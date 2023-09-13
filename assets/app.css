@@ -1,0 +1,73 @@
+/* /assets/app.css */
+
+html {
+    font-size: 62.5%; }
+  body {
+    font-size: 1.0em;
+    font-family: "Open Sans";
+    color: rgb(50, 50, 50); }
+  
+  h1 {
+    font-size: 2em;
+  }
+  
+  .container {
+    position: relative;
+    width: 100%;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 20px;
+    box-sizing: border-box; }
+  .container:after,
+  .row:after,
+  .column,
+  .columns {
+    width: 100%;
+    float: left;
+    box-sizing: border-box; }
+  
+  /* Media Queries
+  –––––––––––––––––––––––––––––––––––––––––––––––––– */
+  /* Larger than mobile */
+  @media (min-width: 400px) {}
+  
+  /* Larger than phablet (also point when grid becomes active) */
+  @media (min-width: 550px) {}
+  
+  /* Larger than tablet */
+  @media (min-width: 750px) {}
+  
+  /* Larger than desktop */
+  @media (min-width: 1000px) {}
+  
+  /* Larger than Desktop HD */
+  @media (min-width: 1200px) {}
+  
+  /* Custom */
+  .modebar { top: 75px !important; }
+  
+  /* For devices larger than 400px */
+  @media (min-width: 400px) {
+    .container {
+      width: 85%;
+      padding: 0; }
+  }
+  
+  /* For devices larger than 550px */
+  @media (min-width: 550px) {
+    .container {
+      width: 80%; }
+    .column,
+    .columns {
+      margin-left: 0.5%; }
+    .column:first-child,
+    .columns:first-child {
+      margin-left: 0; }
+  
+    .three.columns                  {width: 22%;}
+    .nine.columns                   {width: 74.0%;}
+    .offset-by-three.column,
+    .offset-by-three.columns        {margin-left: 26%;}
+    .offset-by-nine.column,
+    .offset-by-nine.columns         {margin-left: 78.0%;}
+  }
