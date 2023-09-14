@@ -7,7 +7,7 @@ function diagram_plot(db)
     fig = plot(db, layout)
 
     dcc_graph(
-                id          = "diagram-bar",
+                id          = "phase-diagram",
                 figure      = fig,
             )
 end
