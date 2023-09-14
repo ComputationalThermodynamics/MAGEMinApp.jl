@@ -4,21 +4,24 @@ callback!(
     app,
     Output("diagram-bar","figure"),
     Output("active-css",  "href"),
+    Output("banner-img",  "src"),
     Input("mode-display", "value"),
 
 ) do bool
 
     if bool == false
-        layout = AppData.default_diagram_layout
-        css = href="/assets/css/default.css"
+        layout  = AppData.default_diagram_layout
+        css     = href="/assets/css/default.css"
+        src     = src="assets/static/images/Logos_MAGEMin_light_noERC.jpg"
     else
         layout = AppData.dark_diagram_layout
         css = href="/assets/css/dark.css"
+        src     = src="assets/static/images/Logos_MAGEMin_dark_noERC.jpg"
     end
-layout
+
     fig_hours = plot( db, layout)
                         
-    return fig_hours, css
+    return fig_hours, css, src
 end
 
 # open/close screenshot box

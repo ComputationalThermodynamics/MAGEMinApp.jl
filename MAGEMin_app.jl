@@ -1,7 +1,5 @@
 using Dash  
 using DashBootstrapComponents
-# using DashHtmlComponents
-# using DashCoreComponents
 using PlotlyJS, JSON3, Printf, Statistics, DataFrames, CSV, Dates
 using UUIDs, Delaunay
 
@@ -24,9 +22,13 @@ app.layout = html_div() do
         rel="stylesheet",
         href="/assets/css/default.css"
     ),
-
     dbc_container([
-        dbc_col(dbc_row([
+        dbc_col([dbc_row([
+                    dbc_cardimg(    id = "banner-img",
+                                    src="assets/static/images/Logos_MAGEMin_light_noERC.jpg",
+                                    style = Dict("height" => 140, "width" => 1100)),
+                        ]),
+                dbc_row([
                         dbc_col([
                                 dbc_dropdownmenu(
                                     [dbc_dropdownmenuitem("Load state", disabled=true),
@@ -35,11 +37,6 @@ app.layout = html_div() do
                                     ],
                                     label="File",
                                     id="id-dropdown-file"),
-
-                                    html_h1("MAGEMin app (v.1.3.3)", style = Dict("margin-top" => 50, "textAlign" => "center")),
-                                    html_div("‎ "),
-                                    html_div("Web application to compute phase diagrams (NR 13/09/23)"),
-                                    html_div("‎ ")
                                 ]),
                                 dbc_col([
                                     dbc_row([
@@ -52,11 +49,16 @@ app.layout = html_div() do
                                         dbc_col([
                                             html_img(src="assets/static/images/moon.png", style = Dict("height" => 20, "width" => 20)),
                                         ], width=1),
-                                    ],className="g-0",)
-
+                                    ],className="g-0",),
                                 ]),
                         ]),
-                ),
+                    dbc_row([
+                        html_div("‎ "),
+                        html_div("Web application to compute phase diagrams using MAGEMin"),
+                        html_div("‎ ")
+                    ]),
+                ]),
+
 
             dbc_tabs(
                 [
