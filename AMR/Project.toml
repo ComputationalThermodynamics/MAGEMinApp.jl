@@ -1,0 +1,9 @@
+name = "AMR"
+uuid = "ddc39b54-6db8-4a70-82e4-b54dfdf5ce5f"
+authors = ["Boris Kaus <kaus@uni-mainz.de>"]
+version = "0.1.0"
+
+[deps]
+MPI = "da04e1cc-30fd-572f-bb4f-1f8673147195"
+MPIPreferences = "3da0fdf6-3ccc-4f1b-acd9-58baa6c99267"
+T8code = "d0cc0030-9a40-4274-8435-baadcfd54fa1"
