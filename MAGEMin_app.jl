@@ -15,7 +15,7 @@ colormaps=read_colormaps()  # colormaps
 
 app         = dash()
 app.title   = "MAGEMin app"
-  
+
 app.layout = html_div() do
 
     dcc_location(id="url", refresh=false),
@@ -28,7 +28,7 @@ app.layout = html_div() do
         dbc_col([dbc_row([
                     dbc_cardimg(    id = "banner-img",
                                     src="assets/static/images/Logos_MAGEMin_light_noERC.jpg",
-                                    style = Dict("height" => 140, "width" => 1100)),
+                                    style = Dict("height" => 120, "width" => 960)),
                         ]),
                 dbc_row([
                         dbc_col([
@@ -64,15 +64,18 @@ app.layout = html_div() do
                         ]),
                     dbc_row([
                         html_div("‎ "),
-                        html_div("Web application to compute phase diagrams using MAGEMin"),
-                        html_div("‎ ")
+                        # html_div("Web application to compute phase diagrams using MAGEMin"),
+                        # html_div("‎ ")
                     ]),
                 ]),
 
 
             dbc_tabs(
                 [
-                    dbc_tab(tab_id="tab-Simulation",label="Simulation",     children = [Tab_Simulation(db)]),
+                    dbc_tab(    tab_id="tab-Simulation",
+                                label="Simulation",
+                                children = [Tab_Simulation(db)],
+                            ),
                     dbc_tab(tab_id="tab-PTX-path", label="PTX-path",        children = []),
                     dbc_tab(tab_id="tab-TEmodeling", label="TE-modeling",   children = []),
 
