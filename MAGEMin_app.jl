@@ -6,10 +6,12 @@ using UUIDs, Delaunay
 # include helper functions
 include("colormaps.jl")
 include("Tab_Simulation.jl")
-include("Tab_PhaseDiagram.jl")
 include("data_plot.jl")
 include("database.jl")
 include("appData.jl")
+
+# read available colormaps
+colormaps=read_colormaps()  # colormaps
 
 app         = dash()
 app.title   = "MAGEMin app"
@@ -41,13 +43,21 @@ app.layout = html_div() do
                                 dbc_col([
                                     dbc_row([
                                         dbc_col([
-                                            html_img(src="assets/static/images/sun.png", style = Dict("height" => 20, "width" => 20)),
+
+                                            dbc_cardimg(    id = "sun-img",
+                                            src="assets/static/images/sun.png",
+                                            style = Dict("height" => 20, "width" => 20)),
+
                                         ], width=1),
                                         dbc_col([
                                             dbc_switch(label="",id="mode-display",  value=false),
                                         ], width=1),
                                         dbc_col([
-                                            html_img(src="assets/static/images/moon.png", style = Dict("height" => 20, "width" => 20)),
+
+                                            dbc_cardimg(    id = "moon-img",
+                                            src="assets/static/images/moon.png",
+                                            style = Dict("height" => 20, "width" => 20)),
+
                                         ], width=1),
                                     ],className="g-0",),
                                 ]),
@@ -63,7 +73,6 @@ app.layout = html_div() do
             dbc_tabs(
                 [
                     dbc_tab(tab_id="tab-Simulation",label="Simulation",     children = [Tab_Simulation(db)]),
-                    dbc_tab(tab_id="tab-PhaseDiagram",label="PhaseDiagram", children = [Tab_PhaseDiagram(db)]),
                     dbc_tab(tab_id="tab-PTX-path", label="PTX-path",        children = []),
                     dbc_tab(tab_id="tab-TEmodeling", label="TE-modeling",   children = []),
 
