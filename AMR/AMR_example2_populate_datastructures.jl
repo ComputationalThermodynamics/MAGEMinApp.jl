@@ -7,7 +7,7 @@ using T8code.Libt8: sc_finalize
 using T8code.Libt8: SC_LP_ESSENTIAL
 using T8code.Libt8: SC_LP_PRODUCTION
 
-using StaticArrays
+using StaticArrays, Statistics
 
 
 include("./AMR_utils.jl")
@@ -85,82 +85,53 @@ t8_forest_write_vtk(forest_quad_rect, "AMR_ex1_t8_uniform_quad_rect")
 # ====================
 # Refine the mesh
 # Callback function
-function adapt_callback(forest, forest_from, which_tree, lelement_id,
-                                  ts, is_family, num_elements, elements_ptr) :: Cint
 
-  # Our adaptation criterion is given by the vector refine_elements, passed into by the function
-  # adapt_forest
-  adapt_data_ptr = Ptr{Cint}(t8_forest_get_user_data(forest))
+for irefine = 1:4
+    local data_quad
+    global forest_quad
+    data_quad   = get_element_info(forest_quad)
+    x_c, y_c    = mean.(data_quad.x), mean.(data_quad.y)
+    Phase_ID    = Cint.(((x_c .- 0.5).^2 .+ (y_c .- 0.5).^2 ) .< 0.2^2)
+    refine_elements = refine_phase_boundaries(forest_quad, Phase_ID);
 
-  # You can use assert for assertions that are active in debug mode (when configured with --enable-debug).
-  # If the condition is not true, then the code will abort.
-  # In this case, we want to make sure that we actually did set a user pointer to forest and thus
-  # did not get the NULL pointer from t8_forest_get_user_data.
-  @T8_ASSERT(adapt_data_ptr != C_NULL)
-
-  #@show lelement_id, which_tree, num_elements, is_family, ts
-  tree_element_offset =   t8_forest_get_tree_element_offset(forest_from, which_tree)
-  @show tree_element_offset
-
-  local_element_id = tree_element_offset+lelement_id
-
-  refine_element = unsafe_load(adapt_data_ptr,local_element_id+1)
-
-  # refines if 1, don't do anything if 0, coarsen if -1
-  return refine_element
+    forest_quad         = adapt_forest(forest_quad, refine_elements)
 end
 
 
-# Call the callback 
-function adapt_forest(forest, refine_elements)
-    num_local_trees = t8_forest_get_num_local_trees(forest)
-    
-    num_local_elements  = t8_forest_get_local_num_elements(forest)
-    
-    @show num_local_elements
-    refine_elements     = zeros(Cint,num_local_elements)
-       
-    #refine_elements = Vector{Cint}(undef, num_elements_in_tree)
-    refine_elements[20] = 1
-   # refine_elements[40] = -1
-    
-    # Check that forest is a committed, that is valid and usable, forest.
-    @T8_ASSERT(t8_forest_is_committed(forest) == 1)
+for irefine = 1:4
+    local data_tri
+    global forest_tri
+    data_tri   = get_element_info(forest_tri)
+    x_c, y_c   = mean.(data_tri.x), mean.(data_tri.y)
+    Phase_ID   = Cint.(((x_c .- 0.5).^2 .+ (y_c .- 0.5).^2 ) .< 0.2^2)
+    refine_elements = refine_phase_boundaries(forest_tri, Phase_ID);
+    forest_tri  = adapt_forest(forest_tri, refine_elements)
+end
+t8_forest_write_vtk(forest_tri, "AMR_ex1_t8_adapt_right_tri")
 
-    # Initialize new forest
-    forest_adapt_ref = Ref(t8_forest_t())
-    t8_forest_init(forest_adapt_ref)
-    forest_adapt = forest_adapt_ref[]
-    
-    # Specify that this forest should result from forest.
-    # The last argument is the flag 'no_repartition'.
-    t8_forest_set_user_data(forest_adapt, pointer(refine_elements))
-    t8_forest_set_adapt(forest_adapt, forest, @t8_adapt_callback(adapt_callback), 0)
-    
-    t8_forest_set_balance(forest_adapt, C_NULL, 0)  # enforces 2:1 balance
-    t8_forest_set_partition(forest_adapt, C_NULL, 0)
-    t8_forest_set_ghost(forest_adapt, 1, T8_GHOST_FACES)
-    t8_forest_commit(forest_adapt)
-
-    return forest_adapt
-  end
 
 #
 # ====================
 
+
+
 # indicate elements that should be refined:
-refine_elements   = zeros(Cint,length(data_quad.tree_id))
-refine_elements[40] = 1
+#refine_elements     = zeros(Cint,length(data_quad.tree_id))
+#x_c, y_c            = mean.(data_quad.x), mean.(data_quad.y)
+#refine_elements     = Cint.(((x_c .- 0.5).^2 .+ (y_c .- 0.5).^2 ) .< 0.2^2)
 
-forest_quad       = adapt_forest(forest_quad, refine_elements)
 
-refine_elements   = zeros(Cint,length(data_quad_rect.tree_id))
-refine_elements[40] = 1
-forest_quad_rect = adapt_forest(forest_quad_rect,refine_elements)
+#refine_elements   = zeros(Cint,length(data_quad_rect.tree_id))
+#refine_elements[40] = 1
+#forest_quad_rect = adapt_forest(forest_quad_rect,refine_elements)
 
-refine_elements   = zeros(Cint,length(data_tri.tree_id))
-refine_elements[40] = 1
-forest_tri      = adapt_forest(forest_tri,refine_elements)
+#refine_elements   = zeros(Cint,length(data_tri.tree_id))
+#data_tri   = get_element_info(forest_tri, Val{true}())
+#x_c, y_c   = mean.(data_tri.x), mean.(data_tri.y)
+#refine_elements   = Cint.( x_c .> 0.5)
+#refine_elements[290] = 1
+
+#forest_tri      = adapt_forest(forest_tri,refine_elements)
 
 t8_step3_print_forest_information(forest_quad)
 t8_step3_print_forest_information(forest_quad_rect)
@@ -169,6 +140,5 @@ t8_step3_print_forest_information(forest_tri)
 t8_forest_write_vtk(forest_tri, "AMR_ex1_t8_adapt_right_tri")
 t8_forest_write_vtk(forest_quad, "AMR_ex1_t8_adapt_right_quad")
 t8_forest_write_vtk(forest_quad_rect, "AMR_ex1_t8_adapt_right_quad_rect")
-
 
 
