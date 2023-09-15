@@ -33,7 +33,7 @@ end
 
 
 # The mesh generation routines have been put in AMR_utile
-cmesh_2D = t8_cmesh_quad_2d(comm)
+cmesh_2D = t8_cmesh_quad_2d(comm, (10,20), (30,40))
 t8_cmesh_vtk_write_file(cmesh_2D, "cmesh_2D_quad", 1.0)
 
 cmesh_tri_2D = t8_cmesh_triangle_2d(comm)
