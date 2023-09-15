@@ -280,7 +280,7 @@ function adapt_forest(forest, refine_elements::Vector{Cint}, data_old::NamedTupl
     t8_forest_commit(forest_adapt)
 
     # Get retrieve the new data for each of the elements  
-    data_adapt  = get_element_data(forest_tri_new);
+    data_adapt  = get_element_data(forest_adapt);
 
     # mapping from old->new elements; the elements that are not refined 
     # will get a new number in the new mesh; the mapping will show how.
