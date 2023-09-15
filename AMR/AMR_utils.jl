@@ -1,7 +1,7 @@
 # this contains utility functions that make life easier when working with AMR, as used in MAGEMin
 
 export find_enclosing_element, get_element_data, refine_phase_boundaries, adapt_forest, t8_print_forest_information
-
+export t8_cmesh_triangle_2d, t8_cmesh_quad_2d
 using T8code.Libt8: sc_free
 
 mutable struct PointSearch
@@ -11,7 +11,92 @@ mutable struct PointSearch
     unique_element::Int64
 end
 
+"""
+    cmesh = t8_cmesh_quad_2d(comm, x= (0,10), y = (0,10))
 
+Creates a 2D quadrilateral coarse mesh with coordinates given by `x`,`y`
+"""
+function t8_cmesh_quad_2d(comm, x=(0.0,10.0), y = (0.0,10.0))
+
+    # Define a quad using the 4 vertices; note that quads are given in z-order
+    x = Float64.(x)
+    y = Float64.(y)
+    
+    vertices = [ 
+    x[1], y[1], 0,                 
+    x[2], y[1], 0,
+    x[1], y[2], 0,
+    x[2], y[2], 0,
+    ]
+
+    # 2. Initialization of the mesh.
+    cmesh_ref = Ref(t8_cmesh_t())
+    t8_cmesh_init(cmesh_ref)
+    cmesh = cmesh_ref[]
+
+    # 3. Definition of the geometry.
+    linear_geom = t8_geometry_linear_new(2)
+    t8_cmesh_register_geometry(cmesh, linear_geom)      # Use linear geometry.
+
+    # 4. Definition of the classes of the different trees.
+    t8_cmesh_set_tree_class(cmesh, 0, T8_ECLASS_QUAD)
+    
+    # 5. Classification of the vertices for each tree.
+    t8_cmesh_set_tree_vertices(cmesh, 0, pointer(vertices), 4)
+    
+    # 7. Commit the mesh.
+    t8_cmesh_commit(cmesh, comm)
+
+    return cmesh
+end
+
+
+"""
+    cmesh = t8_cmesh_triangle_2d(comm, x= (0,10), y = (0,10))
+
+Creates a 2D triangular coarse mesh with coordinates given by `x`,`y`.
+Triangular meshes have 2 trees
+"""
+function t8_cmesh_triangle_2d(comm, x=(0.0,10.0),  y = (0.0,10.0))
+
+    x = Float64.(x)
+    y = Float64.(y)
+    
+    # 1. Defining an array with all vertices.of the triangles
+    vertices = [ 
+        x[1], y[1], 0,                    # tree 0, triangle
+        x[2], y[1], 0,
+        x[2], y[2], 0,
+        x[1], y[1], 0,                    # tree 1, triangle
+        x[2], y[2], 0,
+        x[1], y[2], 0,
+        ]
+  
+    # 2. Initialization of the mesh.
+    cmesh_ref = Ref(t8_cmesh_t())
+    t8_cmesh_init(cmesh_ref)
+    cmesh = cmesh_ref[]
+  
+    # 3. Definition of the geometry.
+    linear_geom = t8_geometry_linear_new(2)
+    t8_cmesh_register_geometry(cmesh, linear_geom)      # Use linear geometry.
+  
+    # 4. Definition of the classes of the different trees.
+    t8_cmesh_set_tree_class(cmesh, 0, T8_ECLASS_TRIANGLE)
+    t8_cmesh_set_tree_class(cmesh, 1, T8_ECLASS_TRIANGLE)
+  
+    # 5. Classification of the vertices for each tree.
+    t8_cmesh_set_tree_vertices(cmesh, 0, pointer(vertices, 0), 3)
+    t8_cmesh_set_tree_vertices(cmesh, 1, pointer(vertices, 9), 3)
+  
+    # 6. Definition of the face neighbors between the different trees.
+    t8_cmesh_set_join(cmesh, 0, 1, 1, 2, 0)
+  
+    # 7. Commit the mesh.
+    t8_cmesh_commit(cmesh, comm)
+  
+    return cmesh
+end
 
 # Helper function to find the enclosing element
 function find_element(forest, ltreeid, element, is_leaf, leaf_elements, tree_leaf_index, query, query_index)
