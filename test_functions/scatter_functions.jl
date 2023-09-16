@@ -1,7 +1,7 @@
 using PlotlyJS, Delaunay, BenchmarkTools
 
 
-function mesh_fct(np)
+function generator_scatter_traces(np)
     c       = rand(np, 2);
     c[end-3:end,:] = [0. 0.; 0. 1.; 1. 1.; 1. 0.]
 

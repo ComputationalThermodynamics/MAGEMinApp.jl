@@ -1,4 +1,4 @@
-function Tab_Simulation(db)
+function Tab_Simulation()
     html_div([
     # one column for the plots
         dbc_col([
@@ -142,16 +142,6 @@ function Tab_Simulation(db)
 
                                     ]),
                                     dbc_col([ 
-                                        html_h1("P step", style = Dict("textAlign" => "center","font-size" => "100%")),
-                                        dbc_input(
-                                            id="pstep-id",
-                                            type="number", 
-                                            min=0.01, 
-                                            max=100.01, 
-                                            value=4.0   ),
-
-                                    ]),
-                                    dbc_col([ 
                                         html_h1("P max", style = Dict("textAlign" => "center","font-size" => "100%")),
                                         dbc_input(
                                             id="pmax-id",
@@ -161,6 +151,15 @@ function Tab_Simulation(db)
                                             value=24.01   ),
 
                                     ]), 
+                                    dbc_col([ 
+                                        html_h1("Init subdivision", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                        dbc_input(
+                                            id      = "psub-id",
+                                            type    = "number", 
+                                            min     = 2, 
+                                            value   = 3   ),
+                                    ]),
+
                                     ]),
                                 ]),
                             ]),
@@ -182,23 +181,21 @@ function Tab_Simulation(db)
 
                                         ]),
                                         dbc_col([ 
-                                            html_h1("T step", style = Dict("textAlign" => "center","font-size" => "100%")),
-                                            dbc_input(
-                                                id="tstep-id",
-                                                type="number", 
-                                                min=0.0, 
-                                                max=2000.0, 
-                                                value=100.0   ),
-
-                                        ]),
-                                        dbc_col([ 
                                             html_h1("T max", style = Dict("textAlign" => "center","font-size" => "100%")),
                                             dbc_input(
-                                                id="tmax-id",
-                                                type="number", 
-                                                min=0.0, 
-                                                max=2000.0,
-                                                value=1400.0   ),
+                                                id      = "tmax-id",
+                                                type    = "number", 
+                                                min     = 0.0, 
+                                                max     = 2000.0,
+                                                value   = 1400.0   ),
+                                        ]),
+                                        dbc_col([ 
+                                            html_h1("Init subdivision", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                            dbc_input(
+                                                id      = "tsub-id",
+                                                type    = "number", 
+                                                min     = 2,  
+                                                value   = 3   ),
 
                                         ]),
                                     ]),
@@ -207,6 +204,20 @@ function Tab_Simulation(db)
 
                         ], width=5),
                     ], justify="start"),
+
+                    html_div("‎ "),
+                    dbc_col([ 
+                    dbc_row([
+                        dbc_button(
+                            "Compute mesh", id="mesh-button", color="primary", className="me-2", n_clicks=0
+                        ),
+                    ]),
+                    dbc_row([
+                        dbc_button(
+                            "Compute phase diagram", id="compute-button", color="primary", className="me-2", n_clicks=0
+                        ),
+                    ]),
+                    ], width=4)
 
                 ], width=12)
     ])

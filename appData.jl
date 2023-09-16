@@ -1,40 +1,11 @@
 global AppData
 
-dark_diagram_layout = Layout(
-    title=attr(
-        text= "Phase diagram",
-        y=0.95,
-        x=0.5,
-        xanchor= "center",
-        yanchor= "top",
-        font_color  = "#FFF",
-        font_size = 18.0  ),
-    # xaxis_gridcolor   = "#282828",
-    # yaxis_gridcolor   = "#393939",
-    plot_bgcolor  = "#282828",
-    paper_bgcolor = "#282828",
-    font_color = "#FFF",
-    showlegend = false,
-    xaxis_title= ""
-)
+MAGEMin_version = "v1.3.3";
+vertice_list    = [];
+mesh            = [];
+field           = [];
 
-default_diagram_layout = Layout(
-    title=attr(
-        text= "Phase diagram",
-        y=0.95,
-        x=0.5,
-        xanchor= "center",
-        yanchor= "top",
-        font_color  = "#000000",
-        font_size = 18.0  ),
-    # xaxis_gridcolor   = "#F0F0F0",
-    # yaxis_gridcolor   = "#E8E8E8",
-    plot_bgcolor  = "#F0F0F0",
-    paper_bgcolor = "#F0F0F0",
-    font_color = "#000000",
-    showlegend = false,
-    xaxis_title= ""
-)
-
-AppData = ( dark_diagram_layout       = dark_diagram_layout,
-            default_diagram_layout    = default_diagram_layout         )
+AppData = ( MAGEMin_version = MAGEMin_version,
+            vertice_list    = vertice_list,
+            mesh            = mesh,
+            field           = field )

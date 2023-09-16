@@ -4,7 +4,7 @@
 include("scatter_functions.jl")
 
 np   = 2048;              #number of points to be triangulated
-data = mesh_fct(np);
+data = generator_scatter_traces();
 
 plot(data, Layout(;height=768, width=1024, showlegend=false))
 
