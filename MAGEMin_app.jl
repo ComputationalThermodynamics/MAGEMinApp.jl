@@ -17,7 +17,7 @@ colormaps   = read_colormaps()  # colormaps
 app         = dash(external_stylesheets = [dbc_themes.BOOTSTRAP], prevent_initial_callbacks=false)
 app.title   = "MAGEMin app"
 app.layout  = html_div() do
-
+ 
 data_vert = []
 
     dbc_container([
