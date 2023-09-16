@@ -215,7 +215,7 @@ function get_element_data(forest, triangle=Val{false}())
 
             element_id[current_index] = ielement
             element_level[current_index] = element_level_local
-            unique_element_id[current_index] = ielement+tree_element_offset
+            unique_element_id[current_index] = ielement+tree_element_offset+1
             tree_id[current_index]    = itree
             current_index += 1
 
@@ -433,22 +433,19 @@ Negative values within this mapping are cells that need to be recomputed.
 `data_new` and `data_old` are computed with `get_element_data`.
 """
 function indices_map(data_new::NamedTuple, data_old::NamedTuple, refine_elements::Vector)
-
     @assert length(refine_elements) == length(data_old.x)
 
-    ind_map = zeros(Int64,length(data_new.xc))
-    num_vertices = length(data_old.x[1])
+    xc_new  = data_new.xc
+    yc_new  = data_new.yc
+    xc      = data_old.xc
+    yc      = data_old.yc
 
-    current_index = 1;
-    for (old_index, refine) in enumerate(refine_elements)
-        if refine==0
-            ind_map[current_index] = old_index
-            current_index += 1;
-        elseif refine==1
-            for j=1:num_vertices
-                ind_map[current_index] = -old_index
-                current_index += 1;
-            end
+    ind_map = -ones(Int64,length(data_new.xc))
+
+    for i = 1:length(data_new.x)
+        id = xc_new[i] .== xc .&& yc_new[i] .== yc
+        if any(id)
+            ind_map[i] = findall(id)[1]
         end
     end
 
