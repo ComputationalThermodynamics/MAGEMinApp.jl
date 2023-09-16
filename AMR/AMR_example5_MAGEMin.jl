@@ -54,21 +54,27 @@ function Calculate_MAGEMin(data; ind_map=nothing, Out_PT_old=nothing)
     Out_PT = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,length(data.x))
     Hash_PT = Vector{UInt64}(undef,length(data.x))
 
+    db          = "ig"  # database: ig, igneous (Holland et al., 2018); mp, metapelite (White et al 2014b)
+    gv, z_b, DB, splx_data      = init_MAGEMin(db);
+
+    test        = 0;
+    sys_in      = "mol"     #default is mol, if wt is provided conversion will be done internally (MAGEMin works on mol basis)
+    gv          = use_predefined_bulk_rock(gv, test, db);
+
     for i=1:length(data.x)
         if ind_map[i]<0
 
             # compute a new point
             # NOTE:  there is something wacky, because we should not have to re-initialize and finalizie 
             # the databases for every point; I think this should only be done only once
-            gv, z_b, DB, splx_data      = init_MAGEMin();
-            test        = 0;
-            sys_in      = "mol"     #default is mol, if wt is provided conversion will be done internally (MAGEMin works on mol basis)
-            gv          = use_predefined_bulk_rock(gv, test);
+
             P = data.yc[i]
             T = data.xc[i]
             Out_PT[i] = point_wise_minimization(P,T, gv, z_b, DB, splx_data, sys_in)
-            
-            finalize_MAGEMin(gv,DB)
+
+            if mod(128,i) == 0
+                GC.gc()
+            end
 
         else
             # This Pointy already exist; transfer data from old array
@@ -77,14 +83,17 @@ function Calculate_MAGEMin(data; ind_map=nothing, Out_PT_old=nothing)
 
     end
 
+    finalize_MAGEMin(gv,DB)
+
     # Compjute has
     for i=1:length(data.x)
-        Hash_PT[i] = hash(sort(Out_PT[i].ph))       # sort this, as the order is sometimes different
+        Hash_PT[i] = hash(sort(Out_PT[i].ph))
     end
 
     return Out_PT, Hash_PT
 
 end
+
 
 # initial optimization on regular grid
 Out_PT, Hash_PT = Calculate_MAGEMin(data)
