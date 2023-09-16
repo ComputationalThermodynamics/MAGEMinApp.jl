@@ -3,52 +3,64 @@
 callback!(
     app,
     Output("phase-diagram","figure"),
-    Output("active-css",  "href"),
-    Output("jgu-img",  "src"),
-    Output("magemin-img",  "src"),
-    Output("moon-img",  "src"),
-    Input("mode-display", "value"),
+    Input("mesh-button","n_clicks"),
+    # Input("compute-button","n_clicks"),
+    State("tsub-id","value"),
+    State("psub-id","value"),
+    State("tmin-id","value"),
+    State("tmax-id","value"),
+    State("pmin-id","value"),
+    State("pmax-id","value"),
+    State("refinement-levels","value"),
 
-) do bool
+) do n_clicks_mesh, Xsub, Ysub, tmin, tmax, pmin, pmax, n_ref
 
-    if bool == false
-        layout  = AppData.default_diagram_layout
-        css     = "/assets/css/default.css"
-        src     = "assets/static/images/JGU_light.jpg"
-        src2    = "assets/static/images/MAGEMin_light.jpg"
-        srcm    = "assets/static/images/moon.png"
+    layout = Layout(
+        title           = attr(
+            text        = "Phase diagram",
+            y           = 0.95,
+            x           = 0.5,
+            xanchor     = "center",
+            yanchor     = "top",
+            font_color  = "#000000",
+            font_size   = 18.0),
+
+        showlegend  = false,
+        xaxis_title = "Temperature [°C]",
+        yaxis_title = "Pressure [kbar]",
+    )
+
+    ctx = callback_context()
+    if length(ctx.triggered) == 0
+        bid = "mesh-button"
     else
-        layout = AppData.dark_diagram_layout
-        css     = "/assets/css/dark.css"
-        src     = "assets/static/images/JGU_dark.jpg"
-        src2    = "assets/static/images/MAGEMin_dark.jpg"
-        srcm    = "assets/static/images/moondark.png"
+        bid = split(ctx.triggered[1].prop_id, ".")[1]
     end
 
-    fig_hours = plot( db, layout)
-    return fig_hours, css, src, src2, srcm                        
-end
+    if bid == "mesh-button"
 
+        empty!(AppData.vertice_list)
+        empty!(AppData.mesh)
+        empty!(AppData.field)
 
+        vert    = get_initial_vertices(Xsub,Ysub,tmin,tmax,pmin,pmax);              # generate initial set of points
+        field   = get_field_from_vert(vert,tmin,tmax,pmin,pmax)                     # attach a field to it (will be phase id)
 
-# open/close screenshot box
-callback!(app,
-    Output("collapse-timeperiod", "is_open"),
-    [Input("button-timeperiod", "n_clicks")],
-    [State("collapse-timeperiod", "is_open")], ) do  n, is_open
-    
-    if isnothing(n); n=0 end
+        push!(AppData.field,field)                                                  # push to Appdata
+        push!(AppData.vertice_list,vert)
+        db, mesh = generator_scatter_traces(tmin,tmax,pmin,pmax);                   # create scatter tracers
 
-    if n>0
-        if is_open==1
-            is_open = 0
-        elseif is_open==0
-            is_open = 1
-        end
+        push!(AppData.mesh,mesh)                                                    # push mesh to AppData
+
+        fig_phase_diagram = plot(db, layout)                                        # plot results
     end
-    return is_open    
-end
 
+    # if bid == "compute-button"
+
+    # end
+
+    return fig_phase_diagram                     
+end
 
 
 # open/close Curve interpretation box

@@ -1,10 +1,8 @@
 
 # This creates the cross-section plot
-function diagram_plot(db)
+function diagram_plot()
 
-    layout  = AppData.default_diagram_layout
-
-    fig = plot(db, layout)
+    fig = plot()
 
     dcc_graph(
                 id          = "phase-diagram",

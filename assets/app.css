@@ -14,7 +14,8 @@ html {
   .container {
     position: relative;
     width: 100%;
-    max-width: 960px;
+    /* max-width: 960px; */
+    max-width: 1024;
     margin: 0 auto;
     padding: 0 20px;
     box-sizing: border-box; }
@@ -64,7 +65,7 @@ html {
     .columns:first-child {
       margin-left: 0; }
   
-    .three.columns                  {width: 22%;}
+    .three.columns                  {width: 12%;}
     .nine.columns                   {width: 74.0%;}
     .offset-by-three.column,
     .offset-by-three.columns        {margin-left: 26%;}
