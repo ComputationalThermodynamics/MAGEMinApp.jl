@@ -12,7 +12,8 @@ using StaticArrays, Statistics
 using MAGEMin_C
 
 include("./AMR_utils.jl")
-
+include("../colormaps.jl")
+colormaps   = read_colormaps() 
 
 # Initialize MPI. This has to happen before we initialize sc or t8code.
 if !MPI.Initialized()
@@ -38,7 +39,7 @@ Trange  = (800,2000)        # in Paraview it looks a bit weird with actual value
 cmesh   = t8_cmesh_quad_2d(comm, Trange, Prange)
 
 # Refine coarse mesh (in a regular manner)
-level   = 4
+level   = 3
 forest  = t8_forest_new_uniform(cmesh, t8_scheme_new_default_cxx(), level, 0, comm)
 
 data   = get_element_data(forest);
@@ -100,7 +101,7 @@ Out_PT, Hash_PT = Calculate_MAGEMin(data)
 
 
 # Refine the mesh along a curve
-for irefine = 1:2
+for irefine = 1:6
     global forest, data, Hash_PT, Out_PT
 
     refine_elements   = refine_phase_boundaries(forest, Hash_PT);
