@@ -79,7 +79,7 @@ function Calculate_MAGEMin(data; ind_map=nothing, Out_PT_old=nothing)
 
     # Compjute has
     for i=1:length(data.x)
-        Hash_PT[i] = hash(Out_PT[i].ph)
+        Hash_PT[i] = hash(sort(Out_PT[i].ph))       # sort this, as the order is sometimes different
     end
 
     return Out_PT, Hash_PT
