@@ -3,6 +3,7 @@
 export find_enclosing_element, get_element_data, refine_phase_boundaries, adapt_forest, t8_print_forest_information
 export t8_cmesh_triangle_2d, t8_cmesh_quad_2d
 using T8code.Libt8: sc_free
+using StaticArrays
 
 mutable struct PointSearch
     point::NTuple{2,Float64}
@@ -291,7 +292,7 @@ end
 
 
 """
-    refine_elements = refine_phase_boundaries(forest, Phase_ID::Vector)
+    refine_elements = refine_phase_boundaries(forest, Phase_ID::Vector; n_diff_fields=2)
 
 This indicates which elements need to be refined based on different numbers between neighboring values
 
@@ -352,9 +353,6 @@ function refine_phase_boundaries(forest, Phase_ID::Vector)
                 num_neighbors = num_neighbors_ref[]
                 neighbor_ielements = unsafe_wrap(Array, pelement_indices_ref[],
                                                  num_neighbors)
-                #neighbor_leafs = unsafe_wrap(Array, pneighbor_leafs_ref[], num_neighbors)
-                #neighbor_scheme = pneigh_scheme_ref[]
-
                 for i_neigh in 1:num_neighbors
                     element_neighbor = neighbor_ielements[i_neigh]
                     neighbor_phaseID = Phase_ID[element_neighbor+1]
@@ -367,7 +365,7 @@ function refine_phase_boundaries(forest, Phase_ID::Vector)
 
                 refine && break
 
-           #     t8_free(dual_faces_ref[])
+            #    t8_free(dual_faces_ref[])
            #     t8_free(pneighbor_leafs_ref[])
            #     t8_free(pelement_indices_ref[])
             end # for
