@@ -35,10 +35,9 @@ end
 # Initialize MAGEMin:
 MAGEMin_db = Initialize_MAGEMin("ig"); # only need to do this once/simulation
 
-
 # Create coarse mesh
-Prange  = (0,50)
-Trange  = (800,2000)        # in Paraview it looks a bit weird with actual values
+Prange  = (0.01,24.01)
+Trange  = (800,1400)        # in Paraview it looks a bit weird with actual values
 cmesh   = t8_cmesh_quad_2d(comm, Trange, Prange)
 
 # Refine coarse mesh (in a regular manner)
@@ -46,7 +45,6 @@ level   = 6
 forest  = t8_forest_new_uniform(cmesh, t8_scheme_new_default_cxx(), level, 0, comm)
 
 data   = get_element_data(forest);
-
 
 
 # MAGEMin optimizations:
@@ -57,9 +55,8 @@ function Calculate_MAGEMin(data, MAGEMin_db::DataBase_DATA; ind_map=nothing, Out
     end
 
     Out_PT = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,length(data.x))
-    Hash_PT = Vector{UInt64}(undef,length(data.x))
 
-    # step 1: determine all points that have not been computed yet 
+    # Step 1: determine all points that have not been computed yet 
     ind_new = findall( ind_map.< 0)
     n_new_points = length(ind_new)
     Out_PT_new   = []
@@ -89,7 +86,10 @@ function Calculate_MAGEMin(data, MAGEMin_db::DataBase_DATA; ind_map=nothing, Out
         end
     end
 
+    Out_PT_new =[]
+
     # Compute hash for all points
+    Hash_PT = Vector{UInt64}(undef,length(data.x))
     for i=1:length(data.x)
         Hash_PT[i] = hash(sort(Out_PT[i].ph))
     end
@@ -101,9 +101,8 @@ end
 # initial optimization on regular grid
 Out_PT, Hash_PT = Calculate_MAGEMin(data, MAGEMin_db)
 
-
-# Refine the mesh along a curve
-for irefine = 1:4
+# Refine the mesh along phase boundaries
+for irefine = 1:3
     global forest, data, Hash_PT, Out_PT
 
     refine_elements   = refine_phase_boundaries(forest, Hash_PT);
@@ -112,8 +111,9 @@ for irefine = 1:4
     forest_new, data_new, ind_map  = adapt_forest(forest, refine_elements, data)
 
     # recompute points that have not been computed before
-    Out_PT, Hash_PT = Calculate_MAGEMin(data_new, MAGEMin_db, ind_map=ind_map, Out_PT_old=Out_PT)
+    t = @elapsed Out_PT, Hash_PT = Calculate_MAGEMin(data_new, MAGEMin_db, ind_map=ind_map, Out_PT_old=Out_PT)
 
+    println("Computed $(length(ind_map.<0)) new points in $t seconds")
     data = data_new
     forest = forest_new
 end
@@ -136,7 +136,7 @@ for i = 1:length(data.x)
         
         # customize what is shown upon hover:
         text ="Stable phases $(Out_PT[i].ph) ",
-        hoverinfo="text",
+        hoverinfo="none",
 
         showlegend=false)
 end
@@ -149,6 +149,7 @@ plot(data_plot,
                     xanchor= "center",
                     yanchor= "top"
                 ),
+
                 xaxis_title="Temperature [Celcius]",
                 yaxis_title="Pressure [kbar]",
                 yaxis_range=[Prange...],
