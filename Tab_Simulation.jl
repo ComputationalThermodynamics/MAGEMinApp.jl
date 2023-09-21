@@ -19,13 +19,9 @@ function Tab_Simulation()
                                     dbc_col([ 
                                         dcc_dropdown(   id      = "database-dropdown",
                                                         options = [
-                                                            (label = "Metapelite (White et al., 2014)",         value = "mp"),
-                                                            (label = "Metabasite (Green et al., 2016)",         value = "mb"),
-                                                            (label = "Igneous HP18 (Green et al., 2023)",       value = "ig"),
-                                                            (label = "Igneous T21 (Green et al., 2023)",        value = "igd"),
-                                                            (label = "Alkaline (Weller et al., 2023)",          value = "alk"),
-                                                            (label = "Ultramafic (Tomlinson et al., 2021)",     value = "um"),
-
+                                                            Dict(   "label" => dba.database[i],
+                                                                    "value" => dba.acronym[i]  )
+                                                                        for i=1:size(dba,1)
                                                         ],
                                                         value="ig" ,
                                                         clearable   = false,
@@ -243,17 +239,35 @@ function Tab_Simulation()
 
                                         dbc_row([
                                                 dbc_col([
-                                                    dbc_row([
-                                                        dbc_col([
-                                                            html_div("Predefined"),
-                                                            ]),
-                                                        dbc_col([
-                                                            dbc_switch(label="",id="mode-bulk", value=false),
+                                                    # dbc_row([
+                                                    #     dbc_col([
+                                                    #         html_div("Predefined"),
+                                                    #         ]),
+                                                    #     dbc_col([
+                                                    #         dbc_switch(label="",id="mode-bulk", value=false),
+                                                    #     ]),
+                                                    #     dbc_col([
+                                                    #         html_div("Custom"),
+                                                    #     ]),
+                                                    # ]),
+
+                                                    dcc_upload(
+                                                        id="upload-bulk",
+                                                        children=html_div([
+                                                            "Drag and drop or select bulk-rock file",
                                                         ]),
-                                                        dbc_col([
-                                                            html_div("Custom"),
-                                                        ]),
-                                                    ]),
+                                                        style=Dict(
+                                                            "width" => "100%",
+                                                            "height" => "60px",
+                                                            "lineHeight" => "60px",
+                                                            "borderWidth" => "1px",
+                                                            "borderStyle" => "dashed",
+                                                            "borderRadius" => "5px",
+                                                            "textAlign" => "center"
+                                                        ),
+                                                        # Allow multiple files to be uploaded
+                                                        multiple=false
+                                                    ),
 
                                                     html_div("‎ "),
                                                     dcc_dropdown(   id      = "test-dropdown",
@@ -274,7 +288,7 @@ function Tab_Simulation()
                                                                         Dict("id" =>  "mol fraction",   "name" =>  "mol fraction",  "editable" => true)]
                                                         ),
                                                         data        =   [Dict(  "oxide"         => db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1][i],
-                                                                                "mol fraction"  => db[(db.db .== "ig") .& (db.test .== 0), :].mol[1][i])
+                                                                                "mol fraction"  => db[(db.db .== "ig") .& (db.test .== 0), :].frac[1][i])
                                                                                     for i=1:length(db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1]) ],
                                                         style_cell  = (textAlign="center", fontSize="140%",),
                                                         style_header= (fontWeight="bold",),

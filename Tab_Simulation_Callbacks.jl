@@ -17,7 +17,7 @@ callback!(
     end
 
     data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
-                            "mol fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].mol[1][i])
+                            "mol fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac[1][i])
                                 for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
 
 
@@ -25,7 +25,7 @@ callback!(
                             "value" => db[(db.db .== dtb), :].test[i]  )
                                 for i=1:length(db[(db.db .== dtb), :].test)]
 
-    cap         = db[(db.db .== dtb) .& (db.test .== t), :].database[1]      
+    cap         = dba[(dba.acronym .== dtb) , :].database[1]      
     
     val         = t
     return data, opts, val, cap                  
