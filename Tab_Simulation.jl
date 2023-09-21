@@ -262,7 +262,7 @@ function Tab_Simulation()
                                                                 "value" => db[(db.db .== "ig"), :].test[i]  )
                                                                     for i=1:length(db[(db.db .== "ig"), :].test)
                                                     ],
-                                                    value       = "0",
+                                                    value       = 0,
                                                     clearable   = false,
                                                     multi       = false),
 
