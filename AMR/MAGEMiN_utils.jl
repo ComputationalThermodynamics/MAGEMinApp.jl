@@ -21,7 +21,7 @@ This initialize the MAGEMin databases on every thread. This actually has to be d
 """
 function Initialize_MAGEMin(db="ig")
     gv, z_b, DB, splx_data      = init_MAGEMin(db);
-    
+
     nt = Threads.nthreads()
     list_gv = Vector{typeof(gv)}(undef, nt)
     list_z_b = Vector{typeof(z_b)}(undef, nt)
@@ -49,7 +49,7 @@ function Finalize_MAGEMin(dat::DataBase_DATA)
         DB = dat.DB[id]
         finalize_MAGEMin(gv, DB)
 
-        # These are indeed not freed (same with C-code), which should be added for completion 
+        # These are indeed not freed (same with C-code), which should be added for completion
         # They are rather small structs compared to the others
         z_b = dat.z_b[id]
         splx_data = dat.splx_data[id]
@@ -68,7 +68,7 @@ function Calculate_MAGEMin(Pvec::Vector, Tvec::Vector, MAGEMin_db::DataBase_DATA
     for i=1:Threads.nthreads()
         MAGEMin_db.gv[i]          = use_predefined_bulk_rock(MAGEMin_db.gv[i], test, MAGEMin_db.db);
     end
-    
+
     # initialize vectors
     Out_PT = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef, length(Pvec))
 

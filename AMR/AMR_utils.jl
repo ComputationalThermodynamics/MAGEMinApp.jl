@@ -22,9 +22,9 @@ function t8_cmesh_quad_2d(comm, x=(0.0,10.0), y = (0.0,10.0))
     # Define a quad using the 4 vertices; note that quads are given in z-order
     x = Float64.(x)
     y = Float64.(y)
-    
-    vertices = [ 
-    x[1], y[1], 0,                 
+
+    vertices = [
+    x[1], y[1], 0,
     x[2], y[1], 0,
     x[1], y[2], 0,
     x[2], y[2], 0,
@@ -41,10 +41,10 @@ function t8_cmesh_quad_2d(comm, x=(0.0,10.0), y = (0.0,10.0))
 
     # 4. Definition of the classes of the different trees.
     t8_cmesh_set_tree_class(cmesh, 0, T8_ECLASS_QUAD)
-    
+
     # 5. Classification of the vertices for each tree.
     t8_cmesh_set_tree_vertices(cmesh, 0, pointer(vertices), 4)
-    
+
     # 7. Commit the mesh.
     t8_cmesh_commit(cmesh, comm)
 
@@ -62,9 +62,9 @@ function t8_cmesh_triangle_2d(comm, x=(0.0,10.0),  y = (0.0,10.0))
 
     x = Float64.(x)
     y = Float64.(y)
-    
+
     # 1. Defining an array with all vertices.of the triangles
-    vertices = [ 
+    vertices = [
         x[1], y[1], 0,                    # tree 0, triangle
         x[2], y[1], 0,
         x[2], y[2], 0,
@@ -72,30 +72,30 @@ function t8_cmesh_triangle_2d(comm, x=(0.0,10.0),  y = (0.0,10.0))
         x[2], y[2], 0,
         x[1], y[2], 0,
         ]
-  
+
     # 2. Initialization of the mesh.
     cmesh_ref = Ref(t8_cmesh_t())
     t8_cmesh_init(cmesh_ref)
     cmesh = cmesh_ref[]
-  
+
     # 3. Definition of the geometry.
     linear_geom = t8_geometry_linear_new(2)
     t8_cmesh_register_geometry(cmesh, linear_geom)      # Use linear geometry.
-  
+
     # 4. Definition of the classes of the different trees.
     t8_cmesh_set_tree_class(cmesh, 0, T8_ECLASS_TRIANGLE)
     t8_cmesh_set_tree_class(cmesh, 1, T8_ECLASS_TRIANGLE)
-  
+
     # 5. Classification of the vertices for each tree.
     t8_cmesh_set_tree_vertices(cmesh, 0, pointer(vertices, 0), 3)
     t8_cmesh_set_tree_vertices(cmesh, 1, pointer(vertices, 9), 3)
-  
+
     # 6. Definition of the face neighbors between the different trees.
     t8_cmesh_set_join(cmesh, 0, 1, 1, 2, 0)
-  
+
     # 7. Commit the mesh.
     t8_cmesh_commit(cmesh, comm)
-  
+
     return cmesh
 end
 
@@ -110,7 +110,7 @@ function find_element(forest, ltreeid, element, is_leaf, leaf_elements, tree_lea
     point       =   [user_data.point...]
     tolerance   =   1e-8
     isinside    =   t8_forest_element_point_inside(forest, ltreeid, element, point, tolerance)
-    
+
     if (isinside != 0) && (is_leaf != 0)
         # we found the enclosing element
         tree_class      = t8_forest_get_tree_class(forest, ltreeid)
@@ -120,7 +120,7 @@ function find_element(forest, ltreeid, element, is_leaf, leaf_elements, tree_lea
 
         element_coords = Array{Float64}(undef, 2)
         t8_element_vertex_reference_coords(eclass_scheme, element, 0, pointer(element_coords))
-        
+
         tree_element_offset =   t8_forest_get_tree_element_offset(forest, ltreeid)
         local_element_id    =   tree_element_offset + tree_leaf_index
 
@@ -143,13 +143,13 @@ function find_enclosing_element(point::NTuple, forest)
 
     # Initialize struct that holds the tree and element @ the end
     user_data = PointSearch(point,-1,-1,-1)
-    
+
     t8_forest_set_user_data(forest, Ref(user_data))
-    t8_forest_search(forest, 
-                        @cfunction(find_element, Cint, (t8_forest_t, t8_locidx_t, Ptr{t8_element_t}, Cint, Ptr{t8_element_array_t}, t8_locidx_t, Ptr{Cvoid}, Cint )),  
+    t8_forest_search(forest,
+                        @cfunction(find_element, Cint, (t8_forest_t, t8_locidx_t, Ptr{t8_element_t}, Cint, Ptr{t8_element_array_t}, t8_locidx_t, Ptr{Cvoid}, Cint )),
                         C_NULL, C_NULL);
 
-    return user_data         
+    return user_data
 end
 
 """
@@ -164,7 +164,7 @@ function get_element_data(forest, triangle=Val{false}())
         num_faces       =  3
     else
         num_faces       =  4
-    end     
+    end
 
     x                   = zeros(SVector{num_faces,Float64}, num_local_elements)
     y                   = zeros(SVector{num_faces,Float64}, num_local_elements)
@@ -183,22 +183,22 @@ function get_element_data(forest, triangle=Val{false}())
     element_coords_lr = Array{Float64}(undef, 2)
     element_coords_ur = Array{Float64}(undef, 2)
     element_coords_ul = Array{Float64}(undef, 2)
-    
+
     for itree = 0:num_local_trees-1
         tree_class = t8_forest_get_tree_class(forest, itree)
         eclass_scheme = t8_forest_get_eclass_scheme(forest, tree_class)
         num_elements_in_tree = t8_forest_get_tree_num_elements(forest, itree)
         tree_element_offset =   t8_forest_get_tree_element_offset(forest, itree)
-        
+
         for ielement in 0:(num_elements_in_tree-1)
             element = t8_forest_get_element_in_tree(forest, itree, ielement)
             element_level_local = t8_element_level(eclass_scheme, element)
-         
+
             # Retrieve centroid coordinates of elements (in normalized manner)
             t8_forest_element_centroid(forest, itree, element,   pointer(element_coords_ll))
             xc[current_index]= element_coords_ll[1]
             yc[current_index]= element_coords_ll[2]
-            
+
             # retrieve coordinates of vertices
             t8_forest_element_coordinate(forest, itree, element,   0, pointer(element_coords_ll))
             t8_forest_element_coordinate(forest, itree, element,   1, pointer(element_coords_lr))
@@ -269,21 +269,21 @@ function adapt_forest(forest, refine_elements::Vector{Cint}, data_old::NamedTupl
     forest_adapt_ref = Ref(t8_forest_t())
     t8_forest_init(forest_adapt_ref)
     forest_adapt = forest_adapt_ref[]
-    
+
     # Specify that this forest should result from forest.
     # The last argument is the flag 'no_repartition'.
     t8_forest_set_user_data(forest_adapt, pointer(refine_elements))
     t8_forest_set_adapt(forest_adapt, forest, @t8_adapt_callback(adapt_callback), 0)
-    
+
     t8_forest_set_balance(forest_adapt, C_NULL, 0)  # enforces 2:1 balance
     t8_forest_set_partition(forest_adapt, C_NULL, 0)
     t8_forest_set_ghost(forest_adapt, 1, T8_GHOST_FACES)
     t8_forest_commit(forest_adapt)
 
-    # Get retrieve the new data for each of the elements  
+    # Get retrieve the new data for each of the elements
     data_adapt  = get_element_data(forest_adapt);
 
-    # mapping from old->new elements; the elements that are not refined 
+    # mapping from old->new elements; the elements that are not refined
     # will get a new number in the new mesh; the mapping will show how.
     ind_map     = indices_map(data_adapt, data_old, refine_elements)
 
@@ -310,7 +310,7 @@ function refine_phase_boundaries(forest, Phase_ID::Vector)
 
     # Get the number of ghost elements of forest.
     num_ghost_elements = t8_forest_get_num_ghosts(forest)
-    
+
     # Get the number of trees that have elements of this process.
     num_local_trees = t8_forest_get_num_local_trees(forest)
 
@@ -319,7 +319,7 @@ function refine_phase_boundaries(forest, Phase_ID::Vector)
     for itree in 0:(num_local_trees - 1)
         tree_class = t8_forest_get_tree_class(forest, itree)
         eclass_scheme = t8_forest_get_eclass_scheme(forest, tree_class)
-        tree_element_offset =   t8_forest_get_tree_element_offset(forest, itree)
+        tree_element_offset = t8_forest_get_tree_element_offset(forest, itree)
 
         # Get the number of elements of this tree.
         num_elements_in_tree = t8_forest_get_tree_num_elements(forest, itree)
@@ -332,7 +332,7 @@ function refine_phase_boundaries(forest, Phase_ID::Vector)
             num_faces = t8_element_num_faces(eclass_scheme, element)
 
             refine = false
-            local_phaseID = Phase_ID[ielement+tree_element_offset+1]
+            local_phaseID = Phase_ID[ielement + tree_element_offset + 1]
 
             for iface in 0:(num_faces - 1)
                 pelement_indices_ref = Ref{Ptr{t8_locidx_t}}()
@@ -355,19 +355,19 @@ function refine_phase_boundaries(forest, Phase_ID::Vector)
                                                  num_neighbors)
                 for i_neigh in 1:num_neighbors
                     element_neighbor = neighbor_ielements[i_neigh]
-                    neighbor_phaseID = Phase_ID[element_neighbor+1]
-                    
+                    neighbor_phaseID = Phase_ID[element_neighbor + 1]
+
                     if neighbor_phaseID != local_phaseID
                         refine = true
                         break
                     end
                 end
 
-                refine && break
+                t8_free(dual_faces_ref[])
+                t8_free(pneighbor_leafs_ref[])
+                t8_free(pelement_indices_ref[])
 
-            #    t8_free(dual_faces_ref[])
-           #     t8_free(pneighbor_leafs_ref[])
-           #     t8_free(pelement_indices_ref[])
+                refine && break
             end # for
 
             refine_elements[ielement+tree_element_offset+1] = Cint(refine)
@@ -395,10 +395,10 @@ function t8_output_data_to_vtu(forest, element_data, prefix)
     for ielem = 1:num_elements
       element_volumes[ielem] = element_data[ielem]
     end
-  
+
     # The number of user defined data fields to write.
     num_data = 1
-  
+
     # WARNING: This code hangs for Julia v1.8.* or older. Use at least Julia v1.9.
     # For each user defined data field we need one t8_vtk_data_field_t variable.
     vtk_data = t8_vtk_data_field_t(
@@ -406,7 +406,7 @@ function t8_output_data_to_vtu(forest, element_data, prefix)
       NTuple{8192, Cchar}(rpad("Element volume\0", 8192, ' ')), # The name of the field as should be written to the file.
       pointer(element_volumes), # Pointer to the data.
     )
-  
+
     # To write user defined data, we need to extended output function
     # t8_forest_vtk_write_file from t8_forest_vtk.h. Despite writin user data,
     # it also offers more control over which properties of the forest to write.
@@ -424,7 +424,7 @@ function t8_output_data_to_vtu(forest, element_data, prefix)
 """
   ind_map = indices_map(data_new::NamedTuple, data_old::NamedTuple, refine_elements::Vector)
 
-In a refined grid, the numbering of cells is different. 
+In a refined grid, the numbering of cells is different.
 This routine returns a mapping, `ind_map` of how to go from the original to the new forest.
 Negative values within this mapping are cells that need to be recomputed.
 
@@ -466,12 +466,12 @@ Prints info about the current forest
 function t8_print_forest_information(forest)
     # Check that forest is a committed, that is valid and usable, forest.
     @T8_ASSERT(t8_forest_is_committed(forest) == 1)
-  
+
     # Get the local number of elements.
     local_num_elements = t8_forest_get_local_num_elements(forest)
     # Get the global number of elements.
     global_num_elements = t8_forest_get_global_num_elements(forest)
-  
+
     println(" Local number of elements: $local_num_elements")
     println(" Global number of elements: $global_num_elements")
 
