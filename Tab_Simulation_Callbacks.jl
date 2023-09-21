@@ -1,4 +1,40 @@
 
+callback!(
+    app,
+    Output("table-bulk-rock","data"),
+    Output("test-dropdown","options"),
+    Output("database-caption","value"),
+    Input("test-dropdown","value"),
+    Input("database-dropdown","value"),
+    prevent_initial_call=true,
+) do test, dtb
+
+    # catching up some special cases
+    if typeof(test) == String
+        t = 0
+    else
+        if test > length(db[(db.db .== dtb), :].test) - 1 
+            t = 0
+        else
+            t = test
+        end
+    end
+
+    data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
+                            "mol fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].mol[1][i])
+                                for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
+
+
+    opts        =  [Dict(   "label" => db[(db.db .== dtb), :].title[i],
+                            "value" => db[(db.db .== dtb), :].test[i]  )
+                                for i=1:length(db[(db.db .== dtb), :].test)]
+
+    cap         = db[(db.db .== dtb) .& (db.test .== t), :].database[1]                      
+    return data, opts, cap                  
+end
+
+
+
 # open/close Curve interpretation box
 callback!(app,
     Output("collapse-general-parameters", "is_open"),

@@ -1,5 +1,4 @@
 
-# callback function to update overview graph
 callback!(
     app,
     Output("phase-diagram","figure"),
@@ -63,7 +62,6 @@ callback!(
 end
 
 
-# open/close Curve interpretation box
 callback!(app,
     Output("collapse", "is_open"),
     [Input("button-display-options", "n_clicks")],
@@ -83,8 +81,6 @@ callback!(app,
 end
 
 
-
-# open/close tomography box
 callback!(app,
     Output("collapse-refinement", "is_open"),
     [Input("button-refinement", "n_clicks")],

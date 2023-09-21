@@ -42,7 +42,8 @@ data_vert = []
                                 dbc_dropdownmenuitem(divider=true),
                                 ],
                                 label="File",
-                                id="id-dropdown-file"),
+                                id="id-dropdown-file",
+                                color="secondary"),
                             ]),
                         ]),
                         dbc_row([

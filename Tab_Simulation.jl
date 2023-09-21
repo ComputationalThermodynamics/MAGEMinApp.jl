@@ -7,7 +7,7 @@ function Tab_Simulation()
                 dbc_row([   
                     dbc_col([ 
                         dbc_row([   
-                        dbc_button("General parameters",id="button-general-parameters"),
+                        dbc_button("General parameters",id="button-general-parameters",color="primary"),
                         dbc_collapse(
                             dbc_card(dbc_cardbody([
 
@@ -21,10 +21,10 @@ function Tab_Simulation()
                                                         options = [
                                                             (label = "Metapelite (White et al., 2014)",         value = "mp"),
                                                             (label = "Metabasite (Green et al., 2016)",         value = "mb"),
-                                                            (label = "Ultramafic (Tomlinson et al., 2021)",     value = "um"),
                                                             (label = "Igneous HP18 (Green et al., 2023)",       value = "ig"),
                                                             (label = "Igneous T21 (Green et al., 2023)",        value = "igd"),
-                                                            (label = "Alkaline (Weller et al., 2023)",  value = "alk"),
+                                                            (label = "Alkaline (Weller et al., 2023)",          value = "alk"),
+                                                            (label = "Ultramafic (Tomlinson et al., 2021)",     value = "um"),
 
                                                         ],
                                                         value="ig" ,
@@ -49,6 +49,7 @@ function Tab_Simulation()
                                         multi   = false),
                                     ]),
                                 ]),
+                                html_div("‎ "),
                                 #solver
                                 dbc_row([
                                     dbc_col([ 
@@ -86,45 +87,7 @@ function Tab_Simulation()
                                         multi       = false),
                                     ]),
                                 ]),
-                                #refinement type
-                                dbc_row([
-                                    dbc_col([ 
-                                        html_h1("Refinement type", style = Dict("textAlign" => "center","font-size" => "120%")),
-                                    ]),
-                                    dbc_col([ 
-                                        dcc_dropdown(   id      = "refinement-dropdown",
-                                        options = [
-                                            (label = "Phases only",         value = "ph"),
-                                            (label = "End-members",         value = "em"),
-                                        ],
-                                        value   = "ph", 
-                                        clearable   = false,
-                                        multi   = false),
-                                    ]),
-                                ]),
-                                #refinement levels 
-                                dbc_row([
-                                    dbc_col([ 
-                                        html_h1("Refinement levels", style = Dict("textAlign" => "center","font-size" => "120%")),
-                                    ]),
-                                    dbc_col([ 
-                                        dcc_dropdown(   id      = "refinement-levels",
-                                        options = [
-                                            (label = "2",         value = 2),
-                                            (label = "3",         value = 3),
-                                            (label = "4",         value = 4),
-                                            (label = "5",         value = 5),
-                                            (label = "6",         value = 6),
-                                            (label = "7",         value = 7),
-                                            (label = "8",         value = 8),
-                                        ],
-                                        value=2, 
-                                        clearable   = false,
-                                        multi   = false),
-                                    ]),
-                                ]),
 
-                            
                                 ])),
                                 id="collapse-general-parameters",
                                 is_open=true,
@@ -136,7 +99,7 @@ function Tab_Simulation()
                         ]),
 
                         dbc_col([ 
-                        dbc_row([dbc_button("Pressure/Temperature conditions",id="button-PT-conditions"),
+                        dbc_row([dbc_button("Grid parameters",id="button-PT-conditions"),
                         dbc_collapse(
                             dbc_card(dbc_cardbody([
 
@@ -221,6 +184,44 @@ function Tab_Simulation()
                                             ]),
                                         ]),
                                     ]),
+                                    html_div("‎ "),
+                                    #refinement type
+                                    dbc_row([
+                                        dbc_col([ 
+                                            html_h1("Refinement type", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                        ]),
+                                        dbc_col([ 
+                                            dcc_dropdown(   id      = "refinement-dropdown",
+                                            options = [
+                                                (label = "Phases only",         value = "ph"),
+                                                (label = "End-members",         value = "em"),
+                                            ],
+                                            value   = "ph", 
+                                            clearable   = false,
+                                            multi   = false),
+                                        ]),
+                                    ]),
+                                    #refinement levels 
+                                    dbc_row([
+                                        dbc_col([ 
+                                            html_h1("Refinement levels", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                        ]),
+                                        dbc_col([ 
+                                            dcc_dropdown(   id      = "refinement-levels",
+                                            options = [
+                                                (label = "2",         value = 2),
+                                                (label = "3",         value = 3),
+                                                (label = "4",         value = 4),
+                                                (label = "5",         value = 5),
+                                                (label = "6",         value = 6),
+                                                (label = "7",         value = 7),
+                                                (label = "8",         value = 8),
+                                            ],
+                                            value=2, 
+                                            clearable   = false,
+                                            multi   = false),
+                                        ]),
+                                    ]),
 
                                 ])
                             ),
@@ -239,19 +240,61 @@ function Tab_Simulation()
                         dbc_row([dbc_button("Bulk-rock composition",id="button-bulk"),
                         dbc_collapse(
                             dbc_card(dbc_cardbody([
-                                                dash_datatable(
-                                                    id="table-bulk-rock",
-                                                    columns=(  [    Dict("id" =>  "oxide",          "name" =>  "oxide",         "editable" => false),
-                                                                    Dict("id" =>  "mol fraction",   "name" =>  "mol fraction",  "editable" => true)]
-                                                    ),
-                                                    data        =   [Dict(  "oxide"         => db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1][i],
-                                                                            "mol fraction"  => db[(db.db .== "ig") .& (db.test .== 0), :].mol[1][i])
-                                                                                for i=1:length(db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1]) ],
-                                                    style_cell  = (textAlign="center", fontSize="140%",),
-                                                    style_header= (fontWeight="bold",),
-                                                    # editable    = true
-                                                ),
 
+                                        dbc_row([
+                                                dbc_col([
+                                                    dbc_row([
+                                                        dbc_col([
+                                                            html_div("Predefined"),
+                                                            ]),
+                                                        dbc_col([
+                                                            dbc_switch(label="",id="mode-bulk", value=false),
+                                                        ]),
+                                                        dbc_col([
+                                                            html_div("Custom"),
+                                                        ]),
+                                                    ]),
+
+                                                    html_div("‎ "),
+                                                    dcc_dropdown(   id      = "test-dropdown",
+                                                    options = [
+                                                        Dict(   "label" => db[(db.db .== "ig"), :].title[i],
+                                                                "value" => db[(db.db .== "ig"), :].test[i]  )
+                                                                    for i=1:length(db[(db.db .== "ig"), :].test)
+                                                    ],
+                                                    value       = "0",
+                                                    clearable   = false,
+                                                    multi       = false),
+
+                                                    # html_h1(db[(db.db .== "ig") .& (db.test .== 0), :].comments, style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                    html_div("‎ "),
+                                                    dash_datatable(
+                                                        id="table-bulk-rock",
+                                                        columns=(  [    Dict("id" =>  "oxide",          "name" =>  "oxide",         "editable" => false),
+                                                                        Dict("id" =>  "mol fraction",   "name" =>  "mol fraction",  "editable" => true)]
+                                                        ),
+                                                        data        =   [Dict(  "oxide"         => db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1][i],
+                                                                                "mol fraction"  => db[(db.db .== "ig") .& (db.test .== 0), :].mol[1][i])
+                                                                                    for i=1:length(db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1]) ],
+                                                        style_cell  = (textAlign="center", fontSize="140%",),
+                                                        style_header= (fontWeight="bold",),
+                                                        # editable    = true
+                                                    ),
+                                                    html_div("‎ "),
+                                                    dcc_textarea(
+                                                        id="database-caption",
+                                                        # placeholder="Enter a value...",
+                                                        value       = db[(db.db .== "ig") .& (db.test .== 0), :].database[1],
+                                                        readOnly    = true,
+                                                        disabled    = true,
+                                                        draggable   = false,
+                                                        style       = Dict("textAlign" => "center","font-size" => "100%", "width"=> "100%", "resize"=> "none")
+                                                    ),
+
+                                                    # html_h1(db[(db.db .== "ig") .& (db.test .== 0), :].database, id="database-caption",style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                ]),
+
+                                                ], justify="center"),
                                                 ])
                                             ),
                                             id="collapse-bulk",
@@ -260,22 +303,23 @@ function Tab_Simulation()
 
                             ])
 
-                        ], width=2),
+                        ], width=3),
 
 
 
-                    ], justify="start"),
+                    ]),
 
                     html_div("‎ "),
                     dbc_col([ 
                     dbc_row([
                         dbc_button(
-                            "Compute mesh", id="mesh-button", color="primary", className="me-2", n_clicks=0
+                            "Compute mesh", id="mesh-button", color="success", className="me-2", n_clicks=0
                         ),
                     ]),
+                    html_div("‎ "),
                     dbc_row([
                         dbc_button(
-                            "Compute phase diagram", id="compute-button", color="primary", className="me-2", n_clicks=0
+                            "Compute phase diagram", id="compute-button", color="success", className="me-2", n_clicks=0
                         ),
                     ]),
                     ], width=4)
