@@ -7,7 +7,7 @@ using T8code.Libt8: sc_finalize
 using T8code.Libt8: SC_LP_ESSENTIAL, SC_LP_DEBUG
 using T8code.Libt8: SC_LP_PRODUCTION
 using Statistics
-
+using StaticArrays
 
 include("./AMR_utils.jl")
 include("./MAGEMiN_utils.jl")
@@ -41,7 +41,7 @@ Trange  = (800,1400)        # in Paraview it looks a bit weird with actual value
 cmesh   = t8_cmesh_quad_2d(comm, Trange, Prange)
 
 # Refine coarse mesh (in a regular manner)
-level   = 6
+level   = 3
 forest  = t8_forest_new_uniform(cmesh, t8_scheme_new_default_cxx(), level, 0, comm)
 
 data   = get_element_data(forest);

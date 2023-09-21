@@ -7,9 +7,9 @@ using T8code.Libt8: sc_finalize
 using T8code.Libt8: SC_LP_ESSENTIAL, SC_LP_DEBUG
 using T8code.Libt8: SC_LP_PRODUCTION
 
-
 using StaticArrays, Statistics
 using MAGEMin_C
+
 
 include("./AMR/AMR_utils.jl")
 include("./colormaps.jl")
@@ -44,43 +44,42 @@ forest  = t8_forest_new_uniform(cmesh, t8_scheme_new_default_cxx(), level, 0, co
 data    = get_element_data(forest);
 
 
-
 # MAGEMin optimizations:
 function Calculate_MAGEMin(data; ind_map=nothing, Out_PT_old=nothing, n_phase_old=nothing)
     if isnothing(ind_map)
         ind_map = -ones(length(data.xc));
     end
 
-    Out_PT = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,length(data.x))
-    Hash_PT = Vector{UInt64}(undef,length(data.x))
-    n_phase = Vector{Int64}(undef,length(data.x))
+    Out_PT  = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,length(data.x));
+    Hash_PT = Vector{UInt64}(undef,length(data.x));
+    n_phase = Vector{Int64}(undef,length(data.x));
 
     db          = "ig"  # database: ig, igneous (Holland et al., 2018); mp, metapelite (White et al 2014b)
-    gv, z_b, DB, splx_data      = init_MAGEMin(db);
+    gv, z_b, DB, splx_data      = init_MAGEMin(db);;
 
-    test        = 0;
+    test        = 1;
     sys_in      = "mol"     #default is mol, if wt is provided conversion will be done internally (MAGEMin works on mol basis)
     gv          = use_predefined_bulk_rock(gv, test, db);
 
     for i=1:length(data.x)
-        if ind_map[i]< 0
+        if ind_map[i] < 0
 
-            P = data.yc[i]
-            T = data.xc[i]
-            Out_PT[i] = point_wise_minimization(P,T, gv, z_b, DB, splx_data, sys_in)
+            P = data.yc[i];
+            T = data.xc[i];
+            Out_PT[i] = point_wise_minimization(P,T, gv, z_b, DB, splx_data, sys_in);
 
             if mod(128,i) == 0
-                GC.gc()
+                GC.gc();
             end
 
         else
             # This Pointy already exist; transfer data from old array
-            Out_PT[i]   = Out_PT_old[ind_map[i]]
+            Out_PT[i]   = Out_PT_old[ind_map[i]];
         end
 
     end
 
-    finalize_MAGEMin(gv,DB)
+    finalize_MAGEMin(gv,DB);
 
     # Compute has
     for i=1:length(data.x)
@@ -98,7 +97,7 @@ Out_PT, Hash_PT, n_phase = Calculate_MAGEMin(data)
 
 
 # Refine the mesh along a curve
-for irefine = 1:3
+for irefine = 1:4
     global forest, data, Hash_PT, Out_PT, n_phase
 
     refine_elements                 = refine_phase_boundaries(forest, Hash_PT);
@@ -121,11 +120,11 @@ end
 # Scatter plotly of the grid
 using PlotlyJS
 
-idx = Vector{Int64}(undef,length(n_phase))
-idx = ((n_phase.-minimum(n_phase))./(maximum(n_phase).-minimum(n_phase)).*255).+ 1.0;
-idx = [floor(Int,x) for x in idx]
+idx         = Vector{Int64}(undef,length(n_phase));
+idx         = ((n_phase.-minimum(n_phase))./(maximum(n_phase).-minimum(n_phase)).*255).+ 1.0;
+idx         = [floor(Int,x) for x in idx];
+data_plot   = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, length(data.x));
 
-data_plot = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, length(data.x))
 for i = 1:length(data.x)
 
         data_plot[i] = scatter( x           = data.x[i],
@@ -140,7 +139,7 @@ for i = 1:length(data.x)
         # customize what is shown upon hover:
         text        = "Stable phases $(Out_PT[i].ph) ",
         hoverinfo   = "text",
-        showlegend  = false)
+        showlegend  = false     )
 end
 
 plot(data_plot, 

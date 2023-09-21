@@ -22,7 +22,7 @@ function Tab_PhaseDiagram()
                                 ])
                             ),
                             id="collapse",
-                            is_open=false,
+                            is_open=true,
                         ),
 
                         dbc_button("Grid refinement",id="button-refinement"),
