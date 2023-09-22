@@ -13,23 +13,27 @@ include("./AMR_utils.jl")
 include("./MAGEMiN_utils.jl")
 include("../colormaps.jl")
 
-colormaps   = read_colormaps(dir_colormaps = "../assets/colormaps/") 
+colormaps = read_colormaps(dir_colormaps = "../assets/colormaps/") 
 
 # Initialize MPI. This has to happen before we initialize sc or t8code.
 if !MPI.Initialized()
-    mpiret  = MPI.Init()
-    comm    = MPI.COMM_WORLD.val
+    mpiret  = MPI.Init(threadlevel = MPI.THREAD_FUNNELED, finalize_atexit = true)
+    @assert mpiret>=MPI.THREAD_FUNNELED "MPI library with insufficient threading support"
 end
+
+const COMM = MPI.COMM_WORLD
 
 t8code_package_id = t8_get_package_id()
 if t8code_package_id<0
     # Initialize the sc library, has to happen before we initialize t8code.
-    sc_init(comm, 1, 1, C_NULL, SC_LP_ESSENTIAL)
-    
+    sc_init(COMM, 1, 1, C_NULL, SC_LP_ESSENTIAL)
+
+    if T8code.Libt8.p4est_is_initialized() == 0
+        T8code.Libt8.p4est_init(C_NULL, SC_LP_PRODUCTION)
+    end
+
      # Initialize t8code with log level SC_LP_PRODUCTION. See sc.h for more info on the log levels.
     t8_init(SC_LP_PRODUCTION)
-
-    T8code.Libt8.p4est_init(C_NULL, SC_LP_PRODUCTION)
 end
 
 # Initialize MAGEMin:
@@ -38,14 +42,13 @@ MAGEMin_db = Initialize_MAGEMin("ig"); # only need to do this once/simulation
 # Create coarse mesh
 Prange  = (0.01,24.01)
 Trange  = (800,1400)        # in Paraview it looks a bit weird with actual values
-cmesh   = t8_cmesh_quad_2d(comm, Trange, Prange)
+cmesh   = t8_cmesh_quad_2d(COMM, Trange, Prange)
 
 # Refine coarse mesh (in a regular manner)
 level   = 3
-forest  = t8_forest_new_uniform(cmesh, t8_scheme_new_default_cxx(), level, 0, comm)
+forest  = t8_forest_new_uniform(cmesh, t8_scheme_new_default_cxx(), level, 0, COMM)
 
-data   = get_element_data(forest);
-
+data   = get_element_data(forest)
 
 # MAGEMin optimizations:
 # We will have to generalize this for chemistry 
@@ -121,7 +124,6 @@ end
 
 # Write as vtk
 t8_forest_write_vtk(forest, "AMR_ex5_quad")
-
 
 
 # Scatter plotly of the grid

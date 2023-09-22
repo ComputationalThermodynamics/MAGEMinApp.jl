@@ -5,12 +5,12 @@ using MAGEMin_C
 """
 This holds the MAGEMin databases & requires structs for every thread
 """
-struct DataBase_DATA
+struct DataBase_DATA{TypeGV, TypeZB, TypeDB, TypeSplxData}
     db :: String
-    gv :: Vector
-    z_b :: Vector
-    DB  :: Vector
-    splx_data :: Vector
+    gv :: TypeGV
+    z_b :: TypeZB
+    DB  :: TypeDB
+    splx_data :: TypeSplxData
 end
 
 
@@ -64,13 +64,26 @@ end
 Calculates a stable phase assemblage for a given Pressure (`P`) and Temperature (`T`)
 """
 function Calculate_MAGEMin(Pvec::Vector, Tvec::Vector, MAGEMin_db::DataBase_DATA; sys_in="mol", test=0)
-
-    for i=1:Threads.nthreads()
-        MAGEMin_db.gv[i]          = use_predefined_bulk_rock(MAGEMin_db.gv[i], test, MAGEMin_db.db);
+    # Create thread-local data
+    for i in 1:Threads.nthreads()
+        MAGEMin_db.gv[i] = use_predefined_bulk_rock(MAGEMin_db.gv[i], test, MAGEMin_db.db)
     end
 
     # initialize vectors
     Out_PT = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef, length(Pvec))
+
+    # Currently, there seem to be some type instabilities or something else so that
+    # some compilation happens in the threaded loop below. This interferes badly
+    # in some weird way with (libsc, p4est, t8code) - in particular on Linux where
+    # we get segfaults. To avoid this, we force serial compilation by calling MAGEMin
+    # once before the loop.
+    let id = 1
+        gv  = MAGEMin_db.gv[id]
+        z_b = MAGEMin_db.z_b[id]
+        DB = MAGEMin_db.DB[id]
+        splx_data = MAGEMin_db.splx_data[id]
+        point_wise_minimization(Pvec[1], Tvec[1], gv, z_b, DB, splx_data, sys_in)
+    end
 
     # main loop
     @threads :static for i in eachindex(Pvec)
