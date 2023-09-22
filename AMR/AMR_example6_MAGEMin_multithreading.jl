@@ -50,7 +50,7 @@ data   = get_element_data(forest)
 
 # MAGEMin optimizations:
 # We will have to generalize this for chemistry
-function Calculate_MAGEMin(data, MAGEMin_db::DataBase_DATA; ind_map=nothing, Out_PT_old=nothing)
+function Calculate_MAGEMin(data, MAGEMin_db::DataBase_DATA; ind_map=nothing, Out_PT_old=nothing, n_phase_PT_old=nothing)
     if isnothing(ind_map)
         ind_map = -ones(length(data.xc));
     end
@@ -90,21 +90,23 @@ function Calculate_MAGEMin(data, MAGEMin_db::DataBase_DATA; ind_map=nothing, Out
     Out_PT_new =[]
 
     # Compute hash for all points
-    Hash_PT = Vector{UInt64}(undef,length(data.x))
+    Hash_PT     = Vector{UInt64}(undef,length(data.x))
+    n_phase_PT  = Vector{UInt64}(undef,length(data.x))
     for i=1:length(data.x)
         Hash_PT[i] = hash(sort(Out_PT[i].ph))
+        n_phase_PT[i] = length(Out_PT[i].ph)
     end
 
-    return Out_PT, Hash_PT
+    return Out_PT, Hash_PT, n_phase_PT
 end
 
 
 # initial optimization on regular grid
-Out_PT, Hash_PT = Calculate_MAGEMin(data, MAGEMin_db)
+Out_PT, Hash_PT, n_phase_PT = Calculate_MAGEMin(data, MAGEMin_db)
 
 # Refine the mesh along phase boundaries
 for irefine = 1:3
-    global forest, data, Hash_PT, Out_PT
+    global forest, data, Hash_PT, Out_PT, n_phase_PT
 
     refine_elements   = refine_phase_boundaries(forest, Hash_PT);
 
@@ -112,7 +114,7 @@ for irefine = 1:3
     forest_new, data_new, ind_map  = adapt_forest(forest, refine_elements, data)
 
     # recompute points that have not been computed before
-    t = @elapsed Out_PT, Hash_PT = Calculate_MAGEMin(data_new, MAGEMin_db, ind_map=ind_map, Out_PT_old=Out_PT)
+    t = @elapsed Out_PT, Hash_PT, n_phase_PT = Calculate_MAGEMin(data_new, MAGEMin_db, ind_map=ind_map, Out_PT_old=Out_PT, n_phase_PT_old=n_phase_PT)
 
     println("Computed $(length(ind_map.<0)) new points in $t seconds")
     data = data_new
@@ -126,19 +128,24 @@ t8_forest_write_vtk(forest, "AMR_ex5_quad")
 
 # Scatter plotly of the grid
 using PlotlyJS
+idx         = Vector{Int64}(undef,length(n_phase_PT));
+idx         = ((n_phase_PT.-minimum(n_phase_PT))./(maximum(n_phase_PT).-minimum(n_phase_PT)).*224).+ 32.0;
+idx         = [floor(Int,x) for x in idx];
+data_plot   = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, length(data.x));
 
-data_plot = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, length(data.x))
 for i = 1:length(data.x)
-
-
-  data_plot[i] = scatter(x=data.x[i], y=data.y[i], mode="lines",
-        fill="toself",fillcolor="white", line_color="#000000", line_width=0.5,
+        data_plot[i] = scatter( x           = data.x[i],
+                                y           = data.y[i],
+                                mode        = "lines",
+                                fill        = "toself",
+                                fillcolor   = colormaps.roma[idx[i]][2],
+                                line_color  = "#000000",
+                                line_width  = 1.0,
 
         # customize what is shown upon hover:
-        text ="Stable phases $(Out_PT[i].ph) ",
-        hoverinfo="none",
-
-        showlegend=false)
+        text        = "Stable phases $(Out_PT[i].ph) ",
+        hoverinfo   = "text",
+        showlegend  = false     )
 end
 
 plot(data_plot,
