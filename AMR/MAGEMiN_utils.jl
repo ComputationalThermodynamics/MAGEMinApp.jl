@@ -15,12 +15,12 @@ end
 
 
 """
-    Dat = Initialize_MAGEMin(db="ig")
+    Dat = Initialize_MAGEMin(db = "ig"; verbose = true)
 
 This initialize the MAGEMin databases on every thread. This actually has to be done only once per simulation/database if all is well.
 """
-function Initialize_MAGEMin(db="ig")
-    gv, z_b, DB, splx_data      = init_MAGEMin(db);
+function Initialize_MAGEMin(db = "ig"; verbose = true)
+    gv, z_b, DB, splx_data = init_MAGEMin(db);
 
     nt = Threads.nthreads()
     list_gv = Vector{typeof(gv)}(undef, nt)
@@ -30,6 +30,10 @@ function Initialize_MAGEMin(db="ig")
 
     for id in 1:nt
         gv, z_b, DB, splx_data = init_MAGEMin(db)
+        if !verbose
+            # deactivate verbose output such as printing the result of each `pointwise_miminimzation`
+            gv.verbose = -1
+        end
         list_gv[id] = gv
         list_z_b[id] = z_b
         list_DB[id] = DB
