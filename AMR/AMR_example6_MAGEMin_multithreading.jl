@@ -4,8 +4,7 @@ using MPI
 using T8code
 using T8code.Libt8: sc_init
 using T8code.Libt8: sc_finalize
-using T8code.Libt8: SC_LP_ESSENTIAL, SC_LP_DEBUG
-using T8code.Libt8: SC_LP_PRODUCTION
+using T8code.Libt8: SC_LP_ERROR, SC_LP_PRODUCTION, SC_LP_ESSENTIAL, SC_LP_DEBUG
 using Statistics
 using StaticArrays
 
@@ -13,7 +12,7 @@ include("./AMR_utils.jl")
 include("./MAGEMiN_utils.jl")
 include("../colormaps.jl")
 
-colormaps = read_colormaps(dir_colormaps = "../assets/colormaps/") 
+colormaps = read_colormaps(dir_colormaps = "../assets/colormaps/")
 
 # Initialize MPI. This has to happen before we initialize sc or t8code.
 if !MPI.Initialized()
@@ -26,18 +25,17 @@ const COMM = MPI.COMM_WORLD
 t8code_package_id = t8_get_package_id()
 if t8code_package_id<0
     # Initialize the sc library, has to happen before we initialize t8code.
-    sc_init(COMM, 1, 1, C_NULL, SC_LP_ESSENTIAL)
+    sc_init(COMM, 1, 1, C_NULL, SC_LP_ERROR)
 
     if T8code.Libt8.p4est_is_initialized() == 0
-        T8code.Libt8.p4est_init(C_NULL, SC_LP_PRODUCTION)
+        T8code.Libt8.p4est_init(C_NULL, SC_LP_ERROR)
     end
 
-     # Initialize t8code with log level SC_LP_PRODUCTION. See sc.h for more info on the log levels.
-    t8_init(SC_LP_PRODUCTION)
+    t8_init(SC_LP_ERROR)
 end
 
 # Initialize MAGEMin:
-MAGEMin_db = Initialize_MAGEMin("ig"); # only need to do this once/simulation
+MAGEMin_db = Initialize_MAGEMin("ig"; verbose = false) # only need to do this once/simulation
 
 # Create coarse mesh
 Prange  = (0.01,24.01)
@@ -51,7 +49,7 @@ forest  = t8_forest_new_uniform(cmesh, t8_scheme_new_default_cxx(), level, 0, CO
 data   = get_element_data(forest)
 
 # MAGEMin optimizations:
-# We will have to generalize this for chemistry 
+# We will have to generalize this for chemistry
 function Calculate_MAGEMin(data, MAGEMin_db::DataBase_DATA; ind_map=nothing, Out_PT_old=nothing)
     if isnothing(ind_map)
         ind_map = -ones(length(data.xc));
@@ -59,17 +57,17 @@ function Calculate_MAGEMin(data, MAGEMin_db::DataBase_DATA; ind_map=nothing, Out
 
     Out_PT = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,length(data.x))
 
-    # Step 1: determine all points that have not been computed yet 
+    # Step 1: determine all points that have not been computed yet
     ind_new = findall( ind_map.< 0)
     n_new_points = length(ind_new)
     Out_PT_new   = []
     if n_new_points>0
 
-        # create list of P/T values 
+        # create list of P/T values
         # (NOTE: if we later want to change chemistry as well, we will need to create a chemistry vector)
         Pvec = zeros(Float64,n_new_points)
         Tvec = zeros(Float64,n_new_points)
-        for (i, new_ind) = enumerate(ind_new)        
+        for (i, new_ind) = enumerate(ind_new)
             Pvec[i] = data.yc[new_ind]
             Tvec[i] = data.xc[new_ind]
         end
@@ -132,10 +130,10 @@ using PlotlyJS
 data_plot = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, length(data.x))
 for i = 1:length(data.x)
 
-    
+
   data_plot[i] = scatter(x=data.x[i], y=data.y[i], mode="lines",
         fill="toself",fillcolor="white", line_color="#000000", line_width=0.5,
-        
+
         # customize what is shown upon hover:
         text ="Stable phases $(Out_PT[i].ph) ",
         hoverinfo="none",
@@ -143,7 +141,7 @@ for i = 1:length(data.x)
         showlegend=false)
 end
 
-plot(data_plot, 
+plot(data_plot,
         Layout(
                 title=attr(
                     text= "KLB",
