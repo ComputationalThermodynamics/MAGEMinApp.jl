@@ -236,7 +236,7 @@ version = "1.0.2"
 
 [[deps.MAGEMin_C]]
 deps = ["CEnum", "MAGEMin_jll", "Test"]
-path = "/home/ranocha/.julia/dev/MAGEMin_C"
+git-tree-sha1 = "a36785edde229f617a82289e0356871d08160d43"
 uuid = "e5d170eb-415a-4524-987b-12f1bce1ddab"
 version = "1.3.2"
 
