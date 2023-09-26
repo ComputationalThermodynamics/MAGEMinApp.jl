@@ -1,6 +1,6 @@
 using Dash  
 using DashBootstrapComponents
-using PlotlyJS, JSON3, Printf, Statistics, DataFrames, CSV, Dates
+using PlotlyJS, JSON3, Printf, Statistics, DataFrames, CSV, Dates, Base64
 using UUIDs, Delaunay
 
 # include helper functions

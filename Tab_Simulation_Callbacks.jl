@@ -1,3 +1,17 @@
+
+callback!(
+    app,
+    Output("output-data-uploadn", "children"),
+    Input("upload-bulk", "contents"),
+    State("upload-bulk", "filename"),
+) do contents, filename
+    if !(contents isa Nothing)
+        children = parse_bulk_rock(contents, filename)
+        return children
+    end
+end
+
+
 callback!(
     app,
     Output("table-bulk-rock","data"),
@@ -6,8 +20,9 @@ callback!(
     Output("database-caption","value"),
     Input("test-dropdown","value"),
     Input("database-dropdown","value"),
+    Input("output-data-uploadn", "children"),
     prevent_initial_call=true,
-) do test, dtb
+) do test, dtb, bulkin
 
     # catching up some special cases
     if test > length(db[(db.db .== dtb), :].test) - 1 

@@ -1,3 +1,76 @@
+"""
+    function to parce bulk-rock composition file
+"""
+function bulk_file_to_db(datain)
+
+    global db;
+    
+    db = db[(db.bulk .== "predefined"), :];
+
+    for i=2:size(datain,1)
+        bulk   		= "custom";
+
+        idx 		= findall(datain[1,:] .== "title")[1];
+        title   	= datain[i,idx];
+
+        idx 		= findall(datain[1,:] .== "comments")[1];
+        comments   	= datain[i,idx];
+
+        idx 		= findall(datain[1,:] .== "db")[1];
+        dbin   		= datain[i,idx];
+
+        test 		= length(db[(db.db .== dbin), :].test);
+
+        idx 		= findall(datain[1,:] .== "sysUnit")[1];
+        sysUnit   	= datain[i,idx];
+
+        idx 		= findall(datain[1,:] .== "oxide")[1];
+        oxide   	= rsplit(datain[i,idx],",");
+        oxide 		= strip.(convert.(String,oxide));
+        oxide 		= replace.(oxide,r"\]"=>"");
+        oxide 		= replace.(oxide,r"\["=>"");
+
+        idx 		= findall(datain[1,:] .== "frac")[1];
+        frac   		= rsplit(datain[i,idx],",");
+        frac 		= strip.(convert.(String,frac));
+        frac 		= replace.(frac,r"\]"=>"");
+        frac 		= replace.(frac,r"\["=>"");
+        frac 		= parse.(Float64,frac);
+
+        push!(db,Dict(  :bulk       => bulk,
+                        :title      => title,
+                        :comments   => comments,
+                        :db         => dbin,
+                        :test       => test,
+                        :sysUnit    => sysUnit,
+                        :oxide      => oxide,
+                        :frac       => frac,
+                    ), cols=:union)
+    end
+
+end
+
+
+function parse_bulk_rock(contents, filename)
+
+    try
+        content_type, content_string = split(contents, ',');
+        decoded = base64decode(content_string);
+        input   = String(decoded) ;
+        datain  = strip.(readdlm(IOBuffer(input), ';', comments=true, comment_char='#'));
+        bulk_file_to_db(datain);
+
+        return html_div([
+            "Bulk-rock file successfully loaded"
+        ], style = Dict("textAlign" => "center","font-size" => "100%"))
+    catch e
+        return html_div([
+            "File format wrong, correct it"
+        ], style = Dict("textAlign" => "center","font-size" => "100%"))
+    end
+
+  end
+
 function get_initial_vertices(Xsub,Ysub,tmin,tmax,pmin,pmax)
     x0      = tmin;
     y0      = pmin;

@@ -268,6 +268,7 @@ function Tab_Simulation()
                                                         # Allow multiple files to be uploaded
                                                         multiple=false
                                                     ),
+                                                    html_div(id="output-data-uploadn"),
 
                                                     html_div("‎ "),
                                                     dcc_dropdown(   id      = "test-dropdown",
@@ -298,7 +299,7 @@ function Tab_Simulation()
                                                     dcc_textarea(
                                                         id="database-caption",
                                                         # placeholder="Enter a value...",
-                                                        value       = db[(db.db .== "ig") .& (db.test .== 0), :].database[1],
+                                                        value       = db[(db.db .== "ig") .& (db.test .== 0), :].db[1],
                                                         readOnly    = true,
                                                         disabled    = true,
                                                         draggable   = false,
