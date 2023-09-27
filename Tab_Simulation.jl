@@ -18,7 +18,7 @@ function Tab_Simulation()
                                 is_open=true,
                         ),
                         ])
-                        ], width=4), 
+                        ], width=3), 
 
                         dbc_col([ 
                         ]),
@@ -352,6 +352,25 @@ function Tab_Simulation()
                                                                         style_header= (fontWeight="bold",),
                                                                         # editable    = true
                                                                     ),
+
+                                                                    # Buffer multiplier
+                                                                    html_div([
+                                                                    html_div("‎ "),
+                                                                    dbc_row([
+                                                                        dbc_col([ 
+                                                                            html_h1("Buffer multiplier", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                                                        ]),
+                                                                        dbc_col([ 
+                                                                                dbc_input(
+                                                                                id      = "buffer-1-mul-id",
+                                                                                type    = "number", 
+                                                                                min     = -50.0, 
+                                                                                max     = +50.0, 
+                                                                                value   = 0.0   ),
+                                                                        ]),
+                                                                    ]),
+                                                                    ], style = Dict("display" => "none"), id      = "buffer-1-id"), #none, block
+
                                                                 ], style = Dict("display" => "block"), id      = "table-1-id"), #none, block
                                                             ]),
                                                         
@@ -370,6 +389,26 @@ function Tab_Simulation()
                                                                     style_header= (fontWeight="bold",),
                                                                     # editable    = true
                                                                 ),
+
+
+                                                                    # Buffer multiplier
+                                                                    html_div([
+                                                                    html_div("‎ "),
+                                                                    dbc_row([
+                                                                        dbc_col([ 
+                                                                            html_h1("Buffer multiplier", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                                                        ]),
+                                                                        dbc_col([ 
+                                                                                dbc_input(
+                                                                                id      = "buffer-2-mul-id",
+                                                                                type    = "number", 
+                                                                                min     = -50.0, 
+                                                                                max     = +50.0, 
+                                                                                value   = 0.0   ),
+                                                                        ]),
+                                                                    ]),
+                                                                    ], style = Dict("display" => "none"), id      = "buffer-2-id"), #none, block
+
                                                             ], style = Dict("display" => "none"), id      = "table-2-id"), #none, block
                                                         ]),
                                                     ]),
@@ -397,7 +436,7 @@ function Tab_Simulation()
 
                             ])
 
-                        ], width=3),
+                        ], width=4),
 
 
 

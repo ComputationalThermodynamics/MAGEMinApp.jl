@@ -1,6 +1,27 @@
 # callback function to display to right set of variables as function of the diagram type
 callback!(
     app,
+    Output("buffer-1-id", "style"),
+    Output("buffer-2-id", "style"),
+    Input("buffer-dropdown", "value"),
+) do value
+
+    if value != "none"
+        b1  = Dict("display" => "block")
+        b2  = Dict("display" => "block")
+    else
+        b1  = Dict("display" => "none")
+        b2  = Dict("display" => "none")
+    end
+
+    return b1, b2
+end
+
+
+
+# callback function to display to right set of variables as function of the diagram type
+callback!(
+    app,
     Output("fixed-temperature-id", "style"),
     Output("fixed-pressure-id", "style"),
     Output("temperature-id", "style"),
