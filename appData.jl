@@ -148,7 +148,7 @@ push!(db,Dict(          :bulk       => "predefined",
                         ), cols=:union)
 
 push!(db,Dict(          :bulk       => "predefined",
-                        :title      => "RE46 - Icelandic basalt -",
+                        :title      => "RE46 - Icelandic basalt",
                         :comments   => "Yang et al., 1996",
                         :db         => "ig",
                         :test       => 1,

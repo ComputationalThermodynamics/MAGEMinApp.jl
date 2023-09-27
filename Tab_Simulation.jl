@@ -301,30 +301,80 @@ function Tab_Simulation()
                                                     html_div(id="output-data-uploadn"),
 
                                                     html_div("‎ "),
-                                                    dcc_dropdown(   id      = "test-dropdown",
-                                                    options = [
-                                                        Dict(   "label" => db[(db.db .== "ig"), :].title[i],
-                                                                "value" => db[(db.db .== "ig"), :].test[i]  )
-                                                                    for i=1:length(db[(db.db .== "ig"), :].test)
-                                                    ],
-                                                    value       = 0,
-                                                    clearable   = false,
-                                                    multi       = false),
+                                                    dbc_row([
+                                                        
+                                                            dbc_col([
+                                                                html_div([
+                                                                    dcc_dropdown(   id      = "test-dropdown",
+                                                                    options = [
+                                                                        Dict(   "label" => db[(db.db .== "ig"), :].title[i],
+                                                                                "value" => db[(db.db .== "ig"), :].test[i]  )
+                                                                                    for i=1:length(db[(db.db .== "ig"), :].test)
+                                                                    ],
+                                                                    value       = 0,
+                                                                    clearable   = false,
+                                                                    multi       = false),
+                                                                ], style = Dict("display" => "block"), id      = "test-1-id"),
+                                                            ]),
+                                                        
+                                                            dbc_col([
+                                                                html_div([
+                                                                    dcc_dropdown(   id      = "test-2-dropdown",
+                                                                    options = [
+                                                                        Dict(   "label" => db[(db.db .== "ig"), :].title[i],
+                                                                                "value" => db[(db.db .== "ig"), :].test[i]  )
+                                                                                    for i=1:length(db[(db.db .== "ig"), :].test)
+                                                                    ],
+                                                                    value       = 0,
+                                                                    clearable   = false,
+                                                                    multi       = false),
+                                                                ], style = Dict("display" => "none"), id      = "test-2-id"),
+                                                            ]),
+                                                    ]),
 
-                                                    # html_h1(db[(db.db .== "ig") .& (db.test .== 0), :].comments, style = Dict("textAlign" => "center","font-size" => "100%")),
+
                                                     html_div("‎ "),
-                                                    dash_datatable(
-                                                        id="table-bulk-rock",
-                                                        columns=(  [    Dict("id" =>  "oxide",          "name" =>  "oxide",         "editable" => false),
-                                                                        Dict("id" =>  "mol fraction",   "name" =>  "mol fraction",  "editable" => true)]
-                                                        ),
-                                                        data        =   [Dict(  "oxide"         => db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1][i],
-                                                                                "mol fraction"  => db[(db.db .== "ig") .& (db.test .== 0), :].frac[1][i])
-                                                                                    for i=1:length(db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1]) ],
-                                                        style_cell  = (textAlign="center", fontSize="140%",),
-                                                        style_header= (fontWeight="bold",),
-                                                        # editable    = true
-                                                    ),
+
+
+                                                    dbc_row([
+                                                        
+                                                            dbc_col([
+                                                                html_div([
+                                                                    dash_datatable(
+                                                                        id="table-bulk-rock",
+                                                                        columns=(  [    Dict("id" =>  "oxide",          "name" =>  "oxide",         "editable" => false),
+                                                                                        Dict("id" =>  "mol fraction",   "name" =>  "mol fraction",  "editable" => true)]
+                                                                        ),
+                                                                        data        =   [Dict(  "oxide"         => db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1][i],
+                                                                                                "mol fraction"  => db[(db.db .== "ig") .& (db.test .== 0), :].frac[1][i])
+                                                                                                    for i=1:length(db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1]) ],
+                                                                        style_cell  = (textAlign="center", fontSize="140%",),
+                                                                        style_header= (fontWeight="bold",),
+                                                                        # editable    = true
+                                                                    ),
+                                                                ], style = Dict("display" => "block"), id      = "table-1-id"), #none, block
+                                                            ]),
+                                                        
+                                                        
+                                                        dbc_col([
+                                                            html_div([
+                                                                dash_datatable(
+                                                                    id="table-2-bulk-rock",
+                                                                    columns=(  [    Dict("id" =>  "oxide",          "name" =>  "oxide",         "editable" => false),
+                                                                                    Dict("id" =>  "mol fraction",   "name" =>  "mol fraction",  "editable" => true)]
+                                                                    ),
+                                                                    data        =   [Dict(  "oxide"         => db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1][i],
+                                                                                            "mol fraction"  => db[(db.db .== "ig") .& (db.test .== 0), :].frac[1][i])
+                                                                                                for i=1:length(db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1]) ],
+                                                                    style_cell  = (textAlign="center", fontSize="140%",),
+                                                                    style_header= (fontWeight="bold",),
+                                                                    # editable    = true
+                                                                ),
+                                                            ], style = Dict("display" => "none"), id      = "table-2-id"), #none, block
+                                                        ]),
+                                                    ]),
+
+
                                                     html_div("‎ "),
                                                     dcc_textarea(
                                                         id="database-caption",
@@ -336,7 +386,6 @@ function Tab_Simulation()
                                                         style       = Dict("textAlign" => "center","font-size" => "100%", "width"=> "100%", "resize"=> "none")
                                                     ),
 
-                                                    # html_h1(db[(db.db .== "ig") .& (db.test .== 0), :].database, id="database-caption",style = Dict("textAlign" => "center","font-size" => "100%")),
                                                 ]),
 
                                                 ], justify="center"),

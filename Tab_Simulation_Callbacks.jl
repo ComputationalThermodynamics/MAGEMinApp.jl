@@ -5,27 +5,35 @@ callback!(
     Output("fixed-pressure-id", "style"),
     Output("temperature-id", "style"),
     Output("pressure-id", "style"),
+    Output("test-2-id", "style"),
+    Output("table-2-id", "style"),
     Input("diagram-dropdown", "value"),
 ) do value
 
     if value == "px"
-        Tstyle = Dict("display" => "block")
-        Pstyle = Dict("display" => "none")
-        Ts = Dict("display" => "none")
-        Ps = Dict("display" => "block")
+        Tstyle  = Dict("display" => "block")
+        Pstyle  = Dict("display" => "none")
+        Ts      = Dict("display" => "none")
+        Ps      = Dict("display" => "block")
+        test2   = Dict("display" => "block")  
+        table2  = Dict("display" => "block")  
     elseif value == "tx"
-        Tstyle = Dict("display" => "none")
-        Pstyle = Dict("display" => "block")
-        Ts = Dict("display" => "block")
-        Ps = Dict("display" => "none")
+        Tstyle  = Dict("display" => "none")
+        Pstyle  = Dict("display" => "block")
+        Ts      = Dict("display" => "block")
+        Ps      = Dict("display" => "none")
+        test2   = Dict("display" => "block")  
+        table2  = Dict("display" => "block")  
     else
-        Tstyle = Dict("display" => "none")
-        Pstyle = Dict("display" => "none")
-        Ts = Dict("display" => "block")
-        Ps = Dict("display" => "block")
+        Tstyle  = Dict("display" => "none")
+        Pstyle  = Dict("display" => "none")
+        Ts      = Dict("display" => "block")
+        Ps      = Dict("display" => "block")
+        test2   = Dict("display" => "none")  
+        table2  = Dict("display" => "none")  
     end
 
-    return Tstyle, Pstyle, Ts, Ps
+    return Tstyle, Pstyle, Ts, Ps, test2, table2
 end
 
 
@@ -78,6 +86,40 @@ callback!(
 end
 
 
+
+callback!(
+    app,
+    Output("table-2-bulk-rock","data"),
+    Output("test-2-dropdown","options"),
+    Output("test-2-dropdown","value"),
+    # Output("database-caption","value"),
+    Input("test-2-dropdown","value"),
+    Input("database-dropdown","value"),
+    Input("output-data-uploadn", "children"),
+    prevent_initial_call=true,
+) do test, dtb, bulkin
+
+    # catching up some special cases
+    if test > length(db[(db.db .== dtb), :].test) - 1 
+        t = 0
+    else
+        t = test
+    end
+
+    data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
+                            "mol fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac[1][i])
+                                for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
+
+
+    opts        =  [Dict(   "label" => db[(db.db .== dtb), :].title[i],
+                            "value" => db[(db.db .== dtb), :].test[i]  )
+                                for i=1:length(db[(db.db .== dtb), :].test)]
+
+    # cap         = dba[(dba.acronym .== dtb) , :].database[1]      
+    
+    val         = t
+    return data, opts, val                  
+end
 
 # open/close Curve interpretation box
 callback!(app,
