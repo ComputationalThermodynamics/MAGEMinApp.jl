@@ -4,15 +4,14 @@ callback!(
     Output("phase-diagram","figure"),
     Input("mesh-button","n_clicks"),
     # Input("compute-button","n_clicks"),
-    State("tsub-id","value"),
-    State("psub-id","value"),
+    State("gsub-id","value"),
     State("tmin-id","value"),
     State("tmax-id","value"),
     State("pmin-id","value"),
     State("pmax-id","value"),
     State("refinement-levels","value"),
 
-) do n_clicks_mesh, Xsub, Ysub, tmin, tmax, pmin, pmax, n_ref
+) do n_clicks_mesh, gsub, tmin, tmax, pmin, pmax, n_ref
 
     layout = Layout(
         title           = attr(
@@ -42,7 +41,7 @@ callback!(
         empty!(AppData.mesh)
         empty!(AppData.field)
 
-        vert    = get_initial_vertices(Xsub,Ysub,tmin,tmax,pmin,pmax);              # generate initial set of points
+        vert    = get_initial_vertices(gsub,gsub,tmin,tmax,pmin,pmax);              # generate initial set of points
         field   = get_field_from_vert(vert,tmin,tmax,pmin,pmax)                     # attach a field to it (will be phase id)
 
         push!(AppData.field,field)                                                  # push to Appdata

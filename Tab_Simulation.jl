@@ -11,78 +11,7 @@ function Tab_Simulation()
                         dbc_collapse(
                             dbc_card(dbc_cardbody([
 
-                                #database
-                                dbc_row([
-                                    dbc_col([ 
-                                        html_h1("Thermodynamic database", style = Dict("textAlign" => "center","font-size" => "120%")),
-                                    ]),
-                                    dbc_col([ 
-                                        dcc_dropdown(   id      = "database-dropdown",
-                                                        options = [
-                                                            Dict(   "label" => dba.database[i],
-                                                                    "value" => dba.acronym[i]  )
-                                                                        for i=1:size(dba,1)
-                                                        ],
-                                                        value="ig" ,
-                                                        clearable   = false,
-                                                        multi   = false),
-                                    ]),
-                                ]),
-                                #diagram type
-                                dbc_row([
-                                    dbc_col([ 
-                                        html_h1("Diagram type", style = Dict("textAlign" => "center","font-size" => "120%")),
-                                    ]),
-                                    dbc_col([ 
-                                        dcc_dropdown(   id      = "diagram-dropdown",
-                                        options = [
-                                            (label = "P-T diagram",         value = "pt"),
-                                            (label = "P-X diagram",         value = "px"),
-                                            (label = "T-X diagram",         value = "tx"),
-                                        ],
-                                        value="pt" ,
-                                        clearable   = false,
-                                        multi   = false),
-                                    ]),
-                                ]),
-                                html_div("‎ "),
-                                #solver
-                                dbc_row([
-                                    dbc_col([ 
-                                        html_h1("Solver", style = Dict("textAlign" => "center","font-size" => "120%")),
-                                    ]),
-                                    dbc_col([ 
-                                        dcc_dropdown(   id      = "solver-dropdown",
-                                        options = [
-                                            (label = "PGE",         value = "pge"),
-                                            (label = "Legacy",      value = "lp"),
-                                        ],
-                                        value="pge" ,
-                                        clearable   = false,
-                                        multi   = false),
-                                    ]),
-                                ]),
-                                #buffer
-                                dbc_row([
-                                    dbc_col([ 
-                                        html_h1("Buffer", style = Dict("textAlign" => "center","font-size" => "120%")),
-                                    ]),
-                                    dbc_col([ 
-                                        dcc_dropdown(   id      = "buffer-dropdown",
-                                        options = [
-                                            (label = "no buffer",value = "none"),
-                                            (label = "QFM",      value = "qfm"),
-                                            (label = "MW",       value = "mw"), 
-                                            (label = "QIF",      value = "qif"),
-                                            (label = "CCO",      value = "cco"),
-                                            (label = "HM",       value = "hm"), 
-                                            (label = "NNO",      value = "nno"), 
-                                        ],
-                                        value="none" ,
-                                        clearable   = false,
-                                        multi       = false),
-                                    ]),
-                                ]),
+                                ###
 
                                 ])),
                                 id="collapse-general-parameters",
@@ -98,24 +27,58 @@ function Tab_Simulation()
                         dbc_row([dbc_button("Grid parameters",id="button-PT-conditions"),
                         dbc_collapse(
                             dbc_card(dbc_cardbody([
-
+                                    #database
                                     dbc_row([
                                         dbc_col([ 
-                                        ], width=3),
+                                            html_h1("Thermodynamic database", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                        ]),
+                                        dbc_col([ 
+                                            dcc_dropdown(   id      = "database-dropdown",
+                                                            options = [
+                                                                Dict(   "label" => dba.database[i],
+                                                                        "value" => dba.acronym[i]  )
+                                                                            for i=1:size(dba,1)
+                                                            ],
+                                                            value="ig" ,
+                                                            clearable   = false,
+                                                            multi   = false),
+                                        ]),
+                                    ]),
+                                    #diagram type
+                                    dbc_row([
+                                        dbc_col([ 
+                                            html_h1("Diagram type", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                        ]),
+                                        dbc_col([ 
+                                            dcc_dropdown(   id      = "diagram-dropdown",
+                                            options = [
+                                                (label = "P-T diagram",         value = "pt"),
+                                                (label = "P-X diagram",         value = "px"),
+                                                (label = "T-X diagram",         value = "tx"),
+                                            ],
+                                            value="pt" ,
+                                            clearable   = false,
+                                            multi   = false),
+                                        ]),
+                                    ]),
+                                    html_div("‎ "),   
+                                    #PT caption 
+                                    dbc_row([
+                                        dbc_col([ 
+                                        ], width=6),
                                         dbc_col([ 
                                             html_h1("min", style = Dict("textAlign" => "center","font-size" => "100%")),
                                         ]),
                                         dbc_col([ 
                                             html_h1("max", style = Dict("textAlign" => "center","font-size" => "100%")),
                                         ]),
-                                        dbc_col([ 
-                                            html_h1("Init subdivision", style = Dict("textAlign" => "center","font-size" => "100%")),
-                                        ]),
                                     ]),
+                                    html_div([
+                                    #pressure
                                     dbc_row([
                                         dbc_col([ 
                                             html_h1("Pressure", style = Dict("textAlign" => "center","font-size" => "120%")),
-                                        ], width=3),
+                                        ], width=6),
                                         dbc_col([ 
                                             dbc_row([
                                             dbc_col([ 
@@ -134,21 +97,17 @@ function Tab_Simulation()
                                                     max=100.01, 
                                                     value=24.01   ),
                                             ]), 
-                                            dbc_col([ 
-                                                dbc_input(
-                                                    id      = "psub-id",
-                                                    type    = "number", 
-                                                    min     = 2, 
-                                                    value   = 3   ),
-                                            ]),
-
                                             ]),
                                         ]),
                                     ]),
+                                    ], style = Dict("display" => "block"), id      = "pressure-id"), #none, block
+
+                                    html_div([
+                                    #temperature                                                        
                                     dbc_row([
                                         dbc_col([ 
                                             html_h1("Temperature", style = Dict("textAlign" => "center","font-size" => "120%")),
-                                        ], width=3),
+                                        ], width=6),
                                         dbc_col([ 
                                             dbc_row([
                                             dbc_col([ 
@@ -169,15 +128,58 @@ function Tab_Simulation()
                                                         max     = 2000.0,
                                                         value   = 1200.0   ),
                                                 ]),
-                                                dbc_col([ 
-                                                    # html_h1("Init subdivision", style = Dict("textAlign" => "center","font-size" => "100%")),
-                                                    dbc_input(
-                                                        id      = "tsub-id",
-                                                        type    = "number", 
-                                                        min     = 2,  
-                                                        value   = 3   ),
-                                                ]),
                                             ]),
+                                        ]),
+                                    ]),
+                                    ], style = Dict("display" => "block"), id      = "temperature-id"), #none, block
+
+                                    # Fixed pressure
+                                    html_div([
+                                    dbc_row([
+                                        dbc_col([ 
+                                            html_h1("Fixed pressure", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                        ]),
+                                        dbc_col([ 
+                                                dbc_input(
+                                                # id      = "fixed-pressure-id",
+                                                type    = "number", 
+                                                min     = 0.01, 
+                                                max     = 100.01, 
+                                                value   = 0.01   ),
+                                        ]),
+                                    ]),
+                                    ], style = Dict("display" => "none"), id      = "fixed-pressure-id"), #none, block
+
+                                    # Fixed temperature
+                                    html_div([
+                                    dbc_row([
+                                        dbc_col([ 
+                                            html_h1("Fixed temperature", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                        ]),
+                                        dbc_col([ 
+                                                dbc_input(
+                                                # id      = "fixed-temperature-id",
+                                                type    = "number", 
+                                                min     = 0.0, 
+                                                max     = 10000.0, 
+                                                value   = 800.0   ),
+                                        ]),
+                                    ]),
+                                    ], style = Dict("display" => "none"),id = "fixed-temperature-id"), #none, block
+                                   
+
+                                    html_div("‎ "),
+                                    #subdivision
+                                    dbc_row([
+                                        dbc_col([ 
+                                            html_h1("Initial grid subdivision", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                        ]),
+                                        dbc_col([ 
+                                                dbc_input(
+                                                id      = "gsub-id",
+                                                type    = "number", 
+                                                min     = 2,  
+                                                value   = 3   ),
                                         ]),
                                     ]),
                                     html_div("‎ "),
@@ -218,6 +220,45 @@ function Tab_Simulation()
                                             multi   = false),
                                         ]),
                                     ]),
+                                    html_div("‎ "), 
+                                    #buffer
+                                    dbc_row([
+                                        dbc_col([ 
+                                            html_h1("Buffer", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                        ]),
+                                        dbc_col([ 
+                                            dcc_dropdown(   id      = "buffer-dropdown",
+                                            options = [
+                                                (label = "no buffer",value = "none"),
+                                                (label = "QFM",      value = "qfm"),
+                                                (label = "MW",       value = "mw"), 
+                                                (label = "QIF",      value = "qif"),
+                                                (label = "CCO",      value = "cco"),
+                                                (label = "HM",       value = "hm"), 
+                                                (label = "NNO",      value = "nno"), 
+                                            ],
+                                            value="none" ,
+                                            clearable   = false,
+                                            multi       = false),
+                                        ]),
+                                    ]),
+                                    #solver
+                                    dbc_row([
+                                        dbc_col([ 
+                                            html_h1("Solver", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                        ]),
+                                        dbc_col([ 
+                                            dcc_dropdown(   id      = "solver-dropdown",
+                                            options = [
+                                                (label = "PGE",         value = "pge"),
+                                                (label = "Legacy",      value = "lp"),
+                                            ],
+                                            value="pge" ,
+                                            clearable   = false,
+                                            multi   = false),
+                                        ]),
+                                    ]),
+
 
                                 ])
                             ),
@@ -239,17 +280,6 @@ function Tab_Simulation()
 
                                         dbc_row([
                                                 dbc_col([
-                                                    # dbc_row([
-                                                    #     dbc_col([
-                                                    #         html_div("Predefined"),
-                                                    #         ]),
-                                                    #     dbc_col([
-                                                    #         dbc_switch(label="",id="mode-bulk", value=false),
-                                                    #     ]),
-                                                    #     dbc_col([
-                                                    #         html_div("Custom"),
-                                                    #     ]),
-                                                    # ]),
 
                                                     dcc_upload(
                                                         id="upload-bulk",

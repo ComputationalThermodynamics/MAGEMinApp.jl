@@ -1,3 +1,34 @@
+# callback function to display to right set of variables as function of the diagram type
+callback!(
+    app,
+    Output("fixed-temperature-id", "style"),
+    Output("fixed-pressure-id", "style"),
+    Output("temperature-id", "style"),
+    Output("pressure-id", "style"),
+    Input("diagram-dropdown", "value"),
+) do value
+
+    if value == "px"
+        Tstyle = Dict("display" => "block")
+        Pstyle = Dict("display" => "none")
+        Ts = Dict("display" => "none")
+        Ps = Dict("display" => "block")
+    elseif value == "tx"
+        Tstyle = Dict("display" => "none")
+        Pstyle = Dict("display" => "block")
+        Ts = Dict("display" => "block")
+        Ps = Dict("display" => "none")
+    else
+        Tstyle = Dict("display" => "none")
+        Pstyle = Dict("display" => "none")
+        Ts = Dict("display" => "block")
+        Ps = Dict("display" => "block")
+    end
+
+    return Tstyle, Pstyle, Ts, Ps
+end
+
+
 
 callback!(
     app,

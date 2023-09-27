@@ -65,7 +65,7 @@ function parse_bulk_rock(contents, filename)
         ], style = Dict("textAlign" => "center","font-size" => "100%"))
     catch e
         return html_div([
-            "File format wrong, correct it"
+            "Wrong file format"
         ], style = Dict("textAlign" => "center","font-size" => "100%"))
     end
 

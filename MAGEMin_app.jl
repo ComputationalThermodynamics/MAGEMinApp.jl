@@ -25,7 +25,7 @@ data_vert = []
                     dbc_col([
                         dbc_cardimg(    id = "jgu-img",
                                         src="assets/static/images/JGU_light.jpg",
-                                        style = Dict("height" => 120, "width" => 420)),
+                                        style = Dict("height" => 90, "width" => 315)),
                             ], width="auto" ),
                     dbc_col([
                         dbc_cardimg(    id = "magemin-img",
