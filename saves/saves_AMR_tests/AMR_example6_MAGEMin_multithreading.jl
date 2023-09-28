@@ -105,7 +105,7 @@ end
 Out_PT, Hash_PT, n_phase_PT = Calculate_MAGEMin(data, MAGEMin_db)
 
 # Refine the mesh along phase boundaries
-for irefine = 1:3
+for irefine = 1:5
     global forest, data, Hash_PT, Out_PT, n_phase_PT
 
     refine_elements   = refine_phase_boundaries(forest, Hash_PT);
@@ -123,7 +123,7 @@ end
 
 
 # Write as vtk
-t8_forest_write_vtk(forest, "AMR_ex5_quad")
+# t8_forest_write_vtk(forest, "AMR_ex5_quad")
 
 
 # Scatter plotly of the grid

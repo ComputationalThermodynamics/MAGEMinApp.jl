@@ -7,7 +7,7 @@ using UUIDs, Delaunay
 using Pkg
 MAGEMin_dir = "../TC_calibration"
 Pkg.activate(MAGEMin_dir)
-
+Pkg.instantiate()
 using MAGEMin_C
 
 
