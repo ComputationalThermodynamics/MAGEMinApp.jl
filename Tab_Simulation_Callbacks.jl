@@ -1,3 +1,18 @@
+
+# callback to display initial title of the pseudosections
+callback!(
+    app,
+    Output("title-id", "value"),
+    Input("test-dropdown", "value"),
+    Input("database-dropdown","value"),
+) do test, dtb
+    # global db
+
+    title = db[(db.db .== dtb), :].title[test+1]
+    return title
+end
+
+
 # callback function to display to right set of variables as function of the diagram type
 callback!(
     app,

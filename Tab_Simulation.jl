@@ -5,23 +5,6 @@ function Tab_Simulation()
                 html_div("‎ "),
                 # first row with 2 columns for plot added related buttons
                 dbc_row([   
-                    dbc_col([ 
-                        dbc_row([   
-                        dbc_button("General parameters",id="button-general-parameters",color="primary"),
-                        dbc_collapse(
-                            dbc_card(dbc_cardbody([
-
-                                ###
-
-                                ])),
-                                id="collapse-general-parameters",
-                                is_open=true,
-                        ),
-                        ])
-                        ], width=3), 
-
-                        dbc_col([ 
-                        ]),
 
                         dbc_col([ 
                         dbc_row([dbc_button("Grid parameters",id="button-PT-conditions"),
@@ -438,24 +421,87 @@ function Tab_Simulation()
 
                         ], width=4),
 
+                        dbc_col([ 
+                        ]),
+
+                        dbc_col([ 
+                            dbc_row([   
+                            dbc_button("General parameters",id="button-general-parameters",color="primary"),
+                            dbc_collapse(
+                                dbc_card(dbc_cardbody([
+
+                                        dbc_col([ 
+                                            #title                                                           
+                                            dbc_row([
+                                                dbc_col([ 
+                                                    html_h1("Title", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                                ], width=3),
+                                                dbc_col([ 
+                                                    dbc_input(
+                                                        id      = "title-id",
+                                                        type    = "text",  
+                                                        value   = db[(db.db .== "ig"), :].title[1]   ),            
+                                                ]),
+                                            ]),
+                                            #Filename
+                                            html_div("‎ "),
+                                            dbc_row([
+                                                dbc_col([ 
+                                                    html_h1("Filename", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                                ], width=3),
+                                                dbc_col([ 
+                                                    dbc_input(
+                                                        id      = "Filename-id",
+                                                        type    = "text", 
+                                                        style   = Dict("textAlign" => "center") ,
+                                                        value   = " ... "   ),            
+                                                ]),
+                                            ]),
+                                            # load save buttons
+                                            dbc_row([
+                                                dbc_col([ 
+                                                ], width=4),        
+                                                dbc_col([ 
+                                                    dbc_button(
+                                                        "Load", id="load-button", color="light",  n_clicks=0,
+                                                    ),
+                                                ]),
+                                                dbc_col([ 
+                                                    dbc_button(
+                                                        "Save", id="Save-button", color="light",  n_clicks=0,
+                                                    ),
+                                                ]),
+                                            ]),
+
+                                            html_div("‎ "),
+                                            dbc_row([
+                                                dbc_button(
+                                                    "Compute mesh", id="mesh-button", color="light", className="me-2", n_clicks=0,
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"1px grey solid")
+                                                ),
+                                            ]),
+                                            html_div("‎ "),
+                                            dbc_row([
+                                                dbc_button(
+                                                    "Compute phase diagram", id="compute-button", color="light", className="me-2", n_clicks=0,
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"1px grey solid")
+                                                ),
+                                            ]),
+                                        ])
+
+                                    ])),
+                                    id="collapse-general-parameters",
+                                    is_open=true,
+                            ),
+                            ])
+                            ], width=3),
 
 
                     ]),
-
-                    html_div("‎ "),
-                    dbc_col([ 
-                    dbc_row([
-                        dbc_button(
-                            "Compute mesh", id="mesh-button", color="success", className="me-2", n_clicks=0
-                        ),
-                    ]),
-                    html_div("‎ "),
-                    dbc_row([
-                        dbc_button(
-                            "Compute phase diagram", id="compute-button", color="success", className="me-2", n_clicks=0
-                        ),
-                    ]),
-                    ], width=4)
 
                 ], width=12)
     ])
