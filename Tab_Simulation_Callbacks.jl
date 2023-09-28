@@ -1,3 +1,38 @@
+# callback to display ca-orthopyroxene limiter
+callback!(
+    app,
+    Output("switch-opx-id", "style"),
+    Input("database-dropdown", "value"),
+) do value
+    # global db
+    if value == "ig"
+        style  = Dict("display" => "block")
+    elseif value == "igd"
+        style  = Dict("display" => "block")    
+    elseif value == "alk"
+        style  = Dict("display" => "block")  
+    else 
+        style  = Dict("display" => "none")
+    end
+    return style
+end
+
+
+# callback to display clinopyroxene choice for the metabasite database
+callback!(
+    app,
+    Output("switch-cpx-id", "style"),
+    Input("database-dropdown", "value"),
+) do value
+    # global db
+    if value == "mb"
+        style  = Dict("display" => "block")
+    else 
+        style  = Dict("display" => "none")
+    end
+    return style
+end
+
 
 # callback to display initial title of the pseudosections
 callback!(

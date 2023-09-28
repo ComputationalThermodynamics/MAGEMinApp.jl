@@ -7,7 +7,7 @@ function Tab_Simulation()
                 dbc_row([   
 
                         dbc_col([ 
-                        dbc_row([dbc_button("Grid parameters",id="button-PT-conditions"),
+                        dbc_row([dbc_button("Phase diagram parameters",id="button-PT-conditions"),
                         dbc_collapse(
                             dbc_card(dbc_cardbody([
                                     #database
@@ -27,6 +27,7 @@ function Tab_Simulation()
                                                             multi   = false),
                                         ]),
                                     ]),
+
                                     #diagram type
                                     dbc_row([
                                         dbc_col([ 
@@ -44,8 +45,62 @@ function Tab_Simulation()
                                             multi   = false),
                                         ]),
                                     ]),
-                                    html_div("‎ "),   
+
+                                    #clinopyroxene for metabasite
+                                    html_div([
+                                        html_div("‎ "),  
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("clinopyroxene", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            ],width=6),
+                                            dbc_col([ 
+                                                html_div("Omphacite"),
+                                            ],width=3),
+                                            dbc_col([ 
+                                                dbc_row(dbc_switch(label="", id="mb-cpx-switch", value=false),justify="center"),
+                                            ]),
+                                            dbc_col([ 
+                                                html_div("Augite"),
+                                            ]),
+                                        ]),
+                                    ], style = Dict("display" => "none"), id      = "switch-cpx-id"), #none, block
+
+                                    #clinopyroxene for metabasite
+                                    html_div([
+                                        html_div("‎ "),  
+                                        dbc_row([
+                                            dbc_col([ 
+                                                # html_h1("Limit Ca-orthopyroxene", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            ],width=6),
+                                            # dbc_col([ 
+                                            # ],width=1),
+                                            dbc_col([ 
+                                                dcc_checklist(
+                                                options = [
+                                                    Dict("label" => " Limit Ca-opx", "value" => "ON"),
+                                                    ],
+                                                    value   = ["OFF"],
+                                                    inline  = true,
+                                                ),
+                                            ]),
+                                            dbc_col([ 
+                                                html_div([
+                                                dbc_input(
+                                                    id      = "ca-opx-val-id",
+                                                    type    = "number", 
+                                                    min     = 0.0, 
+                                                    max     = 1.0, 
+                                                    value   = 0.5   ),
+                                                ], style = Dict("marginTop" => -5)),
+                                            ],width=3),
+
+                                        ]),
+                                    ], style = Dict("display" => "block"), id      = "switch-opx-id"), #none, block
+
+
                                     #PT caption 
+                                    html_div("‎ "),  
+                                    html_div("‎ "),  
                                     dbc_row([
                                         dbc_col([ 
                                         ], width=6),
