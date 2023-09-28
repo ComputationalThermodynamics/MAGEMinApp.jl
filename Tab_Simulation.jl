@@ -296,7 +296,23 @@ function Tab_Simulation()
                                             multi   = false),
                                         ]),
                                     ]),
-
+                                    #verbose
+                                    dbc_row([
+                                        dbc_col([ 
+                                            html_h1("Verbose", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                        ]),
+                                        dbc_col([ 
+                                            dcc_dropdown(   id      = "verbose-dropdown",
+                                            options = [
+                                                (label = "none",        value = -1),
+                                                (label = "light",       value =  0),
+                                                (label = "full",        value =  1),
+                                            ],
+                                            value=0 ,
+                                            clearable   = false,
+                                            multi   = false),
+                                        ]),
+                                    ]),
 
                                 ])
                             ),
