@@ -27,15 +27,15 @@ function bulk_file_to_db(datain)
         idx 		= findall(datain[1,:] .== "oxide")[1];
         oxide   	= rsplit(datain[i,idx],",");
         oxide 		= strip.(convert.(String,oxide));
-        oxide 		= replace.(oxide,r"\]"=>"");
-        oxide 		= replace.(oxide,r"\["=>"");
+        oxide 		= replace.(oxide,r"\]"=>"",r"\["=>"");
 
         idx 		= findall(datain[1,:] .== "frac")[1];
         frac   		= rsplit(datain[i,idx],",");
         frac 		= strip.(convert.(String,frac));
-        frac 		= replace.(frac,r"\]"=>"");
-        frac 		= replace.(frac,r"\["=>"");
+        frac 		= replace.(frac,r"\]"=>"",r"\["=>"");
         frac 		= parse.(Float64,frac);
+
+        bulk, oxide   = convertBulk4MAGEMin(frac,oxide,String(sysUnit),String(dbin)) 
 
         push!(db,Dict(  :bulk       => bulk,
                         :title      => title,

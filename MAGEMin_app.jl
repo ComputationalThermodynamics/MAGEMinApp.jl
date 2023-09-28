@@ -3,6 +3,14 @@ using DashBootstrapComponents
 using PlotlyJS, JSON3, Printf, Statistics, DataFrames, CSV, Dates, Base64
 using UUIDs, Delaunay
 
+# this activate the wrapper of MAGEMin dev branch
+using Pkg
+MAGEMin_dir = "../TC_calibration"
+Pkg.activate(MAGEMin_dir)
+
+using MAGEMin_C
+
+
 # include helper functions
 include("appData.jl")
 include("colormaps.jl")

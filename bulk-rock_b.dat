@@ -4,17 +4,17 @@
 # make sure the header line "title; comments; db; sysUnit; oxide; frac" is provided as first uncommented line
 # column titles order in the header does not matter as long as the same order is respected for the bulk-rock list
 # Bulks provided with unit "wt" will be automatically converted and displayed in mol faction (normalized to 1)
-# Note that either [..., Fe2O3, FeO,...] or [..., FeOt, O, ...] must me provided for database accounting for O (ig,igd,mp,mb,alk)
+# Note that either [..., Fe2O3, FeO,...] or [..., FeO, O, ...] must me provided for database accounting for O (ig,igd,mp,mb,alk)
 # Database to be used should be provided (ig, igd, mp, mb, um, alk), 
 # if you want the bulk to appear in more than one database duplicate it and adjust the oxides/fractions
 #
 # HEADER
 title; comments; db; sysUnit; oxide; frac
 # BULK-ROCK COMPOSITION
-Test 11;Foo et al., 1853; alk; mol; [SiO2, Al2O3, CaO, MgO, FeOt, K2O, Na2O, TiO2, O, Cr2O3, H2O];[48.97, 12.76, 12.87, 5.21, 7.97, 1.66, 10.66, 1.36, 1.66, 0.01, 10.0]
-Test 22;Moo et al., 2000;ig;mol;[SiO2, Al2O3, CaO, MgO, FeOt, K2O, Na2O, TiO2, O, Cr2O3, H2O];[48.97, 11.76, 13.87, 4.21, 8.97, 1.66, 10.66, 1.36, 1.66, 0.01, 5.0]
+Test 11;Foo et al., 1853; alk; mol; [SiO2, Al2O3, CaO, MgO, FeO, K2O, Na2O, TiO2, O, Cr2O3, H2O];[48.97, 12.76, 12.87, 5.21, 7.97, 1.66, 10.66, 1.36, 1.66, 0.01, 10.0]
+Test 22;Moo et al., 2000;ig;mol;[SiO2, Al2O3, CaO, MgO, FeO, K2O, Na2O, TiO2, O, Cr2O3, H2O];[48.97, 11.76, 13.87, 4.21, 8.97, 1.66, 10.66, 1.36, 1.66, 0.01, 5.0]
 Test 33;Coin & Kwak, 1984;mb;wt;[SiO2, Al2O3, CaO, MgO, Fe2O3, K2O,Na2O, TiO2, FeO, H2O];[55.12, 12.76, 4.32, 5.21, 2.45, 1.66, 10.66, 1.36, 1.66, 2.0]
-Test 44;Zoo et al., 2020;ig;mol;[SiO2, Al2O3, CaO, MgO, FeOt, K2O, Na2O, TiO2, O, Cr2O3, H2O];[46.97, 13.76, 13.87, 4.21, 8.97, 1.66, 10.66, 1.36, 1.66, 0.01, 5.0]
+Test 44;Zoo et al., 2020;ig;mol;[SiO2, Al2O3, CaO, MgO, FeO, K2O, Na2O, TiO2, O, Cr2O3, H2O];[46.97, 13.76, 13.87, 4.21, 8.97, 1.66, 10.66, 1.36, 1.66, 0.01, 5.0]
 
 
 
