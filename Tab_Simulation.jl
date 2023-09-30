@@ -76,10 +76,11 @@ function Tab_Simulation()
                                             # ],width=1),
                                             dbc_col([ 
                                                 dcc_checklist(
-                                                options = [
-                                                    Dict("label" => " Limit Ca-opx", "value" => "ON"),
+                                                    id      ="limit-ca-opx-id",
+                                                    options = [
+                                                        Dict("label" => " Limit Ca-opx", "value" => "CAOPX"),
                                                     ],
-                                                    value   = ["OFF"],
+                                                    value   = [""],
                                                     inline  = true,
                                                 ),
                                             ]),
@@ -179,11 +180,11 @@ function Tab_Simulation()
                                         ]),
                                         dbc_col([ 
                                                 dbc_input(
-                                                # id      = "fixed-pressure-id",
+                                                id      = "fixed-pressure-val-id",
                                                 type    = "number", 
                                                 min     = 0.01, 
                                                 max     = 100.01, 
-                                                value   = 0.01   ),
+                                                value   = 10.01   ),
                                         ]),
                                     ]),
                                     ], style = Dict("display" => "none"), id      = "fixed-pressure-id"), #none, block
@@ -196,7 +197,7 @@ function Tab_Simulation()
                                         ]),
                                         dbc_col([ 
                                                 dbc_input(
-                                                # id      = "fixed-temperature-id",
+                                                id      = "fixed-temperature-val-id",
                                                 type    = "number", 
                                                 min     = 0.0, 
                                                 max     = 10000.0, 
@@ -308,9 +309,9 @@ function Tab_Simulation()
                                                 (label = "light",       value =  0),
                                                 (label = "full",        value =  1),
                                             ],
-                                            value=0 ,
+                                            value       = -1,
                                             clearable   = false,
-                                            multi   = false),
+                                            multi       = false),
                                         ]),
                                     ]),
 
@@ -397,10 +398,10 @@ function Tab_Simulation()
                                                                     dash_datatable(
                                                                         id="table-bulk-rock",
                                                                         columns=(  [    Dict("id" =>  "oxide",          "name" =>  "oxide",         "editable" => false),
-                                                                                        Dict("id" =>  "mol fraction",   "name" =>  "mol fraction",  "editable" => true)]
+                                                                                        Dict("id" =>  "mol_fraction",   "name" =>  "mol_fraction",  "editable" => true)]
                                                                         ),
                                                                         data        =   [Dict(  "oxide"         => db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1][i],
-                                                                                                "mol fraction"  => db[(db.db .== "ig") .& (db.test .== 0), :].frac[1][i])
+                                                                                                "mol_fraction"  => db[(db.db .== "ig") .& (db.test .== 0), :].frac[1][i])
                                                                                                     for i=1:length(db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1]) ],
                                                                         style_cell  = (textAlign="center", fontSize="140%",),
                                                                         style_header= (fontWeight="bold",),
@@ -434,10 +435,10 @@ function Tab_Simulation()
                                                                 dash_datatable(
                                                                     id="table-2-bulk-rock",
                                                                     columns=(  [    Dict("id" =>  "oxide",          "name" =>  "oxide",         "editable" => false),
-                                                                                    Dict("id" =>  "mol fraction",   "name" =>  "mol fraction",  "editable" => true)]
+                                                                                    Dict("id" =>  "mol_fraction",   "name" =>  "mol_fraction",  "editable" => true)]
                                                                     ),
                                                                     data        =   [Dict(  "oxide"         => db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1][i],
-                                                                                            "mol fraction"  => db[(db.db .== "ig") .& (db.test .== 0), :].frac[1][i])
+                                                                                            "mol_fraction"  => db[(db.db .== "ig") .& (db.test .== 0), :].frac[1][i])
                                                                                                 for i=1:length(db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1]) ],
                                                                     style_cell  = (textAlign="center", fontSize="140%",),
                                                                     style_header= (fontWeight="bold",),
@@ -544,15 +545,6 @@ function Tab_Simulation()
                                                 ]),
                                             ]),
 
-                                            html_div("‎ "),
-                                            dbc_row([
-                                                dbc_button(
-                                                    "Compute mesh", id="mesh-button", color="light", className="me-2", n_clicks=0,
-                                                    style       = Dict( "textAlign"     => "center",
-                                                                        "font-size"     => "100%",
-                                                                        "border"        =>"1px grey solid")
-                                                ),
-                                            ]),
                                             html_div("‎ "),
                                             dbc_row([
                                                 dbc_button(

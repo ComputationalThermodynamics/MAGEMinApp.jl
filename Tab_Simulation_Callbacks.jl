@@ -142,7 +142,7 @@ callback!(
     end
 
     data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
-                            "mol fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac[1][i])
+                            "mol_fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac[1][i])
                                 for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
 
 
@@ -178,7 +178,7 @@ callback!(
     end
 
     data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
-                            "mol fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac[1][i])
+                            "mol_fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac[1][i])
                                 for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
 
 

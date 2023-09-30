@@ -5,7 +5,7 @@ function Tab_PhaseDiagram()
             html_div("‎ "),
             dbc_row([ 
 
-                    dbc_col([diagram_plot()], width=8),
+                    dbc_col([diagram_plot()], width=9),
                     dbc_col([  
                         dbc_row([dbc_button("Display options",id="button-display-options"),
                         dbc_collapse(
@@ -34,7 +34,7 @@ function Tab_PhaseDiagram()
                                 is_open=false,
                         ),
                     ])
-                    ], width=4),
+                    ], width=3),
 
                 ], justify="left"),
 

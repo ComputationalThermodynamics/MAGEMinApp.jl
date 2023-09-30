@@ -1,24 +1,25 @@
+using Base.Threads: @threads
 using Dash  
 using DashBootstrapComponents
 using PlotlyJS, JSON3, Printf, Statistics, DataFrames, CSV, Dates, Base64
 using UUIDs, Delaunay
+using Interpolations
 
 # this activate the wrapper of MAGEMin dev branch
-using Pkg
-MAGEMin_dir = "../TC_calibration"
-Pkg.activate(MAGEMin_dir)
-Pkg.instantiate()
+# using Pkg
+# MAGEMin_dir = "../TC_calibration"
+# Pkg.activate(MAGEMin_dir)
+# Pkg.instantiate()
 using MAGEMin_C
 
 
-# include helper functions
+include("initialize_MAGEMin_AMR.jl")
 include("appData.jl")
 include("colormaps.jl")
 include("Tab_Simulation.jl")
 include("Tab_PhaseDiagram.jl")
 include("data_plot.jl")
 include("functions.jl")
-
 
 # read available colormaps
 colormaps   = read_colormaps()  # colormaps
