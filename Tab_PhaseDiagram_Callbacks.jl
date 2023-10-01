@@ -47,17 +47,36 @@ callback!(
         bufferN1,   bufferN2,
         test
 
+    #________________________________________________________________________________________#
+    # Diagram type dependent parameters
+    if diagType == "pt"
+        xtitle = "Temperature [Celsius]"
+        ytitle = "Pressure [kbar]"
+        Xrange          = (tmin,tmax)
+        Yrange          = (pmin,pmax)
+    elseif diagType == "px"
+        Xrange          = (0.0,1.0)
+        Yrange          = (pmin,pmax)
+        xtitle = "Composition [X0 -> X1]"
+        ytitle = "Pressure [kbar]"
+    else # diagType == "tx"
+        Xrange          = (0.0,1.0) 
+        Yrange          = (tmin,tmax)
+        xtitle = "Composition [X0 -> X1]"
+        ytitle = "Temperature [Celsius]"
+    end
+
+    #________________________________________________________________________________________#
+    # The next lines capture the identity of the button that has been pushed
     ctx = callback_context()
     if length(ctx.triggered) == 0
         bid = ""
     else
         bid = split(ctx.triggered[1].prop_id, ".")[1]
     end
-    print("Button: $bid\n")
 
-
+    # if we compute a new phase diagram
     if bid == "compute-button"
-        
         n_ox    = length(bulk1);
         bulk_L  = zeros(n_ox); 
         bulk_R  = zeros(n_ox);
@@ -69,19 +88,6 @@ callback!(
         end
         #________________________________________________________________________________________#
         # Create coarse mesh
-
-        if diagType == "pt"
-            Xrange          = (tmin,tmax)
-            Yrange          = (pmin,pmax)
-        elseif diagType == "px"
-            Xrange          = (0.0,1.0)
-            Yrange          = (pmin,pmax)
-        else # diagType == "tx"
-            Xrange          = (0.0,1.0) 
-            Yrange          = (tmin,tmax)
-        end
-
-
         cmesh           = t8_cmesh_quad_2d(COMM, Xrange, Yrange)
 
         # Refine coarse mesh (in a regular manner)
@@ -143,20 +149,11 @@ callback!(
 
         #________________________________________________________________________________________#                   
         # Scatter plotly of the grid
+        global idx, data_plot;
         idx         = Vector{Int64}(undef,length(n_phase_XY));
         idx         = ((n_phase_XY.-minimum(n_phase_XY))./(maximum(n_phase_XY).-minimum(n_phase_XY)).*255).+ 1.0;
         idx         = [floor(Int,x) for x in idx];
         data_plot   = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, length(data.x));
-
-        xtitle = "Temperature [Celsius]"
-        ytitle = "Pressure [kbar]"
-        if diagType == "tx"
-            xtitle = "Composition [X0 -> X1]"
-            ytitle = "Temperature [Celsius]"
-        elseif diagType == "px"
-            xtitle = "Composition [X0 -> X1]"
-            ytitle = "Pressure [kbar]"
-        end
 
         layout = Layout(
                     title=attr(
@@ -180,7 +177,7 @@ callback!(
                                         y           = data.y[i],
                                         mode        = "lines",
                                         fill        = "toself",
-                                        fillcolor   = colormaps.roma[idx[i]][2],
+                                        fillcolor   = colormaps[:roma][idx[i]][2],
                                         line_color  = "#000000",
                                         line_width  = 1,
 
@@ -190,6 +187,42 @@ callback!(
                 showlegend  = false     )
         end
 
+        fig = plot(data_plot,layout)
+
+    #if we want to modify the colomap
+    elseif bid == "colormaps_cross"
+
+        layout = Layout(
+                    title=attr(
+                        text = db[(db.db .== dtb), :].title[test+1],
+                        x=0.5,
+                        xanchor= "center",
+                        yanchor= "top"
+                    ),
+
+                    xaxis_title = xtitle,
+                    yaxis_title = ytitle,
+                    yaxis_range = [Yrange...],
+                    xaxis_range = [Xrange...],
+                    xaxis_showgrid=false, yaxis_showgrid=false,
+                    width       = 800,
+                    height      = 800
+                )
+
+        for i = 1:length(data.x)
+                data_plot[i] = scatter( x           = data.x[i],
+                                        y           = data.y[i],
+                                        mode        = "lines",
+                                        fill        = "toself",
+                                        fillcolor   = colormaps[Symbol(colorm)][idx[i]][2],
+                                        line_color  = "#000000",
+                                        line_width  = 1,
+
+                # customize what is shown upon hover:
+                text        = "Stable phases $(Out_XY[i].ph) ",
+                hoverinfo   = "text",
+                showlegend  = false     )
+        end
         fig = plot(data_plot,layout)
     else
         fig = plot()
