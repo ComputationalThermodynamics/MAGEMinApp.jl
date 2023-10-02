@@ -4,6 +4,7 @@ callback!(
     Output("phase-diagram","figure"),
     Input("compute-button","n_clicks"),
     Input("colormaps_cross","value"),
+    Input("fields-dropdown","value"),
 
     State("diagram-dropdown","value"),          # pt,px,tx
     State("database-dropdown","value"),         # mp,mb,ig,igd,um,alk
@@ -37,7 +38,7 @@ callback!(
 
     prevent_initial_call = true,
 
-) do    n_clicks_mesh, colorm,
+) do    n_clicks_mesh, colorm,  fieldname,
         diagType,   dtb,        cpx,    limOpx, limOpxVal,
         tmin,       tmax,       pmin,   pmax,
         fixT,       fixP,
@@ -149,9 +150,18 @@ callback!(
 
         #________________________________________________________________________________________#                   
         # Scatter plotly of the grid
-        global idx, data_plot;
-        idx         = Vector{Int64}(undef,length(n_phase_XY));
-        idx         = ((n_phase_XY.-minimum(n_phase_XY))./(maximum(n_phase_XY).-minimum(n_phase_XY)).*255).+ 1.0;
+
+        global field, idx, data_plot;
+
+        np          = length(data.x)
+        len_ox      = length(oxi)
+        field       = Vector{Float64}(undef,np);
+        idx         = Vector{Int64}(undef,length(field));
+        for i=1:np
+            field[i] = Float64(len_ox - n_phase_XY[i] + 2);
+        end
+
+        idx         = ((field.-minimum(field))./(maximum(field).-minimum(field)).*255.0).+ 1.0;
         idx         = [floor(Int,x) for x in idx];
         data_plot   = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, length(data.x));
 
@@ -191,6 +201,63 @@ callback!(
 
     #if we want to modify the colomap
     elseif bid == "colormaps_cross"
+
+        layout = Layout(
+                    title=attr(
+                        text = db[(db.db .== dtb), :].title[test+1],
+                        x=0.5,
+                        xanchor= "center",
+                        yanchor= "top"
+                    ),
+
+                    xaxis_title = xtitle,
+                    yaxis_title = ytitle,
+                    yaxis_range = [Yrange...],
+                    xaxis_range = [Xrange...],
+                    xaxis_showgrid=false, yaxis_showgrid=false,
+                    width       = 800,
+                    height      = 800
+                )
+
+        for i = 1:length(data.x)
+                data_plot[i] = scatter( x           = data.x[i],
+                                        y           = data.y[i],
+                                        mode        = "lines",
+                                        fill        = "toself",
+                                        fillcolor   = colormaps[Symbol(colorm)][idx[i]][2],
+                                        line_color  = "#000000",
+                                        line_width  = 1,
+
+                # customize what is shown upon hover:
+                text        = "Stable phases $(Out_XY[i].ph) ",
+                hoverinfo   = "text",
+                showlegend  = false     )
+        end
+        fig = plot(data_plot,layout)
+    elseif bid == "fields-dropdown"
+
+        np          = length(data.x)
+        len_ox      = length(bulk1);
+
+    
+        if fieldname == "nsp"
+            for i=1:np
+                field[i] = Float64(length(Out_XY[i].ph));
+            end
+        elseif fieldname == "nvar"
+            for i=1:np
+                field[i] = Float64(len_ox - n_phase_XY[i] + 2);
+            end
+        else
+            for i=1:np
+                field[i] = Float64(get_property(Out_XY[i], fieldname));
+            end
+        end
+
+        # idx         = Vector{Int64}(undef,length(field));
+        idx         = ((field.-minimum(field))./(maximum(field).-minimum(field)).*255.0).+ 1.0;
+        idx         = [floor(Int,x) for x in idx];
+        data_plot   = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, length(data.x));
 
         layout = Layout(
                     title=attr(

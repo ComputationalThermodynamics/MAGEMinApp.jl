@@ -1,4 +1,13 @@
 """
+    Function to extract values from structure using structure's member name
+"""
+function get_property(x, name::String)
+    s = Symbol(name)
+    return getproperty(x, s)
+end
+
+
+"""
     function to parce bulk-rock composition file
 """
 function bulk_file_to_db(datain)

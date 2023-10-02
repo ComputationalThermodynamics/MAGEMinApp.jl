@@ -11,14 +11,41 @@ function Tab_PhaseDiagram()
                         dbc_collapse(
                             dbc_card(dbc_cardbody([
 
-                                dbc_col([
-                                    dcc_dropdown(   id          = "colormaps_cross",
-                                                    options     = [String.(keys(colormaps))...],
-                                                    value       = "roma",
-                                                    clearable   = false,
-                                                    placeholder = "Colormap")
-                                ]), 
+                                dbc_row([
+                                    dbc_col([ 
+                                        html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                    ]),
+                                    dbc_col([
+                                        dcc_dropdown(   id      = "fields-dropdown",
+                                                        options = [
+                                                            (label = "Variance",                value = "nvar"),
+                                                            (label = "Number of stable phases", value = "nsp"),
+                                                            (label = "ρ_system",                value = "rho"),
+                                                            (label = "ρ_solid",                 value = "rho_S"),
+                                                            (label = "ρ_melt",                  value = "rho_M"),
+                                                            (label = "Vp",                      value = "Vp"),
+                                                            (label = "Vs",                      value = "Vs"),
+                                                            (label = "Status",                  value = "status"),
 
+                                                        ],
+                                                        value="nvar" ,
+                                                        clearable   = false,
+                                                        multi   = false),
+                                    ]), 
+                                ]),
+
+                                dbc_row([
+                                        dbc_col([ 
+                                            html_h1("Colormap", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                        ]),
+                                        dbc_col([
+                                            dcc_dropdown(   id          = "colormaps_cross",
+                                                            options     = [String.(keys(colormaps))...],
+                                                            value       = "roma",
+                                                            clearable   = false,
+                                                            placeholder = "Colormap")
+                                        ]), 
+                                    ])
                                 ])
                             ),
                             id="collapse",
