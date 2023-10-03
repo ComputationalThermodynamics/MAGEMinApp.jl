@@ -6,6 +6,7 @@ mesh                = [];
 field               = [];
 PseudosectionData   = [];
 
+
 # LIST AVAILABLE DATABASE
 dba = DataFrame(        database     = String[],
                         acronym      = String[],
@@ -371,5 +372,5 @@ AppData = ( MAGEMin_version     = MAGEMin_version,
             field               = field,
             db                  = db,
             dba                 = dba,
-            PseudosectionData   = PseudosectionData)
+            PseudosectionData   = PseudosectionData )
             

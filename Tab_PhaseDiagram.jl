@@ -10,11 +10,26 @@ function Tab_PhaseDiagram()
                         dbc_row([dbc_button("Display options",id="button-display-options"),
                         dbc_collapse(
                             dbc_card(dbc_cardbody([
-
+                                dbc_row([
+                                    dbc_col([ 
+                                        # html_h1("Hide grid", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                    ], width=6),
+                                    dbc_col([ 
+                                        dcc_checklist(
+                                            id      ="hide-grid",
+                                            options = [
+                                                Dict("label" => " Hide grid", "value" => "GRID"),
+                                            ],
+                                            value   = [""],
+                                            inline  = true,
+                                        ),
+                                    ], width=6),
+                                ]),
+                                html_div("‎ "),
                                 dbc_row([
                                     dbc_col([ 
                                         html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                    ], width=3),
+                                    ], width=6),
                                     dbc_col([
                                         dcc_dropdown(   id      = "fields-dropdown",
                                                         options = [
@@ -45,7 +60,7 @@ function Tab_PhaseDiagram()
                                 dbc_row([
                                         dbc_col([ 
                                             html_h1("Colormap", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                        ], width=3),
+                                        ], width=6),
                                         dbc_col([
                                             dcc_dropdown(   id          = "colormaps_cross",
                                                             options     = [String.(keys(colormaps))...],

@@ -5,6 +5,7 @@ callback!(
     Input("compute-button","n_clicks"),
     Input("colormaps_cross","value"),
     Input("fields-dropdown","value"),
+    Input("hide-grid","value"),              # show edges checkbox
 
     State("diagram-dropdown","value"),          # pt,px,tx
     State("database-dropdown","value"),         # mp,mb,ig,igd,um,alk
@@ -34,11 +35,12 @@ callback!(
     State("buffer-1-mul-id","value"),           # buffer n 1
     State("buffer-2-mul-id","value"),           # buffer n 2
 
-    State("test-dropdown", "value"),
+    State("test-dropdown", "value"),            # test number
+
 
     prevent_initial_call = true,
 
-) do    n_clicks_mesh, colorm,  fieldname,
+) do    n_clicks_mesh, colorm,  fieldname, grid,
         diagType,   dtb,        cpx,    limOpx, limOpxVal,
         tmin,       tmax,       pmin,   pmax,
         fixT,       fixP,
@@ -239,14 +241,13 @@ callback!(
         np          = length(data.x)
         len_ox      = length(bulk1);
 
-    
         if fieldname == "nsp"
             for i=1:np
                 field[i] = Float64(length(Out_XY[i].ph));
             end
         elseif fieldname == "nvar"
             for i=1:np
-                field[i] = Float64(len_ox - n_phase_XY[i] + 2);
+                field[i] = Float64(len_ox - n_phase_XY[i] + 2.0);
             end
         else
             for i=1:np
@@ -267,13 +268,14 @@ callback!(
                         yanchor= "top"
                     ),
 
-                    xaxis_title = xtitle,
-                    yaxis_title = ytitle,
-                    yaxis_range = [Yrange...],
-                    xaxis_range = [Xrange...],
-                    xaxis_showgrid=false, yaxis_showgrid=false,
-                    width       = 800,
-                    height      = 800
+                    xaxis_title     = xtitle,
+                    yaxis_title     = ytitle,
+                    yaxis_range     = [Yrange...],
+                    xaxis_range     = [Xrange...],
+                    xaxis_showgrid  = false, 
+                    yaxis_showgrid  = false,
+                    width           = 800,
+                    height          = 800
                 )
 
         for i = 1:length(data.x)
@@ -291,6 +293,77 @@ callback!(
                 showlegend  = false     )
         end
         fig = plot(data_plot,layout)
+    elseif bid == "hide-grid"
+
+        if length(grid) == 1
+            layout = Layout(
+                title=attr(
+                    text = db[(db.db .== dtb), :].title[test+1],
+                    x=0.5,
+                    xanchor= "center",
+                    yanchor= "top"
+                ),
+
+                xaxis_title     = xtitle,
+                yaxis_title     = ytitle,
+                yaxis_range     = [Yrange...],
+                xaxis_range     = [Xrange...],
+                xaxis_showgrid  = false, 
+                yaxis_showgrid  = false,
+                width           = 800,
+                height          = 800
+            )
+
+            for i = 1:length(data.x)
+                    data_plot[i] = scatter( x           = data.x[i],
+                                            y           = data.y[i],
+                                            mode        = "lines",
+                                            fill        = "toself",
+                                            fillcolor   = colormaps[Symbol(colorm)][idx[i]][2],
+                                            line_color  = "#000000",
+                                            line_width  = 1,
+
+                    # customize what is shown upon hover:
+                    text        = "Stable phases $(Out_XY[i].ph) ",
+                    hoverinfo   = "text",
+                    showlegend  = false     )
+            end
+            fig = plot(data_plot,layout)
+        else
+            layout = Layout(
+                title=attr(
+                    text = db[(db.db .== dtb), :].title[test+1],
+                    x=0.5,
+                    xanchor= "center",
+                    yanchor= "top"
+                ),
+
+                xaxis_title     = xtitle,
+                yaxis_title     = ytitle,
+                yaxis_range     = [Yrange...],
+                xaxis_range     = [Xrange...],
+                xaxis_showgrid  = false, 
+                yaxis_showgrid  = false,
+                width           = 800,
+                height          = 800
+            )
+
+            for i = 1:length(data.x)
+                    data_plot[i] = scatter( x           = data.x[i],
+                                            y           = data.y[i],
+                                            mode        = "lines",
+                                            fill        = "toself",
+                                            fillcolor   = colormaps[Symbol(colorm)][idx[i]][2],
+                                            line_color  = colormaps[Symbol(colorm)][idx[i]][2],
+                                            line_width  = 2,
+
+                    # customize what is shown upon hover:
+                    text        = "Stable phases $(Out_XY[i].ph) ",
+                    hoverinfo   = "text",
+                    showlegend  = false     )
+            end
+            fig = plot(data_plot,layout)
+        end
     else
         fig = plot()
     end

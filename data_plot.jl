@@ -6,6 +6,7 @@ function diagram_plot()
 
     dcc_graph(
                 id          = "phase-diagram",
+                # clickData   =["click"],
                 figure      = fig,
             )
 end
