@@ -3,7 +3,8 @@ using Dash
 using DashBootstrapComponents
 using PlotlyJS, JSON3, Printf, Statistics, DataFrames, CSV, Dates, Base64
 using UUIDs, Delaunay
-using Interpolations
+# using ScatteredInterpolation
+using GeometricalPredicates
 
 # this activate the wrapper of MAGEMin dev branch
 # using Pkg
@@ -15,14 +16,11 @@ using MAGEMin_C
 
 include("initialize_MAGEMin_AMR.jl")
 include("appData.jl")
-include("colormaps.jl")
 include("Tab_Simulation.jl")
 include("Tab_PhaseDiagram.jl")
 include("data_plot.jl")
 include("functions.jl")
 
-# read available colormaps
-colormaps   = read_colormaps()  # colormaps
 app         = dash(external_stylesheets = [dbc_themes.BOOTSTRAP], prevent_initial_callbacks=false)
 app.title   = "MAGEMin app"
 app.layout  = html_div() do

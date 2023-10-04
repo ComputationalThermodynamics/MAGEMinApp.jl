@@ -2,10 +2,11 @@
 callback!(
     app,
     Output("phase-diagram","figure"),
+    Output("show-grid","value"),
     Input("compute-button","n_clicks"),
     Input("colormaps_cross","value"),
     Input("fields-dropdown","value"),
-    Input("hide-grid","value"),              # show edges checkbox
+    Input("show-grid","value"),                 # show edges checkbox
 
     State("diagram-dropdown","value"),          # pt,px,tx
     State("database-dropdown","value"),         # mp,mb,ig,igd,um,alk
@@ -55,16 +56,16 @@ callback!(
     if diagType == "pt"
         xtitle = "Temperature [Celsius]"
         ytitle = "Pressure [kbar]"
-        Xrange          = (tmin,tmax)
-        Yrange          = (pmin,pmax)
+        Xrange          = (Float64(tmin),Float64(tmax))
+        Yrange          = (Float64(pmin),Float64(pmax))
     elseif diagType == "px"
-        Xrange          = (0.0,1.0)
-        Yrange          = (pmin,pmax)
+        Xrange          = (Float64(0.0),Float64(1.0))
+        Yrange          = (Float64(pmin),Float64(pmax))
         xtitle = "Composition [X0 -> X1]"
         ytitle = "Pressure [kbar]"
     else # diagType == "tx"
-        Xrange          = (0.0,1.0) 
-        Yrange          = (tmin,tmax)
+        Xrange          = (Float64(0.0),Float64(1.0) )
+        Yrange          = (Float64(tmin),Float64(tmax))
         xtitle = "Composition [X0 -> X1]"
         ytitle = "Temperature [Celsius]"
     end
@@ -153,89 +154,78 @@ callback!(
         #________________________________________________________________________________________#                   
         # Scatter plotly of the grid
 
-        global field, idx, data_plot;
+        global field, data_plot, gridded, X, Y;
 
         np          = length(data.x)
         len_ox      = length(oxi)
         field       = Vector{Float64}(undef,np);
-        idx         = Vector{Int64}(undef,length(field));
+
         for i=1:np
             field[i] = Float64(len_ox - n_phase_XY[i] + 2);
         end
 
-        idx         = ((field.-minimum(field))./(maximum(field).-minimum(field)).*255.0).+ 1.0;
-        idx         = [floor(Int,x) for x in idx];
-        data_plot   = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, length(data.x));
+        gridded, X, Y = get_gridded_map(    field,
+                                            sub,
+                                            refLvl,
+                                            data.xc,
+                                            data.yc,
+                                            data.x,
+                                            data.y,
+                                            Xrange,
+                                            Yrange )
 
         layout = Layout(
                     title=attr(
-                        text = db[(db.db .== dtb), :].title[test+1],
-                        x=0.5,
-                        xanchor= "center",
-                        yanchor= "top"
+                        text    = db[(db.db .== dtb), :].title[test+1],
+                        x       = 0.5,
+                        xanchor = "center",
+                        yanchor = "top"
                     ),
 
                     xaxis_title = xtitle,
                     yaxis_title = ytitle,
-                    yaxis_range = [Yrange...],
-                    xaxis_range = [Xrange...],
-                    xaxis_showgrid=false, yaxis_showgrid=false,
                     width       = 800,
                     height      = 800
                 )
 
-        for i = 1:length(data.x)
-                data_plot[i] = scatter( x           = data.x[i],
-                                        y           = data.y[i],
-                                        mode        = "lines",
-                                        fill        = "toself",
-                                        fillcolor   = colormaps[:roma][idx[i]][2],
-                                        line_color  = "#000000",
-                                        line_width  = 1,
 
-                # customize what is shown upon hover:
-                text        = "Stable phases $(Out_XY[i].ph) ",
-                hoverinfo   = "text",
-                showlegend  = false     )
-        end
+        data_plot = heatmap(x               = X,
+                            y               = Y,
+                            z               = gridded,
+                            type            = "heatmap",
+                            colorscale      = colorm,
+                            colorbar_title  = fieldname     )
 
-        fig = plot(data_plot,layout)
+        fig         = plot(data_plot,layout)
+        grid_out    = [""]
 
-    #if we want to modify the colomap
+    # if we want to modify the colomap
     elseif bid == "colormaps_cross"
 
         layout = Layout(
                     title=attr(
-                        text = db[(db.db .== dtb), :].title[test+1],
-                        x=0.5,
-                        xanchor= "center",
-                        yanchor= "top"
+                        text    = db[(db.db .== dtb), :].title[test+1],
+                        x       = 0.5,
+                        xanchor = "center",
+                        yanchor = "top"
                     ),
 
                     xaxis_title = xtitle,
                     yaxis_title = ytitle,
-                    yaxis_range = [Yrange...],
-                    xaxis_range = [Xrange...],
-                    xaxis_showgrid=false, yaxis_showgrid=false,
                     width       = 800,
                     height      = 800
                 )
 
-        for i = 1:length(data.x)
-                data_plot[i] = scatter( x           = data.x[i],
-                                        y           = data.y[i],
-                                        mode        = "lines",
-                                        fill        = "toself",
-                                        fillcolor   = colormaps[Symbol(colorm)][idx[i]][2],
-                                        line_color  = "#000000",
-                                        line_width  = 1,
 
-                # customize what is shown upon hover:
-                text        = "Stable phases $(Out_XY[i].ph) ",
-                hoverinfo   = "text",
-                showlegend  = false     )
-        end
-        fig = plot(data_plot,layout)
+        data_plot = heatmap(x               =  X,
+                            y               =  Y,
+                            z               =  gridded,
+                            type            = "heatmap",
+                            colorscale      =  colorm,
+                            colorbar_title  =  fieldname     )
+
+        fig         = plot(data_plot,layout)
+        grid_out    = [""]
     elseif bid == "fields-dropdown"
 
         np          = length(data.x)
@@ -255,120 +245,118 @@ callback!(
             end
         end
 
-        # idx         = Vector{Int64}(undef,length(field));
-        idx         = ((field.-minimum(field))./(maximum(field).-minimum(field)).*255.0).+ 1.0;
-        idx         = [floor(Int,x) for x in idx];
-        data_plot   = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, length(data.x));
+        gridded, X, Y = get_gridded_map(    field,
+                                            sub,
+                                            refLvl,
+                                            data.xc,
+                                            data.yc,
+                                            data.x,
+                                            data.y,
+                                            Xrange,
+                                            Yrange )
 
         layout = Layout(
                     title=attr(
-                        text = db[(db.db .== dtb), :].title[test+1],
-                        x=0.5,
-                        xanchor= "center",
-                        yanchor= "top"
+                        text    = db[(db.db .== dtb), :].title[test+1],
+                        x       = 0.5,
+                        xanchor = "center",
+                        yanchor = "top"
                     ),
 
-                    xaxis_title     = xtitle,
-                    yaxis_title     = ytitle,
-                    yaxis_range     = [Yrange...],
-                    xaxis_range     = [Xrange...],
-                    xaxis_showgrid  = false, 
-                    yaxis_showgrid  = false,
-                    width           = 800,
-                    height          = 800
+                    xaxis_title = xtitle,
+                    yaxis_title = ytitle,
+                    width       = 800,
+                    height      = 800
                 )
 
-        for i = 1:length(data.x)
-                data_plot[i] = scatter( x           = data.x[i],
-                                        y           = data.y[i],
-                                        mode        = "lines",
-                                        fill        = "toself",
-                                        fillcolor   = colormaps[Symbol(colorm)][idx[i]][2],
-                                        line_color  = "#000000",
-                                        line_width  = 1,
 
-                # customize what is shown upon hover:
-                text        = "Stable phases $(Out_XY[i].ph) ",
-                hoverinfo   = "text",
-                showlegend  = false     )
-        end
-        fig = plot(data_plot,layout)
-    elseif bid == "hide-grid"
+        data_plot = heatmap(x               = X,
+                            y               = Y,
+                            z               = gridded,
+                            type            = "heatmap",
+                            colorscale      = colorm,
+                            colorbar_title  = fieldname    )
 
-        if length(grid) == 1
-            layout = Layout(
-                title=attr(
-                    text = db[(db.db .== dtb), :].title[test+1],
-                    x=0.5,
-                    xanchor= "center",
-                    yanchor= "top"
-                ),
+        fig         = plot(data_plot,layout)
+        grid_out    = [""]
+    # elseif bid == "show-grid"
 
-                xaxis_title     = xtitle,
-                yaxis_title     = ytitle,
-                yaxis_range     = [Yrange...],
-                xaxis_range     = [Xrange...],
-                xaxis_showgrid  = false, 
-                yaxis_showgrid  = false,
-                width           = 800,
-                height          = 800
-            )
+    #     if length(grid) == 2
+    #         layout = Layout(
+    #             title=attr(
+    #                 text        = db[(db.db .== dtb), :].title[test+1],
+    #                 x           = 0.5,
+    #                 xanchor     = "center",
+    #                 yanchor     = "top"
+    #             ),
 
-            for i = 1:length(data.x)
-                    data_plot[i] = scatter( x           = data.x[i],
-                                            y           = data.y[i],
-                                            mode        = "lines",
-                                            fill        = "toself",
-                                            fillcolor   = colormaps[Symbol(colorm)][idx[i]][2],
-                                            line_color  = "#000000",
-                                            line_width  = 1,
+    #             xaxis_title     = xtitle,
+    #             yaxis_title     = ytitle,
+    #             yaxis_range     = [Yrange...],
+    #             xaxis_range     = [Xrange...],
+    #             xaxis_showgrid  = false, 
+    #             yaxis_showgrid  = false,
+    #             width           = 800,
+    #             height          = 800
+    #         )
 
-                    # customize what is shown upon hover:
-                    text        = "Stable phases $(Out_XY[i].ph) ",
-                    hoverinfo   = "text",
-                    showlegend  = false     )
-            end
-            fig = plot(data_plot,layout)
-        else
-            layout = Layout(
-                title=attr(
-                    text = db[(db.db .== dtb), :].title[test+1],
-                    x=0.5,
-                    xanchor= "center",
-                    yanchor= "top"
-                ),
+    #         for i = 1:length(data.x)
+    #                 data_plot[i] = scatter( x           = data.x[i],
+    #                                         y           = data.y[i],
+    #                                         mode        = "lines",
+    #                                         fill        = "toself",
+    #                                         fillcolor   = colormaps[Symbol(colorm)][idx[i]][2],
+    #                                         line_color  = "#000000",
+    #                                         line_width  = 1,
 
-                xaxis_title     = xtitle,
-                yaxis_title     = ytitle,
-                yaxis_range     = [Yrange...],
-                xaxis_range     = [Xrange...],
-                xaxis_showgrid  = false, 
-                yaxis_showgrid  = false,
-                width           = 800,
-                height          = 800
-            )
+    #                 # customize what is shown upon hover:
+    #                 text        = "Stable phases $(Out_XY[i].ph) ",
+    #                 hoverinfo   = "text",
+    #                 showlegend  = false     )
+    #         end
+    #         fig         = plot(data_plot,layout)
+    #         grid_out = ["", "NOGRID"]
+    #     else
+    #         layout = Layout(
+    #             title=attr(
+    #                 text        = db[(db.db .== dtb), :].title[test+1],
+    #                 x           = 0.5,
+    #                 xanchor     = "center",
+    #                 yanchor     = "top"
+    #             ),
 
-            for i = 1:length(data.x)
-                    data_plot[i] = scatter( x           = data.x[i],
-                                            y           = data.y[i],
-                                            mode        = "lines",
-                                            fill        = "toself",
-                                            fillcolor   = colormaps[Symbol(colorm)][idx[i]][2],
-                                            line_color  = colormaps[Symbol(colorm)][idx[i]][2],
-                                            line_width  = 2,
+    #             xaxis_title     = xtitle,
+    #             yaxis_title     = ytitle,
+    #             yaxis_range     = [Yrange...],
+    #             xaxis_range     = [Xrange...],
+    #             xaxis_showgrid  = false, 
+    #             yaxis_showgrid  = false,
+    #             width           = 800,
+    #             height          = 800
+    #         )
 
-                    # customize what is shown upon hover:
-                    text        = "Stable phases $(Out_XY[i].ph) ",
-                    hoverinfo   = "text",
-                    showlegend  = false     )
-            end
-            fig = plot(data_plot,layout)
-        end
+    #         for i = 1:length(data.x)
+    #                 data_plot[i] = scatter( x           = data.x[i],
+    #                                         y           = data.y[i],
+    #                                         mode        = "lines",
+    #                                         fill        = "toself",
+    #                                         fillcolor   = colormaps[Symbol(colorm)][idx[i]][2],
+    #                                         line_color  = colormaps[Symbol(colorm)][idx[i]][2],
+    #                                         line_width  = 2,
+
+    #                 # customize what is shown upon hover:
+    #                 text        = "Stable phases $(Out_XY[i].ph) ",
+    #                 hoverinfo   = "text",
+    #                 showlegend  = false     )
+    #         end
+    #         fig         = plot(data_plot,layout)
+    #         grid_out    = [""]
+    #     end
     else
         fig = plot()
     end
 
-    return fig        
+    return fig, grid_out      
 end
 
 

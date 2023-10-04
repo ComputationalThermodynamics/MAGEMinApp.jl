@@ -165,7 +165,7 @@ function Tab_Simulation()
                                                         type    = "number", 
                                                         min     = 0.0, 
                                                         max     = 2000.0,
-                                                        value   = 1200.0   ),
+                                                        value   = 1400.0   ),
                                                 ]),
                                             ]),
                                         ]),
@@ -239,24 +239,17 @@ function Tab_Simulation()
                                         ]),
                                     ]),
                                     #refinement levels 
+                                    html_div("‎ "), 
                                     dbc_row([
                                         dbc_col([ 
                                             html_h1("Refinement levels", style = Dict("textAlign" => "center","font-size" => "120%")),
                                         ]),
                                         dbc_col([ 
-                                            dcc_dropdown(   id      = "refinement-levels",
-                                            options = [
-                                                (label = "2",         value = 2),
-                                                (label = "3",         value = 3),
-                                                (label = "4",         value = 4),
-                                                (label = "5",         value = 5),
-                                                (label = "6",         value = 6),
-                                                (label = "7",         value = 7),
-                                                (label = "8",         value = 8),
-                                            ],
-                                            value=2, 
-                                            clearable   = false,
-                                            multi   = false),
+                                            dbc_input(
+                                                id      = "refinement-levels",
+                                                type    = "number", 
+                                                min     = 1,  
+                                                value   = 2   ),
                                         ]),
                                     ]),
                                     html_div("‎ "), 

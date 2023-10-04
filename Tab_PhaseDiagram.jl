@@ -16,9 +16,9 @@ function Tab_PhaseDiagram()
                                     ], width=6),
                                     dbc_col([ 
                                         dcc_checklist(
-                                            id      ="hide-grid",
+                                            id      ="show-grid",
                                             options = [
-                                                Dict("label" => " Hide grid", "value" => "GRID"),
+                                                Dict("label" => " Show grid", "value" => "NOGRID"),
                                             ],
                                             value   = [""],
                                             inline  = true,
@@ -63,8 +63,8 @@ function Tab_PhaseDiagram()
                                         ], width=6),
                                         dbc_col([
                                             dcc_dropdown(   id          = "colormaps_cross",
-                                                            options     = [String.(keys(colormaps))...],
-                                                            value       = "roma",
+                                                            options     = ["Plotly3","Viridis","Cividis","Blackbody","Bluered","Electric","Hot","Jet","Rainbow"],
+                                                            value       = "Viridis",
                                                             clearable   = false,
                                                             placeholder = "Colormap")
                                         ]), 

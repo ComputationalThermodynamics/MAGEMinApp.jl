@@ -1,4 +1,43 @@
 """
+    Function interpolate AMR grid to regular grid
+"""
+function get_gridded_map(   field::Vector{Float64},
+                            sub::Int64,
+                            refLvl::Int64,
+                            xc::Vector{Float64},
+                            yc::Vector{Float64},
+                            xf::Vector{SVector{4, Float64}},
+                            yf::Vector{SVector{4, Float64}},
+                            Xrange::Tuple{Float64, Float64},
+                            Yrange::Tuple{Float64, Float64} )
+
+    n           = 2^(sub + refLvl)
+    x           = range(minimum(xc), stop = maximum(xc), length = n)
+    y           = range(minimum(yc), stop = maximum(yc), length = n)
+
+    X           = repeat(x , n)[:]
+    Y           = repeat(y', n)[:]
+    gridded     = zeros(n,n)
+
+
+    Xr = (Xrange[2]-Xrange[1])/n
+    Yr = (Yrange[2]-Yrange[1])/n
+
+    for k=1:length(field)
+        for i=xf[k][1]+Xr/2 :Xr: xf[k][3]
+            for j=yf[k][1]+Yr/2 :Yr: yf[k][3]
+                ii = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
+                jj = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
+                gridded[ii,jj] = field[k]
+            end
+        end
+    end
+
+    return gridded, X, Y
+end
+
+
+"""
     Function to extract values from structure using structure's member name
 """
 function get_property(x, name::String)
