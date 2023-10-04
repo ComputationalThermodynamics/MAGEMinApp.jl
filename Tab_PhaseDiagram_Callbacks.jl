@@ -41,7 +41,7 @@ callback!(
 
     prevent_initial_call = true,
 
-) do    n_clicks_mesh, colorm,  fieldname, grid,
+) do    n_clicks_mesh, colorm,  fieldname,      grid,
         diagType,   dtb,        cpx,    limOpx, limOpxVal,
         tmin,       tmax,       pmin,   pmax,
         fixT,       fixP,
@@ -81,13 +81,22 @@ callback!(
 
     # if we compute a new phase diagram
     if bid == "compute-button"
+
         n_ox    = length(bulk1);
         bulk_L  = zeros(n_ox); 
         bulk_R  = zeros(n_ox);
         oxi     = Vector{String}(undef, n_ox)
         for i=1:n_ox
-            bulk_L[i]   = bulk1[i][:mol_fraction];
-            bulk_R[i]   = bulk2[i][:mol_fraction];
+            tmp = bulk1[i][:mol_fraction]
+            if typeof(tmp) == String
+                tmp = parse(Float64,tmp)
+            end
+            tmp2 = bulk2[i][:mol_fraction]
+            if typeof(tmp2) == String
+                tmp2 = parse(Float64,tmp2)
+            end
+            bulk_L[i]   = tmp;
+            bulk_R[i]   = tmp2;
             oxi[i]      = bulk1[i][:oxide];
         end
         #________________________________________________________________________________________#

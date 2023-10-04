@@ -3,8 +3,6 @@ using Dash
 using DashBootstrapComponents
 using PlotlyJS, JSON3, Printf, Statistics, DataFrames, CSV, Dates, Base64
 using UUIDs, Delaunay
-# using ScatteredInterpolation
-using GeometricalPredicates
 
 # this activate the wrapper of MAGEMin dev branch
 # using Pkg
@@ -12,7 +10,6 @@ using GeometricalPredicates
 # Pkg.activate(MAGEMin_dir)
 # Pkg.instantiate()
 using MAGEMin_C
-
 
 include("initialize_MAGEMin_AMR.jl")
 include("appData.jl")
