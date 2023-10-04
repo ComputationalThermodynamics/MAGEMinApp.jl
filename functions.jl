@@ -24,8 +24,8 @@ function get_gridded_map(   field::Vector{Float64},
     Yr = (Yrange[2]-Yrange[1])/n
 
     for k=1:length(field)
-        for i=xf[k][1]+Xr/2 :Xr: xf[k][3]
-            for j=yf[k][1]+Yr/2 :Yr: yf[k][3]
+        for i=xf[k][1]+Xr/2 : Xr : xf[k][3]
+            for j=yf[k][1]+Yr/2 : Yr : yf[k][3]
                 ii = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
                 jj = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
                 gridded[ii,jj] = field[k]

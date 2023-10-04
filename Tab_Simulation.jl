@@ -519,7 +519,7 @@ function Tab_Simulation()
                                                         id      = "Filename-id",
                                                         type    = "text", 
                                                         style   = Dict("textAlign" => "center") ,
-                                                        value   = " ... "   ),            
+                                                        value   = "..."   ),            
                                                 ]),
                                             ]),
                                             # load save buttons
@@ -533,8 +533,9 @@ function Tab_Simulation()
                                                 ]),
                                                 dbc_col([ 
                                                     dbc_button(
-                                                        "Save", id="Save-button", color="light",  n_clicks=0,
+                                                        "Save", id="save-button", color="light",  n_clicks=0,
                                                     ),
+                                                    html_div(id="data-save"),
                                                 ]),
                                             ]),
 

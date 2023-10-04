@@ -138,6 +138,8 @@ callback!(
         #________________________________________________________________________________________#     
         # Refine the mesh along phase boundaries
         global forest, data, Hash_XY, Out_XY, n_phase_XY
+        global field, data_plot, gridded, X, Y
+
         for irefine = 1:refLvl
             # global forest, data, Hash_XY, Out_XY, n_phase_XY
 
@@ -158,12 +160,13 @@ callback!(
             println("Computed $(length(ind_map.<0)) new points in $t seconds")
             data    = data_new
             forest  = forest_new
+            
         end
+
+        push!(AppData.PseudosectionData,Out_XY);
 
         #________________________________________________________________________________________#                   
         # Scatter plotly of the grid
-
-        global field, data_plot, gridded, X, Y;
 
         np          = length(data.x)
         len_ox      = length(oxi)
@@ -240,11 +243,11 @@ callback!(
         np          = length(data.x)
         len_ox      = length(bulk1);
 
-        if fieldname == "nsp"
+        if fieldname == "#Stable_Phases"
             for i=1:np
                 field[i] = Float64(length(Out_XY[i].ph));
             end
-        elseif fieldname == "nvar"
+        elseif fieldname == "Variance"
             for i=1:np
                 field[i] = Float64(len_ox - n_phase_XY[i] + 2.0);
             end
@@ -288,79 +291,55 @@ callback!(
 
         fig         = plot(data_plot,layout)
         grid_out    = [""]
-    # elseif bid == "show-grid"
+    elseif bid == "show-grid"
+        layout = Layout(
+            title=attr(
+                text    = db[(db.db .== dtb), :].title[test+1],
+                x       = 0.5,
+                xanchor = "center",
+                yanchor = "top"
+            ),
 
-    #     if length(grid) == 2
-    #         layout = Layout(
-    #             title=attr(
-    #                 text        = db[(db.db .== dtb), :].title[test+1],
-    #                 x           = 0.5,
-    #                 xanchor     = "center",
-    #                 yanchor     = "top"
-    #             ),
+            xaxis_title = xtitle,
+            yaxis_title = ytitle,
+            width       = 800,
+            height      = 800
+        )
+        if length(grid) == 2
+            data_plot_grid      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, length(data.x)+1);
+            for i = 1:length(data.x)
+                data_plot_grid[i] = scatter(x           = data.x[i],
+                                            y           = data.y[i],
+                                            mode        = "lines",
+                                            line_color  = "#000000",
+                                            line_width  = 1,
 
-    #             xaxis_title     = xtitle,
-    #             yaxis_title     = ytitle,
-    #             yaxis_range     = [Yrange...],
-    #             xaxis_range     = [Xrange...],
-    #             xaxis_showgrid  = false, 
-    #             yaxis_showgrid  = false,
-    #             width           = 800,
-    #             height          = 800
-    #         )
+                    # customize what is shown upon hover:
+                    # text        = "Stable phases $(Out_XY[i].ph) ",
+                    # hoverinfo   = "text",
+                    showlegend  = false     )
+            end
 
-    #         for i = 1:length(data.x)
-    #                 data_plot[i] = scatter( x           = data.x[i],
-    #                                         y           = data.y[i],
-    #                                         mode        = "lines",
-    #                                         fill        = "toself",
-    #                                         fillcolor   = colormaps[Symbol(colorm)][idx[i]][2],
-    #                                         line_color  = "#000000",
-    #                                         line_width  = 1,
+            data_plot_grid[length(data.x)+1] = heatmap( x               = X,
+                                                        y               = Y,
+                                                        z               = gridded,
+                                                        type            = "heatmap",
+                                                        colorscale      = colorm,
+                                                        colorbar_title  = fieldname    )
 
-    #                 # customize what is shown upon hover:
-    #                 text        = "Stable phases $(Out_XY[i].ph) ",
-    #                 hoverinfo   = "text",
-    #                 showlegend  = false     )
-    #         end
-    #         fig         = plot(data_plot,layout)
-    #         grid_out = ["", "NOGRID"]
-    #     else
-    #         layout = Layout(
-    #             title=attr(
-    #                 text        = db[(db.db .== dtb), :].title[test+1],
-    #                 x           = 0.5,
-    #                 xanchor     = "center",
-    #                 yanchor     = "top"
-    #             ),
+            fig         = plot(data_plot_grid,layout)
+            grid_out    = ["","GRID"]
+        else
+            data_plot = heatmap(x               = X,
+                                y               = Y,
+                                z               = gridded,
+                                type            = "heatmap",
+                                colorscale      = colorm,
+                                colorbar_title  = fieldname    )
 
-    #             xaxis_title     = xtitle,
-    #             yaxis_title     = ytitle,
-    #             yaxis_range     = [Yrange...],
-    #             xaxis_range     = [Xrange...],
-    #             xaxis_showgrid  = false, 
-    #             yaxis_showgrid  = false,
-    #             width           = 800,
-    #             height          = 800
-    #         )
-
-    #         for i = 1:length(data.x)
-    #                 data_plot[i] = scatter( x           = data.x[i],
-    #                                         y           = data.y[i],
-    #                                         mode        = "lines",
-    #                                         fill        = "toself",
-    #                                         fillcolor   = colormaps[Symbol(colorm)][idx[i]][2],
-    #                                         line_color  = colormaps[Symbol(colorm)][idx[i]][2],
-    #                                         line_width  = 2,
-
-    #                 # customize what is shown upon hover:
-    #                 text        = "Stable phases $(Out_XY[i].ph) ",
-    #                 hoverinfo   = "text",
-    #                 showlegend  = false     )
-    #         end
-    #         fig         = plot(data_plot,layout)
-    #         grid_out    = [""]
-    #     end
+            fig         = plot(data_plot,layout)
+            grid_out    = [""]
+        end
     else
         fig = plot()
     end

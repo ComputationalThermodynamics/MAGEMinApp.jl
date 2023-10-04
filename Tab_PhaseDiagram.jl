@@ -18,7 +18,7 @@ function Tab_PhaseDiagram()
                                         dcc_checklist(
                                             id      ="show-grid",
                                             options = [
-                                                Dict("label" => " Show grid", "value" => "NOGRID"),
+                                                Dict("label" => " Show grid", "value" => "GRID"),
                                             ],
                                             value   = [""],
                                             inline  = true,
@@ -33,8 +33,8 @@ function Tab_PhaseDiagram()
                                     dbc_col([
                                         dcc_dropdown(   id      = "fields-dropdown",
                                                         options = [
-                                                            (label = "Variance",                value = "nvar"),
-                                                            (label = "Number of stable phases", value = "nsp"),
+                                                            (label = "Variance",                value = "Variance"),
+                                                            (label = "Number of stable phases", value = "#Stable_Phases"),
                                                             (label = "G system",                value = "G_system"),
                                                             (label = "Entropy",                 value = "entropy"),
                                                             (label = "Enthalpy",                value = "enthalpy"),
@@ -51,7 +51,7 @@ function Tab_PhaseDiagram()
                                                             (label = "Status",                  value = "status"),
 
                                                         ],
-                                                        value="nvar" ,
+                                                        value="Variance" ,
                                                         clearable   = false,
                                                         multi   = false),
                                     ]), 
@@ -63,7 +63,7 @@ function Tab_PhaseDiagram()
                                         ], width=6),
                                         dbc_col([
                                             dcc_dropdown(   id          = "colormaps_cross",
-                                                            options     = ["Plotly3","Viridis","Cividis","Blackbody","Bluered","Electric","Hot","Jet","Rainbow"],
+                                                            options     = ["Blackbody","Bluered","Blues","Cividis","Electric","Greens","Greys","Hot","Jet","Picnic","Portland","Rainbow","RdBu","Reds","Viridis","YlGnBu","YlOrRd"],
                                                             value       = "Viridis",
                                                             clearable   = false,
                                                             placeholder = "Colormap")
