@@ -1,15 +1,41 @@
 """
     Function interpolate AMR grid to regular grid
 """
-function get_gridded_map(   field::Vector{Float64},
-                            sub::Int64,
-                            refLvl::Int64,
-                            xc::Vector{Float64},
-                            yc::Vector{Float64},
-                            xf::Vector{SVector{4, Float64}},
-                            yf::Vector{SVector{4, Float64}},
-                            Xrange::Tuple{Float64, Float64},
-                            Yrange::Tuple{Float64, Float64} )
+function get_gridded_map(   fieldname   ::String,
+                            oxi         ::Vector{String},
+                            Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
+                            sub         ::Int64,
+                            refLvl      ::Int64,
+                            xc          ::Vector{Float64},
+                            yc          ::Vector{Float64},
+                            xf          ::Vector{SVector{4, Float64}},
+                            yf          ::Vector{SVector{4, Float64}},
+                            Xrange      ::Tuple{Float64, Float64},
+                            Yrange      ::Tuple{Float64, Float64} )
+
+    np          = length(data.x)
+    len_ox      = length(oxi)
+    field       = Vector{Union{Float64,Missing}}(undef,np);
+    npoints     = np
+
+    if fieldname == "#Stable_Phases"
+        for i=1:np
+            field[i] = Float64(length(Out_XY[i].ph));
+        end
+    elseif fieldname == "Variance"
+        for i=1:np
+            field[i] = Float64(len_ox - n_phase_XY[i] + 2.0);
+        end
+    else
+        for i=1:np
+            field[i] = Float64(get_property(Out_XY[i], fieldname));
+        end
+
+        field[isnan.(field)] .= missing
+        if fieldname == "frac_M" || fieldname == "rho_M" || fieldname == "rho_S"
+            field[isless.(field, 1e-8)] .= missing              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
+        end
+    end
 
     n           = 2^(sub + refLvl)
     x           = range(minimum(xc), stop = maximum(xc), length = n)
@@ -17,23 +43,25 @@ function get_gridded_map(   field::Vector{Float64},
 
     X           = repeat(x , n)[:]
     Y           = repeat(y', n)[:]
-    gridded     = zeros(n,n)
+    gridded     = Matrix{Union{Float64,Missing}}(undef,n,n);
+    gridded_info= fill("",n,n)
 
 
     Xr = (Xrange[2]-Xrange[1])/n
     Yr = (Yrange[2]-Yrange[1])/n
 
-    for k=1:length(field)
+    for k=1:np
         for i=xf[k][1]+Xr/2 : Xr : xf[k][3]
             for j=yf[k][1]+Yr/2 : Yr : yf[k][3]
                 ii = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
                 jj = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
                 gridded[ii,jj] = field[k]
+                gridded_info[ii,jj] = replace.(string(Out_XY[k].ph),r"\""=>"")
             end
         end
     end
 
-    return gridded, X, Y
+    return gridded, gridded_info, X, Y, npoints
 end
 
 
@@ -45,6 +73,31 @@ function get_property(x, name::String)
     return getproperty(x, s)
 end
 
+
+"""
+    Function to send back the oxide list of the implemented database
+"""
+function get_oxide_list(dbin::String)
+
+    if dbin == "ig"
+	    MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"; "H2O"];
+    elseif dbin == "igd"
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"; "H2O"];      
+    elseif dbin == "alk"
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"; "H2O"];    
+    elseif dbin == "mb"
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "H2O"];     
+    elseif dbin == "um"
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "MgO" ;"FeO"; "O"; "H2O"; "S"];
+    elseif dbin == "mp"
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "MnO"; "H2O"];
+    else
+        print("Database not implemented...\n")
+    end
+
+
+    return MAGEMin_ox
+end
 
 """
     function to parce bulk-rock composition file
@@ -83,7 +136,8 @@ function bulk_file_to_db(datain)
         frac 		= replace.(frac,r"\]"=>"",r"\["=>"");
         frac 		= parse.(Float64,frac);
 
-        bulk, oxide   = convertBulk4MAGEMin(frac,oxide,String(sysUnit),String(dbin)) 
+        bulkrock    = convertBulk4MAGEMin(frac,oxide,String(sysUnit),String(dbin)) 
+        oxide       = get_oxide_list(String(dbin))
 
         push!(db,Dict(  :bulk       => bulk,
                         :title      => title,
@@ -92,7 +146,7 @@ function bulk_file_to_db(datain)
                         :test       => test,
                         :sysUnit    => sysUnit,
                         :oxide      => oxide,
-                        :frac       => frac,
+                        :frac       => bulkrock,
                     ), cols=:union)
     end
 
@@ -113,7 +167,7 @@ function parse_bulk_rock(contents, filename)
         ], style = Dict("textAlign" => "center","font-size" => "100%"))
     catch e
         return html_div([
-            "Wrong file format"
+            "Wrong file format: $e"
         ], style = Dict("textAlign" => "center","font-size" => "100%"))
     end
 

@@ -3,11 +3,16 @@ callback!(
     app,
     Output("phase-diagram","figure"),
     Output("show-grid","value"),
+    Output("npoints-id","value"),
+
     Input("compute-button","n_clicks"),
+    Input("refine-pb-button","n_clicks"),
+
     Input("colormaps_cross","value"),
     Input("fields-dropdown","value"),
     Input("show-grid","value"),                 # show edges checkbox
 
+    State("npoints-id","value"),               # total number of computed points
     State("diagram-dropdown","value"),          # pt,px,tx
     State("database-dropdown","value"),         # mp,mb,ig,igd,um,alk
     State("mb-cpx-switch","value"),             # false,true -> 0,1
@@ -41,8 +46,9 @@ callback!(
 
     prevent_initial_call = true,
 
-) do    n_clicks_mesh, colorm,  fieldname,      grid,
-        diagType,   dtb,        cpx,    limOpx, limOpxVal,
+) do    n_clicks_mesh, n_clicks_refine, 
+        colorm,     fieldname,  grid,
+        npoints,    diagType,   dtb,        cpx,    limOpx, limOpxVal,
         tmin,       tmax,       pmin,   pmax,
         fixT,       fixP,
         sub,        refType,    refLvl,
@@ -79,26 +85,31 @@ callback!(
         bid = split(ctx.triggered[1].prop_id, ".")[1]
     end
 
+    n_ox    = length(bulk1);
+    bulk_L  = zeros(n_ox); 
+    bulk_R  = zeros(n_ox);
+    oxi     = Vector{String}(undef, n_ox)
+    for i=1:n_ox
+        tmp = bulk1[i][:mol_fraction]
+        if typeof(tmp) == String
+            tmp = parse(Float64,tmp)
+        end
+        tmp2 = bulk2[i][:mol_fraction]
+        if typeof(tmp2) == String
+            tmp2 = parse(Float64,tmp2)
+        end
+        bulk_L[i]   = tmp;
+        bulk_R[i]   = tmp2;
+        oxi[i]      = bulk1[i][:oxide];
+    end
+
+
     # if we compute a new phase diagram
     if bid == "compute-button"
 
-        n_ox    = length(bulk1);
-        bulk_L  = zeros(n_ox); 
-        bulk_R  = zeros(n_ox);
-        oxi     = Vector{String}(undef, n_ox)
-        for i=1:n_ox
-            tmp = bulk1[i][:mol_fraction]
-            if typeof(tmp) == String
-                tmp = parse(Float64,tmp)
-            end
-            tmp2 = bulk2[i][:mol_fraction]
-            if typeof(tmp2) == String
-                tmp2 = parse(Float64,tmp2)
-            end
-            bulk_L[i]   = tmp;
-            bulk_R[i]   = tmp2;
-            oxi[i]      = bulk1[i][:oxide];
-        end
+        empty!(AppData.PseudosectionData);              #this empty the data from previous pseudosection computation
+
+
         #________________________________________________________________________________________#
         # Create coarse mesh
         cmesh           = t8_cmesh_quad_2d(COMM, Xrange, Yrange)
@@ -110,6 +121,8 @@ callback!(
 
         #________________________________________________________________________________________#
         # initialize database
+        global MAGEMin_data
+        global addedRefinementLvl  = 0;
         MAGEMin_data    =   Initialize_MAGEMin(dtb, verbose=false);
     
         nt = length(MAGEMin_data.gv);
@@ -117,7 +130,7 @@ callback!(
             if cpx == true && dtb =="mb"
                 MAGEMin_data.gv[i].mbCpx = 1;
             end
-            if limOpx == "CAOPX" && (db =="mb" || db =="ig" || db =="igd" || db =="alk")
+            if limOpx == "CAOPX" && (dtb =="mb" || dtb =="ig" || dtb =="igd" || dtb =="alk")
                 MAGEMin_data.gv[i].limitCaOpx   = 1;
                 MAGEMin_data.gv[i].CaOpxLim     = limOpxVal;
             end
@@ -138,7 +151,7 @@ callback!(
         #________________________________________________________________________________________#     
         # Refine the mesh along phase boundaries
         global forest, data, Hash_XY, Out_XY, n_phase_XY
-        global field, data_plot, gridded, X, Y
+        global field, data_plot, gridded, gridded_info, X, Y
 
         for irefine = 1:refLvl
             # global forest, data, Hash_XY, Out_XY, n_phase_XY
@@ -155,7 +168,7 @@ callback!(
                                                                         bulk_R,
                                                                         ind_map         = ind_map,
                                                                         Out_XY_old      = Out_XY,
-                                                                        n_phase_XY_old  = n_phase_XY) # recompute points that have not been computed before
+                                                                        n_phase_XY_old  = n_phase_XY    ) # recompute points that have not been computed before
 
             println("Computed $(length(ind_map.<0)) new points in $t seconds")
             data    = data_new
@@ -168,23 +181,18 @@ callback!(
         #________________________________________________________________________________________#                   
         # Scatter plotly of the grid
 
-        np          = length(data.x)
-        len_ox      = length(oxi)
-        field       = Vector{Float64}(undef,np);
+        gridded, gridded_info, X, Y, npoints = get_gridded_map(     fieldname,
+                                                                    oxi,
+                                                                    Out_XY,
+                                                                    sub,
+                                                                    refLvl,
+                                                                    data.xc,
+                                                                    data.yc,
+                                                                    data.x,
+                                                                    data.y,
+                                                                    Xrange,
+                                                                    Yrange )
 
-        for i=1:np
-            field[i] = Float64(len_ox - n_phase_XY[i] + 2);
-        end
-
-        gridded, X, Y = get_gridded_map(    field,
-                                            sub,
-                                            refLvl,
-                                            data.xc,
-                                            data.yc,
-                                            data.x,
-                                            data.y,
-                                            Xrange,
-                                            Yrange )
 
         layout = Layout(
                     title=attr(
@@ -193,7 +201,8 @@ callback!(
                         xanchor = "center",
                         yanchor = "top"
                     ),
-
+                    plot_bgcolor = "#FFF",
+                    paper_bgcolor = "#FFF",
                     xaxis_title = xtitle,
                     yaxis_title = ytitle,
                     width       = 800,
@@ -206,13 +215,53 @@ callback!(
                             z               = gridded,
                             type            = "heatmap",
                             colorscale      = colorm,
-                            colorbar_title  = fieldname     )
+                            colorbar_title  = fieldname,
+                            hoverinfo       = "text",
+                            text            = gridded_info   )
 
         fig         = plot(data_plot,layout)
         grid_out    = [""]
 
     # if we want to modify the colomap
-    elseif bid == "colormaps_cross"
+    elseif bid == "refine-pb-button"
+
+        refine_elements                          = refine_phase_boundaries(forest, Hash_XY);
+        forest_new, data_new, ind_map            = adapt_forest(forest, refine_elements, data);     # Adapt the mesh; also returns the new coordinates and a mapping from old->new
+        t = @elapsed Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(  data_new,
+                                                                    MAGEMin_data,
+                                                                    diagType,
+                                                                    Float64(fixT),
+                                                                    Float64(fixP),
+                                                                    oxi,
+                                                                    bulk_L,
+                                                                    bulk_R,
+                                                                    ind_map         = ind_map,
+                                                                    Out_XY_old      = Out_XY,
+                                                                    n_phase_XY_old  = n_phase_XY) # recompute points that have not been computed before
+
+        println("Computed $(length(ind_map.<0)) new points in $t seconds")
+        data    = data_new
+        forest  = forest_new
+        addedRefinementLvl += 1;
+
+        empty!(AppData.PseudosectionData)
+        push!(AppData.PseudosectionData,Out_XY);
+   
+        #________________________________________________________________________________________#                   
+        # Scatter plotly of the grid
+
+        gridded, gridded_info, X, Y, npoints = get_gridded_map(       fieldname,
+                                                        oxi,
+                                                        Out_XY,
+                                                        sub,
+                                                        refLvl + addedRefinementLvl,
+                                                        data.xc,
+                                                        data.yc,
+                                                        data.x,
+                                                        data.y,
+                                                        Xrange,
+                                                        Yrange )
+
 
         layout = Layout(
                     title=attr(
@@ -222,6 +271,41 @@ callback!(
                         yanchor = "top"
                     ),
 
+                    hoverlabel=attr(
+                        bgcolor = "#FFF",
+                    ),
+                    plot_bgcolor = "#FFF",
+                    paper_bgcolor = "#FFF",
+                    xaxis_title = xtitle,
+                    yaxis_title = ytitle,
+                    width       = 800,
+                    height      = 800
+                )
+
+
+        data_plot = heatmap(x               = X,
+                            y               = Y,
+                            z               = gridded,
+                            type            = "heatmap",
+                            colorscale      = colorm,
+                            colorbar_title  = fieldname,
+                            hoverinfo       = "text",
+                            text            = gridded_info     )
+
+        fig         = plot(data_plot,layout)
+        grid_out    = [""]
+
+    elseif bid == "colormaps_cross"
+
+        layout = Layout(
+                    title=attr(
+                        text    = db[(db.db .== dtb), :].title[test+1],
+                        x       = 0.5,
+                        xanchor = "center",
+                        yanchor = "top"
+                    ),
+                    plot_bgcolor = "#FFF",
+                    paper_bgcolor = "#FFF",
                     xaxis_title = xtitle,
                     yaxis_title = ytitle,
                     width       = 800,
@@ -234,38 +318,25 @@ callback!(
                             z               =  gridded,
                             type            = "heatmap",
                             colorscale      =  colorm,
-                            colorbar_title  =  fieldname     )
+                            colorbar_title  =  fieldname,
+                            hoverinfo       = "text",
+                            text            = gridded_info     )
 
         fig         = plot(data_plot,layout)
         grid_out    = [""]
     elseif bid == "fields-dropdown"
 
-        np          = length(data.x)
-        len_ox      = length(bulk1);
-
-        if fieldname == "#Stable_Phases"
-            for i=1:np
-                field[i] = Float64(length(Out_XY[i].ph));
-            end
-        elseif fieldname == "Variance"
-            for i=1:np
-                field[i] = Float64(len_ox - n_phase_XY[i] + 2.0);
-            end
-        else
-            for i=1:np
-                field[i] = Float64(get_property(Out_XY[i], fieldname));
-            end
-        end
-
-        gridded, X, Y = get_gridded_map(    field,
-                                            sub,
-                                            refLvl,
-                                            data.xc,
-                                            data.yc,
-                                            data.x,
-                                            data.y,
-                                            Xrange,
-                                            Yrange )
+        gridded, gridded_info, X, Y, npoints = get_gridded_map(       fieldname,
+                                                        oxi,
+                                                        Out_XY,
+                                                        sub,
+                                                        refLvl + addedRefinementLvl,
+                                                        data.xc,
+                                                        data.yc,
+                                                        data.x,
+                                                        data.y,
+                                                        Xrange,
+                                                        Yrange )
 
         layout = Layout(
                     title=attr(
@@ -274,7 +345,8 @@ callback!(
                         xanchor = "center",
                         yanchor = "top"
                     ),
-
+                    plot_bgcolor = "#FFF",
+                    paper_bgcolor = "#FFF",
                     xaxis_title = xtitle,
                     yaxis_title = ytitle,
                     width       = 800,
@@ -287,7 +359,9 @@ callback!(
                             z               = gridded,
                             type            = "heatmap",
                             colorscale      = colorm,
-                            colorbar_title  = fieldname    )
+                            colorbar_title  = fieldname,
+                            hoverinfo       = "text",
+                            text            = gridded_info     )
 
         fig         = plot(data_plot,layout)
         grid_out    = [""]
@@ -299,7 +373,8 @@ callback!(
                 xanchor = "center",
                 yanchor = "top"
             ),
-
+            plot_bgcolor = "#FFF",
+            paper_bgcolor = "#FFF",
             xaxis_title = xtitle,
             yaxis_title = ytitle,
             width       = 800,
@@ -335,7 +410,9 @@ callback!(
                                 z               = gridded,
                                 type            = "heatmap",
                                 colorscale      = colorm,
-                                colorbar_title  = fieldname    )
+                                colorbar_title  = fieldname,
+                                hoverinfo       = "text",
+                                text            = gridded_info     )
 
             fig         = plot(data_plot,layout)
             grid_out    = [""]
@@ -344,7 +421,7 @@ callback!(
         fig = plot()
     end
 
-    return fig, grid_out      
+    return fig, grid_out, npoints  
 end
 
 
@@ -371,6 +448,25 @@ callback!(app,
     Output("collapse-refinement", "is_open"),
     [Input("button-refinement", "n_clicks")],
     [State("collapse-refinement", "is_open")], ) do  n, is_open
+    
+    if isnothing(n); n=0 end
+
+    if n>0
+        if is_open==1
+            is_open = 0
+        elseif is_open==0
+            is_open = 1
+        end
+    end
+    return is_open    
+end
+
+
+
+callback!(app,
+    Output("collapse-infos-phase-diagram", "is_open"),
+    [Input("infos-phase-diagram", "n_clicks")],
+    [State("collapse-infos-phase-diagram", "is_open")], ) do  n, is_open
     
     if isnothing(n); n=0 end
 
