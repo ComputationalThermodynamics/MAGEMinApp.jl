@@ -7,7 +7,29 @@ function Tab_PhaseDiagram()
 
                     dbc_col([diagram_plot()], width=9),
                     dbc_col([  
-                        dbc_row([dbc_button("Display options",id="button-display-options"),
+                        dbc_row([
+                        dbc_button("Phase diagram information",id="infos-phase-diagram"),
+                        dbc_collapse(
+                            dbc_card(dbc_cardbody([
+                                    html_div("‎ "),
+                                    dbc_row([
+                                        dbc_col([ 
+                                            html_h1("Number of points", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                        ]),
+                                        dbc_col([ 
+                                                dbc_input(
+                                                id      = "npoints-id",
+                                                type    = "number", 
+                                                value   = 0,
+                                                disabled = true   ),
+                                        ]),
+                                    ]),
+                                ])),
+                                id="collapse-infos-phase-diagram",
+                                is_open=true,
+                        ),
+
+                        dbc_button("Display options",id="button-display-options"),
                         dbc_collapse(
                             dbc_card(dbc_cardbody([
                                 dbc_row([

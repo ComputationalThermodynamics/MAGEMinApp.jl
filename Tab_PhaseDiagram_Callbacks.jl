@@ -3,6 +3,8 @@ callback!(
     app,
     Output("phase-diagram","figure"),
     Output("show-grid","value"),
+    Output("npoints-id","value"),
+
     Input("compute-button","n_clicks"),
     Input("refine-pb-button","n_clicks"),
 
@@ -10,6 +12,7 @@ callback!(
     Input("fields-dropdown","value"),
     Input("show-grid","value"),                 # show edges checkbox
 
+    State("npoints-id","value"),               # total number of computed points
     State("diagram-dropdown","value"),          # pt,px,tx
     State("database-dropdown","value"),         # mp,mb,ig,igd,um,alk
     State("mb-cpx-switch","value"),             # false,true -> 0,1
@@ -45,7 +48,7 @@ callback!(
 
 ) do    n_clicks_mesh, n_clicks_refine, 
         colorm,     fieldname,  grid,
-        diagType,   dtb,        cpx,    limOpx, limOpxVal,
+        npoints,    diagType,   dtb,        cpx,    limOpx, limOpxVal,
         tmin,       tmax,       pmin,   pmax,
         fixT,       fixP,
         sub,        refType,    refLvl,
@@ -118,8 +121,8 @@ callback!(
 
         #________________________________________________________________________________________#
         # initialize database
-        global MAGEMin_data, TotalRefinementLvl
-
+        global MAGEMin_data
+        global addedRefinementLvl  = 0;
         MAGEMin_data    =   Initialize_MAGEMin(dtb, verbose=false);
     
         nt = length(MAGEMin_data.gv);
@@ -148,7 +151,7 @@ callback!(
         #________________________________________________________________________________________#     
         # Refine the mesh along phase boundaries
         global forest, data, Hash_XY, Out_XY, n_phase_XY
-        global field, data_plot, gridded, X, Y
+        global field, data_plot, gridded, gridded_info, X, Y
 
         for irefine = 1:refLvl
             # global forest, data, Hash_XY, Out_XY, n_phase_XY
@@ -165,7 +168,7 @@ callback!(
                                                                         bulk_R,
                                                                         ind_map         = ind_map,
                                                                         Out_XY_old      = Out_XY,
-                                                                        n_phase_XY_old  = n_phase_XY) # recompute points that have not been computed before
+                                                                        n_phase_XY_old  = n_phase_XY    ) # recompute points that have not been computed before
 
             println("Computed $(length(ind_map.<0)) new points in $t seconds")
             data    = data_new
@@ -174,28 +177,22 @@ callback!(
         end
 
         push!(AppData.PseudosectionData,Out_XY);
-        TotalRefinementLvl = refLvl;
 
         #________________________________________________________________________________________#                   
         # Scatter plotly of the grid
 
-        np          = length(data.x)
-        len_ox      = length(oxi)
-        field       = Vector{Float64}(undef,np);
+        gridded, gridded_info, X, Y, npoints = get_gridded_map(     fieldname,
+                                                                    oxi,
+                                                                    Out_XY,
+                                                                    sub,
+                                                                    refLvl,
+                                                                    data.xc,
+                                                                    data.yc,
+                                                                    data.x,
+                                                                    data.y,
+                                                                    Xrange,
+                                                                    Yrange )
 
-        for i=1:np
-            field[i] = Float64(len_ox - n_phase_XY[i] + 2);
-        end
-
-        gridded, X, Y = get_gridded_map(    field,
-                                            sub,
-                                            refLvl,
-                                            data.xc,
-                                            data.yc,
-                                            data.x,
-                                            data.y,
-                                            Xrange,
-                                            Yrange )
 
         layout = Layout(
                     title=attr(
@@ -217,7 +214,9 @@ callback!(
                             z               = gridded,
                             type            = "heatmap",
                             colorscale      = colorm,
-                            colorbar_title  = fieldname     )
+                            colorbar_title  = fieldname,
+                            hoverinfo       = "text",
+                            text            = gridded_info   )
 
         fig         = plot(data_plot,layout)
         grid_out    = [""]
@@ -242,7 +241,7 @@ callback!(
         println("Computed $(length(ind_map.<0)) new points in $t seconds")
         data    = data_new
         forest  = forest_new
-        TotalRefinementLvl += 1;
+        addedRefinementLvl += 1;
 
         empty!(AppData.PseudosectionData)
         push!(AppData.PseudosectionData,Out_XY);
@@ -250,23 +249,18 @@ callback!(
         #________________________________________________________________________________________#                   
         # Scatter plotly of the grid
 
-        np          = length(data.x)
-        len_ox      = length(oxi)
-        field       = Vector{Float64}(undef,np);
+        gridded, gridded_info, X, Y, npoints = get_gridded_map(       fieldname,
+                                                        oxi,
+                                                        Out_XY,
+                                                        sub,
+                                                        refLvl + addedRefinementLvl,
+                                                        data.xc,
+                                                        data.yc,
+                                                        data.x,
+                                                        data.y,
+                                                        Xrange,
+                                                        Yrange )
 
-        for i=1:np
-            field[i] = Float64(len_ox - n_phase_XY[i] + 2);
-        end
-
-        gridded, X, Y = get_gridded_map(    field,
-                                            sub,
-                                            TotalRefinementLvl,
-                                            data.xc,
-                                            data.yc,
-                                            data.x,
-                                            data.y,
-                                            Xrange,
-                                            Yrange )
 
         layout = Layout(
                     title=attr(
@@ -274,6 +268,10 @@ callback!(
                         x       = 0.5,
                         xanchor = "center",
                         yanchor = "top"
+                    ),
+
+                    hoverlabel=attr(
+                        bgcolor = "#FFF",
                     ),
 
                     xaxis_title = xtitle,
@@ -288,10 +286,13 @@ callback!(
                             z               = gridded,
                             type            = "heatmap",
                             colorscale      = colorm,
-                            colorbar_title  = fieldname     )
+                            colorbar_title  = fieldname,
+                            hoverinfo       = "text",
+                            text            = gridded_info     )
 
         fig         = plot(data_plot,layout)
         grid_out    = [""]
+
     elseif bid == "colormaps_cross"
 
         layout = Layout(
@@ -314,38 +315,25 @@ callback!(
                             z               =  gridded,
                             type            = "heatmap",
                             colorscale      =  colorm,
-                            colorbar_title  =  fieldname     )
+                            colorbar_title  =  fieldname,
+                            hoverinfo       = "text",
+                            text            = gridded_info     )
 
         fig         = plot(data_plot,layout)
         grid_out    = [""]
     elseif bid == "fields-dropdown"
 
-        np          = length(data.x)
-        len_ox      = length(bulk1);
-
-        if fieldname == "#Stable_Phases"
-            for i=1:np
-                field[i] = Float64(length(Out_XY[i].ph));
-            end
-        elseif fieldname == "Variance"
-            for i=1:np
-                field[i] = Float64(len_ox - n_phase_XY[i] + 2.0);
-            end
-        else
-            for i=1:np
-                field[i] = Float64(get_property(Out_XY[i], fieldname));
-            end
-        end
-
-        gridded, X, Y = get_gridded_map(    field,
-                                            sub,
-                                            refLvl,
-                                            data.xc,
-                                            data.yc,
-                                            data.x,
-                                            data.y,
-                                            Xrange,
-                                            Yrange )
+        gridded, gridded_info, X, Y, npoints = get_gridded_map(       fieldname,
+                                                        oxi,
+                                                        Out_XY,
+                                                        sub,
+                                                        refLvl + addedRefinementLvl,
+                                                        data.xc,
+                                                        data.yc,
+                                                        data.x,
+                                                        data.y,
+                                                        Xrange,
+                                                        Yrange )
 
         layout = Layout(
                     title=attr(
@@ -367,7 +355,9 @@ callback!(
                             z               = gridded,
                             type            = "heatmap",
                             colorscale      = colorm,
-                            colorbar_title  = fieldname    )
+                            colorbar_title  = fieldname,
+                            hoverinfo       = "text",
+                            text            = gridded_info     )
 
         fig         = plot(data_plot,layout)
         grid_out    = [""]
@@ -415,7 +405,9 @@ callback!(
                                 z               = gridded,
                                 type            = "heatmap",
                                 colorscale      = colorm,
-                                colorbar_title  = fieldname    )
+                                colorbar_title  = fieldname,
+                                hoverinfo       = "text",
+                                text            = gridded_info     )
 
             fig         = plot(data_plot,layout)
             grid_out    = [""]
@@ -424,7 +416,7 @@ callback!(
         fig = plot()
     end
 
-    return fig, grid_out      
+    return fig, grid_out, npoints  
 end
 
 
@@ -451,6 +443,25 @@ callback!(app,
     Output("collapse-refinement", "is_open"),
     [Input("button-refinement", "n_clicks")],
     [State("collapse-refinement", "is_open")], ) do  n, is_open
+    
+    if isnothing(n); n=0 end
+
+    if n>0
+        if is_open==1
+            is_open = 0
+        elseif is_open==0
+            is_open = 1
+        end
+    end
+    return is_open    
+end
+
+
+
+callback!(app,
+    Output("collapse-infos-phase-diagram", "is_open"),
+    [Input("infos-phase-diagram", "n_clicks")],
+    [State("collapse-infos-phase-diagram", "is_open")], ) do  n, is_open
     
     if isnothing(n); n=0 end
 

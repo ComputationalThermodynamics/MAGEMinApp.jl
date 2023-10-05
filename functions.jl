@@ -1,7 +1,9 @@
 """
     Function interpolate AMR grid to regular grid
 """
-function get_gridded_map(   field::Vector{Float64},
+function get_gridded_map(   fieldname::String,
+                            oxi::Vector{String},
+                            Out_XY::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
                             sub::Int64,
                             refLvl::Int64,
                             xc::Vector{Float64},
@@ -11,6 +13,25 @@ function get_gridded_map(   field::Vector{Float64},
                             Xrange::Tuple{Float64, Float64},
                             Yrange::Tuple{Float64, Float64} )
 
+    np          = length(data.x)
+    len_ox      = length(oxi)
+    field       = Vector{Float64}(undef,np);
+    npoints     = np
+
+    if fieldname == "#Stable_Phases"
+        for i=1:np
+            field[i] = Float64(length(Out_XY[i].ph));
+        end
+    elseif fieldname == "Variance"
+        for i=1:np
+            field[i] = Float64(len_ox - n_phase_XY[i] + 2.0);
+        end
+    else
+        for i=1:np
+            field[i] = Float64(get_property(Out_XY[i], fieldname));
+        end
+    end
+
     n           = 2^(sub + refLvl)
     x           = range(minimum(xc), stop = maximum(xc), length = n)
     y           = range(minimum(yc), stop = maximum(yc), length = n)
@@ -18,6 +39,7 @@ function get_gridded_map(   field::Vector{Float64},
     X           = repeat(x , n)[:]
     Y           = repeat(y', n)[:]
     gridded     = zeros(n,n)
+    gridded_info= fill("",n,n)
 
 
     Xr = (Xrange[2]-Xrange[1])/n
@@ -29,11 +51,12 @@ function get_gridded_map(   field::Vector{Float64},
                 ii = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
                 jj = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
                 gridded[ii,jj] = field[k]
+                gridded_info[ii,jj] = replace.(string(Out_XY[k].ph),r"\""=>"")
             end
         end
     end
 
-    return gridded, X, Y
+    return gridded, gridded_info, X, Y, npoints
 end
 
 
