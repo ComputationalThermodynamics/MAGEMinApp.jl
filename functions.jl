@@ -15,7 +15,7 @@ function get_gridded_map(   fieldname::String,
 
     np          = length(data.x)
     len_ox      = length(oxi)
-    field       = Vector{Float64}(undef,np);
+    field       = Vector{Union{Float64,Missing}}(undef,np);
     npoints     = np
 
     if fieldname == "#Stable_Phases"
@@ -30,6 +30,11 @@ function get_gridded_map(   fieldname::String,
         for i=1:np
             field[i] = Float64(get_property(Out_XY[i], fieldname));
         end
+
+        field[isnan.(field)] .= missing
+        if fieldname == "frac_M" || fieldname == "rho_M" || fieldname == "rho_S"
+            field[isless.(field, 1e-8)] .= missing
+        end
     end
 
     n           = 2^(sub + refLvl)
@@ -38,14 +43,14 @@ function get_gridded_map(   fieldname::String,
 
     X           = repeat(x , n)[:]
     Y           = repeat(y', n)[:]
-    gridded     = zeros(n,n)
+    gridded     = Matrix{Union{Float64,Missing}}(undef,n,n);
     gridded_info= fill("",n,n)
 
 
     Xr = (Xrange[2]-Xrange[1])/n
     Yr = (Yrange[2]-Yrange[1])/n
 
-    for k=1:length(field)
+    for k=1:np
         for i=xf[k][1]+Xr/2 : Xr : xf[k][3]
             for j=yf[k][1]+Yr/2 : Yr : yf[k][3]
                 ii = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))

@@ -201,7 +201,8 @@ callback!(
                         xanchor = "center",
                         yanchor = "top"
                     ),
-
+                    plot_bgcolor = "#FFF",
+                    paper_bgcolor = "#FFF",
                     xaxis_title = xtitle,
                     yaxis_title = ytitle,
                     width       = 800,
@@ -273,7 +274,8 @@ callback!(
                     hoverlabel=attr(
                         bgcolor = "#FFF",
                     ),
-
+                    plot_bgcolor = "#FFF",
+                    paper_bgcolor = "#FFF",
                     xaxis_title = xtitle,
                     yaxis_title = ytitle,
                     width       = 800,
@@ -302,7 +304,8 @@ callback!(
                         xanchor = "center",
                         yanchor = "top"
                     ),
-
+                    plot_bgcolor = "#FFF",
+                    paper_bgcolor = "#FFF",
                     xaxis_title = xtitle,
                     yaxis_title = ytitle,
                     width       = 800,
@@ -342,7 +345,8 @@ callback!(
                         xanchor = "center",
                         yanchor = "top"
                     ),
-
+                    plot_bgcolor = "#FFF",
+                    paper_bgcolor = "#FFF",
                     xaxis_title = xtitle,
                     yaxis_title = ytitle,
                     width       = 800,
@@ -369,7 +373,8 @@ callback!(
                 xanchor = "center",
                 yanchor = "top"
             ),
-
+            plot_bgcolor = "#FFF",
+            paper_bgcolor = "#FFF",
             xaxis_title = xtitle,
             yaxis_title = ytitle,
             width       = 800,

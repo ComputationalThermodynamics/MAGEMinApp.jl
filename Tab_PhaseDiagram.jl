@@ -14,7 +14,7 @@ function Tab_PhaseDiagram()
                                     html_div("‎ "),
                                     dbc_row([
                                         dbc_col([ 
-                                            html_h1("Number of points", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            html_h1("Number of computed points", style = Dict("textAlign" => "center","font-size" => "120%")),
                                         ]),
                                         dbc_col([ 
                                                 dbc_input(
@@ -28,6 +28,7 @@ function Tab_PhaseDiagram()
                                 id="collapse-infos-phase-diagram",
                                 is_open=true,
                         ),
+
 
                         dbc_button("Display options",id="button-display-options"),
                         dbc_collapse(
@@ -113,6 +114,7 @@ function Tab_PhaseDiagram()
                                 id="collapse-refinement",
                                 is_open=true,
                         ),
+
                     ])
                     ], width=3),
 
