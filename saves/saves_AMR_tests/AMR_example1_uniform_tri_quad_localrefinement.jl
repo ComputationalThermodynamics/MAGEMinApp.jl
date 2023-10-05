@@ -11,12 +11,12 @@ using T8code.Libt8: SC_LP_PRODUCTION
 function t8_step3_print_forest_information(forest)
     # Check that forest is a committed, that is valid and usable, forest.
     @T8_ASSERT(t8_forest_is_committed(forest) == 1)
-  
+
     # Get the local number of elements.
     local_num_elements = t8_forest_get_local_num_elements(forest)
     # Get the global number of elements.
     global_num_elements = t8_forest_get_global_num_elements(forest)
-  
+
     t8_global_productionf(" [step3] Local number of elements:\t\t%i\n", local_num_elements)
     t8_global_productionf(" [step3] Global number of elements:\t%li\n", global_num_elements)
 end
@@ -32,8 +32,10 @@ end
 t8code_package_id = t8_get_package_id()
 if t8code_package_id<0
     # Initialize the sc library, has to happen before we initialize t8code.
-    sc_init(comm, 1, 1, C_NULL, SC_LP_ESSENTIAL)
-    
+    # It is important to set the second argument `catch_signals` to 0.
+    # Otherwise, we get segfaults using multiple threads when running the GC.
+    sc_init(comm, 0, 1, C_NULL, SC_LP_ESSENTIAL)
+
      # Initialize t8code with log level SC_LP_PRODUCTION. See sc.h for more info on the log levels.
     t8_init(SC_LP_PRODUCTION)
 
@@ -46,7 +48,7 @@ cmesh_tri       = t8_cmesh_new_hypercube(T8_ECLASS_TRIANGLE, comm, 0, 0, 0)
 
 # refine a quad with size 2 by 1
 connectivity   = T8code.Libt8.p4est_connectivity_new_twotrees(1,0,0)
-cmesh_quad_rect = t8_cmesh_new_from_p4est(connectivity, comm, 1) 
+cmesh_quad_rect = t8_cmesh_new_from_p4est(connectivity, comm, 1)
 
 # Uniform refinement
 level = 4
@@ -89,17 +91,17 @@ function adapt_callback(forest, forest_from, which_tree, lelement_id,
 end
 
 
-# Call the callback 
+# Call the callback
 function adapt_forest(forest)
     num_local_trees = t8_forest_get_num_local_trees(forest)
-    
+
     num_local_elements = t8_forest_get_local_num_elements(forest)
     refine_elements = zeros(Cint,num_local_elements)
-       
+
     #refine_elements = Vector{Cint}(undef, num_elements_in_tree)
     refine_elements[20] = 1
     refine_elements[40] = -1
-    
+
     # Check that forest is a committed, that is valid and usable, forest.
     @T8_ASSERT(t8_forest_is_committed(forest) == 1)
 
@@ -114,7 +116,7 @@ function adapt_forest(forest)
     #   do_face_ghost - If non-zero additionally a layer of ghost elements is created for the forest.
     #                   We will discuss ghost in latgirt ader steps of the tutorial.
     forest_adapt = t8_forest_new_adapt(forest, @t8_adapt_callback(adapt_callback), 0, 0, pointer(refine_elements))
-  
+
 
     return forest_adapt
   end
