@@ -1,17 +1,17 @@
 """
     Function interpolate AMR grid to regular grid
 """
-function get_gridded_map(   fieldname::String,
-                            oxi::Vector{String},
-                            Out_XY::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
-                            sub::Int64,
-                            refLvl::Int64,
-                            xc::Vector{Float64},
-                            yc::Vector{Float64},
-                            xf::Vector{SVector{4, Float64}},
-                            yf::Vector{SVector{4, Float64}},
-                            Xrange::Tuple{Float64, Float64},
-                            Yrange::Tuple{Float64, Float64} )
+function get_gridded_map(   fieldname   ::String,
+                            oxi         ::Vector{String},
+                            Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
+                            sub         ::Int64,
+                            refLvl      ::Int64,
+                            xc          ::Vector{Float64},
+                            yc          ::Vector{Float64},
+                            xf          ::Vector{SVector{4, Float64}},
+                            yf          ::Vector{SVector{4, Float64}},
+                            Xrange      ::Tuple{Float64, Float64},
+                            Yrange      ::Tuple{Float64, Float64} )
 
     np          = length(data.x)
     len_ox      = length(oxi)
@@ -33,7 +33,7 @@ function get_gridded_map(   fieldname::String,
 
         field[isnan.(field)] .= missing
         if fieldname == "frac_M" || fieldname == "rho_M" || fieldname == "rho_S"
-            field[isless.(field, 1e-8)] .= missing
+            field[isless.(field, 1e-8)] .= missing              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
         end
     end
 
