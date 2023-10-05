@@ -30,7 +30,9 @@ const COMM = MPI.COMM_WORLD
 t8code_package_id = t8_get_package_id()
 if t8code_package_id<0
     # Initialize the sc library, has to happen before we initialize t8code.
-    sc_init(COMM, 1, 1, C_NULL, SC_LP_ERROR)
+    # It is important to set the second argument `catch_signals` to 0.
+    # Otherwise, we get segfaults using multiple threads when running the GC.
+    sc_init(COMM, 0, 1, C_NULL, SC_LP_ERROR)
 
     if T8code.Libt8.p4est_is_initialized() == 0
         T8code.Libt8.p4est_init(C_NULL, SC_LP_ERROR)
@@ -40,7 +42,7 @@ if t8code_package_id<0
 end
 
 # Initialize MAGEMin:
-db              =   "ig" 
+db              =   "ig"
 MAGEMin_data    =   Initialize_MAGEMin(db, verbose=false);
 
 # Create coarse mesh

@@ -13,7 +13,7 @@ using MAGEMin_C
 
 include("./AMR_utils.jl")
 include("../colormaps.jl")
-colormaps   = read_colormaps() 
+colormaps   = read_colormaps()
 
 # Initialize MPI. This has to happen before we initialize sc or t8code.
 if !MPI.Initialized()
@@ -24,8 +24,10 @@ end
 t8code_package_id = t8_get_package_id()
 if t8code_package_id<0
     # Initialize the sc library, has to happen before we initialize t8code.
-    sc_init(comm, 1, 1, C_NULL, SC_LP_ESSENTIAL)
-    
+    # It is important to set the second argument `catch_signals` to 0.
+    # Otherwise, we get segfaults using multiple threads when running the GC.
+    sc_init(comm, 0, 1, C_NULL, SC_LP_ESSENTIAL)
+
      # Initialize t8code with log level SC_LP_PRODUCTION. See sc.h for more info on the log levels.
     t8_init(SC_LP_PRODUCTION)
 
@@ -66,7 +68,7 @@ function Calculate_MAGEMin(data; ind_map=nothing, Out_PT_old=nothing)
         if ind_map[i]<0
 
             # compute a new point
-            # NOTE:  there is something wacky, because we should not have to re-initialize and finalizie 
+            # NOTE:  there is something wacky, because we should not have to re-initialize and finalizie
             # the databases for every point; I think this should only be done only once
 
             P = data.yc[i]
@@ -127,10 +129,10 @@ using PlotlyJS
 data_plot = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, length(data.x))
 for i = 1:length(data.x)
 
-    
+
   data_plot[i] = scatter(x=data.x[i], y=data.y[i], mode="lines",
         fill="toself",fillcolor="white", line_color="#000000", line_width=0.5,
-        
+
         # customize what is shown upon hover:
         text ="Stable phases $(Out_PT[i].ph) ",
         hoverinfo="text",
@@ -138,7 +140,7 @@ for i = 1:length(data.x)
         showlegend=false)
 end
 
-plot(data_plot, 
+plot(data_plot,
         Layout(
                 title=attr(
                     text= "KLB",

@@ -22,10 +22,12 @@ end
 t8code_package_id = t8_get_package_id()
 if t8code_package_id<0
     # Initialize the sc library, has to happen before we initialize t8code.
-    sc_init(comm, 1, 1, C_NULL, SC_LP_ESSENTIAL)
+    # It is important to set the second argument `catch_signals` to 0.
+    # Otherwise, we get segfaults using multiple threads when running the GC.
+    sc_init(comm, 0, 1, C_NULL, SC_LP_ESSENTIAL)
     #sc_init(comm, 1, 1, C_NULL, SC_LP_DEBUG)
-    
-    
+
+
      # Initialize t8code with log level SC_LP_PRODUCTION. See sc.h for more info on the log levels.
     t8_init(SC_LP_PRODUCTION)
 #    t8_init(SC_LP_DEBUG)
@@ -40,7 +42,7 @@ cmesh_tri       = t8_cmesh_new_hypercube(T8_ECLASS_TRIANGLE, comm, 0, 0, 0)
 
 # refine a quad with size 2 by 1
 connectivity   = T8code.Libt8.p4est_connectivity_new_twotrees(1,0,0)
-cmesh_quad_rect = t8_cmesh_new_from_p4est(connectivity, comm, 1) 
+cmesh_quad_rect = t8_cmesh_new_from_p4est(connectivity, comm, 1)
 
 # Uniform refinement
 level               = 4
@@ -53,7 +55,7 @@ data_quad           = get_element_data(forest_quad)
 data_tri            = get_element_data(forest_tri, Val{true}())
 data_quad_rect      = get_element_data(forest_quad_rect, Val{false}())
 
-# Search: Simple UI that returns the tree and the element of the enclosing element 
+# Search: Simple UI that returns the tree and the element of the enclosing element
 coords_search = (0.8, 0.71)
 out_quad    = find_enclosing_element(coords_search, forest_quad)
 out_tri     = find_enclosing_element(coords_search, forest_tri)
@@ -85,7 +87,7 @@ for irefine = 1:5
 
     # Adapt the mesh; also returns the new coordinates and a mapping from old->new
     forest_quad, data_quad, ind_map  = adapt_forest(forest_quad, refine_elements, data_quad)
-end    
+end
 
 # do the same for triangles
 data_tri   = get_element_data(forest_tri)
@@ -98,7 +100,7 @@ for irefine = 1:5
     forest_tri, data_tri, ind_map  = adapt_forest(forest_tri, refine_elements, data_tri)
 end
 
-# print info about meshes: 
+# print info about meshes:
 println("forest_tri:")
 t8_print_forest_information(forest_quad)
 println("forest_quad:")

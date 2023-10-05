@@ -13,7 +13,7 @@ using MAGEMin_C
 
 include("./AMR/AMR_utils.jl")
 include("./colormaps.jl")
-colormaps   = read_colormaps() 
+colormaps   = read_colormaps()
 
 # Initialize MPI. This has to happen before we initialize sc or t8code.
 if !MPI.Initialized()
@@ -24,8 +24,10 @@ end
 t8code_package_id = t8_get_package_id()
 if t8code_package_id<0
     # Initialize the sc library, has to happen before we initialize t8code.
-    sc_init(comm, 1, 1, C_NULL, SC_LP_ESSENTIAL)
-    
+    # It is important to set the second argument `catch_signals` to 0.
+    # Otherwise, we get segfaults using multiple threads when running the GC.
+    sc_init(comm, 0, 1, C_NULL, SC_LP_ESSENTIAL)
+
      # Initialize t8code with log level SC_LP_PRODUCTION. See sc.h for more info on the log levels.
     t8_init(SC_LP_PRODUCTION)
 
@@ -142,7 +144,7 @@ for i = 1:length(data.x)
         showlegend  = false     )
 end
 
-plot(data_plot, 
+plot(data_plot,
         Layout(
                 title=attr(
                     text        = "KLB",

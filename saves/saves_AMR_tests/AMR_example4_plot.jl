@@ -23,8 +23,10 @@ end
 t8code_package_id = t8_get_package_id()
 if t8code_package_id<0
     # Initialize the sc library, has to happen before we initialize t8code.
-    sc_init(comm, 1, 1, C_NULL, SC_LP_ESSENTIAL)
-    
+    # It is important to set the second argument `catch_signals` to 0.
+    # Otherwise, we get segfaults using multiple threads when running the GC.
+    sc_init(comm, 0, 1, C_NULL, SC_LP_ESSENTIAL)
+
      # Initialize t8code with log level SC_LP_PRODUCTION. See sc.h for more info on the log levels.
     t8_init(SC_LP_PRODUCTION)
 
@@ -41,7 +43,7 @@ cmesh   = t8_cmesh_quad_2d(comm, Trange, Prange)
 level   = 4
 forest  = t8_forest_new_uniform(cmesh, t8_scheme_new_default_cxx(), level, 0, comm)
 
-# 
+#
 dPdT = diff([Prange...])[1]./diff([Trange...])[1]
 
 #P = Trange.*dPdT + Prange[1]
@@ -61,11 +63,11 @@ for irefine = 1:5
     forest, data, ind_map  = adapt_forest(forest, refine_elements, data)
 
     Phase_ID    = Cint.((data.xc.-700)*dPdT .+ Prange[1] .> data.yc)
-    
+
 end
 
 Phase_ID    = Cint.((data.xc.-700)*dPdT .+ Prange[1] .> data.yc)
-    
+
 # Write as vtk
 t8_forest_write_vtk(forest, "AMR_ex4_quad")
 
@@ -76,18 +78,18 @@ using PlotlyJS
 data_plot = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, length(data.x))
 for i = 1:length(data.x)
 
-    
+
   data_plot[i] = scatter(x=data.x[i], y=data.y[i], mode="lines",
         fill="toself",fillcolor=Phase_ID[i], line_color="#000000", line_width=0.5,
-        
+
         # customize what is shown upon hover:
         text ="Stable phases $(Phase_ID[i]) ",
         hoverinfo="text",
-        
+
         showlegend=false)
 end
 
-plot(data_plot, 
+plot(data_plot,
         Layout(
                 title=attr(
                     text= "KLB",
