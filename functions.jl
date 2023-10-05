@@ -108,8 +108,8 @@ function bulk_file_to_db(datain)
         frac 		= replace.(frac,r"\]"=>"",r"\["=>"");
         frac 		= parse.(Float64,frac);
 
-        bulkrock = convertBulk4MAGEMin(frac,oxide,String(sysUnit),String(dbin)) 
-        oxide    = get_oxide_list(String(dbin))
+        bulkrock    = convertBulk4MAGEMin(frac,oxide,String(sysUnit),String(dbin)) 
+        oxide       = get_oxide_list(String(dbin))
 
         push!(db,Dict(  :bulk       => bulk,
                         :title      => title,

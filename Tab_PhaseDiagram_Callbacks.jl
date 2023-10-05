@@ -4,6 +4,8 @@ callback!(
     Output("phase-diagram","figure"),
     Output("show-grid","value"),
     Input("compute-button","n_clicks"),
+    Input("refine-pb-button","n_clicks"),
+
     Input("colormaps_cross","value"),
     Input("fields-dropdown","value"),
     Input("show-grid","value"),                 # show edges checkbox
@@ -41,7 +43,8 @@ callback!(
 
     prevent_initial_call = true,
 
-) do    n_clicks_mesh, colorm,  fieldname,      grid,
+) do    n_clicks_mesh, n_clicks_refine, 
+        colorm,     fieldname,  grid,
         diagType,   dtb,        cpx,    limOpx, limOpxVal,
         tmin,       tmax,       pmin,   pmax,
         fixT,       fixP,
@@ -79,26 +82,31 @@ callback!(
         bid = split(ctx.triggered[1].prop_id, ".")[1]
     end
 
+    n_ox    = length(bulk1);
+    bulk_L  = zeros(n_ox); 
+    bulk_R  = zeros(n_ox);
+    oxi     = Vector{String}(undef, n_ox)
+    for i=1:n_ox
+        tmp = bulk1[i][:mol_fraction]
+        if typeof(tmp) == String
+            tmp = parse(Float64,tmp)
+        end
+        tmp2 = bulk2[i][:mol_fraction]
+        if typeof(tmp2) == String
+            tmp2 = parse(Float64,tmp2)
+        end
+        bulk_L[i]   = tmp;
+        bulk_R[i]   = tmp2;
+        oxi[i]      = bulk1[i][:oxide];
+    end
+
+
     # if we compute a new phase diagram
     if bid == "compute-button"
 
-        n_ox    = length(bulk1);
-        bulk_L  = zeros(n_ox); 
-        bulk_R  = zeros(n_ox);
-        oxi     = Vector{String}(undef, n_ox)
-        for i=1:n_ox
-            tmp = bulk1[i][:mol_fraction]
-            if typeof(tmp) == String
-                tmp = parse(Float64,tmp)
-            end
-            tmp2 = bulk2[i][:mol_fraction]
-            if typeof(tmp2) == String
-                tmp2 = parse(Float64,tmp2)
-            end
-            bulk_L[i]   = tmp;
-            bulk_R[i]   = tmp2;
-            oxi[i]      = bulk1[i][:oxide];
-        end
+        empty!(AppData.PseudosectionData);              #this empty the data from previous pseudosection computation
+
+
         #________________________________________________________________________________________#
         # Create coarse mesh
         cmesh           = t8_cmesh_quad_2d(COMM, Xrange, Yrange)
@@ -110,6 +118,8 @@ callback!(
 
         #________________________________________________________________________________________#
         # initialize database
+        global MAGEMin_data, TotalRefinementLvl
+
         MAGEMin_data    =   Initialize_MAGEMin(dtb, verbose=false);
     
         nt = length(MAGEMin_data.gv);
@@ -117,7 +127,7 @@ callback!(
             if cpx == true && dtb =="mb"
                 MAGEMin_data.gv[i].mbCpx = 1;
             end
-            if limOpx == "CAOPX" && (db =="mb" || db =="ig" || db =="igd" || db =="alk")
+            if limOpx == "CAOPX" && (dtb =="mb" || dtb =="ig" || dtb =="igd" || dtb =="alk")
                 MAGEMin_data.gv[i].limitCaOpx   = 1;
                 MAGEMin_data.gv[i].CaOpxLim     = limOpxVal;
             end
@@ -164,6 +174,7 @@ callback!(
         end
 
         push!(AppData.PseudosectionData,Out_XY);
+        TotalRefinementLvl = refLvl;
 
         #________________________________________________________________________________________#                   
         # Scatter plotly of the grid
@@ -212,6 +223,75 @@ callback!(
         grid_out    = [""]
 
     # if we want to modify the colomap
+    elseif bid == "refine-pb-button"
+
+        refine_elements                          = refine_phase_boundaries(forest, Hash_XY);
+        forest_new, data_new, ind_map            = adapt_forest(forest, refine_elements, data);     # Adapt the mesh; also returns the new coordinates and a mapping from old->new
+        t = @elapsed Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(  data_new,
+                                                                    MAGEMin_data,
+                                                                    diagType,
+                                                                    Float64(fixT),
+                                                                    Float64(fixP),
+                                                                    oxi,
+                                                                    bulk_L,
+                                                                    bulk_R,
+                                                                    ind_map         = ind_map,
+                                                                    Out_XY_old      = Out_XY,
+                                                                    n_phase_XY_old  = n_phase_XY) # recompute points that have not been computed before
+
+        println("Computed $(length(ind_map.<0)) new points in $t seconds")
+        data    = data_new
+        forest  = forest_new
+        TotalRefinementLvl += 1;
+
+        empty!(AppData.PseudosectionData)
+        push!(AppData.PseudosectionData,Out_XY);
+   
+        #________________________________________________________________________________________#                   
+        # Scatter plotly of the grid
+
+        np          = length(data.x)
+        len_ox      = length(oxi)
+        field       = Vector{Float64}(undef,np);
+
+        for i=1:np
+            field[i] = Float64(len_ox - n_phase_XY[i] + 2);
+        end
+
+        gridded, X, Y = get_gridded_map(    field,
+                                            sub,
+                                            TotalRefinementLvl,
+                                            data.xc,
+                                            data.yc,
+                                            data.x,
+                                            data.y,
+                                            Xrange,
+                                            Yrange )
+
+        layout = Layout(
+                    title=attr(
+                        text    = db[(db.db .== dtb), :].title[test+1],
+                        x       = 0.5,
+                        xanchor = "center",
+                        yanchor = "top"
+                    ),
+
+                    xaxis_title = xtitle,
+                    yaxis_title = ytitle,
+                    width       = 800,
+                    height      = 800
+                )
+
+
+        data_plot = heatmap(x               = X,
+                            y               = Y,
+                            z               = gridded,
+                            type            = "heatmap",
+                            colorscale      = colorm,
+                            colorbar_title  = fieldname     )
+
+        fig         = plot(data_plot,layout)
+        grid_out    = [""]
     elseif bid == "colormaps_cross"
 
         layout = Layout(

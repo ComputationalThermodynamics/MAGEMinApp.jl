@@ -78,10 +78,18 @@ function Tab_PhaseDiagram()
                         dbc_button("Grid refinement",id="button-refinement"),
                         dbc_collapse(
                             dbc_card(dbc_cardbody([
-
+                                    html_div("‎ "),
+                                    dbc_row([
+                                        dbc_button(
+                                            "Refine phase boundaries", id="refine-pb-button", color="light", className="me-2", n_clicks=0,
+                                            style       = Dict( "textAlign"     => "center",
+                                                                "font-size"     => "100%",
+                                                                "border"        =>"1px grey solid")
+                                        ),
+                                    ]),
                                 ])),
                                 id="collapse-refinement",
-                                is_open=false,
+                                is_open=true,
                         ),
                     ])
                     ], width=3),
