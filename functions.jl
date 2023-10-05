@@ -47,6 +47,31 @@ end
 
 
 """
+    Function to send back the oxide list of the implemented database
+"""
+function get_oxide_list(dbin::String)
+
+    if dbin == "ig"
+	    MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"; "H2O"];
+    elseif dbin == "igd"
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"; "H2O"];      
+    elseif dbin == "alk"
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"; "H2O"];    
+    elseif dbin == "mb"
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "H2O"];     
+    elseif dbin == "um"
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "MgO" ;"FeO"; "O"; "H2O"; "S"];
+    elseif dbin == "mp"
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "MnO"; "H2O"];
+    else
+        print("Database not implemented...\n")
+    end
+
+
+    return MAGEMin_ox
+end
+
+"""
     function to parce bulk-rock composition file
 """
 function bulk_file_to_db(datain)
@@ -83,7 +108,8 @@ function bulk_file_to_db(datain)
         frac 		= replace.(frac,r"\]"=>"",r"\["=>"");
         frac 		= parse.(Float64,frac);
 
-        bulk, oxide   = convertBulk4MAGEMin(frac,oxide,String(sysUnit),String(dbin)) 
+        bulkrock = convertBulk4MAGEMin(frac,oxide,String(sysUnit),String(dbin)) 
+        oxide    = get_oxide_list(String(dbin))
 
         push!(db,Dict(  :bulk       => bulk,
                         :title      => title,
@@ -92,7 +118,7 @@ function bulk_file_to_db(datain)
                         :test       => test,
                         :sysUnit    => sysUnit,
                         :oxide      => oxide,
-                        :frac       => frac,
+                        :frac       => bulkrock,
                     ), cols=:union)
     end
 
@@ -113,7 +139,7 @@ function parse_bulk_rock(contents, filename)
         ], style = Dict("textAlign" => "center","font-size" => "100%"))
     catch e
         return html_div([
-            "Wrong file format"
+            "Wrong file format: $e"
         ], style = Dict("textAlign" => "center","font-size" => "100%"))
     end
 
