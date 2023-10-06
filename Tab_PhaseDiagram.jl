@@ -24,6 +24,23 @@ function Tab_PhaseDiagram()
                                                 disabled = true   ),
                                         ]),
                                     ]),
+                                    html_div("‎ "),
+                                    dbc_row([
+                                        dcc_textarea(
+                                            id="click-data",
+                                            value       = "",
+                                            readOnly    = true,
+                                            disabled    = true,
+                                            draggable   = false,
+                                            style       = Dict( "textAlign" => "center",
+                                                                "font-size" => "100%",
+                                                                "width"     => "100%",
+                                                                "height"    => "64px",
+                                                                "resize"    => "none")
+                                        ),
+                                    ]),
+
+
                                 ])),
                                 id="collapse-infos-phase-diagram",
                                 is_open=true,
@@ -86,7 +103,7 @@ function Tab_PhaseDiagram()
                                         ], width=5),
                                         dbc_col([
                                             dcc_dropdown(   id          = "colormaps_cross",
-                                                            options     = ["blackbody","Blues","cividis","Greens","Greys","hot","jet","rainbow","RdBu","Reds","viridis","YlGnBu","YlOrRd"],
+                                                            options     = ["blackbody","Blues","cividis","Greens","Greys","hot","jet","RdBu","Reds","viridis","YlGnBu","YlOrRd"],
                                                             value       = "viridis",
                                                             clearable   = false,
                                                             placeholder = "Colormap")

@@ -1,3 +1,22 @@
+
+callback!(
+    app,
+    Output("click-data", "value"),
+    Input("phase-diagram", "clickData"),
+    prevent_initial_call = true,
+) do click_info
+
+    sp = click_info[:points][][:text]
+    x  = string(click_info[:points][][:x])
+    y  = string(click_info[:points][][:y])
+
+    p  = "Pressure      : "*y*"\n"
+    p *= "Temperature   : " *x*"\n"
+    p *= "Stable phases : " *sp*"\n"
+   
+    return p
+end
+
 # Callback function to create compute the phase diagram using T8code for Adaptive Mesh Refinement
 callback!(
     app,

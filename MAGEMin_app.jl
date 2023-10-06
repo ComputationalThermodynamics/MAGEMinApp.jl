@@ -2,7 +2,7 @@ using Base.Threads: @threads
 using Dash  
 using DashBootstrapComponents
 using PlotlyJS, JSON3, Printf, Statistics, DataFrames, CSV, Dates, Base64
-using UUIDs, JLD2, Delaunay, DelimitedFiles, Interpolations, ColorTypes
+using UUIDs, JLD2, Delaunay, DelimitedFiles, Interpolations
 
 # this activate the wrapper of MAGEMin dev branch
 # using Pkg
