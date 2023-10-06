@@ -22,7 +22,7 @@ const COMM = MPI.COMM_WORLD
 t8code_package_id = t8_get_package_id()
 if t8code_package_id<0
     # Initialize the sc library, has to happen before we initialize t8code.
-    sc_init(COMM, 1, 1, C_NULL, SC_LP_ERROR)
+    sc_init(COMM, 0, 1, C_NULL, SC_LP_ERROR)
     if T8code.Libt8.p4est_is_initialized() == 0
         T8code.Libt8.p4est_init(C_NULL, SC_LP_ERROR)
     end

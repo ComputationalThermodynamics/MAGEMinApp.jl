@@ -1,4 +1,48 @@
 """
+    Function to restrict colormap range
+"""
+function restrict_colorMapRange(    colorMap    ::String,
+                                    rangeColor  ::JSON3.Array{Int64, Base.CodeUnits{UInt8, String}, SubArray{UInt64, 1, Vector{UInt64}, Tuple{UnitRange{Int64}}, true}})
+
+    n       = rangeColor[2]-rangeColor[1]
+    colorm  = Vector{Vector{Any}}(undef,10)
+
+    rin     = zeros(n+1)
+    gin     = zeros(n+1)
+    bin     = zeros(n+1)
+    xin     = zeros(n+1)
+
+    m       = length(colors[Symbol(colorMap)])
+    cor     = Int64(floor(m/9))
+
+    k = 1
+    for i=rangeColor[1]*cor:cor:rangeColor[2]*cor
+        rin[k] = colors[Symbol(colorMap)][i].r
+        gin[k] = colors[Symbol(colorMap)][i].g
+        bin[k] = colors[Symbol(colorMap)][i].b
+        xin[k] = i
+        k += 1
+    end
+
+    r_interp    = linear_interpolation(xin, rin)
+    g_interp    = linear_interpolation(xin, gin)
+    b_interp    = linear_interpolation(xin, bin)
+    xmid        = vcat( (rangeColor[1]*cor) : (rangeColor[2]-rangeColor[1])/9.0*cor : (rangeColor[2]*cor) )
+
+    rout        = r_interp(xmid)
+    gout        = g_interp(xmid)
+    bout        = b_interp(xmid)
+
+    for i = 1:10
+        ix          = 1.0/9.0 * Float64(i) - 1.0/9.0
+        clr         = "rgb("*string(Int64(round(rout[i]*255)))*","*string(Int64(round(gout[i]*255)))*","*string(Int64(round(bout[i]*255)))*")"
+        colorm[i]   = [ix, clr]
+    end
+
+    return colorm
+end
+
+"""
     Function interpolate AMR grid to regular grid
 """
 function get_gridded_map(   fieldname   ::String,

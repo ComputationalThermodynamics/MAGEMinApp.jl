@@ -9,6 +9,9 @@ callback!(
     Input("refine-pb-button","n_clicks"),
 
     Input("colormaps_cross","value"),
+    Input("smooth-colormap","value"),
+    Input("range-slider-color","value"),
+    Input("reverse-colormap","value"),
     Input("fields-dropdown","value"),
     Input("show-grid","value"),                 # show edges checkbox
 
@@ -47,8 +50,8 @@ callback!(
     prevent_initial_call = true,
 
 ) do    n_clicks_mesh, n_clicks_refine, 
-        colorm,     fieldname,  grid,
-        npoints,    diagType,   dtb,        cpx,    limOpx, limOpxVal,
+        colorMap,   smooth,     rangeColor,     reverse,    fieldname,  grid,
+        npoints,    diagType,   dtb,    cpx,    limOpx,     limOpxVal,
         tmin,       tmax,       pmin,   pmax,
         fixT,       fixP,
         sub,        refType,    refLvl,
@@ -83,6 +86,23 @@ callback!(
         bid = ""
     else
         bid = split(ctx.triggered[1].prop_id, ".")[1]
+    end
+
+
+    #________________________________________________________________________________________#
+    # Set some values
+
+    # Here we change the range of the color map.
+    if rangeColor == [1,9]
+        colorm = colors[Symbol(colorMap)]
+    else
+        colorm = restrict_colorMapRange(colorMap,rangeColor)
+    end
+
+    if reverse == "false"
+        reverseColorMap = false
+    else
+        reverseColorMap = true
     end
 
     n_ox    = length(bulk1);
@@ -213,8 +233,10 @@ callback!(
         data_plot = heatmap(x               = X,
                             y               = Y,
                             z               = gridded,
+                            zsmooth         = smooth,
                             type            = "heatmap",
                             colorscale      = colorm,
+                            reversescale    = reverseColorMap,
                             colorbar_title  = fieldname,
                             hoverinfo       = "text",
                             text            = gridded_info   )
@@ -250,17 +272,17 @@ callback!(
         #________________________________________________________________________________________#                   
         # Scatter plotly of the grid
 
-        gridded, gridded_info, X, Y, npoints = get_gridded_map(       fieldname,
-                                                        oxi,
-                                                        Out_XY,
-                                                        sub,
-                                                        refLvl + addedRefinementLvl,
-                                                        data.xc,
-                                                        data.yc,
-                                                        data.x,
-                                                        data.y,
-                                                        Xrange,
-                                                        Yrange )
+        gridded, gridded_info, X, Y, npoints = get_gridded_map(         fieldname,
+                                                                        oxi,
+                                                                        Out_XY,
+                                                                        sub,
+                                                                        refLvl + addedRefinementLvl,
+                                                                        data.xc,
+                                                                        data.yc,
+                                                                        data.x,
+                                                                        data.y,
+                                                                        Xrange,
+                                                                        Yrange )
 
 
         layout = Layout(
@@ -286,16 +308,18 @@ callback!(
         data_plot = heatmap(x               = X,
                             y               = Y,
                             z               = gridded,
+                            zsmooth         =  smooth,
                             type            = "heatmap",
                             colorscale      = colorm,
                             colorbar_title  = fieldname,
+                            reversescale    = reverseColorMap,
                             hoverinfo       = "text",
                             text            = gridded_info     )
 
         fig         = plot(data_plot,layout)
         grid_out    = [""]
 
-    elseif bid == "colormaps_cross"
+    elseif bid == "colormaps_cross" || bid == "smooth-colormap" || bid == "range-slider-color" || bid == "reverse-colormap"
 
         layout = Layout(
                     title=attr(
@@ -316,9 +340,11 @@ callback!(
         data_plot = heatmap(x               =  X,
                             y               =  Y,
                             z               =  gridded,
+                            zsmooth         =  smooth,
                             type            = "heatmap",
                             colorscale      =  colorm,
                             colorbar_title  =  fieldname,
+                            reversescale    = reverseColorMap,
                             hoverinfo       = "text",
                             text            = gridded_info     )
 
@@ -357,9 +383,11 @@ callback!(
         data_plot = heatmap(x               = X,
                             y               = Y,
                             z               = gridded,
+                            zsmooth         =  smooth,
                             type            = "heatmap",
                             colorscale      = colorm,
                             colorbar_title  = fieldname,
+                            reversescale    = reverseColorMap,
                             hoverinfo       = "text",
                             text            = gridded_info     )
 
@@ -388,19 +416,19 @@ callback!(
                                             mode        = "lines",
                                             line_color  = "#000000",
                                             line_width  = 1,
-
-                    # customize what is shown upon hover:
-                    # text        = "Stable phases $(Out_XY[i].ph) ",
-                    # hoverinfo   = "text",
                     showlegend  = false     )
             end
 
             data_plot_grid[length(data.x)+1] = heatmap( x               = X,
                                                         y               = Y,
                                                         z               = gridded,
+                                                        zsmooth         =  smooth,
                                                         type            = "heatmap",
                                                         colorscale      = colorm,
-                                                        colorbar_title  = fieldname    )
+                                                        colorbar_title  = fieldname,
+                                                        reversescale    = reverseColorMap,
+                                                        hoverinfo       = "text",
+                                                        text            = gridded_info     )
 
             fig         = plot(data_plot_grid,layout)
             grid_out    = ["","GRID"]
@@ -408,9 +436,11 @@ callback!(
             data_plot = heatmap(x               = X,
                                 y               = Y,
                                 z               = gridded,
+                                zsmooth         =  smooth,
                                 type            = "heatmap",
                                 colorscale      = colorm,
                                 colorbar_title  = fieldname,
+                                reversescale    = reverseColorMap,
                                 hoverinfo       = "text",
                                 text            = gridded_info     )
 
