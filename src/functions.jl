@@ -1,5 +1,5 @@
 """
-    function to parce bulk-rock composition file
+    function to parse bulk-rock composition file
 """
 function bulk_file_to_db(datain)
 

@@ -1,13 +1,16 @@
+module MAGEMin_app
+
 using Dash  
 using DashBootstrapComponents
 using PlotlyJS, JSON3, Printf, Statistics, DataFrames, CSV, Dates, Base64
-using UUIDs, Delaunay
+using UUIDs, HTTP
+using Delaunay  # still needed?
 
 # this activate the wrapper of MAGEMin dev branch
-using Pkg
-MAGEMin_dir = "../TC_calibration"
-Pkg.activate(MAGEMin_dir)
-Pkg.instantiate()
+#using Pkg
+#MAGEMin_dir = "../TC_calibration"
+#Pkg.activate(MAGEMin_dir)
+#Pkg.instantiate()
 using MAGEMin_C
 
 
@@ -20,6 +23,7 @@ include("data_plot.jl")
 include("functions.jl")
 
 
+
 # read available colormaps
 colormaps   = read_colormaps()  # colormaps
 app         = dash(external_stylesheets = [dbc_themes.BOOTSTRAP], prevent_initial_callbacks=false)
@@ -29,7 +33,9 @@ app.layout  = html_div() do
 data_vert = []
 
     dbc_container([
-        dbc_col([dbc_row([
+        dbc_col([
+        #=    
+        dbc_row([
                     dbc_col([
                         dbc_cardimg(    id = "jgu-img",
                                         src="assets/static/images/JGU_light.jpg",
@@ -41,7 +47,8 @@ data_vert = []
                                         style = Dict("height" => 120, "width" => 360)),
                             ], width="auto" )
                         ], justify="between"),
-                html_div("‎ "),
+                #html_div("‎ "),
+                =#
                 dbc_row([
                         dbc_col([
                             dbc_dropdownmenu(
@@ -54,9 +61,9 @@ data_vert = []
                                 color="secondary"),
                             ]),
                         ]),
-                        dbc_row([
-                            html_div("‎ "),
-                        ]),
+                        #dbc_row([
+                        #    html_div("‎ "),
+                        #]),
 
 
                         dbc_tabs(
@@ -81,8 +88,11 @@ data_vert = []
 
 end
 
-include("./Tab_Simulation_Callbacks.jl")    
-include("./Tab_PhaseDiagram_Callbacks.jl")    
+#include("./Tab_Simulation_Callbacks.jl")    
+#include("./Tab_PhaseDiagram_Callbacks.jl")    
 
-run_server(app, debug=true)
+run_server(app, HTTP.Sockets.localhost, 8020, debug=false)
+
+
+end # module MAGEMin_app
 
