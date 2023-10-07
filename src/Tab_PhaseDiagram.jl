@@ -1,4 +1,4 @@
-function Tab_PhaseDiagram()
+function Tab_PhaseDiagram(colormaps)
     html_div([
     # one column for the plots
         dbc_col([
