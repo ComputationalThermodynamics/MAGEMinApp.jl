@@ -108,6 +108,20 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
 
     end
     
+    # This creates an initial session id that is unique for this session
+    # it will run on first start 
+    callback!(app, 
+        Dash.Output("session-id", "data"),
+        Dash.Output("label-id", "children"),
+        Input("session-id", "data")
+    ) do session_id
+
+        session_id = UUIDs.uuid4()
+        str = "id=$(session_id), v=$(GUI_version)"
+        return String("$(session_id)"), str
+    end
+
+
     app = Tab_Simulation_Callbacks(app)
     app = Tab_PhaseDiagram_Callbacks(app)
 

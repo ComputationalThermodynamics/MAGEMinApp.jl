@@ -313,7 +313,7 @@ function Tab_Simulation()
                             id="collapse-PT-conditions",
                             is_open=true,
                             ),
-
+                            dbc_row([dbc_label("", id="label-id")])                                                  
                             ])
                         ], width=4),
 
