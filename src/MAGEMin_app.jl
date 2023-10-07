@@ -110,7 +110,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
 
     cd(cur_dir) # go back to directory
 
-    run_server(app, host, port, debug=false)
+    run_server(app, host, port, debug=debug)
 
 end
 
