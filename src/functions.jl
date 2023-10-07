@@ -1,5 +1,158 @@
 """
-    function to parse bulk-rock composition file
+    Function to restrict colormap range
+"""
+function restrict_colorMapRange(    colorMap    ::String,
+                                    rangeColor  ::JSON3.Array{Int64, Base.CodeUnits{UInt8, String}, SubArray{UInt64, 1, Vector{UInt64}, Tuple{UnitRange{Int64}}, true}})
+
+    n       = rangeColor[2]-rangeColor[1]
+    colorm  = Vector{Vector{Any}}(undef,10)
+
+    rin     = zeros(n+1)
+    gin     = zeros(n+1)
+    bin     = zeros(n+1)
+    xin     = zeros(n+1)
+
+    m       = length(colors[Symbol(colorMap)])
+    cor     = Int64(floor(m/9))
+
+    k = 1
+    for i=rangeColor[1]*cor:cor:rangeColor[2]*cor
+        rin[k] = colors[Symbol(colorMap)][i].r
+        gin[k] = colors[Symbol(colorMap)][i].g
+        bin[k] = colors[Symbol(colorMap)][i].b
+        xin[k] = i
+        k += 1
+    end
+
+    r_interp    = linear_interpolation(xin, rin)
+    g_interp    = linear_interpolation(xin, gin)
+    b_interp    = linear_interpolation(xin, bin)
+    xmid        = vcat( (rangeColor[1]*cor) : (rangeColor[2]-rangeColor[1])/9.0*cor : (rangeColor[2]*cor) )
+
+    rout        = r_interp(xmid)
+    gout        = g_interp(xmid)
+    bout        = b_interp(xmid)
+
+    for i = 1:10
+        ix          = 1.0/9.0 * Float64(i) - 1.0/9.0
+        clr         = "rgb("*string(Int64(round(rout[i]*255)))*","*string(Int64(round(gout[i]*255)))*","*string(Int64(round(bout[i]*255)))*")"
+        colorm[i]   = [ix, clr]
+    end
+
+    return colorm
+end
+
+"""
+    Function interpolate AMR grid to regular grid
+"""
+function get_gridded_map(   fieldname   ::String,
+                            oxi         ::Vector{String},
+                            Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
+                            sub         ::Int64,
+                            refLvl      ::Int64,
+                            xc          ::Vector{Float64},
+                            yc          ::Vector{Float64},
+                            xf          ::Vector{SVector{4, Float64}},
+                            yf          ::Vector{SVector{4, Float64}},
+                            Xrange      ::Tuple{Float64, Float64},
+                            Yrange      ::Tuple{Float64, Float64} )
+
+    np          = length(data.x)
+    len_ox      = length(oxi)
+    field       = Vector{Union{Float64,Missing}}(undef,np);
+    npoints     = np
+
+    meant       = 0.0
+    for i=1:np
+        meant  += Out_XY[i].time_ms
+    end
+    meant      /= npoints
+    meant       = round(meant; digits = 3)
+
+    if fieldname == "#Stable_Phases"
+        for i=1:np
+            field[i] = Float64(length(Out_XY[i].ph));
+        end
+    elseif fieldname == "Variance"
+        for i=1:np
+            field[i] = Float64(len_ox - n_phase_XY[i] + 2.0);
+        end
+    else
+        for i=1:np
+            field[i] = Float64(get_property(Out_XY[i], fieldname));
+        end
+
+        field[isnan.(field)] .= missing
+        if fieldname == "frac_M" || fieldname == "rho_M" || fieldname == "rho_S"
+            field[isless.(field, 1e-8)] .= missing              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
+        end
+    end
+
+    n            = 2^(sub + refLvl)
+    x            = range(minimum(xc), stop = maximum(xc), length = n)
+    y            = range(minimum(yc), stop = maximum(yc), length = n)
+
+    X            = repeat(x , n)[:]
+    Y            = repeat(y', n)[:]
+    gridded      = Matrix{Union{Float64,Missing}}(undef,n,n);
+    gridded_info = fill("",n,n)
+
+
+    Xr = (Xrange[2]-Xrange[1])/n
+    Yr = (Yrange[2]-Yrange[1])/n
+
+    for k=1:np
+        for i=xf[k][1]+Xr/2 : Xr : xf[k][3]
+            for j=yf[k][1]+Yr/2 : Yr : yf[k][3]
+                ii                  = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
+                jj                  = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
+                gridded[ii,jj]      = field[k]
+                tmp                 = replace.(string(Out_XY[k].ph),r"\""=>"")
+                gridded_info[ii,jj] = "#"*string(k)*"# "*tmp
+            end
+        end
+    end
+
+    return gridded, gridded_info, X, Y, npoints, meant
+end
+
+
+"""
+    Function to extract values from structure using structure's member name
+"""
+function get_property(x, name::String)
+    s = Symbol(name)
+    return getproperty(x, s)
+end
+
+
+"""
+    Function to send back the oxide list of the implemented database
+"""
+function get_oxide_list(dbin::String)
+
+    if dbin == "ig"
+	    MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"; "H2O"];
+    elseif dbin == "igd"
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"; "H2O"];      
+    elseif dbin == "alk"
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"; "H2O"];    
+    elseif dbin == "mb"
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "H2O"];     
+    elseif dbin == "um"
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "MgO" ;"FeO"; "O"; "H2O"; "S"];
+    elseif dbin == "mp"
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "MnO"; "H2O"];
+    else
+        print("Database not implemented...\n")
+    end
+
+
+    return MAGEMin_ox
+end
+
+"""
+    function to parce bulk-rock composition file
 """
 function bulk_file_to_db(datain)
 
@@ -35,7 +188,8 @@ function bulk_file_to_db(datain)
         frac 		= replace.(frac,r"\]"=>"",r"\["=>"");
         frac 		= parse.(Float64,frac);
 
-        bulk, oxide   = convertBulk4MAGEMin(frac,oxide,String(sysUnit),String(dbin)) 
+        bulkrock    = convertBulk4MAGEMin(frac,oxide,String(sysUnit),String(dbin)) 
+        oxide       = get_oxide_list(String(dbin))
 
         push!(db,Dict(  :bulk       => bulk,
                         :title      => title,
@@ -44,7 +198,7 @@ function bulk_file_to_db(datain)
                         :test       => test,
                         :sysUnit    => sysUnit,
                         :oxide      => oxide,
-                        :frac       => frac,
+                        :frac       => bulkrock,
                     ), cols=:union)
     end
 
@@ -65,7 +219,7 @@ function parse_bulk_rock(contents, filename)
         ], style = Dict("textAlign" => "center","font-size" => "100%"))
     catch e
         return html_div([
-            "Wrong file format"
+            "Wrong file format: $e"
         ], style = Dict("textAlign" => "center","font-size" => "100%"))
     end
 

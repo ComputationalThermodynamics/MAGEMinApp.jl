@@ -16,6 +16,7 @@ using MAGEMin_C
 export App
 
 # include helper functions
+include("initialize_MAGEMin_AMR.jl")
 include("appData.jl")
 include("colormaps.jl")
 include("Tab_Simulation.jl")
@@ -34,10 +35,14 @@ Starts the MAGEMin App
 """
 function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
     GUI_version = "0.1.1"   
+    cur_dir     = pwd()                 # directory from where you started the GUI
+    pkg_dir     = pkgdir(MAGEMin_app)   # package dir
     
+    # Initialize MPI and T8Code
+    COMM = Initialize_AMR()
+
     # read available colormaps
-    pkg_dir       = pkgdir(MAGEMin_app)
-    dir_colormaps = joinpath(pkg_dir,"src/assets/colormaps/")
+    dir_colormaps = joinpath(pkg_dir,"assets/colormaps/")
     colormaps     = read_colormaps(dir_colormaps=dir_colormaps)  # colormaps
     
     app         = dash(external_stylesheets = [dbc_themes.BOOTSTRAP], prevent_initial_callbacks=false)
@@ -102,6 +107,8 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
     
     app = Tab_Simulation_Callbacks(app)
     app = Tab_PhaseDiagram_Callbacks(app)
+
+    cd(cur_dir) # go back to directory
 
     run_server(app, host, port, debug=false)
 
