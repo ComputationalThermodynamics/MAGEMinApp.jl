@@ -18,15 +18,12 @@ export App
 # include helper functions
 include("initialize_MAGEMin_AMR.jl")
 include("appData.jl")
-include("colormaps.jl")
 include("Tab_Simulation.jl")
 include("Tab_PhaseDiagram.jl")
 include("data_plot.jl")
 include("MAGEMin_app_functions.jl")
 include("Tab_Simulation_Callbacks.jl")    
 include("Tab_PhaseDiagram_Callbacks.jl")    
-
-
 
 """
     App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
@@ -41,10 +38,6 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
     # Initialize MPI and T8Code
     COMM = Initialize_AMR()
 
-    # read available colormaps
-    dir_colormaps = joinpath(pkg_dir,"assets/colormaps/")
-    colormaps     = read_colormaps(dir_colormaps=dir_colormaps)  # colormaps
-    
     app         = dash(external_stylesheets = [dbc_themes.BOOTSTRAP], prevent_initial_callbacks=false)
     app.title   = "MAGEMin app"
     app.layout  = html_div() do
@@ -91,7 +84,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                             ),
                                     dbc_tab(    tab_id="tab-phase-diagram",
                                                 label="Phase Diagram",
-                                                children = [Tab_PhaseDiagram(colormaps)]
+                                                children = [Tab_PhaseDiagram()]
                                             ),
                                     dbc_tab(tab_id="tab-PTX-path", label="PTX-path",        children = []),
                                     dbc_tab(tab_id="tab-TEmodeling", label="TE-modeling",   children = []),
