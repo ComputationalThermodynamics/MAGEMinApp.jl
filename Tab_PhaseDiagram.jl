@@ -2,7 +2,7 @@ function Tab_PhaseDiagram()
     html_div([
     # one column for the plots
         dbc_col([
-            html_div("‎ "),
+            # html_div("‎ "),
             dbc_row([ 
 
                     dbc_col([diagram_plot()], width=9),
@@ -15,7 +15,7 @@ function Tab_PhaseDiagram()
                                     dbc_row([
                                         dbc_col([ 
                                             html_h1("Number of computed points", style = Dict("textAlign" => "center","font-size" => "120%")),
-                                        ], width=5),
+                                        ], width=6),
                                         dbc_col([ 
                                                 dbc_input(
                                                 id      = "npoints-id",
@@ -26,8 +26,8 @@ function Tab_PhaseDiagram()
                                     ]),
                                     dbc_row([
                                         dbc_col([ 
-                                            html_h1("Average minimization time", style = Dict("textAlign" => "center","font-size" => "120%")),
-                                        ], width=5),
+                                            html_h1("Average minimization time [ms]", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                        ], width=6),
                                         dbc_col([ 
                                                 dbc_input(
                                                 id      = "meant-id",
@@ -45,9 +45,9 @@ function Tab_PhaseDiagram()
                                             disabled    = true,
                                             draggable   = false,
                                             style       = Dict( "textAlign" => "left",
-                                                                "font-size" => "100%",
+                                                                "font-size" => "110%",
                                                                 "width"     => "100%",
-                                                                "height"    => "128px",
+                                                                "height"    => "160px",
                                                                 "resize"    => "none")
                                         ),
                                     ]),
@@ -64,7 +64,7 @@ function Tab_PhaseDiagram()
                             dbc_card(dbc_cardbody([
                                 dbc_row([
                                     dbc_col([ 
-                                        html_h1("Grid options", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                        html_h1("Grid options", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 0)),
                                     ], width=5),
                                     dbc_col([ 
                                         dcc_checklist(
@@ -77,7 +77,7 @@ function Tab_PhaseDiagram()
                                         ),
                                     ], width=7),
                                 ]),
-                                html_div("‎ "),
+
                                 dbc_row([
                                     dbc_col([ 
                                         html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
