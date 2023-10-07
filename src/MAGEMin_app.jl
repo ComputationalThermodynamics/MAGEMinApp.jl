@@ -4,7 +4,7 @@ using Dash
 using DashBootstrapComponents
 using PlotlyJS, JSON3, Printf, Statistics, DataFrames, CSV, Dates, Base64
 using UUIDs, HTTP
-using Delaunay  # still needed?
+using Interpolations
 
 # this activate the wrapper of MAGEMin dev branch
 #using Pkg
@@ -125,7 +125,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
     app = Tab_Simulation_Callbacks(app)
     app = Tab_PhaseDiagram_Callbacks(app)
 
-    run_server(app, host, port, debug=debug)
+    run_server(app, host, port, debug=true)
 
     cd(cur_dir) # go back to directory
 
