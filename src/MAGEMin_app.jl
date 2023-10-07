@@ -50,7 +50,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
     app.layout  = html_div() do
         #data_vert = []
         pkg_dir       = pkgdir(MAGEMin_app)
-        dbc_container([
+        dbc_container(fluid=false, [
             dbc_col([
             dbc_row([
                         dbc_col([
@@ -101,6 +101,9 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                             ),
 
                     ], width=12),
+
+        dcc_store(id="session-id", data =  "")     # gives a unique number of our session
+
         ])
 
     end
@@ -108,9 +111,9 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
     app = Tab_Simulation_Callbacks(app)
     app = Tab_PhaseDiagram_Callbacks(app)
 
-    cd(cur_dir) # go back to directory
-
     run_server(app, host, port, debug=debug)
+
+    cd(cur_dir) # go back to directory
 
 end
 
