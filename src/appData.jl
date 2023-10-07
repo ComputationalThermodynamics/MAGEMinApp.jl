@@ -1,9 +1,11 @@
 global AppData
 
-MAGEMin_version = "v1.3.3";
-vertice_list    = [];
-mesh            = [];
-field           = [];
+MAGEMin_version     = "v1.3.3";
+vertice_list        = [];
+mesh                = [];
+field               = [];
+PseudosectionData   = [];
+
 
 # LIST AVAILABLE DATABASE
 dba = DataFrame(        database     = String[],
@@ -364,10 +366,11 @@ push!(db,Dict(          :bulk       => "predefined",
     
 
 
-AppData = ( MAGEMin_version = MAGEMin_version,
-            vertice_list    = vertice_list,
-            mesh            = mesh,
-            field           = field,
-            db              = db,
-            dba             = dba )
+AppData = ( MAGEMin_version     = MAGEMin_version,
+            vertice_list        = vertice_list,
+            mesh                = mesh,
+            field               = field,
+            db                  = db,
+            dba                 = dba,
+            PseudosectionData   = PseudosectionData )
             
