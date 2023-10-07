@@ -3,17 +3,37 @@ callback!(
     app,
     Output("click-data", "value"),
     Input("phase-diagram", "clickData"),
+    State("diagram-dropdown","value"),          # pt,px,tx
     prevent_initial_call = true,
-) do click_info
+) do click_info, diagType
 
-    sp = click_info[:points][][:text]
-    x  = string(click_info[:points][][:x])
-    y  = string(click_info[:points][][:y])
+    sp  = click_info[:points][][:text]
+    x   = string(click_info[:points][][:x])
+    y   = string(click_info[:points][][:y])
 
-    p  = "Pressure      : "*y*"\n"
-    p *= "Temperature   : " *x*"\n"
-    p *= "Stable phases : " *sp*"\n"
-   
+    tmp = match(r"#([^# ]+)#", sp)
+    if tmp !== nothing
+        point_id = tmp.match
+    else
+        print("there is a problem with the point information, the id has not been found\n")
+        point_id = ""
+    end
+
+    sp  = replace(sp, r"#([^#]+)#" => "")
+    if diagType == "pt"
+        p  = "Pressure      : " *y*"\n"
+        p *= "Temperature   : " *x*"\n"
+        p *= "Stable phases : " *sp*"\n"
+    elseif diagType == "px"
+        p  = "Pressure      : " *y*"\n"
+        p *= "Composition   : " *x*"\n"
+        p *= "Stable phases : " *sp*"\n"
+    else # diagType == "tx"
+        p  = "Temperature   : " *y*"\n"
+        p *= "Composition   : " *x*"\n"
+        p *= "Stable phases : " *sp*"\n"
+    end
+
     return p
 end
 

@@ -81,14 +81,14 @@ function get_gridded_map(   fieldname   ::String,
         end
     end
 
-    n           = 2^(sub + refLvl)
-    x           = range(minimum(xc), stop = maximum(xc), length = n)
-    y           = range(minimum(yc), stop = maximum(yc), length = n)
+    n            = 2^(sub + refLvl)
+    x            = range(minimum(xc), stop = maximum(xc), length = n)
+    y            = range(minimum(yc), stop = maximum(yc), length = n)
 
-    X           = repeat(x , n)[:]
-    Y           = repeat(y', n)[:]
-    gridded     = Matrix{Union{Float64,Missing}}(undef,n,n);
-    gridded_info= fill("",n,n)
+    X            = repeat(x , n)[:]
+    Y            = repeat(y', n)[:]
+    gridded      = Matrix{Union{Float64,Missing}}(undef,n,n);
+    gridded_info = fill("",n,n)
 
 
     Xr = (Xrange[2]-Xrange[1])/n
@@ -97,10 +97,11 @@ function get_gridded_map(   fieldname   ::String,
     for k=1:np
         for i=xf[k][1]+Xr/2 : Xr : xf[k][3]
             for j=yf[k][1]+Yr/2 : Yr : yf[k][3]
-                ii = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
-                jj = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
-                gridded[ii,jj] = field[k]
-                gridded_info[ii,jj] = replace.(string(Out_XY[k].ph),r"\""=>"")
+                ii                  = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
+                jj                  = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
+                gridded[ii,jj]      = field[k]
+                tmp                 = replace.(string(Out_XY[k].ph),r"\""=>"")
+                gridded_info[ii,jj] = "#"*string(k)*"# "*tmp
             end
         end
     end
