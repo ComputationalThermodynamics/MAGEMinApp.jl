@@ -22,7 +22,7 @@ include("colormaps.jl")
 include("Tab_Simulation.jl")
 include("Tab_PhaseDiagram.jl")
 include("data_plot.jl")
-include("functions.jl")
+include("MAGEMin_app_functions.jl")
 include("Tab_Simulation_Callbacks.jl")    
 include("Tab_PhaseDiagram_Callbacks.jl")    
 
@@ -31,7 +31,7 @@ include("Tab_PhaseDiagram_Callbacks.jl")
 """
     App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
 
-Starts the MAGEMin App
+Starts the MAGEMin App.
 """
 function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
     GUI_version = "0.1.1"   
