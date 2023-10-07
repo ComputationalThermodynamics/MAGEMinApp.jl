@@ -8,30 +8,21 @@ callback!(
 ) do click_info, diagType
 
     sp  = click_info[:points][][:text]
-    x   = string(click_info[:points][][:x])
-    y   = string(click_info[:points][][:y])
-
     tmp = match(r"#([^# ]+)#", sp)
     if tmp !== nothing
         point_id = tmp.match
-    else
-        print("there is a problem with the point information, the id has not been found\n")
-        point_id = ""
-    end
+        point_id = parse(Int64,replace.(point_id,r"#"=>""))
 
-    sp  = replace(sp, r"#([^#]+)#" => "")
-    if diagType == "pt"
-        p  = "Pressure      : " *y*"\n"
-        p *= "Temperature   : " *x*"\n"
-        p *= "Stable phases : " *sp*"\n"
-    elseif diagType == "px"
-        p  = "Pressure      : " *y*"\n"
-        p *= "Composition   : " *x*"\n"
-        p *= "Stable phases : " *sp*"\n"
-    else # diagType == "tx"
-        p  = "Temperature   : " *y*"\n"
-        p *= "Composition   : " *x*"\n"
-        p *= "Stable phases : " *sp*"\n"
+        X       = "Composition\t\t[mol]\t: "*string(round.(Out_XY[point_id].bulk; digits = 3))*"\n"
+        P       = "Pressure\t\t[°C]\t\t: "*string(round(Out_XY[point_id].P_kbar; digits = 3))*"\n"
+        T       = "Temperature\t[kbar]\t: "*string(round(Out_XY[point_id].T_C; digits = 3))*"\n"
+        Gsys    = "Gibbs energy\t[kJ]\t\t: "*string(round(Out_XY[point_id].G_system; digits = 3))*"\n"
+        StPhase = "Stable phases\t[str]\t: "*string(Out_XY[point_id].ph)*"\n"
+        PhFrac  = "Phases fraction\t[mol]\t: "*string(round.(Out_XY[point_id].ph_frac; digits = 3))*"\n"
+
+        p       = X*P*T*Gsys*StPhase*PhFrac
+    else
+        p       = "there is a problem with the point information, the id has not been found\n"
     end
 
     return p
@@ -43,6 +34,7 @@ callback!(
     Output("phase-diagram","figure"),
     Output("show-grid","value"),
     Output("npoints-id","value"),
+    Output("meant-id","value"),
 
     Input("compute-button","n_clicks"),
     Input("refine-pb-button","n_clicks"),
@@ -54,7 +46,7 @@ callback!(
     Input("fields-dropdown","value"),
     Input("show-grid","value"),                 # show edges checkbox
 
-    State("npoints-id","value"),               # total number of computed points
+    State("npoints-id","value"),                # total number of computed points
     State("diagram-dropdown","value"),          # pt,px,tx
     State("database-dropdown","value"),         # mp,mb,ig,igd,um,alk
     State("mb-cpx-switch","value"),             # false,true -> 0,1
@@ -240,17 +232,17 @@ callback!(
         #________________________________________________________________________________________#                   
         # Scatter plotly of the grid
 
-        gridded, gridded_info, X, Y, npoints = get_gridded_map(     fieldname,
-                                                                    oxi,
-                                                                    Out_XY,
-                                                                    sub,
-                                                                    refLvl,
-                                                                    data.xc,
-                                                                    data.yc,
-                                                                    data.x,
-                                                                    data.y,
-                                                                    Xrange,
-                                                                    Yrange )
+        gridded, gridded_info, X, Y, npoints, meant = get_gridded_map(  fieldname,
+                                                                        oxi,
+                                                                        Out_XY,
+                                                                        sub,
+                                                                        refLvl,
+                                                                        data.xc,
+                                                                        data.yc,
+                                                                        data.x,
+                                                                        data.y,
+                                                                        Xrange,
+                                                                        Yrange )
 
 
         layout = Layout(
@@ -311,17 +303,17 @@ callback!(
         #________________________________________________________________________________________#                   
         # Scatter plotly of the grid
 
-        gridded, gridded_info, X, Y, npoints = get_gridded_map(         fieldname,
-                                                                        oxi,
-                                                                        Out_XY,
-                                                                        sub,
-                                                                        refLvl + addedRefinementLvl,
-                                                                        data.xc,
-                                                                        data.yc,
-                                                                        data.x,
-                                                                        data.y,
-                                                                        Xrange,
-                                                                        Yrange )
+        gridded, gridded_info, X, Y, npoints, meant = get_gridded_map(      fieldname,
+                                                                            oxi,
+                                                                            Out_XY,
+                                                                            sub,
+                                                                            refLvl + addedRefinementLvl,
+                                                                            data.xc,
+                                                                            data.yc,
+                                                                            data.x,
+                                                                            data.y,
+                                                                            Xrange,
+                                                                            Yrange )
 
 
         layout = Layout(
@@ -391,17 +383,17 @@ callback!(
         grid_out    = [""]
     elseif bid == "fields-dropdown"
 
-        gridded, gridded_info, X, Y, npoints = get_gridded_map(       fieldname,
-                                                        oxi,
-                                                        Out_XY,
-                                                        sub,
-                                                        refLvl + addedRefinementLvl,
-                                                        data.xc,
-                                                        data.yc,
-                                                        data.x,
-                                                        data.y,
-                                                        Xrange,
-                                                        Yrange )
+        gridded, gridded_info, X, Y, npoints, meant = get_gridded_map(  fieldname,
+                                                                        oxi,
+                                                                        Out_XY,
+                                                                        sub,
+                                                                        refLvl + addedRefinementLvl,
+                                                                        data.xc,
+                                                                        data.yc,
+                                                                        data.x,
+                                                                        data.y,
+                                                                        Xrange,
+                                                                        Yrange )
 
         layout = Layout(
                     title=attr(
@@ -490,7 +482,7 @@ callback!(
         fig = plot()
     end
 
-    return fig, grid_out, npoints  
+    return fig, grid_out, npoints, meant
 end
 
 

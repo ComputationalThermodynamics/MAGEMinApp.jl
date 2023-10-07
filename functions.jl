@@ -62,6 +62,13 @@ function get_gridded_map(   fieldname   ::String,
     field       = Vector{Union{Float64,Missing}}(undef,np);
     npoints     = np
 
+    meant       = 0.0
+    for i=1:np
+        meant  += Out_XY[i].time_ms
+    end
+    meant      /= npoints
+    meant       = round(meant; digits = 3)
+
     if fieldname == "#Stable_Phases"
         for i=1:np
             field[i] = Float64(length(Out_XY[i].ph));
@@ -106,7 +113,7 @@ function get_gridded_map(   fieldname   ::String,
         end
     end
 
-    return gridded, gridded_info, X, Y, npoints
+    return gridded, gridded_info, X, Y, npoints, meant
 end
 
 

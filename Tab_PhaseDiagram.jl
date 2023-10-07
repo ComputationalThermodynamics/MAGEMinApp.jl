@@ -11,7 +11,7 @@ function Tab_PhaseDiagram()
                         dbc_button("Phase diagram information",id="infos-phase-diagram"),
                         dbc_collapse(
                             dbc_card(dbc_cardbody([
-                                    html_div("‎ "),
+                                    # html_div("‎ "),
                                     dbc_row([
                                         dbc_col([ 
                                             html_h1("Number of computed points", style = Dict("textAlign" => "center","font-size" => "120%")),
@@ -19,6 +19,18 @@ function Tab_PhaseDiagram()
                                         dbc_col([ 
                                                 dbc_input(
                                                 id      = "npoints-id",
+                                                type    = "number", 
+                                                value   = 0,
+                                                disabled = true   ),
+                                        ]),
+                                    ]),
+                                    dbc_row([
+                                        dbc_col([ 
+                                            html_h1("Average minimization time", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                        ], width=5),
+                                        dbc_col([ 
+                                                dbc_input(
+                                                id      = "meant-id",
                                                 type    = "number", 
                                                 value   = 0,
                                                 disabled = true   ),
@@ -32,10 +44,10 @@ function Tab_PhaseDiagram()
                                             readOnly    = true,
                                             disabled    = true,
                                             draggable   = false,
-                                            style       = Dict( "textAlign" => "center",
+                                            style       = Dict( "textAlign" => "left",
                                                                 "font-size" => "100%",
                                                                 "width"     => "100%",
-                                                                "height"    => "64px",
+                                                                "height"    => "128px",
                                                                 "resize"    => "none")
                                         ),
                                     ]),
