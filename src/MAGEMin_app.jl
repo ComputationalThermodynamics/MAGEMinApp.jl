@@ -4,7 +4,7 @@ using Dash
 using DashBootstrapComponents
 using PlotlyJS, JSON3, Printf, Statistics, DataFrames, CSV, Dates, Base64
 using UUIDs, HTTP
-using Interpolations
+using JLD2, DelimitedFiles, Interpolations
 
 # this activate the wrapper of MAGEMin dev branch
 #using Pkg
