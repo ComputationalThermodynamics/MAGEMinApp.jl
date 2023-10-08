@@ -1,4 +1,73 @@
 """
+    save all function
+"""
+function save_all_to_file(dtb::String)
+    np        = length(Out_XY)
+
+    file      = ""
+    file     *= @sprintf("#database %s\n", dtb)
+    file     *= @sprintf("#phase mod[wt_frac] G[kJ] V_molar[cm3/mol] V_partial[cm3] Cp[kJ/K] Rho[kg/m3] Alpha[1/K] Entropy[J/K] Enthalpy[J] BulkMod[GPa] ShearMod[GPa] Vp[km/s] Vs[km/s] ")
+
+    for i=1:length(Out_XY[1].oxides)
+        file *= @sprintf("%s[wt_frac] ",Out_XY[1].oxides[i]) 
+    end
+    file     *= @sprintf("\n")
+
+    for i=1:np
+        n_pp  = Out_XY[i].n_PP
+        n_ss  = Out_XY[i].n_SS
+
+        file *= @sprintf("point %d n_phase %d P_kbar %g T_C %g\n", i, n_pp+n_ss, Out_XY[i].P_kbar, Out_XY[i].T_C)
+
+        for j=1:n_ss
+            file *= @sprintf("%s ",Out_XY[i].ph[j])
+            file *= @sprintf("%10f ",Out_XY[i].ph_frac_wt[j])
+            for k=1:length(Out_XY[i].SS_vec[j].Comp_wt)
+                file *= @sprintf("%10f ",Out_XY[i].SS_vec[j].Comp_wt[k])
+            end
+            file *= @sprintf("%10f %10f %10f %10f %10f %10f %10f %10f %10f %10f %10f %10f ",
+                        Out_XY[i].SS_vec[j].G,
+                        Out_XY[i].SS_vec[j].V,
+                        Out_XY[i].SS_vec[j].V*Out_XY[i].ph_frac[j]*Out_XY[i].SS_vec[j].f,
+                        Out_XY[i].SS_vec[j].cp,
+                        Out_XY[i].SS_vec[j].rho,
+                        Out_XY[i].SS_vec[j].alpha,
+                        Out_XY[i].SS_vec[j].entropy,
+                        Out_XY[i].SS_vec[j].enthalpy,
+                        Out_XY[i].SS_vec[j].bulkMod,
+                        Out_XY[i].SS_vec[j].shearMod,
+                        Out_XY[i].SS_vec[j].Vp,
+                        Out_XY[i].SS_vec[j].Vs )
+            file *= @sprintf("\n")
+        end
+
+        for j=1:n_pp
+            file *= @sprintf("%s ",Out_XY[i].ph[j+n_ss])
+            file *= @sprintf("%10f ",Out_XY[i].ph_frac_wt[j+n_ss])
+            for k=1:length(Out_XY[i].PP_vec[j].Comp_wt)
+                file *= @sprintf("%10f ",Out_XY[i].PP_vec[j].Comp_wt[k])
+            end
+            file *= @sprintf("%10f %10f %10f %10f %10f %10f %10f %10f %10f %10f %10f %10f ",
+            Out_XY[i].PP_vec[j].G,
+            Out_XY[i].PP_vec[j].V,
+            Out_XY[i].PP_vec[j].V*Out_XY[i].ph_frac[j+n_ss]*Out_XY[i].PP_vec[j].f,
+            Out_XY[i].PP_vec[j].cp,
+            Out_XY[i].PP_vec[j].rho,
+            Out_XY[i].PP_vec[j].alpha,
+            Out_XY[i].PP_vec[j].entropy,
+            Out_XY[i].PP_vec[j].enthalpy,
+            Out_XY[i].PP_vec[j].bulkMod,
+            Out_XY[i].PP_vec[j].shearMod,
+            Out_XY[i].PP_vec[j].Vp,
+            Out_XY[i].PP_vec[j].Vs )
+            file *= @sprintf("\n")
+        end
+
+    end
+
+    return file
+end
+"""
     save equilibrium function
 """
 function save_equilibrium_to_file(  out::MAGEMin_C.gmin_struct{Float64, Int64}  )
@@ -79,7 +148,7 @@ function save_equilibrium_to_file(  out::MAGEMin_C.gmin_struct{Float64, Int64}  
                         out.ph_frac_wt[i],
                         out.PP_vec[i].G,
                         out.PP_vec[i].V,
-                        out.PP_vec[i].V*out.ph_frac[i]*out.PP_vec[i].f,
+                        out.PP_vec[i].V*out.ph_frac[i+out.n_SS]*out.PP_vec[i].f,
                         out.PP_vec[i].cp,
                         out.PP_vec[i].rho,
                         out.PP_vec[i].alpha,

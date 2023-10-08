@@ -1,5 +1,29 @@
 function Tab_PhaseDiagram_Callbacks(app)
 
+    #save all to file
+    callback!(
+        app,
+        Output("download-all-text", "data"),
+        Output("data-all-save", "children"),
+        Input("save-all-button", "n_clicks"),
+        State("Filename-all-id", "value"),
+        State("database-dropdown","value"),
+        prevent_initial_call=true,
+    ) do n_clicks, fname, dtb
+
+        if fname != "... filename ..."
+            datab   = "_"*dtb
+            fileout = fname*datab*".txt"
+            file    = save_all_to_file(dtb)            #point_id is defined as global variable in clickData callback
+            output  = Dict("content" => file,"filename" => fileout)
+            
+            return output, "Successfully saved all points information"
+        else
+            return nothing, "Provide a valid filename (without extension)"
+        end
+    end
+
+    # save to file
     callback!(
         app,
         Output("download-text", "data"),
@@ -10,7 +34,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         prevent_initial_call=true,
     ) do n_clicks, fname, dtb
 
-        if fname != " ... filename ... "
+        if fname != "... filename ..."
             P       = "_Pkbar_"*string(Out_XY[point_id].P_kbar)
             T       = "_TC_"*string(Out_XY[point_id].T_C)
             datab   = "_"*dtb

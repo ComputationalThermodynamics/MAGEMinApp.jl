@@ -35,6 +35,7 @@ function Tab_PhaseDiagram()
                                                 value   = 0,
                                                 disabled = true   ),
                                         ]),
+                                        dbc_tooltip("This is the average minimization time per point: n_points/time_per_point",target="meant-id"),
                                     ]),
                                     html_div("‎ "),
                                     dbc_row([
@@ -51,13 +52,15 @@ function Tab_PhaseDiagram()
                                                                 "resize"    => "none")
                                         ),
                                     ]),
+                                    html_div("‎ "),
+
                                     dbc_row([
                                         dbc_col([ 
                                             dbc_input(
                                                 id      = "Filename-eq-id",
                                                 type    = "text", 
                                                 style   = Dict("textAlign" => "center") ,
-                                                value   = " ... filename ... "   ),     
+                                                value   = "... filename ..."   ),     
                                         ], width=6),
                                         dbc_col([    
                                             dbc_button(
@@ -69,6 +72,25 @@ function Tab_PhaseDiagram()
                                     dbc_row([
                                         html_div(id="data-eq-save"),
                                     ]),
+                                    dbc_row([
+                                        dbc_col([ 
+                                            dbc_input(
+                                                id      = "Filename-all-id",
+                                                type    = "text", 
+                                                style   = Dict("textAlign" => "center") ,
+                                                value   = "... filename ..."   ),     
+                                        ], width=6),
+                                        dbc_col([    
+                                            dbc_button(
+                                                "Save all data points", id="save-all-button", color="light",  n_clicks=0,
+                                            ),
+                                            dcc_download(id="download-all-text"),  
+                                        ]),
+                                    ]),
+                                    dbc_row([
+                                        html_div(id="data-all-save"),
+                                    ]),
+
                         
                                 ])),
                                 id="collapse-infos-phase-diagram",

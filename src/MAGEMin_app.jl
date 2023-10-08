@@ -30,7 +30,7 @@ include("Tab_PhaseDiagram_Callbacks.jl")
 
 Starts the MAGEMin App.
 """
-function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
+function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=true)
     GUI_version = "0.1.1"   
     cur_dir     = pwd()                 # directory from where you started the GUI
     pkg_dir     = pkgdir(MAGEMin_app)   # package dir
@@ -41,7 +41,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
     app         = dash(external_stylesheets = [dbc_themes.BOOTSTRAP], prevent_initial_callbacks=false)
     app.title   = "MAGEMin app"
     app.layout  = html_div() do
-        #data_vert = []
+ 
         pkg_dir       = pkgdir(MAGEMin_app)
         dbc_container(fluid=false, [
             dbc_col([
@@ -57,7 +57,6 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                             style = Dict("height" => 120, "width" => 360)),
                                 ], width="auto" )
                             ], justify="between"),
-                    # html_div("‎ "),
                     
                     dbc_row([
                             dbc_col([
@@ -74,7 +73,6 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                             dbc_row([
                                 html_div("‎ "),
                             ]),
-
 
                             dbc_tabs(
                                 [
@@ -114,18 +112,15 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
         return String("$(session_id)"), str
     end
 
-
     app = Tab_Simulation_Callbacks(app)
     app = Tab_PhaseDiagram_Callbacks(app)
 
-    # run_server(app, debug=true) #TMP FOR DEV ONLY
     run_server(app, host, port, debug=true)
 
     cd(cur_dir) # go back to directory
 
 end
 
-
+App() #### trick  to have hot reloading: first launch normaly then quit and go to src and run julia -t 5 MAGEMin_app.jl
 
 end # module MAGEMin_app
-

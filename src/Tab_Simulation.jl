@@ -24,9 +24,13 @@ function Tab_Simulation()
                                                             ],
                                                             value="ig" ,
                                                             clearable   = false,
-                                                            multi   = false),
+                                                            multi       = false),
                                         ]),
-                                    ]),
+                                        dbc_tooltip([
+                                            html_div("Here you can select the thermodynamic database you want"),
+                                            html_div("Note that the chemical system can be different from database to another"),
+                                                    ],target="database-dropdown"),
+                                        ]),
 
                                     #diagram type
                                     dbc_row([
@@ -44,6 +48,12 @@ function Tab_Simulation()
                                             clearable   = false,
                                             multi   = false),
                                         ]),
+                                        dbc_tooltip([
+                                            html_div("There is three types of phase diagram available: "),
+                                            html_div("1) pressure vs temperature"),
+                                            html_div("2) pressure vs variable composition"),
+                                            html_div("3) temperature vs variable composition")
+                                                    ],target="diagram-dropdown"),
                                     ]),
 
                                     #clinopyroxene for metabasite
@@ -70,10 +80,8 @@ function Tab_Simulation()
                                         html_div("‎ "),  
                                         dbc_row([
                                             dbc_col([ 
-                                                # html_h1("Limit Ca-orthopyroxene", style = Dict("textAlign" => "center","font-size" => "120%")),
                                             ],width=6),
-                                            # dbc_col([ 
-                                            # ],width=1),
+
                                             dbc_col([ 
                                                 dcc_checklist(
                                                     id      ="limit-ca-opx-id",
@@ -83,6 +91,8 @@ function Tab_Simulation()
                                                     value   = [""],
                                                     inline  = true,
                                                 ),
+                                                dbc_tooltip("This activate a smaller range for compositional variable of opx for the igneous database sets",target="limit-ca-opx-id"),
+
                                             ]),
                                             dbc_col([ 
                                                 html_div([
@@ -347,6 +357,11 @@ function Tab_Simulation()
                                                         multiple=false
                                                     ),
                                                     html_div(id="output-data-uploadn"),
+                                                    dbc_tooltip([
+                                                        html_div("An example of file providing bulk-rock compositions is given in the 'examples' folder"),
+                                                        html_div("The structure of the file should comply with the following structure:"),
+                                                        html_div("title::String; comments::String; db::String; sysUnit::String; oxide::Vector{String}; frac::Vector{Float64}")
+                                                                ],target="upload-bulk"),
 
                                                     html_div("‎ "),
                                                     dbc_row([
