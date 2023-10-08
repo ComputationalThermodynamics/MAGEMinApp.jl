@@ -1,4 +1,169 @@
 """
+    save equilibrium function
+"""
+function save_equilibrium_to_file(  out::MAGEMin_C.gmin_struct{Float64, Int64}  )
+
+    file = ""
+    file *= @sprintf("============================================================\n")
+    for i=1:length(out.ph)
+        file *= @sprintf(" %4s ",out.ph[i])
+    end
+    file *= @sprintf(" {%.4f %.4f} kbar/°C\n\n",out.P_kbar,out.T_C)
+
+    file *= @sprintf("End-members fractions[wt fr]:\n")
+    for i=1:out.n_SS
+        for j=1:length(out.SS_vec[i].emNames)
+            file *= @sprintf(" %8s",out.SS_vec[i].emNames[j])
+        end
+        file *= @sprintf("\n")
+        for j=1:length(out.SS_vec[i].emFrac_wt)
+            file *= @sprintf(" %8f",out.SS_vec[i].emFrac_wt[j])
+        end
+        file *= @sprintf("\n")        
+    end
+    file *= @sprintf("\n") 
+
+
+    file *= @sprintf("Oxide compositions [wt fr]:\n")
+    file *= @sprintf("% 8s"," ") 
+    for i=1:length(out.oxides)
+        file *= @sprintf(" %8s",out.oxides[i]) 
+    end
+    file *= @sprintf("\n")   
+    file *= @sprintf(" %8s","SYS") 
+    for i=1:length(out.bulk_wt)
+        file *= @sprintf(" %8f",out.bulk_wt[i])
+    end
+    file *= @sprintf("\n")  
+    for i=1:out.n_SS
+        file *= @sprintf(" %8s",out.ph[i])
+        for j=1:length(out.SS_vec[i].Comp_wt)
+            file *= @sprintf(" %8f",out.SS_vec[i].Comp_wt[j])
+        end
+        file *= @sprintf("\n")  
+    end
+    for i=1:out.n_PP
+        file *= @sprintf(" %8s",out.ph[i])
+        for j=1:length(out.PP_vec[i].Comp_wt)
+            file *= @sprintf(" %8f",out.PP_vec[i].Comp_wt[j])
+        end
+        file *= @sprintf("\n")  
+    end
+    file *= @sprintf("\n")  
+
+    file *= @sprintf("Stable mineral assemblage:\n")    
+    file *= @sprintf("%6s%15s %13s %17s %17s %12s %12s %12s %12s %12s %12s %12s %12s %12s\n","phase","fraction[wt]","G[J]" ,"V_molar[cm3/mol]","V_partial[cm3]" ,"Cp[kJ/K]","Rho[kg/m3]","Alpha[1/K]","Entropy[J/K]","Enthalpy[J]","BulkMod[GPa]","ShearMod[GPa]","Vp[km/s]","Vs[km/s]")
+   
+    for i=1:out.n_SS
+        file *= @sprintf("%6s",out.ph[i])
+        file *= @sprintf("%+15.5f %+13.5f %+17.5f %+17.5f %+12.5f %+12.5f %+12.8f %+12.6f %+12.4f %+12.2f %+12.2f %+13.2f %+12.2f",
+                        out.ph_frac_wt[i],
+                        out.SS_vec[i].G,
+                        out.SS_vec[i].V,
+                        out.SS_vec[i].V*out.ph_frac[i]*out.SS_vec[i].f,
+                        out.SS_vec[i].cp,
+                        out.SS_vec[i].rho,
+                        out.SS_vec[i].alpha,
+                        out.SS_vec[i].entropy,
+                        out.SS_vec[i].enthalpy,
+                        out.SS_vec[i].bulkMod,
+                        out.SS_vec[i].shearMod,
+                        out.SS_vec[i].Vp,
+                        out.SS_vec[i].Vs)
+        file *= @sprintf("\n")  
+    end
+
+    for i=1:out.n_PP
+        file *= @sprintf("%6s",out.ph[i+out.n_SS])
+        file *= @sprintf("%+15.5f %+13.5f %+17.5f %+17.5f %+12.5f %+12.5f %+12.8f %+12.6f %+12.4f %+12.2f %+12.2f %+13.2f %+12.2f",
+                        out.ph_frac_wt[i],
+                        out.PP_vec[i].G,
+                        out.PP_vec[i].V,
+                        out.PP_vec[i].V*out.ph_frac[i]*out.PP_vec[i].f,
+                        out.PP_vec[i].cp,
+                        out.PP_vec[i].rho,
+                        out.PP_vec[i].alpha,
+                        out.PP_vec[i].entropy,
+                        out.PP_vec[i].enthalpy,
+                        out.PP_vec[i].bulkMod,
+                        out.PP_vec[i].shearMod,
+                        out.PP_vec[i].Vp,
+                        out.PP_vec[i].Vs)
+        file *= @sprintf("\n")  
+    end
+
+    file *= @sprintf("%6s %14s %+13.5f %17s %+17.5f %+12.5f %+12.5f %12s %+12.6f %+12.4f %+12.5f %+12.5f %+13.5f %+12.5f\n",
+                    "SYS",
+                    " ",
+                    out.G_system,
+                    " ",    
+                    0, #V
+                    0, #cp
+                    out.rho,
+                    " ",  
+                    out.entropy,
+                    out.enthalpy,
+                    out.bulkMod,
+                    out.shearMod,
+                    out.Vp,
+                    out.Vs   )
+    file *= @sprintf("\n")    
+
+    file *= @sprintf("Gamma[J] (chemical potential of oxides):\n")  
+    for i=1:length(out.oxides)
+        file *= @sprintf(" %6s %8.3f\n",out.oxides[i],out.Gamma[i]) 
+    end
+    file *= @sprintf("\n") 
+
+    file *= @sprintf("System fugacity:\n")  
+    file *= @sprintf(" %6s %g\n","fO2",out.fO2)  
+    file *= @sprintf("\n\n") 
+
+    file *= @sprintf("G-hyperplane distance[J]:\n")  
+    for i=1:out.n_SS
+        file *= @sprintf(" %6s %12.8f\n",out.ph[i],out.SS_vec[i].deltaG)  
+    end
+    file *= @sprintf("\n\n") 
+
+
+    #for THERMOCALC
+    file *= @sprintf("Initial guess for THERMOCALC:\n") 
+    file *= @sprintf("%% ----------------------------------------------------------\n") 
+    file *= @sprintf("%% at P =  %12.8f, T = %12.8f, for: ",out.P_kbar,out.T_C)
+    for i=1:out.n_SS
+        file *= @sprintf("%s ",out.ph[i])  
+    end
+    file *= @sprintf("\n") 
+    file *= @sprintf("%% ----------------------------------------------------------\n") 
+    file *= @sprintf("ptguess  %12.8f %12.8f\n",out.P_kbar,out.T_C) 
+    file *= @sprintf("%% ----------------------------------------------------------\n")     
+    n = 1;
+    for i=1:out.n_SS
+        for j=1:length(out.SS_vec[i].emFrac)-1
+            if length(out.ph[i]) == 1
+                file *= @sprintf(	"xyzguess %5s(%1s) %10f\n", "?",out.ph[i], out.SS_vec[i].compVariables[j])
+            elseif length(out.ph[i]) == 2
+                file *= @sprintf(	"xyzguess %5s(%2s) %10f\n", "?",out.ph[i], out.SS_vec[i].compVariables[j])
+            elseif length(out.ph[i]) == 3
+                file *= @sprintf(	"xyzguess %5s(%3s) %10f\n", "?",out.ph[i], out.SS_vec[i].compVariables[j])
+            elseif length(out.ph[i]) == 4
+                file *= @sprintf(	"xyzguess %5s(%4s) %10f\n", "?",out.ph[i], out.SS_vec[i].compVariables[j])
+            elseif length(out.ph[i]) == 5
+                file *= @sprintf(	"xyzguess %5s(%5s) %10f\n", "?",out.ph[i], out.SS_vec[i].compVariables[j])
+            end
+        end
+        if n < out.n_SS
+            file *= @sprintf("%% -----------------------------\n");
+        end
+        n += 1
+    end     
+    file *= @sprintf("%% —————————————————————————————\n");
+
+    return file
+end
+
+
+"""
     Function to restrict colormap range
 """
 function restrict_colorMapRange(    colorMap    ::String,

@@ -51,8 +51,13 @@ function Tab_PhaseDiagram()
                                                                 "resize"    => "none")
                                         ),
                                     ]),
-
-
+                                    dbc_row([
+                                        dbc_button(
+                                            "Save equilibrium data", id="save-eq-button", color="light",  n_clicks=0,
+                                        ),
+                                        dcc_download(id="download-text"),
+                                    ]),
+                        
                                 ])),
                                 id="collapse-infos-phase-diagram",
                                 is_open=true,
