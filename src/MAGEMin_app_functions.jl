@@ -52,7 +52,7 @@ function save_equilibrium_to_file(  out::MAGEMin_C.gmin_struct{Float64, Int64}  
     file *= @sprintf("\n")  
 
     file *= @sprintf("Stable mineral assemblage:\n")    
-    file *= @sprintf("%6s%15s %13s %17s %17s %12s %12s %12s %12s %12s %12s %12s %12s %12s\n","phase","fraction[wt]","G[J]" ,"V_molar[cm3/mol]","V_partial[cm3]" ,"Cp[kJ/K]","Rho[kg/m3]","Alpha[1/K]","Entropy[J/K]","Enthalpy[J]","BulkMod[GPa]","ShearMod[GPa]","Vp[km/s]","Vs[km/s]")
+    file *= @sprintf("%6s%15s %13s %17s %17s %12s %12s %12s %12s %12s %12s %12s %12s %12s\n","phase","fraction[wt]","G[kJ]" ,"V_molar[cm3/mol]","V_partial[cm3]" ,"Cp[kJ/K]","Rho[kg/m3]","Alpha[1/K]","Entropy[J/K]","Enthalpy[J]","BulkMod[GPa]","ShearMod[GPa]","Vp[km/s]","Vs[km/s]")
    
     for i=1:out.n_SS
         file *= @sprintf("%6s",out.ph[i])

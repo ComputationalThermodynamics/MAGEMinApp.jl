@@ -3,14 +3,25 @@ function Tab_PhaseDiagram_Callbacks(app)
     callback!(
         app,
         Output("download-text", "data"),
+        Output("data-eq-save", "children"),
         Input("save-eq-button", "n_clicks"),
+        State("Filename-eq-id", "value"),
+        State("database-dropdown","value"),
         prevent_initial_call=true,
-    ) do n_clicks
-        
-        file    = save_equilibrium_to_file(Out_XY[point_id])            #point_id is defined as global variable in clickData callback
-        output  = Dict("content" => file,"filename" => "test.txt")
-        
-        return output
+    ) do n_clicks, fname, dtb
+
+        if fname != " ... filename ... "
+            P       = "_Pkbar_"*string(Out_XY[point_id].P_kbar)
+            T       = "_TC_"*string(Out_XY[point_id].T_C)
+            datab   = "_"*dtb
+            fileout = fname*datab*P*T*".txt"
+            file    = save_equilibrium_to_file(Out_XY[point_id])            #point_id is defined as global variable in clickData callback
+            output  = Dict("content" => file,"filename" => fileout)
+            
+            return output, "Successfully saved equilibrium point information"
+        else
+            return nothing, "Provide a valid filename (without extension)"
+        end
     end
 
     # clickData callback

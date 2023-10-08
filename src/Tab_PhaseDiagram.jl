@@ -52,10 +52,22 @@ function Tab_PhaseDiagram()
                                         ),
                                     ]),
                                     dbc_row([
-                                        dbc_button(
-                                            "Save equilibrium data", id="save-eq-button", color="light",  n_clicks=0,
-                                        ),
-                                        dcc_download(id="download-text"),
+                                        dbc_col([ 
+                                            dbc_input(
+                                                id      = "Filename-eq-id",
+                                                type    = "text", 
+                                                style   = Dict("textAlign" => "center") ,
+                                                value   = " ... filename ... "   ),     
+                                        ], width=6),
+                                        dbc_col([    
+                                            dbc_button(
+                                                "Save equilibrium data", id="save-eq-button", color="light",  n_clicks=0,
+                                            ),
+                                            dcc_download(id="download-text"),  
+                                        ]),
+                                    ]),
+                                    dbc_row([
+                                        html_div(id="data-eq-save"),
                                     ]),
                         
                                 ])),
