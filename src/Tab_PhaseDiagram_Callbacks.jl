@@ -255,7 +255,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             #________________________________________________________________________________________#     
             # Refine the mesh along phase boundaries
             global forest, data, Hash_XY, Out_XY, n_phase_XY
-            global field, data_plot, gridded, gridded_info, X, Y, meant
+            global field, data_plot, gridded, gridded_info, X, Y, meant, PhasesLabels
 
             for irefine = 1:refLvl
                 # global forest, data, Hash_XY, Out_XY, n_phase_XY
@@ -285,19 +285,19 @@ function Tab_PhaseDiagram_Callbacks(app)
             #________________________________________________________________________________________#                   
             # Scatter plotly of the grid
 
-            gridded, gridded_info, X, Y, npoints, meant = get_gridded_map(  fieldname,
-                                                                            oxi,
-                                                                            Out_XY,
-                                                                            sub,
-                                                                            refLvl,
-                                                                            data.xc,
-                                                                            data.yc,
-                                                                            data.x,
-                                                                            data.y,
-                                                                            Xrange,
-                                                                            Yrange )
+            gridded, gridded_info, X, Y, npoints, meant, PhasesLabels = get_gridded_map(    fieldname,
+                                                                                            oxi,
+                                                                                            Out_XY,
+                                                                                            sub,
+                                                                                            refLvl,
+                                                                                            data.xc,
+                                                                                            data.yc,
+                                                                                            data.x,
+                                                                                            data.y,
+                                                                                            Xrange,
+                                                                                            Yrange )
 
-
+            # print("PhasesLabels $PhasesLabels\n")
             layout = Layout(
                         title=attr(
                             text    = db[(db.db .== dtb), :].title[test+1],
@@ -309,6 +309,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                         paper_bgcolor = "#FFF",
                         xaxis_title = xtitle,
                         yaxis_title = ytitle,
+                        annotations = PhasesLabels,
                         width       = 800,
                         height      = 800
                     )
@@ -356,7 +357,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             #________________________________________________________________________________________#                   
             # Scatter plotly of the grid
 
-            gridded, gridded_info, X, Y, npoints, meant = get_gridded_map(      fieldname,
+            gridded, gridded_info, X, Y, npoints, meant, PhasesLabels = get_gridded_map(      fieldname,
                                                                                 oxi,
                                                                                 Out_XY,
                                                                                 sub,
@@ -384,6 +385,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                         paper_bgcolor = "#FFF",
                         xaxis_title = xtitle,
                         yaxis_title = ytitle,
+                        annotations = PhasesLabels,
                         width       = 800,
                         height      = 800
                     )
@@ -416,6 +418,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                         paper_bgcolor = "#FFF",
                         xaxis_title = xtitle,
                         yaxis_title = ytitle,
+                        annotations = PhasesLabels,
                         width       = 800,
                         height      = 800
                     )
@@ -436,7 +439,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             grid_out    = [""]
         elseif bid == "fields-dropdown"
 
-            gridded, gridded_info, X, Y, npoints, meant = get_gridded_map(  fieldname,
+            gridded, gridded_info, X, Y, npoints, meant, PhasesLabels = get_gridded_map(  fieldname,
                                                                             oxi,
                                                                             Out_XY,
                                                                             sub,
@@ -459,6 +462,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                         paper_bgcolor = "#FFF",
                         xaxis_title = xtitle,
                         yaxis_title = ytitle,
+                        annotations = PhasesLabels,
                         width       = 800,
                         height      = 800
                     )
@@ -489,6 +493,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                 paper_bgcolor = "#FFF",
                 xaxis_title = xtitle,
                 yaxis_title = ytitle,
+                annotations = PhasesLabels,
                 width       = 800,
                 height      = 800
             )

@@ -7,10 +7,10 @@ using UUIDs, HTTP
 using JLD2, DelimitedFiles, Interpolations
 
 # this activate the wrapper of MAGEMin dev branch
-#using Pkg
-#MAGEMin_dir = "../TC_calibration"
-#Pkg.activate(MAGEMin_dir)
-#Pkg.instantiate()
+# using Pkg
+# MAGEMin_dir = "../TC_calibration"
+# Pkg.activate(MAGEMin_dir)
+# Pkg.instantiate()
 using MAGEMin_C
 
 export App
@@ -121,6 +121,6 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
 
 end
 
-App() #### trick  to have hot reloading: first launch normaly then quit and go to src and run julia -t 5 MAGEMin_app.jl
+# App() #### trick  to have hot reloading: first launch normaly then quit and go to src and run julia -t 5 MAGEMin_app.jl
 
 end # module MAGEMin_app

@@ -276,6 +276,8 @@ function restrict_colorMapRange(    colorMap    ::String,
     return colorm
 end
 
+
+
 """
     Function interpolate AMR grid to regular grid
 """
@@ -331,10 +333,12 @@ function get_gridded_map(   fieldname   ::String,
     gridded      = Matrix{Union{Float64,Missing}}(undef,n,n);
     gridded_info = fill("",n,n)
 
+    #create annotations
+    PhasesLabels = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,n*n)
 
     Xr = (Xrange[2]-Xrange[1])/n
     Yr = (Yrange[2]-Yrange[1])/n
-
+    l  = 1
     for k=1:np
         for i=xf[k][1]+Xr/2 : Xr : xf[k][3]
             for j=yf[k][1]+Yr/2 : Yr : yf[k][3]
@@ -342,12 +346,41 @@ function get_gridded_map(   fieldname   ::String,
                 jj                  = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
                 gridded[ii,jj]      = field[k]
                 tmp                 = replace.(string(Out_XY[k].ph),r"\""=>"")
+                # tmp                 = replace(string(Out_XY[k].ph), "\""=>"", "]"=>"", "["=>"", ","=>"")
                 gridded_info[ii,jj] = "#"*string(k)*"# "*tmp
+
+                # initialize PhaseLabels
+                PhasesLabels[l] =   attr(   
+                                            x           = x[ii],
+                                            y           = y[jj],
+                                            text        = replace(string(Out_XY[k].ph), "\""=>"", "]"=>"", "["=>"", ","=>""),
+                                            showarrow   = true,
+                                            arrowhead   = 1,
+                                            clicktoshow = "onoff",
+                                            visible     = false
+                                    )
+
+                l += 1
+
             end
         end
     end
 
-    return gridded, gridded_info, X, Y, npoints, meant
+
+
+    # for k=1:np
+    #     # initialize PhaseLabels
+    #     PhasesLabels[k] =   attr(   x           = xc[k]
+    #                                 y           = yc[k],
+    #                                 text        = replace.(string(Out_XY[k].ph),r"\""=>""),
+    #                                 showarrow   = true,
+    #                                 arrowhead   = 1,
+    #                                 clicktoshow = "onoff",
+    #                                 visible     = false
+    #                         )
+    # end
+
+    return gridded, gridded_info, X, Y, npoints, meant, PhasesLabels
 end
 
 

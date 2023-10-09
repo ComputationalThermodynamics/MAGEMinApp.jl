@@ -1,10 +1,11 @@
 global AppData
 
-MAGEMin_version     = "v1.3.3";
+MAGEMin_version     = "v1.3.4";
 vertice_list        = [];
 mesh                = [];
 field               = [];
 PseudosectionData   = [];
+LayoutPS            = [];
 
 
 # LIST AVAILABLE DATABASE
@@ -365,6 +366,18 @@ push!(db,Dict(          :bulk       => "predefined",
                         ), cols=:union)
     
 
+layoutPS = Layout(
+            title = attr(
+                x       = 0.5,
+                xanchor = "center",
+                yanchor = "top"
+            ),
+            plot_bgcolor  = "#FFF",
+            paper_bgcolor = "#FFF",
+            width       = 800,
+            height      = 800
+        )
+
 
 AppData = ( MAGEMin_version     = MAGEMin_version,
             vertice_list        = vertice_list,
@@ -372,5 +385,6 @@ AppData = ( MAGEMin_version     = MAGEMin_version,
             field               = field,
             db                  = db,
             dba                 = dba,
-            PseudosectionData   = PseudosectionData )
+            PseudosectionData   = PseudosectionData,
+            layoutPS            = layoutPS )
             
