@@ -6,11 +6,6 @@ using PlotlyJS, JSON3, Printf, Statistics, DataFrames, CSV, Dates, Base64
 using UUIDs, HTTP
 using JLD2, DelimitedFiles, Interpolations
 
-# this activate the wrapper of MAGEMin dev branch
-# using Pkg
-# MAGEMin_dir = "../TC_calibration"
-# Pkg.activate(MAGEMin_dir)
-# Pkg.instantiate()
 using MAGEMin_C
 
 export App
@@ -30,7 +25,7 @@ include("Tab_PhaseDiagram_Callbacks.jl")
 
 Starts the MAGEMin App.
 """
-function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=true)
+function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
     GUI_version = "0.1.1"   
     cur_dir     = pwd()                 # directory from where you started the GUI
     pkg_dir     = pkgdir(MAGEMin_app)   # package dir
@@ -115,7 +110,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
     app = Tab_Simulation_Callbacks(app)
     app = Tab_PhaseDiagram_Callbacks(app)
 
-    run_server(app, host, port, debug=true)
+    run_server(app, host, port, debug=debug)
 
     cd(cur_dir) # go back to directory
 

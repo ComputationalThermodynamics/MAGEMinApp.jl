@@ -6,7 +6,6 @@ using T8code.Libt8: sc_finalize
 using T8code.Libt8: SC_LP_ERROR, SC_LP_PRODUCTION, SC_LP_ESSENTIAL, SC_LP_DEBUG
 using Statistics
 using StaticArrays
-using MAGEMin_C
 
 include("./AMR/AMR_utils.jl")
 include("./AMR/MAGEMiN_utils.jl")

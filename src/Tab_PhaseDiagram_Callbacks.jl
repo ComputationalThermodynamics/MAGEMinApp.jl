@@ -227,20 +227,26 @@ function Tab_PhaseDiagram_Callbacks(app)
             # initialize database
             global MAGEMin_data
             global addedRefinementLvl  = 0;
-            MAGEMin_data    =   Initialize_MAGEMin(dtb, verbose=false);
-        
-            nt = length(MAGEMin_data.gv);
-            for i=1:nt
-                if cpx == true && dtb =="mb"
-                    MAGEMin_data.gv[i].mbCpx = 1;
-                end
-                if limOpx == "CAOPX" && (dtb =="mb" || dtb =="ig" || dtb =="igd" || dtb =="alk")
-                    MAGEMin_data.gv[i].limitCaOpx   = 1;
-                    MAGEMin_data.gv[i].CaOpxLim     = limOpxVal;
-                end
-                MAGEMin_data.gv[i].verbose = -1;
+
+
+            # set clinopyroxene for the metabasite database
+            mbCpx = 0
+            if cpx == true && dtb =="mb"
+                mbCpx = 1;
+            end
+            limitCaOpx  = 0
+            CaOpxLim    = 1.0
+            if limOpx == "ON" && (dtb =="mb" || dtb =="ig" || dtb =="igd" || dtb =="alk")
+                limitCaOpx   = 1
+                CaOpxLim     = limOpxVal
             end
 
+            MAGEMin_data    =   Initialize_MAGEMin( dtb;
+                                                    verbose     = false,
+                                                    limitCaOpx  = limitCaOpx,
+                                                    CaOpxLim    = CaOpxLim,
+                                                    mbCpx       = mbCpx);
+        
             #________________________________________________________________________________________#                      
             # initial optimization on regular grid
             Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(  data, 

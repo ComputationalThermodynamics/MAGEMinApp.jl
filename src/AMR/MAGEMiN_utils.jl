@@ -39,17 +39,21 @@ function initialize_MAGEMin_AMR(db::String,
         verbose = 1
     end
 
-    MAGEMin_data    =   Initialize_MAGEMin(db, verbose=verbose);
-
     # set clinopyroxene for the metabasite database
+    mbCpx = 0;
     if cpx == true && db =="mb"
-        gv.mbCpx = 1;
+        mbCpx = 1;
     end
 
     if limOpx == "ON" && (db =="mb" || db =="ig" || db =="igd" || db =="alk")
-        gv.limitCaOpx   = 1;
-        gv.CaOpxLim     = limOpxVal;
+        limitCaOpx   = 1;
+        CaOpxLim     = limOpxVal;
     end
+
+
+
+    MAGEMin_data    =   Initialize_MAGEMin(db, verbose=verbose, limitCaOpx = limitCaOpx, CaOpxLim = CaOpxLim, mbCpx = mbCpx );
+
 
 
     # MAGEMin_data.gv[1].verbose = 0

@@ -333,34 +333,44 @@ function get_gridded_map(   fieldname   ::String,
     gridded      = Matrix{Union{Float64,Missing}}(undef,n,n);
     gridded_info = fill("",n,n)
 
-    #create annotations
-    PhasesLabels = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,n*n)
+    #create annotations and limit the maximum number to not slow down display too much
+    # if (n^2) > (64^2);
+    #     stp     = Int64(floor((n^2)/(64^2)))
+    #     nann    = length(1:stp:n^2);
+    # else
+        nann    = n^2
+        # stp     = 1
+    # end
+    PhasesLabels = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,nann)
 
     Xr = (Xrange[2]-Xrange[1])/n
     Yr = (Yrange[2]-Yrange[1])/n
-    l  = 1
+    # l  = 1
+    m  = 1
     for k=1:np
         for i=xf[k][1]+Xr/2 : Xr : xf[k][3]
             for j=yf[k][1]+Yr/2 : Yr : yf[k][3]
                 ii                  = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
                 jj                  = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
                 gridded[ii,jj]      = field[k]
-                tmp                 = replace.(string(Out_XY[k].ph),r"\""=>"")
-                # tmp                 = replace(string(Out_XY[k].ph), "\""=>"", "]"=>"", "["=>"", ","=>"")
+                # tmp                 = replace.(string(Out_XY[k].ph),r"\""=>"")
+                tmp                 = replace(string(Out_XY[k].ph), "\""=>"", "]"=>"", "["=>"", ","=>"")
                 gridded_info[ii,jj] = "#"*string(k)*"# "*tmp
 
                 # initialize PhaseLabels
-                PhasesLabels[l] =   attr(   
-                                            x           = x[ii],
-                                            y           = y[jj],
-                                            text        = replace(string(Out_XY[k].ph), "\""=>"", "]"=>"", "["=>"", ","=>""),
-                                            showarrow   = true,
-                                            arrowhead   = 1,
-                                            clicktoshow = "onoff",
-                                            visible     = false
-                                    )
-
-                l += 1
+                # if mod(l-1,stp) == 0
+                    PhasesLabels[m] =   attr(   
+                                                x           = x[ii],
+                                                y           = y[jj],
+                                                text        = replace(string(Out_XY[k].ph), "\""=>"", "]"=>"", "["=>"", ","=>""),
+                                                showarrow   = true,
+                                                arrowhead   = 1,
+                                                clicktoshow = "onoff",
+                                                visible     = false
+                                        )
+                    m += 1
+                # end
+                # l += 1
 
             end
         end
@@ -455,8 +465,8 @@ function bulk_file_to_db(datain)
         frac 		= replace.(frac,r"\]"=>"",r"\["=>"");
         frac 		= parse.(Float64,frac);
 
-        bulkrock    = convertBulk4MAGEMin(frac,oxide,String(sysUnit),String(dbin)) 
-        oxide       = get_oxide_list(String(dbin))
+        bulkrock, MAGEMin_ox    = convertBulk4MAGEMin(frac,oxide,String(sysUnit),String(dbin)) 
+        oxide                   = get_oxide_list(String(dbin))
 
         push!(db,Dict(  :bulk       => bulk,
                         :title      => title,
