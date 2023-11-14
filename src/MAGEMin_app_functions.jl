@@ -100,7 +100,7 @@ function save_rho_for_LaMEM(    dtb         ::String,
     for i=1:n_ox
         file   *= @sprintf("%8s : %+5.10f\n",oxi[i],bulk[i])
     end
-    for i=1:16
+    for i=1:20
         file   *= @sprintf("\n")
     end
     file       *= @sprintf("%5.10f\n",minimum(T));
