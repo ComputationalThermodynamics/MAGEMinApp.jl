@@ -4,7 +4,9 @@ function MAGEMin_app_Callbacks(app)
     #save all to file
     callback!(
         app,
+        Output("download-lamem-in", "data"),
         Output("export-to-lamem-text", "is_open"),
+        Output("export-to-lamem-text-failed", "is_open"),
         Input("export-to-lamem",    "n_clicks"),
         State("database-dropdown","value"),
         State("diagram-dropdown",   "value"),
@@ -33,25 +35,12 @@ function MAGEMin_app_Callbacks(app)
                                             Yrange,
                                             bulk1 )
             output  = Dict("content" => file,"filename" => fileout)
-
-            print(file)
+            return output, "success", ""
         else
-
+            output = nothing
+            return output, "", "failed"
         end
 
-        
-        # if fname != "... filename ..."
-        #     datab   = "_"*dtb
-        #     fileout = fname*datab*".txt"
-        #     file    = save_all_to_file(dtb)            #point_id is defined as global variable in clickData callback
-        #     output  = Dict("content" => file,"filename" => fileout)
-            
-        #     return output, "Successfully saved all points information"
-        # else
-        #     return nothing, "Provide a valid filename (without extension)"
-        # end
-
-        return "saved"
 
     end
 

@@ -25,8 +25,8 @@ function save_rho_for_LaMEM(    dtb         ::String,
     x            = range(minimum(data.xc), stop = maximum(data.xc), length = n)
     y            = range(minimum(data.yc), stop = maximum(data.yc), length = n)
 
-    X            = repeat(x , n)[:]
-    Y            = repeat(y', n)[:]
+    T            = vcat(x)
+    P            = vcat(y)
     gridded      = Array{Union{Float64,Missing}}(undef,n,n,ncol);
 
     Xr           = (Xrange[2]-Xrange[1])/n
@@ -44,6 +44,27 @@ function save_rho_for_LaMEM(    dtb         ::String,
         end
     end
 
+    # filter some potential iffy values
+    rho_S_min                        = minimum(gridded[:,:,2])
+    rho_M_min                        = minimum(gridded[:,:,1])
+
+    gridded[gridded[:,:,2] .== 0.0,2] .= rho_S_min
+    gridded[isnan.(gridded[:,:,2]),2] .= rho_S_min
+
+    gridded[gridded[:,:,1] .== 0.0,1] .= 2000.0
+    gridded[isnan.(gridded[:,:,1]),1] .= 2000.0
+
+
+
+    # convert values
+    T      .= T .+ 273.15            # --> to K
+    P      .= P .* 1e3               # --> to bar
+
+    nT      =  length(x)
+    nP      =  length(y)
+    dT      = (maximum(x)-minimum(x))/(nT-1);
+    dP      = (maximum(y)-minimum(y))/(nP-1);
+
     # retrieve bulk rock composition and associated oxide list
     n_ox    = length(bulk1);
     bulk    = zeros(n_ox); 
@@ -56,7 +77,6 @@ function save_rho_for_LaMEM(    dtb         ::String,
         bulk[i]   = tmp;
         oxi[i]    = bulk1[i][:oxide];
     end
-
 
     file        = ""
     file       *= @sprintf("5\n")
@@ -72,15 +92,28 @@ function save_rho_for_LaMEM(    dtb         ::String,
     file       *= @sprintf("54:    P increment\n");
     file       *= @sprintf("55:    # of P values\n");
 
-    for i=1:5
+    for i=1:4
         file   *= @sprintf("\n")
     end
+    file       *= @sprintf("Phase diagram produced using MAGEMin 1.3.6 with database %5s\n",dtb)
     file       *= @sprintf("Bulk rock composition[mol fraction]\n")
     for i=1:n_ox
         file   *= @sprintf("%8s : %+5.10f\n",oxi[i],bulk[i])
     end
-
-
+    for i=1:16
+        file   *= @sprintf("\n")
+    end
+    file       *= @sprintf("%5.10f\n",minimum(T));
+    file       *= @sprintf("%5.10f\n",dT);
+    file       *= @sprintf("%d\n",nT);
+    file       *= @sprintf("%5.10f\n",minimum(P));
+    file       *= @sprintf("%5.10f\n",dP);
+    file       *= @sprintf("%d\n",nP);
+    for j=1:nP
+        for i=1:nT
+            file   *= @sprintf("%5.6f %5.6f %5.6f %5.6f %5.6f\n",gridded[i,j,1],gridded[i,j,3],gridded[i,j,2],T[i],P[j])
+        end
+    end
 
 
     return file

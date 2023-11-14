@@ -67,12 +67,20 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                     label="File",
                                     id="id-dropdown-file",
                                     color="secondary"),
+                                    dcc_download(id="download-lamem-in"),  
                                 ]),
                             ]),
                             dbc_col([
                                 dbc_alert(
                                     "Density diagram saved for LaMEM",
                                     id      ="export-to-lamem-text",
+                                    is_open =false,
+                                    duration=4000,
+                                ),
+                                dbc_alert(
+                                    "Phase diagrams for LaMEM have to be PT",
+                                    color="danger",
+                                    id      ="export-to-lamem-text-failed",
                                     is_open =false,
                                     duration=4000,
                                 ),
@@ -133,6 +141,6 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
 
 end
 
-App() #### trick  to have hot reloading: first launch normaly then quit and go to src and run julia -t 5 MAGEMin_app.jl
+# App() #### trick  to have hot reloading: first launch normaly then quit and go to src and run julia -t 5 MAGEMin_app.jl
 
 end # module MAGEMin_app
