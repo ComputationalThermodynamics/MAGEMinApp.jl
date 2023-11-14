@@ -356,7 +356,20 @@ function Tab_Simulation()
                                                         # Allow multiple files to be uploaded
                                                         multiple=false
                                                     ),
-                                                    html_div(id="output-data-uploadn"),
+                                                    dbc_alert(
+                                                        "Bulk-rock(s) composition(s) successfully loaded",
+                                                        id      = "output-data-uploadn",
+                                                        is_open = false,
+                                                        duration= 4000,
+                                                    ),
+                                                    dbc_alert(
+                                                        "Bulk-rock(s) composition(s) failed to load, check input file format",
+                                                        color="danger",
+                                                        id      ="output-data-uploadn-failed",
+                                                        is_open = false,
+                                                        duration= 4000,
+                                                    ),
+                                                    # html_div(id="output-data-uploadn"),
                                                     dbc_tooltip([
                                                         html_div("An example of file providing bulk-rock compositions is given in the 'examples' folder"),
                                                         html_div("The structure of the file should comply with the following structure:"),

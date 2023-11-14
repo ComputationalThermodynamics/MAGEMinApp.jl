@@ -4,7 +4,8 @@ function Tab_PhaseDiagram_Callbacks(app)
     callback!(
         app,
         Output("download-all-text", "data"),
-        Output("data-all-save", "children"),
+        Output("data-all-save", "is_open"),
+        Output("data-all-save-failed", "is_open"),
         Input("save-all-button", "n_clicks"),
         State("Filename-all-id", "value"),
         State("database-dropdown","value"),
@@ -17,9 +18,10 @@ function Tab_PhaseDiagram_Callbacks(app)
             file    = save_all_to_file(dtb)            #point_id is defined as global variable in clickData callback
             output  = Dict("content" => file,"filename" => fileout)
             
-            return output, "Successfully saved all points information"
+            return output, "success", ""
         else
-            return nothing, "Provide a valid filename (without extension)"
+            output = nothing
+            return output, "", "failed"
         end
     end
 
@@ -27,7 +29,8 @@ function Tab_PhaseDiagram_Callbacks(app)
     callback!(
         app,
         Output("download-text", "data"),
-        Output("data-eq-save", "children"),
+        Output("data-eq-save", "is_open"),
+        Output("data-eq-save-failed", "is_open"),
         Input("save-eq-button", "n_clicks"),
         State("Filename-eq-id", "value"),
         State("database-dropdown","value"),
@@ -42,9 +45,9 @@ function Tab_PhaseDiagram_Callbacks(app)
             file    = save_equilibrium_to_file(Out_XY[point_id])            #point_id is defined as global variable in clickData callback
             output  = Dict("content" => file,"filename" => fileout)
             
-            return output, "Successfully saved equilibrium point information"
+            return output, "success", ""
         else
-            return nothing, "Provide a valid filename (without extension)"
+            return nothing, "", "failed"
         end
     end
 

@@ -153,13 +153,20 @@ function Tab_Simulation_Callbacks(app)
 
     callback!(
         app,
-        Output("output-data-uploadn", "children"),
+        Output("output-data-uploadn", "is_open"),
+        Output("output-data-uploadn-failed", "is_open"),
         Input("upload-bulk", "contents"),
         State("upload-bulk", "filename"),
+        prevent_initial_call=true,
     ) do contents, filename
+
         if !(contents isa Nothing)
-            children = parse_bulk_rock(contents, filename)
-            return children
+            status = parse_bulk_rock(contents, filename)
+            if status == 1
+                return "success", ""
+            else
+                return "", "failed"
+            end
         end
     end
 
@@ -172,9 +179,9 @@ function Tab_Simulation_Callbacks(app)
         Output("database-caption","value"),
         Input("test-dropdown","value"),
         Input("database-dropdown","value"),
-        Input("output-data-uploadn", "children"),
+        Input("output-data-uploadn", "is_open"),        # this listens for changes and updated the list
         prevent_initial_call=true,
-    ) do test, dtb, bulkin
+    ) do test, dtb, update
 
         # catching up some special cases
         if test > length(db[(db.db .== dtb), :].test) - 1 
@@ -205,12 +212,11 @@ function Tab_Simulation_Callbacks(app)
         Output("table-2-bulk-rock","data"),
         Output("test-2-dropdown","options"),
         Output("test-2-dropdown","value"),
-        # Output("database-caption","value"),
         Input("test-2-dropdown","value"),
         Input("database-dropdown","value"),
-        Input("output-data-uploadn", "children"),
+        Input("output-data-uploadn", "is_open"),        # this listens for changes and updated the list
         prevent_initial_call=true,
-    ) do test, dtb, bulkin
+    ) do test, dtb, update
 
         # catching up some special cases
         if test > length(db[(db.db .== dtb), :].test) - 1 

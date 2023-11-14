@@ -17,6 +17,7 @@ include("Tab_Simulation.jl")
 include("Tab_PhaseDiagram.jl")
 include("data_plot.jl")
 include("MAGEMin_app_functions.jl")
+include("MAGEMin_app_Callbacks.jl")   
 include("Tab_Simulation_Callbacks.jl")    
 include("Tab_PhaseDiagram_Callbacks.jl")    
 
@@ -25,7 +26,7 @@ include("Tab_PhaseDiagram_Callbacks.jl")
 
 Starts the MAGEMin App.
 """
-function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
+function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=true)
     GUI_version = "0.1.1"   
     cur_dir     = pwd()                 # directory from where you started the GUI
     pkg_dir     = pkgdir(MAGEMin_app)   # package dir
@@ -56,17 +57,33 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                     dbc_row([
                             dbc_col([
                                 dbc_dropdownmenu(
-                                    [dbc_dropdownmenuitem("Load state", disabled=true),
-                                    dbc_dropdownmenuitem("Save state", disabled=true),
-                                    dbc_dropdownmenuitem(divider=true),
+                                    [   dbc_dropdownmenuitem("Load state", disabled=true),
+                                        dbc_dropdownmenuitem("Save state", disabled=true),
+                                        dbc_dropdownmenuitem(divider=true),
+                                        dbc_dropdownmenuitem(                 "Export ρ for LaMEM", 
+                                                                id          = "export-to-lamem",
+                                                                disabled    = false                 ),
                                     ],
                                     label="File",
                                     id="id-dropdown-file",
                                     color="secondary"),
                                 ]),
                             ]),
+                            dbc_col([
+                                dbc_alert(
+                                    "Density diagram saved for LaMEM",
+                                    id      ="export-to-lamem-text",
+                                    is_open =false,
+                                    duration=4000,
+                                ),
+                            ]),
+                            # dbc_col([
+                            #     html_div(id="export-to-lamem-text"),
+                            # ]),
+
                             dbc_row([
                                 html_div("‎ "),
+
                             ]),
 
                             dbc_tabs(
@@ -106,7 +123,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
         str = "id=$(session_id), v=$(GUI_version)"
         return String("$(session_id)"), str
     end
-
+    app = MAGEMin_app_Callbacks(app)
     app = Tab_Simulation_Callbacks(app)
     app = Tab_PhaseDiagram_Callbacks(app)
 
@@ -116,6 +133,6 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
 
 end
 
-# App() #### trick  to have hot reloading: first launch normaly then quit and go to src and run julia -t 5 MAGEMin_app.jl
+App() #### trick  to have hot reloading: first launch normaly then quit and go to src and run julia -t 5 MAGEMin_app.jl
 
 end # module MAGEMin_app

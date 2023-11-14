@@ -1,5 +1,96 @@
 """
-    save all function
+    export_rho_for_LaMEM()
+    This function export a density diagram in the the right format to be directly used in LaMEM
+"""
+function save_rho_for_LaMEM(    dtb         ::String,
+                                sub         ::Int64,
+                                refLvl      ::Int64,
+                                Xrange,
+                                Yrange,
+                                bulk1                  )
+
+    np          = length(Out_XY)
+
+    field2save  = ["rho_M","rho_S","frac_M"]
+    ncol        = length(field2save)
+    field       = Matrix{Union{Float64,Missing}}(undef,np,ncol);
+
+    for j=1:ncol
+        for i=1:np
+            field[i,j] = Float64(get_property(Out_XY[i], field2save[j]));
+        end
+    end
+
+    n            = 2^(sub + refLvl)
+    x            = range(minimum(data.xc), stop = maximum(data.xc), length = n)
+    y            = range(minimum(data.yc), stop = maximum(data.yc), length = n)
+
+    X            = repeat(x , n)[:]
+    Y            = repeat(y', n)[:]
+    gridded      = Array{Union{Float64,Missing}}(undef,n,n,ncol);
+
+    Xr           = (Xrange[2]-Xrange[1])/n
+    Yr           = (Yrange[2]-Yrange[1])/n
+
+    for l=1:ncol
+        for k=1:np
+            for i=data.x[k][1]+Xr/2 : Xr : data.x[k][3]
+                for j=data.y[k][1]+Yr/2 : Yr : data.y[k][3]
+                    ii                  = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
+                    jj                  = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
+                    gridded[ii,jj,l]    = field[k,l]
+                end
+            end
+        end
+    end
+
+    # retrieve bulk rock composition and associated oxide list
+    n_ox    = length(bulk1);
+    bulk    = zeros(n_ox); 
+    oxi     = Vector{String}(undef, n_ox)
+    for i=1:n_ox
+        tmp = bulk1[i][:mol_fraction]
+        if typeof(tmp) == String
+            tmp = parse(Float64,tmp)
+        end
+        bulk[i]   = tmp;
+        oxi[i]    = bulk1[i][:oxide];
+    end
+
+
+    file        = ""
+    file       *= @sprintf("5\n")
+    file       *= @sprintf("\n")
+    file       *= @sprintf("Phase diagram always needs this 5 columns:\n")
+    file       *= @sprintf("       1               2                     3            4        5\n");
+    file       *= @sprintf("rho_melt[kg/m3]   melt_fraction[wt]   rho_solid[kg/m3]   T[K]   P[bar]\n");
+    file       *= @sprintf("1-49:  Comments\n");
+    file       *= @sprintf("50:    Lowest T [K]\n");
+    file       *= @sprintf("51:    T increment\n");
+    file       *= @sprintf("52:    # of T values\n");
+    file       *= @sprintf("53:    Lowest P [K]\n");
+    file       *= @sprintf("54:    P increment\n");
+    file       *= @sprintf("55:    # of P values\n");
+
+    for i=1:5
+        file   *= @sprintf("\n")
+    end
+    file       *= @sprintf("Bulk rock composition[mol fraction]\n")
+    for i=1:n_ox
+        file   *= @sprintf("%8s : %+5.10f\n",oxi[i],bulk[i])
+    end
+
+
+
+
+    return file
+end
+
+
+
+"""
+    save_all_to_file(dtb::String)
+    Saves of computed points from the phase diagram to a file
 """
 function save_all_to_file(dtb::String)
     np        = length(Out_XY)
@@ -483,7 +574,6 @@ end
 
 
 function parse_bulk_rock(contents, filename)
-
     try
         content_type, content_string = split(contents, ',');
         decoded = base64decode(content_string);
@@ -491,13 +581,9 @@ function parse_bulk_rock(contents, filename)
         datain  = strip.(readdlm(IOBuffer(input), ';', comments=true, comment_char='#'));
         bulk_file_to_db(datain);
 
-        return html_div([
-            "Bulk-rock file successfully loaded"
-        ], style = Dict("textAlign" => "center","font-size" => "100%"))
+        return 1
     catch e
-        return html_div([
-            "Wrong file format: $e"
-        ], style = Dict("textAlign" => "center","font-size" => "100%"))
+        return 0
     end
 
   end
