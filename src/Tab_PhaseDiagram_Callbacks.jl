@@ -248,7 +248,8 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                     verbose     = false,
                                                     limitCaOpx  = limitCaOpx,
                                                     CaOpxLim    = CaOpxLim,
-                                                    mbCpx       = mbCpx);
+                                                    mbCpx       = mbCpx,
+                                                    buffer      = bufferType    );
         
             #________________________________________________________________________________________#                      
             # initial optimization on regular grid
@@ -259,7 +260,9 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                             Float64(fixP),
                                                             oxi,
                                                             bulk_L,
-                                                            bulk_R,    )
+                                                            bulk_R,
+                                                            bufferN1,
+                                                            bufferN2    )
                         
             #________________________________________________________________________________________#     
             # Refine the mesh along phase boundaries
@@ -279,6 +282,8 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                             oxi,
                                                                             bulk_L,
                                                                             bulk_R,
+                                                                            bufferN1,
+                                                                            bufferN2, 
                                                                             ind_map         = ind_map,
                                                                             Out_XY_old      = Out_XY,
                                                                             n_phase_XY_old  = n_phase_XY    ) # recompute points that have not been computed before
@@ -318,7 +323,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                         paper_bgcolor = "#FFF",
                         xaxis_title = xtitle,
                         yaxis_title = ytitle,
-                        annotations = PhasesLabels,
+                        # annotations = PhasesLabels,
                         width       = 800,
                         height      = 800
                     )
@@ -351,6 +356,8 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                         oxi,
                                                                         bulk_L,
                                                                         bulk_R,
+                                                                        bufferN1,
+                                                                        bufferN2, 
                                                                         ind_map         = ind_map,
                                                                         Out_XY_old      = Out_XY,
                                                                         n_phase_XY_old  = n_phase_XY) # recompute points that have not been computed before
@@ -427,7 +434,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                         paper_bgcolor = "#FFF",
                         xaxis_title = xtitle,
                         yaxis_title = ytitle,
-                        annotations = PhasesLabels,
+                        # annotations = PhasesLabels,
                         width       = 800,
                         height      = 800
                     )
@@ -471,7 +478,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                         paper_bgcolor = "#FFF",
                         xaxis_title = xtitle,
                         yaxis_title = ytitle,
-                        annotations = PhasesLabels,
+                        # annotations = PhasesLabels,
                         width       = 800,
                         height      = 800
                     )
@@ -502,7 +509,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                 paper_bgcolor = "#FFF",
                 xaxis_title = xtitle,
                 yaxis_title = ytitle,
-                annotations = PhasesLabels,
+                # annotations = PhasesLabels,
                 width       = 800,
                 height      = 800
             )

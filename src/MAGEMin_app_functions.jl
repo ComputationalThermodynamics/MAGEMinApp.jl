@@ -21,7 +21,7 @@ function save_rho_for_LaMEM(    dtb         ::String,
         end
     end
 
-    n            = 2^(sub + refLvl)
+    n            = 2^(sub + refLvl + addedRefinementLvl)
     x            = range(minimum(data.xc), stop = maximum(data.xc), length = n)
     y            = range(minimum(data.yc), stop = maximum(data.yc), length = n)
 
@@ -465,8 +465,8 @@ function get_gridded_map(   fieldname   ::String,
         nann    = n^2
         # stp     = 1
     # end
-    PhasesLabels = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,nann)
-
+    # PhasesLabels = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,nann)
+    PhasesLabels = [];
     Xr = (Xrange[2]-Xrange[1])/n
     Yr = (Yrange[2]-Yrange[1])/n
     # l  = 1
@@ -477,30 +477,27 @@ function get_gridded_map(   fieldname   ::String,
                 ii                  = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
                 jj                  = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
                 gridded[ii,jj]      = field[k]
-                # tmp                 = replace.(string(Out_XY[k].ph),r"\""=>"")
                 tmp                 = replace(string(Out_XY[k].ph), "\""=>"", "]"=>"", "["=>"", ","=>"")
                 gridded_info[ii,jj] = "#"*string(k)*"# "*tmp
 
                 # initialize PhaseLabels
                 # if mod(l-1,stp) == 0
-                    PhasesLabels[m] =   attr(   
-                                                x           = x[ii],
-                                                y           = y[jj],
-                                                text        = replace(string(Out_XY[k].ph), "\""=>"", "]"=>"", "["=>"", ","=>""),
-                                                showarrow   = true,
-                                                arrowhead   = 1,
-                                                clicktoshow = "onoff",
-                                                visible     = false
-                                        )
-                    m += 1
+                    # PhasesLabels[m] =   attr(   
+                    #                             x           = x[ii],
+                    #                             y           = y[jj],
+                    #                             text        = replace(string(Out_XY[k].ph), "\""=>"", "]"=>"", "["=>"", ","=>""),
+                    #                             showarrow   = true,
+                    #                             arrowhead   = 1,
+                    #                             clicktoshow = "onoff",
+                    #                             visible     = false
+                    #                     )
+                    # m += 1
                 # end
                 # l += 1
 
             end
         end
     end
-
-
 
     # for k=1:np
     #     # initialize PhaseLabels

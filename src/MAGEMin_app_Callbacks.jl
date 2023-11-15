@@ -27,7 +27,7 @@ function MAGEMin_app_Callbacks(app)
             Yrange          = (Float64(pmin),Float64(pmax))
 
             testName = replace(db[(db.db .== dtb), :].title[1], " " => "_")
-            fileout = testName*".in"
+            fileout = testName*".in";
             file    = save_rho_for_LaMEM(   dtb,
                                             sub,
                                             refLvl,

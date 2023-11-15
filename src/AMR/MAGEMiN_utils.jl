@@ -25,40 +25,39 @@ function create_forest( tmin::Float64,
     return forest_data
 end
 
-function initialize_MAGEMin_AMR(db::String,
-                                verbose::Int64,
-                                diagType::String,
-                                bufferType::String, bufferN1::Float64, bufferN2::Float64,
-                                cpx::Bool, limOpx::String, limOpxVal::Float64 )
+# function initialize_MAGEMin_AMR(    db          :: String,
+#                                     verbose     :: Int64,
+#                                     diagType    :: String,
+#                                     bufferType  :: String,
+#                                     cpx         :: Bool,
+#                                     limOpx      :: String,
+#                                     limOpxVal   :: Float64 )
 
-    if verbose == "none"
-        verbose = false
-    elseif verbose == "light"
-        verbose = true
-    elseif verbose == "full"
-        verbose = 1
-    end
+#     if verbose == "none"
+#         verbose = false
+#     elseif verbose == "light"
+#         verbose = true
+#     elseif verbose == "full"
+#         verbose = 1
+#     end
 
-    # set clinopyroxene for the metabasite database
-    mbCpx = 0;
-    if cpx == true && db =="mb"
-        mbCpx = 1;
-    end
+#     # set clinopyroxene for the metabasite database
+#     mbCpx = 0;
+#     if cpx == true && db =="mb"
+#         mbCpx = 1;
+#     end
 
-    if limOpx == "ON" && (db =="mb" || db =="ig" || db =="igd" || db =="alk")
-        limitCaOpx   = 1;
-        CaOpxLim     = limOpxVal;
-    end
-
-
-
-    MAGEMin_data    =   Initialize_MAGEMin(db, verbose=verbose, limitCaOpx = limitCaOpx, CaOpxLim = CaOpxLim, mbCpx = mbCpx );
+#     if limOpx == "ON" && (db =="mb" || db =="ig" || db =="igd" || db =="alk")
+#         limitCaOpx   = 1;
+#         CaOpxLim     = limOpxVal;
+#     end
 
 
+#     MAGEMin_data    =   Initialize_MAGEMin(db, verbose=verbose, limitCaOpx = limitCaOpx, CaOpxLim = CaOpxLim, mbCpx = mbCpx, buffer=bufferType );
 
-    # MAGEMin_data.gv[1].verbose = 0
-    return MAGEMin_data
-end
+#     # MAGEMin_data.gv[1].verbose = 0
+#     return MAGEMin_data
+# end
 
 function refine_MAGEMin(data, 
                         MAGEMin_data    :: MAGEMin_Data, 
@@ -67,7 +66,9 @@ function refine_MAGEMin(data,
                         fixP            :: Float64,
                         oxi             :: Vector{String},
                         bulk_L          :: Vector{Float64},
-                        bulk_R          :: Vector{Float64};
+                        bulk_R          :: Vector{Float64},
+                        bufferN1        :: Float64,
+                        bufferN2        :: Float64;
                         ind_map          = nothing, 
                         Out_XY_old       = nothing, 
                         n_phase_XY_old   = nothing)
@@ -83,40 +84,43 @@ function refine_MAGEMin(data,
     n_new_points = length(ind_new)
     Out_XY_new   = []
     if n_new_points > 0
-
-        
+       
         if diagType == "tx"
             Tvec = zeros(Float64,n_new_points);
             Pvec = zeros(Float64,n_new_points);
             Xvec = Vector{Vector{Float64}}(undef,n_new_points);
-
+            Bvec = zeros(Float64,n_new_points);
             for (i, new_ind) = enumerate(ind_new)
                 Pvec[i] = fixP;
                 Tvec[i] = data.yc[new_ind];
                 Xvec[i] = bulk_L*(1.0 - data.xc[new_ind]) + bulk_R*data.xc[new_ind];
+                Bvec[i] = bufferN1*(1.0 - data.xc[new_ind]) + bufferN2*data.xc[new_ind];
             end
         elseif diagType == "px"
             Tvec = zeros(Float64,n_new_points);
             Pvec = zeros(Float64,n_new_points);
             Xvec = Vector{Vector{Float64}}(undef,n_new_points);
-
+            Bvec = zeros(Float64,n_new_points);
             for (i, new_ind) = enumerate(ind_new)
                 Tvec[i] = fixT;
                 Pvec[i] = data.yc[new_ind];
                 Xvec[i] = bulk_L*(1.0 - data.xc[new_ind]) + bulk_R*data.xc[new_ind];
+                Bvec[i] = bufferN1*(1.0 - data.xc[new_ind]) + bufferN2*data.xc[new_ind];
+
             end
         else 
             Tvec = zeros(Float64,n_new_points);
             Pvec = zeros(Float64,n_new_points);
             Xvec = Vector{Vector{Float64}}(undef,n_new_points);
-
+            Bvec = zeros(Float64,n_new_points);
             for (i, new_ind) = enumerate(ind_new)
                 Tvec[i] = data.xc[new_ind];
                 Pvec[i] = data.yc[new_ind];
                 Xvec[i] = bulk_L;
+                Bvec[i] = bufferN1;
             end
         end
-        Out_XY_new  =   multi_point_minimization(Pvec, Tvec, MAGEMin_data, X=Xvec, Xoxides=oxi, sys_in="mol");
+        Out_XY_new  =   multi_point_minimization(Pvec, Tvec, MAGEMin_data, X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol");
         
     end
 
