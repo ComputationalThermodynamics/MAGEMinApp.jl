@@ -12,6 +12,7 @@ export App
 
 # include helper functions
 include("initialize_MAGEMin_AMR.jl")
+include("PhaseDiagram_functions.jl")
 include("appData.jl")
 include("Tab_Simulation.jl")
 include("Tab_PhaseDiagram.jl")
