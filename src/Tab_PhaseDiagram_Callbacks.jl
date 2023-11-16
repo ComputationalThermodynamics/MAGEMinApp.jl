@@ -166,6 +166,9 @@ function Tab_PhaseDiagram_Callbacks(app)
             ytitle = "Temperature [Celsius]"
         end
 
+        bufferN1 = Float64(bufferN1)
+        bufferN2 = Float64(bufferN2)
+
         #________________________________________________________________________________________#
         # The next lines capture the identity of the button that has been pushed
         ctx = callback_context()
@@ -231,7 +234,6 @@ function Tab_PhaseDiagram_Callbacks(app)
             global MAGEMin_data
             global addedRefinementLvl  = 0;
 
-
             # set clinopyroxene for the metabasite database
             mbCpx = 0
             if cpx == true && dtb =="mb"
@@ -250,7 +252,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                     CaOpxLim    = CaOpxLim,
                                                     mbCpx       = mbCpx,
                                                     buffer      = bufferType    );
-        
+
             #________________________________________________________________________________________#                      
             # initial optimization on regular grid
             Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(  data, 
@@ -261,6 +263,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                             oxi,
                                                             bulk_L,
                                                             bulk_R,
+                                                            bufferType,
                                                             bufferN1,
                                                             bufferN2    )
                         
@@ -282,6 +285,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                             oxi,
                                                                             bulk_L,
                                                                             bulk_R,
+                                                                            bufferType,
                                                                             bufferN1,
                                                                             bufferN2, 
                                                                             ind_map         = ind_map,
@@ -356,6 +360,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                         oxi,
                                                                         bulk_L,
                                                                         bulk_R,
+                                                                        bufferType,
                                                                         bufferN1,
                                                                         bufferN2, 
                                                                         ind_map         = ind_map,
