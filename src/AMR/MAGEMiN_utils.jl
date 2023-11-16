@@ -67,6 +67,7 @@ function refine_MAGEMin(data,
                         oxi             :: Vector{String},
                         bulk_L          :: Vector{Float64},
                         bulk_R          :: Vector{Float64},
+                        bufferType      :: String,
                         bufferN1        :: Float64,
                         bufferN2        :: Float64;
                         ind_map          = nothing, 
@@ -75,6 +76,10 @@ function refine_MAGEMin(data,
 
     if isnothing(ind_map)
         ind_map = - ones(length(data.xc));
+    end
+
+    for i in 1:Threads.nthreads()
+        MAGEMin_data.gv[i].buffer = pointer(bufferType)
     end
 
     Out_XY = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,length(data.x))
