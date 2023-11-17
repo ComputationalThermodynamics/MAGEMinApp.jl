@@ -27,7 +27,7 @@ include("Tab_PhaseDiagram_Callbacks.jl")
 
 Starts the MAGEMin App.
 """
-function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=true)
+function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
     GUI_version = "0.1.1"   
     cur_dir     = pwd()                 # directory from where you started the GUI
     pkg_dir     = pkgdir(MAGEMin_app)   # package dir
@@ -143,6 +143,6 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
 
 end
 
-# App() #### trick  to have hot reloading: first launch normaly then quit and go to src and run julia -t 5 MAGEMin_app.jl
+App( debug=true ) #### trick  to have hot reloading: first launch normaly then quit and go to src and run julia -t 5 MAGEMin_app.jl
 
 end # module MAGEMin_app

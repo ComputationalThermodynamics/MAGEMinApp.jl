@@ -103,23 +103,18 @@ function get_bulkrock_prop(bulk1, bulk2)
 end
 
 
-# if      bid == "compute-button"
-
-#     fig, npoints, grid_out, meant  =  compute_new_phaseDiagram( xtitle,     ytitle,     
-#                                                                 Xrange,     Yrange,     fieldname,
-#                                                                 dtb,        diagType,   verbose,
-#                                                                 fixT,       fixP,
-#                                                                 sub,        refLvl,
-#                                                                 cpx,        limOpx,     limOpxVal,
-#                                                                 bulk_L,     bulk_R,     oxi,
-#                                                                 bufferType, bufferN1,   bufferN2,
-#                                                                 smooth,     colorm,     reverseColorMap,
-#                                                                 test                                  )
-
-
-
 """
-   
+    compute_new_phaseDiagram(   xtitle,     ytitle,     
+                                Xrange,     Yrange,     fieldname,
+                                dtb,        diagType,   verbose,
+                                fixT,       fixP,
+                                sub,        refLvl,
+                                cpx,        limOpx,     limOpxVal,
+                                bulk_L,     bulk_R,     oxi,
+                                bufferType, bufferN1,   bufferN2,
+                                smooth,     colorm,     reverseColorMap,
+                                test                                    )
+
     Compute a new phase diagram from scratch
 """
 function compute_new_phaseDiagram(  xtitle,     ytitle,     
@@ -259,4 +254,279 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
         grid_out    = [""]
 
         return fig, npoints, grid_out, meant
+end
+
+
+
+"""
+   
+    Refine existing phase diagram
+"""
+function refine_phaseDiagram(   xtitle,     ytitle,     
+                                Xrange,     Yrange,     fieldname,
+                                dtb,        diagType,   verbose,
+                                fixT,       fixP,
+                                sub,        refLvl,
+                                cpx,        limOpx,     limOpxVal,
+                                bulk_L,     bulk_R,     oxi,
+                                bufferType, bufferN1,   bufferN2,
+                                smooth,     colorm,     reverseColorMap,
+                                test                                  )
+
+    global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels,addedRefinementLvl
+
+    refine_elements                          = refine_phase_boundaries(forest, Hash_XY);
+    forest_new, data_new, ind_map            = adapt_forest(forest, refine_elements, data);     # Adapt the mesh; also returns the new coordinates and a mapping from old->new
+    t = @elapsed Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(  data_new,
+                                                                MAGEMin_data,
+                                                                diagType,
+                                                                fixT,
+                                                                fixP,
+                                                                oxi,
+                                                                bulk_L,
+                                                                bulk_R,
+                                                                bufferType,
+                                                                bufferN1,
+                                                                bufferN2, 
+                                                                ind_map         = ind_map,
+                                                                Out_XY_old      = Out_XY,
+                                                                n_phase_XY_old  = n_phase_XY) # recompute points that have not been computed before
+
+    println("Computed $(length(ind_map.<0)) new points in $t seconds")
+    data                = data_new
+    forest              = forest_new
+    addedRefinementLvl += 1;
+
+    empty!(AppData.PseudosectionData)
+    push!(AppData.PseudosectionData,Out_XY);
+
+    #________________________________________________________________________________________#                   
+    # Scatter plotly of the grid
+
+    gridded, gridded_info, X, Y, npoints, meant, PhasesLabels = get_gridded_map(    fieldname,
+                                                                                    oxi,
+                                                                                    Out_XY,
+                                                                                    sub,
+                                                                                    refLvl + addedRefinementLvl,
+                                                                                    data.xc,
+                                                                                    data.yc,
+                                                                                    data.x,
+                                                                                    data.y,
+                                                                                    Xrange,
+                                                                                    Yrange )
+
+    global  data_plot, gridded, gridded_info, X, Y, PhasesLabels
+
+    layout = Layout(
+                title=attr(
+                    text    = db[(db.db .== dtb), :].title[test+1],
+                    x       = 0.5,
+                    xanchor = "center",
+                    yanchor = "top"
+                ),
+
+                hoverlabel=attr(
+                    bgcolor = "#FFF",
+                ),
+                plot_bgcolor = "#FFF",
+                paper_bgcolor = "#FFF",
+                xaxis_title = xtitle,
+                yaxis_title = ytitle,
+                annotations = PhasesLabels,
+                width       = 800,
+                height      = 800
+            )
+
+    data_plot = heatmap(x               = X,
+                        y               = Y,
+                        z               = gridded,
+                        zsmooth         =  smooth,
+                        type            = "heatmap",
+                        colorscale      = colorm,
+                        colorbar_title  = fieldname,
+                        reversescale    = reverseColorMap,
+                        hoverinfo       = "text",
+                        text            = gridded_info     )
+
+    fig         = plot(data_plot,layout)
+    grid_out    = [""]
+
+
+    return fig, npoints, grid_out, meant
+
+end
+
+
+"""
+   
+    Updates the colormap configuration of the phase diagram
+"""
+function update_colormap_phaseDiagram(      xtitle,     ytitle,     
+                                            Xrange,     Yrange,     fieldname,
+                                            dtb,        diagType,
+                                            smooth,     colorm,     reverseColorMap,
+                                            test                                  )
+
+    layout = Layout(
+        title=attr(
+            text    = db[(db.db .== dtb), :].title[test+1],
+            x       = 0.5,
+            xanchor = "center",
+            yanchor = "top"
+        ),
+        plot_bgcolor = "#FFF",
+        paper_bgcolor = "#FFF",
+        xaxis_title = xtitle,
+        yaxis_title = ytitle,
+        # annotations = PhasesLabels,
+        width       = 800,
+        height      = 800
+    )
+
+
+    data_plot = heatmap(x               =  X,
+                y               =  Y,
+                z               =  gridded,
+                zsmooth         =  smooth,
+                type            = "heatmap",
+                colorscale      =  colorm,
+                colorbar_title  =  fieldname,
+                reversescale    = reverseColorMap,
+                hoverinfo       = "text",
+                text            = gridded_info     )
+
+    fig         = plot(data_plot,layout)
+    grid_out    = [""]
+
+    return fig, grid_out
+end
+
+
+
+
+"""
+   
+    Updates the field displayed
+"""
+function  update_diplayed_field_phaseDiagram(   xtitle,     ytitle,     
+                                                Xrange,     Yrange,     fieldname,
+                                                dtb,        oxi,
+                                                sub,        refLvl,
+                                                smooth,     colorm,     reverseColorMap,
+                                                test                                  )
+
+    global data, Out_XY, data_plot, gridded, gridded_info, X, Y, PhasesLabels, addedRefinementLvl
+
+    gridded, gridded_info, X, Y, npoints, meant, PhasesLabels = get_gridded_map(    fieldname,
+                                                                                    oxi,
+                                                                                    Out_XY,
+                                                                                    sub,
+                                                                                    refLvl + addedRefinementLvl,
+                                                                                    data.xc,
+                                                                                    data.yc,
+                                                                                    data.x,
+                                                                                    data.y,
+                                                                                    Xrange,
+                                                                                    Yrange )
+
+    layout      = Layout(
+    title=attr( text    = db[(db.db .== dtb), :].title[test+1],
+                x       = 0.5,
+                xanchor = "center",
+                yanchor = "top"     ),
+    plot_bgcolor = "#FFF",
+    paper_bgcolor = "#FFF",
+    xaxis_title = xtitle,
+    yaxis_title = ytitle,
+    # annotations = PhasesLabels,
+    width       = 800,
+    height      = 800 )
+
+    data_plot = heatmap(x               = X,
+                        y               = Y,
+                        z               = gridded,
+                        zsmooth         =  smooth,
+                        type            = "heatmap",
+                        colorscale      = colorm,
+                        colorbar_title  = fieldname,
+                        reversescale    = reverseColorMap,
+                        hoverinfo       = "text",
+                        text            = gridded_info     )
+
+    fig         = plot(data_plot,layout)
+    grid_out    = [""]
+
+    return fig, grid_out
+end
+
+
+
+"""
+   
+    Shows/hides the grid
+"""
+function  show_hide_grid_phaseDiagram(  xtitle,     ytitle,     grid,  
+                                        Xrange,     Yrange,     fieldname,
+                                        dtb,
+                                        smooth,     colorm,     reverseColorMap,
+                                        test                                  )
+
+    global data, data_plot, gridded, gridded_info, X, Y, PhasesLabels
+
+    layout = Layout(
+        title=attr(
+            text    = db[(db.db .== dtb), :].title[test+1],
+            x       = 0.5,
+            xanchor = "center",
+            yanchor = "top"
+        ),
+        plot_bgcolor = "#FFF",
+        paper_bgcolor = "#FFF",
+        xaxis_title = xtitle,
+        yaxis_title = ytitle,
+        # annotations = PhasesLabels,
+        width       = 800,
+        height      = 800
+    )
+    if length(grid) == 2
+        data_plot_grid      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, length(data.x)+1);
+        for i = 1:length(data.x)
+            data_plot_grid[i] = scatter(x           = data.x[i],
+                                        y           = data.y[i],
+                                        mode        = "lines",
+                                        line_color  = "#000000",
+                                        line_width  = 1,
+                showlegend  = false     )
+        end
+
+        data_plot_grid[length(data.x)+1] = heatmap( x               = X,
+                                                    y               = Y,
+                                                    z               = gridded,
+                                                    zsmooth         =  smooth,
+                                                    type            = "heatmap",
+                                                    colorscale      = colorm,
+                                                    colorbar_title  = fieldname,
+                                                    reversescale    = reverseColorMap,
+                                                    hoverinfo       = "text",
+                                                    text            = gridded_info     )
+
+        fig         = plot(data_plot_grid,layout)
+        grid_out    = ["","GRID"]
+    else
+        data_plot = heatmap(x               = X,
+                            y               = Y,
+                            z               = gridded,
+                            zsmooth         =  smooth,
+                            type            = "heatmap",
+                            colorscale      = colorm,
+                            colorbar_title  = fieldname,
+                            reversescale    = reverseColorMap,
+                            hoverinfo       = "text",
+                            text            = gridded_info     )
+
+        fig         = plot(data_plot,layout)
+        grid_out    = [""]
+    end                            
+
+    return fig, grid_out
 end
