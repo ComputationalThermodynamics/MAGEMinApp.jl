@@ -1,5 +1,68 @@
 function Tab_Simulation_Callbacks(app)
 
+    # update the dictionary of the solution phases and end-members for isopleth
+    callback!(
+        app,
+        Output("ss-dropdown","options"),
+        Output("em-1-id","style"),
+        Input("database-dropdown","value"),
+        Input("phase-dropdown","value"),
+        
+        prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
+    ) do dtb, phase
+        # bid  = pushed_button( callback_context() ) 
+
+        db_in       = retrieve_solution_phase_information(dtb)
+        n_ss        = length(db_in.data_ss)
+        n_pp        = length(db_in.data_pp)
+
+        if phase == "ss"
+            opts_ph     =  [Dict(   "label" => db_in.data_ss[i].ss_name,
+                                    "value" => i  )
+                                        for i=1:n_ss ]
+            style       = Dict("display" => "block")
+
+        else
+            opts_ph     =  [Dict(   "label" => db_in.data_pp[i],
+                                    "value" => i  )
+                                        for i=1:n_pp ]
+
+            style       = Dict("display" => "none")
+        end
+
+        return opts_ph, style
+    end
+
+
+    # update the dictionary of the solution phases and end-members for isopleth
+    callback!(
+        app,
+        Output("em-dropdown","options"),
+        Input("database-dropdown","value"),
+        Input("ss-dropdown","value"),
+        prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
+    ) do dtb, ssid
+        # bid  = pushed_button( callback_context() ) 
+
+        db_in          = retrieve_solution_phase_information(dtb)
+
+        if ssid == 0
+            ssid = 1
+        end
+
+        n_em        = length(db_in.data_ss[ssid].ss_em)
+
+        opts_em     =  [Dict(   "label" => db_in.data_ss[ssid].ss_em[i],
+                                "value" => i-1 )
+                                    for i=1:n_em ]
+            
+        return opts_em
+
+    end
+
+
+
+
     # save phase diagram data callback
     callback!(
         app,
@@ -296,5 +359,27 @@ function Tab_Simulation_Callbacks(app)
         return is_open 
             
     end
+
+    # open/close isopleth box
+    callback!(app,
+        Output("collapse-isopleths", "is_open"),
+        [Input("button-isopleths", "n_clicks")],
+        [State("collapse-isopleths", "is_open")], ) do  n, is_open
+        
+        if isnothing(n); n=0 end
+
+        if n>0
+            if is_open==1
+                is_open = 0
+            elseif is_open==0
+                is_open = 1
+            end
+        end
+        return is_open 
+            
+    end
+
+
+
     return app
 end

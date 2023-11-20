@@ -429,7 +429,7 @@ function get_gridded_map(   fieldname   ::String,
     meant      /= npoints
     meant       = round(meant; digits = 3)
 
-    if fieldname == "#Stable_Phases"
+    if fieldname == "#Phases"
         for i=1:np
             field[i] = Float64(length(Out_XY[i].ph));
         end

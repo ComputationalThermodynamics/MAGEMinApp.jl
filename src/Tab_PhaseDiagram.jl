@@ -5,9 +5,26 @@ function Tab_PhaseDiagram()
             # html_div("‎ "),
             dbc_row([ 
 
-                    dbc_col([diagram_plot()], width=9),
+                    dbc_col([diagram_plot()], width=7),
                     dbc_col([  
                         dbc_row([
+
+                        dbc_button("Grid refinement",id="button-refinement"),
+                        dbc_collapse(
+                            dbc_card(dbc_cardbody([
+                                    dbc_row([
+                                        dbc_button(
+                                            "Refine phase boundaries", id="refine-pb-button", color="light", className="me-2", n_clicks=0,
+                                            style       = Dict( "textAlign"     => "center",
+                                                                "font-size"     => "100%")
+                                                                # "border"        =>"1px grey solid")
+                                        ),
+                                    ]),
+                                ])),
+                                id="collapse-refinement",
+                                is_open=true,
+                        ),
+
                         dbc_button("Phase diagram information",id="infos-phase-diagram"),
                         dbc_collapse(
                             dbc_card(dbc_cardbody([
@@ -151,7 +168,7 @@ function Tab_PhaseDiagram()
                                         dcc_dropdown(   id      = "fields-dropdown",
                                                         options = [
                                                             (label = "Variance",                value = "Variance"),
-                                                            (label = "Number of stable phases", value = "#Stable_Phases"),
+                                                            (label = "Number of stable phases", value = "#Phases"),
                                                             (label = "G system",                value = "G_system"),
                                                             (label = "Entropy",                 value = "entropy"),
                                                             (label = "Enthalpy",                value = "enthalpy"),
@@ -240,25 +257,158 @@ function Tab_PhaseDiagram()
                             is_open=true,
                         ),
 
-                        dbc_button("Grid refinement",id="button-refinement"),
-                        dbc_collapse(
-                            dbc_card(dbc_cardbody([
-                                    html_div("‎ "),
-                                    dbc_row([
-                                        dbc_button(
-                                            "Refine phase boundaries", id="refine-pb-button", color="light", className="me-2", n_clicks=0,
-                                            style       = Dict( "textAlign"     => "center",
-                                                                "font-size"     => "100%",
-                                                                "border"        =>"1px grey solid")
-                                        ),
-                                    ]),
-                                ])),
-                                id="collapse-refinement",
-                                is_open=true,
-                        ),
+
 
                     ])
                     ], width=3),
+                    dbc_col([
+                        dbc_row([
+
+                        dbc_button("Display isopleths",id="button-isopleths"),
+                        dbc_collapse(
+                            dbc_card(dbc_cardbody([
+
+                                dbc_row([
+                                    dbc_col([
+                                        html_h1("Phase type", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                    ]),
+                                    dbc_col([
+                                        html_div([
+                                            dcc_dropdown(   id      = "phase-dropdown",
+                                            options = [
+                                                (label = "Pure phase",              value = "pp"),
+                                                (label = "Solution phase",          value = "ss"),
+                                            ],
+                                            value       = "pp",
+                                            clearable   = false,
+                                            multi       = false),
+                                        ], style = Dict("display" => "block"), id      = "phase-1-id"),
+
+                                    ]),
+                                ]),
+
+                                    dbc_row([
+
+                                        dbc_col([
+                                            html_h1("Phase", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                        ]),
+                                        dbc_col([
+                                            html_div([
+                                                dcc_dropdown(   id      = "ss-dropdown",
+                                                options = [
+                                                    Dict(   "label" => "",
+                                                            "value" => ""  )
+                                                                
+                                                ],
+                                                value       = 0,
+                                                clearable   = false,
+                                                multi       = false),
+                                            ], style = Dict("display" => "block"), id      = "ss-1-id"),
+
+                                        ]),
+
+                                    ]),
+                                    html_div([
+                                        dbc_row([
+
+                                            dbc_col([
+                                                html_h1("Endmember", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                            ]),
+                                            dbc_col([
+                                                
+                                                    dcc_dropdown(   id      = "em-dropdown",
+                                                    options = [
+                                                        Dict(   "label" => "",
+                                                                "value" => ""  )
+                                                                    
+                                                    ],
+                                                    value       = 0,
+                                                    clearable   = false,
+                                                    multi       = false),
+                                                ]),
+
+                                            ]),
+                                    ], style = Dict("display" => "none"), id      = "em-1-id"),
+
+                                    html_div("‎ "),
+                                    dbc_row([
+
+                                        dbc_col([
+                                            html_h1("Min", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                        ]),
+                                        dbc_col([
+                                            html_h1("Step", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                        ]),           
+                                        dbc_col([
+                                            html_h1("Max", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                        ]),
+                                    ]),
+
+                                    dbc_row([
+                                        dbc_col([ 
+                                            dbc_input(
+                                                id="iso-min-id",
+                                                type="number", 
+                                                min=-2.0, 
+                                                max= 2.0, 
+                                                value=0.0   ),
+                                        ]),
+                                        dbc_col([ 
+                                            dbc_input(
+                                                id="iso-step-id",
+                                                type="number", 
+                                                min= 0.0, 
+                                                max= 2.0, 
+                                                value=0.1   ),
+                                        ]),
+                                        dbc_col([ 
+                                            dbc_input(
+                                                id="iso-max-id",
+                                                type="number", 
+                                                min=-2.0, 
+                                                max= 2.0, 
+                                                value=1.0   ),
+                                        ]),
+
+                                    ]),
+                                    html_div("‎ "),
+                                    html_h1("Isopleth list", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                    dbc_row([
+
+                                        html_div([
+                                            dcc_dropdown(   id      = "isopleth-dropdown",
+                                            options = [
+                                                Dict(   "label" => "",
+                                                        "value" => ""  )
+                                            ],
+                                            value       = 0,
+                                            clearable   = false,
+                                            multi       = false),
+                                        ],  style = Dict("display" => "block"), id      = "isopleth-1-id"),
+
+                                     ]),
+                                     html_div("‎ "),
+                                     dbc_row([
+
+                                        dbc_col([
+                                            dbc_button("Add",id="button-add-isopleth"),    
+                                        ]),
+                                        dbc_col([
+                                            dbc_button("Remove",id="button-remove-isopleth"),   
+                                        ]),           
+                                        dbc_col([
+                                            dbc_button("Remove all",id="button-remove-all-isopleth"),   
+                                        ]),  
+                                     ]),
+
+
+                                ])),
+                                id="collapse-isopleths",
+                                is_open=true,
+                        ),
+
+                        ]),
+                    ], width=2),
 
                 ], justify="left"),
 

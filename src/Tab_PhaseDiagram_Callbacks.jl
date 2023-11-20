@@ -69,8 +69,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             point_id = parse(Int64,replace.(point_id,r"#"=>""))
 
             X       = "Composition\t[mol]\t: "*string(round.(Out_XY[point_id].bulk; digits = 3))*"\n"
-            P       = "Pressure\t\t[°C]\t\t: "*string(round(Out_XY[point_id].P_kbar; digits = 3))*"\n"
-            T       = "Temperature\t[kbar]\t: "*string(round(Out_XY[point_id].T_C; digits = 3))*"\n"
+            P       = "Pressure\t\t[knar]\t\t: "*string(round(Out_XY[point_id].P_kbar; digits = 3))*"\n"
+            T       = "Temperature\t[°C]\t: "*string(round(Out_XY[point_id].T_C; digits = 3))*"\n"
             Gsys    = "Gibbs energy\t[kJ]\t\t: "*string(round(Out_XY[point_id].G_system; digits = 3))*"\n"
             StPhase = "Stable phases\t[str]\t: "*string(Out_XY[point_id].ph)*"\n"
             PhFrac  = "Phases fraction\t[mol]\t: "*string(round.(Out_XY[point_id].ph_frac; digits = 3))*"\n"
@@ -91,6 +91,12 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("show-grid","value"),
         Output("npoints-id","value"),
         Output("meant-id","value"),
+
+        Output("isopleth-dropdown","options"),
+
+        Input("button-add-isopleth","n_clicks"),
+        Input("button-remove-isopleth","n_clicks"),
+        Input("button-remove-all-isopleth","n_clicks"),
 
         Input("compute-button","n_clicks"),
         Input("refine-pb-button","n_clicks"),
@@ -133,9 +139,18 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         State("test-dropdown", "value"),            # test number
 
+        # block related to isopleth plotting
+        State("isopleth-dropdown",  "options"),
+        State("phase-dropdown", "value"),
+        State("ss-dropdown",    "value"),
+        State("em-dropdown",    "value"),
+        State("iso-min-id",     "value"),
+        State("iso-step-id",    "value"),
+        State("iso-max-id",     "value"),
+
         prevent_initial_call = true,
 
-    ) do    n_clicks_mesh, n_clicks_refine, 
+    ) do    addIso,     removeIso,  removeAllIso,   n_clicks_mesh, n_clicks_refine, 
             colorMap,   smooth,     rangeColor,     reverse,    fieldname,  grid,
             npoints,    diagType,   dtb,    cpx,    limOpx,     limOpxVal,
             tmin,       tmax,       pmin,   pmax,
@@ -144,7 +159,9 @@ function Tab_PhaseDiagram_Callbacks(app)
             bufferType, solver,     verbose,
             bulk1,      bulk2,
             bufferN1,   bufferN2,
-            test
+            test,
+            isopleths,  phase,      ss,     em,     minIso,     stepIso,    maxIso
+
 
         xtitle, ytitle, Xrange, Yrange  = diagram_type(diagType, tmin, tmax, pmin, pmax)                # get axis information
         bufferN1, bufferN2, fixT, fixP  = convert2Float64(bufferN1, bufferN2, fixT, fixP)               # convert buffer_n to float
@@ -152,6 +169,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)              # get colormap information
         bulk_L, bulk_R, oxi             = get_bulkrock_prop(bulk1, bulk2)                               # get bulk rock composition information
         
+        global grid_out, data_plot, layout
 
         if bid == "compute-button"
 
@@ -159,7 +177,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, meant, PhasesLabels
             global addedRefinementLvl  = 0;
 
-            fig, npoints, grid_out, meant  =  compute_new_phaseDiagram( xtitle,     ytitle,     
+            data_plot, layout, npoints, grid_out, meant  =  compute_new_phaseDiagram( xtitle,     ytitle,     
                                                                         Xrange,     Yrange,     fieldname,
                                                                         dtb,        diagType,   verbose,
                                                                         fixT,       fixP,
@@ -169,9 +187,12 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                         bufferType, bufferN1,   bufferN2,
                                                                         smooth,     colorm,     reverseColorMap,
                                                                         test                                  )
+
+            fig         = plot(data_plot,layout)
+
         elseif bid == "refine-pb-button"
 
-            fig, npoints, grid_out, meant  =  refine_phaseDiagram(      xtitle,     ytitle,     
+            data_plot, layout, npoints, grid_out, meant  =  refine_phaseDiagram(      xtitle,     ytitle,     
                                                                         Xrange,     Yrange,     fieldname,
                                                                         dtb,        diagType,   verbose,
                                                                         fixT,       fixP,
@@ -181,36 +202,56 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                         bufferType, bufferN1,   bufferN2,
                                                                         smooth,     colorm,     reverseColorMap,
                                                                         test                                  )
+
+            fig         = plot(data_plot,layout)
 
         elseif bid == "colormaps_cross" || bid == "smooth-colormap" || bid == "range-slider-color" || bid == "reverse-colormap"
 
-            fig, grid_out  =  update_colormap_phaseDiagram(             xtitle,     ytitle,     
+            data_plot,layout, grid_out  =  update_colormap_phaseDiagram(             xtitle,     ytitle,     
                                                                         Xrange,     Yrange,     fieldname,
                                                                         dtb,        diagType,
                                                                         smooth,     colorm,     reverseColorMap,
                                                                         test                                  )
- 
+
+            fig         = plot(data_plot,layout)
+
         elseif bid == "fields-dropdown"
 
-            fig, grid_out  =  update_diplayed_field_phaseDiagram(       xtitle,     ytitle,     
+            data_plot,layout, grid_out  =  update_diplayed_field_phaseDiagram(       xtitle,     ytitle,     
                                                                         Xrange,     Yrange,     fieldname,
                                                                         dtb,        oxi,
                                                                         sub,        refLvl,
                                                                         smooth,     colorm,     reverseColorMap,
                                                                         test                                  )
 
+            fig         = plot(data_plot,layout)
+
         elseif bid == "show-grid"
 
-            fig, grid_out  =  show_hide_grid_phaseDiagram(              xtitle,     ytitle,     grid,   
+            data_plot,layout, grid_out  =  show_hide_grid_phaseDiagram(              xtitle,     ytitle,     grid,   
                                                                         Xrange,     Yrange,     fieldname,
                                                                         dtb,
                                                                         smooth,     colorm,     reverseColorMap,
                                                                         test                                  )
+
+            fig         = plot(data_plot,layout)
+
+        elseif bid == "button-add-isopleth" || bid == "button-remove-isopleth" || bid == "button-remove-all-isopleth"
+            print("isopleths: $(isopleths) \n")
+            print("phase: $(phase) \n")
+            print("ss: $(ss) \n")
+            print("em: $(em) \n")
+            print("minIso: $(minIso) \n")
+            print("stepIso: $(stepIso) \n")
+            print("maxIso: $(maxIso) \n")    
+
+            fig         = plot(data_plot,layout)
         else
             fig = plot()
         end
 
-        return fig, grid_out, npoints, meant
+
+        return fig, grid_out, npoints, meant, isopleths
     end
 
 

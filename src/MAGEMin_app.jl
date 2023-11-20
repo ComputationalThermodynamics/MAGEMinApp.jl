@@ -44,14 +44,14 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
             dbc_col([
             dbc_row([
                         dbc_col([
-                            dbc_cardimg(    id = "jgu-img",
-                                            src=    "assets/static/images/JGU_light.jpg",
-                                            style = Dict("height" => 90, "width" => 315)),
+                            dbc_cardimg(    id      = "jgu-img",
+                                            src     = "assets/static/images/JGU_light.jpg",
+                                            style   = Dict("height" => 55, "width" => 190)),
                                 ], width="auto" ),
                         dbc_col([
-                            dbc_cardimg(    id = "magemin-img",
-                                            src=    "assets/static/images/MAGEMin_light.jpg",
-                                            style = Dict("height" => 120, "width" => 360)),
+                            dbc_cardimg(    id      = "magemin-img",
+                                            src     = "assets/static/images/MAGEMin_light.jpg",
+                                            style   = Dict("height" => 70, "width" => 190)),
                                 ], width="auto" )
                             ], justify="between"),
                     
@@ -130,7 +130,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
     ) do session_id
 
         session_id = UUIDs.uuid4()
-        str = "id=$(session_id), v=$(GUI_version)"
+        str = "id=$(session_id), MAGEMin_app GUI v=$(GUI_version)"
         return String("$(session_id)"), str
     end
     app = MAGEMin_app_Callbacks(app)
@@ -143,6 +143,6 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
 
 end
 
-App( debug=true ) #### trick  to have hot reloading: first launch normaly then quit and go to src and run julia -t 5 MAGEMin_app.jl
+# App( debug=true ) #### trick  to have hot reloading: first launch normaly then quit and go to src and run julia -t 5 MAGEMin_app.jl
 
 end # module MAGEMin_app
