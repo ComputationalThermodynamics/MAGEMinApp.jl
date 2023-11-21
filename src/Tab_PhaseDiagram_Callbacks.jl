@@ -169,83 +169,85 @@ function Tab_PhaseDiagram_Callbacks(app)
         colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)              # get colormap information
         bulk_L, bulk_R, oxi             = get_bulkrock_prop(bulk1, bulk2)                               # get bulk rock composition information
         
-        global grid_out, data_plot, layout
+        global grid_out, data_plot, data_plot_isopleth, layout
 
         if bid == "compute-button"
 
             # declare set of global variables needed to generate, refine and display phase diagrams
-            global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, meant, PhasesLabels
-            global addedRefinementLvl  = 0;
+            global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, PhasesLabels
+            global addedRefinementLvl   = 0;
+            global nIsopleths           = 0;
 
-            data_plot, layout, npoints, grid_out, meant  =  compute_new_phaseDiagram( xtitle,     ytitle,     
-                                                                        Xrange,     Yrange,     fieldname,
-                                                                        dtb,        diagType,   verbose,
-                                                                        fixT,       fixP,
-                                                                        sub,        refLvl,
-                                                                        cpx,        limOpx,     limOpxVal,
-                                                                        bulk_L,     bulk_R,     oxi,
-                                                                        bufferType, bufferN1,   bufferN2,
-                                                                        smooth,     colorm,     reverseColorMap,
-                                                                        test                                  )
+            data_plot, layout, npoints, grid_out, meant  =  compute_new_phaseDiagram(   xtitle,     ytitle,     
+                                                                                        Xrange,     Yrange,     fieldname,
+                                                                                        dtb,        diagType,   verbose,
+                                                                                        fixT,       fixP,
+                                                                                        sub,        refLvl,
+                                                                                        cpx,        limOpx,     limOpxVal,
+                                                                                        bulk_L,     bulk_R,     oxi,
+                                                                                        bufferType, bufferN1,   bufferN2,
+                                                                                        smooth,     colorm,     reverseColorMap,
+                                                                                        test                                  )
 
             fig         = plot(data_plot,layout)
 
         elseif bid == "refine-pb-button"
 
-            data_plot, layout, npoints, grid_out, meant  =  refine_phaseDiagram(      xtitle,     ytitle,     
-                                                                        Xrange,     Yrange,     fieldname,
-                                                                        dtb,        diagType,   verbose,
-                                                                        fixT,       fixP,
-                                                                        sub,        refLvl,
-                                                                        cpx,        limOpx,     limOpxVal,
-                                                                        bulk_L,     bulk_R,     oxi,
-                                                                        bufferType, bufferN1,   bufferN2,
-                                                                        smooth,     colorm,     reverseColorMap,
-                                                                        test                                  )
+            data_plot, layout, npoints, grid_out, meant  =  refine_phaseDiagram(    xtitle,     ytitle,     
+                                                                                    Xrange,     Yrange,     fieldname,
+                                                                                    dtb,        diagType,   verbose,
+                                                                                    fixT,       fixP,
+                                                                                    sub,        refLvl,
+                                                                                    cpx,        limOpx,     limOpxVal,
+                                                                                    bulk_L,     bulk_R,     oxi,
+                                                                                    bufferType, bufferN1,   bufferN2,
+                                                                                    smooth,     colorm,     reverseColorMap,
+                                                                                    test                                  )
 
             fig         = plot(data_plot,layout)
 
         elseif bid == "colormaps_cross" || bid == "smooth-colormap" || bid == "range-slider-color" || bid == "reverse-colormap"
 
-            data_plot,layout, grid_out  =  update_colormap_phaseDiagram(             xtitle,     ytitle,     
-                                                                        Xrange,     Yrange,     fieldname,
-                                                                        dtb,        diagType,
-                                                                        smooth,     colorm,     reverseColorMap,
-                                                                        test                                  )
+            data_plot,layout, grid_out  =  update_colormap_phaseDiagram(    xtitle,     ytitle,     
+                                                                            Xrange,     Yrange,     fieldname,
+                                                                            dtb,        diagType,
+                                                                            smooth,     colorm,     reverseColorMap,
+                                                                            test                                  )
 
             fig         = plot(data_plot,layout)
 
         elseif bid == "fields-dropdown"
 
-            data_plot,layout, grid_out  =  update_diplayed_field_phaseDiagram(       xtitle,     ytitle,     
-                                                                        Xrange,     Yrange,     fieldname,
-                                                                        dtb,        oxi,
-                                                                        sub,        refLvl,
-                                                                        smooth,     colorm,     reverseColorMap,
-                                                                        test                                  )
+            data_plot,layout, grid_out  =  update_diplayed_field_phaseDiagram(  xtitle,     ytitle,     
+                                                                                Xrange,     Yrange,     fieldname,
+                                                                                dtb,        oxi,
+                                                                                sub,        refLvl,
+                                                                                smooth,     colorm,     reverseColorMap,
+                                                                                test                                  )
 
             fig         = plot(data_plot,layout)
 
         elseif bid == "show-grid"
 
-            data_plot,layout, grid_out  =  show_hide_grid_phaseDiagram(              xtitle,     ytitle,     grid,   
-                                                                        Xrange,     Yrange,     fieldname,
-                                                                        dtb,
-                                                                        smooth,     colorm,     reverseColorMap,
-                                                                        test                                  )
+            data_plot, layout, grid_out  =  show_hide_grid_phaseDiagram(    xtitle,     ytitle,     grid,   
+                                                                            Xrange,     Yrange,     fieldname,
+                                                                            dtb,
+                                                                            smooth,     colorm,     reverseColorMap,
+                                                                            test                                  )
 
             fig         = plot(data_plot,layout)
 
         elseif bid == "button-add-isopleth" || bid == "button-remove-isopleth" || bid == "button-remove-all-isopleth"
-            print("isopleths: $(isopleths) \n")
-            print("phase: $(phase) \n")
-            print("ss: $(ss) \n")
-            print("em: $(em) \n")
-            print("minIso: $(minIso) \n")
-            print("stepIso: $(stepIso) \n")
-            print("maxIso: $(maxIso) \n")    
 
-            fig         = plot(data_plot,layout)
+            data_plot_isopleth,isopleths = add_isopleth_phaseDiagram(       Xrange,     Yrange,
+                                                                            sub,        refLvl,
+                                                                            dtb,        oxi,
+                                                                            isopleths,  phase,      ss,     em,     
+                                                                            minIso,     stepIso,    maxIso      )
+
+
+
+            fig         = plot(data_plot_isopleth, layout)
         else
             fig = plot()
         end

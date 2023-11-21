@@ -515,6 +515,85 @@ function get_gridded_map(   fieldname   ::String,
 end
 
 
+
+"""
+    Function interpolate AMR grid to regular grid
+"""
+function get_isopleth_map(  mod         ::String, 
+                            ss          ::String, 
+                            em          ::String,
+                            oxi         ::Vector{String},
+                            Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
+                            sub         ::Int64,
+                            refLvl      ::Int64,
+                            xc          ::Vector{Float64},
+                            yc          ::Vector{Float64},
+                            xf          ::Vector{SVector{4, Float64}},
+                            yf          ::Vector{SVector{4, Float64}},
+                            Xrange      ::Tuple{Float64, Float64},
+                            Yrange      ::Tuple{Float64, Float64} )
+
+    np          = length(data.x)
+    len_ox      = length(oxi)
+    field       = Vector{Union{Float64,Missing}}(undef,np);
+
+    if mod == "ph_frac" 
+        for i=1:np
+            id       = findall(Out_XY[i].ph .== ss)
+            if ~isempty(id)  
+                field[i] = Out_XY[i].ph_frac[id[1] ]
+            else
+                field[i] = missing
+            end
+        end
+    elseif mod == "em_frac"
+        for i=1:np
+            id       = findall(Out_XY[i].ph .== ss)
+            if ~isempty(id)  
+                idem     = findall(Out_XY[i].SS_vec[id[1]].emNames .== em)
+                field[i] = Out_XY[i].SS_vec[id[1]].emFrac[idem[1]]
+            else
+                field[i] = missing
+            end
+        end 
+    end
+
+    n            = 2^(sub + refLvl)
+    x            = range(minimum(xc), stop = maximum(xc), length = n)
+    y            = range(minimum(yc), stop = maximum(yc), length = n)
+
+    X            = repeat(x , n)[:]
+    Y            = repeat(y', n)[:]
+    gridded      = Matrix{Union{Float64,Missing}}(undef,n,n);
+    in           = similar(gridded)
+    Xr = (Xrange[2]-Xrange[1])/n
+    Yr = (Yrange[2]-Yrange[1])/n
+
+    m  = 1
+    for k=1:np
+        for i=xf[k][1]+Xr/2 : Xr : xf[k][3]
+            for j=yf[k][1]+Yr/2 : Yr : yf[k][3]
+                ii                  = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
+                jj                  = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
+                in[ii,jj]      = field[k]
+            end
+        end
+    end
+
+    in[ismissing.(in)] .= -0.001;
+    kx      = Kernel.gaussian((3,), ( Int64(n/8+1),))
+    ky      = Kernel.gaussian((3,), ( Int64(n/8+1),))
+    in      = imfilter(in, (kx', ky))
+    
+    gridded .= in
+    gridded[isless.(in, 1e-8)] .= missing 
+
+
+    return gridded, X, Y
+end
+
+
+
 """
     Function to extract values from structure using structure's member name
 """

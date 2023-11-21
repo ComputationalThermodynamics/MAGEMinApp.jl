@@ -18,13 +18,13 @@ function Tab_Simulation_Callbacks(app)
 
         if phase == "ss"
             opts_ph     =  [Dict(   "label" => db_in.data_ss[i].ss_name,
-                                    "value" => i  )
+                                    "value" => db_in.data_ss[i].ss_name )
                                         for i=1:n_ss ]
             style       = Dict("display" => "block")
 
         else
             opts_ph     =  [Dict(   "label" => db_in.data_pp[i],
-                                    "value" => i  )
+                                    "value" => db_in.data_pp[i]  )
                                         for i=1:n_pp ]
 
             style       = Dict("display" => "none")
@@ -40,24 +40,29 @@ function Tab_Simulation_Callbacks(app)
         Output("em-dropdown","options"),
         Input("database-dropdown","value"),
         Input("ss-dropdown","value"),
+        State("phase-dropdown","value"),
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
-    ) do dtb, ssid
+    ) do dtb, id, ph
         # bid  = pushed_button( callback_context() ) 
+        if ph == "ss"
+            db_in          = retrieve_solution_phase_information(dtb)
 
-        db_in          = retrieve_solution_phase_information(dtb)
+            if id == 0
+                id = db_in.ss_name[1]
+            end
 
-        if ssid == 0
-            ssid = 1
+            ssid = findall(db_in.ss_name .== id)[1]
+
+            n_em        = length(db_in.data_ss[ssid].ss_em)
+
+            opts_em     =  [Dict(   "label" => db_in.data_ss[ssid].ss_em[i],
+                                    "value" => db_in.data_ss[ssid].ss_em[i] )
+                                        for i=1:n_em ]
+                
+            return opts_em
+        else
+            return ""
         end
-
-        n_em        = length(db_in.data_ss[ssid].ss_em)
-
-        opts_em     =  [Dict(   "label" => db_in.data_ss[ssid].ss_em[i],
-                                "value" => i-1 )
-                                    for i=1:n_em ]
-            
-        return opts_em
-
     end
 
 

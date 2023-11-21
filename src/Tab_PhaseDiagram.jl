@@ -276,8 +276,8 @@ function Tab_PhaseDiagram()
                                         html_div([
                                             dcc_dropdown(   id      = "phase-dropdown",
                                             options = [
-                                                (label = "Pure phase",              value = "pp"),
-                                                (label = "Solution phase",          value = "ss"),
+                                                (label = "Pure",              value = "pp"),
+                                                (label = "Solution",          value = "ss"),
                                             ],
                                             value       = "pp",
                                             clearable   = false,
@@ -370,7 +370,7 @@ function Tab_PhaseDiagram()
                                                 value=1.0   ),
                                         ]),
 
-                                    ]),
+                                    ],className="g-0"),
                                     html_div("‎ "),
                                     html_h1("Isopleth list", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                     dbc_row([

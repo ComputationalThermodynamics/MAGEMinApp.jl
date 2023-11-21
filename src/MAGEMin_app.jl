@@ -5,7 +5,7 @@ using DashBootstrapComponents
 using PlotlyJS, JSON3, Printf, Statistics, DataFrames, CSV, Dates, Base64
 using UUIDs, HTTP
 using JLD2, DelimitedFiles, Interpolations
-
+using ImageFiltering
 using MAGEMin_C
 
 export App
