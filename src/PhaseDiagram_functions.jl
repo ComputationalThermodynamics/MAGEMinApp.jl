@@ -15,6 +15,63 @@ mutable struct db_infos
 end
 
 
+mutable struct isopleth_data
+    n_iso   :: Int64
+
+    colorL  :: Vector{Vector{Vector{Any}}}
+    colorT  :: Vector{String}
+
+    active  :: Vector{Int64}
+    isoP    :: Vector{GenericTrace{Dict{Symbol, Any}}}
+    colorId :: Vector{Int64}
+
+    label   :: Vector{String}
+    value   :: Vector{Int64}
+    min     :: Vector{Float64}
+    step    :: Vector{Float64}
+    max     :: Vector{Float64}
+end
+
+
+"""
+
+    Initiatize global variable storing isopleths information
+"""
+function initialize_g_isopleth(; n_iso = 8)
+    global g_isopleths
+
+
+    colorL    =     [   [[0, "white"],      [1, "white"]],
+                        [[0, "grey"],       [1, "grey"]], 
+                        [[0, "coral"],      [1, "coral"]],
+                        [[0, "turquoise"],  [1, "turquoise"]], 
+                        [[0, "dodgerblue"], [1, "dodgerblue"]],
+                        [[0, "orchid"],     [1, "orchid"]], 
+                        [[0, "peru"],       [1, "peru"]],
+                        [[0, "black"],      [1, "black"]] 
+                    ] 
+
+    colorT    = ["white","grey","coral","turquoise","dodgerblue","orchid","peru","black"]
+
+    active    = zeros(Int64,n_iso)
+    isoP      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso + 1); # + 1 to store the heatmap
+    colorId   = zeros(Int64,n_iso)
+
+    label     = Vector{String}(undef,n_iso)
+    value     = Vector{Int64}(undef,n_iso)
+    min       = Vector{Float64}(undef,n_iso)
+    step      = Vector{Float64}(undef,n_iso)
+    max       = Vector{Float64}(undef,n_iso)
+
+
+    g_isopleths = isopleth_data(n_iso, colorL, colorT,
+                                active, isoP, colorId,
+                                label, value, min, step, max )
+
+
+    return g_isopleths
+end
+
 """
     retrieve_solution_phase_information(dtb)
 
@@ -269,7 +326,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                     paper_bgcolor = "#FFF",
                     xaxis_title = xtitle,
                     yaxis_title = ytitle,
-                    # annotations = PhasesLabels,
+                    annotations = PhasesLabels,
                     width       = 700,
                     height      = 700
                 )
@@ -427,7 +484,7 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
         paper_bgcolor = "#FFF",
         xaxis_title = xtitle,
         yaxis_title = ytitle,
-        # annotations = PhasesLabels,
+        annotations = PhasesLabels,
         width       = 700,
         height      = 700
     )
@@ -492,7 +549,7 @@ function  update_diplayed_field_phaseDiagram(   xtitle,     ytitle,
     paper_bgcolor = "#FFF",
     xaxis_title = xtitle,
     yaxis_title = ytitle,
-    # annotations = PhasesLabels,
+    annotations = PhasesLabels,
     width       = 700,
     height      = 700 )
 
@@ -542,7 +599,7 @@ function  show_hide_grid_phaseDiagram(  xtitle,     ytitle,     grid,
         paper_bgcolor = "#FFF",
         xaxis_title = xtitle,
         yaxis_title = ytitle,
-        # annotations = PhasesLabels,
+        annotations = PhasesLabels,
         width       = 700,
         height      = 700
     )
@@ -568,7 +625,6 @@ function  show_hide_grid_phaseDiagram(  xtitle,     ytitle,     grid,
                                                     hoverinfo       = "text",
                                                     text            = gridded_info     )
 
-        # fig         = plot(data_plot,layout)
         grid_out    = ["","GRID"]
     else
         data_plot = heatmap(x               = X,
@@ -582,7 +638,6 @@ function  show_hide_grid_phaseDiagram(  xtitle,     ytitle,     grid,
                             hoverinfo       = "text",
                             text            = gridded_info     )
 
-        # fig         = plot(data_plot,layout)
         grid_out    = [""]
     end                            
 
@@ -606,7 +661,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
         name    = ss*"_"*em*"_mode"
     end
 
-    global data_plot, nIsopleths, data_plot_isopleth, data, Out_XY, data_plot, X, Y, addedRefinementLvl
+    global g_isopleths, data_plot, nIsopleths, data_plot_isopleth, data, Out_XY, data_plot, X, Y, addedRefinementLvl
 
     gridded, X, Y = get_isopleth_map(   mod, ss, em,
                                         oxi,
@@ -621,11 +676,11 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                         Yrange )
 
 
-    nIsopleths      = 1
-    colorscale      = [[0, "black"], [1, "black"]]
+    print("$g_isopleths\n")
+
+    nIsopleths              = 1
+    colorscale              = [[0, "black"], [1, "black"]]
     
-
-
     data_plot_isopleth      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, nIsopleths + 1);
     data_plot_isopleth[1]   = data_plot
 
@@ -643,6 +698,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
         contours_size       = stepIso,
         line_width          = 1,
         showscale           = false,
+        hoverinfo           = "skip",
         contours            = attr(     coloring    = "lines",
                                         showlabels  = true,
                                         labelfont   = attr( size    = 12,

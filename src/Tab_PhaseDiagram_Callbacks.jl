@@ -169,7 +169,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)              # get colormap information
         bulk_L, bulk_R, oxi             = get_bulkrock_prop(bulk1, bulk2)                               # get bulk rock composition information
         
-        global grid_out, data_plot, data_plot_isopleth, layout
+        
 
         if bid == "compute-button"
 
@@ -177,6 +177,10 @@ function Tab_PhaseDiagram_Callbacks(app)
             global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, PhasesLabels
             global addedRefinementLvl   = 0;
             global nIsopleths           = 0;
+            global grid_out, data_plot, data_plot_isopleth, layout, g_isopleths;
+
+
+            g_isopleths                                  = initialize_g_isopleth(; n_iso = 8)
 
             data_plot, layout, npoints, grid_out, meant  =  compute_new_phaseDiagram(   xtitle,     ytitle,     
                                                                                         Xrange,     Yrange,     fieldname,
@@ -239,7 +243,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         elseif bid == "button-add-isopleth" || bid == "button-remove-isopleth" || bid == "button-remove-all-isopleth"
 
-            data_plot_isopleth,isopleths = add_isopleth_phaseDiagram(       Xrange,     Yrange,
+            data_plot_isopleth, isopleths = add_isopleth_phaseDiagram(      Xrange,     Yrange,
                                                                             sub,        refLvl,
                                                                             dtb,        oxi,
                                                                             isopleths,  phase,      ss,     em,     

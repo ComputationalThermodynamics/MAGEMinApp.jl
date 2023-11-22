@@ -201,13 +201,11 @@ function Tab_PhaseDiagram()
                                         dbc_col([
                                             dcc_dropdown(   id          = "colormaps_cross",
                                                             options     = ["blackbody","Blues","cividis","Greens","Greys","hot","jet","RdBu","Reds","viridis","YlGnBu","YlOrRd"],
-                                                            value       = "viridis",
+                                                            value       = "Blues",
                                                             clearable   = false,
                                                             placeholder = "Colormap")
                                         ]), 
                                     ]),
-
-
 
                                     dbc_row([
                                         dbc_col([ 
@@ -295,11 +293,7 @@ function Tab_PhaseDiagram()
                                         dbc_col([
                                             html_div([
                                                 dcc_dropdown(   id      = "ss-dropdown",
-                                                options = [
-                                                    Dict(   "label" => "",
-                                                            "value" => ""  )
-                                                                
-                                                ],
+                                                options = [],
                                                 value       = 0,
                                                 clearable   = false,
                                                 multi       = false),
@@ -317,11 +311,7 @@ function Tab_PhaseDiagram()
                                             dbc_col([
                                                 
                                                     dcc_dropdown(   id      = "em-dropdown",
-                                                    options = [
-                                                        Dict(   "label" => "",
-                                                                "value" => ""  )
-                                                                    
-                                                    ],
+                                                    options = [],
                                                     value       = 0,
                                                     clearable   = false,
                                                     multi       = false),
@@ -371,34 +361,68 @@ function Tab_PhaseDiagram()
                                         ]),
 
                                     ],className="g-0"),
+
+                                    dbc_row([
+                                        dbc_col([
+                                            html_h1("Isopleth/label color", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                        ]),
+                                    ]),
+
+                                    dbc_row([
+                                        dbc_col([ 
+                                            dcc_dropdown(   id          = "iso-color-dropdown",
+                                                            options     = [         (   label = "white",        value = 1  ),
+                                                                                    (   label = "grey",         value = 2  ) ,
+                                                                                    (   label = "coral",        value = 3  ) ,
+                                                                                    (   label = "turquoise",    value = 4  ) ,
+                                                                                    (   label = "dodgerblue",   value = 5  ) ,
+                                                                                    (   label = "orchid",       value = 6  ) ,
+                                                                                    (   label = "peru",         value = 7  ) ,
+                                                                                    (   label = "black",        value = 8  )  ],
+                                                            value       = 3,
+                                                            clearable   = false,
+                                                            multi       = false),
+                                        ]),
+                                    ]),
+
+                                    html_div("‎ "),
+                                    dbc_row([
+
+                                       dbc_col([
+                                           dbc_button("Add",id="button-add-isopleth"),    
+                                       ]),
+                                       dbc_col([
+                                           dbc_button("Remove",id="button-remove-isopleth"),   
+                                       ]),           
+                                       dbc_col([
+                                           dbc_button("Remove all",id="button-remove-all-isopleth"),   
+                                       ]),  
+                                    ]),
+
                                     html_div("‎ "),
                                     html_h1("Isopleth list", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                     dbc_row([
 
                                         html_div([
                                             dcc_dropdown(   id      = "isopleth-dropdown",
-                                            options = [
-                                                Dict(   "label" => "",
-                                                        "value" => ""  )
-                                            ],
+                                            options = [],
                                             value       = 0,
                                             clearable   = false,
                                             multi       = false),
                                         ],  style = Dict("display" => "block"), id      = "isopleth-1-id"),
 
                                      ]),
+
                                      html_div("‎ "),
                                      dbc_row([
 
                                         dbc_col([
-                                            dbc_button("Add",id="button-add-isopleth"),    
+                                            dbc_button("Show all",id="button-show-all-isopleth"),    
                                         ]),
                                         dbc_col([
-                                            dbc_button("Remove",id="button-remove-isopleth"),   
+                                            dbc_button("Hide all",id="button-hide-all-isopleth"),   
                                         ]),           
-                                        dbc_col([
-                                            dbc_button("Remove all",id="button-remove-all-isopleth"),   
-                                        ]),  
+ 
                                      ]),
 
 

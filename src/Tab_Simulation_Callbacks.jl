@@ -4,6 +4,7 @@ function Tab_Simulation_Callbacks(app)
     callback!(
         app,
         Output("ss-dropdown","options"),
+        Output("ss-dropdown","value"),
         Output("em-1-id","style"),
         Input("database-dropdown","value"),
         Input("phase-dropdown","value"),
@@ -22,15 +23,19 @@ function Tab_Simulation_Callbacks(app)
                                         for i=1:n_ss ]
             style       = Dict("display" => "block")
 
+            val         = db_in.data_ss[1].ss_name
+
         else
             opts_ph     =  [Dict(   "label" => db_in.data_pp[i],
                                     "value" => db_in.data_pp[i]  )
                                         for i=1:n_pp ]
 
             style       = Dict("display" => "none")
+
+            val         = db_in.data_pp[1]
         end
 
-        return opts_ph, style
+        return opts_ph, val, style
     end
 
 
@@ -38,6 +43,7 @@ function Tab_Simulation_Callbacks(app)
     callback!(
         app,
         Output("em-dropdown","options"),
+        Output("em-dropdown","value"),
         Input("database-dropdown","value"),
         Input("ss-dropdown","value"),
         State("phase-dropdown","value"),
@@ -55,13 +61,14 @@ function Tab_Simulation_Callbacks(app)
 
             n_em        = length(db_in.data_ss[ssid].ss_em)
 
+            val         = "none"
             opts_em     =  [Dict(   "label" => db_in.data_ss[ssid].ss_em[i],
                                     "value" => db_in.data_ss[ssid].ss_em[i] )
                                         for i=1:n_em ]
                 
-            return opts_em
+            return opts_em, val
         else
-            return ""
+            return "", ""
         end
     end
 

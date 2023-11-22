@@ -463,13 +463,13 @@ function get_gridded_map(   fieldname   ::String,
     #     nann    = length(1:stp:n^2);
     # else
         nann    = n^2
-        # stp     = 1
+        stp     = 1
     # end
-    # PhasesLabels = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,nann)
-    PhasesLabels = [];
+    PhasesLabels = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,nann)
+    # PhasesLabels = [];
     Xr = (Xrange[2]-Xrange[1])/n
     Yr = (Yrange[2]-Yrange[1])/n
-    # l  = 1
+    l  = 1
     m  = 1
     for k=1:np
         for i=xf[k][1]+Xr/2 : Xr : xf[k][3]
@@ -481,19 +481,19 @@ function get_gridded_map(   fieldname   ::String,
                 gridded_info[ii,jj] = "#"*string(k)*"# "*tmp
 
                 # initialize PhaseLabels
-                # if mod(l-1,stp) == 0
-                    # PhasesLabels[m] =   attr(   
-                    #                             x           = x[ii],
-                    #                             y           = y[jj],
-                    #                             text        = replace(string(Out_XY[k].ph), "\""=>"", "]"=>"", "["=>"", ","=>""),
-                    #                             showarrow   = true,
-                    #                             arrowhead   = 1,
-                    #                             clicktoshow = "onoff",
-                    #                             visible     = false
-                    #                     )
-                    # m += 1
-                # end
-                # l += 1
+                if mod(l-1,stp) == 0
+                    PhasesLabels[m] =   attr(   
+                                                x           = x[ii],
+                                                y           = y[jj],
+                                                text        = replace(string(Out_XY[k].ph), "\""=>"", "]"=>"", "["=>"", ","=>""),
+                                                showarrow   = true,
+                                                arrowhead   = 1,
+                                                clicktoshow = "onoff",
+                                                visible     = false
+                                        )
+                    m += 1
+                end
+                l += 1
 
             end
         end
@@ -575,12 +575,12 @@ function get_isopleth_map(  mod         ::String,
             for j=yf[k][1]+Yr/2 : Yr : yf[k][3]
                 ii                  = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
                 jj                  = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
-                in[ii,jj]      = field[k]
+                in[ii,jj]           = field[k]
             end
         end
     end
 
-    in[ismissing.(in)] .= -0.001;
+    in[ismissing.(in)] .= 0.0;
     kx      = Kernel.gaussian((3,), ( Int64(n/8+1),))
     ky      = Kernel.gaussian((3,), ( Int64(n/8+1),))
     in      = imfilter(in, (kx', ky))
