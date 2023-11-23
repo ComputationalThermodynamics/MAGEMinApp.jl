@@ -17,19 +17,20 @@ end
 
 mutable struct isopleth_data
     n_iso   :: Int64
+    n_iso_max   :: Int64
 
     colorL  :: Vector{Vector{Vector{Any}}}
     colorT  :: Vector{String}
 
     active  :: Vector{Int64}
     isoP    :: Vector{GenericTrace{Dict{Symbol, Any}}}
-    colorId :: Vector{Int64}
+    # colorId :: Vector{Int64}
 
     label   :: Vector{String}
     value   :: Vector{Int64}
-    min     :: Vector{Float64}
-    step    :: Vector{Float64}
-    max     :: Vector{Float64}
+    # min     :: Vector{Float64}
+    # step    :: Vector{Float64}
+    # max     :: Vector{Float64}
 end
 
 
@@ -37,7 +38,7 @@ end
 
     Initiatize global variable storing isopleths information
 """
-function initialize_g_isopleth(; n_iso = 8)
+function initialize_g_isopleth(; n_iso_max = 8)
     global g_isopleths
 
 
@@ -53,20 +54,20 @@ function initialize_g_isopleth(; n_iso = 8)
 
     colorT    = ["white","grey","coral","turquoise","dodgerblue","orchid","peru","black"]
 
-    active    = zeros(Int64,n_iso)
-    isoP      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso + 1); # + 1 to store the heatmap
-    colorId   = zeros(Int64,n_iso)
+    active    = zeros(Int64,n_iso_max)
+    isoP      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max + 1); # + 1 to store the heatmap
+    # colorId   = zeros(Int64,n_iso_max)
 
-    label     = Vector{String}(undef,n_iso)
-    value     = Vector{Int64}(undef,n_iso)
-    min       = Vector{Float64}(undef,n_iso)
-    step      = Vector{Float64}(undef,n_iso)
-    max       = Vector{Float64}(undef,n_iso)
+    label     = Vector{String}(undef,n_iso_max)
+    value     = Vector{Int64}(undef,n_iso_max)
+    # min       = Vector{Float64}(undef,n_iso_max)
+    # step      = Vector{Float64}(undef,n_iso_max)
+    # max       = Vector{Float64}(undef,n_iso_max)
 
 
-    g_isopleths = isopleth_data(n_iso, colorL, colorT,
-                                active, isoP, colorId,
-                                label, value, min, step, max )
+    g_isopleths = isopleth_data(0, n_iso_max, colorL, colorT,
+                                active, isoP, #colorId,
+                                label, value) #, min, step, max )
 
 
     return g_isopleths
@@ -648,10 +649,11 @@ end
 function add_isopleth_phaseDiagram(         Xrange,     Yrange, 
                                             sub,        refLvl,
                                             dtb,        oxi,
-                                            isopleths,  phase,      ss,     em,     
+                                            isopleths,  phase,      ss,     em, 
+                                            isoColor,    
                                             minIso,     stepIso,    maxIso      )
 
-
+    isoColor = Int64(isoColor)
     if (phase == "ss" && em == "none") || (phase == "pp")
         mod     = "ph_frac"
         em      = ""
@@ -675,41 +677,38 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                         Xrange,
                                         Yrange )
 
+    g_isopleths.n_iso      += 1
+    g_isopleths.isoP[1]     = data_plot     #save heatmap from phase diagram
 
-    print("$g_isopleths\n")
-
-    nIsopleths              = 1
-    colorscale              = [[0, "black"], [1, "black"]]
+    g_isopleths.isoP[g_isopleths.n_iso + 1]= contour(   x                   = X,
+                                                        y                   = Y,
+                                                        z                   = gridded,
+                                                        contours_coloring   = "lines",
+                                                        # line_smoothing      = 3.0,
+                                                        labelfont           = attr( size  = 10,
+                                                                                    color = "white" ),
+                                                        colorscale          = g_isopleths.colorL[isoColor],
+                                                        contours_start      = minIso,
+                                                        contours_end        = maxIso,
+                                                        contours_size       = stepIso,
+                                                        line_width          = 1,
+                                                        showscale           = false,
+                                                        hoverinfo           = "skip",
+                                                        contours            = attr(     coloring    = "lines",
+                                                                                        showlabels  = true,
+                                                                                        labelfont   = attr( size    = 12,
+                                                                                                            color   = g_isopleths.colorT[isoColor],  )
+                                                        )
+                                                    )
+    g_isopleths.active[g_isopleths.n_iso] = 1
+    g_isopleths.label[g_isopleths.n_iso]  = name
+    g_isopleths.value[g_isopleths.n_iso]  = g_isopleths.n_iso
     
-    data_plot_isopleth      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, nIsopleths + 1);
-    data_plot_isopleth[1]   = data_plot
-
-    data_plot_isopleth[end] = contour(
-        x                   = X,
-        y                   = Y,
-        z                   = gridded,
-        contours_coloring   = "lines",
-        # line_smoothing      = 3.0,
-        labelfont           = attr( size  = 12,
-                                    color = "white" ),
-        colorscale          = colorscale,
-        contours_start      = minIso,
-        contours_end        = maxIso,
-        contours_size       = stepIso,
-        line_width          = 1,
-        showscale           = false,
-        hoverinfo           = "skip",
-        contours            = attr(     coloring    = "lines",
-                                        showlabels  = true,
-                                        labelfont   = attr( size    = 12,
-                                                            color   = "white",  )
-        )
-    )
-    
-    isopleths = [Dict("label" => name, "value" => 0)]
+    isopleths = [Dict("label" => g_isopleths.label[i], "value" => g_isopleths.value[i])
+                        for i=1:g_isopleths.n_iso]
 
     # isopleths   =  (isopleths, dict_iso...)
 
-    return data_plot_isopleth, isopleths
+    return g_isopleths.isoP[1:g_isopleths.n_iso+1], isopleths
 
 end

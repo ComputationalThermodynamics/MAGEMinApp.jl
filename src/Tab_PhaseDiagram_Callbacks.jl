@@ -144,6 +144,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("phase-dropdown", "value"),
         State("ss-dropdown",    "value"),
         State("em-dropdown",    "value"),
+        State("iso-color-dropdown",    "value"),
         State("iso-min-id",     "value"),
         State("iso-step-id",    "value"),
         State("iso-max-id",     "value"),
@@ -160,7 +161,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             bulk1,      bulk2,
             bufferN1,   bufferN2,
             test,
-            isopleths,  phase,      ss,     em,     minIso,     stepIso,    maxIso
+            isopleths,  phase,      ss,     em,     isoColor,       minIso,     stepIso,    maxIso
 
 
         xtitle, ytitle, Xrange, Yrange  = diagram_type(diagType, tmin, tmax, pmin, pmax)                # get axis information
@@ -180,7 +181,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             global grid_out, data_plot, data_plot_isopleth, layout, g_isopleths;
 
 
-            g_isopleths                                  = initialize_g_isopleth(; n_iso = 8)
+            g_isopleths                                  = initialize_g_isopleth(; n_iso_max = 8)
 
             data_plot, layout, npoints, grid_out, meant  =  compute_new_phaseDiagram(   xtitle,     ytitle,     
                                                                                         Xrange,     Yrange,     fieldname,
@@ -246,7 +247,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             data_plot_isopleth, isopleths = add_isopleth_phaseDiagram(      Xrange,     Yrange,
                                                                             sub,        refLvl,
                                                                             dtb,        oxi,
-                                                                            isopleths,  phase,      ss,     em,     
+                                                                            isopleths,  phase,      ss,     em, 
+                                                                            isoColor,    
                                                                             minIso,     stepIso,    maxIso      )
 
 
