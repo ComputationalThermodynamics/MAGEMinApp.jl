@@ -87,71 +87,75 @@ function Tab_PhaseDiagram_Callbacks(app)
     # Callback function to create compute the phase diagram using T8code for Adaptive Mesh Refinement
     callback!(
         app,
-        Output("phase-diagram","figure"),
-        Output("show-grid","value"),
-        Output("npoints-id","value"),
-        Output("meant-id","value"),
+        Output("phase-diagram", "figure"),
+        Output("phase-diagram", "config"),
+        Output("show-grid",     "value"),
+        Output("npoints-id",    "value"),
+        Output("meant-id",      "value"),
 
         Output("isopleth-dropdown","options"),
 
-        Input("button-add-isopleth","n_clicks"),
-        Input("button-remove-isopleth","n_clicks"),
-        Input("button-remove-all-isopleth","n_clicks"),
+        Input("button-add-isopleth",        "n_clicks"),
+        Input("button-remove-isopleth",     "n_clicks"),
+        Input("button-remove-all-isopleth", "n_clicks"),
+        Input("button-show-all-isopleth",   "n_clicks"),
+        Input("button-hide-all-isopleth",   "n_clicks"),
 
-        Input("compute-button","n_clicks"),
-        Input("refine-pb-button","n_clicks"),
+        Input("compute-button",     "n_clicks"),
+        Input("refine-pb-button",   "n_clicks"),
 
-        Input("colormaps_cross","value"),
-        Input("smooth-colormap","value"),
-        Input("range-slider-color","value"),
-        Input("reverse-colormap","value"),
-        Input("fields-dropdown","value"),
-        Input("show-grid","value"),                 # show edges checkbox
+        Input("colormaps_cross",    "value"),
+        Input("smooth-colormap",    "value"),
+        Input("range-slider-color", "value"),
+        Input("reverse-colormap",   "value"),
+        Input("fields-dropdown",    "value"),
+        Input("show-grid",          "value"),           # show edges checkbox
 
-        State("npoints-id","value"),                # total number of computed points
-        State("diagram-dropdown","value"),          # pt,px,tx
-        State("database-dropdown","value"),         # mp,mb,ig,igd,um,alk
-        State("mb-cpx-switch","value"),             # false,true -> 0,1
-        State("limit-ca-opx-id","value"),           # ON,OFF -> 0,1
-        State("ca-opx-val-id","value"),             # 0.0-1.0 -> 0,1
+        State("npoints-id",         "value"),           # total number of computed points
+        State("diagram-dropdown",   "value"),           # pt,px,tx
+        State("database-dropdown",  "value"),           # mp,mb,ig,igd,um,alk
+        State("mb-cpx-switch",      "value"),           # false,true -> 0,1
+        State("limit-ca-opx-id",    "value"),           # ON,OFF -> 0,1
+        State("ca-opx-val-id",      "value"),           # 0.0-1.0 -> 0,1
 
-        State("tmin-id","value"),                   # tmin
-        State("tmax-id","value"),                   # tmax
-        State("pmin-id","value"),                   # pmin
-        State("pmax-id","value"),                   # pmax
+        State("tmin-id",            "value"),           # tmin
+        State("tmax-id",            "value"),           # tmax
+        State("pmin-id",            "value"),           # pmin
+        State("pmax-id",            "value"),           # pmax
 
-        State("fixed-temperature-val-id","value"),  # fix T
-        State("fixed-pressure-val-id","value"),     # fix P
+        State("fixed-temperature-val-id","value"),      # fix T
+        State("fixed-pressure-val-id",   "value"),      # fix P
 
-        State("gsub-id","value"),                   # n subdivision
-        State("refinement-dropdown","value"),       # ph,em
-        State("refinement-levels","value"),         # level
+        State("gsub-id",            "value"),           # n subdivision
+        State("refinement-dropdown","value"),           # ph,em
+        State("refinement-levels",  "value"),           # level
 
-        State("buffer-dropdown","value"),           # none,qfm,mw,qif,cco,hm,nno
-        State("solver-dropdown","value"),           # pge,lp
-        State("verbose-dropdown","value"),          # none,light,full -> -1,0,1
+        State("buffer-dropdown",    "value"),           # none,qfm,mw,qif,cco,hm,nno
+        State("solver-dropdown",    "value"),           # pge,lp
+        State("verbose-dropdown",   "value"),           # none,light,full -> -1,0,1
 
-        State("table-bulk-rock","data"),            # bulk-rock 1
-        State("table-2-bulk-rock","data"),          # bulk-rock 2
+        State("table-bulk-rock",    "data"),            # bulk-rock 1
+        State("table-2-bulk-rock",  "data"),            # bulk-rock 2
         
-        State("buffer-1-mul-id","value"),           # buffer n 1
-        State("buffer-2-mul-id","value"),           # buffer n 2
+        State("buffer-1-mul-id",    "value"),           # buffer n 1
+        State("buffer-2-mul-id",    "value"),           # buffer n 2
 
-        State("test-dropdown", "value"),            # test number
+        State("test-dropdown",      "value"),           # test number
 
         # block related to isopleth plotting
         State("isopleth-dropdown",  "options"),
-        State("phase-dropdown", "value"),
-        State("ss-dropdown",    "value"),
-        State("em-dropdown",    "value"),
-        State("iso-color-dropdown",    "value"),
-        State("iso-min-id",     "value"),
-        State("iso-step-id",    "value"),
-        State("iso-max-id",     "value"),
+        State("phase-dropdown",     "value"),
+        State("ss-dropdown",        "value"),
+        State("em-dropdown",        "value"),
+        State("iso-color-dropdown", "value"),
+        State("iso-text-size-id",   "value"),
+        State("iso-min-id",         "value"),
+        State("iso-step-id",        "value"),
+        State("iso-max-id",         "value"),
 
         prevent_initial_call = true,
 
-    ) do    addIso,     removeIso,  removeAllIso,   n_clicks_mesh, n_clicks_refine, 
+    ) do    addIso,     removeIso,  removeAllIso,   isoShow,    isoHide,    n_clicks_mesh, n_clicks_refine, 
             colorMap,   smooth,     rangeColor,     reverse,    fieldname,  grid,
             npoints,    diagType,   dtb,    cpx,    limOpx,     limOpxVal,
             tmin,       tmax,       pmin,   pmax,
@@ -161,7 +165,9 @@ function Tab_PhaseDiagram_Callbacks(app)
             bulk1,      bulk2,
             bufferN1,   bufferN2,
             test,
-            isopleths,  phase,      ss,     em,     isoColor,       minIso,     stepIso,    maxIso
+            isopleths,  phase,      ss,     em,     
+            isoColor,   isoLabelSize,   
+            minIso,     stepIso,    maxIso
 
 
         xtitle, ytitle, Xrange, Yrange  = diagram_type(diagType, tmin, tmax, pmin, pmax)                # get axis information
@@ -175,10 +181,10 @@ function Tab_PhaseDiagram_Callbacks(app)
         if bid == "compute-button"
 
             # declare set of global variables needed to generate, refine and display phase diagrams
-            global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, PhasesLabels
+            global fig, MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, PhasesLabels
             global addedRefinementLvl   = 0;
             global nIsopleths           = 0;
-            global grid_out, data_plot, data_plot_isopleth, layout, g_isopleths;
+            global grid_out, data_plot, layout, g_isopleths;
 
 
             g_isopleths                                  = initialize_g_isopleth(; n_iso_max = 8)
@@ -242,24 +248,44 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             fig         = plot(data_plot,layout)
 
-        elseif bid == "button-add-isopleth" || bid == "button-remove-isopleth" || bid == "button-remove-all-isopleth"
+        elseif bid == "button-add-isopleth"
 
-            data_plot_isopleth, isopleths = add_isopleth_phaseDiagram(      Xrange,     Yrange,
-                                                                            sub,        refLvl,
-                                                                            dtb,        oxi,
-                                                                            isopleths,  phase,      ss,     em, 
-                                                                            isoColor,    
-                                                                            minIso,     stepIso,    maxIso      )
+            g_isopleths, isopleths = add_isopleth_phaseDiagram(     Xrange,     Yrange,
+                                                                    sub,        refLvl,
+                                                                    dtb,        oxi,
+                                                                    isopleths,  phase,      ss,     em, 
+                                                                    isoColor,   isoLabelSize,   
+                                                                    minIso,     stepIso,    maxIso      )
 
 
 
-            fig         = plot(data_plot_isopleth, layout)
+            fig         = plot(g_isopleths.isoP[g_isopleths.active], layout)
+
+        elseif bid == "button-remove-isopleth"
+        elseif bid == "button-remove-all-isopleth"
+
+            g_isopleths, isopleths, data_plot = remove_all_isopleth_phaseDiagram()
+            
+            fig         = plot(data_plot,layout)
+
+        elseif bid == "button-show-all-isopleth"
+            g_isopleths.isoP[1] = data_plot
+            fig         = plot(g_isopleths.isoP[g_isopleths.active], layout)
+        elseif bid == "button-hide-all-isopleth"
+            fig         = plot(data_plot,layout)
         else
             fig = plot()
         end
 
 
-        return fig, grid_out, npoints, meant, isopleths
+        config = PlotConfig( toImageButtonOptions  = attr(  format  = "svg", # one of png, svg, jpeg, webp
+                                                            filename= "myPlot",
+                                                            height  =  1024,
+                                                            width   =  1024,
+                                                            scale   =  1.0,       ).fields)
+
+
+        return fig, config, grid_out, npoints, meant, isopleths
     end
 
 

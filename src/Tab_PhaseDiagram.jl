@@ -214,7 +214,7 @@ function Tab_PhaseDiagram()
                                         dbc_col([
                                             dcc_dropdown(   id          = "smooth-colormap",
                                                             options     = ["fast","best",false],
-                                                            value       = false,
+                                                            value       = "fast",
                                                             clearable   = false)
                                         ]), 
                                     ]),
@@ -364,7 +364,10 @@ function Tab_PhaseDiagram()
 
                                     dbc_row([
                                         dbc_col([
-                                            html_h1("Isopleth/label color", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                            html_h1("Color", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                        ]),
+                                        dbc_col([
+                                            html_h1("Label size", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
                                         ]),
                                     ]),
 
@@ -382,6 +385,14 @@ function Tab_PhaseDiagram()
                                                             value       = 3,
                                                             clearable   = false,
                                                             multi       = false),
+                                        ]),
+                                        dbc_col([ 
+                                            dbc_input(
+                                            id      = "iso-text-size-id",
+                                            type    = "number", 
+                                            min     = 6,  
+                                            max     = 20,  
+                                            value   = 10   ),
                                         ]),
                                     ]),
 

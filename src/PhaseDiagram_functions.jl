@@ -22,15 +22,12 @@ mutable struct isopleth_data
     colorL  :: Vector{Vector{Vector{Any}}}
     colorT  :: Vector{String}
 
+    status  :: Vector{Int64}
     active  :: Vector{Int64}
     isoP    :: Vector{GenericTrace{Dict{Symbol, Any}}}
-    # colorId :: Vector{Int64}
 
     label   :: Vector{String}
     value   :: Vector{Int64}
-    # min     :: Vector{Float64}
-    # step    :: Vector{Float64}
-    # max     :: Vector{Float64}
 end
 
 
@@ -54,20 +51,20 @@ function initialize_g_isopleth(; n_iso_max = 8)
 
     colorT    = ["white","grey","coral","turquoise","dodgerblue","orchid","peru","black"]
 
-    active    = zeros(Int64,n_iso_max)
+    status    = zeros(Int64,n_iso_max)
+    active    = []
     isoP      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max + 1); # + 1 to store the heatmap
-    # colorId   = zeros(Int64,n_iso_max)
+
+    for i=1:n_iso_max
+        isoP[i] = contour()
+    end
 
     label     = Vector{String}(undef,n_iso_max)
     value     = Vector{Int64}(undef,n_iso_max)
-    # min       = Vector{Float64}(undef,n_iso_max)
-    # step      = Vector{Float64}(undef,n_iso_max)
-    # max       = Vector{Float64}(undef,n_iso_max)
-
 
     g_isopleths = isopleth_data(0, n_iso_max, colorL, colorT,
-                                active, isoP, #colorId,
-                                label, value) #, min, step, max )
+                                status, active, isoP,
+                                label, value)
 
 
     return g_isopleths
@@ -418,8 +415,6 @@ function refine_phaseDiagram(   xtitle,     ytitle,
                                                                                     Xrange,
                                                                                     Yrange )
 
-    global  data_plot, gridded, gridded_info, X, Y, PhasesLabels
-
     layout = Layout(
                 title=attr(
                     text    = db[(db.db .== dtb), :].title[test+1],
@@ -443,6 +438,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,
     data_plot = heatmap(x               = X,
                         y               = Y,
                         z               = gridded,
+                        connectgaps     = true,
                         zsmooth         =  smooth,
                         type            = "heatmap",
                         colorscale      = colorm,
@@ -451,7 +447,6 @@ function refine_phaseDiagram(   xtitle,     ytitle,
                         hoverinfo       = "text",
                         text            = gridded_info     )
 
-    # fig         = plot(data_plot,layout)
     grid_out    = [""]
 
 
@@ -495,6 +490,7 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
                 y               =  Y,
                 z               =  gridded,
                 zsmooth         =  smooth,
+                connectgaps     = true,
                 type            = "heatmap",
                 colorscale      =  colorm,
                 colorbar_title  =  fieldname,
@@ -502,7 +498,6 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
                 hoverinfo       = "text",
                 text            = gridded_info     )
 
-    # fig         = plot(data_plot,layout)
     grid_out    = [""]
 
     return data_plot,layout, grid_out
@@ -558,6 +553,7 @@ function  update_diplayed_field_phaseDiagram(   xtitle,     ytitle,
                         y               = Y,
                         z               = gridded,
                         zsmooth         =  smooth,
+                        connectgaps     = true,
                         type            = "heatmap",
                         colorscale      = colorm,
                         colorbar_title  = fieldname,
@@ -619,6 +615,7 @@ function  show_hide_grid_phaseDiagram(  xtitle,     ytitle,     grid,
                                                     y               = Y,
                                                     z               = gridded,
                                                     zsmooth         =  smooth,
+                                                    connectgaps     = true,
                                                     type            = "heatmap",
                                                     colorscale      = colorm,
                                                     colorbar_title  = fieldname,
@@ -632,6 +629,7 @@ function  show_hide_grid_phaseDiagram(  xtitle,     ytitle,     grid,
                             y               = Y,
                             z               = gridded,
                             zsmooth         =  smooth,
+                            connectgaps     = true,
                             type            = "heatmap",
                             colorscale      = colorm,
                             colorbar_title  = fieldname,
@@ -650,10 +648,12 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                             sub,        refLvl,
                                             dtb,        oxi,
                                             isopleths,  phase,      ss,     em, 
-                                            isoColor,    
+                                            isoColor,   isoLabelSize,       
                                             minIso,     stepIso,    maxIso      )
 
-    isoColor = Int64(isoColor)
+    isoColor        = Int64(isoColor)
+    isoLabelSize    = Int64(isoLabelSize)
+
     if (phase == "ss" && em == "none") || (phase == "pp")
         mod     = "ph_frac"
         em      = ""
@@ -663,7 +663,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
         name    = ss*"_"*em*"_mode"
     end
 
-    global g_isopleths, data_plot, nIsopleths, data_plot_isopleth, data, Out_XY, data_plot, X, Y, addedRefinementLvl
+    global g_isopleths, data_plot, nIsopleths, data, Out_XY, data_plot, X, Y, addedRefinementLvl
 
     gridded, X, Y = get_isopleth_map(   mod, ss, em,
                                         oxi,
@@ -679,14 +679,11 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
 
     g_isopleths.n_iso      += 1
     g_isopleths.isoP[1]     = data_plot     #save heatmap from phase diagram
-
+    g_isopleths.status[1]   = 1
     g_isopleths.isoP[g_isopleths.n_iso + 1]= contour(   x                   = X,
                                                         y                   = Y,
                                                         z                   = gridded,
                                                         contours_coloring   = "lines",
-                                                        # line_smoothing      = 3.0,
-                                                        labelfont           = attr( size  = 10,
-                                                                                    color = "white" ),
                                                         colorscale          = g_isopleths.colorL[isoColor],
                                                         contours_start      = minIso,
                                                         contours_end        = maxIso,
@@ -694,21 +691,41 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                                         line_width          = 1,
                                                         showscale           = false,
                                                         hoverinfo           = "skip",
-                                                        contours            = attr(     coloring    = "lines",
+                                                        contours            =  attr(    coloring    = "lines",
                                                                                         showlabels  = true,
-                                                                                        labelfont   = attr( size    = 12,
+                                                                                        labelfont   = attr( size    = isoLabelSize,
                                                                                                             color   = g_isopleths.colorT[isoColor],  )
                                                         )
                                                     )
-    g_isopleths.active[g_isopleths.n_iso] = 1
-    g_isopleths.label[g_isopleths.n_iso]  = name
-    g_isopleths.value[g_isopleths.n_iso]  = g_isopleths.n_iso
+    g_isopleths.status[g_isopleths.n_iso+1] = 1
+    g_isopleths.label[g_isopleths.n_iso]    = name
+    g_isopleths.value[g_isopleths.n_iso]    = g_isopleths.n_iso
+
+    g_isopleths.active = findall(g_isopleths.status .== 1)
     
-    isopleths = [Dict("label" => g_isopleths.label[i], "value" => g_isopleths.value[i])
+    isopleths = [Dict("label" => g_isopleths.label[g_isopleths.active[i]], "value" => g_isopleths.value[g_isopleths.active[i]])
                         for i=1:g_isopleths.n_iso]
 
-    # isopleths   =  (isopleths, dict_iso...)
 
-    return g_isopleths.isoP[1:g_isopleths.n_iso+1], isopleths
+    return g_isopleths, isopleths
 
+end
+
+
+function remove_all_isopleth_phaseDiagram()
+    global g_isopleths, data_plot
+
+    g_isopleths.label    .= ""
+    g_isopleths.value    .= 0
+    g_isopleths.n_iso     = 0
+    for i=1:g_isopleths.n_iso_max + 1
+        g_isopleths.isoP[i] = contour()
+    end
+    g_isopleths.status   .= 0
+    g_isopleths.active   .= 0
+
+    # clear isopleth dropdown menu
+    isopleths = []              
+
+    return g_isopleths, isopleths, data_plot
 end
