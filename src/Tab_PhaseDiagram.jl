@@ -417,7 +417,7 @@ function Tab_PhaseDiagram()
                                         html_div([
                                             dcc_dropdown(   id      = "isopleth-dropdown",
                                             options = [],
-                                            value       = 0,
+                                            value       = 1,
                                             clearable   = false,
                                             multi       = false),
                                         ],  style = Dict("display" => "block"), id      = "isopleth-1-id"),
