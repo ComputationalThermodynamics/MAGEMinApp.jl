@@ -16,9 +16,8 @@ function Tab_PhaseDiagram()
                                         dbc_button(
                                             "Refine phase boundaries", id="refine-pb-button", color="light", className="me-2", n_clicks=0,
                                             style       = Dict( "textAlign"     => "center",
-                                                                "font-size"     => "100%")
-                                                                # "border"        =>"1px grey solid")
-                                        ),
+                                                                "font-size"     => "100%",
+                                                                "border"        =>"1px green solid")), 
                                     ]),
                                 ])),
                                 id="collapse-refinement",
@@ -265,7 +264,7 @@ function Tab_PhaseDiagram()
                         dbc_button("Display isopleths",id="button-isopleths"),
                         dbc_collapse(
                             dbc_card(dbc_cardbody([
-
+                                html_h1("Selection", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                 dbc_row([
                                     dbc_col([
                                         html_h1("Phase type", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
@@ -321,20 +320,11 @@ function Tab_PhaseDiagram()
                                     ], style = Dict("display" => "none"), id      = "em-1-id"),
 
                                     html_div("‎ "),
+                                    html_h1("Range", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                     dbc_row([
-
                                         dbc_col([
                                             html_h1("Min", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
                                         ]),
-                                        dbc_col([
-                                            html_h1("Step", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
-                                        ]),           
-                                        dbc_col([
-                                            html_h1("Max", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
-                                        ]),
-                                    ]),
-
-                                    dbc_row([
                                         dbc_col([ 
                                             dbc_input(
                                                 id="iso-min-id",
@@ -343,6 +333,11 @@ function Tab_PhaseDiagram()
                                                 max= 2.0, 
                                                 value=0.0   ),
                                         ]),
+                                    ]),
+                                    dbc_row([
+                                        dbc_col([
+                                            html_h1("Step", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                        ]), 
                                         dbc_col([ 
                                             dbc_input(
                                                 id="iso-step-id",
@@ -350,6 +345,11 @@ function Tab_PhaseDiagram()
                                                 min= 0.0, 
                                                 max= 2.0, 
                                                 value=0.1   ),
+                                        ]),
+                                    ]),
+                                    dbc_row([  
+                                        dbc_col([
+                                            html_h1("Max", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
                                         ]),
                                         dbc_col([ 
                                             dbc_input(
@@ -359,19 +359,13 @@ function Tab_PhaseDiagram()
                                                 max= 2.0, 
                                                 value=1.0   ),
                                         ]),
-
-                                    ],className="g-0"),
-
+                                    ]),
+                                    html_div("‎ "),
+                                    html_h1("Plotting options", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                     dbc_row([
                                         dbc_col([
                                             html_h1("Color", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
                                         ]),
-                                        dbc_col([
-                                            html_h1("Label size", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
-                                        ]),
-                                    ]),
-
-                                    dbc_row([
                                         dbc_col([ 
                                             dcc_dropdown(   id          = "iso-color-dropdown",
                                                             options     = [         (   label = "white",        value = 1  ),
@@ -386,6 +380,11 @@ function Tab_PhaseDiagram()
                                                             clearable   = false,
                                                             multi       = false),
                                         ]),
+                                    ]),
+                                    dbc_row([    
+                                        dbc_col([
+                                            html_h1("Label size", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                        ]),
                                         dbc_col([ 
                                             dbc_input(
                                             id      = "iso-text-size-id",
@@ -397,45 +396,56 @@ function Tab_PhaseDiagram()
                                     ]),
 
                                     html_div("‎ "),
-                                    dbc_row([
-
-                                       dbc_col([
-                                           dbc_button("Add",id="button-add-isopleth"),    
-                                       ]),
-                                       dbc_col([
-                                           dbc_button("Remove",id="button-remove-isopleth"),   
-                                       ]),           
-                                       dbc_col([
-                                           dbc_button("Remove all",id="button-remove-all-isopleth"),   
-                                       ]),  
-                                    ]),
-
-                                    html_div("‎ "),
                                     html_h1("Isopleth list", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                     dbc_row([
 
-                                        html_div([
-                                            dcc_dropdown(   id      = "isopleth-dropdown",
-                                            options = [],
-                                            value       = 1,
-                                            clearable   = false,
-                                            multi       = false),
-                                        ],  style = Dict("display" => "block"), id      = "isopleth-1-id"),
+                                       dbc_col([
+                                            dbc_row([
+                                                dbc_button("Add",id="button-add-isopleth", color="light",
+                                                style       = Dict( "textAlign"     => "center",
+                                                                    "font-size"     => "100%",
+                                                                    "border"        =>"1px green solid")),
+                                            ]),  
+                                            dbc_row([
+                                                dbc_button("Remove",id="button-remove-isopleth", color="light",
+                                                style       = Dict( "textAlign"     => "center",
+                                                                    "font-size"     => "100%",
+                                                                    "border"        =>"1px green solid")), 
+                                            ]), 
+                                            dbc_row([
+                                                dbc_button("Remove all",id="button-remove-all-isopleth", color="light",
+                                                style       = Dict( "textAlign"     => "center",
+                                                                    "font-size"     => "100%",
+                                                                    "border"        =>"1px green solid")),
+                                            ]), 
+                                            html_div("‎ "),
+                                            dbc_row([
+                                                dbc_button("Hide all",id="button-hide-all-isopleth", color="light",
+                                                style       = Dict( "textAlign"     => "center",
+                                                                    "font-size"     => "100%",
+                                                                    "border"        =>"1px green solid")),  
+                                            ]),
+                                            dbc_row([
+                                                dbc_button("Show all",id="button-show-all-isopleth", color="light",
+                                                style       = Dict( "textAlign"     => "center",
+                                                                    "font-size"     => "100%",
+                                                                    "border"        =>"1px green solid")), 
+                                            ]),
+                                       ]),
+                                       dbc_col([
+                                            dbc_row([
+                                                html_div([
+                                                    dcc_dropdown(   id      = "isopleth-dropdown",
+                                                    options = [],
+                                                    value       = nothing,
+                                                    clearable   = false,
+                                                    multi       = false),
+                                                ],  style = Dict("display" => "block"), id      = "isopleth-1-id"),
+                                            ]),
 
-                                     ]),
-
-                                     html_div("‎ "),
-                                     dbc_row([
-
-                                        dbc_col([
-                                            dbc_button("Show all",id="button-show-all-isopleth"),    
                                         ]),
-                                        dbc_col([
-                                            dbc_button("Hide all",id="button-hide-all-isopleth"),   
-                                        ]),           
- 
-                                     ]),
 
+                                    ]),
 
                                 ])),
                                 id="collapse-isopleths",

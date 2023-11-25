@@ -62,7 +62,7 @@ function initialize_g_isopleth(; n_iso_max = 8)
     label     = Vector{String}(undef,n_iso_max)
     value     = Vector{Int64}(undef,n_iso_max)
 
-    g_isopleths = isopleth_data(0, n_iso_max, colorL, colorT,
+    g_isopleths = isopleth_data(1, n_iso_max, colorL, colorT,
                                 status, active, isoP,
                                 label, value)
 
@@ -680,7 +680,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
     g_isopleths.n_iso      += 1
     g_isopleths.isoP[1]     = data_plot     #save heatmap from phase diagram
     g_isopleths.status[1]   = 1
-    g_isopleths.isoP[g_isopleths.n_iso + 1]= contour(   x                   = X,
+    g_isopleths.isoP[g_isopleths.n_iso]= contour(       x                   = X,
                                                         y                   = Y,
                                                         z                   = gridded,
                                                         contours_coloring   = "lines",
@@ -697,18 +697,40 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                                                                                             color   = g_isopleths.colorT[isoColor],  )
                                                         )
                                                     )
-    g_isopleths.status[g_isopleths.n_iso+1] = 1
+    g_isopleths.status[g_isopleths.n_iso]   = 1
     g_isopleths.label[g_isopleths.n_iso]    = name
     g_isopleths.value[g_isopleths.n_iso]    = g_isopleths.n_iso
 
     g_isopleths.active = findall(g_isopleths.status .== 1)
     
     isopleths = [Dict("label" => g_isopleths.label[g_isopleths.active[i]], "value" => g_isopleths.value[g_isopleths.active[i]])
-                        for i=1:g_isopleths.n_iso]
+                        for i=2:g_isopleths.n_iso]
 
 
     return g_isopleths, isopleths
 
+end
+
+function remove_single_isopleth_phaseDiagram(isoplethsID)
+    global g_isopleths
+
+    g_isopleths.n_iso      -= 1      
+
+    g_isopleths.status[isoplethsID]   = 0;
+    g_isopleths.isoP[isoplethsID]     = contour()
+    g_isopleths.label[isoplethsID]    = ""
+    g_isopleths.value[isoplethsID]    = 0
+    g_isopleths.active = findall(g_isopleths.status .== 1)
+
+
+    if g_isopleths.n_iso >= 2
+        isopleths = [Dict("label" => g_isopleths.label[g_isopleths.active[i]], "value" => g_isopleths.value[g_isopleths.active[i]])
+        for i=2:g_isopleths.n_iso]
+    else
+        isopleths = []
+    end
+
+    return g_isopleths, isopleths
 end
 
 
@@ -717,8 +739,8 @@ function remove_all_isopleth_phaseDiagram()
 
     g_isopleths.label    .= ""
     g_isopleths.value    .= 0
-    g_isopleths.n_iso     = 0
-    for i=1:g_isopleths.n_iso_max + 1
+    g_isopleths.n_iso     = 1
+    for i=2:g_isopleths.n_iso_max
         g_isopleths.isoP[i] = contour()
     end
     g_isopleths.status   .= 0

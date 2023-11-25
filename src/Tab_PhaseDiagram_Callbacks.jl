@@ -144,6 +144,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         # block related to isopleth plotting
         State("isopleth-dropdown",  "options"),
+        State("isopleth-dropdown",  "value"),
         State("phase-dropdown",     "value"),
         State("ss-dropdown",        "value"),
         State("em-dropdown",        "value"),
@@ -165,7 +166,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             bulk1,      bulk2,
             bufferN1,   bufferN2,
             test,
-            isopleths,  phase,      ss,     em,     
+            isopleths,  isoplethsID,phase,      ss,     em,     
             isoColor,   isoLabelSize,   
             minIso,     stepIso,    maxIso
 
@@ -187,7 +188,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             global grid_out, data_plot, layout, g_isopleths;
 
 
-            g_isopleths                                  = initialize_g_isopleth(; n_iso_max = 8)
+            g_isopleths                                  = initialize_g_isopleth(; n_iso_max = 32)
 
             data_plot, layout, npoints, grid_out, meant  =  compute_new_phaseDiagram(   xtitle,     ytitle,     
                                                                                         Xrange,     Yrange,     fieldname,
@@ -262,6 +263,24 @@ function Tab_PhaseDiagram_Callbacks(app)
             fig         = plot(g_isopleths.isoP[g_isopleths.active], layout)
 
         elseif bid == "button-remove-isopleth"
+
+            if (isoplethsID) in g_isopleths.active
+
+                if g_isopleths.n_iso >= 2
+                g_isopleths, isopleths = remove_single_isopleth_phaseDiagram(isoplethsID)
+
+                fig         = plot(g_isopleths.isoP[g_isopleths.active], layout)
+                else
+                    fig     = plot(data_plot,layout)
+                end
+
+            else
+
+                print("cannot remove isopleth, did you select one?")
+                fig         = plot(g_isopleths.isoP[g_isopleths.active], layout)
+
+            end
+
         elseif bid == "button-remove-all-isopleth"
 
             g_isopleths, isopleths, data_plot = remove_all_isopleth_phaseDiagram()
@@ -269,12 +288,18 @@ function Tab_PhaseDiagram_Callbacks(app)
             fig         = plot(data_plot,layout)
 
         elseif bid == "button-show-all-isopleth"
+
             g_isopleths.isoP[1] = data_plot
             fig         = plot(g_isopleths.isoP[g_isopleths.active], layout)
+
         elseif bid == "button-hide-all-isopleth"
+
             fig         = plot(data_plot,layout)
+
         else
+            
             fig = plot()
+
         end
 
 
