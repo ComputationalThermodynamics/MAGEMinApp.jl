@@ -314,6 +314,17 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
 
         # print("PhasesLabels $PhasesLabels\n")
         layout = Layout(
+                    images=[ attr(
+                        source  = "assets/static/images/MAGEMin.jpg",
+                        xref    = "paper",
+                        yref    = "paper",
+                        x       =  1.1,
+                        y       =  0.99,
+                        sizex   =  0.1, 
+                        sizey   =  0.1,
+                        xanchor = "right", 
+                        yanchor = "bottom"
+                    )],
                     title=attr(
                         text    = db[(db.db .== dtb), :].title[test+1],
                         x       = 0.5,
@@ -339,7 +350,13 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                             reversescale    = reverseColorMap,
                             colorbar_title  = fieldname,
                             hoverinfo       = "text",
-                            text            = gridded_info   )
+                            text            = gridded_info,
+                            colorbar        = attr(     lenmode         = "fraction",
+                                                        len             =  0.75,
+                                                        thicknessmode   = "fraction",
+                                                        tickness        =  0.5,
+                                                        x               =  1.005,
+                                                        y               =  0.5         ),)
 
         # fig         = plot(data_plot,layout)
         grid_out    = [""]
@@ -416,6 +433,17 @@ function refine_phaseDiagram(   xtitle,     ytitle,
                                                                                     Yrange )
 
     layout = Layout(
+                images=[ attr(
+                    source  = "assets/static/images/MAGEMin.jpg",
+                    xref    = "paper",
+                    yref    = "paper",
+                    x       =  1.1,
+                    y       =  0.99,
+                    sizex   =  0.1, 
+                    sizey   =  0.1,
+                    xanchor = "right", 
+                    yanchor = "bottom"
+                )],
                 title=attr(
                     text    = db[(db.db .== dtb), :].title[test+1],
                     x       = 0.5,
@@ -445,7 +473,13 @@ function refine_phaseDiagram(   xtitle,     ytitle,
                         colorbar_title  = fieldname,
                         reversescale    = reverseColorMap,
                         hoverinfo       = "text",
-                        text            = gridded_info     )
+                        text            = gridded_info,
+                        colorbar        = attr(     lenmode         = "fraction",
+                                                    len             =  0.75,
+                                                    thicknessmode   = "fraction",
+                                                    tickness        =  0.5,
+                                                    x               =  1.005,
+                                                    y               =  0.5         ),)
 
     grid_out    = [""]
 
@@ -470,6 +504,17 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
                                             test                                  )
 
     layout = Layout(
+        images=[ attr(
+            source  = "assets/static/images/MAGEMin.jpg",
+            xref    = "paper",
+            yref    = "paper",
+            x       =  1.1,
+            y       =  0.99,
+            sizex   =  0.1, 
+            sizey   =  0.1,
+            xanchor = "right", 
+            yanchor = "bottom"
+        )],
         title=attr(
             text    = db[(db.db .== dtb), :].title[test+1],
             x       = 0.5,
@@ -496,7 +541,13 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
                 colorbar_title  =  fieldname,
                 reversescale    = reverseColorMap,
                 hoverinfo       = "text",
-                text            = gridded_info     )
+                text            = gridded_info,
+                colorbar        = attr(     lenmode         = "fraction",
+                                            len             =  0.75,
+                                            thicknessmode   = "fraction",
+                                            tickness        =  0.5,
+                                            x               =  1.005,
+                                            y               =  0.5         ),)
 
     grid_out    = [""]
 
@@ -537,6 +588,17 @@ function  update_diplayed_field_phaseDiagram(   xtitle,     ytitle,
                                                                                     Yrange )
 
     layout      = Layout(
+    images=[ attr(
+        source  = "assets/static/images/MAGEMin.jpg",
+        xref    = "paper",
+        yref    = "paper",
+        x       =  1.1,
+        y       =  0.99,
+        sizex   =  0.1, 
+        sizey   =  0.1,
+        xanchor = "right", 
+        yanchor = "bottom"
+    )],
     title=attr( text    = db[(db.db .== dtb), :].title[test+1],
                 x       = 0.5,
                 xanchor = "center",
@@ -552,14 +614,20 @@ function  update_diplayed_field_phaseDiagram(   xtitle,     ytitle,
     data_plot = heatmap(x               = X,
                         y               = Y,
                         z               = gridded,
-                        zsmooth         =  smooth,
+                        zsmooth         = smooth,
                         connectgaps     = true,
                         type            = "heatmap",
                         colorscale      = colorm,
                         colorbar_title  = fieldname,
                         reversescale    = reverseColorMap,
                         hoverinfo       = "text",
-                        text            = gridded_info     )
+                        text            = gridded_info,
+                        colorbar        = attr(     lenmode         = "fraction",
+                                                    len             =  0.75,
+                                                    thicknessmode   = "fraction",
+                                                    tickness        =  0.5,
+                                                    x               =  1.005,
+                                                    y               =  0.5         ),)
 
     # fig         = plot(data_plot,layout)
     grid_out    = [""]
@@ -586,6 +654,17 @@ function  show_hide_grid_phaseDiagram(  xtitle,     ytitle,     grid,
     global data, data_plot, gridded, gridded_info, X, Y, PhasesLabels
 
     layout = Layout(
+        images=[ attr(
+            source  = "assets/static/images/MAGEMin.jpg",
+            xref    = "paper",
+            yref    = "paper",
+            x       =  1.1,
+            y       =  0.99,
+            sizex   =  0.1, 
+            sizey   =  0.1,
+            xanchor = "right", 
+            yanchor = "bottom"
+        )],
         title=attr(
             text    = db[(db.db .== dtb), :].title[test+1],
             x       = 0.5,
@@ -621,7 +700,13 @@ function  show_hide_grid_phaseDiagram(  xtitle,     ytitle,     grid,
                                                     colorbar_title  = fieldname,
                                                     reversescale    = reverseColorMap,
                                                     hoverinfo       = "text",
-                                                    text            = gridded_info     )
+                                                    text            = gridded_info,
+                                                    colorbar        = attr(     lenmode         = "fraction",
+                                                                                len             =  0.75,
+                                                                                thicknessmode   = "fraction",
+                                                                                tickness        =  0.5,
+                                                                                x               =  1.005,
+                                                                                y               =  0.5         ),)
 
         grid_out    = ["","GRID"]
     else
@@ -635,7 +720,13 @@ function  show_hide_grid_phaseDiagram(  xtitle,     ytitle,     grid,
                             colorbar_title  = fieldname,
                             reversescale    = reverseColorMap,
                             hoverinfo       = "text",
-                            text            = gridded_info     )
+                            text            = gridded_info,
+                            colorbar        = attr(     lenmode         = "fraction",
+                                                        len             =  0.75,
+                                                        thicknessmode   = "fraction",
+                                                        tickness        =  0.5,
+                                                        x               =  1.005,
+                                                        y               =  0.5         ),)
 
         grid_out    = [""]
     end                            

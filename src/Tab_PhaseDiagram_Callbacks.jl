@@ -303,11 +303,11 @@ function Tab_PhaseDiagram_Callbacks(app)
         end
 
 
-        config = PlotConfig( toImageButtonOptions  = attr(  format  = "svg", # one of png, svg, jpeg, webp
-                                                            filename= "myPlot",
-                                                            height  =  1024,
-                                                            width   =  1024,
-                                                            scale   =  1.0,       ).fields)
+        config = PlotConfig(    toImageButtonOptions  = attr(   format  = "svg", # one of png, svg, jpeg, webp
+                                                                filename= "myPlot",
+                                                                height  =  1024,
+                                                                width   =  1024,
+                                                                scale   =  1.0,       ).fields)
 
 
         return fig, config, grid_out, npoints, meant, isopleths
