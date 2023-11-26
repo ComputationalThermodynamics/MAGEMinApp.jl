@@ -187,6 +187,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             global nIsopleths           = 0;
             global grid_out, data_plot, layout, g_isopleths;
 
+            PT_infos                                     = get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP)
 
             g_isopleths                                  = initialize_g_isopleth(; n_iso_max = 32)
 

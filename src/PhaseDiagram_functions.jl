@@ -31,6 +31,56 @@ mutable struct isopleth_data
 end
 
 
+function get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP)
+
+    datetoday = string(Dates.today())
+    rightnow  = string(Dates.Time(Dates.now()))
+
+    if diagType == "pt"
+        dgtype = "Pressure-Temperature, fixed composition"
+    elseif diagType == "px"
+        dgtype = "Pressure-Composition, fixed temperature"
+    else
+        dgtype = "Temperature-Composition, fixed pressure"
+    end
+
+    if solver == "lp"
+        solv = "LP (legacy)"
+    elseif solver == "pge"
+        solv = "PGE (default)"
+    end
+
+
+    db_in = retrieve_solution_phase_information(dtb)
+
+
+    PD_infos  = "Phase Diagram computed using MAGEMin v1.3.6\n"
+    PD_infos *= "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾\n"
+    PD_infos *= "Date & time  : " * datetoday * ", " * rightnow * "\n"
+    PD_infos *= "Database     : " * db_in.db_info * "\n"
+    PD_infos *= "Diagram type : " * dgtype *"\n"
+    PD_infos *= "Solver       : " * solv *"\n"
+    PD_infos *= "Oxide list   : " * join(oxi, " ") *"\n"
+    if diagType == "pt"
+        PD_infos *= "X comp [mol] : " * join(bulk_L, " ") *"\n"
+    elseif diagType == "px"
+        PD_infos *= "X1 comp [mol]: " * join(bulk_L, " ") *"\n"
+        PD_infos *= "X2 comp [mol]: " * join(bulk_R, " ") *"\n"
+        PD_infos *= "Fixed Temp   : " * join(fixT, " ") *"\n"
+    else
+        PD_infos *= "X1 comp [mol]: " * join(bulk_L, " ") *"\n"
+        PD_infos *= "X2 comp [mol]: " * join(bulk_R, " ") *"\n"
+        PD_infos *= "Fixed Pres   : " * join(fixP, " ") *"\n"
+    end
+    PD_infos *= "____________________________________________\n"
+    
+    print(PD_infos)
+
+    return PD_infos
+end
+
+
+
 """
 
     Initiatize global variable storing isopleths information
@@ -338,7 +388,10 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                     annotations = PhasesLabels,
                     width       = 700,
                     height      = 750,
-                    margin=attr(l=50, r=50, b=50, t=80, pad=4),
+                    autosize=false,
+                    # paper_bgcolor="LightSteelBlue",
+                    # margin=attr(l=50, r=50, b=50, t=80, pad=4),
+                    margin=attr(l=50, r=50, b=140, t=60, pad=4),
                 )
 
 
@@ -462,7 +515,10 @@ function refine_phaseDiagram(   xtitle,     ytitle,
                 annotations = PhasesLabels,
                 width       = 700,
                 height      = 750,
-                margin=attr(l=50, r=50, b=50, t=80, pad=4),
+                autosize=false,
+                # paper_bgcolor="LightSteelBlue",
+                # margin=attr(l=50, r=50, b=50, t=80, pad=4),
+                margin=attr(l=50, r=50, b=140, t=60, pad=4),
             )
 
     data_plot = heatmap(x               = X,
@@ -530,7 +586,10 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
         annotations = PhasesLabels,
         width       = 700,
         height      = 750,
-        margin=attr(l=50, r=50, b=50, t=80, pad=4),
+        autosize=false,
+        # paper_bgcolor="LightSteelBlue",
+        # margin=attr(l=50, r=50, b=50, t=80, pad=4),
+        margin=attr(l=50, r=50, b=140, t=60, pad=4),
     )
 
 
@@ -613,7 +672,10 @@ function  update_diplayed_field_phaseDiagram(   xtitle,     ytitle,
     annotations = PhasesLabels,
     width       = 700,
     height      = 750,
-    margin=attr(l=50, r=50, b=50, t=80, pad=4), )
+    autosize=false,
+    # paper_bgcolor="LightSteelBlue",
+    # margin=attr(l=50, r=50, b=50, t=80, pad=4),
+    margin=attr(l=50, r=50, b=140, t=60, pad=4), )
 
     data_plot = heatmap(x               = X,
                         y               = Y,
@@ -682,7 +744,10 @@ function  show_hide_grid_phaseDiagram(  xtitle,     ytitle,     grid,
         annotations = PhasesLabels,
         width       = 700,
         height      = 750,
-        margin=attr(l=50, r=50, b=50, t=80, pad=4),
+        autosize=false,
+        # paper_bgcolor="LightSteelBlue",
+        # margin=attr(l=50, r=50, b=50, t=80, pad=4),
+        margin=attr(l=50, r=50, b=140, t=60, pad=4),
     )
     if length(grid) == 2
         data_plot      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, length(data.x)+1);

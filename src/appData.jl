@@ -1,6 +1,6 @@
 global AppData
 
-MAGEMin_version     = "v1.3.4";
+MAGEMin_version     = "v1.3.6";
 vertice_list        = [];
 mesh                = [];
 field               = [];
