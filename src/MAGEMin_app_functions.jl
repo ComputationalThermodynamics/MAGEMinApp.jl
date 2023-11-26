@@ -446,6 +446,8 @@ function get_gridded_map(   fieldname   ::String,
         field[isnan.(field)] .= missing
         if fieldname == "frac_M" || fieldname == "rho_M" || fieldname == "rho_S"
             field[isless.(field, 1e-8)] .= missing              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
+        elseif fieldname == "fO2"
+            field .= log10.(field)
         end
     end
 

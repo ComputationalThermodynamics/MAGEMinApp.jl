@@ -171,7 +171,7 @@ function Tab_PhaseDiagram()
                                                             (label = "G system",                value = "G_system"),
                                                             (label = "Entropy",                 value = "entropy"),
                                                             (label = "Enthalpy",                value = "enthalpy"),
-                                                            (label = "Oxygen fugacity",         value = "fO2"),
+                                                            (label = "log10(fO2)",              value = "fO2"),
                                                             (label = "H2O activity",            value = "aH2O"),
                                                             (label = "SiO2 activity",           value = "aSiO2"),
                                                             (label = "TiO2 activity",           value = "aTiO2"),
