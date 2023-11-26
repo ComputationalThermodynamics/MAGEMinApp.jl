@@ -5,7 +5,6 @@ using DashBootstrapComponents
 using PlotlyJS, JSON3, Printf, Statistics, DataFrames, CSV, Dates, Base64
 using UUIDs, HTTP
 using JLD2, DelimitedFiles, Interpolations
-using ImageFiltering
 using MAGEMin_C
 
 export App
@@ -63,12 +62,16 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                         dbc_dropdownmenuitem(divider=true),
                                         dbc_dropdownmenuitem(                 "Export ρ for LaMEM", 
                                                                 id          = "export-to-lamem",
-                                                                disabled    = false                 ),            
+                                                                disabled    = false                 ), 
+                                        dbc_dropdownmenuitem(                 "Export phase diagram", 
+                                                                id          = "export-figure",
+                                                                disabled    = false                 ),           
                                     ],
                                     label="File",
                                     id="id-dropdown-file",
                                     color="secondary"),
                                     dcc_download(id="download-lamem-in"),  
+                                    dcc_download(id="download-figure"), 
                                     dbc_tooltip("Note that 3-4 refinement levels are more that necessary",target="export-to-lamem"),
                                 ]),
                             ]),

@@ -41,8 +41,30 @@ function MAGEMin_app_Callbacks(app)
             return output, "", "failed"
         end
 
+    end
+
+
+
+
+    #save all to file
+    callback!(
+        app,
+        Output("download-figure", "data"),
+        Input("export-figure",    "n_clicks"),
+        prevent_initial_call=true,
+    ) do n_clicks
+        # PlotlyKaleido.start()
+
+        # PlotlyKaleido.savefig(PlotlyJS.plot(data_plot,layout), "plot1.png")
+        # PlotlyKaleido.kill_kaleido()
+        # save("test.png", fig)
+        # savefig(    fig, 
+        #             "Phase_diagram.png",
+        #             format = "png"   )
 
     end
+
+
 
     return(app)
 end

@@ -17,27 +17,75 @@ end
 
 mutable struct isopleth_data
     n_iso   :: Int64
+    n_iso_max   :: Int64
 
     colorL  :: Vector{Vector{Vector{Any}}}
     colorT  :: Vector{String}
 
+    status  :: Vector{Int64}
     active  :: Vector{Int64}
     isoP    :: Vector{GenericTrace{Dict{Symbol, Any}}}
-    colorId :: Vector{Int64}
 
     label   :: Vector{String}
     value   :: Vector{Int64}
-    min     :: Vector{Float64}
-    step    :: Vector{Float64}
-    max     :: Vector{Float64}
 end
+
+
+function get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP)
+
+    datetoday = string(Dates.today())
+    rightnow  = string(Dates.Time(Dates.now()))
+
+    if diagType == "pt"
+        dgtype = "Pressure-Temperature, fixed composition"
+    elseif diagType == "px"
+        dgtype = "Pressure-Composition, fixed temperature"
+    else
+        dgtype = "Temperature-Composition, fixed pressure"
+    end
+
+    if solver == "lp"
+        solv = "LP (legacy)"
+    elseif solver == "pge"
+        solv = "PGE (default)"
+    end
+
+
+    db_in = retrieve_solution_phase_information(dtb)
+
+
+    PD_infos  = "Phase Diagram computed using MAGEMin v1.3.6\n"
+    PD_infos *= "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾\n"
+    PD_infos *= "Date & time  : " * datetoday * ", " * rightnow * "\n"
+    PD_infos *= "Database     : " * db_in.db_info * "\n"
+    PD_infos *= "Diagram type : " * dgtype *"\n"
+    PD_infos *= "Solver       : " * solv *"\n"
+    PD_infos *= "Oxide list   : " * join(oxi, " ") *"\n"
+    if diagType == "pt"
+        PD_infos *= "X comp [mol] : " * join(bulk_L, " ") *"\n"
+    elseif diagType == "px"
+        PD_infos *= "X1 comp [mol]: " * join(bulk_L, " ") *"\n"
+        PD_infos *= "X2 comp [mol]: " * join(bulk_R, " ") *"\n"
+        PD_infos *= "Fixed Temp   : " * join(fixT, " ") *"\n"
+    else
+        PD_infos *= "X1 comp [mol]: " * join(bulk_L, " ") *"\n"
+        PD_infos *= "X2 comp [mol]: " * join(bulk_R, " ") *"\n"
+        PD_infos *= "Fixed Pres   : " * join(fixP, " ") *"\n"
+    end
+    PD_infos *= "____________________________________________\n"
+    
+    print(PD_infos)
+
+    return PD_infos
+end
+
 
 
 """
 
     Initiatize global variable storing isopleths information
 """
-function initialize_g_isopleth(; n_iso = 8)
+function initialize_g_isopleth(; n_iso_max = 8)
     global g_isopleths
 
 
@@ -53,20 +101,20 @@ function initialize_g_isopleth(; n_iso = 8)
 
     colorT    = ["white","grey","coral","turquoise","dodgerblue","orchid","peru","black"]
 
-    active    = zeros(Int64,n_iso)
-    isoP      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso + 1); # + 1 to store the heatmap
-    colorId   = zeros(Int64,n_iso)
+    status    = zeros(Int64,n_iso_max)
+    active    = []
+    isoP      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max + 1); # + 1 to store the heatmap
 
-    label     = Vector{String}(undef,n_iso)
-    value     = Vector{Int64}(undef,n_iso)
-    min       = Vector{Float64}(undef,n_iso)
-    step      = Vector{Float64}(undef,n_iso)
-    max       = Vector{Float64}(undef,n_iso)
+    for i=1:n_iso_max
+        isoP[i] = contour()
+    end
 
+    label     = Vector{String}(undef,n_iso_max)
+    value     = Vector{Int64}(undef,n_iso_max)
 
-    g_isopleths = isopleth_data(n_iso, colorL, colorT,
-                                active, isoP, colorId,
-                                label, value, min, step, max )
+    g_isopleths = isopleth_data(1, n_iso_max, colorL, colorT,
+                                status, active, isoP,
+                                label, value)
 
 
     return g_isopleths
@@ -316,6 +364,17 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
 
         # print("PhasesLabels $PhasesLabels\n")
         layout = Layout(
+                    images=[ attr(
+                        source  = "assets/static/images/MAGEMin.jpg",
+                        xref    = "paper",
+                        yref    = "paper",
+                        x       =  0.05,
+                        y       =  1.01,
+                        sizex   =  0.1, 
+                        sizey   =  0.1,
+                        xanchor = "right", 
+                        yanchor = "bottom"
+                    )],
                     title=attr(
                         text    = db[(db.db .== dtb), :].title[test+1],
                         x       = 0.5,
@@ -328,7 +387,11 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                     yaxis_title = ytitle,
                     annotations = PhasesLabels,
                     width       = 700,
-                    height      = 700
+                    height      = 750,
+                    autosize=false,
+                    # paper_bgcolor="LightSteelBlue",
+                    # margin=attr(l=50, r=50, b=50, t=80, pad=4),
+                    margin=attr(l=50, r=50, b=140, t=60, pad=4),
                 )
 
 
@@ -341,7 +404,13 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                             reversescale    = reverseColorMap,
                             colorbar_title  = fieldname,
                             hoverinfo       = "text",
-                            text            = gridded_info   )
+                            text            = gridded_info,
+                            colorbar        = attr(     lenmode         = "fraction",
+                                                        len             =  0.75,
+                                                        thicknessmode   = "fraction",
+                                                        tickness        =  0.5,
+                                                        x               =  1.005,
+                                                        y               =  0.5         ),)
 
         # fig         = plot(data_plot,layout)
         grid_out    = [""]
@@ -417,9 +486,18 @@ function refine_phaseDiagram(   xtitle,     ytitle,
                                                                                     Xrange,
                                                                                     Yrange )
 
-    global  data_plot, gridded, gridded_info, X, Y, PhasesLabels
-
     layout = Layout(
+                images=[ attr(
+                    source  = "assets/static/images/MAGEMin.jpg",
+                    xref    = "paper",
+                    yref    = "paper",
+                    x       =  0.05,
+                    y       =  1.01,
+                    sizex   =  0.1, 
+                    sizey   =  0.1,
+                    xanchor = "right", 
+                    yanchor = "bottom"
+                )],
                 title=attr(
                     text    = db[(db.db .== dtb), :].title[test+1],
                     x       = 0.5,
@@ -436,21 +514,31 @@ function refine_phaseDiagram(   xtitle,     ytitle,
                 yaxis_title = ytitle,
                 annotations = PhasesLabels,
                 width       = 700,
-                height      = 700
+                height      = 750,
+                autosize=false,
+                # paper_bgcolor="LightSteelBlue",
+                # margin=attr(l=50, r=50, b=50, t=80, pad=4),
+                margin=attr(l=50, r=50, b=140, t=60, pad=4),
             )
 
     data_plot = heatmap(x               = X,
                         y               = Y,
                         z               = gridded,
+                        connectgaps     = true,
                         zsmooth         =  smooth,
                         type            = "heatmap",
                         colorscale      = colorm,
                         colorbar_title  = fieldname,
                         reversescale    = reverseColorMap,
                         hoverinfo       = "text",
-                        text            = gridded_info     )
+                        text            = gridded_info,
+                        colorbar        = attr(     lenmode         = "fraction",
+                                                    len             =  0.75,
+                                                    thicknessmode   = "fraction",
+                                                    tickness        =  0.5,
+                                                    x               =  1.005,
+                                                    y               =  0.5         ),)
 
-    # fig         = plot(data_plot,layout)
     grid_out    = [""]
 
 
@@ -474,6 +562,17 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
                                             test                                  )
 
     layout = Layout(
+        images=[ attr(
+            source  = "assets/static/images/MAGEMin.jpg",
+            xref    = "paper",
+            yref    = "paper",
+            x       =  0.05,
+            y       =  1.01,
+            sizex   =  0.1, 
+            sizey   =  0.1,
+            xanchor = "right", 
+            yanchor = "bottom"
+        )],
         title=attr(
             text    = db[(db.db .== dtb), :].title[test+1],
             x       = 0.5,
@@ -486,7 +585,11 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
         yaxis_title = ytitle,
         annotations = PhasesLabels,
         width       = 700,
-        height      = 700
+        height      = 750,
+        autosize=false,
+        # paper_bgcolor="LightSteelBlue",
+        # margin=attr(l=50, r=50, b=50, t=80, pad=4),
+        margin=attr(l=50, r=50, b=140, t=60, pad=4),
     )
 
 
@@ -494,14 +597,20 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
                 y               =  Y,
                 z               =  gridded,
                 zsmooth         =  smooth,
+                connectgaps     = true,
                 type            = "heatmap",
                 colorscale      =  colorm,
                 colorbar_title  =  fieldname,
                 reversescale    = reverseColorMap,
                 hoverinfo       = "text",
-                text            = gridded_info     )
+                text            = gridded_info,
+                colorbar        = attr(     lenmode         = "fraction",
+                                            len             =  0.75,
+                                            thicknessmode   = "fraction",
+                                            tickness        =  0.5,
+                                            x               =  1.005,
+                                            y               =  0.5         ),)
 
-    # fig         = plot(data_plot,layout)
     grid_out    = [""]
 
     return data_plot,layout, grid_out
@@ -541,6 +650,17 @@ function  update_diplayed_field_phaseDiagram(   xtitle,     ytitle,
                                                                                     Yrange )
 
     layout      = Layout(
+    images=[ attr(
+        source  = "assets/static/images/MAGEMin.jpg",
+        xref    = "paper",
+        yref    = "paper",
+        x       =  0.05,
+        y       =  1.01,
+        sizex   =  0.1, 
+        sizey   =  0.1,
+        xanchor = "right", 
+        yanchor = "bottom"
+    )],
     title=attr( text    = db[(db.db .== dtb), :].title[test+1],
                 x       = 0.5,
                 xanchor = "center",
@@ -551,18 +671,29 @@ function  update_diplayed_field_phaseDiagram(   xtitle,     ytitle,
     yaxis_title = ytitle,
     annotations = PhasesLabels,
     width       = 700,
-    height      = 700 )
+    height      = 750,
+    autosize=false,
+    # paper_bgcolor="LightSteelBlue",
+    # margin=attr(l=50, r=50, b=50, t=80, pad=4),
+    margin=attr(l=50, r=50, b=140, t=60, pad=4), )
 
     data_plot = heatmap(x               = X,
                         y               = Y,
                         z               = gridded,
-                        zsmooth         =  smooth,
+                        zsmooth         = smooth,
+                        connectgaps     = true,
                         type            = "heatmap",
                         colorscale      = colorm,
                         colorbar_title  = fieldname,
                         reversescale    = reverseColorMap,
                         hoverinfo       = "text",
-                        text            = gridded_info     )
+                        text            = gridded_info,
+                        colorbar        = attr(     lenmode         = "fraction",
+                                                    len             =  0.75,
+                                                    thicknessmode   = "fraction",
+                                                    tickness        =  0.5,
+                                                    x               =  1.005,
+                                                    y               =  0.5         ),)
 
     # fig         = plot(data_plot,layout)
     grid_out    = [""]
@@ -589,6 +720,17 @@ function  show_hide_grid_phaseDiagram(  xtitle,     ytitle,     grid,
     global data, data_plot, gridded, gridded_info, X, Y, PhasesLabels
 
     layout = Layout(
+        images=[ attr(
+            source  = "assets/static/images/MAGEMin.jpg",
+            xref    = "paper",
+            yref    = "paper",
+            x       =  0.05,
+            y       =  1.01,
+            sizex   =  0.1, 
+            sizey   =  0.1,
+            xanchor = "right", 
+            yanchor = "bottom"
+        )],
         title=attr(
             text    = db[(db.db .== dtb), :].title[test+1],
             x       = 0.5,
@@ -601,7 +743,11 @@ function  show_hide_grid_phaseDiagram(  xtitle,     ytitle,     grid,
         yaxis_title = ytitle,
         annotations = PhasesLabels,
         width       = 700,
-        height      = 700
+        height      = 750,
+        autosize=false,
+        # paper_bgcolor="LightSteelBlue",
+        # margin=attr(l=50, r=50, b=50, t=80, pad=4),
+        margin=attr(l=50, r=50, b=140, t=60, pad=4),
     )
     if length(grid) == 2
         data_plot      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, length(data.x)+1);
@@ -618,12 +764,19 @@ function  show_hide_grid_phaseDiagram(  xtitle,     ytitle,     grid,
                                                     y               = Y,
                                                     z               = gridded,
                                                     zsmooth         =  smooth,
+                                                    connectgaps     = true,
                                                     type            = "heatmap",
                                                     colorscale      = colorm,
                                                     colorbar_title  = fieldname,
                                                     reversescale    = reverseColorMap,
                                                     hoverinfo       = "text",
-                                                    text            = gridded_info     )
+                                                    text            = gridded_info,
+                                                    colorbar        = attr(     lenmode         = "fraction",
+                                                                                len             =  0.75,
+                                                                                thicknessmode   = "fraction",
+                                                                                tickness        =  0.5,
+                                                                                x               =  1.005,
+                                                                                y               =  0.5         ),)
 
         grid_out    = ["","GRID"]
     else
@@ -631,12 +784,19 @@ function  show_hide_grid_phaseDiagram(  xtitle,     ytitle,     grid,
                             y               = Y,
                             z               = gridded,
                             zsmooth         =  smooth,
+                            connectgaps     = true,
                             type            = "heatmap",
                             colorscale      = colorm,
                             colorbar_title  = fieldname,
                             reversescale    = reverseColorMap,
                             hoverinfo       = "text",
-                            text            = gridded_info     )
+                            text            = gridded_info,
+                            colorbar        = attr(     lenmode         = "fraction",
+                                                        len             =  0.75,
+                                                        thicknessmode   = "fraction",
+                                                        tickness        =  0.5,
+                                                        x               =  1.005,
+                                                        y               =  0.5         ),)
 
         grid_out    = [""]
     end                            
@@ -648,9 +808,12 @@ end
 function add_isopleth_phaseDiagram(         Xrange,     Yrange, 
                                             sub,        refLvl,
                                             dtb,        oxi,
-                                            isopleths,  phase,      ss,     em,     
+                                            isopleths,  phase,      ss,     em, 
+                                            isoColor,   isoLabelSize,       
                                             minIso,     stepIso,    maxIso      )
 
+    isoColor        = Int64(isoColor)
+    isoLabelSize    = Int64(isoLabelSize)
 
     if (phase == "ss" && em == "none") || (phase == "pp")
         mod     = "ph_frac"
@@ -661,7 +824,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
         name    = ss*"_"*em*"_mode"
     end
 
-    global g_isopleths, data_plot, nIsopleths, data_plot_isopleth, data, Out_XY, data_plot, X, Y, addedRefinementLvl
+    global g_isopleths, data_plot, nIsopleths, data, Out_XY, data_plot, X, Y, addedRefinementLvl
 
     gridded, X, Y = get_isopleth_map(   mod, ss, em,
                                         oxi,
@@ -675,41 +838,77 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                         Xrange,
                                         Yrange )
 
+    g_isopleths.n_iso      += 1
+    g_isopleths.isoP[1]     = data_plot     #save heatmap from phase diagram
+    g_isopleths.status[1]   = 1
+    g_isopleths.isoP[g_isopleths.n_iso]= contour(       x                   = X,
+                                                        y                   = Y,
+                                                        z                   = gridded,
+                                                        contours_coloring   = "lines",
+                                                        colorscale          = g_isopleths.colorL[isoColor],
+                                                        contours_start      = minIso,
+                                                        contours_end        = maxIso,
+                                                        contours_size       = stepIso,
+                                                        line_width          = 1,
+                                                        showscale           = false,
+                                                        hoverinfo           = "skip",
+                                                        contours            =  attr(    coloring    = "lines",
+                                                                                        showlabels  = true,
+                                                                                        labelfont   = attr( size    = isoLabelSize,
+                                                                                                            color   = g_isopleths.colorT[isoColor],  )
+                                                        )
+                                                    )
+    g_isopleths.status[g_isopleths.n_iso]   = 1
+    g_isopleths.label[g_isopleths.n_iso]    = name
+    g_isopleths.value[g_isopleths.n_iso]    = g_isopleths.n_iso
 
-    print("$g_isopleths\n")
-
-    nIsopleths              = 1
-    colorscale              = [[0, "black"], [1, "black"]]
+    g_isopleths.active = findall(g_isopleths.status .== 1)
     
-    data_plot_isopleth      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, nIsopleths + 1);
-    data_plot_isopleth[1]   = data_plot
+    isopleths = [Dict("label" => g_isopleths.label[g_isopleths.active[i]], "value" => g_isopleths.value[g_isopleths.active[i]])
+                        for i=2:g_isopleths.n_iso]
 
-    data_plot_isopleth[end] = contour(
-        x                   = X,
-        y                   = Y,
-        z                   = gridded,
-        contours_coloring   = "lines",
-        # line_smoothing      = 3.0,
-        labelfont           = attr( size  = 12,
-                                    color = "white" ),
-        colorscale          = colorscale,
-        contours_start      = minIso,
-        contours_end        = maxIso,
-        contours_size       = stepIso,
-        line_width          = 1,
-        showscale           = false,
-        hoverinfo           = "skip",
-        contours            = attr(     coloring    = "lines",
-                                        showlabels  = true,
-                                        labelfont   = attr( size    = 12,
-                                                            color   = "white",  )
-        )
-    )
-    
-    isopleths = [Dict("label" => name, "value" => 0)]
 
-    # isopleths   =  (isopleths, dict_iso...)
+    return g_isopleths, isopleths
 
-    return data_plot_isopleth, isopleths
+end
 
+function remove_single_isopleth_phaseDiagram(isoplethsID)
+    global g_isopleths
+
+    g_isopleths.n_iso      -= 1      
+
+    g_isopleths.status[isoplethsID]   = 0;
+    g_isopleths.isoP[isoplethsID]     = contour()
+    g_isopleths.label[isoplethsID]    = ""
+    g_isopleths.value[isoplethsID]    = 0
+    g_isopleths.active = findall(g_isopleths.status .== 1)
+
+
+    if g_isopleths.n_iso >= 2
+        isopleths = [Dict("label" => g_isopleths.label[g_isopleths.active[i]], "value" => g_isopleths.value[g_isopleths.active[i]])
+        for i=2:g_isopleths.n_iso]
+    else
+        isopleths = []
+    end
+
+    return g_isopleths, isopleths
+end
+
+
+function remove_all_isopleth_phaseDiagram()
+    global g_isopleths, data_plot
+
+    g_isopleths.label    .= ""
+    g_isopleths.value    .= 0
+    g_isopleths.n_iso     = 1
+    for i=2:g_isopleths.n_iso_max
+        g_isopleths.isoP[i] = contour()
+    end
+    g_isopleths.status   .= 0
+    g_isopleths.active   .= 0
+
+    # clear isopleth dropdown menu
+    isopleths = []              
+
+    return g_isopleths, isopleths, data_plot
 end

@@ -420,6 +420,7 @@ function get_gridded_map(   fieldname   ::String,
     np          = length(data.x)
     len_ox      = length(oxi)
     field       = Vector{Union{Float64,Missing}}(undef,np);
+ 
     npoints     = np
 
     meant       = 0.0
@@ -445,6 +446,8 @@ function get_gridded_map(   fieldname   ::String,
         field[isnan.(field)] .= missing
         if fieldname == "frac_M" || fieldname == "rho_M" || fieldname == "rho_S"
             field[isless.(field, 1e-8)] .= missing              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
+        elseif fieldname == "fO2"
+            field .= log10.(field)
         end
     end
 
@@ -455,61 +458,40 @@ function get_gridded_map(   fieldname   ::String,
     X            = repeat(x , n)[:]
     Y            = repeat(y', n)[:]
     gridded      = Matrix{Union{Float64,Missing}}(undef,n,n);
-    gridded_info = fill("",n,n)
+    gridded_info = Matrix{Union{String,Missing}}(undef,n,n);   
+    PhasesLabels = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,n^2)
 
-    #create annotations and limit the maximum number to not slow down display too much
-    # if (n^2) > (64^2);
-    #     stp     = Int64(floor((n^2)/(64^2)))
-    #     nann    = length(1:stp:n^2);
-    # else
-        nann    = n^2
-        stp     = 1
-    # end
-    PhasesLabels = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,nann)
-    # PhasesLabels = [];
     Xr = (Xrange[2]-Xrange[1])/n
     Yr = (Yrange[2]-Yrange[1])/n
-    l  = 1
+
     m  = 1
     for k=1:np
+        ii              = Int64(round((xc[k]-Xrange[1] + Xr/2)/(Xr)))
+        jj              = Int64(round((yc[k]-Yrange[1] + Yr/2)/(Yr))) 
+        gridded[ii,jj]  = field[k] 
+
         for i=xf[k][1]+Xr/2 : Xr : xf[k][3]
             for j=yf[k][1]+Yr/2 : Yr : yf[k][3]
-                ii                  = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
-                jj                  = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
-                gridded[ii,jj]      = field[k]
+                iii                  = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
+                jjj                  = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
+
                 tmp                 = replace(string(Out_XY[k].ph), "\""=>"", "]"=>"", "["=>"", ","=>"")
-                gridded_info[ii,jj] = "#"*string(k)*"# "*tmp
+                gridded_info[iii,jjj] = "#"*string(k)*"# "*tmp
 
-                # initialize PhaseLabels
-                if mod(l-1,stp) == 0
-                    PhasesLabels[m] =   attr(   
-                                                x           = x[ii],
-                                                y           = y[jj],
-                                                text        = replace(string(Out_XY[k].ph), "\""=>"", "]"=>"", "["=>"", ","=>""),
-                                                showarrow   = true,
-                                                arrowhead   = 1,
-                                                clicktoshow = "onoff",
-                                                visible     = false
-                                        )
-                    m += 1
-                end
-                l += 1
-
+                PhasesLabels[m] =   attr(   
+                                            x           = x[iii],
+                                            y           = y[jjj],
+                                            text        = tmp,
+                                            showarrow   = true,
+                                            arrowhead   = 1,
+                                            clicktoshow = "onoff",
+                                            visible     = false
+                                    )
+                m += 1
             end
         end
-    end
 
-    # for k=1:np
-    #     # initialize PhaseLabels
-    #     PhasesLabels[k] =   attr(   x           = xc[k]
-    #                                 y           = yc[k],
-    #                                 text        = replace.(string(Out_XY[k].ph),r"\""=>""),
-    #                                 showarrow   = true,
-    #                                 arrowhead   = 1,
-    #                                 clicktoshow = "onoff",
-    #                                 visible     = false
-    #                         )
-    # end
+    end
 
     return gridded, gridded_info, X, Y, npoints, meant, PhasesLabels
 end
@@ -535,7 +517,7 @@ function get_isopleth_map(  mod         ::String,
 
     np          = length(data.x)
     len_ox      = length(oxi)
-    field       = Vector{Union{Float64,Missing}}(undef,np);
+    field       = Vector{Union{Float64,Missing}}(missing,np);
 
     if mod == "ph_frac" 
         for i=1:np
@@ -543,7 +525,7 @@ function get_isopleth_map(  mod         ::String,
             if ~isempty(id)  
                 field[i] = Out_XY[i].ph_frac[id[1] ]
             else
-                field[i] = missing
+                field[i] = 0.0
             end
         end
     elseif mod == "em_frac"
@@ -553,7 +535,7 @@ function get_isopleth_map(  mod         ::String,
                 idem     = findall(Out_XY[i].SS_vec[id[1]].emNames .== em)
                 field[i] = Out_XY[i].SS_vec[id[1]].emFrac[idem[1]]
             else
-                field[i] = missing
+                field[i] = 0.0
             end
         end 
     end
@@ -564,30 +546,16 @@ function get_isopleth_map(  mod         ::String,
 
     X            = repeat(x , n)[:]
     Y            = repeat(y', n)[:]
-    gridded      = Matrix{Union{Float64,Missing}}(undef,n,n);
-    in           = similar(gridded)
+    gridded      = Matrix{Union{Float64,Missing}}(missing,n,n);
+
     Xr = (Xrange[2]-Xrange[1])/n
     Yr = (Yrange[2]-Yrange[1])/n
 
-    m  = 1
     for k=1:np
-        for i=xf[k][1]+Xr/2 : Xr : xf[k][3]
-            for j=yf[k][1]+Yr/2 : Yr : yf[k][3]
-                ii                  = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
-                jj                  = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
-                in[ii,jj]           = field[k]
-            end
-        end
+        ii              = Int64(round((xc[k]-Xrange[1] + Xr/2)/(Xr)))
+        jj              = Int64(round((yc[k]-Yrange[1] + Yr/2)/(Yr))) 
+        gridded[ii,jj]  = field[k] 
     end
-
-    in[ismissing.(in)] .= 0.0;
-    kx      = Kernel.gaussian((3,), ( Int64(n/8+1),))
-    ky      = Kernel.gaussian((3,), ( Int64(n/8+1),))
-    in      = imfilter(in, (kx', ky))
-    
-    gridded .= in
-    gridded[isless.(in, 1e-8)] .= missing 
-
 
     return gridded, X, Y
 end
