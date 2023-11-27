@@ -185,7 +185,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             global fig, MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, PhasesLabels
             global addedRefinementLvl   = 0;
             global nIsopleths           = 0;
-            global grid_out, data_plot, layout, g_isopleths, PT_infos;
+            global grid_out, data_plot, layout, g_isopleths;
 
             PT_infos                                     = get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
 
@@ -205,6 +205,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             fig         = plot(data_plot,layout)
 
         elseif bid == "refine-pb-button"
+
+            PT_infos                                     = get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
 
             data_plot, layout, npoints, grid_out, meant  =  refine_phaseDiagram(    xtitle,     ytitle,     
                                                                                     Xrange,     Yrange,     fieldname,

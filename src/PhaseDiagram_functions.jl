@@ -463,7 +463,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,
                                 smooth,     colorm,     reverseColorMap,
                                 test,       PT_infos                                 )
 
-    global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels, addedRefinementLvl, PT_infos
+    global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels, addedRefinementLvl
 
     refine_elements                          = refine_phase_boundaries(forest, Hash_XY);
     forest_new, data_new, ind_map            = adapt_forest(forest, refine_elements, data);     # Adapt the mesh; also returns the new coordinates and a mapping from old->new
