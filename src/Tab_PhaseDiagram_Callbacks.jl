@@ -185,9 +185,9 @@ function Tab_PhaseDiagram_Callbacks(app)
             global fig, MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, PhasesLabels
             global addedRefinementLvl   = 0;
             global nIsopleths           = 0;
-            global grid_out, data_plot, layout, g_isopleths;
+            global grid_out, data_plot, layout, g_isopleths, PT_infos;
 
-            PT_infos                                     = get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP)
+            PT_infos                                     = get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
 
             g_isopleths                                  = initialize_g_isopleth(; n_iso_max = 32)
 
@@ -200,7 +200,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                                         bulk_L,     bulk_R,     oxi,
                                                                                         bufferType, bufferN1,   bufferN2,
                                                                                         smooth,     colorm,     reverseColorMap,
-                                                                                        test                                  )
+                                                                                        test,       PT_infos                                  )
 
             fig         = plot(data_plot,layout)
 
@@ -215,7 +215,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                                     bulk_L,     bulk_R,     oxi,
                                                                                     bufferType, bufferN1,   bufferN2,
                                                                                     smooth,     colorm,     reverseColorMap,
-                                                                                    test                                  )
+                                                                                    test,       PT_infos                                  )
 
             fig         = plot(data_plot,layout)
 

@@ -31,10 +31,11 @@ mutable struct isopleth_data
 end
 
 
-function get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP)
+function get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
 
     datetoday = string(Dates.today())
     rightnow  = string(Dates.Time(Dates.now()))
+
 
     if diagType == "pt"
         dgtype = "Pressure-Temperature, fixed composition"
@@ -51,30 +52,47 @@ function get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, 
     end
 
 
-    db_in = retrieve_solution_phase_information(dtb)
+    db_in     = retrieve_solution_phase_information(dtb)
 
 
-    PD_infos  = "Phase Diagram computed using MAGEMin v1.3.6\n"
-    PD_infos *= "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾\n"
-    PD_infos *= "Date & time  : " * datetoday * ", " * rightnow * "\n"
-    PD_infos *= "Database     : " * db_in.db_info * "\n"
-    PD_infos *= "Diagram type : " * dgtype *"\n"
-    PD_infos *= "Solver       : " * solv *"\n"
-    PD_infos *= "Oxide list   : " * join(oxi, " ") *"\n"
+    PD_infos  = "Phase Diagram computed using MAGEMin v1.3.6<br>"
+    PD_infos *= "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾<br>"
+    PD_infos *= "Date & time: " * datetoday * ", " * rightnow * "<br>"
+    PD_infos *= "Database: " * db_in.db_info * "<br>"
+    PD_infos *= "Diagram type: " * dgtype *"<br>"
+    PD_infos *= "Solver: " * solv *"<br>"
+    PD_infos *= "Oxide list: " * join(oxi, " ") *"<br>"
+    if bufferType != "none"
+        PD_infos *= "Buffer: " * bufferType *"<br>"
+    end            
     if diagType == "pt"
-        PD_infos *= "X comp [mol] : " * join(bulk_L, " ") *"\n"
+        PD_infos *= "X comp [mol]: " * join(bulk_L, " ") *"<br>"
+        if bufferType != "none"
+            PD_infos *= "Buffer factor: " * string(bufferN1) *"<br>"
+        end       
     elseif diagType == "px"
-        PD_infos *= "X1 comp [mol]: " * join(bulk_L, " ") *"\n"
-        PD_infos *= "X2 comp [mol]: " * join(bulk_R, " ") *"\n"
-        PD_infos *= "Fixed Temp   : " * join(fixT, " ") *"\n"
+        PD_infos *= "X1 comp [mol]: " * join(bulk_L, " ") *"<br>"
+        if bufferType != "none"
+            PD_infos *= "Buffer factor: " * string(bufferN1) *"<br>"
+        end
+        PD_infos *= "X2 comp [mol]: " * join(bulk_R, " ") *"<br>"
+        if bufferType != "none"
+            PD_infos *= "Buffer factor: " * string(bufferN2) *"<br>"
+        end        
+        PD_infos *= "Fixed Temp: " * join(fixT, " ") *"<br>"
     else
-        PD_infos *= "X1 comp [mol]: " * join(bulk_L, " ") *"\n"
-        PD_infos *= "X2 comp [mol]: " * join(bulk_R, " ") *"\n"
-        PD_infos *= "Fixed Pres   : " * join(fixP, " ") *"\n"
+        PD_infos *= "X1 comp [mol]: " * join(bulk_L, " ") *"<br>"
+        if bufferType != "none"
+            PD_infos *= "Buffer factor: " * string(bufferN1) *"<br>"
+        end        
+        PD_infos *= "X2 comp [mol]: " * join(bulk_R, " ") *"<br>"
+        if bufferType != "none"
+            PD_infos *= "Buffer factor: " * string(bufferN2) *"<br>"
+        end        
+        PD_infos *= "Fixed Pres: " * join(fixP, " ") *"<br>"
     end
-    PD_infos *= "____________________________________________\n"
+    PD_infos *= "____________________________________________________________________________________<br>"
     
-    print(PD_infos)
 
     return PD_infos
 end
@@ -267,7 +285,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                                     bulk_L,     bulk_R,     oxi,
                                     bufferType, bufferN1,   bufferN2,
                                     smooth,     colorm,     reverseColorMap,
-                                    test                                  )
+                                    test,       PT_infos                                  )
 
         empty!(AppData.PseudosectionData);              #this empty the data from previous pseudosection computation
 
@@ -360,7 +378,8 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                                                                                         data.x,
                                                                                         data.y,
                                                                                         Xrange,
-                                                                                        Yrange )
+                                                                                        Yrange,
+                                                                                        PT_infos )
 
         # print("PhasesLabels $PhasesLabels\n")
         layout = Layout(
@@ -387,11 +406,11 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                     yaxis_title = ytitle,
                     annotations = PhasesLabels,
                     width       = 700,
-                    height      = 750,
+                    height      = 900,
                     autosize=false,
                     # paper_bgcolor="LightSteelBlue",
-                    # margin=attr(l=50, r=50, b=50, t=80, pad=4),
-                    margin=attr(l=50, r=50, b=140, t=60, pad=4),
+                    # margin=attr(l=50, r=50, b=50, t=80),
+                    margin=attr(l=50, r=50, b=260, t=60),
                 )
 
 
@@ -442,9 +461,9 @@ function refine_phaseDiagram(   xtitle,     ytitle,
                                 bulk_L,     bulk_R,     oxi,
                                 bufferType, bufferN1,   bufferN2,
                                 smooth,     colorm,     reverseColorMap,
-                                test                                  )
+                                test,       PT_infos                                 )
 
-    global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels,addedRefinementLvl
+    global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels, addedRefinementLvl, PT_infos
 
     refine_elements                          = refine_phase_boundaries(forest, Hash_XY);
     forest_new, data_new, ind_map            = adapt_forest(forest, refine_elements, data);     # Adapt the mesh; also returns the new coordinates and a mapping from old->new
@@ -484,7 +503,8 @@ function refine_phaseDiagram(   xtitle,     ytitle,
                                                                                     data.x,
                                                                                     data.y,
                                                                                     Xrange,
-                                                                                    Yrange )
+                                                                                    Yrange,
+                                                                                    PT_infos )
 
     layout = Layout(
                 images=[ attr(
@@ -514,11 +534,11 @@ function refine_phaseDiagram(   xtitle,     ytitle,
                 yaxis_title = ytitle,
                 annotations = PhasesLabels,
                 width       = 700,
-                height      = 750,
+                height      = 900,
                 autosize=false,
                 # paper_bgcolor="LightSteelBlue",
-                # margin=attr(l=50, r=50, b=50, t=80, pad=4),
-                margin=attr(l=50, r=50, b=140, t=60, pad=4),
+                # margin=attr(l=50, r=50, b=50, t=80),
+                margin=attr(l=50, r=50, b=260, t=60),
             )
 
     data_plot = heatmap(x               = X,
@@ -585,11 +605,11 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
         yaxis_title = ytitle,
         annotations = PhasesLabels,
         width       = 700,
-        height      = 750,
+        height      = 900,
         autosize=false,
         # paper_bgcolor="LightSteelBlue",
-        # margin=attr(l=50, r=50, b=50, t=80, pad=4),
-        margin=attr(l=50, r=50, b=140, t=60, pad=4),
+        # margin=attr(l=50, r=50, b=50, t=80),
+        margin=attr(l=50, r=50, b=260, t=60),
     )
 
 
@@ -647,7 +667,8 @@ function  update_diplayed_field_phaseDiagram(   xtitle,     ytitle,
                                                                                     data.x,
                                                                                     data.y,
                                                                                     Xrange,
-                                                                                    Yrange )
+                                                                                    Yrange,
+                                                                                    PT_infos )
 
     layout      = Layout(
     images=[ attr(
@@ -671,11 +692,11 @@ function  update_diplayed_field_phaseDiagram(   xtitle,     ytitle,
     yaxis_title = ytitle,
     annotations = PhasesLabels,
     width       = 700,
-    height      = 750,
+    height      = 900,
     autosize=false,
     # paper_bgcolor="LightSteelBlue",
-    # margin=attr(l=50, r=50, b=50, t=80, pad=4),
-    margin=attr(l=50, r=50, b=140, t=60, pad=4), )
+    # margin=attr(l=50, r=50, b=50, t=80),
+    margin=attr(l=50, r=50, b=260, t=60), )
 
     data_plot = heatmap(x               = X,
                         y               = Y,
@@ -743,11 +764,11 @@ function  show_hide_grid_phaseDiagram(  xtitle,     ytitle,     grid,
         yaxis_title = ytitle,
         annotations = PhasesLabels,
         width       = 700,
-        height      = 750,
+        height      = 900,
         autosize=false,
         # paper_bgcolor="LightSteelBlue",
-        # margin=attr(l=50, r=50, b=50, t=80, pad=4),
-        margin=attr(l=50, r=50, b=140, t=60, pad=4),
+        # margin=attr(l=50, r=50, b=50, t=80),
+        margin=attr(l=50, r=50, b=260, t=60),
     )
     if length(grid) == 2
         data_plot      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, length(data.x)+1);

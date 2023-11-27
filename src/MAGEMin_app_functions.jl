@@ -415,7 +415,8 @@ function get_gridded_map(   fieldname   ::String,
                             xf          ::Vector{SVector{4, Float64}},
                             yf          ::Vector{SVector{4, Float64}},
                             Xrange      ::Tuple{Float64, Float64},
-                            Yrange      ::Tuple{Float64, Float64} )
+                            Yrange      ::Tuple{Float64, Float64},
+                            PT_infos    ::String )
 
     np          = length(data.x)
     len_ox      = length(oxi)
@@ -459,12 +460,26 @@ function get_gridded_map(   fieldname   ::String,
     Y            = repeat(y', n)[:]
     gridded      = Matrix{Union{Float64,Missing}}(undef,n,n);
     gridded_info = Matrix{Union{String,Missing}}(undef,n,n);   
-    PhasesLabels = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,n^2)
+    PhasesLabels = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,n^2+1)
 
     Xr = (Xrange[2]-Xrange[1])/n
     Yr = (Yrange[2]-Yrange[1])/n
 
-    m  = 1
+    PhasesLabels[1] =   attr(   xref        = "paper",
+                                yref        = "paper",
+                                align       = "left",
+                                valign      = "top",
+                                x           = 0.0,
+                                y           = 0.0,
+                                yshift      = -250,
+                                text        = PT_infos,
+                                showarrow   = false,
+                                clicktoshow = false,
+                                visible     = true,
+                                font        = attr( size = 10),
+                                )   
+
+    m  = 2
     for k=1:np
         ii              = Int64(round((xc[k]-Xrange[1] + Xr/2)/(Xr)))
         jj              = Int64(round((yc[k]-Yrange[1] + Yr/2)/(Yr))) 
