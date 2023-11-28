@@ -149,6 +149,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("phase-dropdown",     "value"),
         State("ss-dropdown",        "value"),
         State("em-dropdown",        "value"),
+        State("of-dropdown",        "value"),
         State("iso-color-dropdown", "value"),
         State("iso-text-size-id",   "value"),
         State("iso-min-id",         "value"),
@@ -168,7 +169,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             bulk1,      bulk2,
             bufferN1,   bufferN2,
             test,
-            isopleths,  isoplethsID,        phase,  ss,         em,     
+            isopleths,  isoplethsID,        phase,  ss,         em,         of,  
             isoColor,   isoLabelSize,   
             minIso,     stepIso,    maxIso
 
@@ -261,7 +262,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             g_isopleths, isopleths = add_isopleth_phaseDiagram(     Xrange,     Yrange,
                                                                     sub,        refLvl,
                                                                     dtb,        oxi,
-                                                                    isopleths,  phase,      ss,     em, 
+                                                                    isopleths,  phase,      ss,     em,     of,
                                                                     isoColor,   isoLabelSize,   
                                                                     minIso,     stepIso,    maxIso      )
 
@@ -273,12 +274,15 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             if (isoplethsID) in g_isopleths.active
 
-                if g_isopleths.n_iso >= 2
+                if g_isopleths.n_iso > 2
                 g_isopleths, isopleths = remove_single_isopleth_phaseDiagram(isoplethsID)
 
                 fig         = plot(g_isopleths.isoP[g_isopleths.active], layout)
+                
                 else
-                    fig     = plot(data_plot,layout)
+                    g_isopleths, isopleths, data_plot = remove_all_isopleth_phaseDiagram()
+
+                    fig         = plot(data_plot,layout)
                 end
 
             else

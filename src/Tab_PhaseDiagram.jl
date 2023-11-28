@@ -267,14 +267,15 @@ function Tab_PhaseDiagram()
                                 html_h1("Selection", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                 dbc_row([
                                     dbc_col([
-                                        html_h1("Phase type", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                        html_h1("Isopleth type", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
                                     ]),
                                     dbc_col([
                                         html_div([
                                             dcc_dropdown(   id      = "phase-dropdown",
                                             options = [
-                                                (label = "Pure",              value = "pp"),
-                                                (label = "Solution",          value = "ss"),
+                                                (label = "Pure phase",          value = "pp"),
+                                                (label = "Solution phase",      value = "ss"),
+                                                (label = "Other",               value = "of"),
                                             ],
                                             value       = "pp",
                                             clearable   = false,
@@ -283,41 +284,69 @@ function Tab_PhaseDiagram()
 
                                     ]),
                                 ]),
+                                    html_div([
+                                        dbc_row([
 
-                                    dbc_row([
-
-                                        dbc_col([
-                                            html_h1("Phase", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
-                                        ]),
-                                        dbc_col([
-                                            html_div([
+                                            dbc_col([
+                                                html_h1("Phase", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                            ]),
+                                            dbc_col([
                                                 dcc_dropdown(   id      = "ss-dropdown",
                                                 options = [],
                                                 value       = 0,
                                                 clearable   = false,
                                                 multi       = false),
-                                            ], style = Dict("display" => "block"), id      = "ss-1-id"),
+                                            ]),
 
                                         ]),
+                                    ], style = Dict("display" => "none"), id      = "ss-1-id"),
 
-                                    ]),
                                     html_div([
                                         dbc_row([
-
                                             dbc_col([
                                                 html_h1("Endmember", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
                                             ]),
                                             dbc_col([
-                                                
-                                                    dcc_dropdown(   id      = "em-dropdown",
-                                                    options = [],
-                                                    value       = 0,
-                                                    clearable   = false,
-                                                    multi       = false),
-                                                ]),
-
+                                                dcc_dropdown(   id      = "em-dropdown",
+                                                options = [],
+                                                value       = 0,
+                                                clearable   = false,
+                                                multi       = false),
                                             ]),
+                                        ]),
                                     ], style = Dict("display" => "none"), id      = "em-1-id"),
+
+                                    html_div([
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                            ]),
+                                            dbc_col([
+                                                dcc_dropdown(   id      = "of-dropdown",
+                                                options = [
+                                                    (label = "G system",                value = "G_system"),
+                                                    (label = "Entropy",                 value = "entropy"),
+                                                    (label = "Enthalpy",                value = "enthalpy"),
+                                                    (label = "log10(fO2)",              value = "fO2"),
+                                                    (label = "H2O activity",            value = "aH2O"),
+                                                    (label = "SiO2 activity",           value = "aSiO2"),
+                                                    (label = "TiO2 activity",           value = "aTiO2"),
+                                                    (label = "ρ_system",                value = "rho"),
+                                                    (label = "ρ_solid",                 value = "rho_S"),
+                                                    (label = "ρ_melt",                  value = "rho_M"),
+                                                    (label = "Solid fraction",          value = "frac_S"),
+                                                    (label = "Melt fraction",           value = "frac_M"),                                                            
+                                                    (label = "Vp",                      value = "Vp"),
+                                                    (label = "Vs",                      value = "Vs"),
+                                                ],
+                                                value       = "G_system",
+                                                clearable   = false,
+                                                multi       = false),
+                                            ]),
+                                        ]),
+                                    ], style = Dict("display" => "none"), id      = "of-1-id"),
+
+
 
                                     html_div("‎ "),
                                     html_h1("Range", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),

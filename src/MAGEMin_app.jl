@@ -44,8 +44,8 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
             dbc_row([
                         dbc_col([
                             dbc_cardimg(    id      = "jgu-img",
-                                            src     = "assets/static/images/JGU_light.jpg",
-                                            style   = Dict("height" => 55, "width" => 190)),
+                                            src     = "assets/static/images/ERC_JGU_light.jpg",
+                                            style   = Dict("height" => 55, "width" => 230)),
                                 ], width="auto" ),
                         dbc_col([
                             dbc_cardimg(    id      = "magemin-img",

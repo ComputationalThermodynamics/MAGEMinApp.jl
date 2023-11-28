@@ -340,7 +340,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
 
         #________________________________________________________________________________________#
         # initialize database
-        global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels
+        global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels, layout
         global addedRefinementLvl  = 0;
 
         # set clinopyroxene for the metabasite database
@@ -421,7 +421,6 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                                                                                         Yrange,
                                                                                         PT_infos )
 
-        # print("PhasesLabels $PhasesLabels\n")
         layout = Layout(
                     images=[ attr(
                         source  = "assets/static/images/MAGEMin.jpg",
@@ -447,10 +446,8 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                     annotations = PhasesLabels,
                     width       = 700,
                     height      = 900,
-                    autosize=false,
-                    # paper_bgcolor="LightSteelBlue",
-                    # margin=attr(l=50, r=50, b=50, t=80),
-                    margin=attr(l=50, r=50, b=260, t=70, pad=4),
+                    autosize    = false,
+                    margin      = attr(l=50, r=50, b=260, t=70, pad=4),
                 )
 
 
@@ -503,7 +500,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,
                                 smooth,     colorm,     reverseColorMap,
                                 test,       PT_infos                                 )
 
-    global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels, addedRefinementLvl
+    global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels, addedRefinementLvl, layout
 
     refine_elements                          = refine_phase_boundaries(forest, Hash_XY);
     forest_new, data_new, ind_map            = adapt_forest(forest, refine_elements, data);     # Adapt the mesh; also returns the new coordinates and a mapping from old->new
@@ -546,40 +543,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,
                                                                                     Yrange,
                                                                                     PT_infos )
 
-    layout = Layout(
-                images=[ attr(
-                    source  = "assets/static/images/MAGEMin.jpg",
-                    xref    = "paper",
-                    yref    = "paper",
-                    x       =  0.05,
-                    y       =  1.01,
-                    sizex   =  0.1, 
-                    sizey   =  0.1,
-                    xanchor = "right", 
-                    yanchor = "bottom"
-                )],
-                title=attr(
-                    text    = db[(db.db .== dtb), :].title[test+1],
-                    x       = 0.5,
-                    xanchor = "center",
-                    yanchor = "top"
-                ),
-
-                hoverlabel=attr(
-                    bgcolor = "#FFF",
-                ),
-                plot_bgcolor = "#FFF",
-                paper_bgcolor = "#FFF",
-                xaxis_title = xtitle,
-                yaxis_title = ytitle,
-                annotations = PhasesLabels,
-                width       = 700,
-                height      = 900,
-                autosize=false,
-                # paper_bgcolor="LightSteelBlue",
-                # margin=attr(l=50, r=50, b=50, t=80),
-                margin=attr(l=50, r=50, b=260, t=70, pad=4),
-            )
+    layout[:annotations] = PhasesLabels                                                                                   
 
     data_plot = heatmap(x               = X,
                         y               = Y,
@@ -620,55 +584,25 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
                                             dtb,        diagType,
                                             smooth,     colorm,     reverseColorMap,
                                             test                                  )
-    global PT_infos
-
-    layout = Layout(
-        images=[ attr(
-            source  = "assets/static/images/MAGEMin.jpg",
-            xref    = "paper",
-            yref    = "paper",
-            x       =  0.05,
-            y       =  1.01,
-            sizex   =  0.1, 
-            sizey   =  0.1,
-            xanchor = "right", 
-            yanchor = "bottom"
-        )],
-        title=attr(
-            text    = db[(db.db .== dtb), :].title[test+1],
-            x       = 0.5,
-            xanchor = "center",
-            yanchor = "top"
-        ),
-        plot_bgcolor = "#FFF",
-        paper_bgcolor = "#FFF",
-        xaxis_title = xtitle,
-        yaxis_title = ytitle,
-        annotations = PhasesLabels,
-        width       = 700,
-        height      = 900,
-        autosize=false,
-        margin=attr(l=50, r=50, b=260, t=70, pad=4),
-    )
-
+    global PT_infos, layout
 
     data_plot = heatmap(x               =  X,
-                y               =  Y,
-                z               =  gridded,
-                zsmooth         =  smooth,
-                connectgaps     = true,
-                type            = "heatmap",
-                colorscale      =  colorm,
-                colorbar_title  =  fieldname,
-                reversescale    = reverseColorMap,
-                hoverinfo       = "text",
-                text            = gridded_info,
-                colorbar        = attr(     lenmode         = "fraction",
-                                            len             =  0.75,
-                                            thicknessmode   = "fraction",
-                                            tickness        =  0.5,
-                                            x               =  1.005,
-                                            y               =  0.5         ),)
+                        y               =  Y,
+                        z               =  gridded,
+                        zsmooth         =  smooth,
+                        connectgaps     = true,
+                        type            = "heatmap",
+                        colorscale      =  colorm,
+                        colorbar_title  =  fieldname,
+                        reversescale    = reverseColorMap,
+                        hoverinfo       = "text",
+                        text            = gridded_info,
+                        colorbar        = attr(     lenmode         = "fraction",
+                                                    len             =  0.75,
+                                                    thicknessmode   = "fraction",
+                                                    tickness        =  0.5,
+                                                    x               =  1.005,
+                                                    y               =  0.5         ),)
 
     grid_out    = [""]
 
@@ -694,48 +628,20 @@ function  update_diplayed_field_phaseDiagram(   xtitle,     ytitle,
                                                 smooth,     colorm,     reverseColorMap,
                                                 test                                  )
 
-    global data, Out_XY, data_plot, gridded, gridded_info, X, Y, PhasesLabels, addedRefinementLvl, PT_infos
+    global data, Out_XY, data_plot, gridded, gridded_info, X, Y, PhasesLabels, addedRefinementLvl, PT_infos, layout
 
-    gridded, gridded_info, X, Y, npoints, meant, PhasesLabels = get_gridded_map(    fieldname,
-                                                                                    oxi,
-                                                                                    Out_XY,
-                                                                                    sub,
-                                                                                    refLvl + addedRefinementLvl,
-                                                                                    data.xc,
-                                                                                    data.yc,
-                                                                                    data.x,
-                                                                                    data.y,
-                                                                                    Xrange,
-                                                                                    Yrange,
-                                                                                    PT_infos )
+    gridded, X, Y, npoints, meant = get_gridded_map_no_lbl(     fieldname,
+                                                                oxi,
+                                                                Out_XY,
+                                                                sub,
+                                                                refLvl + addedRefinementLvl,
+                                                                data.xc,
+                                                                data.yc,
+                                                                data.x,
+                                                                data.y,
+                                                                Xrange,
+                                                                Yrange )
 
-    layout      = Layout(
-    images=[ attr(
-        source  = "assets/static/images/MAGEMin.jpg",
-        xref    = "paper",
-        yref    = "paper",
-        x       =  0.05,
-        y       =  1.01,
-        sizex   =  0.1, 
-        sizey   =  0.1,
-        xanchor = "right", 
-        yanchor = "bottom"
-    )],
-    title=attr( text    = db[(db.db .== dtb), :].title[test+1],
-                x       = 0.5,
-                xanchor = "center",
-                yanchor = "top"     ),
-    plot_bgcolor = "#FFF",
-    paper_bgcolor = "#FFF",
-    xaxis_title = xtitle,
-    yaxis_title = ytitle,
-    annotations = PhasesLabels,
-    width       = 700,
-    height      = 900,
-    autosize=false,
-    # paper_bgcolor="LightSteelBlue",
-    # margin=attr(l=50, r=50, b=50, t=80),
-    margin=attr(l=50, r=50, b=260, t=70, pad=4), )
 
     data_plot = heatmap(x               = X,
                         y               = Y,
@@ -755,7 +661,6 @@ function  update_diplayed_field_phaseDiagram(   xtitle,     ytitle,
                                                     x               =  1.005,
                                                     y               =  0.5         ),)
 
-    # fig         = plot(data_plot,layout)
     grid_out    = [""]
 
     return data_plot,layout, grid_out
@@ -777,38 +682,8 @@ function  show_hide_grid_phaseDiagram(  xtitle,     ytitle,     grid,
                                         smooth,     colorm,     reverseColorMap,
                                         test                                  )
 
-    global data, data_plot, gridded, gridded_info, X, Y, PhasesLabels, PT_infos
+    global data, data_plot, gridded, gridded_info, X, Y, PhasesLabels, PT_infos, layout
 
-    layout = Layout(
-        images=[ attr(
-            source  = "assets/static/images/MAGEMin.jpg",
-            xref    = "paper",
-            yref    = "paper",
-            x       =  0.05,
-            y       =  1.01,
-            sizex   =  0.1, 
-            sizey   =  0.1,
-            xanchor = "right", 
-            yanchor = "bottom"
-        )],
-        title=attr(
-            text    = db[(db.db .== dtb), :].title[test+1],
-            x       = 0.5,
-            xanchor = "center",
-            yanchor = "top"
-        ),
-        plot_bgcolor = "#FFF",
-        paper_bgcolor = "#FFF",
-        xaxis_title = xtitle,
-        yaxis_title = ytitle,
-        annotations = PhasesLabels,
-        width       = 700,
-        height      = 900,
-        autosize=false,
-        # paper_bgcolor="LightSteelBlue",
-        # margin=attr(l=50, r=50, b=50, t=80),
-        margin=attr(l=50, r=50, b=260, t=70, pad=4),
-    )
     if length(grid) == 2
         data_plot      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, length(data.x)+1);
         for i = 1:length(data.x)
@@ -843,7 +718,7 @@ function  show_hide_grid_phaseDiagram(  xtitle,     ytitle,     grid,
         data_plot = heatmap(x               = X,
                             y               = Y,
                             z               = gridded,
-                            zsmooth         =  smooth,
+                            zsmooth         = smooth,
                             connectgaps     = true,
                             type            = "heatmap",
                             colorscale      = colorm,
@@ -868,7 +743,7 @@ end
 function add_isopleth_phaseDiagram(         Xrange,     Yrange, 
                                             sub,        refLvl,
                                             dtb,        oxi,
-                                            isopleths,  phase,      ss,     em, 
+                                            isopleths,  phase,      ss,     em,     of,
                                             isoColor,   isoLabelSize,       
                                             minIso,     stepIso,    maxIso      )
 
@@ -880,13 +755,18 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
         em      = ""
         name    = ss*"_mode"
     elseif (phase == "ss" && em != "none")
-        mod = "em_frac"
+        mod     = "em_frac"
         name    = ss*"_"*em*"_mode"
+    elseif (phase == "of")
+        em      = ""
+        ss      = ""
+        mod     = "of_mod"
+        name    = of
     end
 
     global g_isopleths, data_plot, nIsopleths, data, Out_XY, data_plot, X, Y, addedRefinementLvl
 
-    gridded, X, Y = get_isopleth_map(   mod, ss, em,
+    gridded, X, Y = get_isopleth_map(   mod, ss, em, of,
                                         oxi,
                                         Out_XY,
                                         sub,
@@ -921,11 +801,10 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
     g_isopleths.status[g_isopleths.n_iso]   = 1
     g_isopleths.label[g_isopleths.n_iso]    = name
     g_isopleths.value[g_isopleths.n_iso]    = g_isopleths.n_iso
-
-    g_isopleths.active = findall(g_isopleths.status .== 1)
-    
+    g_isopleths.active                      = findall(g_isopleths.status .== 1)
+    n_act                                   = length(g_isopleths.active)
     isopleths = [Dict("label" => g_isopleths.label[g_isopleths.active[i]], "value" => g_isopleths.value[g_isopleths.active[i]])
-                        for i=2:g_isopleths.n_iso]
+                        for i=2:n_act]
 
 
     return g_isopleths, isopleths
@@ -935,21 +814,16 @@ end
 function remove_single_isopleth_phaseDiagram(isoplethsID)
     global g_isopleths
 
-    g_isopleths.n_iso      -= 1      
-
+    g_isopleths.n_iso                -= 1      
     g_isopleths.status[isoplethsID]   = 0;
     g_isopleths.isoP[isoplethsID]     = contour()
     g_isopleths.label[isoplethsID]    = ""
     g_isopleths.value[isoplethsID]    = 0
-    g_isopleths.active = findall(g_isopleths.status .== 1)
+    g_isopleths.active                = findall(g_isopleths.status .== 1)
+    n_act                             = length(g_isopleths.active)
+    isopleths = [Dict("label" => g_isopleths.label[g_isopleths.active[i]], "value" => g_isopleths.value[g_isopleths.active[i]])
+                    for i=2:n_act]
 
-
-    if g_isopleths.n_iso >= 2
-        isopleths = [Dict("label" => g_isopleths.label[g_isopleths.active[i]], "value" => g_isopleths.value[g_isopleths.active[i]])
-        for i=2:g_isopleths.n_iso]
-    else
-        isopleths = []
-    end
 
     return g_isopleths, isopleths
 end
