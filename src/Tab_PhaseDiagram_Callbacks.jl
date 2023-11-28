@@ -94,6 +94,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("meant-id",      "value"),
 
         Output("isopleth-dropdown","options"),
+        Output("smooth-colormap",    "value"),
 
         Input("button-add-isopleth",        "n_clicks"),
         Input("button-remove-isopleth",     "n_clicks"),
@@ -112,8 +113,8 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("show-grid",          "value"),           # show edges checkbox
 
         State("npoints-id",         "value"),           # total number of computed points
-        State("diagram-dropdown",   "value"),           # pt,px,tx
-        State("database-dropdown",  "value"),           # mp,mb,ig,igd,um,alk
+        State("diagram-dropdown",   "value"),           # pt, px, tx
+        State("database-dropdown",  "value"),           # mp, mb, ig ,igd, um, alk
         State("mb-cpx-switch",      "value"),           # false,true -> 0,1
         State("limit-ca-opx-id",    "value"),           # ON,OFF -> 0,1
         State("ca-opx-val-id",      "value"),           # 0.0-1.0 -> 0,1
@@ -154,6 +155,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("iso-step-id",        "value"),
         State("iso-max-id",         "value"),
 
+
         prevent_initial_call = true,
 
     ) do    addIso,     removeIso,  removeAllIso,   isoShow,    isoHide,    n_clicks_mesh, n_clicks_refine, 
@@ -166,11 +168,11 @@ function Tab_PhaseDiagram_Callbacks(app)
             bulk1,      bulk2,
             bufferN1,   bufferN2,
             test,
-            isopleths,  isoplethsID,phase,      ss,     em,     
+            isopleths,  isoplethsID,        phase,  ss,         em,     
             isoColor,   isoLabelSize,   
             minIso,     stepIso,    maxIso
 
-
+        smooth                          = smooth
         xtitle, ytitle, Xrange, Yrange  = diagram_type(diagType, tmin, tmax, pmin, pmax)                # get axis information
         bufferN1, bufferN2, fixT, fixP  = convert2Float64(bufferN1, bufferN2, fixT, fixP)               # convert buffer_n to float
         bid                             = pushed_button( callback_context() )                           # get the ID of the last pushed button
@@ -181,11 +183,13 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         if bid == "compute-button"
 
+            smooth                      = "best"
+
             # declare set of global variables needed to generate, refine and display phase diagrams
             global fig, MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, PhasesLabels
             global addedRefinementLvl   = 0;
             global nIsopleths           = 0;
-            global grid_out, data_plot, layout, g_isopleths;
+            global grid_out, data_plot, layout, g_isopleths, PT_infos;
 
             PT_infos                                     = get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
 
@@ -201,7 +205,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                                         bufferType, bufferN1,   bufferN2,
                                                                                         smooth,     colorm,     reverseColorMap,
                                                                                         test,       PT_infos                                  )
-
+            
             fig         = plot(data_plot,layout)
 
         elseif bid == "refine-pb-button"
@@ -309,11 +313,11 @@ function Tab_PhaseDiagram_Callbacks(app)
         config = PlotConfig(    toImageButtonOptions  = attr(   format  = "svg", # one of png, svg, jpeg, webp
                                                                 filename= "myPlot",
                                                                 height  =  1024,
-                                                                width   =  1024,
+                                                                width   =  840,
                                                                 scale   =  1.0,       ).fields)
 
 
-        return fig, config, grid_out, npoints, meant, isopleths
+        return fig, config, grid_out, npoints, meant, isopleths, smooth
     end
 
 

@@ -33,6 +33,8 @@ end
 
 function get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
 
+    PD_infos  = Vector{String}(undef,2)
+
     datetoday = string(Dates.today())
     rightnow  = string(Dates.Time(Dates.now()))
 
@@ -55,45 +57,83 @@ function get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, 
     db_in     = retrieve_solution_phase_information(dtb)
 
 
-    PD_infos  = "Phase Diagram computed using MAGEMin v1.3.6<br>"
-    PD_infos *= "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾<br>"
-    PD_infos *= "Date & time: " * datetoday * ", " * rightnow * "<br>"
-    PD_infos *= "Database: " * db_in.db_info * "<br>"
-    PD_infos *= "Diagram type: " * dgtype *"<br>"
-    PD_infos *= "Solver: " * solv *"<br>"
-    PD_infos *= "Oxide list: " * join(oxi, " ") *"<br>"
+    PD_infos[1]  = "Phase Diagram computed using MAGEMin v1.3.6 <br>"
+    PD_infos[1] *= "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾<br>"
+    PD_infos[1] *= "Date & time <br>"
+    PD_infos[1] *= "Database <br>"
+    PD_infos[1] *= "Diagram type <br>"
+    PD_infos[1] *= "Solver <br>"
+    PD_infos[1] *= "Oxide list <br>"
     if bufferType != "none"
-        PD_infos *= "Buffer: " * bufferType *"<br>"
+        PD_infos[1] *= "Buffer <br>"
     end            
     if diagType == "pt"
-        PD_infos *= "X comp [mol]: " * join(bulk_L, " ") *"<br>"
+        PD_infos[1] *= "X comp [mol] <br>"
         if bufferType != "none"
-            PD_infos *= "Buffer factor: " * string(bufferN1) *"<br>"
+            PD_infos[1] *= "Buffer factor <br>"
         end       
     elseif diagType == "px"
-        PD_infos *= "X1 comp [mol]: " * join(bulk_L, " ") *"<br>"
+        PD_infos[1] *= "X1 comp [mol] <br>"
         if bufferType != "none"
-            PD_infos *= "Buffer factor: " * string(bufferN1) *"<br>"
+            PD_infos[1] *= "Buffer factor <br>"
         end
-        PD_infos *= "X2 comp [mol]: " * join(bulk_R, " ") *"<br>"
+        PD_infos[1] *= "X2 comp [mol] <br>"
         if bufferType != "none"
-            PD_infos *= "Buffer factor: " * string(bufferN2) *"<br>"
+            PD_infos[1] *= "Buffer factor <br>"
         end        
-        PD_infos *= "Fixed Temp: " * join(fixT, " ") *"<br>"
+        PD_infos[1] *= "Fixed Temp <br>"
     else
-        PD_infos *= "X1 comp [mol]: " * join(bulk_L, " ") *"<br>"
+        PD_infos[1] *= "X1 comp [mol] <br>"
         if bufferType != "none"
-            PD_infos *= "Buffer factor: " * string(bufferN1) *"<br>"
+            PD_infos[1] *= "Buffer factor <br>"
         end        
-        PD_infos *= "X2 comp [mol]: " * join(bulk_R, " ") *"<br>"
+        PD_infos[1] *= "X2 comp [mol] <br>"
         if bufferType != "none"
-            PD_infos *= "Buffer factor: " * string(bufferN2) *"<br>"
+            PD_infos[1] *= "Buffer factor <br>"
         end        
-        PD_infos *= "Fixed Pres: " * join(fixP, " ") *"<br>"
+        PD_infos[1] *= "Fixed Pres <br>"
     end
-    PD_infos *= "____________________________________________________________________________________<br>"
+    PD_infos[1] *= "_____________________________________________________________________________________________________<br>"
     
 
+    PD_infos[2] = " <br>"
+    PD_infos[2] *= " <br>"
+    PD_infos[2] *= datetoday * ", " * rightnow * "<br>"
+    PD_infos[2] *= db_in.db_info * "<br>"
+    PD_infos[2] *= dgtype *"<br>"
+    PD_infos[2] *= solv *"<br>"
+    PD_infos[2] *= join(oxi, " ") *"<br>"
+    if bufferType != "none"
+        PD_infos[2] *= bufferType *"<br>"
+    end            
+    if diagType == "pt"
+        PD_infos[2] *= join(bulk_L, " ") *"<br>"
+        if bufferType != "none"
+            PD_infos[2] *= string(bufferN1) *"<br>"
+        end       
+    elseif diagType == "px"
+        PD_infos[2] *= join(bulk_L, " ") *"<br>"
+        if bufferType != "none"
+            PD_infos[2] *= string(bufferN1) *"<br>"
+        end
+        PD_infos[2] *= join(bulk_R, " ") *"<br>"
+        if bufferType != "none"
+            PD_infos[2] *= string(bufferN2) *"<br>"
+        end        
+        PD_infos[2] *= join(fixT, " ") *"<br>"
+    else
+        PD_infos[2] *= join(bulk_L, " ") *"<br>"
+        if bufferType != "none"
+            PD_infos[2] *= string(bufferN1) *"<br>"
+        end        
+        PD_infos[2] *= join(bulk_R, " ") *"<br>"
+        if bufferType != "none"
+            PD_infos[2] *= string(bufferN2) *"<br>"
+        end        
+        PD_infos[2] *= join(fixP, " ") *"<br>"
+    end
+    PD_infos[2] *= " <br>"
+    
     return PD_infos
 end
 
@@ -410,7 +450,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                     autosize=false,
                     # paper_bgcolor="LightSteelBlue",
                     # margin=attr(l=50, r=50, b=50, t=80),
-                    margin=attr(l=50, r=50, b=260, t=60),
+                    margin=attr(l=50, r=50, b=260, t=70, pad=4),
                 )
 
 
@@ -538,7 +578,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,
                 autosize=false,
                 # paper_bgcolor="LightSteelBlue",
                 # margin=attr(l=50, r=50, b=50, t=80),
-                margin=attr(l=50, r=50, b=260, t=60),
+                margin=attr(l=50, r=50, b=260, t=70, pad=4),
             )
 
     data_plot = heatmap(x               = X,
@@ -580,6 +620,7 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
                                             dtb,        diagType,
                                             smooth,     colorm,     reverseColorMap,
                                             test                                  )
+    global PT_infos
 
     layout = Layout(
         images=[ attr(
@@ -607,9 +648,7 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
         width       = 700,
         height      = 900,
         autosize=false,
-        # paper_bgcolor="LightSteelBlue",
-        # margin=attr(l=50, r=50, b=50, t=80),
-        margin=attr(l=50, r=50, b=260, t=60),
+        margin=attr(l=50, r=50, b=260, t=70, pad=4),
     )
 
 
@@ -655,7 +694,7 @@ function  update_diplayed_field_phaseDiagram(   xtitle,     ytitle,
                                                 smooth,     colorm,     reverseColorMap,
                                                 test                                  )
 
-    global data, Out_XY, data_plot, gridded, gridded_info, X, Y, PhasesLabels, addedRefinementLvl
+    global data, Out_XY, data_plot, gridded, gridded_info, X, Y, PhasesLabels, addedRefinementLvl, PT_infos
 
     gridded, gridded_info, X, Y, npoints, meant, PhasesLabels = get_gridded_map(    fieldname,
                                                                                     oxi,
@@ -696,7 +735,7 @@ function  update_diplayed_field_phaseDiagram(   xtitle,     ytitle,
     autosize=false,
     # paper_bgcolor="LightSteelBlue",
     # margin=attr(l=50, r=50, b=50, t=80),
-    margin=attr(l=50, r=50, b=260, t=60), )
+    margin=attr(l=50, r=50, b=260, t=70, pad=4), )
 
     data_plot = heatmap(x               = X,
                         y               = Y,
@@ -738,7 +777,7 @@ function  show_hide_grid_phaseDiagram(  xtitle,     ytitle,     grid,
                                         smooth,     colorm,     reverseColorMap,
                                         test                                  )
 
-    global data, data_plot, gridded, gridded_info, X, Y, PhasesLabels
+    global data, data_plot, gridded, gridded_info, X, Y, PhasesLabels, PT_infos
 
     layout = Layout(
         images=[ attr(
@@ -768,7 +807,7 @@ function  show_hide_grid_phaseDiagram(  xtitle,     ytitle,     grid,
         autosize=false,
         # paper_bgcolor="LightSteelBlue",
         # margin=attr(l=50, r=50, b=50, t=80),
-        margin=attr(l=50, r=50, b=260, t=60),
+        margin=attr(l=50, r=50, b=260, t=70, pad=4),
     )
     if length(grid) == 2
         data_plot      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, length(data.x)+1);
