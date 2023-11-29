@@ -334,15 +334,15 @@ function save_equilibrium_to_file(  out::MAGEMin_C.gmin_struct{Float64, Int64}  
     for i=1:out.n_SS
         for j=1:length(out.SS_vec[i].emFrac)-1
             if length(out.ph[i]) == 1
-                file *= @sprintf(	"xyzguess %5s(%1s) %10f\n", "?",out.ph[i], out.SS_vec[i].compVariables[j])
+                file *= @sprintf(	"xyzguess %5s(%1s) %10f\n", out.SS_vec[i].compVariablesNames[j],out.ph[i], out.SS_vec[i].compVariables[j])
             elseif length(out.ph[i]) == 2
-                file *= @sprintf(	"xyzguess %5s(%2s) %10f\n", "?",out.ph[i], out.SS_vec[i].compVariables[j])
+                file *= @sprintf(	"xyzguess %5s(%2s) %10f\n", out.SS_vec[i].compVariablesNames[j],out.ph[i], out.SS_vec[i].compVariables[j])
             elseif length(out.ph[i]) == 3
-                file *= @sprintf(	"xyzguess %5s(%3s) %10f\n", "?",out.ph[i], out.SS_vec[i].compVariables[j])
+                file *= @sprintf(	"xyzguess %5s(%3s) %10f\n", out.SS_vec[i].compVariablesNames[j],out.ph[i], out.SS_vec[i].compVariables[j])
             elseif length(out.ph[i]) == 4
-                file *= @sprintf(	"xyzguess %5s(%4s) %10f\n", "?",out.ph[i], out.SS_vec[i].compVariables[j])
+                file *= @sprintf(	"xyzguess %5s(%4s) %10f\n", out.SS_vec[i].compVariablesNames[j],out.ph[i], out.SS_vec[i].compVariables[j])
             elseif length(out.ph[i]) == 5
-                file *= @sprintf(	"xyzguess %5s(%5s) %10f\n", "?",out.ph[i], out.SS_vec[i].compVariables[j])
+                file *= @sprintf(	"xyzguess %5s(%5s) %10f\n", out.SS_vec[i].compVariablesNames[j],out.ph[i], out.SS_vec[i].compVariables[j])
             end
         end
         if n < out.n_SS

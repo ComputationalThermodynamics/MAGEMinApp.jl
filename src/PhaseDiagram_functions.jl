@@ -318,7 +318,7 @@ end
 """
 function compute_new_phaseDiagram(  xtitle,     ytitle,     
                                     Xrange,     Yrange,     fieldname,
-                                    dtb,        diagType,   verbose,
+                                    dtb,        diagType,   verbose,    solver,
                                     fixT,       fixP,
                                     sub,        refLvl,
                                     cpx,        limOpx,     limOpxVal,
@@ -354,13 +354,19 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
             limitCaOpx   = 1
             CaOpxLim     = limOpxVal
         end
+        if solver == "pge"
+            sol = 1
+        elseif solver == "lp"
+            sol = 0
+        end
 
         MAGEMin_data    =   Initialize_MAGEMin( dtb;
                                                 verbose     = false,
                                                 limitCaOpx  = limitCaOpx,
                                                 CaOpxLim    = CaOpxLim,
                                                 mbCpx       = mbCpx,
-                                                buffer      = bufferType    );
+                                                buffer      = bufferType,
+                                                solver      = sol    );
 
         #________________________________________________________________________________________#                      
         # initial optimization on regular grid
@@ -491,7 +497,7 @@ end
 """
 function refine_phaseDiagram(   xtitle,     ytitle,     
                                 Xrange,     Yrange,     fieldname,
-                                dtb,        diagType,   verbose,
+                                dtb,        diagType,   verbose,    solver,
                                 fixT,       fixP,
                                 sub,        refLvl,
                                 cpx,        limOpx,     limOpxVal,

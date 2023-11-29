@@ -198,7 +198,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             data_plot, layout, npoints, grid_out, meant  =  compute_new_phaseDiagram(   xtitle,     ytitle,     
                                                                                         Xrange,     Yrange,     fieldname,
-                                                                                        dtb,        diagType,   verbose,
+                                                                                        dtb,        diagType,   verbose,    solver,
                                                                                         fixT,       fixP,
                                                                                         sub,        refLvl,
                                                                                         cpx,        limOpx,     limOpxVal,
@@ -215,7 +215,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             data_plot, layout, npoints, grid_out, meant  =  refine_phaseDiagram(    xtitle,     ytitle,     
                                                                                     Xrange,     Yrange,     fieldname,
-                                                                                    dtb,        diagType,   verbose,
+                                                                                    dtb,        diagType,   verbose,    solver,
                                                                                     fixT,       fixP,
                                                                                     sub,        refLvl,
                                                                                     cpx,        limOpx,     limOpxVal,
