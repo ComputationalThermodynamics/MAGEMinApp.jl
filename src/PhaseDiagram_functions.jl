@@ -51,6 +51,8 @@ function get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, 
         solv = "LP (legacy)"
     elseif solver == "pge"
         solv = "PGE (default)"
+    elseif solver == "hyb"
+        solv = "Hybrid (PGE&LP)"
     end
 
 
@@ -359,6 +361,8 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
             sol = 1
         elseif solver == "lp"
             sol = 0
+        elseif solver == "hyb" 
+            sol = 2         
         end
 
         MAGEMin_data    =   Initialize_MAGEMin( dtb;
