@@ -409,6 +409,16 @@ function Tab_PhaseDiagram()
                                                             clearable   = false,
                                                             multi       = false),
                                         ]),
+
+                                        dbc_col([ 
+                                            dbc_input(
+                                                type    = "color",
+                                                id      = "colorpicker",
+                                                value   = "#000000",
+                                                style   = Dict("width" => 75, "height" => 25),
+                                            ),
+                                        ]),
+
                                     ]),
                                     dbc_row([    
                                         dbc_col([

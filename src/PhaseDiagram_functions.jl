@@ -797,6 +797,8 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                                         z                   = gridded,
                                                         contours_coloring   = "lines",
                                                         colorscale          = g_isopleths.colorL[isoColor],
+                                                        # colorscale          = [[0, "rgb(180,178,13)"], [1, "rgb(180,178,13)"]],
+                                                        
                                                         contours_start      = minIso,
                                                         contours_end        = maxIso,
                                                         contours_size       = stepIso,
@@ -807,6 +809,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                                                                         showlabels  = true,
                                                                                         labelfont   = attr( size    = isoLabelSize,
                                                                                                             color   = g_isopleths.colorT[isoColor],  )
+                                                                                                            # color   = "rgb(180,178,13)",  )
                                                         )
                                                     )
     g_isopleths.status[g_isopleths.n_iso]   = 1
