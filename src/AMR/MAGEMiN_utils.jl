@@ -25,39 +25,6 @@ function create_forest( tmin::Float64,
     return forest_data
 end
 
-# function initialize_MAGEMin_AMR(    db          :: String,
-#                                     verbose     :: Int64,
-#                                     diagType    :: String,
-#                                     bufferType  :: String,
-#                                     cpx         :: Bool,
-#                                     limOpx      :: String,
-#                                     limOpxVal   :: Float64 )
-
-#     if verbose == "none"
-#         verbose = false
-#     elseif verbose == "light"
-#         verbose = true
-#     elseif verbose == "full"
-#         verbose = 1
-#     end
-
-#     # set clinopyroxene for the metabasite database
-#     mbCpx = 0;
-#     if cpx == true && db =="mb"
-#         mbCpx = 1;
-#     end
-
-#     if limOpx == "ON" && (db =="mb" || db =="ig" || db =="igd" || db =="alk")
-#         limitCaOpx   = 1;
-#         CaOpxLim     = limOpxVal;
-#     end
-
-
-#     MAGEMin_data    =   Initialize_MAGEMin(db, verbose=verbose, limitCaOpx = limitCaOpx, CaOpxLim = CaOpxLim, mbCpx = mbCpx, buffer=bufferType );
-
-#     # MAGEMin_data.gv[1].verbose = 0
-#     return MAGEMin_data
-# end
 
 function refine_MAGEMin(data, 
                         MAGEMin_data    :: MAGEMin_Data, 

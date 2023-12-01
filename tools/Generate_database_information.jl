@@ -24,7 +24,7 @@ db_details      = [ "Metapelite (White et al., 2014)",
                     "Igneous HP18 (Green et al., 2023)",
                     "Igneous T21 (Green et al., 2023)",
                     "Alkaline (Weller et al., 2023)",
-                    "Ultramafic (Tomlinson et al., 2021)"]
+                    "Ultramafic (Evans & Frost., 2021)"]
 
 database_list   = ["mp","mb","ig","igd","alk","um"]
 db_inf          = Array{db_infos, 1}(undef, length(database_list))
