@@ -32,7 +32,7 @@ push!(dba,Dict(         :database    => "Alkaline (Weller et al., 2023)",
                         :acronym     => "alk",
                         ), cols=:union)
 
-push!(dba,Dict(         :database    => "Ultramafic (Tomlinson et al., 2021)",
+push!(dba,Dict(         :database    => "Ultramafic (Evans & Frost., 2021)",
                         :acronym     => "um",
                         ), cols=:union)
 

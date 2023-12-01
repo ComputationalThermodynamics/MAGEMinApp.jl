@@ -334,15 +334,15 @@ function save_equilibrium_to_file(  out::MAGEMin_C.gmin_struct{Float64, Int64}  
     for i=1:out.n_SS
         for j=1:length(out.SS_vec[i].emFrac)-1
             if length(out.ph[i]) == 1
-                file *= @sprintf(	"xyzguess %5s(%1s) %10f\n", "?",out.ph[i], out.SS_vec[i].compVariables[j])
+                file *= @sprintf(	"xyzguess %5s(%1s) %10f\n", out.SS_vec[i].compVariablesNames[j],out.ph[i], out.SS_vec[i].compVariables[j])
             elseif length(out.ph[i]) == 2
-                file *= @sprintf(	"xyzguess %5s(%2s) %10f\n", "?",out.ph[i], out.SS_vec[i].compVariables[j])
+                file *= @sprintf(	"xyzguess %5s(%2s) %10f\n", out.SS_vec[i].compVariablesNames[j],out.ph[i], out.SS_vec[i].compVariables[j])
             elseif length(out.ph[i]) == 3
-                file *= @sprintf(	"xyzguess %5s(%3s) %10f\n", "?",out.ph[i], out.SS_vec[i].compVariables[j])
+                file *= @sprintf(	"xyzguess %5s(%3s) %10f\n", out.SS_vec[i].compVariablesNames[j],out.ph[i], out.SS_vec[i].compVariables[j])
             elseif length(out.ph[i]) == 4
-                file *= @sprintf(	"xyzguess %5s(%4s) %10f\n", "?",out.ph[i], out.SS_vec[i].compVariables[j])
+                file *= @sprintf(	"xyzguess %5s(%4s) %10f\n", out.SS_vec[i].compVariablesNames[j],out.ph[i], out.SS_vec[i].compVariables[j])
             elseif length(out.ph[i]) == 5
-                file *= @sprintf(	"xyzguess %5s(%5s) %10f\n", "?",out.ph[i], out.SS_vec[i].compVariables[j])
+                file *= @sprintf(	"xyzguess %5s(%5s) %10f\n", out.SS_vec[i].compVariablesNames[j],out.ph[i], out.SS_vec[i].compVariables[j])
             end
         end
         if n < out.n_SS
@@ -415,7 +415,8 @@ function get_gridded_map(   fieldname   ::String,
                             xf          ::Vector{SVector{4, Float64}},
                             yf          ::Vector{SVector{4, Float64}},
                             Xrange      ::Tuple{Float64, Float64},
-                            Yrange      ::Tuple{Float64, Float64} )
+                            Yrange      ::Tuple{Float64, Float64},
+                            PT_infos    ::Vector{String} )
 
     np          = length(data.x)
     len_ox      = length(oxi)
@@ -459,12 +460,38 @@ function get_gridded_map(   fieldname   ::String,
     Y            = repeat(y', n)[:]
     gridded      = Matrix{Union{Float64,Missing}}(undef,n,n);
     gridded_info = Matrix{Union{String,Missing}}(undef,n,n);   
-    PhasesLabels = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,n^2)
+    PhasesLabels = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,n^2+2)
 
     Xr = (Xrange[2]-Xrange[1])/n
     Yr = (Yrange[2]-Yrange[1])/n
 
-    m  = 1
+    PhasesLabels[1] =   attr(   xref        = "paper",
+                                yref        = "paper",
+                                align       = "left",
+                                valign      = "top",
+                                x           = 0.0,
+                                y           = 0.0,
+                                yshift      = -250,
+                                text        = PT_infos[1],
+                                showarrow   = false,
+                                clicktoshow = false,
+                                visible     = true,
+                                font        = attr( size = 10),
+                                )   
+    PhasesLabels[2] =   attr(   xref        = "paper",
+                                yref        = "paper",
+                                align       = "left",
+                                valign      = "top",
+                                x           = 0.2,
+                                y           = 0.0,
+                                yshift      = -250,
+                                text        = PT_infos[2],
+                                showarrow   = false,
+                                clicktoshow = false,
+                                visible     = true,
+                                font        = attr( size = 10),
+                                )   
+    m  = 3
     for k=1:np
         ii              = Int64(round((xc[k]-Xrange[1] + Xr/2)/(Xr)))
         jj              = Int64(round((yc[k]-Yrange[1] + Yr/2)/(Yr))) 
@@ -497,6 +524,83 @@ function get_gridded_map(   fieldname   ::String,
 end
 
 
+"""
+    Function interpolate AMR grid to regular grid
+"""
+function get_gridded_map_no_lbl(    fieldname   ::String,
+                                    oxi         ::Vector{String},
+                                    Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
+                                    sub         ::Int64,
+                                    refLvl      ::Int64,
+                                    xc          ::Vector{Float64},
+                                    yc          ::Vector{Float64},
+                                    xf          ::Vector{SVector{4, Float64}},
+                                    yf          ::Vector{SVector{4, Float64}},
+                                    Xrange      ::Tuple{Float64, Float64},
+                                    Yrange      ::Tuple{Float64, Float64} )
+
+    np          = length(data.x)
+    len_ox      = length(oxi)
+    field       = Vector{Union{Float64,Missing}}(undef,np);
+ 
+    npoints     = np
+
+    meant       = 0.0
+    for i=1:np
+        meant  += Out_XY[i].time_ms
+    end
+    meant      /= npoints
+    meant       = round(meant; digits = 3)
+
+    if fieldname == "#Phases"
+        for i=1:np
+            field[i] = Float64(length(Out_XY[i].ph));
+        end
+    elseif fieldname == "Variance"
+        for i=1:np
+            field[i] = Float64(len_ox - n_phase_XY[i] + 2.0);
+        end
+    else
+        for i=1:np
+            field[i] = Float64(get_property(Out_XY[i], fieldname));
+        end
+
+        field[isnan.(field)] .= missing
+        if fieldname == "frac_M" || fieldname == "rho_M" || fieldname == "rho_S"
+            field[isless.(field, 1e-8)] .= missing              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
+        elseif fieldname == "fO2"
+            field .= log10.(field)
+        end
+    end
+
+    n            = 2^(sub + refLvl)
+    x            = range(minimum(xc), stop = maximum(xc), length = n)
+    y            = range(minimum(yc), stop = maximum(yc), length = n)
+
+    X            = repeat(x , n)[:]
+    Y            = repeat(y', n)[:]
+    gridded      = Matrix{Union{Float64,Missing}}(undef,n,n);
+
+    Xr = (Xrange[2]-Xrange[1])/n
+    Yr = (Yrange[2]-Yrange[1])/n
+
+    for k=1:np
+        ii              = Int64(round((xc[k]-Xrange[1] + Xr/2)/(Xr)))
+        jj              = Int64(round((yc[k]-Yrange[1] + Yr/2)/(Yr))) 
+        gridded[ii,jj]  = field[k] 
+
+        for i=xf[k][1]+Xr/2 : Xr : xf[k][3]
+            for j=yf[k][1]+Yr/2 : Yr : yf[k][3]
+                iii                  = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
+                jjj                  = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
+            end
+        end
+
+    end
+
+    return gridded, X, Y, npoints, meant
+end
+
 
 """
     Function interpolate AMR grid to regular grid
@@ -504,6 +608,7 @@ end
 function get_isopleth_map(  mod         ::String, 
                             ss          ::String, 
                             em          ::String,
+                            of          ::String,
                             oxi         ::Vector{String},
                             Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
                             sub         ::Int64,
@@ -538,7 +643,19 @@ function get_isopleth_map(  mod         ::String,
                 field[i] = 0.0
             end
         end 
+    elseif mod == "of_mod"
+        for i=1:np
+            field[i] = Float64(get_property(Out_XY[i], of));
+        end
+        field[isnan.(field)] .= missing
+        if of == "frac_M" || of == "rho_M" || of == "rho_S"
+            field[isless.(field, 1e-8)] .= 0.0              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
+        elseif of == "fO2"
+            field .= log10.(field)
+        end 
     end
+
+
 
     n            = 2^(sub + refLvl)
     x            = range(minimum(xc), stop = maximum(xc), length = n)

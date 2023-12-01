@@ -294,6 +294,7 @@ function Tab_Simulation()
                                             options = [
                                                 (label = "PGE",         value = "pge"),
                                                 (label = "Legacy",      value = "lp"),
+                                                (label = "Hybrid",      value = "hyb")
                                             ],
                                             value="pge" ,
                                             clearable   = false,

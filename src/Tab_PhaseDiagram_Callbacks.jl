@@ -94,6 +94,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("meant-id",      "value"),
 
         Output("isopleth-dropdown","options"),
+        Output("smooth-colormap",    "value"),
 
         Input("button-add-isopleth",        "n_clicks"),
         Input("button-remove-isopleth",     "n_clicks"),
@@ -112,8 +113,8 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("show-grid",          "value"),           # show edges checkbox
 
         State("npoints-id",         "value"),           # total number of computed points
-        State("diagram-dropdown",   "value"),           # pt,px,tx
-        State("database-dropdown",  "value"),           # mp,mb,ig,igd,um,alk
+        State("diagram-dropdown",   "value"),           # pt, px, tx
+        State("database-dropdown",  "value"),           # mp, mb, ig ,igd, um, alk
         State("mb-cpx-switch",      "value"),           # false,true -> 0,1
         State("limit-ca-opx-id",    "value"),           # ON,OFF -> 0,1
         State("ca-opx-val-id",      "value"),           # 0.0-1.0 -> 0,1
@@ -148,11 +149,13 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("phase-dropdown",     "value"),
         State("ss-dropdown",        "value"),
         State("em-dropdown",        "value"),
-        State("iso-color-dropdown", "value"),
+        State("of-dropdown",        "value"),
+        State("colorpicker_isoL",   "value"),
         State("iso-text-size-id",   "value"),
         State("iso-min-id",         "value"),
         State("iso-step-id",        "value"),
         State("iso-max-id",         "value"),
+
 
         prevent_initial_call = true,
 
@@ -166,11 +169,11 @@ function Tab_PhaseDiagram_Callbacks(app)
             bulk1,      bulk2,
             bufferN1,   bufferN2,
             test,
-            isopleths,  isoplethsID,phase,      ss,     em,     
-            isoColor,   isoLabelSize,   
+            isopleths,  isoplethsID,        phase,  ss,         em,         of,  
+            isoColorLine,           isoLabelSize,   
             minIso,     stepIso,    maxIso
 
-
+        smooth                          = smooth
         xtitle, ytitle, Xrange, Yrange  = diagram_type(diagType, tmin, tmax, pmin, pmax)                # get axis information
         bufferN1, bufferN2, fixT, fixP  = convert2Float64(bufferN1, bufferN2, fixT, fixP)               # convert buffer_n to float
         bid                             = pushed_button( callback_context() )                           # get the ID of the last pushed button
@@ -180,42 +183,53 @@ function Tab_PhaseDiagram_Callbacks(app)
         
 
         if bid == "compute-button"
+            smooth                      = "best"
+      
+            if @isdefined(MAGEMin_data)
+                for i = 1:Threads.nthreads()
+
+                    finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i])
+                    GC.gc()
+
+                end
+            end
 
             # declare set of global variables needed to generate, refine and display phase diagrams
             global fig, MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, PhasesLabels
             global addedRefinementLvl   = 0;
-            global nIsopleths           = 0;
-            global grid_out, data_plot, layout, g_isopleths;
+            global grid_out, data_plot, layout, g_isopleths, PT_infos;
 
-            PT_infos                                     = get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP)
+            PT_infos                                     = get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
 
             g_isopleths                                  = initialize_g_isopleth(; n_iso_max = 32)
 
             data_plot, layout, npoints, grid_out, meant  =  compute_new_phaseDiagram(   xtitle,     ytitle,     
                                                                                         Xrange,     Yrange,     fieldname,
-                                                                                        dtb,        diagType,   verbose,
+                                                                                        dtb,        diagType,   verbose,    solver,
                                                                                         fixT,       fixP,
                                                                                         sub,        refLvl,
                                                                                         cpx,        limOpx,     limOpxVal,
                                                                                         bulk_L,     bulk_R,     oxi,
                                                                                         bufferType, bufferN1,   bufferN2,
                                                                                         smooth,     colorm,     reverseColorMap,
-                                                                                        test                                  )
-
+                                                                                        test,       PT_infos                                  )
+            
             fig         = plot(data_plot,layout)
 
         elseif bid == "refine-pb-button"
 
+            PT_infos                                     = get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
+
             data_plot, layout, npoints, grid_out, meant  =  refine_phaseDiagram(    xtitle,     ytitle,     
                                                                                     Xrange,     Yrange,     fieldname,
-                                                                                    dtb,        diagType,   verbose,
+                                                                                    dtb,        diagType,   verbose,    solver,
                                                                                     fixT,       fixP,
                                                                                     sub,        refLvl,
                                                                                     cpx,        limOpx,     limOpxVal,
                                                                                     bulk_L,     bulk_R,     oxi,
                                                                                     bufferType, bufferN1,   bufferN2,
                                                                                     smooth,     colorm,     reverseColorMap,
-                                                                                    test                                  )
+                                                                                    test,       PT_infos                                  )
 
             fig         = plot(data_plot,layout)
 
@@ -255,8 +269,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             g_isopleths, isopleths = add_isopleth_phaseDiagram(     Xrange,     Yrange,
                                                                     sub,        refLvl,
                                                                     dtb,        oxi,
-                                                                    isopleths,  phase,      ss,     em, 
-                                                                    isoColor,   isoLabelSize,   
+                                                                    isopleths,  phase,      ss,     em,     of,
+                                                                    isoColorLine,           isoLabelSize,   
                                                                     minIso,     stepIso,    maxIso      )
 
 
@@ -267,12 +281,15 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             if (isoplethsID) in g_isopleths.active
 
-                if g_isopleths.n_iso >= 2
+                if g_isopleths.n_iso > 2
                 g_isopleths, isopleths = remove_single_isopleth_phaseDiagram(isoplethsID)
 
                 fig         = plot(g_isopleths.isoP[g_isopleths.active], layout)
+                
                 else
-                    fig     = plot(data_plot,layout)
+                    g_isopleths, isopleths, data_plot = remove_all_isopleth_phaseDiagram()
+
+                    fig         = plot(data_plot,layout)
                 end
 
             else
@@ -307,11 +324,11 @@ function Tab_PhaseDiagram_Callbacks(app)
         config = PlotConfig(    toImageButtonOptions  = attr(   format  = "svg", # one of png, svg, jpeg, webp
                                                                 filename= "myPlot",
                                                                 height  =  1024,
-                                                                width   =  1024,
+                                                                width   =  840,
                                                                 scale   =  1.0,       ).fields)
 
 
-        return fig, config, grid_out, npoints, meant, isopleths
+        return fig, config, grid_out, npoints, meant, isopleths, smooth
     end
 
 

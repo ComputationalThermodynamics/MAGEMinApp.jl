@@ -1,27 +1,37 @@
 function Tab_Simulation_Callbacks(app)
 
-    # update the dictionary of the solution phases and end-members for isopleth
+    # update the dictionary of the solution phases and end-members for isopleths
     callback!(
         app,
         Output("ss-dropdown","options"),
         Output("ss-dropdown","value"),
         Output("em-1-id","style"),
+        Output("ss-1-id","style"),
+        Output("of-1-id","style"),
         Input("database-dropdown","value"),
         Input("phase-dropdown","value"),
         
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
     ) do dtb, phase
-        # bid  = pushed_button( callback_context() ) 
 
         db_in       = retrieve_solution_phase_information(dtb)
         n_ss        = length(db_in.data_ss)
         n_pp        = length(db_in.data_pp)
 
-        if phase == "ss"
+        if phase == "of"
+            style_ph    = Dict("display" => "none")
+            style_em    = Dict("display" => "none")
+            style_of    = Dict("display" => "block")
+            opts_ph     = []
+            val         = nothing
+
+        elseif phase == "ss"
             opts_ph     =  [Dict(   "label" => db_in.data_ss[i].ss_name,
                                     "value" => db_in.data_ss[i].ss_name )
                                         for i=1:n_ss ]
-            style       = Dict("display" => "block")
+            style_em    = Dict("display" => "block")
+            style_ph    = Dict("display" => "block")
+            style_of    = Dict("display" => "none")
 
             val         = db_in.data_ss[1].ss_name
 
@@ -30,12 +40,14 @@ function Tab_Simulation_Callbacks(app)
                                     "value" => db_in.data_pp[i]  )
                                         for i=1:n_pp ]
 
-            style       = Dict("display" => "none")
+            style_em    = Dict("display" => "none")
+            style_ph    = Dict("display" => "block")
+            style_of    = Dict("display" => "none")
 
             val         = db_in.data_pp[1]
         end
 
-        return opts_ph, val, style
+        return opts_ph, val, style_em, style_ph, style_of
     end
 
 
