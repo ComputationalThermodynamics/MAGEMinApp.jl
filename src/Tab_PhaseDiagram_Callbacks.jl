@@ -150,7 +150,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("ss-dropdown",        "value"),
         State("em-dropdown",        "value"),
         State("of-dropdown",        "value"),
-        State("iso-color-dropdown", "value"),
+        State("colorpicker_isoL",   "value"),
         State("iso-text-size-id",   "value"),
         State("iso-min-id",         "value"),
         State("iso-step-id",        "value"),
@@ -170,7 +170,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             bufferN1,   bufferN2,
             test,
             isopleths,  isoplethsID,        phase,  ss,         em,         of,  
-            isoColor,   isoLabelSize,   
+            isoColorLine,           isoLabelSize,   
             minIso,     stepIso,    maxIso
 
         smooth                          = smooth
@@ -263,7 +263,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     sub,        refLvl,
                                                                     dtb,        oxi,
                                                                     isopleths,  phase,      ss,     em,     of,
-                                                                    isoColor,   isoLabelSize,   
+                                                                    isoColorLine,           isoLabelSize,   
                                                                     minIso,     stepIso,    maxIso      )
 
 

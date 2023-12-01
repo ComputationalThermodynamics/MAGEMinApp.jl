@@ -19,9 +19,6 @@ mutable struct isopleth_data
     n_iso   :: Int64
     n_iso_max   :: Int64
 
-    colorL  :: Vector{Vector{Vector{Any}}}
-    colorT  :: Vector{String}
-
     status  :: Vector{Int64}
     active  :: Vector{Int64}
     isoP    :: Vector{GenericTrace{Dict{Symbol, Any}}}
@@ -148,19 +145,6 @@ end
 function initialize_g_isopleth(; n_iso_max = 8)
     global g_isopleths
 
-
-    colorL    =     [   [[0, "white"],      [1, "white"]],
-                        [[0, "grey"],       [1, "grey"]], 
-                        [[0, "coral"],      [1, "coral"]],
-                        [[0, "turquoise"],  [1, "turquoise"]], 
-                        [[0, "dodgerblue"], [1, "dodgerblue"]],
-                        [[0, "orchid"],     [1, "orchid"]], 
-                        [[0, "peru"],       [1, "peru"]],
-                        [[0, "black"],      [1, "black"]] 
-                    ] 
-
-    colorT    = ["white","grey","coral","turquoise","dodgerblue","orchid","peru","black"]
-
     status    = zeros(Int64,n_iso_max)
     active    = []
     isoP      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max + 1); # + 1 to store the heatmap
@@ -172,7 +156,7 @@ function initialize_g_isopleth(; n_iso_max = 8)
     label     = Vector{String}(undef,n_iso_max)
     value     = Vector{Int64}(undef,n_iso_max)
 
-    g_isopleths = isopleth_data(1, n_iso_max, colorL, colorT,
+    g_isopleths = isopleth_data(1, n_iso_max,
                                 status, active, isoP,
                                 label, value)
 
@@ -755,10 +739,9 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                             sub,        refLvl,
                                             dtb,        oxi,
                                             isopleths,  phase,      ss,     em,     of,
-                                            isoColor,   isoLabelSize,       
+                                            isoColorLine,           isoLabelSize,       
                                             minIso,     stepIso,    maxIso      )
 
-    isoColor        = Int64(isoColor)
     isoLabelSize    = Int64(isoLabelSize)
 
     if (phase == "ss" && em == "none") || (phase == "pp")
@@ -796,8 +779,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                                         y                   = Y,
                                                         z                   = gridded,
                                                         contours_coloring   = "lines",
-                                                        colorscale          = g_isopleths.colorL[isoColor],
-                                                        # colorscale          = [[0, "rgb(180,178,13)"], [1, "rgb(180,178,13)"]],
+                                                        colorscale          = [[0, isoColorLine], [1, isoColorLine]],
                                                         
                                                         contours_start      = minIso,
                                                         contours_end        = maxIso,
@@ -808,8 +790,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                                         contours            =  attr(    coloring    = "lines",
                                                                                         showlabels  = true,
                                                                                         labelfont   = attr( size    = isoLabelSize,
-                                                                                                            color   = g_isopleths.colorT[isoColor],  )
-                                                                                                            # color   = "rgb(180,178,13)",  )
+                                                                                                            color   = isoColorLine,  )
                                                         )
                                                     )
     g_isopleths.status[g_isopleths.n_iso]   = 1

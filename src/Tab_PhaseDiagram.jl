@@ -396,24 +396,9 @@ function Tab_PhaseDiagram()
                                             html_h1("Color", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
                                         ]),
                                         dbc_col([ 
-                                            dcc_dropdown(   id          = "iso-color-dropdown",
-                                                            options     = [         (   label = "white",        value = 1  ),
-                                                                                    (   label = "grey",         value = 2  ) ,
-                                                                                    (   label = "coral",        value = 3  ) ,
-                                                                                    (   label = "turquoise",    value = 4  ) ,
-                                                                                    (   label = "dodgerblue",   value = 5  ) ,
-                                                                                    (   label = "orchid",       value = 6  ) ,
-                                                                                    (   label = "peru",         value = 7  ) ,
-                                                                                    (   label = "black",        value = 8  )  ],
-                                                            value       = 3,
-                                                            clearable   = false,
-                                                            multi       = false),
-                                        ]),
-
-                                        dbc_col([ 
                                             dbc_input(
                                                 type    = "color",
-                                                id      = "colorpicker",
+                                                id      = "colorpicker_isoL",
                                                 value   = "#000000",
                                                 style   = Dict("width" => 75, "height" => 25),
                                             ),
