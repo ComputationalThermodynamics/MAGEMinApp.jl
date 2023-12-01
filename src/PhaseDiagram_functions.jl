@@ -328,7 +328,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
         # initialize database
         global forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels, layout
         global addedRefinementLvl  = 0;
-        global MAGEMin_data = [];
+        global MAGEMin_data;
 
         # set clinopyroxene for the metabasite database
         mbCpx = 0

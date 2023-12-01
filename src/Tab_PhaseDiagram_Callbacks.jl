@@ -183,13 +183,20 @@ function Tab_PhaseDiagram_Callbacks(app)
         
 
         if bid == "compute-button"
-
             smooth                      = "best"
+      
+            if @isdefined(MAGEMin_data)
+                for i = 1:Threads.nthreads()
+
+                    finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i])
+                    GC.gc()
+
+                end
+            end
 
             # declare set of global variables needed to generate, refine and display phase diagrams
             global fig, MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, PhasesLabels
             global addedRefinementLvl   = 0;
-            global nIsopleths           = 0;
             global grid_out, data_plot, layout, g_isopleths, PT_infos;
 
             PT_infos                                     = get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
