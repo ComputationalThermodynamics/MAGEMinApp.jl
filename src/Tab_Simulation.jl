@@ -296,7 +296,7 @@ function Tab_Simulation()
                                                 (label = "Legacy",      value = "lp"),
                                                 (label = "Hybrid",      value = "hyb")
                                             ],
-                                            value="pge" ,
+                                            value="hyb" ,
                                             clearable   = false,
                                             multi   = false),
                                         ]),

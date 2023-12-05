@@ -444,9 +444,9 @@ function get_gridded_map(   fieldname   ::String,
             field[i] = Float64(get_property(Out_XY[i], fieldname));
         end
 
-        field[isnan.(field)] .= missing
+        field[isnan.(field)] .= 0.0
         if fieldname == "frac_M" || fieldname == "rho_M" || fieldname == "rho_S"
-            field[isless.(field, 1e-8)] .= missing              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
+            field[isless.(field, 1e-8)] .= 0.0              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
         elseif fieldname == "fO2"
             field .= log10.(field)
         end
@@ -565,9 +565,9 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
             field[i] = Float64(get_property(Out_XY[i], fieldname));
         end
 
-        field[isnan.(field)] .= missing
+        field[isnan.(field)] .= 0.0
         if fieldname == "frac_M" || fieldname == "rho_M" || fieldname == "rho_S"
-            field[isless.(field, 1e-8)] .= missing              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
+            field[isless.(field, 1e-8)] .= 0.0              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
         elseif fieldname == "fO2"
             field .= log10.(field)
         end

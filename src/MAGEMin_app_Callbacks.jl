@@ -17,16 +17,16 @@ function MAGEMin_app_Callbacks(app)
         State("pmin-id","value"),                   # pmin
         State("pmax-id","value"),                   # pmax
         State("table-bulk-rock","data"),            # bulk-rock 1
+        State("test-dropdown",      "value"),
         prevent_initial_call=true,
     ) do n_clicks, dtb, dtype, sub, refLvl,
-            tmin, tmax, pmin, pmax, bulk1
+            tmin, tmax, pmin, pmax, bulk1, t
 
         if dtype == "pt"
-
             Xrange          = (Float64(tmin),Float64(tmax))
             Yrange          = (Float64(pmin),Float64(pmax))
 
-            testName = replace(db[(db.db .== dtb), :].title[1], " " => "_")
+            testName = replace(db[(db.db .== dtb), :].title[t+1], " " => "_")
             fileout = testName*".in";
             file    = save_rho_for_LaMEM(   dtb,
                                             sub,
