@@ -503,12 +503,23 @@ function get_gridded_map(   fieldname   ::String,
                 jjj                  = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
 
                 tmp                 = replace(string(Out_XY[k].ph), "\""=>"", "]"=>"", "["=>"", ","=>"")
+
+
+                tmp2 = ""
+                np = length(Out_XY[k].ph)
+                for m=1:np
+                    ph = Out_XY[k].ph[m]
+                    if m%3 == 0
+                        ph *= "<br>"
+                    end
+                    tmp2 *= ph*" "
+                end
                 gridded_info[iii,jjj] = "#"*string(k)*"# "*tmp
 
                 PhasesLabels[m] =   attr(   
                                             x           = x[iii],
                                             y           = y[jjj],
-                                            text        = tmp,
+                                            text        = tmp2,
                                             showarrow   = true,
                                             arrowhead   = 1,
                                             clicktoshow = "onoff",
