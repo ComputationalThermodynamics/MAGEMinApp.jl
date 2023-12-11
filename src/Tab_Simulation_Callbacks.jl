@@ -312,10 +312,15 @@ function Tab_Simulation_Callbacks(app)
             t = test
         end
 
-        data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
-                                "mol_fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac[1][i])
-                                    for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
-
+        if (~isempty(db[(db.db .== dtb) .& (db.test .== t), :].frac2[1]))
+            data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
+                                    "mol_fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac2[1][i])
+                                        for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
+        else
+            data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
+                                    "mol_fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac[1][i])
+                                        for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
+        end
 
         opts        =  [Dict(   "label" => db[(db.db .== dtb), :].title[i],
                                 "value" => db[(db.db .== dtb), :].test[i]  )

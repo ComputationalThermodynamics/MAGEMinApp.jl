@@ -761,8 +761,21 @@ function bulk_file_to_db(datain)
         frac 		= replace.(frac,r"\]"=>"",r"\["=>"");
         frac 		= parse.(Float64,frac);
 
+        idx 		= findall(datain[1,:] .== "frac2")[1];
         bulkrock, MAGEMin_ox    = convertBulk4MAGEMin(frac,oxide,String(sysUnit),String(dbin)) 
+
+        if ~isempty(datain[i,idx])
+            frac2  		= rsplit(datain[i,idx],",");
+            frac2 		= strip.(convert.(String,frac2));
+            frac2 		= replace.(frac2,r"\]"=>"",r"\["=>"");
+            frac2		= parse.(Float64,frac2);
+            bulkrock2, MAGEMin_ox   = convertBulk4MAGEMin(frac2,oxide,String(sysUnit),String(dbin)) 
+        else
+            bulkrock2 = []
+        end
+
         oxide                   = get_oxide_list(String(dbin))
+
 
         push!(db,Dict(  :bulk       => bulk,
                         :title      => title,
@@ -772,6 +785,7 @@ function bulk_file_to_db(datain)
                         :sysUnit    => sysUnit,
                         :oxide      => oxide,
                         :frac       => bulkrock,
+                        :frac2      => bulkrock2,
                     ), cols=:union)
     end
 
