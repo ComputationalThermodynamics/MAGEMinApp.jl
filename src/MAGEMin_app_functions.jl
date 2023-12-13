@@ -763,6 +763,8 @@ function bulk_file_to_db(datain)
 
         idx 		= findall(datain[1,:] .== "frac2")[1];
         bulkrock, MAGEMin_ox    = convertBulk4MAGEMin(frac,oxide,String(sysUnit),String(dbin)) 
+        bulkrock   .= round.(bulkrock; digits = 4)
+
 
         if ~isempty(datain[i,idx])
             frac2  		= rsplit(datain[i,idx],",");
@@ -770,6 +772,7 @@ function bulk_file_to_db(datain)
             frac2 		= replace.(frac2,r"\]"=>"",r"\["=>"");
             frac2		= parse.(Float64,frac2);
             bulkrock2, MAGEMin_ox   = convertBulk4MAGEMin(frac2,oxide,String(sysUnit),String(dbin)) 
+            bulkrock2  .= round.(bulkrock; digits = 4)
         else
             bulkrock2 = []
         end
