@@ -187,7 +187,7 @@ function Tab_PhaseDiagram_Callbacks(app)
       
             if @isdefined(MAGEMin_data)
                 for i = 1:Threads.nthreads()
-                    finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i])
+                    finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i])
                     GC.gc()
                 end
             end
