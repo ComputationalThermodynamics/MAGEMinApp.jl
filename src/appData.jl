@@ -24,6 +24,10 @@ push!(dba,Dict(         :database    => "Igneous HP18 (Green et al., 2023)",
                         :acronym     => "ig",
                         ), cols=:union)
 
+push!(dba,Dict(         :database    => "Igneous HP18 (Green et al., 2023), extended",
+                        :acronym     => "ige",
+                        ), cols=:union)
+
 push!(dba,Dict(         :database    => "Igneous T21 (Green et al., 2023)",
                         :acronym     => "igd",
                         ), cols=:union)
@@ -305,6 +309,85 @@ push!(db,Dict(          :bulk       => "predefined",
                         :frac2      => [],
                         ), cols=:union)
              
+            
+#IGNEOUS EXTENDED DATABASE
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "KLB1 Peridotite - Anhydrous",
+                        :comments   => "Holland et al., 2018",
+                        :db         => "ige",
+                        :test       => 0,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3","H2O"],
+                        :frac       => [38.494,  1.776,  2.824, 50.566, 5.886,  0.01,  0.250,  0.10,  0.096,  0.109, 0],
+                        :frac2      => [],
+                        ), cols=:union)
+
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "RE46 - Icelandic basalt",
+                        :comments   => "Yang et al., 1996",
+                        :db         => "ige",
+                        :test       => 1,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3","H2O"],
+                        :frac       => [ 50.72,	9.16,15.21, 16.25,	7.06, 0.01, 1.47, 0.39, 0.35,  0.01,  0.0],
+                        :frac2      => [],
+                        ), cols=:union)
+
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "N_MORB - Basalt",
+                        :comments   => "Gale et al., 2013",
+                        :db         => "ige",
+                        :test       => 2,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3","H2O"],
+                        :frac       => [53.21,	9.41,	12.21,	12.21,	8.65,	0.09,	2.90,1.21,0.69,0.02, 0.0],
+                        :frac2      => [],
+                        ), cols=:union)
+             
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "MIX1-G - Pyroxenite",
+                        :comments   => "Hirschmann et al., 2003",
+                        :db         => "ige",
+                        :test       => 3,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3","H2O"],
+                        :frac       => [45.25,	8.89,	12.22,	24.68,6.45,	0.03,	1.39,0.67,0.11,0.02,0.0],
+                        :frac2      => [],
+                        ), cols=:union)
+             
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "High-Al basalt",
+                        :comments   => "Baker, 1983",
+                        :db         => "ige",
+                        :test       => 4,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3","H2O"],
+                        :frac       => [54.40,	12.96, 11.31, 7.68, 8.63,	0.54, 3.93, 0.79, 0.41, 0.01, 0.0],
+                        :frac2      => [],
+                        ), cols=:union)
+             
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "Tonalite 101",
+                        :comments   => "Piwinskii, 1968",
+                        :db         => "ige",
+                        :test       => 5,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3","H2O"],
+                        :frac       => [66.01,11.98,7.06,4.16,5.30,1.57,4.12,0.66,0.97,0.01, 50],
+                        :frac2      => [],
+                        ), cols=:union)
+             
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "Wet Basalt",
+                        :comments   => "unpublished",
+                        :db         => "ige",
+                        :test       => 6,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3","H2O"],
+                        :frac       => [50.0810,  8.6901,  11.6698, 12.1438, 7.7832,  0.2150,  2.4978,  1.0059,  0.4670,  0.0100, 5.4364],
+                        :frac2      => [],
+                        ), cols=:union)
+       
 
 
 #ALKALINE DATABASE
