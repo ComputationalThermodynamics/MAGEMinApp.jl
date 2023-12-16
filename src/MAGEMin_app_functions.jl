@@ -236,7 +236,7 @@ function save_equilibrium_to_file(  out::MAGEMin_C.gmin_struct{Float64, Int64}  
         file *= @sprintf("\n")  
     end
     for i=1:out.n_PP
-        file *= @sprintf(" %8s",out.ph[i])
+        file *= @sprintf(" %8s",out.ph[i+out.n_SS])
         for j=1:length(out.PP_vec[i].Comp_wt)
             file *= @sprintf(" %8f",out.PP_vec[i].Comp_wt[j])
         end
