@@ -509,16 +509,16 @@ function get_gridded_map(   fieldname   ::String,
                 np = length(Out_XY[k].ph)
                 for m=1:np
                     ph = Out_XY[k].ph[m]
-                    if m%4 == 0
-                        ph *= "<br>"
-                    end
+                    # if m%4 == 0
+                    #     ph *= "<br>"
+                    # end
                     tmp2 *= ph*" "
                 end
                 gridded_info[iii,jjj] = "#"*string(k)*"# "*tmp
 
                 PhasesLabels[m] =   attr(   
-                                            axref       = "pixel",  ayref       = "pixel",
-                                            ax          = -15,      ay          = -40,
+                                            # axref       = "pixel",  ayref       = "pixel",
+                                            # ax          = -15,      ay          = -40,
 
                                             x           = x[iii],
                                             y           = y[jjj],
