@@ -188,9 +188,9 @@ function Tab_PhaseDiagram_Callbacks(app)
             if @isdefined(MAGEMin_data)
                 for i = 1:Threads.nthreads()
                     finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i])
-                    GC.gc()
                 end
             end
+            GC.gc()
 
             # declare set of global variables needed to generate, refine and display phase diagrams
             global fig, MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, PhasesLabels
