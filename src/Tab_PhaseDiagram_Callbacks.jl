@@ -191,8 +191,6 @@ function Tab_PhaseDiagram_Callbacks(app)
                 end
             end
             GC.gc()
-
-            GC.gc()
             
             # declare set of global variables needed to generate, refine and display phase diagrams
             global fig, MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, PhasesLabels
