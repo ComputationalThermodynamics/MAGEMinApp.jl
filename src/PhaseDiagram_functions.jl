@@ -298,7 +298,7 @@ end
                                 bulk_L,     bulk_R,     oxi,
                                 bufferType, bufferN1,   bufferN2,
                                 smooth,     colorm,     reverseColorMap,
-                                test                                    )
+                                test,       PT_infos,   refType                                     )
 
     Compute a new phase diagram from scratch
 """
@@ -311,7 +311,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                                     bulk_L,     bulk_R,     oxi,
                                     bufferType, bufferN1,   bufferN2,
                                     smooth,     colorm,     reverseColorMap,
-                                    test,       PT_infos                                  )
+                                    test,       PT_infos,   refType                                  )
 
         empty!(AppData.PseudosectionData);              #this empty the data from previous pseudosection computation
 
@@ -369,7 +369,8 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                                                         bulk_R,
                                                         bufferType,
                                                         bufferN1,
-                                                        bufferN2    )
+                                                        bufferN2,
+                                                        refType    )
                     
         #________________________________________________________________________________________#     
         # Refine the mesh along phase boundaries
@@ -387,7 +388,8 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                                                                         bulk_R,
                                                                         bufferType,
                                                                         bufferN1,
-                                                                        bufferN2, 
+                                                                        bufferN2,
+                                                                        refType, 
                                                                         ind_map         = ind_map,
                                                                         Out_XY_old      = Out_XY,
                                                                         n_phase_XY_old  = n_phase_XY    ) # recompute points that have not been computed before
@@ -482,7 +484,7 @@ end
                                     bulk_L,     bulk_R,     oxi,
                                     bufferType, bufferN1,   bufferN2,
                                     smooth,     colorm,     reverseColorMap,
-                                    test                                  )
+                                    test,       PT_infos,   refType                                   )
     Refine existing phase diagram
 """
 function refine_phaseDiagram(   xtitle,     ytitle,     
@@ -494,7 +496,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,
                                 bulk_L,     bulk_R,     oxi,
                                 bufferType, bufferN1,   bufferN2,
                                 smooth,     colorm,     reverseColorMap,
-                                test,       PT_infos                                 )
+                                test,       PT_infos,   refType                                 )
 
     global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels, addedRefinementLvl, layout
 
@@ -511,6 +513,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,
                                                                 bufferType,
                                                                 bufferN1,
                                                                 bufferN2, 
+                                                                refType,
                                                                 ind_map         = ind_map,
                                                                 Out_XY_old      = Out_XY,
                                                                 n_phase_XY_old  = n_phase_XY) # recompute points that have not been computed before
