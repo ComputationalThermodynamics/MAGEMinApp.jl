@@ -248,7 +248,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                                 dtb,        oxi,
                                                                                 sub,        refLvl,
                                                                                 smooth,     colorm,     reverseColorMap,
-                                                                                test                                  )
+                                                                                test,       refType                                 )
 
             fig         = plot(data_plot,layout)
 

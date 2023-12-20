@@ -408,8 +408,10 @@ end
 function get_gridded_map(   fieldname   ::String,
                             oxi         ::Vector{String},
                             Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
+                            Hash_XY     ::Vector{UInt64},
                             sub         ::Int64,
                             refLvl      ::Int64,
+                            refType     ::String,
                             xc          ::Vector{Float64},
                             yc          ::Vector{Float64},
                             xf          ::Vector{SVector{4, Float64}},
@@ -435,6 +437,10 @@ function get_gridded_map(   fieldname   ::String,
         for i=1:np
             field[i] = Float64(length(Out_XY[i].ph));
         end
+    elseif fieldname == "Hash"
+        for i=1:np
+            field[i] = Hash_XY[i];
+        end 
     elseif fieldname == "Variance"
         for i=1:np
             field[i] = Float64(len_ox - n_phase_XY[i] + 2.0);
@@ -502,19 +508,33 @@ function get_gridded_map(   fieldname   ::String,
                 iii                  = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
                 jjj                  = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
 
-                tmp                 = replace(string(Out_XY[k].ph), "\""=>"", "]"=>"", "["=>"", ","=>"")
 
+                if refType == "ph"
+                    # tmp                 = replace(string(Out_XY[k].ph), "\""=>"", "]"=>"", "["=>"", ","=>"")
+                    tmp = ""
+                    np = length(Out_XY[k].ph)
+                    for m=1:np
+                        ph = Out_XY[k].ph[m]
+                        tmp *= ph*" "
+                    end
 
-                tmp2 = ""
-                np = length(Out_XY[k].ph)
-                for m=1:np
-                    ph = Out_XY[k].ph[m]
-                    # if m%4 == 0
-                    #     ph *= "<br>"
-                    # end
-                    tmp2 *= ph*" "
+                elseif refType == "em"
+
+                    ph_em = get_dominant_en(    Out_XY[k].ph,
+                                                Out_XY[k].n_SS,
+                                                Out_XY[k].SS_vec)
+                    tmp = ""
+                    np = length(ph_em)
+                    for m=1:np
+                        ph = ph_em[m]
+                        tmp *= ph*" "
+                    end
+
                 end
+
+
                 gridded_info[iii,jjj] = "#"*string(k)*"# "*tmp
+                # gridded_info[iii,jjj] = tmp
 
                 PhasesLabels[m] =   attr(   
                                             # axref       = "pixel",  ayref       = "pixel",
@@ -522,7 +542,7 @@ function get_gridded_map(   fieldname   ::String,
 
                                             x           = x[iii],
                                             y           = y[jjj],
-                                            text        = tmp2,
+                                            text        = tmp,
                                             showarrow   = true,
                                             arrowhead   = 1,
                                             clicktoshow = "onoff",
@@ -544,8 +564,10 @@ end
 function get_gridded_map_no_lbl(    fieldname   ::String,
                                     oxi         ::Vector{String},
                                     Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
+                                    Hash_XY     ::Vector{UInt64},
                                     sub         ::Int64,
                                     refLvl      ::Int64,
+                                    refType     ::String,
                                     xc          ::Vector{Float64},
                                     yc          ::Vector{Float64},
                                     xf          ::Vector{SVector{4, Float64}},
@@ -555,7 +577,7 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
 
     np          = length(data.x)
     len_ox      = length(oxi)
-    field       = Vector{Union{Float64,Missing}}(undef,np);
+    field       = Vector{Union{UInt64,Float64,Missing}}(undef,np);
  
     npoints     = np
 
@@ -570,6 +592,10 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
         for i=1:np
             field[i] = Float64(length(Out_XY[i].ph));
         end
+    elseif fieldname == "Hash"
+        for i=1:np
+            field[i] = Hash_XY[i];
+        end 
     elseif fieldname == "Variance"
         for i=1:np
             field[i] = Float64(len_ox - n_phase_XY[i] + 2.0);

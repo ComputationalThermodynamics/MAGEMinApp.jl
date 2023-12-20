@@ -166,6 +166,7 @@ function Tab_PhaseDiagram()
                                     dbc_col([
                                         dcc_dropdown(   id      = "fields-dropdown",
                                                         options = [
+                                                            (label = "Hash",                    value = "Hash"),
                                                             (label = "Variance",                value = "Variance"),
                                                             (label = "Number of stable phases", value = "#Phases"),
                                                             (label = "G system",                value = "G_system"),
