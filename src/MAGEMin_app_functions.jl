@@ -401,6 +401,32 @@ function restrict_colorMapRange(    colorMap    ::String,
 end
 
 
+"""
+    Function interpolate AMR grid to regular grid
+"""
+function get_diagram_labels(    fieldname   ::String,
+                                oxi         ::Vector{String},
+                                Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
+                                Hash_XY     ::Vector{UInt64},
+                                sub         ::Int64,
+                                refLvl      ::Int64,
+                                refType     ::String,
+                                xc          ::Vector{Float64},
+                                yc          ::Vector{Float64},
+                                xf          ::Vector{SVector{4, Float64}},
+                                yf          ::Vector{SVector{4, Float64}},
+                                Xrange      ::Tuple{Float64, Float64},
+                                Yrange      ::Tuple{Float64, Float64},
+                                PT_infos    ::Vector{String} )
+
+
+    label_trace = GenericTrace{Dict{Symbol, Any}}
+
+
+    
+
+    return label_trace
+end
 
 """
     Function interpolate AMR grid to regular grid

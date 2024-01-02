@@ -443,10 +443,10 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                     xaxis_title = xtitle,
                     yaxis_title = ytitle,
                     annotations = PhasesLabels,
-                    width       = 700,
+                    width       = 900,
                     height      = 900,
                     autosize    = false,
-                    margin      = attr(l=50, r=50, b=260, t=70, pad=4),
+                    margin      = attr(l=50, r=250, b=260, t=70, pad=4),
                 )
 
 
