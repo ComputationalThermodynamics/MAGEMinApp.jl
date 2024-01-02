@@ -402,7 +402,7 @@ end
 
 
 """
-    Function interpolate AMR grid to regular grid
+    Function to retrieve the field labels
 """
 function get_diagram_labels(    fieldname   ::String,
                                 oxi         ::Vector{String},
@@ -413,19 +413,209 @@ function get_diagram_labels(    fieldname   ::String,
                                 refType     ::String,
                                 xc          ::Vector{Float64},
                                 yc          ::Vector{Float64},
-                                xf          ::Vector{SVector{4, Float64}},
-                                yf          ::Vector{SVector{4, Float64}},
-                                Xrange      ::Tuple{Float64, Float64},
-                                Yrange      ::Tuple{Float64, Float64},
                                 PT_infos    ::Vector{String} )
 
-
-    label_trace = GenericTrace{Dict{Symbol, Any}}
-
-
+    np          = length(data.x)
+    ph          = Vector{String}(undef,np)
+    phd         = Vector{String}(undef,np)
+    fac         = (maximum(xc)-minimum(xc))*(maximum(yc)-minimum(yc))
     
+    if refType == "ph"
+        for i = 1:np
+            phd[i]      = ""
+            for k=1:length(Out_XY[i].ph)
+                phd[i] *= Out_XY[i].ph[k]*" "
+                if k % 3 == 0
+                    phd[i] *= "<br>" 
+                end
+            end
+            ph[i]       = join(Out_XY[i].ph," ")
+        end
 
-    return label_trace
+    elseif refType == "em"
+        for i = 1:np
+            ph_em = get_dominant_en(    Out_XY[i].ph,
+                                        Out_XY[k].n_SS,
+                                        Out_XY[k].SS_vec)
+            phd[i]      = ""
+            for k=1:length(ph_em)
+                phd[i] *= ph_em[k]*" "
+                if k % 3 == 0
+                    phd[i] *= "<br>" 
+                end
+            end
+        end
+        ph[i]       = join(ph_em," ")  
+    end
+
+    n_hull      = length(unique(Hash_XY))
+    hull_list   = Vector{Any}(undef,    n_hull)
+    ph_list     = Vector{String}(undef, n_hull)
+    phd_list    = Vector{String}(undef, n_hull)
+    id          = 0
+    for i in unique(Hash_XY)
+        field_tmp   = findall(Hash_XY .== i)
+    
+        t2          = xc[field_tmp]
+        p2          = yc[field_tmp]
+        phase       = ph[field_tmp]
+        phased      = phd[field_tmp]
+    
+        np          = length(t2)
+        if np > 2
+            id             += 1
+            points          = [[ t2[i]+rand()/2, p2[i]+rand()/100] for i=1:np]
+            hull_list[id]   = concave_hull(points,1024)
+            ph_list[id]     = phase[1]
+            phd_list[id]    = phased[1]
+        end
+    end
+
+    n_trace     = id;
+    traces      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef,n_trace+1);
+    annotations = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,n_trace+3)
+    labelCoor   = Matrix{Float64}(undef,n_trace,2)
+    
+    txt_list = ""
+    cnt = 1;
+    for i=1:n_trace
+        
+        tmp     = mapreduce(permutedims,vcat,hull_list[i].vertices)
+        tmp     = vcat(tmp,tmp[1,:]')
+    
+        traces[i+1] = scatter(; x           =  tmp[:,1],
+                                y           =  tmp[:,2],
+                                fill        = "toself",
+                                fillcolor   = "transparent",
+                                line_width  =  0.0,
+                                mode        = "lines",
+                                hoverinfo   = "text",
+                                showlegend  = false,
+                                text        =  ph_list[i],
+                                );
+    
+    
+        np          = size(tmp,1) 
+        if np > 4
+            tmp2    = [tmp[i,:] for i in 1:size(tmp,1)]
+            ctr     = PolygonOps.centroid(tmp2)
+        else
+            ctr     = zeros(2)
+            ctr[1]  =  mean(tmp[2:end,1])
+            ctr[2]  =  mean(tmp[2:end,2])
+        end
+        labelCoor[i,1]   = (ctr[1]-minimum(xc))/(maximum(xc)-minimum(xc))
+        labelCoor[i,2]   = (ctr[2]-minimum(yc))/(maximum(yc)-minimum(yc))
+    
+        if i > 1
+            for j=1:i-1
+                dist = sqrt((labelCoor[i,1] - labelCoor[j,1])^2+(labelCoor[i,2] - labelCoor[j,2])^2)
+            end
+        end
+    
+        if area(hull_list[i])/fac < 0.004
+    
+            if (labelCoor[i,1]) < 0.025
+                ax = 15
+            else
+                ax = -15
+            end
+            if (labelCoor[i,2]) > 0.975
+                ay =  15
+            else
+                ay = -15
+            end
+    
+            annotations[i] =   attr(    xref        = "x",
+                                        yref        = "y",
+                                        x           = ctr[1],
+                                        y           = ctr[2],
+                                        ax          = ax,
+                                        ay          = ay,
+                                        text        = string(cnt),
+                                        showarrow   = true,
+                                        arrowhead   = 1,
+                                        visible     = true,
+                                        font        = attr( size = 10),
+                                    )  
+            txt_list *= string(cnt)*") "*ph_list[i]*"<br>"
+            cnt +=1
+        elseif area(hull_list[i])/fac > 0.03 
+            annotations[i] =   attr(    xref        = "x",
+                                        yref        = "y",
+                                        align       = "left",
+                                        valign      = "top",
+                                        x           = ctr[1],
+                                        y           = ctr[2],
+                                        text        = phd_list[i],
+                                        showarrow   = false,
+                                        visible     = true,
+                                        font        = attr( size = 10),  
+                                    )                     
+        else
+            annotations[i] =   attr(    xref        = "x",
+                                        yref        = "y",
+                                        align       = "left",
+                                        valign      = "top",
+                                        x           = ctr[1],
+                                        y           = ctr[2],
+                                        text        = string(cnt),
+                                        showarrow   = false,
+                                        visible     = true,
+                                        font        = attr( size = 10),
+                                    )  
+    
+            txt_list *= string(cnt)*") "*ph_list[i]*"<br>" 
+            cnt +=1  
+        end 
+    end
+    
+    annotations[n_trace+1] =   attr(    xref        = "paper",
+                                        yref        = "paper",
+                                        align       = "left",
+                                        valign      = "top",
+                                        height      = 960,
+                                        x           = 0.0,
+                                        y           = 0.0,
+                                        xshift      = 650,
+                                        yshift      = -360,
+                                        text        = txt_list,
+                                        showarrow   = false,
+                                        clicktoshow = false,
+                                        visible     = true,
+                                        font        = attr( size = 10),
+    )  
+
+
+    annotations[n_trace+2] =   attr(    xref        = "paper",
+                                        yref        = "paper",
+                                        align       = "left",
+                                        valign      = "top",
+                                        x           = 0.0,
+                                        y           = 0.0,
+                                        yshift      = -250,
+                                        text        = PT_infos[1],
+                                        showarrow   = false,
+                                        clicktoshow = false,
+                                        visible     = true,
+                                        font        = attr( size = 10),
+                                        )   
+
+    annotations[n_trace+3] =   attr(    xref        = "paper",
+                                        yref        = "paper",
+                                        align       = "left",
+                                        valign      = "top",
+                                        x           = 0.2,
+                                        y           = 0.0,
+                                        yshift      = -250,
+                                        text        = PT_infos[2],
+                                        showarrow   = false,
+                                        clicktoshow = false,
+                                        visible     = true,
+                                        font        = attr( size = 10),
+                                        )   
+
+    return traces, annotations 
 end
 
 """
@@ -534,9 +724,7 @@ function get_gridded_map(   fieldname   ::String,
                 iii                  = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
                 jjj                  = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
 
-
                 if refType == "ph"
-                    # tmp                 = replace(string(Out_XY[k].ph), "\""=>"", "]"=>"", "["=>"", ","=>"")
                     tmp = ""
                     np = length(Out_XY[k].ph)
                     for m=1:np
@@ -560,13 +748,8 @@ function get_gridded_map(   fieldname   ::String,
 
 
                 gridded_info[iii,jjj] = "#"*string(k)*"# "*tmp
-                # gridded_info[iii,jjj] = tmp
 
-                PhasesLabels[m] =   attr(   
-                                            # axref       = "pixel",  ayref       = "pixel",
-                                            # ax          = -15,      ay          = -40,
-
-                                            x           = x[iii],
+                PhasesLabels[m] =   attr(   x           = x[iii],
                                             y           = y[jjj],
                                             text        = tmp,
                                             showarrow   = true,

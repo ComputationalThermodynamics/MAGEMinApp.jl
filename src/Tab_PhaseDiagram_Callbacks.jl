@@ -195,11 +195,11 @@ function Tab_PhaseDiagram_Callbacks(app)
             # declare set of global variables needed to generate, refine and display phase diagrams
             global fig, MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, PhasesLabels
             global addedRefinementLvl   = 0;
-            global grid_out, data_plot, layout, g_isopleths, PT_infos;
+            global grid_out, data_plot, layout, g_traces, PT_infos;
 
             PT_infos                                     = get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
 
-            g_isopleths                                  = initialize_g_isopleth(; n_iso_max = 32)
+            g_traces                                  = initialize_g_isopleth(; n_iso_max = 32)
 
             data_plot, layout, npoints, grid_out, meant  =  compute_new_phaseDiagram(   xtitle,     ytitle,     
                                                                                         Xrange,     Yrange,     fieldname,
@@ -264,7 +264,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         elseif bid == "button-add-isopleth"
 
-            g_isopleths, isopleths = add_isopleth_phaseDiagram(     Xrange,     Yrange,
+            g_traces, isopleths = add_isopleth_phaseDiagram(     Xrange,     Yrange,
                                                                     sub,        refLvl,
                                                                     dtb,        oxi,
                                                                     isopleths,  phase,      ss,     em,     of,
@@ -273,19 +273,19 @@ function Tab_PhaseDiagram_Callbacks(app)
 
 
 
-            fig         = plot(g_isopleths.isoP[g_isopleths.active], layout)
+            fig         = plot(g_traces.isoP[g_traces.active], layout)
 
         elseif bid == "button-remove-isopleth"
 
-            if (isoplethsID) in g_isopleths.active
+            if (isoplethsID) in g_traces.active
 
-                if g_isopleths.n_iso > 2
-                g_isopleths, isopleths = remove_single_isopleth_phaseDiagram(isoplethsID)
+                if g_traces.n_iso > 2
+                g_traces, isopleths = remove_single_isopleth_phaseDiagram(isoplethsID)
 
-                fig         = plot(g_isopleths.isoP[g_isopleths.active], layout)
+                fig         = plot(g_traces.isoP[g_traces.active], layout)
                 
                 else
-                    g_isopleths, isopleths, data_plot = remove_all_isopleth_phaseDiagram()
+                    g_traces, isopleths, data_plot = remove_all_isopleth_phaseDiagram()
 
                     fig         = plot(data_plot,layout)
                 end
@@ -293,20 +293,20 @@ function Tab_PhaseDiagram_Callbacks(app)
             else
 
                 print("cannot remove isopleth, did you select one?")
-                fig         = plot(g_isopleths.isoP[g_isopleths.active], layout)
+                fig         = plot(g_traces.isoP[g_traces.active], layout)
 
             end
 
         elseif bid == "button-remove-all-isopleth"
 
-            g_isopleths, isopleths, data_plot = remove_all_isopleth_phaseDiagram()
+            g_traces, isopleths, data_plot = remove_all_isopleth_phaseDiagram()
             
             fig         = plot(data_plot,layout)
 
         elseif bid == "button-show-all-isopleth"
 
-            g_isopleths.isoP[1] = data_plot
-            fig         = plot(g_isopleths.isoP[g_isopleths.active], layout)
+            g_traces.isoP[1] = data_plot
+            fig         = plot(g_traces.isoP[g_traces.active], layout)
 
         elseif bid == "button-hide-all-isopleth"
 

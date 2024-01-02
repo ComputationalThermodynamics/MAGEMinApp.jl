@@ -142,8 +142,8 @@ end
 
     Initiatize global variable storing isopleths information
 """
-function initialize_g_isopleth(; n_iso_max = 8)
-    global g_isopleths
+function initialize_g_isopleth(; n_iso_max = 32)
+    global g_traces
 
     status    = zeros(Int64,n_iso_max)
     active    = []
@@ -156,12 +156,12 @@ function initialize_g_isopleth(; n_iso_max = 8)
     label     = Vector{String}(undef,n_iso_max)
     value     = Vector{Int64}(undef,n_iso_max)
 
-    g_isopleths = isopleth_data(1, n_iso_max,
+    g_traces = isopleth_data(1, n_iso_max,
                                 status, active, isoP,
                                 label, value)
 
 
-    return g_isopleths
+    return g_traces
 end
 
 """
@@ -420,6 +420,16 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                                                                                         Yrange,
                                                                                         PT_infos )
 
+        data_plot, annotations = get_diagram_labels(   fieldname,
+                                                    oxi,
+                                                    Out_XY,
+                                                    Hash_XY,
+                                                    sub,
+                                                    refLvl,
+                                                    refType,
+                                                    data.xc,
+                                                    data.yc,
+                                                    PT_infos )
         layout = Layout(
                     images=[ attr(
                         source  = "assets/static/images/MAGEMin.jpg",
@@ -442,15 +452,16 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                     paper_bgcolor = "#FFF",
                     xaxis_title = xtitle,
                     yaxis_title = ytitle,
-                    annotations = PhasesLabels,
+                    # annotations = PhasesLabels,
+                    annotations = annotations,
                     width       = 900,
                     height      = 900,
                     autosize    = false,
-                    margin      = attr(l=50, r=250, b=260, t=70, pad=4),
+                    margin      = attr(l=50, r=280, b=260, t=70, pad=4),
                 )
 
 
-        data_plot = heatmap(x               = X,
+        heat_map = heatmap( x               = X,
                             y               = Y,
                             z               = gridded,
                             zsmooth         = smooth,
@@ -461,6 +472,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                             colorbar_title  = fieldname,
                             hoverinfo       = "text",
                             text            = gridded_info,
+                            showlegend      = false,
                             colorbar        = attr(     lenmode         = "fraction",
                                                         len             =  0.75,
                                                         thicknessmode   = "fraction",
@@ -469,6 +481,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                                                         y               =  0.5         ),)
 
         # fig         = plot(data_plot,layout)
+        data_plot[1] = heat_map
         grid_out    = [""]
 
         return data_plot, layout, npoints, grid_out, meant
@@ -768,7 +781,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
         name    = of
     end
 
-    global g_isopleths, data_plot, nIsopleths, data, Out_XY, data_plot, X, Y, addedRefinementLvl
+    global g_traces, data_plot, nIsopleths, data, Out_XY, data_plot, X, Y, addedRefinementLvl
 
     gridded, X, Y = get_isopleth_map(   mod, ss, em, of,
                                         oxi,
@@ -782,10 +795,10 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                         Xrange,
                                         Yrange )
 
-    g_isopleths.n_iso      += 1
-    g_isopleths.isoP[1]     = data_plot     #save heatmap from phase diagram
-    g_isopleths.status[1]   = 1
-    g_isopleths.isoP[g_isopleths.n_iso]= contour(       x                   = X,
+    g_traces.n_iso      += 1
+    g_traces.isoP[1]     = data_plot     #save heatmap from phase diagram
+    g_traces.status[1]   = 1
+    g_traces.isoP[g_traces.n_iso]= contour(             x                   = X,
                                                         y                   = Y,
                                                         z                   = gridded,
                                                         contours_coloring   = "lines",
@@ -803,51 +816,51 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                                                                                             color   = isoColorLine,  )
                                                         )
                                                     )
-    g_isopleths.status[g_isopleths.n_iso]   = 1
-    g_isopleths.label[g_isopleths.n_iso]    = name
-    g_isopleths.value[g_isopleths.n_iso]    = g_isopleths.n_iso
-    g_isopleths.active                      = findall(g_isopleths.status .== 1)
-    n_act                                   = length(g_isopleths.active)
-    isopleths = [Dict("label" => g_isopleths.label[g_isopleths.active[i]], "value" => g_isopleths.value[g_isopleths.active[i]])
+    g_traces.status[g_traces.n_iso]   = 1
+    g_traces.label[g_traces.n_iso]    = name
+    g_traces.value[g_traces.n_iso]    = g_traces.n_iso
+    g_traces.active                   = findall(g_traces.status .== 1)
+    n_act                             = length(g_traces.active)
+    isopleths = [Dict("label" => g_traces.label[g_traces.active[i]], "value" => g_traces.value[g_traces.active[i]])
                         for i=2:n_act]
 
 
-    return g_isopleths, isopleths
+    return g_traces, isopleths
 
 end
 
 function remove_single_isopleth_phaseDiagram(isoplethsID)
-    global g_isopleths
+    global g_traces
 
-    g_isopleths.n_iso                -= 1      
-    g_isopleths.status[isoplethsID]   = 0;
-    g_isopleths.isoP[isoplethsID]     = contour()
-    g_isopleths.label[isoplethsID]    = ""
-    g_isopleths.value[isoplethsID]    = 0
-    g_isopleths.active                = findall(g_isopleths.status .== 1)
-    n_act                             = length(g_isopleths.active)
-    isopleths = [Dict("label" => g_isopleths.label[g_isopleths.active[i]], "value" => g_isopleths.value[g_isopleths.active[i]])
+    g_traces.n_iso                -= 1      
+    g_traces.status[isoplethsID]   = 0;
+    g_traces.isoP[isoplethsID]     = contour()
+    g_traces.label[isoplethsID]    = ""
+    g_traces.value[isoplethsID]    = 0
+    g_traces.active                = findall(g_traces.status .== 1)
+    n_act                          = length(g_traces.active)
+    isopleths = [Dict("label" => g_traces.label[g_traces.active[i]], "value" => g_traces.value[g_traces.active[i]])
                     for i=2:n_act]
 
 
-    return g_isopleths, isopleths
+    return g_traces, isopleths
 end
 
 
 function remove_all_isopleth_phaseDiagram()
-    global g_isopleths, data_plot
+    global g_traces, data_plot
 
-    g_isopleths.label    .= ""
-    g_isopleths.value    .= 0
-    g_isopleths.n_iso     = 1
-    for i=2:g_isopleths.n_iso_max
-        g_isopleths.isoP[i] = contour()
+    g_traces.label    .= ""
+    g_traces.value    .= 0
+    g_traces.n_iso     = 1
+    for i=2:g_traces.n_iso_max
+        g_traces.isoP[i] = contour()
     end
-    g_isopleths.status   .= 0
-    g_isopleths.active   .= 0
+    g_traces.status   .= 0
+    g_traces.active   .= 0
 
     # clear isopleth dropdown menu
     isopleths = []              
 
-    return g_isopleths, isopleths, data_plot
+    return g_traces, isopleths, data_plot
 end
