@@ -357,21 +357,6 @@ function Tab_PhaseDiagram()
                         dbc_button("Display options",id="button-display-options"),
                         dbc_collapse(
                             dbc_card(dbc_cardbody([
-                                dbc_row([
-                                    dbc_col([ 
-                                        html_h1("Grid options", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 0)),
-                                    ], width=5),
-                                    dbc_col([ 
-                                        dcc_checklist(
-                                            id      ="show-grid",
-                                            options = [
-                                                Dict("label" => " Show grid", "value" => "GRID"),
-                                            ],
-                                            value   = [""],
-                                            inline  = true,
-                                        ),
-                                    ], width=7),
-                                ]),
 
                                 dbc_row([
                                     dbc_col([ 

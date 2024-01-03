@@ -514,18 +514,8 @@ function get_diagram_labels(    fieldname   ::String,
         end
     
         if area(hull_list[i])/fac < 0.004
-    
-            if (labelCoor[i,1]) < 0.025
-                ax = 15
-            else
-                ax = -15
-            end
-            if (labelCoor[i,2]) > 0.975
-                ay =  15
-            else
-                ay = -15
-            end
-    
+            ax = -15
+            ay = -15
             annotations[i] =   attr(    xref        = "x",
                                         yref        = "y",
                                         x           = ctr[1],
@@ -536,7 +526,7 @@ function get_diagram_labels(    fieldname   ::String,
                                         showarrow   = true,
                                         arrowhead   = 1,
                                         visible     = true,
-                                        font        = attr( size = 10),
+                                        font        = attr( size = 10, color = "#212121"),
                                     )  
             txt_list *= string(cnt)*") "*ph_list[i]*"<br>"
             cnt +=1
@@ -550,7 +540,7 @@ function get_diagram_labels(    fieldname   ::String,
                                         text        = phd_list[i],
                                         showarrow   = false,
                                         visible     = true,
-                                        font        = attr( size = 10),  
+                                        font        = attr( size = 10, color = "#212121"),  
                                     )                     
         else
             annotations[i] =   attr(    xref        = "x",
@@ -562,7 +552,7 @@ function get_diagram_labels(    fieldname   ::String,
                                         text        = string(cnt),
                                         showarrow   = false,
                                         visible     = true,
-                                        font        = attr( size = 10),
+                                        font        = attr( size = 10, color = "#212121"),
                                     )  
     
             txt_list *= string(cnt)*") "*ph_list[i]*"<br>" 
@@ -617,6 +607,7 @@ function get_diagram_labels(    fieldname   ::String,
 
     return traces, annotations 
 end
+
 
 """
     Function interpolate AMR grid to regular grid
@@ -681,39 +672,11 @@ function get_gridded_map(   fieldname   ::String,
     X            = repeat(x , n)[:]
     Y            = repeat(y', n)[:]
     gridded      = Matrix{Union{Float64,Missing}}(undef,n,n);
-    gridded_info = Matrix{Union{String,Missing}}(undef,n,n);   
-    PhasesLabels = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,n^2+2)
+    gridded_info = Matrix{Union{String,Missing}}(undef,n,n); 
 
     Xr = (Xrange[2]-Xrange[1])/n
     Yr = (Yrange[2]-Yrange[1])/n
 
-    PhasesLabels[1] =   attr(   xref        = "paper",
-                                yref        = "paper",
-                                align       = "left",
-                                valign      = "top",
-                                x           = 0.0,
-                                y           = 0.0,
-                                yshift      = -250,
-                                text        = PT_infos[1],
-                                showarrow   = false,
-                                clicktoshow = false,
-                                visible     = true,
-                                font        = attr( size = 10),
-                                )   
-    PhasesLabels[2] =   attr(   xref        = "paper",
-                                yref        = "paper",
-                                align       = "left",
-                                valign      = "top",
-                                x           = 0.2,
-                                y           = 0.0,
-                                yshift      = -250,
-                                text        = PT_infos[2],
-                                showarrow   = false,
-                                clicktoshow = false,
-                                visible     = true,
-                                font        = attr( size = 10),
-                                )   
-    m  = 3
     for k=1:np
         ii              = Int64(round((xc[k]-Xrange[1] + Xr/2)/(Xr)))
         jj              = Int64(round((yc[k]-Yrange[1] + Yr/2)/(Yr))) 
@@ -724,46 +687,14 @@ function get_gridded_map(   fieldname   ::String,
                 iii                  = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
                 jjj                  = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
 
-                if refType == "ph"
-                    tmp = ""
-                    np = length(Out_XY[k].ph)
-                    for m=1:np
-                        ph = Out_XY[k].ph[m]
-                        tmp *= ph*" "
-                    end
-
-                elseif refType == "em"
-
-                    ph_em = get_dominant_en(    Out_XY[k].ph,
-                                                Out_XY[k].n_SS,
-                                                Out_XY[k].SS_vec)
-                    tmp = ""
-                    np = length(ph_em)
-                    for m=1:np
-                        ph = ph_em[m]
-                        tmp *= ph*" "
-                    end
-
-                end
-
-
+                tmp                 = replace(string(Out_XY[k].ph), "\""=>"", "]"=>"", "["=>"", ","=>"")
                 gridded_info[iii,jjj] = "#"*string(k)*"# "*tmp
-
-                PhasesLabels[m] =   attr(   x           = x[iii],
-                                            y           = y[jjj],
-                                            text        = tmp,
-                                            showarrow   = true,
-                                            arrowhead   = 1,
-                                            clicktoshow = "onoff",
-                                            visible     = false
-                                    )
-                m += 1
             end
         end
 
     end
 
-    return gridded, gridded_info, X, Y, npoints, meant, PhasesLabels
+    return gridded, gridded_info, X, Y, npoints, meant
 end
 
 
@@ -786,7 +717,7 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
 
     np          = length(data.x)
     len_ox      = length(oxi)
-    field       = Vector{Union{UInt64,Float64,Missing}}(undef,np);
+    field       = Vector{Union{Float64,Missing}}(undef,np);
  
     npoints     = np
 
@@ -837,14 +768,6 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
         ii              = Int64(round((xc[k]-Xrange[1] + Xr/2)/(Xr)))
         jj              = Int64(round((yc[k]-Yrange[1] + Yr/2)/(Yr))) 
         gridded[ii,jj]  = field[k] 
-
-        for i=xf[k][1]+Xr/2 : Xr : xf[k][3]
-            for j=yf[k][1]+Yr/2 : Yr : yf[k][3]
-                iii                  = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
-                jjj                  = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
-            end
-        end
-
     end
 
     return gridded, X, Y, npoints, meant
@@ -903,8 +826,6 @@ function get_isopleth_map(  mod         ::String,
             field .= log10.(field)
         end 
     end
-
-
 
     n            = 2^(sub + refLvl)
     x            = range(minimum(xc), stop = maximum(xc), length = n)
