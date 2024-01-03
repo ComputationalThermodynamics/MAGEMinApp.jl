@@ -309,9 +309,9 @@ function Tab_PhaseDiagram_Callbacks(app)
         config   = PlotConfig(    toImageButtonOptions  = attr(     name     = "Download as svg",
                                                                     format   = "svg", # one of png, svg, jpeg, webp
                                                                     filename = replace(db[(db.db .== dtb), :].title[test+1], " " => "_"),
-                                                                    height   =  1024,
-                                                                    width    =  840,
-                                                                    scale    =  1.0,       ).fields)
+                                                                    height   =  900,
+                                                                    width    =  900,
+                                                                    scale    =  2.0,       ).fields)
 
 
         return fig, config, npoints, meant, isopleths, smooth
