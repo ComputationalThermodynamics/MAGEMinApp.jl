@@ -455,6 +455,7 @@ function get_diagram_labels(    fieldname   ::String,
     ph_list     = Vector{String}(undef, n_hull)
     phd_list    = Vector{String}(undef, n_hull)
     id          = 0
+
     for i in unique(Hash_XY)
         field_tmp   = findall(Hash_XY .== i)
     
@@ -466,7 +467,7 @@ function get_diagram_labels(    fieldname   ::String,
         np          = length(t2)
         if np > 2
             id             += 1
-            points          = [[ t2[i]+rand()/2, p2[i]+rand()/100] for i=1:np]
+            points          = [[ t2[i]+rand()/100, p2[i]+rand()/100] for i=1:np]
             hull_list[id]   = concave_hull(points,1024)
             ph_list[id]     = phase[1]
             phd_list[id]    = phased[1]
