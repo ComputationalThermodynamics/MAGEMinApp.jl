@@ -405,22 +405,13 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                                         data.xc,
                                                         data.yc,
                                                         PT_infos )
-                                             
-        layout = Layout(
-                    images=[ attr(
-                        source  = "assets/static/images/MAGEMin.jpg",
-                        xref    = "paper",
-                        yref    = "paper",
-                        x       =  0.05,
-                        y       =  1.01,
-                        sizex   =  0.1, 
-                        sizey   =  0.1,
-                        xanchor = "right", 
-                        yanchor = "bottom"
-                    )],
+        ticks   = 4
+        frame   = get_plot_frame(Xrange,Yrange, ticks)                                  
+        layout  = Layout(
+                    images=frame,
                     title= attr(
                         text    = db[(db.db .== dtb), :].title[test+1],
-                        x       = 0.35,
+                        x       = 0.4,
                         xanchor = "center",
                         yanchor = "top"
                     ),
@@ -438,7 +429,15 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                     autosize    = false,
                     margin      = attr(autoexpand = false, l=50, r=280, b=260, t=70, pad=4),
                     xaxis_range = Xrange, 
-                    yaxis_range = Yrange
+                    yaxis_range = Yrange,
+                    xaxis       = attr(     tickmode    = "linear",
+                                            tick0       = Xrange[1],
+                                            dtick       = (Xrange[2]-Xrange[1])/(ticks+1)
+                                        ),
+                    yaxis       = attr(     tickmode    = "linear",
+                                            tick0       = Yrange[1],
+                                            dtick       = (Yrange[2]-Yrange[1])/(ticks+1)
+                                    ),
                 )
                 
         heat_map = heatmap( x               = X,
