@@ -436,7 +436,9 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                     width       = 900,
                     height      = 900,
                     autosize    = false,
-                    margin      = attr(l=50, r=280, b=260, t=70, pad=4),
+                    margin      = attr(autoexpand = false, l=50, r=280, b=260, t=70, pad=4),
+                    xaxis_range = Xrange, 
+                    yaxis_range = Yrange
                 )
  
         heat_map = heatmap( x               = X,

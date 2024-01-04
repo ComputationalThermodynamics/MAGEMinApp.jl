@@ -516,6 +516,7 @@ function get_diagram_labels(    fieldname   ::String,
         if area(hull_list[i])/fac < 0.004
             ax = -15
             ay = -15
+
             annotations[i] =   attr(    xref        = "x",
                                         yref        = "y",
                                         x           = ctr[1],
