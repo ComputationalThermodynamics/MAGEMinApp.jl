@@ -459,25 +459,12 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                                                         x               =  1.005,
                                                         y               =  0.5         ),)
 
-        # hover_lbl = scatter(;   x           =  X,
-        #                         y           =  Y,
-        #                         mode        = "markers",
-        #                         marker      = attr( color       = "transparent",
-        #                                             line_color  = "transparent",
-        #                                             line_width  = 0, 
-        #                                             size        = 0, 
-        #                                             symbol      = "circle"),
-        #                         hoverinfo   = "text",
-        #                         showlegend  = false,
-        #                         text        = gridded_info,
-        #                         );
-
  
         hover_lbl = heatmap(    x               = X,
                                 y               = Y,
                                 z               = X,
                                 type            = "heatmap",
-                                colorscale      = colorm,
+                                showscale       = false,
                                 opacity         = 0.0,
                                 hoverinfo       = "text",
                                 showlegend      = false,
@@ -594,25 +581,11 @@ function refine_phaseDiagram(   xtitle,     ytitle,
                                                         x               =  1.005,
                                                         y               =  0.5         ),)
 
-
-    # hover_lbl = scatter(;   x           =  X,
-    #                         y           =  Y,
-    #                         mode        = "markers",
-    #                         marker      = attr( color       = "transparent",
-    #                                             line_color  = "transparent",
-    #                                             line_width  = 0, 
-    #                                             size        = 0, 
-    #                                             symbol      = "circle"),
-    #                         hoverinfo   = "text",
-    #                         showlegend  = false,
-    #                         text        = gridded_info,
-    #                         );   
-    
     hover_lbl = heatmap(    x               = X,
                             y               = Y,
                             z               = X,
                             type            = "heatmap",
-                            colorscale      = colorm,
+                            showscale       = false,
                             opacity         = 0.0,
                             hoverinfo       = "text",
                             showlegend      = false,
