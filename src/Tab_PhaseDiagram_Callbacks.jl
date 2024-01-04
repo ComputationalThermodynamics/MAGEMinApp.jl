@@ -95,6 +95,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("isopleth-dropdown","options"),
         Output("smooth-colormap",    "value"),
 
+        Input("show-lbl-id",                "value"),
         Input("button-add-isopleth",        "n_clicks"),
         Input("button-remove-isopleth",     "n_clicks"),
         Input("button-remove-all-isopleth", "n_clicks"),
@@ -157,7 +158,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         prevent_initial_call = true,
 
-    ) do    addIso,     removeIso,  removeAllIso,   isoShow,    isoHide,    n_clicks_mesh, n_clicks_refine, 
+    ) do    lbl,        addIso,     removeIso,  removeAllIso,   isoShow,    isoHide,    n_clicks_mesh, n_clicks_refine, 
             colorMap,   smooth,     rangeColor,     reverse,    fieldname,
             npoints,    diagType,   dtb,    cpx,    limOpx,     limOpxVal,
             tmin,       tmax,       pmin,   pmax,
@@ -178,7 +179,6 @@ function Tab_PhaseDiagram_Callbacks(app)
         colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)              # get colormap information
         bulk_L, bulk_R, oxi             = get_bulkrock_prop(bulk1, bulk2)                               # get bulk rock composition information
         
-        
 
         if bid == "compute-button"
             smooth                      = "best"
@@ -193,13 +193,14 @@ function Tab_PhaseDiagram_Callbacks(app)
             # declare set of global variables needed to generate, refine and display phase diagrams
             global fig, MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, PhasesLabels
             global addedRefinementLvl   = 0;
+            global n_lbl                = 0;
             global grid_out, data_plot, layout, g_traces, PT_infos;
 
             PT_infos = get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
 
             g_traces = initialize_g_isopleth(; n_iso_max = 32)
 
-            data_plot, layout, npoints, grid_out, meant  =  compute_new_phaseDiagram(   xtitle,     ytitle,     
+            data_plot, layout, npoints, grid_out, meant  =  compute_new_phaseDiagram(   xtitle,     ytitle,     lbl,
                                                                                         Xrange,     Yrange,     fieldname,
                                                                                         dtb,        diagType,   verbose,    solver,
                                                                                         fixT,       fixP,
@@ -210,13 +211,23 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                                         smooth,     colorm,     reverseColorMap,
                                                                                         test,       PT_infos,   refType                                  )
             
+            if ~isempty(lbl) == true
+                for i=1:n_lbl+1
+                    layout[:annotations][i][:visible] = true
+                end
+            else
+                for i=1:n_lbl+1
+                    layout[:annotations][i][:visible] = false
+                end
+            end  
+
             fig         = plot(data_plot,layout)
 
         elseif bid == "refine-pb-button"
 
             PT_infos                                     = get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
 
-            data_plot, layout, npoints, grid_out, meant  =  refine_phaseDiagram(    xtitle,     ytitle,     
+            data_plot, layout, npoints, grid_out, meant  =  refine_phaseDiagram(    xtitle,     ytitle,     lbl, 
                                                                                     Xrange,     Yrange,     fieldname,
                                                                                     dtb,        diagType,   verbose,    solver,
                                                                                     fixT,       fixP,
@@ -227,6 +238,15 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                                     smooth,     colorm,     reverseColorMap,
                                                                                     test,       PT_infos,   refType                                  )
 
+            if ~isempty(lbl) == true
+                for i=1:n_lbl+1
+                    layout[:annotations][i][:visible] = true
+                end
+            else
+                for i=1:n_lbl+1
+                    layout[:annotations][i][:visible] = false
+                end
+            end                                                                       
             fig         = plot(data_plot,layout)
 
         elseif bid == "colormaps_cross" || bid == "smooth-colormap" || bid == "range-slider-color" || bid == "reverse-colormap"
@@ -300,6 +320,18 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             fig         = plot(data_plot,layout)
 
+        elseif bid == "show-lbl-id"
+            if ~isempty(lbl) == true
+                for i=1:n_lbl+1
+                    layout[:annotations][i][:visible] = true
+                end
+            else
+                for i=1:n_lbl+1
+                    layout[:annotations][i][:visible] = false
+                end
+            end
+
+            fig         = plot(data_plot,layout)
         else
             
             fig = plot()

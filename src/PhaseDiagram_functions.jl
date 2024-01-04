@@ -277,7 +277,7 @@ end
 
     Compute a new phase diagram from scratch
 """
-function compute_new_phaseDiagram(  xtitle,     ytitle,     
+function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                     Xrange,     Yrange,     fieldname,
                                     dtb,        diagType,   verbose,    solver,
                                     fixT,       fixP,
@@ -301,7 +301,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
 
         #________________________________________________________________________________________#
         # initialize database
-        global forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels, layout
+        global forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels, layout, n_lbl
         global addedRefinementLvl  = 0;
         global MAGEMin_data;
 
@@ -420,7 +420,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                     )],
                     title= attr(
                         text    = db[(db.db .== dtb), :].title[test+1],
-                        x       = 0.5,
+                        x       = 0.35,
                         xanchor = "center",
                         yanchor = "top"
                     ),
@@ -440,7 +440,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                     xaxis_range = Xrange, 
                     yaxis_range = Yrange
                 )
- 
+                
         heat_map = heatmap( x               = X,
                             y               = Y,
                             z               = gridded,
@@ -495,7 +495,7 @@ end
                                     test,       PT_infos,   refType                                   )
     Refine existing phase diagram
 """
-function refine_phaseDiagram(   xtitle,     ytitle,     
+function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                 Xrange,     Yrange,     fieldname,
                                 dtb,        diagType,   verbose,    solver,
                                 fixT,       fixP,
@@ -506,7 +506,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,
                                 smooth,     colorm,     reverseColorMap,
                                 test,       PT_infos,   refType                                 )
 
-    global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels, addedRefinementLvl, layout
+    global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels, addedRefinementLvl, layout, n_lbl
 
     refine_elements                          = refine_phase_boundaries(forest, Hash_XY);
     forest_new, data_new, ind_map            = adapt_forest(forest, refine_elements, data);     # Adapt the mesh; also returns the new coordinates and a mapping from old->new

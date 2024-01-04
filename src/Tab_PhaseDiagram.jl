@@ -360,6 +360,24 @@ function Tab_PhaseDiagram()
 
                                 dbc_row([
                                     dbc_col([ 
+                                        html_h1("Show/hide stable phases", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 0)),
+                                    ], width=5),
+                                    dbc_col([ 
+                                        dcc_checklist(
+                                            id      ="show-lbl-id",
+                                            options = [
+                                                Dict("label" => "", "value" => "LBL"),
+                                            ],
+                                            value   = ["LBL"],
+                                            inline  = true,
+                                        ),
+                                        dbc_tooltip("Hide/display the stable phase assemblages"),
+
+                                    ]),
+                                ]),
+
+                                dbc_row([
+                                    dbc_col([ 
                                         html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                     ], width=5),
                                     dbc_col([

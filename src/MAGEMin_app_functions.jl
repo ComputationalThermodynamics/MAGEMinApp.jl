@@ -415,6 +415,8 @@ function get_diagram_labels(    fieldname   ::String,
                                 yc          ::Vector{Float64},
                                 PT_infos    ::Vector{String} )
 
+    global n_lbl
+
     np          = length(data.x)
     ph          = Vector{String}(undef,np)
     phd         = Vector{String}(undef,np)
@@ -605,6 +607,7 @@ function get_diagram_labels(    fieldname   ::String,
                                         visible     = true,
                                         font        = attr( size = 10),
                                         )   
+    n_lbl = n_trace
 
     return traces, annotations 
 end
