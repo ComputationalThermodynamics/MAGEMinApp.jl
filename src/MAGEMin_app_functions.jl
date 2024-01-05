@@ -571,7 +571,7 @@ function get_diagram_labels(    fieldname   ::String,
                                         height      = 960,
                                         x           = 0.0,
                                         y           = 0.0,
-                                        xshift      = 650,
+                                        xshift      = 640,
                                         yshift      = -360,
                                         text        = txt_list,
                                         showarrow   = false,
@@ -619,7 +619,7 @@ end
 """
 function get_plot_frame(Xrange, Yrange, ticks)
 
-    frame   = Array{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}, 1}(undef, 1+4+ticks*4)
+    frame   = Array{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}, 1}(undef, 1+4+ticks*6)
     # frame   = Array{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}, 1}(undef, 1+4+1)
 
     outline = [ attr(
@@ -697,13 +697,15 @@ function get_plot_frame(Xrange, Yrange, ticks)
   
 
     n = 6
-    for i=1:ticks
+    for i=0:(ticks+1)
 
         frame[n] = attr(    source  = "assets/static/images/img_h_tick.png",
                             xref    = "paper",
                             yref    = "paper",
-                            x       =  0.005,
+                            # x       =  0.005,
+                            x       =  0.0,
                             y       =  dy*i,
+
                             sizex   =  0.005, 
                             sizey   =  0.005,
                             xanchor = "right", 
@@ -712,8 +714,10 @@ function get_plot_frame(Xrange, Yrange, ticks)
         frame[n] = attr(    source  = "assets/static/images/img_h_tick.png",
                             xref    = "paper",
                             yref    = "paper",
-                            x       =  1.0,
+                            # x       =  1.0,
+                            x       =  1.005,
                             y       =  dy*i,
+
                             sizex   =  0.005, 
                             sizey   =  0.005,
                             xanchor = "right", 
@@ -723,7 +727,9 @@ function get_plot_frame(Xrange, Yrange, ticks)
                             xref    = "paper",
                             yref    = "paper",
                             x       =  dx*i,
-                            y       =  0.0,
+                            # y       =  0.0,
+                            y       =  -0.005,
+
                             sizex   =  0.005, 
                             sizey   =  0.005,
                             xanchor = "right", 
@@ -733,7 +739,9 @@ function get_plot_frame(Xrange, Yrange, ticks)
                             xref    = "paper",
                             yref    = "paper",
                             x       =  dx*i,
-                            y       =  0.995,
+                            # y       =  0.995,
+                            y       =  1.0,
+
                             sizex   =  0.005, 
                             sizey   =  0.005,
                             xanchor = "right", 
