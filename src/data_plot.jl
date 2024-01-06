@@ -7,6 +7,25 @@ function diagram_plot()
     dcc_graph(
                 id          = "phase-diagram",
                 figure      = fig,
-                # clickData   = 
+            )
+end
+
+function PTX_plot()
+
+    fig = plot()
+
+    dcc_graph(
+                id          = "ptx-plot",
+                figure      = fig,
+            )
+end
+
+function path_plot()
+
+    fig = plot()
+
+    dcc_graph(
+                id          = "path-plot",
+                figure      = fig,
             )
 end

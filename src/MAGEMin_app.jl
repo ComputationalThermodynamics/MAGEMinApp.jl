@@ -19,11 +19,13 @@ include("PhaseDiagram_functions.jl")
 include("appData.jl")
 include("Tab_Simulation.jl")
 include("Tab_PhaseDiagram.jl")
+include("Tab_PTXpaths.jl")
 include("data_plot.jl")
 include("MAGEMin_app_functions.jl")
 include("MAGEMin_app_Callbacks.jl")   
 include("Tab_Simulation_Callbacks.jl")    
-include("Tab_PhaseDiagram_Callbacks.jl")    
+include("Tab_PhaseDiagram_Callbacks.jl")   
+include("Tab_PTXpaths_Callbacks.jl") 
 
 """
     App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
@@ -105,15 +107,18 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
 
                             dbc_tabs(
                                 [
-                                    dbc_tab(    tab_id="tab-Simulation",
-                                                label="Simulation",
-                                                children = [Tab_Simulation()],
+                                    dbc_tab(    tab_id      = "tab-Simulation",
+                                                label       = "Simulation",
+                                                children    = [Tab_Simulation()],
                                             ),
-                                    dbc_tab(    tab_id="tab-phase-diagram",
-                                                label="Phase Diagram",
-                                                children = [Tab_PhaseDiagram()]
+                                    dbc_tab(    tab_id      = "tab-phase-diagram",
+                                                label       = "Phase Diagram",
+                                                children    = [Tab_PhaseDiagram()]
                                             ),
-                                    dbc_tab(tab_id="tab-PTX-path", label="PTX-path",        children = []),
+                                    dbc_tab(    tab_id      = "tab-PTX-path",
+                                                label       = "PTX path",
+                                                children    = [Tab_PTXpaths()]
+                                        ),
                                     dbc_tab(tab_id="tab-TEmodeling", label="TE-modeling",   children = []),
                 
                                 ],
@@ -143,6 +148,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
     app = MAGEMin_app_Callbacks(app)
     app = Tab_Simulation_Callbacks(app)
     app = Tab_PhaseDiagram_Callbacks(app)
+    app = Tab_PTXpaths_Callbacks(app)
 
     run_server(app, host, port, debug=debug)
 
