@@ -12,7 +12,7 @@ function Tab_PTXpaths()
                             dbc_card(dbc_cardbody([
                                 dbc_row([
                                     dbc_col([ 
-                                        html_h1("Thermodynamic database", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                        html_h1("Thermodynamic database", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 2)),
                                     ]),
                                     dbc_col([ 
                                         dcc_dropdown(   id      = "database-dropdown-ptx",
@@ -33,7 +33,7 @@ function Tab_PTXpaths()
                                     # buffer
                                     dbc_row([
                                         dbc_col([ 
-                                            html_h1("Buffer", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            html_h1("Buffer", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                         ]),
                                         dbc_col([ 
                                             dcc_dropdown(   id      = "buffer-dropdown-ptx",
@@ -54,7 +54,7 @@ function Tab_PTXpaths()
                                     #solver
                                     dbc_row([
                                         dbc_col([ 
-                                            html_h1("Solver", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            html_h1("Solver", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                         ]),
                                         dbc_col([ 
                                             dcc_dropdown(   id      = "solver-dropdown-ptx",
@@ -71,7 +71,7 @@ function Tab_PTXpaths()
                                     #verbose
                                     dbc_row([
                                         dbc_col([ 
-                                            html_h1("Verbose", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            html_h1("Verbose", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                         ]),
                                         dbc_col([ 
                                             dcc_dropdown(   id      = "verbose-dropdown-ptx",
@@ -224,24 +224,12 @@ function Tab_PTXpaths()
 
                     dbc_row([
 
-                    dbc_button("Path preview",id="button-path-preview"),
+                        dbc_button("Path definition",id="button-path"),
                         dbc_collapse(
-                            dbc_card(dbc_cardbody([
-                                dbc_row([
-                                        path_plot(),
-                                    ]),
-                                ])),
-                                id="collapse-path-preview",
-                                is_open=true,
-                        ),
-                    ]),
-
-                    dbc_row([
-
-                    dbc_button("Path definition",id="button-path"),
-                    dbc_collapse(
                         dbc_card(dbc_cardbody([
-
+                            dbc_row([
+                                path_plot(),
+                            ]),
                             dbc_row([
 
                                 dash_datatable(
@@ -259,25 +247,55 @@ function Tab_PTXpaths()
                                 ),
 
                             ]),
-                            html_div("‎ "),
                             dbc_row([
                                 dbc_button("Add point",id="add-row-button", color="light", className="me-2", n_clicks=0,
                                 style       = Dict( "textAlign"     => "center",
                                                     "font-size"     => "100%",
                                                     "border"        =>"1px lightgray solid")), 
                             ]),
-                            html_div("‎ "),
-                            dbc_row([
-                                dbc_button("Compute path",id="compute-path-button", color="light", className="me-2", n_clicks=0,
-                                style       = Dict( "textAlign"     => "center",
-                                                    "font-size"     => "100%",
-                                                    "border"        =>"1px lightgray solid")), 
-                            ]),
-
 
                         ])),
                         id="collapse-path",
                         is_open=true,
+                        ),
+                                                                            
+                    ])
+
+                    dbc_row([
+
+                        dbc_button("Path options",id="button-path-opt"),
+                        dbc_collapse(
+                            dbc_card(dbc_cardbody([
+
+                                # PTX mode
+                                dbc_row([
+                                    dbc_col([ 
+                                        html_h1("P-T-X Mode", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                    ], width=4),
+                                    dbc_col([ 
+                                        dcc_dropdown(   id      = "mode-dropdown-ptx",
+                                        options = [
+                                            (label = "Equilibrium",                 value = "eq"),
+                                            (label = "Fractional melting",          value = "fm"),
+                                            (label = "Fractional crystallization",  value = "fc"), 
+                                        ],
+                                        value       = "eq",
+                                        clearable   =  false,
+                                        multi       =  false    ),
+                                    ], width=8),
+                                ]),
+                                html_div("‎ "),
+                                dbc_row([
+                                    dbc_button("Compute path",id="compute-path-button", color="light", className="me-2", n_clicks=0,
+                                    style       = Dict( "textAlign"     => "center",
+                                                        "font-size"     => "100%",
+                                                        "border"        =>"1px lightgray solid")), 
+                                ]),
+
+
+                            ])),
+                            id="collapse-path-opt",
+                            is_open=true,
                         ),
                                                                             
                     ])

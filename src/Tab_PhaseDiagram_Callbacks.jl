@@ -188,7 +188,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                     finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i])
                 end
             end
-            GC.gc()         # garbage collector should be place after freeing the threads, otherwise this leads to issues
+            # GC.gc()         # garbage collector should be place after freeing the threads, otherwise this leads to issues
             
             # declare set of global variables needed to generate, refine and display phase diagrams
             global fig, MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, PhasesLabels

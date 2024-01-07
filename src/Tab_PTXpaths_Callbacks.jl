@@ -44,7 +44,7 @@ function Tab_PTXpaths_Callbacks(app)
         )
     
         layout  = Layout(
-
+            font        = attr(size = 10),
             height      = 240,
             margin      = attr(autoexpand = false, l=16, r=16, b=16, t=16),
             autosize    = false,
@@ -115,6 +115,22 @@ function Tab_PTXpaths_Callbacks(app)
         return data, opts, val, cap                  
     end
 
+    callback!(app,
+        Output("collapse-path-opt", "is_open"),
+        [Input("button-path-opt", "n_clicks")],
+        [State("collapse-path-opt", "is_open")], ) do  n, is_open
+        
+        if isnothing(n); n=0 end
+
+        if n>0
+            if is_open==1
+                is_open = 0
+            elseif is_open==0
+                is_open = 1
+            end
+        end
+        return is_open    
+    end
 
     callback!(app,
         Output("collapse-path", "is_open"),
@@ -195,7 +211,7 @@ function Tab_PTXpaths_Callbacks(app)
         dataout = copy(data)
 
         if n_clicks > 0
-            add = Dict(Symbol("col-1") => 5, Symbol("col-2") => 500)
+            add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000)
             push!(dataout,add)
         end
 
