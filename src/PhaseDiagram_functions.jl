@@ -641,63 +641,21 @@ end
                                     test                                  )
     Shows/hides the grid
 """
-function  show_hide_grid_phaseDiagram(  xtitle,     ytitle,     grid,  
-                                        Xrange,     Yrange,     fieldname,
-                                        dtb,
-                                        smooth,     colorm,     reverseColorMap,
-                                        test                                  )
+function  show_hide_grid_phaseDiagram()
 
-    global data, data_plot, gridded, gridded_info, X, Y, PhasesLabels, PT_infos, layout
+    global data
 
-    if length(grid) == 2
-        data_plot      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, length(data.x)+1);
+        grid_plot      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, length(data.x));
         for i = 1:length(data.x)
-            data_plot[i] = scatter(     x           = data.x[i],
+            grid_plot[i] = scatter(     x           = data.x[i],
                                         y           = data.y[i],
                                         mode        = "lines",
                                         line_color  = "#000000",
                                         line_width  = 1,
-                showlegend  = false     )
+                                        showlegend  = false     )
         end
 
-        data_plot[length(data.x)+1] = heatmap(      x               = X,
-                                                    y               = Y,
-                                                    z               = gridded,
-                                                    zsmooth         =  smooth,
-                                                    connectgaps     = true,
-                                                    type            = "heatmap",
-                                                    colorscale      = colorm,
-                                                    colorbar_title  = fieldname,
-                                                    reversescale    = reverseColorMap,
-                                                    hoverinfo       = "text",
-                                                    text            = gridded_info,
-                                                    colorbar        = attr(     lenmode         = "fraction",
-                                                                                len             =  0.75,
-                                                                                thicknessmode   = "fraction",
-                                                                                tickness        =  0.5,
-                                                                                x               =  1.005,
-                                                                                y               =  0.5         ),)
-    else
-        data_plot = heatmap(x               = X,
-                            y               = Y,
-                            z               = gridded,
-                            zsmooth         = smooth,
-                            connectgaps     = true,
-                            type            = "heatmap",
-                            colorscale      = colorm,
-                            colorbar_title  = fieldname,
-                            reversescale    = reverseColorMap,
-                            hoverinfo       = "text",
-                            text            = gridded_info,
-                            colorbar        = attr(     lenmode         = "fraction",
-                                                        len             =  0.75,
-                                                        thicknessmode   = "fraction",
-                                                        tickness        =  0.5,
-                                                        x               =  1.005,
-                                                        y               =  0.5         ),)
-    end                            
-
-    return data_plot, layout
+    return grid_plot
 end
 
 """
