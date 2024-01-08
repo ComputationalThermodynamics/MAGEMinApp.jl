@@ -69,7 +69,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             point_id = parse(Int64,replace.(point_id,r"#"=>""))
 
             X       = "Composition\t[mol]\t: "*string(round.(Out_XY[point_id].bulk; digits = 3))*"\n"
-            P       = "Pressure\t\t[knar]\t\t: "*string(round(Out_XY[point_id].P_kbar; digits = 3))*"\n"
+            P       = "Pressure\t\t[kbar]\t\t: "*string(round(Out_XY[point_id].P_kbar; digits = 3))*"\n"
             T       = "Temperature\t[°C]\t: "*string(round(Out_XY[point_id].T_C; digits = 3))*"\n"
             Gsys    = "Gibbs energy\t[kJ]\t\t: "*string(round(Out_XY[point_id].G_system; digits = 3))*"\n"
             StPhase = "Stable phases\t[str]\t: "*string(Out_XY[point_id].ph)*"\n"
