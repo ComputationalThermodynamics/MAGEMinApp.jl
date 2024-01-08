@@ -236,7 +236,7 @@ function save_equilibrium_to_file(  out::MAGEMin_C.gmin_struct{Float64, Int64}  
         file *= @sprintf("\n")  
     end
     for i=1:out.n_PP
-        file *= @sprintf(" %8s",out.ph[i])
+        file *= @sprintf(" %8s",out.ph[i+out.n_SS])
         for j=1:length(out.PP_vec[i].Comp_wt)
             file *= @sprintf(" %8f",out.PP_vec[i].Comp_wt[j])
         end
@@ -401,6 +401,357 @@ function restrict_colorMapRange(    colorMap    ::String,
 end
 
 
+"""
+    Function to retrieve the field labels
+"""
+function get_diagram_labels(    fieldname   ::String,
+                                oxi         ::Vector{String},
+                                Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
+                                Hash_XY     ::Vector{UInt64},
+                                sub         ::Int64,
+                                refLvl      ::Int64,
+                                refType     ::String,
+                                xc          ::Vector{Float64},
+                                yc          ::Vector{Float64},
+                                PT_infos    ::Vector{String} )
+
+    global n_lbl
+
+    np          = length(data.x)
+    ph          = Vector{String}(undef,np)
+    phd         = Vector{String}(undef,np)
+    fac         = (maximum(xc)-minimum(xc))*(maximum(yc)-minimum(yc))
+    
+    if refType == "ph"
+        for i = 1:np
+            phd[i]      = ""
+            for k=1:length(Out_XY[i].ph)
+                phd[i] *= Out_XY[i].ph[k]*" "
+                if k % 3 == 0
+                    phd[i] *= "<br>" 
+                end
+            end
+            ph[i]       = join(Out_XY[i].ph," ")
+        end
+
+    elseif refType == "em"
+        for i = 1:np
+            ph_em = get_dominant_en(    Out_XY[i].ph,
+                                        Out_XY[k].n_SS,
+                                        Out_XY[k].SS_vec)
+            phd[i]      = ""
+            for k=1:length(ph_em)
+                phd[i] *= ph_em[k]*" "
+                if k % 3 == 0
+                    phd[i] *= "<br>" 
+                end
+            end
+        end
+        ph[i]       = join(ph_em," ")  
+    end
+
+    n_hull      = length(unique(Hash_XY))
+    hull_list   = Vector{Any}(undef,    n_hull)
+    ph_list     = Vector{String}(undef, n_hull)
+    phd_list    = Vector{String}(undef, n_hull)
+    id          = 0
+
+    for i in unique(Hash_XY)
+        field_tmp   = findall(Hash_XY .== i)
+    
+        t2          = xc[field_tmp]
+        p2          = yc[field_tmp]
+        phase       = ph[field_tmp]
+        phased      = phd[field_tmp]
+    
+        np          = length(t2)
+        if np > 2
+            id             += 1
+            points          = [[ t2[i]+rand()/100, p2[i]+rand()/100] for i=1:np]
+            hull_list[id]   = concave_hull(points,1024)
+            ph_list[id]     = phase[1]
+            phd_list[id]    = phased[1]
+        end
+    end
+
+    n_trace     = id;
+    traces      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef,n_trace+1);
+    annotations = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,n_trace+3)
+    labelCoor   = Matrix{Float64}(undef,n_trace,2)
+    
+    txt_list = ""
+    cnt = 1;
+    for i=1:n_trace
+        
+        tmp     = mapreduce(permutedims,vcat,hull_list[i].vertices)
+        tmp     = vcat(tmp,tmp[1,:]')
+    
+        traces[i+1] = scatter(; x           =  tmp[:,1],
+                                y           =  tmp[:,2],
+                                fill        = "toself",
+                                fillcolor   = "transparent",
+                                line_width  =  0.0,
+                                mode        = "lines",
+                                hoverinfo   = "text",
+                                showlegend  = false,
+                                text        =  ph_list[i],
+                                );
+    
+    
+        np          = size(tmp,1) 
+        if np > 4
+            tmp2    = [tmp[i,:] for i in 1:size(tmp,1)]
+            ctr     = PolygonOps.centroid(tmp2)
+        else
+            ctr     = zeros(2)
+            ctr[1]  =  mean(tmp[2:end,1])
+            ctr[2]  =  mean(tmp[2:end,2])
+        end
+        labelCoor[i,1]   = (ctr[1]-minimum(xc))/(maximum(xc)-minimum(xc))
+        labelCoor[i,2]   = (ctr[2]-minimum(yc))/(maximum(yc)-minimum(yc))
+    
+        if i > 1
+            for j=1:i-1
+                dist = sqrt((labelCoor[i,1] - labelCoor[j,1])^2+(labelCoor[i,2] - labelCoor[j,2])^2)
+            end
+        end
+    
+        if area(hull_list[i])/fac < 0.004
+            ax = -15
+            ay = -15
+
+            annotations[i] =   attr(    xref        = "x",
+                                        yref        = "y",
+                                        x           = ctr[1],
+                                        y           = ctr[2],
+                                        ax          = ax,
+                                        ay          = ay,
+                                        text        = string(cnt),
+                                        showarrow   = true,
+                                        arrowhead   = 1,
+                                        visible     = true,
+                                        font        = attr( size = 10, color = "#212121"),
+                                    )  
+            txt_list *= string(cnt)*") "*ph_list[i]*"<br>"
+            cnt +=1
+        elseif area(hull_list[i])/fac > 0.03 
+            annotations[i] =   attr(    xref        = "x",
+                                        yref        = "y",
+                                        align       = "left",
+                                        valign      = "top",
+                                        x           = ctr[1],
+                                        y           = ctr[2],
+                                        text        = phd_list[i],
+                                        showarrow   = false,
+                                        visible     = true,
+                                        font        = attr( size = 10, color = "#212121"),  
+                                    )                     
+        else
+            annotations[i] =   attr(    xref        = "x",
+                                        yref        = "y",
+                                        align       = "left",
+                                        valign      = "top",
+                                        x           = ctr[1],
+                                        y           = ctr[2],
+                                        text        = string(cnt),
+                                        showarrow   = false,
+                                        visible     = true,
+                                        font        = attr( size = 10, color = "#212121"),
+                                    )  
+    
+            txt_list *= string(cnt)*") "*ph_list[i]*"<br>" 
+            cnt +=1  
+        end 
+    end
+    
+    annotations[n_trace+1] =   attr(    xref        = "paper",
+                                        yref        = "paper",
+                                        align       = "left",
+                                        valign      = "top",
+                                        height      = 960,
+                                        x           = 0.0,
+                                        y           = 0.0,
+                                        xshift      = 640,
+                                        yshift      = -360,
+                                        text        = txt_list,
+                                        showarrow   = false,
+                                        clicktoshow = false,
+                                        visible     = true,
+                                        font        = attr( size = 10),
+    )  
+
+
+    annotations[n_trace+2] =   attr(    xref        = "paper",
+                                        yref        = "paper",
+                                        align       = "left",
+                                        valign      = "top",
+                                        x           = 0.0,
+                                        y           = 0.0,
+                                        yshift      = -250,
+                                        text        = PT_infos[1],
+                                        showarrow   = false,
+                                        clicktoshow = false,
+                                        visible     = true,
+                                        font        = attr( size = 10),
+                                        )   
+
+    annotations[n_trace+3] =   attr(    xref        = "paper",
+                                        yref        = "paper",
+                                        align       = "left",
+                                        valign      = "top",
+                                        x           = 0.2,
+                                        y           = 0.0,
+                                        yshift      = -250,
+                                        text        = PT_infos[2],
+                                        showarrow   = false,
+                                        clicktoshow = false,
+                                        visible     = true,
+                                        font        = attr( size = 10),
+                                        )   
+    n_lbl = n_trace
+
+    return traces, annotations 
+end
+
+"""
+    Function to generate the frame of the diagrams,
+    This includes MAGEMin logo, outline and ticks
+"""
+function get_plot_frame(Xrange, Yrange, ticks)
+
+    frame   = Array{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}, 1}(undef, 1+4+ticks*6)
+    # frame   = Array{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}, 1}(undef, 1+4+1)
+
+    outline = [ attr(
+        source  = "assets/static/images/MAGEMin.jpg",
+        xref    = "paper",
+        yref    = "paper",
+        x       =  0.05,
+        y       =  1.01,
+        sizex   =  0.1, 
+        sizey   =  0.1,
+        xanchor = "right", 
+        yanchor = "bottom"
+    ),
+    attr(
+        source  = "assets/static/images/img_v.png",
+        xref    = "paper",
+        yref    = "paper",
+        x       =  0.0,
+        y       =  0.0,
+        sizex   =  1.0, 
+        sizey   =  1.0,
+        xanchor = "right", 
+        yanchor = "bottom"
+    ),
+    attr(
+        source  = "assets/static/images/img_v.png",
+        xref    = "paper",
+        yref    = "paper",
+        x       =  1.0,
+        y       =  0.0,
+        sizex   =  1.0, 
+        sizey   =  1.0,
+        xanchor = "right", 
+        yanchor = "bottom"
+    ),
+    attr(
+        source  = "assets/static/images/img_h.png",
+        xref    = "paper",
+        yref    = "paper",
+        x       =  1.0,
+        y       =  0.0,
+        sizex   =  1.0, 
+        sizey   =  1.0,
+        xanchor = "right", 
+        yanchor = "bottom"
+    ),
+    attr(
+        source  = "assets/static/images/img_h.png",
+        xref    = "paper",
+        yref    = "paper",
+        x       =  1.0,
+        y       =  1.0,
+        sizex   =  1.0, 
+        sizey   =  1.0,
+        xanchor = "right", 
+        yanchor = "bottom"
+    )]
+
+    frame[1:5] .= outline
+
+    dx = 1.0/(ticks+1)
+    dy = 1.0/(ticks+1)
+
+
+    frame[6] = attr(    source  = "assets/static/images/img_h_tick.png",
+                            xref    = "paper",
+                            yref    = "paper",
+                            x       =  0.0,
+                            y       =  dy,
+                            sizex   =  0.005, 
+                            sizey   =  0.005,
+                            xanchor = "right", 
+                            yanchor = "bottom"  )  
+
+  
+
+    n = 6
+    for i=0:(ticks+1)
+
+        frame[n] = attr(    source  = "assets/static/images/img_h_tick.png",
+                            xref    = "paper",
+                            yref    = "paper",
+                            # x       =  0.005,
+                            x       =  0.0,
+                            y       =  dy*i,
+
+                            sizex   =  0.005, 
+                            sizey   =  0.005,
+                            xanchor = "right", 
+                            yanchor = "bottom"  )  
+        n+=1
+        frame[n] = attr(    source  = "assets/static/images/img_h_tick.png",
+                            xref    = "paper",
+                            yref    = "paper",
+                            # x       =  1.0,
+                            x       =  1.005,
+                            y       =  dy*i,
+
+                            sizex   =  0.005, 
+                            sizey   =  0.005,
+                            xanchor = "right", 
+                            yanchor = "bottom"  )  
+        n+=1
+        frame[n] = attr(    source  = "assets/static/images/img_v_tick.png",
+                            xref    = "paper",
+                            yref    = "paper",
+                            x       =  dx*i,
+                            # y       =  0.0,
+                            y       =  -0.005,
+
+                            sizex   =  0.005, 
+                            sizey   =  0.005,
+                            xanchor = "right", 
+                            yanchor = "bottom"  )  
+        n+=1
+        frame[n] = attr(    source  = "assets/static/images/img_v_tick.png",
+                            xref    = "paper",
+                            yref    = "paper",
+                            x       =  dx*i,
+                            # y       =  0.995,
+                            y       =  1.0,
+
+                            sizex   =  0.005, 
+                            sizey   =  0.005,
+                            xanchor = "right", 
+                            yanchor = "bottom"  )  
+        n+=1
+
+    end
+    
+    return frame
+end
 
 """
     Function interpolate AMR grid to regular grid
@@ -408,8 +759,10 @@ end
 function get_gridded_map(   fieldname   ::String,
                             oxi         ::Vector{String},
                             Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
+                            Hash_XY     ::Vector{UInt64},
                             sub         ::Int64,
                             refLvl      ::Int64,
+                            refType     ::String,
                             xc          ::Vector{Float64},
                             yc          ::Vector{Float64},
                             xf          ::Vector{SVector{4, Float64}},
@@ -435,6 +788,10 @@ function get_gridded_map(   fieldname   ::String,
         for i=1:np
             field[i] = Float64(length(Out_XY[i].ph));
         end
+    elseif fieldname == "Hash"
+        for i=1:np
+            field[i] = Hash_XY[i];
+        end 
     elseif fieldname == "Variance"
         for i=1:np
             field[i] = Float64(len_ox - n_phase_XY[i] + 2.0);
@@ -459,39 +816,11 @@ function get_gridded_map(   fieldname   ::String,
     X            = repeat(x , n)[:]
     Y            = repeat(y', n)[:]
     gridded      = Matrix{Union{Float64,Missing}}(undef,n,n);
-    gridded_info = Matrix{Union{String,Missing}}(undef,n,n);   
-    PhasesLabels = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,n^2+2)
+    gridded_info = Matrix{Union{String,Missing}}(undef,n,n); 
 
     Xr = (Xrange[2]-Xrange[1])/n
     Yr = (Yrange[2]-Yrange[1])/n
 
-    PhasesLabels[1] =   attr(   xref        = "paper",
-                                yref        = "paper",
-                                align       = "left",
-                                valign      = "top",
-                                x           = 0.0,
-                                y           = 0.0,
-                                yshift      = -250,
-                                text        = PT_infos[1],
-                                showarrow   = false,
-                                clicktoshow = false,
-                                visible     = true,
-                                font        = attr( size = 10),
-                                )   
-    PhasesLabels[2] =   attr(   xref        = "paper",
-                                yref        = "paper",
-                                align       = "left",
-                                valign      = "top",
-                                x           = 0.2,
-                                y           = 0.0,
-                                yshift      = -250,
-                                text        = PT_infos[2],
-                                showarrow   = false,
-                                clicktoshow = false,
-                                visible     = true,
-                                font        = attr( size = 10),
-                                )   
-    m  = 3
     for k=1:np
         ii              = Int64(round((xc[k]-Xrange[1] + Xr/2)/(Xr)))
         jj              = Int64(round((yc[k]-Yrange[1] + Yr/2)/(Yr))) 
@@ -504,23 +833,12 @@ function get_gridded_map(   fieldname   ::String,
 
                 tmp                 = replace(string(Out_XY[k].ph), "\""=>"", "]"=>"", "["=>"", ","=>"")
                 gridded_info[iii,jjj] = "#"*string(k)*"# "*tmp
-
-                PhasesLabels[m] =   attr(   
-                                            x           = x[iii],
-                                            y           = y[jjj],
-                                            text        = tmp,
-                                            showarrow   = true,
-                                            arrowhead   = 1,
-                                            clicktoshow = "onoff",
-                                            visible     = false
-                                    )
-                m += 1
             end
         end
 
     end
 
-    return gridded, gridded_info, X, Y, npoints, meant, PhasesLabels
+    return gridded, gridded_info, X, Y, npoints, meant
 end
 
 
@@ -530,8 +848,10 @@ end
 function get_gridded_map_no_lbl(    fieldname   ::String,
                                     oxi         ::Vector{String},
                                     Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
+                                    Hash_XY     ::Vector{UInt64},
                                     sub         ::Int64,
                                     refLvl      ::Int64,
+                                    refType     ::String,
                                     xc          ::Vector{Float64},
                                     yc          ::Vector{Float64},
                                     xf          ::Vector{SVector{4, Float64}},
@@ -556,6 +876,10 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
         for i=1:np
             field[i] = Float64(length(Out_XY[i].ph));
         end
+    elseif fieldname == "Hash"
+        for i=1:np
+            field[i] = Hash_XY[i];
+        end 
     elseif fieldname == "Variance"
         for i=1:np
             field[i] = Float64(len_ox - n_phase_XY[i] + 2.0);
@@ -588,14 +912,6 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
         ii              = Int64(round((xc[k]-Xrange[1] + Xr/2)/(Xr)))
         jj              = Int64(round((yc[k]-Yrange[1] + Yr/2)/(Yr))) 
         gridded[ii,jj]  = field[k] 
-
-        for i=xf[k][1]+Xr/2 : Xr : xf[k][3]
-            for j=yf[k][1]+Yr/2 : Yr : yf[k][3]
-                iii                  = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
-                jjj                  = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
-            end
-        end
-
     end
 
     return gridded, X, Y, npoints, meant
@@ -655,8 +971,6 @@ function get_isopleth_map(  mod         ::String,
         end 
     end
 
-
-
     n            = 2^(sub + refLvl)
     x            = range(minimum(xc), stop = maximum(xc), length = n)
     y            = range(minimum(yc), stop = maximum(yc), length = n)
@@ -696,6 +1010,8 @@ function get_oxide_list(dbin::String)
     if dbin == "ig"
 	    MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"; "H2O"];
     elseif dbin == "igd"
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"; "H2O"];      
+    elseif dbin == "ige"
         MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"; "H2O"];      
     elseif dbin == "alk"
         MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"; "H2O"];    
@@ -750,8 +1066,24 @@ function bulk_file_to_db(datain)
         frac 		= replace.(frac,r"\]"=>"",r"\["=>"");
         frac 		= parse.(Float64,frac);
 
+        idx 		= findall(datain[1,:] .== "frac2")[1];
         bulkrock, MAGEMin_ox    = convertBulk4MAGEMin(frac,oxide,String(sysUnit),String(dbin)) 
+        bulkrock   .= round.(bulkrock; digits = 4)
+
+
+        if ~isempty(datain[i,idx])
+            frac2  		= rsplit(datain[i,idx],",");
+            frac2 		= strip.(convert.(String,frac2));
+            frac2 		= replace.(frac2,r"\]"=>"",r"\["=>"");
+            frac2		= parse.(Float64,frac2);
+            bulkrock2, MAGEMin_ox   = convertBulk4MAGEMin(frac2,oxide,String(sysUnit),String(dbin)) 
+            bulkrock2  .= round.(bulkrock; digits = 4)
+        else
+            bulkrock2 = []
+        end
+
         oxide                   = get_oxide_list(String(dbin))
+
 
         push!(db,Dict(  :bulk       => bulk,
                         :title      => title,
@@ -761,6 +1093,7 @@ function bulk_file_to_db(datain)
                         :sysUnit    => sysUnit,
                         :oxide      => oxide,
                         :frac       => bulkrock,
+                        :frac2      => bulkrock2,
                     ), cols=:union)
     end
 

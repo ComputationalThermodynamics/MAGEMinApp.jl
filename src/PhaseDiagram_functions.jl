@@ -138,31 +138,6 @@ end
 
 
 
-"""
-
-    Initiatize global variable storing isopleths information
-"""
-function initialize_g_isopleth(; n_iso_max = 8)
-    global g_isopleths
-
-    status    = zeros(Int64,n_iso_max)
-    active    = []
-    isoP      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max + 1); # + 1 to store the heatmap
-
-    for i=1:n_iso_max
-        isoP[i] = contour()
-    end
-
-    label     = Vector{String}(undef,n_iso_max)
-    value     = Vector{Int64}(undef,n_iso_max)
-
-    g_isopleths = isopleth_data(1, n_iso_max,
-                                status, active, isoP,
-                                label, value)
-
-
-    return g_isopleths
-end
 
 """
     retrieve_solution_phase_information(dtb)
@@ -171,8 +146,8 @@ end
 """
 function retrieve_solution_phase_information(dtb)
 
-    db_inf  = db_infos[db_infos("mp", "Metapelite (White et al., 2014)", ss_infos[ss_infos("liq", 8, 7, ["none", "q4L", "abL", "kspL", "anL", "slL", "fo2L", "fa2L", "h2oL"], ["none", "q", "fsp", "na", "an", "ol", "x", "h2o"]), ss_infos("pl4tr", 3, 2, ["none", "ab", "an", "san"], ["none", "ca", "k"]), ss_infos("bi", 7, 6, ["none", "phl", "annm", "obi", "east", "tbi", "fbi", "mmbi"], ["none", "x", "m", "y", "f", "t", "Q"]), ss_infos("g", 5, 4, ["none", "py", "alm", "spss", "gr", "kho"], ["none", "x", "z", "m", "f"]), ss_infos("ep", 3, 2, ["none", "cz", "ep", "fep"], ["none", "f", "Q"]), ss_infos("ma", 6, 5, ["none", "mut", "celt", "fcelt", "pat", "ma", "fmu"], ["none", "x", "y", "f", "n", "c"]), ss_infos("mu", 6, 5, ["none", "mut", "cel", "fcel", "pat", "ma", "fmu"], ["none", "x", "y", "f", "n", "c"]), ss_infos("opx", 7, 6, ["none", "en", "fs", "fm", "mgts", "fopx", "mnopx", "odi"], ["none", "x", "m", "y", "f", "c", "Q"]), ss_infos("sa", 5, 4, ["none", "spr4", "spr5", "fspm", "spro", "ospr"], ["none", "x", "y", "f", "Q"]), ss_infos("cd", 4, 3, ["none", "crd", "fcrd", "hcrd", "mncd"], ["none", "x", "m", "h"]), ss_infos("st", 5, 4, ["none", "mstm", "fst", "mnstm", "msto", "mstt"], ["none", "x", "m", "f", "t"]), ss_infos("chl", 8, 7, ["none", "clin", "afchl", "ames", "daph", "ochl1", "ochl4", "f3clin", "mmchl"], ["none", "x", "y", "f", "m", "QAl", "Q1", "Q4"]), ss_infos("ctd", 4, 3, ["none", "mctd", "fctd", "mnct", "ctdo"], ["none", "x", "m", "f"]), ss_infos("sp", 4, 3, ["none", "herc", "sp", "mt", "usp"], ["none", "x", "y", "z"]), ss_infos("ilm", 5, 4, ["none", "oilm", "dilm", "dhem", "geik", "pnt"], ["none", "i", "g", "m", "Q"]), ss_infos("mt", 3, 2, ["none", "imt", "dmt", "usp"], ["none", "x", "Q"])], ["liq", "pl4tr", "bi", "g", "ep", "ma", "mu", "opx", "sa", "cd", "st", "chl", "ctd", "sp", "ilm", "mt"], ["q", "crst", "trd", "coe", "stv", "ky", "sill", "and", "ru", "sph", "wo", "pswo", "ne", "O2", "H2O", "qfm", "qif", "nno", "hm", "cco"]), db_infos("mb", "Metabasite (Green et al., 2016)", ss_infos[ss_infos("sp", 4, 3, ["none", "herc", "sp", "mt", "usp"], ["none", "x", "y", "z"]), ss_infos("opx", 6, 5, ["none", "en", "fs", "fm", "mgts", "fopx", "odi"], ["none", "x", "y", "f", "c", "Q"]), ss_infos("pl4tr", 3, 2, ["none", "ab", "an", "san"], ["none", "ca", "k"]), ss_infos("liq", 9, 8, ["none", "q4L", "abL", "kspL", "wo1L", "sl1L", "fa2L", "fo2L", "watL", "anoL"], ["none", "q", "fsp", "na", "wo", "sil", "ol", "x", "yan"]), ss_infos("mu", 6, 5, ["none", "mu", "cel", "fcel", "pa", "mam", "fmu"], ["none", "x", "y", "f", "n", "c"]), ss_infos("ilm", 3, 2, ["none", "oilm", "dilm", "dhem"], ["none", "x", "Q"]), ss_infos("ol", 2, 1, ["none", "fo", "fa"], ["none", "x"]), ss_infos("hb", 11, 10, ["none", "tr", "tsm", "prgm", "glm", "cumm", "grnm", "a", "b", "mrb", "kprg", "tts"], ["none", "x", "y", "z", "a", "k", "c", "f", "t", "Q1", "Q2"]), ss_infos("ep", 3, 2, ["none", "cz", "ep", "fep"], ["none", "f", "Q"]), ss_infos("g", 4, 3, ["none", "py", "alm", "gr", "kho"], ["none", "x", "z", "f"]), ss_infos("chl", 7, 6, ["none", "clin", "afchl", "ames", "daph", "ochl1", "ochl4", "f3clin"], ["none", "x", "y", "f", "QAl", "Q1", "Q4"]), ss_infos("bi", 6, 5, ["none", "phl", "annm", "obi", "east", "tbi", "fbi"], ["none", "x", "y", "f", "t", "Q"]), ss_infos("dio", 7, 6, ["none", "jd", "di", "hed", "acmm", "om", "cfm", "jac"], ["none", "x", "j", "t", "c", "Qaf", "Qfm"]), ss_infos("abc", 2, 1, ["none", "abm", "anm"], ["none", "ca"])], ["sp", "opx", "pl4tr", "liq", "mu", "ilm", "ol", "hb", "ep", "g", "chl", "bi", "dio", "abc"], ["q", "crst", "trd", "coe", "law", "ky", "sill", "and", "ru", "sph", "sph", "ab", "H2O", "qfm", "qif", "nno", "hm", "cco"]), db_infos("ig", "Igneous HP18 (Green et al., 2023)", ss_infos[ss_infos("spn", 8, 7, ["none", "nsp", "isp", "nhc", "ihc", "nmt", "imt", "pcr", "usp"], ["none", "x", "y", "c", "t", "Q1", "Q2", "Q3"]), ss_infos("bi", 6, 5, ["none", "phl", "annm", "obi", "eas", "tbi", "fbi"], ["none", "x", "y", "f", "t", "Q"]), ss_infos("cd", 3, 2, ["none", "crd", "fcrd", "hcrd"], ["none", "x", "h"]), ss_infos("cpx", 10, 9, ["none", "di", "cfs", "cats", "crdi", "cess", "cbuf", "jd", "cen", "cfm", "kjd"], ["none", "x", "y", "o", "n", "Q", "f", "cr", "t", "k"]), ss_infos("ep", 3, 2, ["none", "cz", "ep", "fep"], ["none", "f", "Q"]), ss_infos("g", 6, 5, ["none", "py", "alm", "gr", "andr", "knom", "tig"], ["none", "x", "c", "f", "cr", "t"]), ss_infos("hb", 11, 10, ["none", "tr", "tsm", "prgm", "glm", "cumm", "grnm", "a", "b", "mrb", "kprg", "tts"], ["none", "x", "y", "z", "a", "k", "c", "f", "t", "Q1", "Q2"]), ss_infos("ilm", 5, 4, ["none", "oilm", "dilm", "hm", "ogk", "dgk"], ["none", "i", "m", "Q", "Qt"]), ss_infos("liq", 12, 11, ["none", "q4L", "slL", "wo1L", "fo2L", "fa2L", "jdL", "hmL", "ekL", "tiL", "kjL", "ctL", "wat1L"], ["none", "wo", "sl", "fo", "fa", "jd", "hm", "ek", "ti", "kj", "yct", "h2o"]), ss_infos("ol", 4, 3, ["none", "mont", "fa", "fo", "cfm"], ["none", "x", "c", "Q"]), ss_infos("opx", 9, 8, ["none", "en", "fs", "fm", "odi", "mgts", "cren", "obuf", "mess", "ojd"], ["none", "x", "y", "c", "Q", "f", "t", "cr", "j"]), ss_infos("pl4T", 3, 2, ["none", "ab", "an", "san"], ["none", "ca", "k"]), ss_infos("fl", 11, 10, ["none", "qfL", "slfL", "wofL", "fofL", "fafL", "jdfL", "hmfL", "ekfL", "tifL", "kjfL", "H2O"], ["none", "wo", "sl", "fo", "fa", "jd", "hm", "ek", "ti", "kj", "h2o"]), ss_infos("fper", 2, 1, ["none", "per", "wu"], ["none", ""])], ["spn", "bi", "cd", "cpx", "ep", "g", "hb", "ilm", "liq", "ol", "opx", "pl4T", "fl", "fper"], ["q", "crst", "trd", "coe", "stv", "ky", "sill", "and", "ru", "sph", "wo", "pswo", "ne", "O2", "qfm", "mw", "qif", "nno", "hm", "cco"]), db_infos("igd", "Igneous T21 (Green et al., 2023)", ss_infos[ss_infos("spn", 8, 7, ["none", "nsp", "isp", "nhc", "ihc", "nmt", "imt", "pcr", "usp"], ["none", "x", "y", "c", "t", "Q1", "Q2", "Q3"]), ss_infos("bi", 6, 5, ["none", "phl", "annm", "obi", "eas", "tbi", "fbi"], ["none", "x", "y", "f", "t", "Q"]), ss_infos("cd", 3, 2, ["none", "crd", "fcrd", "hcrd"], ["none", "x", "h"]), ss_infos("cpx", 10, 9, ["none", "di", "cfs", "cats", "crdi", "cess", "cbuf", "jd", "cen", "cfm", "kjd"], ["none", "x", "y", "o", "n", "Q", "f", "cr", "t", "k"]), ss_infos("ep", 3, 2, ["none", "cz", "ep", "fep"], ["none", "f", "Q"]), ss_infos("g", 6, 5, ["none", "py", "alm", "gr", "andr", "knr", "tig"], ["none", "x", "c", "f", "cr", "t"]), ss_infos("hb", 11, 10, ["none", "tr", "tsm", "prgm", "glm", "cumm", "grnm", "a", "b", "mrb", "kprg", "tts"], ["none", "x", "y", "z", "a", "k", "c", "f", "t", "Q1", "Q2"]), ss_infos("ilm", 5, 4, ["none", "oilm", "dilm", "hm", "ogk", "dgk"], ["none", "i", "m", "Q", "Qt"]), ss_infos("liq", 15, 14, ["none", "q3L", "sl1L", "wo1L", "fo2L", "fa2L", "neL", "hmL", "ekL", "tiL", "kjL", "anL", "ab1L", "enL", "kfL", "wat1L"], ["none", "wo", "sl", "fo", "fa", "ne", "hm", "ek", "ti", "kj", "h2o", "yan", "yab", "yen", "ykf"]), ss_infos("ol", 4, 3, ["none", "mnt", "fa", "fo", "cfm"], ["none", "x", "c", "Q"]), ss_infos("opx", 9, 8, ["none", "en", "fs", "fm", "odi", "mgts", "cren", "obuf", "mess", "ojd"], ["none", "x", "y", "c", "Q", "f", "t", "cr", "j"]), ss_infos("fsp", 3, 2, ["none", "ab", "an", "san"], ["none", "ca", "k"]), ss_infos("fl", 4, 3, ["none", "qfL", "nefL", "ksfL", "H2O"], ["none", "ne", "ks", "h2o"]), ss_infos("fper", 2, 1, ["none", "per", "wu"], ["none", ""])], ["spn", "bi", "cd", "cpx", "ep", "g", "hb", "ilm", "liq", "ol", "opx", "fsp", "fl", "fper"], ["q", "crst", "trd", "coe", "stv", "ky", "sill", "and", "ru", "sph", "wo", "pswo", "ne", "O2", "qfm", "mw", "qif", "nno", "hm", "cco"]), db_infos("alk", "Alkaline (Weller et al., 2023)", ss_infos[ss_infos("spn", 8, 7, ["none", "nsp", "isp", "nhc", "ihc", "nmt", "imt", "pcr", "usp"], ["none", "x", "y", "c", "t", "Q1", "Q2", "Q3"]), ss_infos("bi", 6, 5, ["none", "phl", "annm", "obi", "eas", "tbi", "fbi"], ["none", "x", "y", "f", "t", "Q"]), ss_infos("cd", 3, 2, ["none", "crd", "fcrd", "hcrd"], ["none", "x", "h"]), ss_infos("cpx", 10, 9, ["none", "di", "cfs", "cats", "crdi", "cess", "cbuf", "jd", "cen", "cfm", "kjd"], ["none", "x", "y", "o", "n", "Q", "f", "cr", "t", "k"]), ss_infos("ep", 3, 2, ["none", "cz", "ep", "fep"], ["none", "f", "Q"]), ss_infos("g", 6, 5, ["none", "py", "alm", "gr", "andr", "knr", "tig"], ["none", "x", "c", "f", "cr", "t"]), ss_infos("hb", 11, 10, ["none", "tr", "tsm", "prgm", "glm", "cumm", "grnm", "a", "b", "mrb", "kprg", "tts"], ["none", "x", "y", "z", "a", "k", "c", "f", "t", "Q1", "Q2"]), ss_infos("ilm", 5, 4, ["none", "oilm", "dilm", "hm", "ogk", "dgk"], ["none", "i", "m", "Q", "Qt"]), ss_infos("liq", 15, 14, ["none", "q3L", "sl1L", "wo1L", "fo2L", "fa2L", "nmL", "hmL", "ekL", "tiL", "kmL", "anL", "ab1L", "enL", "kfL", "wat1L"], ["none", "wo", "sl", "fo", "fa", "ns", "hm", "ek", "ti", "ks", "h2o", "yan", "yab", "yen", "ykf"]), ss_infos("ol", 4, 3, ["none", "mnt", "fa", "fo", "cfm"], ["none", "x", "c", "Q"]), ss_infos("opx", 9, 8, ["none", "en", "fs", "fm", "odi", "mgts", "cren", "obuf", "mess", "ojd"], ["none", "x", "y", "c", "Q", "f", "t", "cr", "j"]), ss_infos("fsp", 3, 2, ["none", "ab", "an", "san"], ["none", "ca", "k"]), ss_infos("fl", 4, 3, ["none", "qfL", "nefL", "ksfL", "H2O"], ["none", "ne", "ks", "h2o"]), ss_infos("lct", 2, 1, ["none", "nlc", "klc"], ["none", "n"]), ss_infos("mel", 5, 4, ["none", "geh", "ak", "fak", "nml", "fge"], ["none", "x", "n", "y", "f"]), ss_infos("ness", 6, 5, ["none", "neN", "neS", "neK", "neO", "neC", "neF"], ["none", "s", "k", "Q", "f", "c"]), ss_infos("kals", 2, 1, ["none", "nks", "kls"], ["none", "k"])], ["spn", "bi", "cd", "cpx", "ep", "g", "hb", "ilm", "liq", "ol", "opx", "fsp", "fl", "lct", "mel", "ness", "kals"], ["q", "crst", "trd", "coe", "stv", "ky", "sill", "and", "ru", "sph", "O2", "qfm", "mw", "qif", "nno", "hm", "cco"]), db_infos("um", "Ultramafic (Tomlinson et al., 2021)", ss_infos[ss_infos("fluid", 2, 1, ["none", "H2", "H2O"], ["none", "x"]), ss_infos("ol", 2, 1, ["none", "fo", "fa"], ["none", "x"]), ss_infos("br", 2, 1, ["none", "br", "fbr"], ["none", "x"]), ss_infos("ch", 2, 1, ["none", "chum", "chuf"], ["none", "x"]), ss_infos("atg", 5, 4, ["none", "atgf", "fatg", "atgo", "aatg", "oatg"], ["none", "x", "y", "f", "t"]), ss_infos("g", 2, 1, ["none", "py", "alm"], ["none", "x"]), ss_infos("ta", 6, 5, ["none", "ta", "fta", "tao", "tats", "ota", "tap"], ["none", "x", "y", "f", "v", "Q"]), ss_infos("chl", 7, 6, ["none", "clin", "afchl", "ames", "daph", "ochl1", "ochl4", "f3clin"], ["none", "x", "y", "f", "m", "t", "QA1"]), ss_infos("spi", 3, 2, ["none", "herc", "sp", "mt"], ["none", "x", "y"]), ss_infos("opx", 5, 4, ["none", "en", "fs", "fm", "mgts", "fopx"], ["none", "x", "y", "f", "Q"]), ss_infos("po", 2, 1, ["none", "trov", "trot"], ["none", "y"]), ss_infos("anth", 5, 4, ["none", "anth", "gedf", "fant", "a", "b"], ["none", "x", "y", "z", "a"])], ["fluid", "ol", "br", "ch", "atg", "g", "ta", "chl", "spi", "opx", "po", "anth"], ["q", "crst", "trd", "coe", "stv", "ky", "sill", "and", "pyr", "O2", "qfm", "qif", "nno", "hm", "cco"])]
-    dbs     = ["mp","mb","ig","igd","alk","um"]
+    db_inf  = db_infos[db_infos("mp", "Metapelite (White et al., 2014)", ss_infos[ss_infos("liq", 8, 7, ["none", "q4L", "abL", "kspL", "anL", "slL", "fo2L", "fa2L", "h2oL"], ["none", "q", "fsp", "na", "an", "ol", "x", "h2o"]), ss_infos("fsp", 3, 2, ["none", "ab", "an", "san"], ["none", "ca", "k"]), ss_infos("bi", 7, 6, ["none", "phl", "annm", "obi", "east", "tbi", "fbi", "mmbi"], ["none", "x", "m", "y", "f", "t", "Q"]), ss_infos("g", 5, 4, ["none", "py", "alm", "spss", "gr", "kho"], ["none", "x", "z", "m", "f"]), ss_infos("ep", 3, 2, ["none", "cz", "ep", "fep"], ["none", "f", "Q"]), ss_infos("ma", 6, 5, ["none", "mut", "celt", "fcelt", "pat", "ma", "fmu"], ["none", "x", "y", "f", "n", "c"]), ss_infos("mu", 6, 5, ["none", "mut", "cel", "fcel", "pat", "ma", "fmu"], ["none", "x", "y", "f", "n", "c"]), ss_infos("opx", 7, 6, ["none", "en", "fs", "fm", "mgts", "fopx", "mnopx", "odi"], ["none", "x", "m", "y", "f", "c", "Q"]), ss_infos("sa", 5, 4, ["none", "spr4", "spr5", "fspm", "spro", "ospr"], ["none", "x", "y", "f", "Q"]), ss_infos("cd", 4, 3, ["none", "crd", "fcrd", "hcrd", "mncd"], ["none", "x", "m", "h"]), ss_infos("st", 5, 4, ["none", "mstm", "fst", "mnstm", "msto", "mstt"], ["none", "x", "m", "f", "t"]), ss_infos("chl", 8, 7, ["none", "clin", "afchl", "ames", "daph", "ochl1", "ochl4", "f3clin", "mmchl"], ["none", "x", "y", "f", "m", "QAl", "Q1", "Q4"]), ss_infos("ctd", 4, 3, ["none", "mctd", "fctd", "mnct", "ctdo"], ["none", "x", "m", "f"]), ss_infos("sp", 4, 3, ["none", "herc", "sp", "mt", "usp"], ["none", "x", "y", "z"]), ss_infos("ilmm", 5, 4, ["none", "oilm", "dilm", "dhem", "geik", "pnt"], ["none", "i", "g", "m", "Q"])], ["liq", "fsp", "bi", "g", "ep", "ma", "mu", "opx", "sa", "cd", "st", "chl", "ctd", "sp", "ilmm"], ["q", "crst", "trd", "coe", "stv", "ky", "sill", "and", "ru", "sph", "O2", "H2O", "qfm", "qif", "nno", "hm", "cco"]), db_infos("mb", "Metabasite (Green et al., 2016)", ss_infos[ss_infos("sp", 4, 3, ["none", "herc", "sp", "mt", "usp"], ["none", "x", "y", "z"]), ss_infos("opx", 6, 5, ["none", "en", "fs", "fm", "mgts", "fopx", "odi"], ["none", "x", "y", "f", "c", "Q"]), ss_infos("fsp", 3, 2, ["none", "ab", "an", "san"], ["none", "ca", "k"]), ss_infos("liq", 9, 8, ["none", "q4L", "abL", "kspL", "wo1L", "sl1L", "fa2L", "fo2L", "watL", "anoL"], ["none", "q", "fsp", "na", "wo", "sil", "ol", "x", "yan"]), ss_infos("mu", 6, 5, ["none", "mu", "cel", "fcel", "pa", "mam", "fmu"], ["none", "x", "y", "f", "n", "c"]), ss_infos("ilm", 3, 2, ["none", "oilm", "dilm", "dhem"], ["none", "x", "Q"]), ss_infos("ol", 2, 1, ["none", "fo", "fa"], ["none", "x"]), ss_infos("hb", 11, 10, ["none", "tr", "tsm", "prgm", "glm", "cumm", "grnm", "a", "b", "mrb", "kprg", "tts"], ["none", "x", "y", "z", "a", "k", "c", "f", "t", "Q1", "Q2"]), ss_infos("ep", 3, 2, ["none", "cz", "ep", "fep"], ["none", "f", "Q"]), ss_infos("g", 4, 3, ["none", "py", "alm", "gr", "kho"], ["none", "x", "z", "f"]), ss_infos("chl", 7, 6, ["none", "clin", "afchl", "ames", "daph", "ochl1", "ochl4", "f3clin"], ["none", "x", "y", "f", "QAl", "Q1", "Q4"]), ss_infos("bi", 6, 5, ["none", "phl", "annm", "obi", "east", "tbi", "fbi"], ["none", "x", "y", "f", "t", "Q"]), ss_infos("dio", 7, 6, ["none", "jd", "di", "hed", "acmm", "om", "cfm", "jac"], ["none", "x", "j", "t", "c", "Qaf", "Qfm"]), ss_infos("abc", 2, 1, ["none", "abm", "anm"], ["none", "ca"])], ["sp", "opx", "fsp", "liq", "mu", "ilm", "ol", "hb", "ep", "g", "chl", "bi", "dio", "abc"], ["q", "crst", "trd", "coe", "law", "ky", "sill", "and", "ru", "sph", "sph", "ab", "H2O", "qfm", "qif", "nno", "hm", "cco"]), db_infos("ig", "Igneous HP18 (Green et al., 2023)", ss_infos[ss_infos("spn", 8, 7, ["none", "nsp", "isp", "nhc", "ihc", "nmt", "imt", "pcr", "usp"], ["none", "x", "y", "c", "t", "Q1", "Q2", "Q3"]), ss_infos("bi", 6, 5, ["none", "phl", "annm", "obi", "eas", "tbi", "fbi"], ["none", "x", "y", "f", "t", "Q"]), ss_infos("cd", 3, 2, ["none", "crd", "fcrd", "hcrd"], ["none", "x", "h"]), ss_infos("cpx", 10, 9, ["none", "di", "cfs", "cats", "crdi", "cess", "cbuf", "jd", "cen", "cfm", "kjd"], ["none", "x", "y", "o", "n", "Q", "f", "cr", "t", "k"]), ss_infos("ep", 3, 2, ["none", "cz", "ep", "fep"], ["none", "f", "Q"]), ss_infos("g", 6, 5, ["none", "py", "alm", "gr", "andr", "knom", "tig"], ["none", "x", "c", "f", "cr", "t"]), ss_infos("hb", 11, 10, ["none", "tr", "tsm", "prgm", "glm", "cumm", "grnm", "a", "b", "mrb", "kprg", "tts"], ["none", "x", "y", "z", "a", "k", "c", "f", "t", "Q1", "Q2"]), ss_infos("ilm", 5, 4, ["none", "oilm", "dilm", "hm", "ogk", "dgk"], ["none", "i", "m", "Q", "Qt"]), ss_infos("liq", 12, 11, ["none", "q4L", "slL", "wo1L", "fo2L", "fa2L", "jdL", "hmL", "ekL", "tiL", "kjL", "ctL", "wat1L"], ["none", "wo", "sl", "fo", "fa", "jd", "hm", "ek", "ti", "kj", "yct", "h2o"]), ss_infos("ol", 4, 3, ["none", "mont", "fa", "fo", "cfm"], ["none", "x", "c", "Q"]), ss_infos("opx", 9, 8, ["none", "en", "fs", "fm", "odi", "mgts", "cren", "obuf", "mess", "ojd"], ["none", "x", "y", "c", "Q", "f", "t", "cr", "j"]), ss_infos("fsp", 3, 2, ["none", "ab", "an", "san"], ["none", "ca", "k"]), ss_infos("fl", 11, 10, ["none", "qfL", "slfL", "wofL", "fofL", "fafL", "jdfL", "hmfL", "ekfL", "tifL", "kjfL", "H2O"], ["none", "wo", "sl", "fo", "fa", "jd", "hm", "ek", "ti", "kj", "h2o"]), ss_infos("fper", 2, 1, ["none", "per", "wu"], ["none", ""])], ["spn", "bi", "cd", "cpx", "ep", "g", "hb", "ilm", "liq", "ol", "opx", "fsp", "fl", "fper"], ["q", "crst", "trd", "coe", "stv", "ky", "sill", "and", "ru", "sph", "O2", "qfm", "mw", "qif", "nno", "hm", "cco"]), db_infos("ige", "Igneous HP18 (Green et al., 2023), extended", ss_infos[ss_infos("spn", 8, 7, ["none", "nsp", "isp", "nhc", "ihc", "nmt", "imt", "pcr", "usp"], ["none", "x", "y", "c", "t", "Q1", "Q2", "Q3"]), ss_infos("bi", 6, 5, ["none", "phl", "annm", "obi", "eas", "tbi", "fbi"], ["none", "x", "y", "f", "t", "Q"]), ss_infos("cd", 3, 2, ["none", "crd", "fcrd", "hcrd"], ["none", "x", "h"]), ss_infos("cpx", 10, 9, ["none", "di", "cfs", "cats", "crdi", "cess", "cbuf", "jd", "cen", "cfm", "kjd"], ["none", "x", "y", "o", "n", "Q", "f", "cr", "t", "k"]), ss_infos("ep", 3, 2, ["none", "cz", "ep", "fep"], ["none", "f", "Q"]), ss_infos("g", 6, 5, ["none", "py", "alm", "gr", "andr", "knom", "tig"], ["none", "x", "c", "f", "cr", "t"]), ss_infos("hb", 11, 10, ["none", "tr", "tsm", "prgm", "glm", "cumm", "grnm", "a", "b", "mrb", "kprg", "tts"], ["none", "x", "y", "z", "a", "k", "c", "f", "t", "Q1", "Q2"]), ss_infos("ilm", 5, 4, ["none", "oilm", "dilm", "hm", "ogk", "dgk"], ["none", "i", "m", "Q", "Qt"]), ss_infos("liq", 12, 11, ["none", "q4L", "slL", "wo1L", "fo2L", "fa2L", "jdL", "hmL", "ekL", "tiL", "kjL", "ctL", "wat1L"], ["none", "wo", "sl", "fo", "fa", "jd", "hm", "ek", "ti", "kj", "yct", "h2o"]), ss_infos("ol", 4, 3, ["none", "mont", "fa", "fo", "cfm"], ["none", "x", "c", "Q"]), ss_infos("opx", 9, 8, ["none", "en", "fs", "fm", "odi", "mgts", "cren", "obuf", "mess", "ojd"], ["none", "x", "y", "c", "Q", "f", "t", "cr", "j"]), ss_infos("fsp", 3, 2, ["none", "ab", "an", "san"], ["none", "ca", "k"]), ss_infos("fl", 11, 10, ["none", "qfL", "slfL", "wofL", "fofL", "fafL", "jdfL", "hmfL", "ekfL", "tifL", "kjfL", "H2O"], ["none", "wo", "sl", "fo", "fa", "jd", "hm", "ek", "ti", "kj", "h2o"]), ss_infos("fper", 2, 1, ["none", "per", "wu"], ["none", ""]), ss_infos("ma", 6, 5, ["none", "mut", "celt", "fcelt", "pat", "ma", "fmu"], ["none", "x", "y", "f", "n", "c"]), ss_infos("chl", 7, 6, ["none", "clin", "afchl", "ames", "daph", "ochl1", "ochl4", "f3clin"], ["none", "x", "y", "f", "QA1", "Q1", "Q4"]), ss_infos("mu", 6, 5, ["none", "mu", "cel", "fcel", "pa", "mam", "fmu"], ["none", "x", "y", "f", "n", "c"])], ["spn", "bi", "cd", "cpx", "ep", "g", "hb", "ilm", "liq", "ol", "opx", "fsp", "fl", "fper", "ma", "chl", "mu"], ["q", "crst", "trd", "coe", "stv", "ky", "sill", "and", "ru", "sph", "O2", "zo", "qfm", "mw", "qif", "nno", "hm", "cco"]), db_infos("igd", "Igneous T21 (Green et al., 2023)", ss_infos[ss_infos("spn", 8, 7, ["none", "nsp", "isp", "nhc", "ihc", "nmt", "imt", "pcr", "usp"], ["none", "x", "y", "c", "t", "Q1", "Q2", "Q3"]), ss_infos("bi", 6, 5, ["none", "phl", "annm", "obi", "eas", "tbi", "fbi"], ["none", "x", "y", "f", "t", "Q"]), ss_infos("cd", 3, 2, ["none", "crd", "fcrd", "hcrd"], ["none", "x", "h"]), ss_infos("cpx", 10, 9, ["none", "di", "cfs", "cats", "crdi", "cess", "cbuf", "jd", "cen", "cfm", "kjd"], ["none", "x", "y", "o", "n", "Q", "f", "cr", "t", "k"]), ss_infos("ep", 3, 2, ["none", "cz", "ep", "fep"], ["none", "f", "Q"]), ss_infos("g", 6, 5, ["none", "py", "alm", "gr", "andr", "knr", "tig"], ["none", "x", "c", "f", "cr", "t"]), ss_infos("hb", 11, 10, ["none", "tr", "tsm", "prgm", "glm", "cumm", "grnm", "a", "b", "mrb", "kprg", "tts"], ["none", "x", "y", "z", "a", "k", "c", "f", "t", "Q1", "Q2"]), ss_infos("ilm", 5, 4, ["none", "oilm", "dilm", "hm", "ogk", "dgk"], ["none", "i", "m", "Q", "Qt"]), ss_infos("liq", 15, 14, ["none", "q3L", "sl1L", "wo1L", "fo2L", "fa2L", "neL", "hmL", "ekL", "tiL", "kjL", "anL", "ab1L", "enL", "kfL", "wat1L"], ["none", "wo", "sl", "fo", "fa", "ne", "hm", "ek", "ti", "kj", "h2o", "yan", "yab", "yen", "ykf"]), ss_infos("ol", 4, 3, ["none", "mnt", "fa", "fo", "cfm"], ["none", "x", "c", "Q"]), ss_infos("opx", 9, 8, ["none", "en", "fs", "fm", "odi", "mgts", "cren", "obuf", "mess", "ojd"], ["none", "x", "y", "c", "Q", "f", "t", "cr", "j"]), ss_infos("fsp", 3, 2, ["none", "ab", "an", "san"], ["none", "ca", "k"]), ss_infos("fl", 4, 3, ["none", "qfL", "nefL", "ksfL", "H2O"], ["none", "ne", "ks", "h2o"]), ss_infos("fper", 2, 1, ["none", "per", "wu"], ["none", ""])], ["spn", "bi", "cd", "cpx", "ep", "g", "hb", "ilm", "liq", "ol", "opx", "fsp", "fl", "fper"], ["q", "crst", "trd", "coe", "stv", "ky", "sill", "and", "ru", "sph", "O2", "qfm", "mw", "qif", "nno", "hm", "cco"]), db_infos("alk", "Alkaline (Weller et al., 2023)", ss_infos[ss_infos("spn", 8, 7, ["none", "nsp", "isp", "nhc", "ihc", "nmt", "imt", "pcr", "usp"], ["none", "x", "y", "c", "t", "Q1", "Q2", "Q3"]), ss_infos("bi", 6, 5, ["none", "phl", "annm", "obi", "eas", "tbi", "fbi"], ["none", "x", "y", "f", "t", "Q"]), ss_infos("cd", 3, 2, ["none", "crd", "fcrd", "hcrd"], ["none", "x", "h"]), ss_infos("cpx", 10, 9, ["none", "di", "cfs", "cats", "crdi", "cess", "cbuf", "jd", "cen", "cfm", "kjd"], ["none", "x", "y", "o", "n", "Q", "f", "cr", "t", "k"]), ss_infos("ep", 3, 2, ["none", "cz", "ep", "fep"], ["none", "f", "Q"]), ss_infos("g", 6, 5, ["none", "py", "alm", "gr", "andr", "knr", "tig"], ["none", "x", "c", "f", "cr", "t"]), ss_infos("hb", 11, 10, ["none", "tr", "tsm", "prgm", "glm", "cumm", "grnm", "a", "b", "mrb", "kprg", "tts"], ["none", "x", "y", "z", "a", "k", "c", "f", "t", "Q1", "Q2"]), ss_infos("ilm", 5, 4, ["none", "oilm", "dilm", "hm", "ogk", "dgk"], ["none", "i", "m", "Q", "Qt"]), ss_infos("liq", 15, 14, ["none", "q3L", "sl1L", "wo1L", "fo2L", "fa2L", "nmL", "hmL", "ekL", "tiL", "kmL", "anL", "ab1L", "enL", "kfL", "wat1L"], ["none", "wo", "sl", "fo", "fa", "ns", "hm", "ek", "ti", "ks", "h2o", "yan", "yab", "yen", "ykf"]), ss_infos("ol", 4, 3, ["none", "mnt", "fa", "fo", "cfm"], ["none", "x", "c", "Q"]), ss_infos("opx", 9, 8, ["none", "en", "fs", "fm", "odi", "mgts", "cren", "obuf", "mess", "ojd"], ["none", "x", "y", "c", "Q", "f", "t", "cr", "j"]), ss_infos("fsp", 3, 2, ["none", "ab", "an", "san"], ["none", "ca", "k"]), ss_infos("fl", 4, 3, ["none", "qfL", "nefL", "ksfL", "H2O"], ["none", "ne", "ks", "h2o"]), ss_infos("lct", 2, 1, ["none", "nlc", "klc"], ["none", "n"]), ss_infos("mel", 5, 4, ["none", "geh", "ak", "fak", "nml", "fge"], ["none", "x", "n", "y", "f"]), ss_infos("ness", 6, 5, ["none", "neN", "neS", "neK", "neO", "neC", "neF"], ["none", "s", "k", "Q", "f", "c"]), ss_infos("kals", 2, 1, ["none", "nks", "kls"], ["none", "k"])], ["spn", "bi", "cd", "cpx", "ep", "g", "hb", "ilm", "liq", "ol", "opx", "fsp", "fl", "lct", "mel", "ness", "kals"], ["q", "crst", "trd", "coe", "stv", "ky", "sill", "and", "ru", "sph", "O2", "qfm", "mw", "qif", "nno", "hm", "cco"]), db_infos("um", "Ultramafic (Evans & Frost., 2021)", ss_infos[ss_infos("fluid", 2, 1, ["none", "H2", "H2O"], ["none", "x"]), ss_infos("ol", 2, 1, ["none", "fo", "fa"], ["none", "x"]), ss_infos("br", 2, 1, ["none", "br", "fbr"], ["none", "x"]), ss_infos("ch", 2, 1, ["none", "chum", "chuf"], ["none", "x"]), ss_infos("atg", 5, 4, ["none", "atgf", "fatg", "atgo", "aatg", "oatg"], ["none", "x", "y", "f", "t"]), ss_infos("g", 2, 1, ["none", "py", "alm"], ["none", "x"]), ss_infos("ta", 6, 5, ["none", "ta", "fta", "tao", "tats", "ota", "tap"], ["none", "x", "y", "f", "v", "Q"]), ss_infos("chl", 7, 6, ["none", "clin", "afchl", "ames", "daph", "ochl1", "ochl4", "f3clin"], ["none", "x", "y", "f", "m", "t", "QA1"]), ss_infos("spi", 3, 2, ["none", "herc", "sp", "mt"], ["none", "x", "y"]), ss_infos("opx", 5, 4, ["none", "en", "fs", "fm", "mgts", "fopx"], ["none", "x", "y", "f", "Q"]), ss_infos("po", 2, 1, ["none", "trov", "trot"], ["none", "y"]), ss_infos("anth", 5, 4, ["none", "anth", "gedf", "fant", "a", "b"], ["none", "x", "y", "z", "a"])], ["fluid", "ol", "br", "ch", "atg", "g", "ta", "chl", "spi", "opx", "po", "anth"], ["q", "crst", "trd", "coe", "stv", "ky", "sill", "and", "pyr", "O2", "qfm", "qif", "nno", "hm", "cco"])]
+    dbs     = ["mp","mb","ig","ige","igd","alk","um"]
     id      = findall(dbs .== dtb)[1]
 
     return db_inf[id]
@@ -298,11 +273,11 @@ end
                                 bulk_L,     bulk_R,     oxi,
                                 bufferType, bufferN1,   bufferN2,
                                 smooth,     colorm,     reverseColorMap,
-                                test                                    )
+                                test,       PT_infos,   refType                                     )
 
     Compute a new phase diagram from scratch
 """
-function compute_new_phaseDiagram(  xtitle,     ytitle,     
+function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                     Xrange,     Yrange,     fieldname,
                                     dtb,        diagType,   verbose,    solver,
                                     fixT,       fixP,
@@ -311,7 +286,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                                     bulk_L,     bulk_R,     oxi,
                                     bufferType, bufferN1,   bufferN2,
                                     smooth,     colorm,     reverseColorMap,
-                                    test,       PT_infos                                  )
+                                    test,       PT_infos,   refType                                  )
 
         empty!(AppData.PseudosectionData);              #this empty the data from previous pseudosection computation
 
@@ -326,7 +301,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
 
         #________________________________________________________________________________________#
         # initialize database
-        global forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels, layout
+        global forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels, layout, n_lbl
         global addedRefinementLvl  = 0;
         global MAGEMin_data;
 
@@ -369,7 +344,8 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                                                         bulk_R,
                                                         bufferType,
                                                         bufferN1,
-                                                        bufferN2    )
+                                                        bufferN2,
+                                                        refType    )
                     
         #________________________________________________________________________________________#     
         # Refine the mesh along phase boundaries
@@ -387,7 +363,8 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                                                                         bulk_R,
                                                                         bufferType,
                                                                         bufferN1,
-                                                                        bufferN2, 
+                                                                        bufferN2,
+                                                                        refType, 
                                                                         ind_map         = ind_map,
                                                                         Out_XY_old      = Out_XY,
                                                                         n_phase_XY_old  = n_phase_XY    ) # recompute points that have not been computed before
@@ -403,50 +380,67 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
         #________________________________________________________________________________________#                   
         # Scatter plotly of the grid
 
-        gridded, gridded_info, X, Y, npoints, meant, PhasesLabels = get_gridded_map(    fieldname,
-                                                                                        oxi,
-                                                                                        Out_XY,
-                                                                                        sub,
-                                                                                        refLvl,
-                                                                                        data.xc,
-                                                                                        data.yc,
-                                                                                        data.x,
-                                                                                        data.y,
-                                                                                        Xrange,
-                                                                                        Yrange,
-                                                                                        PT_infos )
+        gridded, gridded_info, X, Y, npoints, meant = get_gridded_map(  fieldname,
+                                                                        oxi,
+                                                                        Out_XY,
+                                                                        Hash_XY,
+                                                                        sub,
+                                                                        refLvl,
+                                                                        refType,
+                                                                        data.xc,
+                                                                        data.yc,
+                                                                        data.x,
+                                                                        data.y,
+                                                                        Xrange,
+                                                                        Yrange,
+                                                                        PT_infos )
 
-        layout = Layout(
-                    images=[ attr(
-                        source  = "assets/static/images/MAGEMin.jpg",
-                        xref    = "paper",
-                        yref    = "paper",
-                        x       =  0.05,
-                        y       =  1.01,
-                        sizex   =  0.1, 
-                        sizey   =  0.1,
-                        xanchor = "right", 
-                        yanchor = "bottom"
-                    )],
-                    title=attr(
+        data_plot, annotations = get_diagram_labels(    fieldname,
+                                                        oxi,
+                                                        Out_XY,
+                                                        Hash_XY,
+                                                        sub,
+                                                        refLvl,
+                                                        refType,
+                                                        data.xc,
+                                                        data.yc,
+                                                        PT_infos )
+        ticks   = 4
+        frame   = get_plot_frame(Xrange,Yrange, ticks)                                  
+        layout  = Layout(
+                    images=frame,
+                    title= attr(
                         text    = db[(db.db .== dtb), :].title[test+1],
-                        x       = 0.5,
+                        x       = 0.4,
                         xanchor = "center",
                         yanchor = "top"
+                    ),
+                    hoverlabel = attr(
+                        bgcolor     = "#566573",
+                        bordercolor = "#f8f9f9",
                     ),
                     plot_bgcolor = "#FFF",
                     paper_bgcolor = "#FFF",
                     xaxis_title = xtitle,
                     yaxis_title = ytitle,
-                    annotations = PhasesLabels,
-                    width       = 700,
+                    annotations = annotations,
+                    width       = 900,
                     height      = 900,
                     autosize    = false,
-                    margin      = attr(l=50, r=50, b=260, t=70, pad=4),
+                    margin      = attr(autoexpand = false, l=50, r=280, b=260, t=70, pad=4),
+                    xaxis_range = Xrange, 
+                    yaxis_range = Yrange,
+                    xaxis       = attr(     tickmode    = "linear",
+                                            tick0       = Xrange[1],
+                                            dtick       = (Xrange[2]-Xrange[1])/(ticks+1)
+                                        ),
+                    yaxis       = attr(     tickmode    = "linear",
+                                            tick0       = Yrange[1],
+                                            dtick       = (Yrange[2]-Yrange[1])/(ticks+1)
+                                    ),
                 )
-
-
-        data_plot = heatmap(x               = X,
+                
+        heat_map = heatmap( x               = X,
                             y               = Y,
                             z               = gridded,
                             zsmooth         = smooth,
@@ -455,8 +449,10 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                             colorscale      = colorm,
                             reversescale    = reverseColorMap,
                             colorbar_title  = fieldname,
-                            hoverinfo       = "text",
-                            text            = gridded_info,
+                            hoverinfo       = "skip",
+                            # hoverinfo       = "text",
+                            # text            = gridded_info,
+                            showlegend      = false,
                             colorbar        = attr(     lenmode         = "fraction",
                                                         len             =  0.75,
                                                         thicknessmode   = "fraction",
@@ -464,10 +460,23 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,
                                                         x               =  1.005,
                                                         y               =  0.5         ),)
 
-        # fig         = plot(data_plot,layout)
-        grid_out    = [""]
+ 
+        hover_lbl = heatmap(    x               = X,
+                                y               = Y,
+                                z               = X,
+                                type            = "heatmap",
+                                showscale       = false,
+                                opacity         = 0.0,
+                                hoverinfo       = "text",
+                                showlegend      = false,
+                                text            = gridded_info )
 
-        return data_plot, layout, npoints, grid_out, meant
+
+        data_plot[1]    = heat_map
+
+        grid_out        = [""]
+
+        return vcat(data_plot,hover_lbl), layout, npoints, grid_out, meant
 end
 
 
@@ -482,10 +491,10 @@ end
                                     bulk_L,     bulk_R,     oxi,
                                     bufferType, bufferN1,   bufferN2,
                                     smooth,     colorm,     reverseColorMap,
-                                    test                                  )
+                                    test,       PT_infos,   refType                                   )
     Refine existing phase diagram
 """
-function refine_phaseDiagram(   xtitle,     ytitle,     
+function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                 Xrange,     Yrange,     fieldname,
                                 dtb,        diagType,   verbose,    solver,
                                 fixT,       fixP,
@@ -494,9 +503,9 @@ function refine_phaseDiagram(   xtitle,     ytitle,
                                 bulk_L,     bulk_R,     oxi,
                                 bufferType, bufferN1,   bufferN2,
                                 smooth,     colorm,     reverseColorMap,
-                                test,       PT_infos                                 )
+                                test,       PT_infos,   refType                                 )
 
-    global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels, addedRefinementLvl, layout
+    global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels, addedRefinementLvl, layout, n_lbl
 
     refine_elements                          = refine_phase_boundaries(forest, Hash_XY);
     forest_new, data_new, ind_map            = adapt_forest(forest, refine_elements, data);     # Adapt the mesh; also returns the new coordinates and a mapping from old->new
@@ -511,6 +520,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,
                                                                 bufferType,
                                                                 bufferN1,
                                                                 bufferN2, 
+                                                                refType,
                                                                 ind_map         = ind_map,
                                                                 Out_XY_old      = Out_XY,
                                                                 n_phase_XY_old  = n_phase_XY) # recompute points that have not been computed before
@@ -526,43 +536,65 @@ function refine_phaseDiagram(   xtitle,     ytitle,
     #________________________________________________________________________________________#                   
     # Scatter plotly of the grid
 
-    gridded, gridded_info, X, Y, npoints, meant, PhasesLabels = get_gridded_map(    fieldname,
-                                                                                    oxi,
-                                                                                    Out_XY,
-                                                                                    sub,
-                                                                                    refLvl + addedRefinementLvl,
-                                                                                    data.xc,
-                                                                                    data.yc,
-                                                                                    data.x,
-                                                                                    data.y,
-                                                                                    Xrange,
-                                                                                    Yrange,
-                                                                                    PT_infos )
+    gridded, gridded_info, X, Y, npoints, meant = get_gridded_map(  fieldname,
+                                                                    oxi,
+                                                                    Out_XY,
+                                                                    Hash_XY,
+                                                                    sub,
+                                                                    refLvl + addedRefinementLvl,
+                                                                    refType,
+                                                                    data.xc,
+                                                                    data.yc,
+                                                                    data.x,
+                                                                    data.y,
+                                                                    Xrange,
+                                                                    Yrange,
+                                                                    PT_infos )
 
-    layout[:annotations] = PhasesLabels                                                                                   
+    data_plot, annotations = get_diagram_labels(    fieldname,
+                                                    oxi,
+                                                    Out_XY,
+                                                    Hash_XY,
+                                                    sub,
+                                                    refLvl,
+                                                    refType,
+                                                    data.xc,
+                                                    data.yc,
+                                                    PT_infos )
+    layout[:annotations] = annotations                                                                                   
 
-    data_plot = heatmap(x               = X,
-                        y               = Y,
-                        z               = gridded,
-                        connectgaps     = true,
-                        zsmooth         =  smooth,
-                        type            = "heatmap",
-                        colorscale      = colorm,
-                        colorbar_title  = fieldname,
-                        reversescale    = reverseColorMap,
-                        hoverinfo       = "text",
-                        text            = gridded_info,
-                        colorbar        = attr(     lenmode         = "fraction",
-                                                    len             =  0.75,
-                                                    thicknessmode   = "fraction",
-                                                    tickness        =  0.5,
-                                                    x               =  1.005,
-                                                    y               =  0.5         ),)
+    data_plot[1] = heatmap( x               = X,
+                            y               = Y,
+                            z               = gridded,
+                            connectgaps     = true,
+                            zsmooth         =  smooth,
+                            type            = "heatmap",
+                            colorscale      = colorm,
+                            colorbar_title  = fieldname,
+                            reversescale    = reverseColorMap,
+                            hoverinfo       = "skip",
+                            # hoverinfo       = "text",
+                            # text            = gridded_info,
+                            colorbar        = attr(     lenmode         = "fraction",
+                                                        len             =  0.75,
+                                                        thicknessmode   = "fraction",
+                                                        tickness        =  0.5,
+                                                        x               =  1.005,
+                                                        y               =  0.5         ),)
 
+    hover_lbl = heatmap(    x               = X,
+                            y               = Y,
+                            z               = X,
+                            type            = "heatmap",
+                            showscale       = false,
+                            opacity         = 0.0,
+                            hoverinfo       = "text",
+                            showlegend      = false,
+                            text            = gridded_info )
     grid_out    = [""]
 
 
-    return data_plot, layout, npoints, grid_out, meant
+    return vcat(data_plot,hover_lbl), layout, npoints, grid_out, meant
 
 end
 
@@ -582,29 +614,29 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
                                             test                                  )
     global PT_infos, layout
 
-    data_plot = heatmap(x               =  X,
-                        y               =  Y,
-                        z               =  gridded,
-                        zsmooth         =  smooth,
-                        connectgaps     = true,
-                        type            = "heatmap",
-                        colorscale      =  colorm,
-                        colorbar_title  =  fieldname,
-                        reversescale    = reverseColorMap,
-                        hoverinfo       = "text",
-                        text            = gridded_info,
-                        colorbar        = attr(     lenmode         = "fraction",
-                                                    len             =  0.75,
-                                                    thicknessmode   = "fraction",
-                                                    tickness        =  0.5,
-                                                    x               =  1.005,
-                                                    y               =  0.5         ),)
+    data_plot[1] = heatmap( x               =  X,
+                            y               =  Y,
+                            z               =  gridded,
+                            zsmooth         =  smooth,
+                            connectgaps     = true,
+                            type            = "heatmap",
+                            colorscale      =  colorm,
+                            colorbar_title  =  fieldname,
+                            reversescale    =  reverseColorMap,
+                            hoverinfo       = "skip",
+                            # hoverinfo       = "text",
+                            # text            = gridded_info,
+                            colorbar        = attr(     lenmode         = "fraction",
+                                                        len             =  0.75,
+                                                        thicknessmode   = "fraction",
+                                                        tickness        =  0.5,
+                                                        x               =  1.005,
+                                                        y               =  0.5         ),)
 
     grid_out    = [""]
 
     return data_plot,layout, grid_out
 end
-
 
 
 
@@ -622,15 +654,17 @@ function  update_diplayed_field_phaseDiagram(   xtitle,     ytitle,
                                                 dtb,        oxi,
                                                 sub,        refLvl,
                                                 smooth,     colorm,     reverseColorMap,
-                                                test                                  )
+                                                test,       refType                                  )
 
     global data, Out_XY, data_plot, gridded, gridded_info, X, Y, PhasesLabels, addedRefinementLvl, PT_infos, layout
 
     gridded, X, Y, npoints, meant = get_gridded_map_no_lbl(     fieldname,
                                                                 oxi,
                                                                 Out_XY,
+                                                                Hash_XY,
                                                                 sub,
                                                                 refLvl + addedRefinementLvl,
+                                                                refType,
                                                                 data.xc,
                                                                 data.yc,
                                                                 data.x,
@@ -639,79 +673,7 @@ function  update_diplayed_field_phaseDiagram(   xtitle,     ytitle,
                                                                 Yrange )
 
 
-    data_plot = heatmap(x               = X,
-                        y               = Y,
-                        z               = gridded,
-                        zsmooth         = smooth,
-                        connectgaps     = true,
-                        type            = "heatmap",
-                        colorscale      = colorm,
-                        colorbar_title  = fieldname,
-                        reversescale    = reverseColorMap,
-                        hoverinfo       = "text",
-                        text            = gridded_info,
-                        colorbar        = attr(     lenmode         = "fraction",
-                                                    len             =  0.75,
-                                                    thicknessmode   = "fraction",
-                                                    tickness        =  0.5,
-                                                    x               =  1.005,
-                                                    y               =  0.5         ),)
-
-    grid_out    = [""]
-
-    return data_plot,layout, grid_out
-end
-
-
-
-"""
-    show_hide_grid_phaseDiagram(    xtitle,     ytitle,     grid,  
-                                    Xrange,     Yrange,     fieldname,
-                                    dtb,
-                                    smooth,     colorm,     reverseColorMap,
-                                    test                                  )
-    Shows/hides the grid
-"""
-function  show_hide_grid_phaseDiagram(  xtitle,     ytitle,     grid,  
-                                        Xrange,     Yrange,     fieldname,
-                                        dtb,
-                                        smooth,     colorm,     reverseColorMap,
-                                        test                                  )
-
-    global data, data_plot, gridded, gridded_info, X, Y, PhasesLabels, PT_infos, layout
-
-    if length(grid) == 2
-        data_plot      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, length(data.x)+1);
-        for i = 1:length(data.x)
-            data_plot[i] = scatter(     x           = data.x[i],
-                                        y           = data.y[i],
-                                        mode        = "lines",
-                                        line_color  = "#000000",
-                                        line_width  = 1,
-                showlegend  = false     )
-        end
-
-        data_plot[length(data.x)+1] = heatmap(      x               = X,
-                                                    y               = Y,
-                                                    z               = gridded,
-                                                    zsmooth         =  smooth,
-                                                    connectgaps     = true,
-                                                    type            = "heatmap",
-                                                    colorscale      = colorm,
-                                                    colorbar_title  = fieldname,
-                                                    reversescale    = reverseColorMap,
-                                                    hoverinfo       = "text",
-                                                    text            = gridded_info,
-                                                    colorbar        = attr(     lenmode         = "fraction",
-                                                                                len             =  0.75,
-                                                                                thicknessmode   = "fraction",
-                                                                                tickness        =  0.5,
-                                                                                x               =  1.005,
-                                                                                y               =  0.5         ),)
-
-        grid_out    = ["","GRID"]
-    else
-        data_plot = heatmap(x               = X,
+    data_plot[1] = heatmap( x               = X,
                             y               = Y,
                             z               = gridded,
                             zsmooth         = smooth,
@@ -720,8 +682,9 @@ function  show_hide_grid_phaseDiagram(  xtitle,     ytitle,     grid,
                             colorscale      = colorm,
                             colorbar_title  = fieldname,
                             reversescale    = reverseColorMap,
-                            hoverinfo       = "text",
-                            text            = gridded_info,
+                            hoverinfo       = "skip",
+                            # hoverinfo       = "text",
+                            # text            = gridded_info,
                             colorbar        = attr(     lenmode         = "fraction",
                                                         len             =  0.75,
                                                         thicknessmode   = "fraction",
@@ -729,13 +692,42 @@ function  show_hide_grid_phaseDiagram(  xtitle,     ytitle,     grid,
                                                         x               =  1.005,
                                                         y               =  0.5         ),)
 
-        grid_out    = [""]
-    end                            
+    grid_out    = [""]
 
-    return data_plot, layout, grid_out
+    return data_plot,layout, grid_out
+end
+
+"""
+
+    Initiatize global variable storing isopleths information
+"""
+function initialize_g_isopleth(; n_iso_max = 32)
+    global g_traces
+
+    status    = zeros(Int64,n_iso_max)
+    active    = []
+    isoP      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
+
+    for i=1:n_iso_max
+        isoP[i] = contour()
+    end
+
+    label     = Vector{String}(undef,n_iso_max)
+    value     = Vector{Int64}(undef,n_iso_max)
+
+    g_traces = isopleth_data(0, n_iso_max,
+                                status, active, isoP,
+                                label, value)
+
+
+    return g_traces
 end
 
 
+"""
+
+    add_isopleth_phaseDiagram
+"""
 function add_isopleth_phaseDiagram(         Xrange,     Yrange, 
                                             sub,        refLvl,
                                             dtb,        oxi,
@@ -759,7 +751,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
         name    = of
     end
 
-    global g_isopleths, data_plot, nIsopleths, data, Out_XY, data_plot, X, Y, addedRefinementLvl
+    global g_traces, nIsopleths, data, Out_XY, data_plot, X, Y, addedRefinementLvl
 
     gridded, X, Y = get_isopleth_map(   mod, ss, em, of,
                                         oxi,
@@ -773,72 +765,70 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                         Xrange,
                                         Yrange )
 
-    g_isopleths.n_iso      += 1
-    g_isopleths.isoP[1]     = data_plot     #save heatmap from phase diagram
-    g_isopleths.status[1]   = 1
-    g_isopleths.isoP[g_isopleths.n_iso]= contour(       x                   = X,
-                                                        y                   = Y,
-                                                        z                   = gridded,
-                                                        contours_coloring   = "lines",
-                                                        colorscale          = [[0, isoColorLine], [1, isoColorLine]],
-                                                        
-                                                        contours_start      = minIso,
-                                                        contours_end        = maxIso,
-                                                        contours_size       = stepIso,
-                                                        line_width          = 1,
-                                                        showscale           = false,
-                                                        hoverinfo           = "skip",
-                                                        contours            =  attr(    coloring    = "lines",
-                                                                                        showlabels  = true,
-                                                                                        labelfont   = attr( size    = isoLabelSize,
-                                                                                                            color   = isoColorLine,  )
-                                                        )
-                                                    )
-    g_isopleths.status[g_isopleths.n_iso]   = 1
-    g_isopleths.label[g_isopleths.n_iso]    = name
-    g_isopleths.value[g_isopleths.n_iso]    = g_isopleths.n_iso
-    g_isopleths.active                      = findall(g_isopleths.status .== 1)
-    n_act                                   = length(g_isopleths.active)
-    isopleths = [Dict("label" => g_isopleths.label[g_isopleths.active[i]], "value" => g_isopleths.value[g_isopleths.active[i]])
-                        for i=2:n_act]
+    g_traces.n_iso += 1
 
+    g_traces.isoP[g_traces.n_iso]= contour(     x                   = X,
+                                                y                   = Y,
+                                                z                   = gridded,
+                                                contours_coloring   = "lines",
+                                                colorscale          = [[0, isoColorLine], [1, isoColorLine]],
+                                                
+                                                contours_start      = minIso,
+                                                contours_end        = maxIso,
+                                                contours_size       = stepIso,
+                                                line_width          = 1,
+                                                showscale           = false,
+                                                hoverinfo           = "skip",
+                                                contours            =  attr(    coloring    = "lines",
+                                                                                showlabels  = true,
+                                                                                labelfont   = attr( size    = isoLabelSize,
+                                                                                                    color   = isoColorLine,  )
+                                                )
+                                            )
+    g_traces.status[g_traces.n_iso]   = 1
+    g_traces.label[g_traces.n_iso]    = name
+    g_traces.value[g_traces.n_iso]    = g_traces.n_iso
+    g_traces.active                   = findall(g_traces.status .== 1)
+    n_act                             = length(g_traces.active)
 
-    return g_isopleths, isopleths
+    isopleths = [Dict("label" => g_traces.label[g_traces.active[i]], "value" => g_traces.value[g_traces.active[i]])
+                        for i=1:n_act]
+
+    return g_traces, isopleths
 
 end
 
 function remove_single_isopleth_phaseDiagram(isoplethsID)
-    global g_isopleths
+    global g_traces
 
-    g_isopleths.n_iso                -= 1      
-    g_isopleths.status[isoplethsID]   = 0;
-    g_isopleths.isoP[isoplethsID]     = contour()
-    g_isopleths.label[isoplethsID]    = ""
-    g_isopleths.value[isoplethsID]    = 0
-    g_isopleths.active                = findall(g_isopleths.status .== 1)
-    n_act                             = length(g_isopleths.active)
-    isopleths = [Dict("label" => g_isopleths.label[g_isopleths.active[i]], "value" => g_isopleths.value[g_isopleths.active[i]])
-                    for i=2:n_act]
+    g_traces.n_iso                -= 1      
+    g_traces.status[isoplethsID]   = 0;
+    g_traces.isoP[isoplethsID]     = contour()
+    g_traces.label[isoplethsID]    = ""
+    g_traces.value[isoplethsID]    = 0
+    g_traces.active                = findall(g_traces.status .== 1)
+    n_act                          = length(g_traces.active)
+    isopleths = [Dict("label" => g_traces.label[g_traces.active[i]], "value" => g_traces.value[g_traces.active[i]])
+                    for i=1:n_act]
 
-
-    return g_isopleths, isopleths
+    return g_traces, isopleths
 end
 
 
 function remove_all_isopleth_phaseDiagram()
-    global g_isopleths, data_plot
+    global g_traces, data_plot
 
-    g_isopleths.label    .= ""
-    g_isopleths.value    .= 0
-    g_isopleths.n_iso     = 1
-    for i=2:g_isopleths.n_iso_max
-        g_isopleths.isoP[i] = contour()
+    g_traces.label    .= ""
+    g_traces.value    .= 0
+    g_traces.n_iso     = 0
+    for i=1:g_traces.n_iso_max
+        g_traces.isoP[i] = contour()
     end
-    g_isopleths.status   .= 0
-    g_isopleths.active   .= 0
+    g_traces.status   .= 0
+    g_traces.active   .= 0
 
     # clear isopleth dropdown menu
     isopleths = []              
 
-    return g_isopleths, isopleths, data_plot
+    return g_traces, isopleths, data_plot
 end

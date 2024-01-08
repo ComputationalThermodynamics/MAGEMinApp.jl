@@ -36,7 +36,8 @@ function refine_MAGEMin(data,
                         bulk_R          :: Vector{Float64},
                         bufferType      :: String,
                         bufferN1        :: Float64,
-                        bufferN2        :: Float64;
+                        bufferN2        :: Float64,
+                        refType         :: String;
                         ind_map          = nothing, 
                         Out_XY_old       = nothing, 
                         n_phase_XY_old   = nothing)
@@ -112,10 +113,46 @@ function refine_MAGEMin(data,
     # Compute hash for all points
     Hash_XY     = Vector{UInt64}(undef,length(data.x))
     n_phase_XY  = Vector{UInt64}(undef,length(data.x))
-    for i=1:length(data.x)
-        Hash_XY[i]      = hash(sort(Out_XY[i].ph))
-        n_phase_XY[i]   = length(Out_XY[i].ph)
+
+    if refType == "ph"
+
+        for i=1:length(data.x)
+            Hash_XY[i]      = hash(sort(Out_XY[i].ph))
+            n_phase_XY[i]   = length(Out_XY[i].ph)
+        end
+
+    elseif refType == "em"
+
+        for i=1:length(data.x)
+
+            ph_em = get_dominant_en(    Out_XY[i].ph,
+                                        Out_XY[i].n_SS,
+                                        Out_XY[i].SS_vec)
+
+            Hash_XY[i]      = hash(sort(ph_em))
+            n_phase_XY[i]   = length(ph_em)
+        end
+
     end
 
     return Out_XY, Hash_XY, n_phase_XY
+end
+
+
+function get_dominant_en(   ph,
+                            n_SS,
+                            SS_vec)
+    n_ph  = length(ph)
+    ph_em = Vector{String}(undef,n_ph)
+    for i=1:n_SS
+        f = SS_vec[i].emFrac
+        id = findall(f .== maximum(f))[1]
+        em = SS_vec[i].emNames[id]
+        ph_em[i] = ph[i]*":"*em
+    end
+    for i=n_SS+1:n_ph
+        ph_em[i] = ph[i]
+    end
+
+    return ph_em
 end
