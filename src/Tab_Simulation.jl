@@ -144,7 +144,7 @@ function Tab_Simulation()
                                                     type="number", 
                                                     min=0.01, 
                                                     max=100.01, 
-                                                    value=24.01   ),
+                                                    value=20.01   ),
                                             ]), 
                                             ]),
                                         ]),
