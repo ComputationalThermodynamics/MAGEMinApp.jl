@@ -334,15 +334,14 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             fig         = plot(data_plot,layout)
         elseif bid == "show-grid"
-            if ~isempty(grid) == true
-                data_plot, layout =  show_hide_grid_phaseDiagram(   xtitle,     ytitle,     grid,   
-                                                                    Xrange,     Yrange,     fieldname,
-                                                                    dtb,
-                                                                    smooth,     colorm,     reverseColorMap,
-                                                                    test                                  )
-            end
 
-            fig         = plot(data_plot,layout)
+            if length(grid) == 2
+                grid_plot   = show_hide_grid_phaseDiagram()
+                fig         = plot(vcat(data_plot,grid_plot),layout)
+            else
+                fig         = plot(data_plot,layout)
+            end
+            
         else
             
             fig = plot()
