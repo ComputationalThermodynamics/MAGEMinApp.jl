@@ -474,9 +474,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
 
         data_plot[1]    = heat_map
 
-        grid_out        = [""]
-
-        return vcat(data_plot,hover_lbl), layout, npoints, grid_out, meant
+        return vcat(data_plot,hover_lbl), layout, npoints, meant
 end
 
 
@@ -591,10 +589,8 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                             hoverinfo       = "text",
                             showlegend      = false,
                             text            = gridded_info )
-    grid_out    = [""]
 
-
-    return vcat(data_plot,hover_lbl), layout, npoints, grid_out, meant
+    return vcat(data_plot,hover_lbl), layout, npoints, meant
 
 end
 
@@ -633,12 +629,76 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
                                                         x               =  1.005,
                                                         y               =  0.5         ),)
 
-    grid_out    = [""]
-
-    return data_plot,layout, grid_out
+    return data_plot,layout
 end
 
 
+"""
+    show_hide_grid_phaseDiagram(    xtitle,     ytitle,     grid,  
+                                    Xrange,     Yrange,     fieldname,
+                                    dtb,
+                                    smooth,     colorm,     reverseColorMap,
+                                    test                                  )
+    Shows/hides the grid
+"""
+function  show_hide_grid_phaseDiagram(  xtitle,     ytitle,     grid,  
+                                        Xrange,     Yrange,     fieldname,
+                                        dtb,
+                                        smooth,     colorm,     reverseColorMap,
+                                        test                                  )
+
+    global data, data_plot, gridded, gridded_info, X, Y, PhasesLabels, PT_infos, layout
+
+    if length(grid) == 2
+        data_plot      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, length(data.x)+1);
+        for i = 1:length(data.x)
+            data_plot[i] = scatter(     x           = data.x[i],
+                                        y           = data.y[i],
+                                        mode        = "lines",
+                                        line_color  = "#000000",
+                                        line_width  = 1,
+                showlegend  = false     )
+        end
+
+        data_plot[length(data.x)+1] = heatmap(      x               = X,
+                                                    y               = Y,
+                                                    z               = gridded,
+                                                    zsmooth         =  smooth,
+                                                    connectgaps     = true,
+                                                    type            = "heatmap",
+                                                    colorscale      = colorm,
+                                                    colorbar_title  = fieldname,
+                                                    reversescale    = reverseColorMap,
+                                                    hoverinfo       = "text",
+                                                    text            = gridded_info,
+                                                    colorbar        = attr(     lenmode         = "fraction",
+                                                                                len             =  0.75,
+                                                                                thicknessmode   = "fraction",
+                                                                                tickness        =  0.5,
+                                                                                x               =  1.005,
+                                                                                y               =  0.5         ),)
+    else
+        data_plot = heatmap(x               = X,
+                            y               = Y,
+                            z               = gridded,
+                            zsmooth         = smooth,
+                            connectgaps     = true,
+                            type            = "heatmap",
+                            colorscale      = colorm,
+                            colorbar_title  = fieldname,
+                            reversescale    = reverseColorMap,
+                            hoverinfo       = "text",
+                            text            = gridded_info,
+                            colorbar        = attr(     lenmode         = "fraction",
+                                                        len             =  0.75,
+                                                        thicknessmode   = "fraction",
+                                                        tickness        =  0.5,
+                                                        x               =  1.005,
+                                                        y               =  0.5         ),)
+    end                            
+
+    return data_plot, layout
+end
 
 """
     update_diplayed_field_phaseDiagram(   xtitle,     ytitle,     
@@ -692,9 +752,7 @@ function  update_diplayed_field_phaseDiagram(   xtitle,     ytitle,
                                                         x               =  1.005,
                                                         y               =  0.5         ),)
 
-    grid_out    = [""]
-
-    return data_plot,layout, grid_out
+    return data_plot,layout
 end
 
 """

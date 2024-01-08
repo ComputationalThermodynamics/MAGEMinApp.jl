@@ -358,6 +358,23 @@ function Tab_PhaseDiagram()
                         dbc_collapse(
                             dbc_card(dbc_cardbody([
 
+                            dbc_row([
+                                dbc_col([ 
+                                    html_h1("Show/hide grid", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 0)),
+                                ], width=5),
+                                dbc_col([ 
+                                    dcc_checklist(
+                                        id      ="show-grid",
+                                        options = [
+                                            Dict("label" => "", "value" => "GRD"),
+                                        ],
+                                        value   = [""],
+                                        inline  = true,
+                                    ),
+                                    dbc_tooltip("Hide/display grid"),
+
+                                ]),
+                            ]),                           
                                 dbc_row([
                                     dbc_col([ 
                                         html_h1("Show/hide stable phases", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 0)),

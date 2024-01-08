@@ -95,6 +95,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("isopleth-dropdown","options"),
         Output("smooth-colormap",    "value"),
 
+        Input("show-grid",                  "value"), 
         Input("show-lbl-id",                "value"),
         Input("button-add-isopleth",        "n_clicks"),
         Input("button-remove-isopleth",     "n_clicks"),
@@ -158,7 +159,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         prevent_initial_call = true,
 
-    ) do    lbl,        addIso,     removeIso,  removeAllIso,   isoShow,    isoHide,    n_clicks_mesh, n_clicks_refine, 
+    ) do    grid,       lbl,        addIso,     removeIso,  removeAllIso,   isoShow,    isoHide,    n_clicks_mesh, n_clicks_refine, 
             colorMap,   smooth,     rangeColor,     reverse,    fieldname,
             npoints,    diagType,   dtb,    cpx,    limOpx,     limOpxVal,
             tmin,       tmax,       pmin,   pmax,
@@ -194,23 +195,23 @@ function Tab_PhaseDiagram_Callbacks(app)
             global fig, MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, PhasesLabels
             global addedRefinementLvl   = 0;
             global n_lbl                = 0;
-            global grid_out, data_plot, layout, g_traces, PT_infos;
+            global data_plot, layout, g_traces, PT_infos;
 
             PT_infos = get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
 
             g_traces = initialize_g_isopleth(; n_iso_max = 32)
 
-            data_plot, layout, npoints, grid_out, meant  =  compute_new_phaseDiagram(   xtitle,     ytitle,     lbl,
-                                                                                        Xrange,     Yrange,     fieldname,
-                                                                                        dtb,        diagType,   verbose,    solver,
-                                                                                        fixT,       fixP,
-                                                                                        sub,        refLvl,
-                                                                                        cpx,        limOpx,     limOpxVal,
-                                                                                        bulk_L,     bulk_R,     oxi,
-                                                                                        bufferType, bufferN1,   bufferN2,
-                                                                                        smooth,     colorm,     reverseColorMap,
-                                                                                        test,       PT_infos,   refType                                  )
-            
+            data_plot, layout, npoints, meant  =  compute_new_phaseDiagram( xtitle,     ytitle,     lbl,
+                                                                            Xrange,     Yrange,     fieldname,
+                                                                            dtb,        diagType,   verbose,    solver,
+                                                                            fixT,       fixP,
+                                                                            sub,        refLvl,
+                                                                            cpx,        limOpx,     limOpxVal,
+                                                                            bulk_L,     bulk_R,     oxi,
+                                                                            bufferType, bufferN1,   bufferN2,
+                                                                            smooth,     colorm,     reverseColorMap,
+                                                                            test,       PT_infos,   refType                                  )
+
             if ~isempty(lbl) == true
                 for i=1:n_lbl+1
                     layout[:annotations][i][:visible] = true
@@ -227,16 +228,16 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             PT_infos                                     = get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
 
-            data_plot, layout, npoints, grid_out, meant  =  refine_phaseDiagram(    xtitle,     ytitle,     lbl, 
-                                                                                    Xrange,     Yrange,     fieldname,
-                                                                                    dtb,        diagType,   verbose,    solver,
-                                                                                    fixT,       fixP,
-                                                                                    sub,        refLvl,
-                                                                                    cpx,        limOpx,     limOpxVal,
-                                                                                    bulk_L,     bulk_R,     oxi,
-                                                                                    bufferType, bufferN1,   bufferN2,
-                                                                                    smooth,     colorm,     reverseColorMap,
-                                                                                    test,       PT_infos,   refType                                  )
+            data_plot, layout, npoints, meant  =  refine_phaseDiagram(  xtitle,     ytitle,     lbl, 
+                                                                        Xrange,     Yrange,     fieldname,
+                                                                        dtb,        diagType,   verbose,    solver,
+                                                                        fixT,       fixP,
+                                                                        sub,        refLvl,
+                                                                        cpx,        limOpx,     limOpxVal,
+                                                                        bulk_L,     bulk_R,     oxi,
+                                                                        bufferType, bufferN1,   bufferN2,
+                                                                        smooth,     colorm,     reverseColorMap,
+                                                                        test,       PT_infos,   refType                                  )
 
             if ~isempty(lbl) == true
                 for i=1:n_lbl+1
@@ -251,22 +252,22 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         elseif bid == "colormaps_cross" || bid == "smooth-colormap" || bid == "range-slider-color" || bid == "reverse-colormap"
 
-            data_plot,layout, grid_out  =  update_colormap_phaseDiagram(    xtitle,     ytitle,     
-                                                                            Xrange,     Yrange,     fieldname,
-                                                                            dtb,        diagType,
-                                                                            smooth,     colorm,     reverseColorMap,
-                                                                            test                                  )
+            data_plot, layout =  update_colormap_phaseDiagram(  xtitle,     ytitle,     
+                                                                Xrange,     Yrange,     fieldname,
+                                                                dtb,        diagType,
+                                                                smooth,     colorm,     reverseColorMap,
+                                                                test                                  )
 
             fig         = plot(data_plot,layout)
 
         elseif bid == "fields-dropdown"
 
-            data_plot,layout, grid_out  =  update_diplayed_field_phaseDiagram(  xtitle,     ytitle,     
-                                                                                Xrange,     Yrange,     fieldname,
-                                                                                dtb,        oxi,
-                                                                                sub,        refLvl,
-                                                                                smooth,     colorm,     reverseColorMap,
-                                                                                test,       refType                                 )
+            data_plot,layout =  update_diplayed_field_phaseDiagram( xtitle,     ytitle,     
+                                                                    Xrange,     Yrange,     fieldname,
+                                                                    dtb,        oxi,
+                                                                    sub,        refLvl,
+                                                                    smooth,     colorm,     reverseColorMap,
+                                                                    test,       refType                                 )
 
             fig         = plot(data_plot,layout)
 
@@ -329,6 +330,16 @@ function Tab_PhaseDiagram_Callbacks(app)
                 for i=1:n_lbl+1
                     layout[:annotations][i][:visible] = false
                 end
+            end
+
+            fig         = plot(data_plot,layout)
+        elseif bid == "show-grid"
+            if ~isempty(grid) == true
+                data_plot, layout =  show_hide_grid_phaseDiagram(   xtitle,     ytitle,     grid,   
+                                                                    Xrange,     Yrange,     fieldname,
+                                                                    dtb,
+                                                                    smooth,     colorm,     reverseColorMap,
+                                                                    test                                  )
             end
 
             fig         = plot(data_plot,layout)
