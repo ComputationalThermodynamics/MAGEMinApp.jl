@@ -226,7 +226,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         elseif bid == "refine-pb-button"
 
-            PT_infos                                     = get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
+            PT_infos                           = get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
 
             data_plot, layout, npoints, meant  =  refine_phaseDiagram(  xtitle,     ytitle,     lbl, 
                                                                         Xrange,     Yrange,     fieldname,
@@ -336,7 +336,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         elseif bid == "show-grid"
 
             if length(grid) == 2
-                grid_plot   = show_hide_grid_phaseDiagram()
+                grid_plot   = show_hide_grid_phaseDiagram(data, forest, Hash_XY)
                 fig         = plot(vcat(data_plot,grid_plot),layout)
             else
                 fig         = plot(data_plot,layout)

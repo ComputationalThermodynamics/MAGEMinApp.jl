@@ -641,19 +641,19 @@ end
                                     test                                  )
     Shows/hides the grid
 """
-function  show_hide_grid_phaseDiagram()
+function  show_hide_grid_phaseDiagram(data)
 
-    global data
+    print("$data\n")
 
-        grid_plot      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, length(data.x));
-        for i = 1:length(data.x)
-            grid_plot[i] = scatter(     x           = data.x[i],
-                                        y           = data.y[i],
-                                        mode        = "lines",
-                                        line_color  = "#000000",
-                                        line_width  = 1,
-                                        showlegend  = false     )
-        end
+    grid_plot      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, length(data.x));
+    for i = 1:length(data.x)
+        grid_plot[i] = scatter(     x           = data.x[i],
+                                    y           = data.y[i],
+                                    mode        = "lines",
+                                    line_color  = "#FFFFFF",
+                                    line_width  = 0.5,
+                                    showlegend  = false     )
+    end
 
     return grid_plot
 end
