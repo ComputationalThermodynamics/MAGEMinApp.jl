@@ -643,7 +643,7 @@ end
 """
 function  show_hide_grid_phaseDiagram(data)
 
-    print("$data\n")
+    # print("$data\n")
 
     grid_plot      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, length(data.x));
     for i = 1:length(data.x)
