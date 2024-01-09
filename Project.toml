@@ -31,7 +31,7 @@ UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 [compat]
 CSV = "0.10"
 ConcaveHull = "1.0"
-Dash = "1.4"
+Dash = "1.5"
 DashBootstrapComponents = "1.4"
 DataFrames = "1.6"
 DelimitedFiles = "1.9"
