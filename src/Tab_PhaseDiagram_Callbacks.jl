@@ -336,7 +336,12 @@ function Tab_PhaseDiagram_Callbacks(app)
         elseif bid == "show-grid"
 
             if length(grid) == 2
-                grid_plot   = show_hide_grid_phaseDiagram(data)
+                
+                grid_plot   = show_hide_grid_phaseDiagram(  sub, 
+                                                            refLvl, 
+                                                            Xrange, 
+                                                            Yrange  )
+                                                            
                 fig         = plot(vcat(data_plot,grid_plot),layout)
             else
                 fig         = plot(data_plot,layout)

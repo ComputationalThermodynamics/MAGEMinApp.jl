@@ -641,17 +641,37 @@ end
                                     test                                  )
     Shows/hides the grid
 """
-function  show_hide_grid_phaseDiagram(data)
+function  show_hide_grid_phaseDiagram(  sub, 
+                                        refLvl, 
+                                        Xrange, 
+                                        Yrange  )
 
-    # print("$data\n")
+    global data, Hash_XY, addedRefinementLvl
 
-    grid_plot      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, length(data.x));
-    for i = 1:length(data.x)
-        grid_plot[i] = scatter(     x           = data.x[i],
-                                    y           = data.y[i],
+    boundaries  = get_boundaries(   Hash_XY,
+                                    sub,
+                                    refLvl+addedRefinementLvl,
+                                    Xrange,
+                                    Yrange,
+                                    data.xc,
+                                    data.yc,
+                                    data.x,
+                                    data.y          ) 
+    
+    bnd            = findall(boundaries .> 0)
+    np             = length(bnd)
+    grid_plot      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, np);
+    for i = 1:np
+
+        x = vcat(data.x[boundaries[bnd[i]]],data.x[boundaries[bnd[i]]][1])
+        y = vcat(data.y[boundaries[bnd[i]]],data.y[boundaries[bnd[i]]][1])
+
+        grid_plot[i] = scatter(     x           = x,
+                                    y           = y,
                                     mode        = "lines",
-                                    line_color  = "#FFFFFF",
-                                    line_width  = 0.5,
+                                    # line_color  = "#FFFFFF",
+                                    line_color  = "#333333",
+                                    line_width  = 0.2,
                                     showlegend  = false     )
     end
 

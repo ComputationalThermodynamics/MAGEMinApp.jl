@@ -753,6 +753,82 @@ function get_plot_frame(Xrange, Yrange, ticks)
     return frame
 end
 
+
+
+"""
+    Function interpolate AMR grid to regular grid
+"""
+function get_boundaries(    Hash_XY     ::Vector{UInt64},
+                            sub         ::Int64,
+                            refLvl      ::Int64,
+                            Xrange      ::Tuple{Float64, Float64},
+                            Yrange      ::Tuple{Float64, Float64},
+                            xc          ::Vector{Float64},
+                            yc          ::Vector{Float64},
+                            xf          ::Vector{SVector{4, Float64}},
+                            yf          ::Vector{SVector{4, Float64}}, )
+
+    np           = length(xf)
+    n            = 2^(sub + refLvl)
+    x            = range(minimum(xc), stop = maximum(xc), length = n)
+    y            = range(minimum(yc), stop = maximum(yc), length = n)
+
+    X            = repeat(x , n)[:]
+    Y            = repeat(y', n)[:]
+    hash_field   = Matrix{UInt64}(undef,n,n);
+    hash_id      = Matrix{Int64}( undef,n,n); 
+
+    Xr = (Xrange[2]-Xrange[1])/n
+    Yr = (Yrange[2]-Yrange[1])/n
+
+    for k=1:np
+        for i=xf[k][1]+Xr/2 : Xr : xf[k][3]
+            for j=yf[k][1]+Yr/2 : Yr : yf[k][3]
+                iii                  = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
+                jjj                  = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
+                hash_field[iii,jjj]   = Hash_XY[k] 
+                hash_id[iii,jjj]      = k
+            end
+        end
+    end
+
+    # print("hash_id: $hash_id \n\n")
+
+    uhash   = unique(Hash_XY)
+    nf      = length(uhash)
+    phase   = zeros(Int64,n,n)
+
+    for j=1:n
+        for i=1:nf
+            phase[j,findall(hash_field[j,:] .== uhash[i])] .= i
+        end
+    end
+
+    boundaries = zeros(Int64,n*n)
+    for i=1:n
+        for j=1:n
+            gx = 0; gy = 0;
+            if i != n && j != n 
+                gx = (phase[i,j+1] - phase[i,j])/2.0; 
+                gy = (phase[i+1,j] - phase[i,j])/2.0;
+            else
+                if i == n && j < n
+                    gx = (phase[i,j+1] - phase[i,j])/2.0;
+                elseif j == n && i < n
+                    gy = (phase[i+1,j] - phase[i,j])/2.0;
+                end
+            end
+            if abs(gx) + abs(gy) > 0
+                k = j + n*(i-1)
+                boundaries[k] = hash_id[i,j]
+            end     
+        end
+    end
+
+    return boundaries
+end
+
+
 """
     Function interpolate AMR grid to regular grid
 """
