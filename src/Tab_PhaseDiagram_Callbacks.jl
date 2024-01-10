@@ -87,6 +87,7 @@ function Tab_PhaseDiagram_Callbacks(app)
     # Callback function to create compute the phase diagram using T8code for Adaptive Mesh Refinement
     callback!(
         app,
+        Output("show-grid",     "value"), 
         Output("phase-diagram", "figure"),
         Output("phase-diagram", "config"),
         Output("npoints-id",    "value"),
@@ -223,7 +224,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             end  
 
             fig         = plot(data_plot,layout)
-
+            grid        = [""]
         elseif bid == "refine-pb-button"
 
             PT_infos                           = get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
@@ -249,7 +250,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                 end
             end                                                                       
             fig         = plot(data_plot,layout)
-
+            grid        = [""]
         elseif bid == "colormaps_cross" || bid == "smooth-colormap" || bid == "range-slider-color" || bid == "reverse-colormap"
 
             data_plot, layout =  update_colormap_phaseDiagram(  xtitle,     ytitle,     
@@ -259,7 +260,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                 test                                  )
 
             fig         = plot(data_plot,layout)
-
+            grid        = [""]
         elseif bid == "fields-dropdown"
 
             data_plot,layout =  update_diplayed_field_phaseDiagram( xtitle,     ytitle,     
@@ -270,7 +271,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     test,       refType                                 )
 
             fig         = plot(data_plot,layout)
-
+            grid        = [""]
         elseif bid == "button-add-isopleth"
 
             g_traces, isopleths = add_isopleth_phaseDiagram(        Xrange,     Yrange,
@@ -283,7 +284,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
 
             fig         = plot( vcat(data_plot,g_traces.isoP[g_traces.active]), layout)
-
+            grid        = [""]
         elseif bid == "button-remove-isopleth"
 
             if (isoplethsID) in g_traces.active
@@ -305,22 +306,22 @@ function Tab_PhaseDiagram_Callbacks(app)
                 fig         = plot( vcat(data_plot,g_traces.isoP[g_traces.active]), layout)
 
             end
-
+            grid        = [""]
         elseif bid == "button-remove-all-isopleth"
 
             g_traces, isopleths, data_plot = remove_all_isopleth_phaseDiagram()
             
             fig         = plot(data_plot,layout)
-
+            grid        = [""]
         elseif bid == "button-show-all-isopleth"
 
             g_traces.isoP[1] = data_plot
             fig         = plot( vcat(data_plot,g_traces.isoP[g_traces.active]), layout)
-
+            grid        = [""]
         elseif bid == "button-hide-all-isopleth"
 
             fig         = plot(data_plot,layout)
-
+            grid        = [""]
         elseif bid == "show-lbl-id"
             if ~isempty(lbl) == true
                 for i=1:n_lbl+1
@@ -333,10 +334,11 @@ function Tab_PhaseDiagram_Callbacks(app)
             end
 
             fig         = plot(data_plot,layout)
+            grid        = [""]
         elseif bid == "show-grid"
 
             if length(grid) == 2
-                
+                grid        = ["","GRD"]
                 grid_plot   = show_hide_grid_phaseDiagram(  sub, 
                                                             refLvl, 
                                                             Xrange, 
@@ -345,6 +347,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                 fig         = plot(vcat(data_plot,grid_plot),layout)
             else
                 fig         = plot(data_plot,layout)
+                grid        = [""]
             end
             
         else
@@ -361,7 +364,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     scale    =  2.0,       ).fields)
 
 
-        return fig, config, npoints, meant, isopleths, smooth
+        return grid, fig, config, npoints, meant, isopleths, smooth
     end
 
 
