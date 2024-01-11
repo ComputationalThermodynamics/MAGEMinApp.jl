@@ -132,7 +132,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("reverse-colormap",   "value"),
         Input("fields-dropdown",    "value"),
 
-        State("npoints-id",        "children"),
+        State("npoints-id",         "children"),           # total number of computed points
         State("diagram-dropdown",   "value"),           # pt, px, tx
         State("database-dropdown",  "value"),           # mp, mb, ig ,igd, um, alk
         State("mb-cpx-switch",      "value"),           # false,true -> 0,1
@@ -391,13 +391,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     scale    =  2.0,       ).fields)
 
 
-        return      grid, 
-                    full_grid, 
-                    fig, config, 
-                    string(npoints), 
-                    string(meant), 
-                    isopleths, 
-                    smooth
+        return grid, full_grid, fig, config, string(npoints), string(meant), isopleths, smooth
     end
 
 
