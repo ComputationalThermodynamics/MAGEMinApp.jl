@@ -54,7 +54,8 @@ function Tab_PhaseDiagram_Callbacks(app)
     # clickData callback
     callback!(
         app,
-        Output("click-data", "children"),
+        Output("click-data-left", "children"),
+        Output("click-data-right", "children"),
         Input("phase-diagram", "clickData"),
         State("diagram-dropdown","value"),          # pt,px,tx
         prevent_initial_call = true,
@@ -64,24 +65,36 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         sp  = click_info[:points][][:text]
         tmp = match(r"#([^# ]+)#", sp)
+
+
         if tmp !== nothing
             point_id = tmp.match
             point_id = parse(Int64,replace.(point_id,r"#"=>""))
 
+            # left panel
+            pLeft = "\n"
+            pLeft *= "|Variable &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;|Value &nbsp; &nbsp; &nbsp; &nbsp;| Unit |\n"
+            pLeft *= "|----------|-------|------|\n"
+            pLeft *= "| Pressure |"*string(round(Out_XY[point_id].P_kbar; digits = 3))*"| kbar |\n"
+            pLeft *= "| Temperature |"*string(round(Out_XY[point_id].T_C; digits = 3))*"| °C |\n"
+            pLeft *= "| Gibbs energy |"*string(round(Out_XY[point_id].G_system; digits = 3))*"| kJ |\n"
+            pLeft *= "| ρ_system |"*string(round(Out_XY[point_id].rho; digits = 3))*"| kg/m^3 |\n"
+            pLeft *= "| Pressure |"*string(round(Out_XY[point_id].P_kbar; digits = 3))*"| kbar |\n"
 
-            P       = "Pressure\t\t**kbar**\t: "*join(round(Out_XY[point_id].P_kbar; digits = 3)," ")*"\n"
-            T       = "Temperature\t**°C**\t\t: "*join(round(Out_XY[point_id].T_C; digits = 3)," ")*"\n"
-            Gsys    = "Gibbs energy\t**kJ**\t\t: "*join(round(Out_XY[point_id].G_system; digits = 3)," ")*"\n"
-            StPhase = "Stable phases\t**str**\t\t: "*join(Out_XY[point_id].ph," ")*"\n"
-            PhFrac  = "Phases fraction\t**mol**\t: "*join(round.(Out_XY[point_id].ph_frac; digits = 3)," ")*"\n"
-            RhoSys  = "ρ_system\t\t**kg/m^3**\t: "*join(round(Out_XY[point_id].rho; digits = 3)," ")*"\n"
-            X       = "Composition\t\t**mol**\t: "*join(round.(Out_XY[point_id].bulk; digits = 3)," ")*"\n"
-            p       = P*T*Gsys*StPhase*PhFrac*RhoSys*X
-        else
-            p       = "there is a problem with the point information, the id has not been found\n"
+            # X       = "Composition\t\t**mol**\t: "*join(round.(Out_XY[point_id].bulk; digits = 3)," ")*"\n"
+            
+            # right panel
+            pRight = "\n"
+            pRight *= "|Phase &nbsp; &nbsp;| Fraction |\n"
+            pRight *= "|-------|----------|\n"
+            np      = length(Out_XY[point_id].ph)
+            for i=1:np
+                pRight *= "| "*Out_XY[point_id].ph[i]*"|"*string(round.(Out_XY[point_id].ph_frac[i]; digits = 3))*"| \n"
+            end
+
         end
 
-        return p
+        return pLeft,pRight
     end
 
     # Callback function to create compute the phase diagram using T8code for Adaptive Mesh Refinement

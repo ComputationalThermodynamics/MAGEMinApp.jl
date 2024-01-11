@@ -55,23 +55,24 @@ function Tab_PhaseDiagram()
                                     ]),
                                     html_div("‎ "),
                                     dbc_row([
-                                        dcc_markdown(   id          = "click-data", 
-                                                        children    = "",
-                                                        style       = Dict("white-space" => "pre"))
+                                        
+                                            dbc_col([ 
+                                                dbc_card([
+                                                dcc_markdown(   id          = "click-data-left", 
+                                                                children    = "",
+                                                                style       = Dict("white-space" => "pre"))
+                                                ])
+                                            ]),
+                                            dbc_col([ 
+                                                dbc_card([
+                                                dcc_markdown(   id          = "click-data-right", 
+                                                                children    = "",
+                                                                style       = Dict("white-space" => "pre"))
+                                                ])
+                                            ]),
 
-                                        # dcc_textarea(
-                                        #     id="click-data",
-                                        #     value       = "",
-                                        #     readOnly    = true,
-                                        #     disabled    = true,
-                                        #     draggable   = false,
-                                        #     style       = Dict( "textAlign" => "left",
-                                        #                         "font-size" => "110%",
-                                        #                         "width"     => "100%",
-                                        #                         "height"    => "160px",
-                                        #                         "resize"    => "none")
-                                        # ),
-                                    ]),
+                                        ]),
+
                                     html_div("‎ "),
 
                                     dbc_row([
