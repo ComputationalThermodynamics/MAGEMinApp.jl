@@ -28,7 +28,7 @@ mutable struct isopleth_data
 end
 
 
-function get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
+function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
 
     PD_infos  = Vector{String}(undef,2)
 
@@ -58,6 +58,7 @@ function get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, 
 
     PD_infos[1]  = "Phase Diagram computed using MAGEMin v1.3.6 <br>"
     PD_infos[1] *= "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾<br>"
+    PD_infos[1] *= "Number of points <br>"
     PD_infos[1] *= "Date & time <br>"
     PD_infos[1] *= "Database <br>"
     PD_infos[1] *= "Diagram type <br>"
@@ -97,6 +98,7 @@ function get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, 
 
     PD_infos[2] = " <br>"
     PD_infos[2] *= " <br>"
+    PD_infos[2] *= string(npoints) * "<br>"
     PD_infos[2] *= datetoday * ", " * rightnow * "<br>"
     PD_infos[2] *= db_in.db_info * "<br>"
     PD_infos[2] *= dgtype *"<br>"
@@ -286,7 +288,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                     bulk_L,     bulk_R,     oxi,
                                     bufferType, bufferN1,   bufferN2,
                                     smooth,     colorm,     reverseColorMap,
-                                    test,       PT_infos,   refType                                  )
+                                    test,       refType                                  )
 
         empty!(AppData.PseudosectionData);              #this empty the data from previous pseudosection computation
 
@@ -392,8 +394,9 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                                                         data.x,
                                                                         data.y,
                                                                         Xrange,
-                                                                        Yrange,
-                                                                        PT_infos )
+                                                                        Yrange)
+
+        PT_infos                           = get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
 
         data_plot, annotations = get_diagram_labels(    fieldname,
                                                         oxi,
@@ -501,7 +504,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                 bulk_L,     bulk_R,     oxi,
                                 bufferType, bufferN1,   bufferN2,
                                 smooth,     colorm,     reverseColorMap,
-                                test,       PT_infos,   refType                                 )
+                                test,       refType                                 )
 
     global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels, addedRefinementLvl, layout, n_lbl
 
@@ -546,9 +549,10 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                                                     data.x,
                                                                     data.y,
                                                                     Xrange,
-                                                                    Yrange,
-                                                                    PT_infos )
+                                                                    Yrange )
 
+    PT_infos                           = get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
+                                                              
     data_plot, annotations = get_diagram_labels(    fieldname,
                                                     oxi,
                                                     Out_XY,
@@ -571,8 +575,6 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                             colorbar_title  = fieldname,
                             reversescale    = reverseColorMap,
                             hoverinfo       = "skip",
-                            # hoverinfo       = "text",
-                            # text            = gridded_info,
                             colorbar        = attr(     lenmode         = "fraction",
                                                         len             =  0.75,
                                                         thicknessmode   = "fraction",
@@ -620,8 +622,6 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
                             colorbar_title  =  fieldname,
                             reversescale    =  reverseColorMap,
                             hoverinfo       = "skip",
-                            # hoverinfo       = "text",
-                            # text            = gridded_info,
                             colorbar        = attr(     lenmode         = "fraction",
                                                         len             =  0.75,
                                                         thicknessmode   = "fraction",

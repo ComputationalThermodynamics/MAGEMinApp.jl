@@ -844,8 +844,7 @@ function get_gridded_map(   fieldname   ::String,
                             xf          ::Vector{SVector{4, Float64}},
                             yf          ::Vector{SVector{4, Float64}},
                             Xrange      ::Tuple{Float64, Float64},
-                            Yrange      ::Tuple{Float64, Float64},
-                            PT_infos    ::Vector{String} )
+                            Yrange      ::Tuple{Float64, Float64} )
 
     np          = length(data.x)
     len_ox      = length(oxi)

@@ -79,6 +79,12 @@ function Tab_PhaseDiagram_Callbacks(app)
             pLeft *= "| Temperature |"*string(round(Out_XY[point_id].T_C; digits = 3))*"| °C |\n"
             pLeft *= "| Gibbs energy |"*string(round(Out_XY[point_id].G_system; digits = 3))*"| kJ |\n"
             pLeft *= "| ρ_system |"*string(round(Out_XY[point_id].rho; digits = 3))*"| kg/m^3 |\n"
+
+            if "liq" in Out_XY[point_id].ph
+                pLeft *= "| ρ_solid |"*string(round(Out_XY[point_id].rho_S; digits = 3))*"| kg/m^3 |\n"
+                pLeft *= "| ρ_melt |"*string(round(Out_XY[point_id].rho_M; digits = 3))*"| kg/m^3 |\n"
+            end
+
             pLeft *= "| Pressure |"*string(round(Out_XY[point_id].P_kbar; digits = 3))*"| kbar |\n"
 
             # X       = "Composition\t\t**mol**\t: "*join(round.(Out_XY[point_id].bulk; digits = 3)," ")*"\n"
@@ -211,8 +217,6 @@ function Tab_PhaseDiagram_Callbacks(app)
             global n_lbl                = 0;
             global data_plot, layout, g_traces, PT_infos;
 
-            PT_infos = get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
-
             g_traces = initialize_g_isopleth(; n_iso_max = 32)
 
             data_plot, layout, npoints, meant  =  compute_new_phaseDiagram( xtitle,     ytitle,     lbl,
@@ -224,7 +228,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                             bulk_L,     bulk_R,     oxi,
                                                                             bufferType, bufferN1,   bufferN2,
                                                                             smooth,     colorm,     reverseColorMap,
-                                                                            test,       PT_infos,   refType                                  )
+                                                                            test,       refType                                  )
 
             if ~isempty(lbl) == true
                 for i=1:n_lbl+1
@@ -240,8 +244,6 @@ function Tab_PhaseDiagram_Callbacks(app)
             grid        = [""]
         elseif bid == "refine-pb-button"
 
-            PT_infos                           = get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
-
             data_plot, layout, npoints, meant  =  refine_phaseDiagram(  xtitle,     ytitle,     lbl, 
                                                                         Xrange,     Yrange,     fieldname,
                                                                         dtb,        diagType,   verbose,    solver,
@@ -251,7 +253,9 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                         bulk_L,     bulk_R,     oxi,
                                                                         bufferType, bufferN1,   bufferN2,
                                                                         smooth,     colorm,     reverseColorMap,
-                                                                        test,       PT_infos,   refType                                  )
+                                                                        test,       refType                                  )
+
+
 
             if ~isempty(lbl) == true
                 for i=1:n_lbl+1
