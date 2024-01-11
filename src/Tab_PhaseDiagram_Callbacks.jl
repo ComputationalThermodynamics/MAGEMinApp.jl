@@ -132,6 +132,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("reverse-colormap",   "value"),
         Input("fields-dropdown",    "value"),
 
+        State("npoints-id",        "children"),
         State("diagram-dropdown",   "value"),           # pt, px, tx
         State("database-dropdown",  "value"),           # mp, mb, ig ,igd, um, alk
         State("mb-cpx-switch",      "value"),           # false,true -> 0,1
@@ -180,7 +181,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
     ) do    grid,       full_grid,  lbl,        addIso,     removeIso,  removeAllIso,   isoShow,    isoHide,    n_clicks_mesh, n_clicks_refine, 
             colorMap,   smooth,     rangeColor,     reverse,    fieldname,
-            diagType,   dtb,    cpx,    limOpx,     limOpxVal,
+            npoints,    diagType,   dtb,    cpx,    limOpx,     limOpxVal,
             tmin,       tmax,       pmin,   pmax,
             fixT,       fixP,
             sub,        refType,    refLvl,
