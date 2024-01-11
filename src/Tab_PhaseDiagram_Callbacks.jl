@@ -54,7 +54,7 @@ function Tab_PhaseDiagram_Callbacks(app)
     # clickData callback
     callback!(
         app,
-        Output("click-data", "value"),
+        Output("click-data", "children"),
         Input("phase-diagram", "clickData"),
         State("diagram-dropdown","value"),          # pt,px,tx
         prevent_initial_call = true,
@@ -68,15 +68,15 @@ function Tab_PhaseDiagram_Callbacks(app)
             point_id = tmp.match
             point_id = parse(Int64,replace.(point_id,r"#"=>""))
 
-            X       = "Composition\t[mol]\t: "*string(round.(Out_XY[point_id].bulk; digits = 3))*"\n"
-            P       = "Pressure\t\t[kbar]\t\t: "*string(round(Out_XY[point_id].P_kbar; digits = 3))*"\n"
-            T       = "Temperature\t[°C]\t: "*string(round(Out_XY[point_id].T_C; digits = 3))*"\n"
-            Gsys    = "Gibbs energy\t[kJ]\t\t: "*string(round(Out_XY[point_id].G_system; digits = 3))*"\n"
-            StPhase = "Stable phases\t[str]\t: "*string(Out_XY[point_id].ph)*"\n"
-            PhFrac  = "Phases fraction\t[mol]\t: "*string(round.(Out_XY[point_id].ph_frac; digits = 3))*"\n"
-            RhoSys  = "ρ_system\t\t[kg/m^3]: "*string(round(Out_XY[point_id].rho; digits = 3))*"\n"
 
-            p       = X*P*T*Gsys*StPhase*PhFrac*RhoSys
+            P       = "Pressure\t\t**kbar**\t: "*join(round(Out_XY[point_id].P_kbar; digits = 3)," ")*"\n"
+            T       = "Temperature\t**°C**\t\t: "*join(round(Out_XY[point_id].T_C; digits = 3)," ")*"\n"
+            Gsys    = "Gibbs energy\t**kJ**\t\t: "*join(round(Out_XY[point_id].G_system; digits = 3)," ")*"\n"
+            StPhase = "Stable phases\t**str**\t\t: "*join(Out_XY[point_id].ph," ")*"\n"
+            PhFrac  = "Phases fraction\t**mol**\t: "*join(round.(Out_XY[point_id].ph_frac; digits = 3)," ")*"\n"
+            RhoSys  = "ρ_system\t\t**kg/m^3**\t: "*join(round(Out_XY[point_id].rho; digits = 3)," ")*"\n"
+            X       = "Composition\t\t**mol**\t: "*join(round.(Out_XY[point_id].bulk; digits = 3)," ")*"\n"
+            p       = P*T*Gsys*StPhase*PhFrac*RhoSys*X
         else
             p       = "there is a problem with the point information, the id has not been found\n"
         end
