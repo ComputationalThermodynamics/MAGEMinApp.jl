@@ -96,8 +96,8 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     PD_infos[1] *= "_____________________________________________________________________________________________________<br>"
     
 
-    PD_infos[2] = "‎ <br>"
-    PD_infos[2] *= "‎ <br>"
+    PD_infos[2] = "<br>"
+    PD_infos[2] *= "<br>"
     PD_infos[2] *= string(npoints) * "<br>"
     PD_infos[2] *= datetoday * ", " * rightnow * "<br>"
     PD_infos[2] *= db_in.db_info * "<br>"
@@ -659,6 +659,7 @@ function  show_hide_reaction_lines(  sub,
                                     data.y          ) 
     
     bnd            = findall(boundaries .> 0)
+
     # np             = length(bnd)
     # grid_plot      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, np);
     # for i = 1:np
@@ -676,18 +677,55 @@ function  show_hide_reaction_lines(  sub,
 
     grid_plot = GenericTrace{Dict{Symbol, Any}}
 
-    # print("boundaries $boundaries\n")
-    # print("bnd $bnd\n")
-    # print("$(data.xc[boundaries[bnd]])\n")
-
     grid_plot =  scatter(   x           = data.xc[boundaries[bnd]],
                             y           = data.yc[boundaries[bnd]],
                             mode        = "markers",
                             # line_color  = "#FFFFFF",
                             # color       = "#333333",
-                            marker      = attr(color = "#333333", size = 1),
+                            marker      = attr(color = "#333333", size = 1.5),
                             hoverinfo   = "skip",
                             showlegend  = false     );
+
+    # print("$data \n")
+
+
+    # n_hull      = length(unique(Hash_XY))
+    # hull_list   = Vector{Any}(undef,    n_hull)
+    # id          = 0
+
+    # for i in unique(Hash_XY)
+    #     field_tmp   = findall(Hash_XY .== i)
+    
+    #     # t2          = reduce(vcat,data.x[field_tmp])
+    #     # p2          = reduce(vcat,data.y[field_tmp])
+    
+    #     t2          = data.xc[field_tmp]
+    #     p2          = data.yc[field_tmp]
+
+    #     np          = length(t2)
+    #     if np > 2
+    #         id             += 1
+    #         points          = [[ t2[i]+rand()/100, p2[i]+rand()/100] for i=1:np]
+    #         hull_list[id]   = concave_hull(points,1024)
+    #     end
+    # end
+    # n_trace     = id;
+    # grid_plot   = Vector{GenericTrace{Dict{Symbol, Any}}}(undef,n_trace);
+
+    # for i = 1:n_trace
+
+    #     tmp     = mapreduce(permutedims,vcat,hull_list[i].vertices)
+    #     tmp     = vcat(tmp,tmp[1,:]')
+    
+    #     grid_plot[i] = scatter(     x           =  tmp[:,1],
+    #                                 y           =  tmp[:,2],
+    #                                 mode        = "lines",
+    #                                 # line_color  = "#FFFFFF",
+    #                                 line_color  = "#333333",
+    #                                 line_width  = 0.2,
+    #                                 showlegend  = false     )
+    # end
+
     return grid_plot
 end
 

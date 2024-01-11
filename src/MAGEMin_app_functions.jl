@@ -639,7 +639,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
         yref    = "paper",
         x       =  0.0,
         y       =  0.0,
-        sizex   =  1.0, 
+        sizex   =  0.002, 
         sizey   =  1.0,
         xanchor = "right", 
         yanchor = "bottom"
@@ -650,7 +650,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
         yref    = "paper",
         x       =  1.0,
         y       =  0.0,
-        sizex   =  1.0, 
+        sizex   =  0.002, 
         sizey   =  1.0,
         xanchor = "right", 
         yanchor = "bottom"
@@ -662,7 +662,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
         x       =  1.0,
         y       =  0.0,
         sizex   =  1.0, 
-        sizey   =  1.0,
+        sizey   =  0.002,
         xanchor = "right", 
         yanchor = "bottom"
     ),
@@ -673,7 +673,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
         x       =  1.0,
         y       =  1.0,
         sizex   =  1.0, 
-        sizey   =  1.0,
+        sizey   =  0.002,
         xanchor = "right", 
         yanchor = "bottom"
     )]
@@ -690,7 +690,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
                             x       =  0.0,
                             y       =  dy,
                             sizex   =  0.005, 
-                            sizey   =  0.005,
+                            sizey   =  0.002,
                             xanchor = "right", 
                             yanchor = "bottom"  )  
 
@@ -707,7 +707,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
                             y       =  dy*i,
 
                             sizex   =  0.005, 
-                            sizey   =  0.005,
+                            sizey   =  0.002,
                             xanchor = "right", 
                             yanchor = "bottom"  )  
         n+=1
@@ -719,7 +719,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
                             y       =  dy*i,
 
                             sizex   =  0.005, 
-                            sizey   =  0.005,
+                            sizey   =  0.002,
                             xanchor = "right", 
                             yanchor = "bottom"  )  
         n+=1
@@ -730,7 +730,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
                             # y       =  0.0,
                             y       =  -0.005,
 
-                            sizex   =  0.005, 
+                            sizex   =  0.002, 
                             sizey   =  0.005,
                             xanchor = "right", 
                             yanchor = "bottom"  )  
@@ -742,7 +742,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
                             # y       =  0.995,
                             y       =  1.0,
 
-                            sizex   =  0.005, 
+                            sizex   =  0.002, 
                             sizey   =  0.005,
                             xanchor = "right", 
                             yanchor = "bottom"  )  
