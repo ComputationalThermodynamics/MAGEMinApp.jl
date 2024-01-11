@@ -78,11 +78,11 @@ function Tab_PhaseDiagram_Callbacks(app)
             pLeft *= "| Pressure |"*string(round(Out_XY[point_id].P_kbar; digits = 3))*"| kbar |\n"
             pLeft *= "| Temperature |"*string(round(Out_XY[point_id].T_C; digits = 3))*"| °C |\n"
             pLeft *= "| Gibbs energy |"*string(round(Out_XY[point_id].G_system; digits = 3))*"| kJ |\n"
-            pLeft *= "| ρ_system |"*string(round(Out_XY[point_id].rho; digits = 3))*"| kg/m^3 |\n"
+            pLeft *= "| ρ_system |"*string(round(Out_XY[point_id].rho; digits = 3))*"| kg/m³   |\n"
 
             if "liq" in Out_XY[point_id].ph
-                pLeft *= "| ρ_solid |"*string(round(Out_XY[point_id].rho_S; digits = 3))*"| kg/m^3 |\n"
-                pLeft *= "| ρ_melt |"*string(round(Out_XY[point_id].rho_M; digits = 3))*"| kg/m^3 |\n"
+                pLeft *= "| ρ_solid |"*string(round(Out_XY[point_id].rho_S; digits = 3))*"| kg/m³ |\n"
+                pLeft *= "| ρ_melt |"*string(round(Out_XY[point_id].rho_M; digits = 3))*"| kg/m³ |\n"
             end
 
             pLeft *= "| Pressure |"*string(round(Out_XY[point_id].P_kbar; digits = 3))*"| kbar |\n"
