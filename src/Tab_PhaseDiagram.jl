@@ -30,7 +30,7 @@ function Tab_PhaseDiagram()
                                     # html_div("‎ "),
                                     dbc_row([
                                         dbc_col([ 
-                                            html_h1("Number of computed points", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            html_h1("# computed points", style = Dict("textAlign" => "center","font-size" => "120%")),
                                         ], width=6),
                                         dbc_col([ 
                                             dbc_card([
@@ -42,7 +42,7 @@ function Tab_PhaseDiagram()
                                     ]),
                                     dbc_row([
                                         dbc_col([ 
-                                            html_h1("Average minimization time [ms]", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            html_h1("Minimization time [ms]", style = Dict("textAlign" => "center","font-size" => "120%")),
                                         ], width=6),
                                         dbc_col([ 
                                             dbc_card([

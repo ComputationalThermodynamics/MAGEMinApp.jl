@@ -96,8 +96,8 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     PD_infos[1] *= "_____________________________________________________________________________________________________<br>"
     
 
-    PD_infos[2] = "‎<br>"
-    PD_infos[2] *= "‎<br>"
+    PD_infos[2] = "‎ <br>"
+    PD_infos[2] *= "‎ <br>"
     PD_infos[2] *= string(npoints) * "<br>"
     PD_infos[2] *= datetoday * ", " * rightnow * "<br>"
     PD_infos[2] *= db_in.db_info * "<br>"
@@ -659,22 +659,35 @@ function  show_hide_reaction_lines(  sub,
                                     data.y          ) 
     
     bnd            = findall(boundaries .> 0)
-    np             = length(bnd)
-    grid_plot      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, np);
-    for i = 1:np
+    # np             = length(bnd)
+    # grid_plot      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, np);
+    # for i = 1:np
 
-        x = vcat(data.x[boundaries[bnd[i]]],data.x[boundaries[bnd[i]]][1])
-        y = vcat(data.y[boundaries[bnd[i]]],data.y[boundaries[bnd[i]]][1])
+    #     x = vcat(data.x[boundaries[bnd[i]]],data.x[boundaries[bnd[i]]][1])
+    #     y = vcat(data.y[boundaries[bnd[i]]],data.y[boundaries[bnd[i]]][1])
+    #     grid_plot[i] = scatter(     x           = x,
+    #                                 y           = y,
+    #                                 mode        = "lines",
+    #                                 # line_color  = "#FFFFFF",
+    #                                 line_color  = "#333333",
+    #                                 line_width  = 0.2,
+    #                                 showlegend  = false     )
+    # end
 
-        grid_plot[i] = scatter(     x           = x,
-                                    y           = y,
-                                    mode        = "lines",
-                                    # line_color  = "#FFFFFF",
-                                    line_color  = "#333333",
-                                    line_width  = 0.2,
-                                    showlegend  = false     )
-    end
+    grid_plot = GenericTrace{Dict{Symbol, Any}}
 
+    # print("boundaries $boundaries\n")
+    # print("bnd $bnd\n")
+    # print("$(data.xc[boundaries[bnd]])\n")
+
+    grid_plot =  scatter(   x           = data.xc[boundaries[bnd]],
+                            y           = data.yc[boundaries[bnd]],
+                            mode        = "markers",
+                            # line_color  = "#FFFFFF",
+                            # color       = "#333333",
+                            marker      = attr(color = "#333333", size = 1),
+                            hoverinfo   = "skip",
+                            showlegend  = false     );
     return grid_plot
 end
 
