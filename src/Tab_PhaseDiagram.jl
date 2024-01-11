@@ -33,11 +33,11 @@ function Tab_PhaseDiagram()
                                             html_h1("Number of computed points", style = Dict("textAlign" => "center","font-size" => "120%")),
                                         ], width=6),
                                         dbc_col([ 
-                                                dbc_input(
-                                                id      = "npoints-id",
-                                                type    = "number", 
-                                                value   = 0,
-                                                disabled = true   ),
+                                            dbc_card([
+                                                dcc_markdown(   id          = "npoints-id", 
+                                                                children    = "",
+                                                                style       = Dict("white-space" => "pre"))
+                                                ])
                                         ]),
                                     ]),
                                     dbc_row([
@@ -45,11 +45,11 @@ function Tab_PhaseDiagram()
                                             html_h1("Average minimization time [ms]", style = Dict("textAlign" => "center","font-size" => "120%")),
                                         ], width=6),
                                         dbc_col([ 
-                                                dbc_input(
-                                                id      = "meant-id",
-                                                type    = "number", 
-                                                value   = 0,
-                                                disabled = true   ),
+                                            dbc_card([
+                                                dcc_markdown(   id          = "meant-id", 
+                                                                children    = "",
+                                                                style       = Dict("white-space" => "pre"))
+                                                ])
                                         ]),
                                         dbc_tooltip("This is the average minimization time per point: n_points/time_per_point",target="meant-id"),
                                     ]),
@@ -365,7 +365,7 @@ function Tab_PhaseDiagram()
 
                             dbc_row([
                                 dbc_col([ 
-                                    html_h1("Show/hide grid", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 0)),
+                                    html_h1("Show reaction lines", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 0)),
                                 ], width=5),
                                 dbc_col([ 
                                     dcc_checklist(
@@ -376,13 +376,32 @@ function Tab_PhaseDiagram()
                                         value   = [""],
                                         inline  = true,
                                     ),
-                                    dbc_tooltip("Hide/display grid"),
+                                    dbc_tooltip("Hide/display reactions line"),
 
                                 ]),
-                            ]),                           
+                            ]),     
+                            
+                            dbc_row([
+                                dbc_col([ 
+                                    html_h1("Show grid", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 0)),
+                                ], width=5),
+                                dbc_col([ 
+                                    dcc_checklist(
+                                        id      ="show-full-grid",
+                                        options = [
+                                            Dict("label" => "", "value" => "FGRD"),
+                                        ],
+                                        value   = [""],
+                                        inline  = true,
+                                    ),
+                                    dbc_tooltip("Hide/display AMR grid"),
+
+                                ]),
+                            ]),
+
                                 dbc_row([
                                     dbc_col([ 
-                                        html_h1("Show/hide stable phases", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 0)),
+                                        html_h1("Show stable phases", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 0)),
                                     ], width=5),
                                     dbc_col([ 
                                         dcc_checklist(

@@ -56,7 +56,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     db_in     = retrieve_solution_phase_information(dtb)
 
 
-    PD_infos[1]  = "Phase Diagram computed using MAGEMin v1.3.6 <br>"
+    PD_infos[1]  = "Phase Diagram computed using MAGEMin v1.4.0 <br>"
     PD_infos[1] *= "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾<br>"
     PD_infos[1] *= "Number of points <br>"
     PD_infos[1] *= "Date & time <br>"
@@ -96,8 +96,8 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     PD_infos[1] *= "_____________________________________________________________________________________________________<br>"
     
 
-    PD_infos[2] = " <br>"
-    PD_infos[2] *= " <br>"
+    PD_infos[2] = "‎<br>"
+    PD_infos[2] *= "‎<br>"
     PD_infos[2] *= string(npoints) * "<br>"
     PD_infos[2] *= datetoday * ", " * rightnow * "<br>"
     PD_infos[2] *= db_in.db_info * "<br>"
@@ -551,7 +551,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                                                     Xrange,
                                                                     Yrange )
 
-    PT_infos                           = get_phase_diagram_information(dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
+    PT_infos                           = get_phase_diagram_information(npoints,dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
                                                               
     data_plot, annotations = get_diagram_labels(    fieldname,
                                                     oxi,
@@ -634,14 +634,14 @@ end
 
 
 """
-    show_hide_grid_phaseDiagram(    xtitle,     ytitle,     grid,  
+    show_hide_reaction_lines(    xtitle,     ytitle,     grid,  
                                     Xrange,     Yrange,     fieldname,
                                     dtb,
                                     smooth,     colorm,     reverseColorMap,
                                     test                                  )
     Shows/hides the grid
 """
-function  show_hide_grid_phaseDiagram(  sub, 
+function  show_hide_reaction_lines(  sub, 
                                         refLvl, 
                                         Xrange, 
                                         Yrange  )
@@ -677,6 +677,38 @@ function  show_hide_grid_phaseDiagram(  sub,
 
     return grid_plot
 end
+
+
+
+
+"""
+    show_hide_reaction_lines(    xtitle,     ytitle,     grid,  
+                                    Xrange,     Yrange,     fieldname,
+                                    dtb,
+                                    smooth,     colorm,     reverseColorMap,
+                                    test                                  )
+    Shows/hides the grid
+"""
+function  show_hide_mesh_grid()
+
+    np             = length(data.x)
+    grid_plot      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, np);
+    for i = 1:np
+
+        grid_plot[i] = scatter(     x           = data.x[i],
+                                    y           = data.y[i],
+                                    mode        = "lines",
+                                    # line_color  = "#FFFFFF",
+                                    line_color  = "#333333",
+                                    line_width  = 0.2,
+                                    showlegend  = false     )
+    end
+
+    return grid_plot
+end
+
+
+
 
 """
     update_diplayed_field_phaseDiagram(   xtitle,     ytitle,     
