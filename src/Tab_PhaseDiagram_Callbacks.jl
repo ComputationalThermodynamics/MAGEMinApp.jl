@@ -273,17 +273,17 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     test,       refType                                 )
 
         elseif bid == "show-grid"
-            
+
             if grid == "true"
                 field2plot[2] = 1
-                full_grid = "false"
+                # full_grid = "false"
             end
 
         elseif bid == "show-full-grid"
 
             if full_grid == "true"
                 field2plot[3] = 1
-                grid = "false"
+                # grid = "false"
             end
                                                         
         elseif bid == "button-add-isopleth"
