@@ -35,7 +35,7 @@ function get_computation_info(npoints, meant)
 
     infos  = "|Number of computed points &nbsp;| Minimization time (ms) |\n"
     infos *= "|--------------------------------|------------------------|\n"
-    infos *= "| "*string(npoints)*"  |  "*string(meant)*" |\n"
+    infos *= "|  &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;"*string(npoints)*"  |   &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;"*string(meant)*" |\n"
 
     return infos
 end
