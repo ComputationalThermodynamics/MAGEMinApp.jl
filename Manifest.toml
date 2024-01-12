@@ -2,7 +2,7 @@
 
 julia_version = "1.9.3"
 manifest_format = "2.0"
-project_hash = "1576e23d06327ac50351d1352c137ff9373e0554"
+project_hash = "3753cde3fc31524f74bd8e9b756bb5dbb84a0103"
 
 [[deps.Adapt]]
 deps = ["LinearAlgebra", "Requires"]
@@ -418,7 +418,7 @@ version = "1.0.3"
 
 [[deps.MAGEMin_C]]
 deps = ["CEnum", "Libdl", "MAGEMin_jll", "ProgressMeter", "Test"]
-git-tree-sha1 = "87191c44f00fd2c83e73ab3b01c3439da480d80f"
+git-tree-sha1 = "48dd32ce2ea510a2a36df6fc0032efdb8167bd6d"
 repo-rev = "main"
 repo-url = "https://github.com/boriskaus/MAGEMin_C.jl"
 uuid = "e5d170eb-415a-4524-987b-12f1bce1ddab"
