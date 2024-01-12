@@ -147,7 +147,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         PD_infos[2] *= join(fixP, " ") *"<br>"
     end
     PD_infos[2] *= " <br>"
-    
+
     return PD_infos
 end
 
@@ -549,7 +549,6 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
 
     #________________________________________________________________________________________#                   
     # Scatter plotly of the grid
-    print("Interpolate data on grid ..."); t0 = time()
     gridded, gridded_info, X, Y, npoints, meant = get_gridded_map(  fieldname,
                                                                     oxi,
                                                                     Out_XY,
@@ -563,9 +562,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                                                     data.y,
                                                                     Xrange,
                                                                     Yrange )
-    println("\rInterpolate data on grid $(round(time()-t0, digits=3)) s"); 
     
-    print("Get phase diagram info ..."); t0 = time()
     PT_infos                           = get_phase_diagram_information(npoints,dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
                                                               
     data_plot, annotations = get_diagram_labels(    fieldname,
@@ -579,7 +576,6 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                                     data.yc,
                                                     PT_infos )
     layout[:annotations] = annotations                                                                                   
-    println("\rGet phase diagram info $(round(time()-t0, digits=3)) s"); 
 
     data_plot[1] = heatmap( x               = X,
                             y               = Y,
