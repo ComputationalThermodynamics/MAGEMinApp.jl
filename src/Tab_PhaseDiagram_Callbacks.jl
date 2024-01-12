@@ -114,7 +114,8 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         Output("isopleth-dropdown", "options"),
         Output("smooth-colormap",   "value"),
-
+        Output("tabs",    "active_tab"),                 # currently active tab
+        
         Input("show-grid",                  "value"), 
         Input("show-full-grid",             "value"), 
         Input("show-lbl-id",                "value"),
@@ -132,8 +133,9 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("range-slider-color", "value"),
         Input("reverse-colormap",   "value"),
         Input("fields-dropdown",    "value"),
-
-        # State("npoints-id",         "children"),           # total number of computed points
+        
+        
+        # State("npoints-id",         "children"),      # total number of computed points
         State("diagram-dropdown",   "value"),           # pt, px, tx
         State("database-dropdown",  "value"),           # mp, mb, ig ,igd, um, alk
         State("mb-cpx-switch",      "value"),           # false,true -> 0,1
@@ -176,6 +178,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("iso-min-id",         "value"),
         State("iso-step-id",        "value"),
         State("iso-max-id",         "value"),
+        State("tabs",               "active_tab"),      # currently active tab
 
         prevent_initial_call = true,
 
@@ -191,7 +194,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             test,
             isopleths,  isoplethsID,phase,      ss,         em,         of,  
             isoColorLine,           isoLabelSize,   
-            minIso,     stepIso,    maxIso
+            minIso,     stepIso,    maxIso, active_tab
 
         smooth                          = smooth
         xtitle, ytitle, Xrange, Yrange  = diagram_type(diagType, tmin, tmax, pmin, pmax)                # get axis information
@@ -200,7 +203,6 @@ function Tab_PhaseDiagram_Callbacks(app)
         colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)              # get colormap information
         bulk_L, bulk_R, oxi             = get_bulkrock_prop(bulk1, bulk2)                               # get bulk rock composition information
         
-
         if bid == "compute-button"
             smooth                      = "best"
       
@@ -242,6 +244,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             infos       = get_computation_info(npoints, meant)
             fig         = plot_diagram(data_plot,layout)
             grid        = "false"; full_grid        = "false"
+            active_tab  = "tab-phase-diagram" 
+
         elseif bid == "refine-pb-button"
 
             data_plot, layout, npoints, meant  =  refine_phaseDiagram(  xtitle,     ytitle,     lbl, 
@@ -393,7 +397,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     width    =  900,
                                                                     scale    =  2.0,       ).fields)
 
-        return grid, full_grid, fig, config, infos, isopleths, smooth
+        return grid, full_grid, fig, config, infos, isopleths, smooth, active_tab 
     end
 
 
