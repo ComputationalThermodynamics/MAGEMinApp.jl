@@ -581,7 +581,6 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
     layout[:annotations] = annotations                                                                                   
     println("\rGet phase diagram info $(round(time()-t0, digits=3)) s"); 
 
-    print("Prepare plot & labels ..."); t0 = time()
     data_plot[1] = heatmap( x               = X,
                             y               = Y,
                             z               = gridded,
@@ -608,8 +607,6 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                             hoverinfo       = "text",
                             showlegend      = false,
                             text            = gridded_info )
-
-    println("\rPrepare plot & labels $(round(time()-t0, digits=3)) s"); 
 
     return vcat(data_plot,hover_lbl), layout, npoints, meant
 
