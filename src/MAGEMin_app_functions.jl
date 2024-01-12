@@ -416,7 +416,6 @@ function get_diagram_labels(    fieldname   ::String,
                                 PT_infos    ::Vector{String} )
 
     global n_lbl
-    print("Get phase diagram labels ..."); t0 = time();
 
     np          = length(data.x)
     ph          = Vector{String}(undef,np)
@@ -610,8 +609,6 @@ function get_diagram_labels(    fieldname   ::String,
                                         font        = attr( size = 10),
                                         )   
     n_lbl = n_trace
-    
-    println("\rGet phase diagram labels $(round(time()-t0, digits=3)) s"); 
 
     return traces, annotations 
 end
@@ -642,7 +639,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
         yref    = "paper",
         x       =  0.0,
         y       =  0.0,
-        sizex   =  0.002, 
+        sizex   =  1.0, 
         sizey   =  1.0,
         xanchor = "right", 
         yanchor = "bottom"
@@ -653,7 +650,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
         yref    = "paper",
         x       =  1.0,
         y       =  0.0,
-        sizex   =  0.002, 
+        sizex   =  1.0, 
         sizey   =  1.0,
         xanchor = "right", 
         yanchor = "bottom"
@@ -665,7 +662,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
         x       =  1.0,
         y       =  0.0,
         sizex   =  1.0, 
-        sizey   =  0.002,
+        sizey   =  1.0,
         xanchor = "right", 
         yanchor = "bottom"
     ),
@@ -676,7 +673,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
         x       =  1.0,
         y       =  1.0,
         sizex   =  1.0, 
-        sizey   =  0.002,
+        sizey   =  1.0,
         xanchor = "right", 
         yanchor = "bottom"
     )]
@@ -693,7 +690,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
                             x       =  0.0,
                             y       =  dy,
                             sizex   =  0.005, 
-                            sizey   =  0.002,
+                            sizey   =  0.005,
                             xanchor = "right", 
                             yanchor = "bottom"  )  
 
@@ -710,7 +707,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
                             y       =  dy*i,
 
                             sizex   =  0.005, 
-                            sizey   =  0.002,
+                            sizey   =  0.005,
                             xanchor = "right", 
                             yanchor = "bottom"  )  
         n+=1
@@ -722,7 +719,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
                             y       =  dy*i,
 
                             sizex   =  0.005, 
-                            sizey   =  0.002,
+                            sizey   =  0.005,
                             xanchor = "right", 
                             yanchor = "bottom"  )  
         n+=1
@@ -733,7 +730,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
                             # y       =  0.0,
                             y       =  -0.005,
 
-                            sizex   =  0.002, 
+                            sizex   =  0.005, 
                             sizey   =  0.005,
                             xanchor = "right", 
                             yanchor = "bottom"  )  
@@ -745,7 +742,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
                             # y       =  0.995,
                             y       =  1.0,
 
-                            sizex   =  0.002, 
+                            sizex   =  0.005, 
                             sizey   =  0.005,
                             xanchor = "right", 
                             yanchor = "bottom"  )  
@@ -849,7 +846,6 @@ function get_gridded_map(   fieldname   ::String,
                             Xrange      ::Tuple{Float64, Float64},
                             Yrange      ::Tuple{Float64, Float64} )
 
-    print("Interpolate data on grid ..."); t0 = time()
     np          = length(data.x)
     len_ox      = length(oxi)
     field       = Vector{Union{Float64,Missing}}(undef,np);
@@ -916,9 +912,7 @@ function get_gridded_map(   fieldname   ::String,
         end
 
     end
-    
-    println("\rInterpolate data on grid $(round(time()-t0, digits=3)) s"); 
-    
+
     return gridded, gridded_info, X, Y, npoints, meant
 end
 
@@ -940,7 +934,6 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
                                     Xrange      ::Tuple{Float64, Float64},
                                     Yrange      ::Tuple{Float64, Float64} )
 
-    print("Interpolate data on grid ..."); t0 = time()
     np          = length(data.x)
     len_ox      = length(oxi)
     field       = Vector{Union{Float64,Missing}}(undef,np);
@@ -995,8 +988,7 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
         jj              = Int64(round((yc[k]-Yrange[1] + Yr/2)/(Yr))) 
         gridded[ii,jj]  = field[k] 
     end
-    
-    println("\rInterpolate data on grid $(round(time()-t0, digits=3)) s"); 
+
     return gridded, X, Y, npoints, meant
 end
 

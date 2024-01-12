@@ -201,7 +201,6 @@ function Tab_PhaseDiagram_Callbacks(app)
         fieldNames                      = ["data_plot","data_reaction","data_grid","data_isopleth_out"]
         field2plot                      = zeros(Int64,4)
 
-
         field2plot[1]    = 1
         if bid == "compute-button"
             smooth                      = "best"
