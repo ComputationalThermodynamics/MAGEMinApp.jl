@@ -198,10 +198,11 @@ function Tab_PhaseDiagram_Callbacks(app)
         bid                             = pushed_button( callback_context() )                           # get the ID of the last pushed button
         colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)              # get colormap information
         bulk_L, bulk_R, oxi             = get_bulkrock_prop(bulk1, bulk2)                               # get bulk rock composition information
+        fieldNames                      = ["data_plot","data_reaction","data_grid","data_isopleth_out"]
+        field2plot                      = zeros(Int64,4)
 
-        field2plot = Vector{String}()
-        push!(field2plot,"data_plot")  
 
+        field2plot[1]    = 1
         if bid == "compute-button"
             smooth                      = "best"
       
@@ -216,6 +217,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             global fig, MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, npoints, PhasesLabels
             global addedRefinementLvl   = 0;
             global n_lbl                = 0;
+            global iso_show             = 1;
             global data_plot, data_reaction, data_grid, layout, data_isopleth, data_isopleth_out, PT_infos, infos;
 
             data_isopleth = initialize_g_isopleth(; n_iso_max = 32)
@@ -271,17 +273,18 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     test,       refType                                 )
 
         elseif bid == "show-grid"
+            
             if grid == "true"
-                push!(field2plot,"data_reaction")
+                field2plot[2] = 1
                 full_grid = "false"
             end
 
         elseif bid == "show-full-grid"
+
             if full_grid == "true"
-                push!(field2plot,"data_grid")    
+                field2plot[3] = 1
                 grid = "false"
             end
-        end
                                                         
         elseif bid == "button-add-isopleth"
 
@@ -292,7 +295,8 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     isoColorLine,           isoLabelSize,   
                                                                     minIso,     stepIso,    maxIso                      )
             data_isopleth_out = data_isopleth.isoP[data_isopleth.active]
-            push!(field2plot,"data_isopleth_out")
+            field2plot[4] = 1
+            iso_show      = 1
 
         elseif bid == "button-remove-isopleth"
 
@@ -300,7 +304,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                 if data_isopleth.n_iso > 1
                     data_isopleth, isopleths = remove_single_isopleth_phaseDiagram(isoplethsID)
                     data_isopleth_out = data_isopleth.isoP[data_isopleth.active]
-                    push!(field2plot,"data_isopleth_out")
+                    field2plot[4] = 1
                 else
                     data_isopleth, isopleths, data_plot = remove_all_isopleth_phaseDiagram()
                 end
@@ -308,7 +312,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             else
                 print("cannot remove isopleth, did you select one?")
                 data_isopleth_out = data_isopleth.isoP[data_isopleth.active]
-                push!(field2plot,"data_isopleth_out")
+                field2plot[4] = 1
             end
 
         elseif bid == "button-remove-all-isopleth"
@@ -317,12 +321,16 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         elseif bid == "button-show-all-isopleth"
 
+            iso_show          = 1
             data_isopleth_out = data_isopleth.isoP[data_isopleth.active]
-            push!(field2plot,"data_isopleth_out")
+            field2plot[4] = 1
 
         elseif bid == "button-hide-all-isopleth"
 
+            iso_show          = 0
+
         elseif bid == "show-lbl-id"
+
             if lbl == "true"
                 for i=1:n_lbl+1
                     layout[:annotations][i][:visible] = true
@@ -333,17 +341,30 @@ function Tab_PhaseDiagram_Callbacks(app)
                 end
             end
 
-        if isempty(field2plot)
+        end
+
+
+        # check state of unchanged variables ["data_plot","data_reaction","data_grid","data_isopleth_out"]
+        if grid == "true"
+            field2plot[2] = 1
+        end
+        if full_grid == "true"
+            field2plot[3] = 1
+        end
+        if data_isopleth.n_iso > 0 && iso_show == 1
+            field2plot[4] = 1
+        end
+
+        # Fetch the fields to display
+        if sum(field2plot) == 0
             fig = plot()
         else
-
-            # print("field2plot: $field2plot\n")
-    
-            data_all = eval(Symbol(field2plot[1]))
+            data_all = eval(Symbol(fieldNames[1]))
             np       = length(field2plot)
-            if np > 1
-                for i=2:np
-                    data_all = vcat( data_all, eval(Symbol(field2plot[i])) )
+
+            for i=2:np
+                if field2plot[i] == 1
+                    data_all = vcat( data_all, eval(Symbol(fieldNames[i])) )
                 end
             end
 
