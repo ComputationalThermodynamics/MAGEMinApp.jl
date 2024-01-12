@@ -180,17 +180,16 @@ function Tab_PhaseDiagram_Callbacks(app)
         prevent_initial_call = true,
 
     ) do    grid,       full_grid,  lbl,        addIso,     removeIso,  removeAllIso,   isoShow,    isoHide,    n_clicks_mesh, n_clicks_refine, 
-            colorMap,   smooth,     rangeColor,     reverse,    fieldname,
-            # npoints,    diagType,   dtb,    cpx,    limOpx,     limOpxVal,
-            diagType,   dtb,        cpx,    limOpx,     limOpxVal,
-            tmin,       tmax,       pmin,   pmax,
+            colorMap,   smooth,     rangeColor, reverse,    fieldname,
+            diagType,   dtb,        cpx,        limOpx,     limOpxVal,
+            tmin,       tmax,       pmin,       pmax,
             fixT,       fixP,
             sub,        refType,    refLvl,
             bufferType, solver,     verbose,
             bulk1,      bulk2,
             bufferN1,   bufferN2,
             test,
-            isopleths,  isoplethsID,        phase,  ss,         em,         of,  
+            isopleths,  isoplethsID,phase,      ss,         em,         of,  
             isoColorLine,           isoLabelSize,   
             minIso,     stepIso,    maxIso
 
@@ -231,7 +230,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                             smooth,     colorm,     reverseColorMap,
                                                                             test,       refType                                  )
 
-            if ~isempty(lbl) == true
+            if lbl == "true"
                 for i=1:n_lbl+1
                     layout[:annotations][i][:visible] = true
                 end
@@ -258,7 +257,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
 
 
-            if ~isempty(lbl) == true
+            if lbl == "true"
                 for i=1:n_lbl+1
                     layout[:annotations][i][:visible] = true
                 end
@@ -302,8 +301,6 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     isopleths,  phase,      ss,     em,     of,
                                                                     isoColorLine,           isoLabelSize,   
                                                                     minIso,     stepIso,    maxIso      )
-
-
 
             fig         = plot( vcat(data_plot,g_traces.isoP[g_traces.active]), layout)
             grid        = "false"; full_grid        = "false"
