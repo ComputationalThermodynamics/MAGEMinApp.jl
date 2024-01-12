@@ -108,8 +108,9 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("show-full-grid",    "value"), 
         Output("phase-diagram",     "figure"),
         Output("phase-diagram",     "config"),
-        Output("npoints-id",        "children"),
-        Output("meant-id",          "children"),
+        Output("computation-info-id",       "children"),        
+        # Output("npoints-id",        "children"),
+        # Output("meant-id",          "children"),
 
         Output("isopleth-dropdown", "options"),
         Output("smooth-colormap",   "value"),
@@ -132,7 +133,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("reverse-colormap",   "value"),
         Input("fields-dropdown",    "value"),
 
-        State("npoints-id",         "children"),           # total number of computed points
+        # State("npoints-id",         "children"),           # total number of computed points
         State("diagram-dropdown",   "value"),           # pt, px, tx
         State("database-dropdown",  "value"),           # mp, mb, ig ,igd, um, alk
         State("mb-cpx-switch",      "value"),           # false,true -> 0,1
@@ -176,12 +177,12 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("iso-step-id",        "value"),
         State("iso-max-id",         "value"),
 
-
         prevent_initial_call = true,
 
     ) do    grid,       full_grid,  lbl,        addIso,     removeIso,  removeAllIso,   isoShow,    isoHide,    n_clicks_mesh, n_clicks_refine, 
             colorMap,   smooth,     rangeColor,     reverse,    fieldname,
-            npoints,    diagType,   dtb,    cpx,    limOpx,     limOpxVal,
+            # npoints,    diagType,   dtb,    cpx,    limOpx,     limOpxVal,
+            diagType,   dtb,        cpx,    limOpx,     limOpxVal,
             tmin,       tmax,       pmin,   pmax,
             fixT,       fixP,
             sub,        refType,    refLvl,
@@ -212,10 +213,10 @@ function Tab_PhaseDiagram_Callbacks(app)
             GC.gc()         # garbage collector should be place after freeing the threads, otherwise this leads to issues
             
             # declare set of global variables needed to generate, refine and display phase diagrams
-            global fig, MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, PhasesLabels
+            global fig, MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, npoints, PhasesLabels
             global addedRefinementLvl   = 0;
             global n_lbl                = 0;
-            global data_plot, layout, g_traces, PT_infos;
+            global data_plot, layout, g_traces, PT_infos, infos;
 
             g_traces = initialize_g_isopleth(; n_iso_max = 32)
 
@@ -239,9 +240,9 @@ function Tab_PhaseDiagram_Callbacks(app)
                     layout[:annotations][i][:visible] = false
                 end
             end  
-
+            infos       = get_computation_info(npoints, meant)
             fig         = plot(data_plot,layout)
-            grid        = [""]; full_grid        = [""]
+            grid        = "false"; full_grid        = "false"
         elseif bid == "refine-pb-button"
 
             data_plot, layout, npoints, meant  =  refine_phaseDiagram(  xtitle,     ytitle,     lbl, 
@@ -265,9 +266,10 @@ function Tab_PhaseDiagram_Callbacks(app)
                 for i=1:n_lbl+1
                     layout[:annotations][i][:visible] = false
                 end
-            end                                                                       
+            end          
+            infos       = get_computation_info(npoints, meant)                                                             
             fig         = plot(data_plot,layout)
-            grid        = [""]; full_grid        = [""]
+            grid        = "false"; full_grid        = "false"
         elseif bid == "colormaps_cross" || bid == "smooth-colormap" || bid == "range-slider-color" || bid == "reverse-colormap"
 
             data_plot, layout =  update_colormap_phaseDiagram(  xtitle,     ytitle,     
@@ -277,7 +279,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                 test                                  )
 
             fig         = plot(data_plot,layout)
-            grid        = [""]; full_grid        = [""]
+            grid        = "false"; full_grid        = "false"
         elseif bid == "fields-dropdown"
 
             data_plot,layout =  update_diplayed_field_phaseDiagram( xtitle,     ytitle,     
@@ -288,7 +290,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     test,       refType                                 )
 
             fig         = plot(data_plot,layout)
-            grid        = [""]; full_grid        = [""]
+            grid        = "false"; full_grid        = "false"
         elseif bid == "button-add-isopleth"
 
             g_traces, isopleths = add_isopleth_phaseDiagram(        Xrange,     Yrange,
@@ -301,7 +303,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
 
             fig         = plot( vcat(data_plot,g_traces.isoP[g_traces.active]), layout)
-            grid        = [""]; full_grid        = [""]
+            grid        = "false"; full_grid        = "false"
         elseif bid == "button-remove-isopleth"
 
             if (isoplethsID) in g_traces.active
@@ -323,24 +325,25 @@ function Tab_PhaseDiagram_Callbacks(app)
                 fig         = plot( vcat(data_plot,g_traces.isoP[g_traces.active]), layout)
 
             end
-            grid        = [""]; full_grid        = [""]
+            grid        = "false"; full_grid        = "false"
         elseif bid == "button-remove-all-isopleth"
 
             g_traces, isopleths, data_plot = remove_all_isopleth_phaseDiagram()
             
             fig         = plot(data_plot,layout)
-            grid        = [""]; full_grid        = [""]
+            grid        = "false"; full_grid        = "false"
         elseif bid == "button-show-all-isopleth"
 
             g_traces.isoP[1] = data_plot
             fig         = plot( vcat(data_plot,g_traces.isoP[g_traces.active]), layout)
-            grid        = [""]
+            grid        = "false"
         elseif bid == "button-hide-all-isopleth"
 
             fig         = plot(data_plot,layout)
-            grid        = [""]; full_grid        = [""]
+            grid        = "false"; full_grid        = "false"
+
         elseif bid == "show-lbl-id"
-            if ~isempty(lbl) == true
+            if lbl == "true"
                 for i=1:n_lbl+1
                     layout[:annotations][i][:visible] = true
                 end
@@ -351,12 +354,12 @@ function Tab_PhaseDiagram_Callbacks(app)
             end
 
             fig         = plot(data_plot,layout)
-            grid        = [""]; full_grid        = [""]
+            grid        = "false"; full_grid        = "false"
         elseif bid == "show-grid"
 
-            if length(grid) == 2
-                grid        = ["","GRD"]; full_grid        = [""]
-                grid_plot   = show_hide_reaction_lines(  sub, 
+            if grid == "true"
+                full_grid        = "false"
+                grid_plot   = show_hide_reaction_lines(     sub, 
                                                             refLvl, 
                                                             Xrange, 
                                                             Yrange  )
@@ -364,18 +367,18 @@ function Tab_PhaseDiagram_Callbacks(app)
                 fig         = plot(vcat(data_plot,grid_plot),layout)
             else
                 fig         = plot(data_plot,layout)
-                grid        = [""]; full_grid        = [""]
+                grid        = "false"; full_grid        = "false"
             end
         elseif bid == "show-full-grid"
 
-            if length(full_grid) == 2
-                full_grid        = ["","FGRD"]; grid        = [""]
+            if full_grid == "true"
+                grid        = "false"
                 grid_plot   = show_hide_mesh_grid()
                                                             
                 fig         = plot(vcat(data_plot,grid_plot),layout)
             else
                 fig         = plot(data_plot,layout)
-                grid        = [""]; full_grid        = [""]
+                grid        = "false"; full_grid        = "false"
             end        
         else
             
@@ -390,8 +393,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     width    =  900,
                                                                     scale    =  2.0,       ).fields)
 
-
-        return grid, full_grid, fig, config, string(npoints), string(meant), isopleths, smooth
+        return grid, full_grid, fig, config, infos, isopleths, smooth
     end
 
 

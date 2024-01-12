@@ -28,6 +28,19 @@ mutable struct isopleth_data
 end
 
 
+"""
+    function to format the markdown text area to display general informations of the computation
+"""
+function get_computation_info(npoints, meant)
+
+    infos  = "|Number of computed points &nbsp;| Minimization time (ms) |\n"
+    infos *= "|--------------------------------|------------------------|\n"
+    infos *= "| "*string(npoints)*"  |  "*string(meant)*" |\n"
+
+    return infos
+end
+
+
 function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
 
     PD_infos  = Vector{String}(undef,2)
@@ -56,7 +69,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     db_in     = retrieve_solution_phase_information(dtb)
 
 
-    PD_infos[1]  = "Phase Diagram computed using MAGEMin v1.4.0 <br>"
+    PD_infos[1]  = "Phase Diagram computed using MAGEMin v"*Out_XY[1].MAGEMin_ver*"<br>"
     PD_infos[1] *= "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾<br>"
     PD_infos[1] *= "Number of points <br>"
     PD_infos[1] *= "Date & time <br>"
