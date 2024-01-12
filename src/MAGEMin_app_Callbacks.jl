@@ -55,7 +55,7 @@ function MAGEMin_app_Callbacks(app)
     ) do n_clicks
         # PlotlyKaleido.start()
 
-        # PlotlyKaleido.savefig(PlotlyJS.plot(data_plot,layout), "plot1.png")
+        # PlotlyKaleido.savefig(plot_diagram(data_plot,layout), "plot1.png")
         # PlotlyKaleido.kill_kaleido()
         # save("test.png", fig)
         # savefig(    fig, 

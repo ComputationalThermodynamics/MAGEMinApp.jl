@@ -241,7 +241,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                 end
             end  
             infos       = get_computation_info(npoints, meant)
-            fig         = plot(data_plot,layout)
+            fig         = plot_diagram(data_plot,layout)
             grid        = "false"; full_grid        = "false"
         elseif bid == "refine-pb-button"
 
@@ -267,8 +267,11 @@ function Tab_PhaseDiagram_Callbacks(app)
                     layout[:annotations][i][:visible] = false
                 end
             end          
-            infos       = get_computation_info(npoints, meant)                                                             
-            fig         = plot(data_plot,layout)
+            infos       = get_computation_info(npoints, meant)          
+                                                   
+            fig         = plot_diagram(data_plot,layout)
+                                                  
+            
             grid        = "false"; full_grid        = "false"
         elseif bid == "colormaps_cross" || bid == "smooth-colormap" || bid == "range-slider-color" || bid == "reverse-colormap"
 
@@ -278,7 +281,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                 smooth,     colorm,     reverseColorMap,
                                                                 test                                  )
 
-            fig         = plot(data_plot,layout)
+            fig         = plot_diagram(data_plot,layout)
             grid        = "false"; full_grid        = "false"
         elseif bid == "fields-dropdown"
 
@@ -289,7 +292,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     smooth,     colorm,     reverseColorMap,
                                                                     test,       refType                                 )
 
-            fig         = plot(data_plot,layout)
+            fig         = plot_diagram(data_plot,layout)
             grid        = "false"; full_grid        = "false"
         elseif bid == "button-add-isopleth"
 
@@ -316,7 +319,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                 else
                     g_traces, isopleths, data_plot = remove_all_isopleth_phaseDiagram()
 
-                    fig         = plot(data_plot,layout)
+                    fig         = plot_diagram(data_plot,layout)
                 end
 
             else
@@ -330,7 +333,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             g_traces, isopleths, data_plot = remove_all_isopleth_phaseDiagram()
             
-            fig         = plot(data_plot,layout)
+            fig         = plot_diagram(data_plot,layout)
             grid        = "false"; full_grid        = "false"
         elseif bid == "button-show-all-isopleth"
 
@@ -339,7 +342,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             grid        = "false"
         elseif bid == "button-hide-all-isopleth"
 
-            fig         = plot(data_plot,layout)
+            fig         = plot_diagram(data_plot,layout)
             grid        = "false"; full_grid        = "false"
 
         elseif bid == "show-lbl-id"
@@ -353,7 +356,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                 end
             end
 
-            fig         = plot(data_plot,layout)
+            fig         = plot_diagram(data_plot,layout)
             grid        = "false"; full_grid        = "false"
         elseif bid == "show-grid"
 
@@ -366,7 +369,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                             
                 fig         = plot(vcat(data_plot,grid_plot),layout)
             else
-                fig         = plot(data_plot,layout)
+                fig         = plot_diagram(data_plot,layout)
                 grid        = "false"; full_grid        = "false"
             end
         elseif bid == "show-full-grid"
@@ -377,7 +380,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                             
                 fig         = plot(vcat(data_plot,grid_plot),layout)
             else
-                fig         = plot(data_plot,layout)
+                fig         = plot_diagram(data_plot,layout)
                 grid        = "false"; full_grid        = "false"
             end        
         else

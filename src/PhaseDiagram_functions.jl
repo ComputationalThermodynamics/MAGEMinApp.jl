@@ -539,7 +539,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                                                 Out_XY_old      = Out_XY,
                                                                 n_phase_XY_old  = n_phase_XY) # recompute points that have not been computed before
 
-    println("Computed $(length(ind_map.<0)) new points in $t seconds")
+    println("Computed $(length(ind_map.<0)) new points in $(round(t, digits=3)) seconds")
     data                = data_new
     forest              = forest_new
     addedRefinementLvl += 1;
@@ -549,7 +549,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
 
     #________________________________________________________________________________________#                   
     # Scatter plotly of the grid
-
+    print("Interpolate data on grid ..."); t0 = time()
     gridded, gridded_info, X, Y, npoints, meant = get_gridded_map(  fieldname,
                                                                     oxi,
                                                                     Out_XY,
@@ -563,7 +563,9 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                                                     data.y,
                                                                     Xrange,
                                                                     Yrange )
-
+    println("\rInterpolate data on grid $(round(time()-t0, digits=3)) s"); 
+    
+    print("Get phase diagram info ..."); t0 = time()
     PT_infos                           = get_phase_diagram_information(npoints,dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
                                                               
     data_plot, annotations = get_diagram_labels(    fieldname,
@@ -577,7 +579,9 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                                     data.yc,
                                                     PT_infos )
     layout[:annotations] = annotations                                                                                   
+    println("\rGet phase diagram info $(round(time()-t0, digits=3)) s"); 
 
+    print("Prepare plot & labels ..."); t0 = time()
     data_plot[1] = heatmap( x               = X,
                             y               = Y,
                             z               = gridded,
@@ -604,6 +608,8 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                             hoverinfo       = "text",
                             showlegend      = false,
                             text            = gridded_info )
+
+    println("\rPrepare plot & labels $(round(time()-t0, digits=3)) s"); 
 
     return vcat(data_plot,hover_lbl), layout, npoints, meant
 

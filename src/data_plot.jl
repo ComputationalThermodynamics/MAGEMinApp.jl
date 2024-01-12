@@ -29,3 +29,17 @@ function path_plot()
                 figure      = fig,
             )
 end
+
+"""
+    plot_diagram(data_plot,layout)
+
+Plots the phase diagram along with info in the REPL
+"""
+function plot_diagram(data_plot,layout)
+
+    print("Updating plot ..."); t0 = time()     
+    fig = plot(data_plot,layout)
+    print("\rUpdated plots in $(round(time()-t0,digits=2)) seconds \n\n")           
+
+    return fig
+end
