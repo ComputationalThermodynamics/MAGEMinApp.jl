@@ -764,6 +764,7 @@ function  show_hide_mesh_grid()
                                     # line_color  = "#FFFFFF",
                                     line_color  = "#333333",
                                     line_width  = 0.2,
+                                    hoverinfo   = "skip",
                                     showlegend  = false     )
     end
 
@@ -833,7 +834,7 @@ end
     Initiatize global variable storing isopleths information
 """
 function initialize_g_isopleth(; n_iso_max = 32)
-    global g_traces
+    global data_isopleth
 
     status    = zeros(Int64,n_iso_max)
     active    = []
@@ -846,12 +847,12 @@ function initialize_g_isopleth(; n_iso_max = 32)
     label     = Vector{String}(undef,n_iso_max)
     value     = Vector{Int64}(undef,n_iso_max)
 
-    g_traces = isopleth_data(0, n_iso_max,
+    data_isopleth = isopleth_data(0, n_iso_max,
                                 status, active, isoP,
                                 label, value)
 
-
-    return g_traces
+    
+    return data_isopleth
 end
 
 
@@ -882,7 +883,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
         name    = of
     end
 
-    global g_traces, nIsopleths, data, Out_XY, data_plot, X, Y, addedRefinementLvl
+    global data_isopleth, nIsopleths, data, Out_XY, data_plot, X, Y, addedRefinementLvl
 
     gridded, X, Y = get_isopleth_map(   mod, ss, em, of,
                                         oxi,
@@ -896,9 +897,9 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                         Xrange,
                                         Yrange )
 
-    g_traces.n_iso += 1
+    data_isopleth.n_iso += 1
 
-    g_traces.isoP[g_traces.n_iso]= contour(     x                   = X,
+    data_isopleth.isoP[data_isopleth.n_iso]= contour(     x                   = X,
                                                 y                   = Y,
                                                 z                   = gridded,
                                                 contours_coloring   = "lines",
@@ -916,50 +917,50 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                                                                                     color   = isoColorLine,  )
                                                 )
                                             )
-    g_traces.status[g_traces.n_iso]   = 1
-    g_traces.label[g_traces.n_iso]    = name
-    g_traces.value[g_traces.n_iso]    = g_traces.n_iso
-    g_traces.active                   = findall(g_traces.status .== 1)
-    n_act                             = length(g_traces.active)
+    data_isopleth.status[data_isopleth.n_iso]   = 1
+    data_isopleth.label[data_isopleth.n_iso]    = name
+    data_isopleth.value[data_isopleth.n_iso]    = data_isopleth.n_iso
+    data_isopleth.active                   = findall(data_isopleth.status .== 1)
+    n_act                             = length(data_isopleth.active)
 
-    isopleths = [Dict("label" => g_traces.label[g_traces.active[i]], "value" => g_traces.value[g_traces.active[i]])
+    isopleths = [Dict("label" => data_isopleth.label[data_isopleth.active[i]], "value" => data_isopleth.value[data_isopleth.active[i]])
                         for i=1:n_act]
 
-    return g_traces, isopleths
+    return data_isopleth, isopleths
 
 end
 
 function remove_single_isopleth_phaseDiagram(isoplethsID)
-    global g_traces
+    global data_isopleth
 
-    g_traces.n_iso                -= 1      
-    g_traces.status[isoplethsID]   = 0;
-    g_traces.isoP[isoplethsID]     = contour()
-    g_traces.label[isoplethsID]    = ""
-    g_traces.value[isoplethsID]    = 0
-    g_traces.active                = findall(g_traces.status .== 1)
-    n_act                          = length(g_traces.active)
-    isopleths = [Dict("label" => g_traces.label[g_traces.active[i]], "value" => g_traces.value[g_traces.active[i]])
+    data_isopleth.n_iso                -= 1      
+    data_isopleth.status[isoplethsID]   = 0;
+    data_isopleth.isoP[isoplethsID]     = contour()
+    data_isopleth.label[isoplethsID]    = ""
+    data_isopleth.value[isoplethsID]    = 0
+    data_isopleth.active                = findall(data_isopleth.status .== 1)
+    n_act                          = length(data_isopleth.active)
+    isopleths = [Dict("label" => data_isopleth.label[data_isopleth.active[i]], "value" => data_isopleth.value[data_isopleth.active[i]])
                     for i=1:n_act]
 
-    return g_traces, isopleths
+    return data_isopleth, isopleths
 end
 
 
 function remove_all_isopleth_phaseDiagram()
-    global g_traces, data_plot
+    global data_isopleth, data_plot
 
-    g_traces.label    .= ""
-    g_traces.value    .= 0
-    g_traces.n_iso     = 0
-    for i=1:g_traces.n_iso_max
-        g_traces.isoP[i] = contour()
+    data_isopleth.label    .= ""
+    data_isopleth.value    .= 0
+    data_isopleth.n_iso     = 0
+    for i=1:data_isopleth.n_iso_max
+        data_isopleth.isoP[i] = contour()
     end
-    g_traces.status   .= 0
-    g_traces.active   .= 0
+    data_isopleth.status   .= 0
+    data_isopleth.active   .= 0
 
     # clear isopleth dropdown menu
     isopleths = []              
 
-    return g_traces, isopleths, data_plot
+    return data_isopleth, isopleths, data_plot
 end
