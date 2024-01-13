@@ -112,8 +112,8 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         Output("isopleth-dropdown", "options"),
         Output("smooth-colormap",   "value"),
-        Output("tabs",    "active_tab"),                 # currently active tab
-        
+        Output("tabs",              "active_tab"),                 # currently active tab
+
         Input("show-grid",                  "value"), 
         Input("show-full-grid",             "value"), 
         Input("show-lbl-id",                "value"),
@@ -131,8 +131,9 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("range-slider-color", "value"),
         Input("reverse-colormap",   "value"),
         Input("fields-dropdown",    "value"),
-        Input("title-id",           "value"),
-        
+        Input("update-title-button","n_clicks"),
+        State("title-id",           "value"),
+
         State("diagram-dropdown",   "value"),           # pt, px, tx
         State("database-dropdown",  "value"),           # mp, mb, ig ,igd, um, alk
         State("mb-cpx-switch",      "value"),           # false,true -> 0,1
@@ -180,7 +181,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         prevent_initial_call = true,
 
     ) do    grid,       full_grid,  lbl,        addIso,     removeIso,  removeAllIso,   isoShow,    isoHide,    n_clicks_mesh, n_clicks_refine, 
-            colorMap,   smooth,     rangeColor, reverse,    fieldname,  customTitle,
+            colorMap,   smooth,     rangeColor, reverse,    fieldname,  updateTitle, customTitle,
             diagType,   dtb,        cpx,        limOpx,     limOpxVal,
             tmin,       tmax,       pmin,       pmax,
             fixT,       fixP,
@@ -276,14 +277,12 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             if grid == "true"
                 field2plot[2] = 1
-                # full_grid = "false"
             end
 
         elseif bid == "show-full-grid"
 
             if full_grid == "true"
                 field2plot[3] = 1
-                # grid = "false"
             end
                                                         
         elseif bid == "button-add-isopleth"
@@ -340,16 +339,17 @@ function Tab_PhaseDiagram_Callbacks(app)
                     layout[:annotations][i][:visible] = false
                 end
             end
-
-        elseif bid == "title-id"
-
-            layout[:title] = attr(
-                text    = customTitle,
-                x       = 0.4,
-                xanchor = "center",
-                yanchor = "top"
-            )
-
+        elseif bid == "update-title-button"
+            if @isdefined(MAGEMin_data)
+                layout[:title] = attr(
+                    text    = customTitle,
+                    x       = 0.4,
+                    xanchor = "center",
+                    yanchor = "top"
+                )
+            end
+        else
+            fig = plot()
         end
 
 
@@ -389,7 +389,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
 
 
-        return grid, full_grid, fig, config, infos, isopleths, smooth, active_tab 
+        return grid, full_grid, fig, config, infos, isopleths, smooth, active_tab
     end
 
 

@@ -114,11 +114,19 @@ function refine_MAGEMin(data,
     Hash_XY     = Vector{UInt64}(undef,length(data.x))
     n_phase_XY  = Vector{UInt64}(undef,length(data.x))
 
+    miny        = minimum(data.yc)
+    maxx        = maximum(data.xc)
+
     if refType == "ph"
 
         for i=1:length(data.x)
             Hash_XY[i]      = hash(sort(Out_XY[i].ph))
             n_phase_XY[i]   = length(Out_XY[i].ph)
+
+            if data.xc[i] == maxx && data.yc[i] == miny
+                Hash_XY[i]      = hash("pouet")
+            end
+
         end
 
     elseif refType == "em"
@@ -131,6 +139,10 @@ function refine_MAGEMin(data,
 
             Hash_XY[i]      = hash(sort(ph_em))
             n_phase_XY[i]   = length(ph_em)
+
+            if data.xc[i] == maxx && data.yc[i] == miny
+                Hash_XY[i]      = hash("pouet")
+            end
         end
 
     end

@@ -167,12 +167,12 @@ function Tab_Simulation_Callbacks(app)
     callback!(
         app,
         Output("title-id", "value"),
+        Input("reset-title-button", "n_clicks"),
         Input("test-dropdown", "value"),
         Input("database-dropdown","value"),
-    ) do test, dtb
-        # global db
-
-        title = db[(db.db .== dtb), :].title[test+1]
+    ) do reset, test, dtb
+    
+            title = db[(db.db .== dtb), :].title[test+1]
         return title
     end
 
