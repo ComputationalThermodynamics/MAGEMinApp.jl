@@ -108,11 +108,9 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         end        
         PD_infos[1] *= "Fixed Pres <br>"
     end
-    
-    PD_infos[1] *= "_____________________________________________________________________________________________________"
-    #=
-    =#
+    oxi_string = replace.(oxi,"2"=>"₂", "3"=>"₃");
 
+    PD_infos[1] *= "_____________________________________________________________________________________________________"
     PD_infos[2] = "<br>"
     PD_infos[2] *= "<br>"
     PD_infos[2] *= string(npoints) * "<br>"
@@ -122,7 +120,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     
     PD_infos[2] *= dgtype *"<br>"
     PD_infos[2] *= solv *"<br>"
-    PD_infos[2] *= join(oxi, " ") *"<br>"
+    PD_infos[2] *= join(oxi_string, " ") *"<br>"
     if bufferType != "none"
         PD_infos[2] *= bufferType *"<br>"
     end            
