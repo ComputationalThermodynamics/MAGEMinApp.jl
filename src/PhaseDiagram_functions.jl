@@ -72,6 +72,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     PD_infos[1]  = "Phase Diagram computed using MAGEMin v"*Out_XY[1].MAGEMin_ver*"<br>"
     PD_infos[1] *= "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾<br>"
     PD_infos[1] *= "Number of points <br>"
+    
     PD_infos[1] *= "Date & time <br>"
     PD_infos[1] *= "Database <br>"
     PD_infos[1] *= "Diagram type <br>"
@@ -80,6 +81,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     if bufferType != "none"
         PD_infos[1] *= "Buffer <br>"
     end            
+    
     if diagType == "pt"
         PD_infos[1] *= "X comp [mol] <br>"
         if bufferType != "none"
@@ -106,14 +108,18 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         end        
         PD_infos[1] *= "Fixed Pres <br>"
     end
-    PD_infos[1] *= "_____________________________________________________________________________________________________<br>"
     
+    PD_infos[1] *= "_____________________________________________________________________________________________________"
+    #=
+    =#
 
     PD_infos[2] = "<br>"
     PD_infos[2] *= "<br>"
     PD_infos[2] *= string(npoints) * "<br>"
+    
     PD_infos[2] *= datetoday * ", " * rightnow * "<br>"
     PD_infos[2] *= db_in.db_info * "<br>"
+    
     PD_infos[2] *= dgtype *"<br>"
     PD_infos[2] *= solv *"<br>"
     PD_infos[2] *= join(oxi, " ") *"<br>"
@@ -146,7 +152,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         end        
         PD_infos[2] *= join(fixP, " ") *"<br>"
     end
-    PD_infos[2] *= " <br>"
+    PD_infos[2] *= "_"
 
     return PD_infos
 end
