@@ -293,7 +293,7 @@ end
     Compute a new phase diagram from scratch
 """
 function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
-                                    Xrange,     Yrange,     fieldname,
+                                    Xrange,     Yrange,     fieldname,  customTitle,
                                     dtb,        diagType,   verbose,    solver,
                                     fixT,       fixP,
                                     sub,        refLvl,
@@ -426,7 +426,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
         layout  = Layout(
                     images=frame,
                     title= attr(
-                        text    = db[(db.db .== dtb), :].title[test+1],
+                        text    = customTitle,
                         x       = 0.4,
                         xanchor = "center",
                         yanchor = "top"
@@ -507,7 +507,7 @@ end
     Refine existing phase diagram
 """
 function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
-                                Xrange,     Yrange,     fieldname,
+                                Xrange,     Yrange,     fieldname,  customTitle,
                                 dtb,        diagType,   verbose,    solver,
                                 fixT,       fixP,
                                 sub,        refLvl,
@@ -573,8 +573,14 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                                     data.xc,
                                                     data.yc,
                                                     PT_infos )
-    layout[:annotations] = annotations                                                                                   
-
+    layout[:annotations] = annotations 
+    layout[:title] = attr(
+        text    = customTitle,
+        x       = 0.4,
+        xanchor = "center",
+        yanchor = "top"
+    )
+    
     data_plot[1] = heatmap( x               = X,
                             y               = Y,
                             z               = gridded,

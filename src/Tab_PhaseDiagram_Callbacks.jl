@@ -131,7 +131,8 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("range-slider-color", "value"),
         Input("reverse-colormap",   "value"),
         Input("fields-dropdown",    "value"),
-
+        Input("title-id",           "value"),
+        
         State("diagram-dropdown",   "value"),           # pt, px, tx
         State("database-dropdown",  "value"),           # mp, mb, ig ,igd, um, alk
         State("mb-cpx-switch",      "value"),           # false,true -> 0,1
@@ -179,7 +180,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         prevent_initial_call = true,
 
     ) do    grid,       full_grid,  lbl,        addIso,     removeIso,  removeAllIso,   isoShow,    isoHide,    n_clicks_mesh, n_clicks_refine, 
-            colorMap,   smooth,     rangeColor, reverse,    fieldname,
+            colorMap,   smooth,     rangeColor, reverse,    fieldname,  customTitle,
             diagType,   dtb,        cpx,        limOpx,     limOpxVal,
             tmin,       tmax,       pmin,       pmax,
             fixT,       fixP,
@@ -222,7 +223,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             data_isopleth = initialize_g_isopleth(; n_iso_max = 32)
 
             data_plot, layout, npoints, meant  =  compute_new_phaseDiagram( xtitle,     ytitle,     lbl,
-                                                                            Xrange,     Yrange,     fieldname,
+                                                                            Xrange,     Yrange,     fieldname,  customTitle,
                                                                             dtb,        diagType,   verbose,    solver,
                                                                             fixT,       fixP,
                                                                             sub,        refLvl,
@@ -240,7 +241,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         elseif bid == "refine-pb-button"
 
             data_plot, layout, npoints, meant  =  refine_phaseDiagram(  xtitle,     ytitle,     lbl, 
-                                                                        Xrange,     Yrange,     fieldname,
+                                                                        Xrange,     Yrange,     fieldname,  customTitle,
                                                                         dtb,        diagType,   verbose,    solver,
                                                                         fixT,       fixP,
                                                                         sub,        refLvl,
@@ -340,6 +341,15 @@ function Tab_PhaseDiagram_Callbacks(app)
                 end
             end
 
+        elseif bid == "title-id"
+
+            layout[:title] = attr(
+                text    = customTitle,
+                x       = 0.4,
+                xanchor = "center",
+                yanchor = "top"
+            )
+
         end
 
 
@@ -372,7 +382,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         config   = PlotConfig(    toImageButtonOptions  = attr(     name     = "Download as svg",
                                                                     format   = "svg", # one of png, svg, jpeg, webp
-                                                                    filename =  replace(db[(db.db .== dtb), :].title[test+1], " " => "_"),
+                                                                    filename =  replace(customTitle, " " => "_"),
                                                                     height   =  900,
                                                                     width    =  900,
                                                                     scale    =  2.0,       ).fields)
