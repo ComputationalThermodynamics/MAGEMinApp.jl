@@ -34,7 +34,6 @@ Hash_XY     = Vector{UInt64}(undef,n*n)
 Pres        = Vector{Float64}(undef,n*n)
 Temp        = Vector{Float64}(undef,n*n)
 ph          = Vector{String}(undef,n*n)
-fac         = (maximum(T)-minimum(T))*(maximum(P)-minimum(P))
 
 for i = 1:n*n 
     Hash_XY[i]  = hash(sort(Out_XY[i].ph))
@@ -65,35 +64,238 @@ t           = zeros(n-1)
 p          .= P[1:end-1] .+(P[2]-P[1])/2.0
 t          .= T[1:end-1] .+(T[2]-T[1])/2.0
 
+
+# p_rec           = zeros(n-1,n-1)
+# t_rec           = zeros(n-1,n-1)
+
+# for i=1:n-1
+#     for j=1:n-1
+#         p_rec[i,j] = p_rec
+#     end
+# end
+
+
 all_fields  = unique(Hash_XY)
 n_fields    = length(all_fields)
 
 
-tup = ()
+hash_tmp = zeros(UInt64,4)
+
+"""
+    The following part creates a tupple of cell coordinates for all fields
+        tup -> saves the coordinates of the cell of the reactions lines
+        tup_hash -> saves the surrounding fields hash
+"""
+tup         = ()
+tup_hash    = ()
+tup_neigh   = ()
+tup_reac    = ()
 for k = 1:n_fields 
 
-    coords = []
+    coords      = []
+    reactions   = []
+    tup_r       = ()
 
     for i=1:n-1
         for j=1:n-1
 
-            for M = i:i+1
-                for N = j:j+1
+            hash_tmp[1] = hash_field[i,j]
+            hash_tmp[2] = hash_field[i+1,j]
+            hash_tmp[3] = hash_field[i+1,j+1]
+            hash_tmp[4] = hash_field[i,j+1]
 
-                    if hash_field[M,N] == all_fields[k]
-                        if ~([i,j] in coords)
-                            push!(coords,[i,j])
-                        end
+            if all_fields[k] in hash_tmp
+
+                ofields = findall(hash_tmp .!= all_fields[k])  
+                if ~isempty(ofields)
+                    push!(reactions,unique(hash_tmp[ofields]))
+                    if ~([i,j] in coords)
+                        push!(coords,[i,j])
                     end
-
                 end
+
             end
 
         end
     end
 
-    tup = (tup...,coords)
+    tup         = (tup...,coords)
+    tup_hash    = (tup_hash...,reactions)
+    tup_neigh   = (tup_neigh..., unique(collect(Iterators.flatten(tup_hash[k]))))
+    for l = 1:length(tup_neigh[k])
+        tup_r = (tup_r...,findall(tup_neigh[k][l] in tup_hash[k][j] for j=1:length(tup[k])))
+    end
+    tup_reac    = (tup_reac...,tup_r)
 end
+
+np          = length(tup_reac[1])
+data        = Vector{GenericTrace{Dict{Symbol, Any}}}(undef,np);
+for n=1:np
+    coor = tup[1][tup_reac[1][n]]
+
+    tmp = mapreduce(permutedims, vcat,coor)
+
+    t2 = t[tmp[:,1]]
+    p2 = p[tmp[:,2]]
+
+
+    data[n] = scatter(; x          = t2,
+                        y           = p2,
+                        mode        = "lines",
+                        line_width  = 1.5,
+                        # line_color  = "#000000",
+                        showlegend  = false     )
+end
+layout = Layout(
+                    height      = 768, 
+                    width       = 1024, 
+                    showlegend  = false,
+                    # annotations = annotations,
+                )
+
+    
+plot( data, layout)
+
+
+    
+
+
+
+
+# for k = 1:n_fields 
+
+#     for l = 1:length(tup_neigh[k])
+#         reac = findall(tup_neigh[k][l] in tup_hash[k][j] for j=1:length(tup[k]))
+#         print(reac,"\n")
+#     end
+#     print("\n")
+# end
+
+
+# for i=1:length(tup_neigh[1])
+#    findall[tup_neigh[1][i] in ]
+# end
+
+
+
+# for i=1:length(tup_hash[1])
+#     print(" $(tup_hash[1][i]) \n")
+# end
+
+
+n_hull      = n_fields
+hull_list   = Vector{Any}(undef,n_hull)
+
+n_act_reacLines = 0
+for k=1:n_fields
+
+    tmp = mapreduce(permutedims, vcat, tup[k])
+
+    t2 = t[tmp[:,1]]
+    p2 = p[tmp[:,2]]
+
+    np = length(t2)
+    if np > 2
+        n_act_reacLines             += 1
+        points          =  [[ t2[i]+rand()/100, p2[i]+rand()/1000] for i=1:np]
+        hull_list[n_act_reacLines]   = concave_hull(points,2)
+    end
+end
+
+
+n_act_reacLines = 2
+data        = Vector{GenericTrace{Dict{Symbol, Any}}}(undef,n_act_reacLines);
+data_p        = Vector{GenericTrace{Dict{Symbol, Any}}}(undef,n_act_reacLines);
+data_m        = Vector{GenericTrace{Dict{Symbol, Any}}}(undef,n_act_reacLines);
+
+
+color = ["red","blue"]
+for i=1:n_act_reacLines
+    
+    tmp     = mapreduce(permutedims,vcat,hull_list[i].vertices)
+    tmp     = vcat(tmp,tmp[1,:]')
+
+    data[i] = scatter(; x           = tmp[:,1],
+                        y           = tmp[:,2],
+                        # fill        = "toself",
+                        # fillcolor   = "#ceefff",
+
+                        mode        = "lines",
+                        # line_color  = "#FFFFFF",
+                        # line_color  = "#333333",
+                        line_width  = 0.5,
+                        showlegend  = false     )
+
+
+    data_p[i] = scatter(; x           = tmp[:,1],
+                        y           = tmp[:,2],
+                        # fill        = "toself",
+                        # fillcolor   = "#ceefff",
+
+                        mode        = "markers",
+                        # line_color  = "#FFFFFF",
+                        # color       = "#333333",
+                        marker      = attr(color = "#333333", size = 4),
+                        hoverinfo   = "skip",
+                        showlegend  = false     );
+
+
+
+    tmp = mapreduce(permutedims, vcat, tup[i])
+
+    if i%2 == 1
+        color = "red"
+        size = 6
+    else
+        color = "blue"
+        size = 4
+    end
+
+    t2 = t[tmp[:,1]]
+    p2 = p[tmp[:,2]]
+    data_m[i] = scatter(; x           = t2,
+                        y           = p2,
+                        # fill        = "toself",
+                        # fillcolor   = "#ceefff",
+
+                        mode        = "markers",
+                        # line_color  = "#FFFFFF",
+                        # color       = "#333333",
+                        marker      = attr(color = color, size = size),
+                        hoverinfo   = "skip",
+                        showlegend  = false     );
+end
+
+
+
+layout = Layout(
+                    height      = 768, 
+                    width       = 1024, 
+                    showlegend  = false,
+                    # annotations = annotations,
+                )
+
+
+plot( vcat(data,data_p,data_m), layout)
+
+
+
+
+
+
+
+tmp1     = mapreduce(permutedims,vcat,tup[1])
+tmp2     = mapreduce(permutedims,vcat,tup[2])
+
+
+
+
+
+all(tmp1 .== [1,5], dims=2)
+
+
+
+
 
 
 
