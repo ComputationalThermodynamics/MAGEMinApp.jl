@@ -99,10 +99,7 @@ for k = 1:n_fields
     for i=1:n-1
         for j=1:n-1
 
-            hash_tmp[1] = hash_field[i,j]
-            hash_tmp[2] = hash_field[i+1,j]
-            hash_tmp[3] = hash_field[i+1,j+1]
-            hash_tmp[4] = hash_field[i,j+1]
+            hash_tmp[1:4] = [hash_field[i,j], hash_field[i+1,j], hash_field[i+1,j+1], hash_field[i,j+1]]
 
             if all_fields[k] in hash_tmp
 
@@ -187,7 +184,7 @@ n_hull      = n_fields
 hull_list   = Vector{Any}(undef,n_hull)
 
 n_act_reacLines = 0
-for k=1:n_fields
+for k=1
 
     tmp = mapreduce(permutedims, vcat, tup[k])
 
@@ -198,12 +195,13 @@ for k=1:n_fields
     if np > 2
         n_act_reacLines             += 1
         points          =  [[ t2[i]+rand()/100, p2[i]+rand()/1000] for i=1:np]
-        hull_list[n_act_reacLines]   = concave_hull(points,2)
+        hull_list[n_act_reacLines]   = concave_hull(points,1)
     end
 end
 
 
-n_act_reacLines = 2
+
+n_act_reacLines = 1
 data        = Vector{GenericTrace{Dict{Symbol, Any}}}(undef,n_act_reacLines);
 data_p        = Vector{GenericTrace{Dict{Symbol, Any}}}(undef,n_act_reacLines);
 data_m        = Vector{GenericTrace{Dict{Symbol, Any}}}(undef,n_act_reacLines);
