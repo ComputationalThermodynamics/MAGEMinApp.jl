@@ -625,7 +625,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
     # frame   = Array{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}, 1}(undef, 1+4+1)
 
     outline = [ attr(
-        source  = "assets/static/images/MAGEMin.jpg",
+        source  = joinpath(pkg_dir,"assets/static/images/MAGEMin.jpg"),
         xref    = "paper",
         yref    = "paper",
         x       =  0.05,
@@ -636,7 +636,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
         yanchor = "bottom"
     ),
     attr(
-        source  = "assets/static/images/img_v.png",
+        source  = joinpath(pkg_dir,"assets/static/images/img_v.png"),
         xref    = "paper",
         yref    = "paper",
         x       =  0.0,
@@ -647,7 +647,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
         yanchor = "bottom"
     ),
     attr(
-        source  = "assets/static/images/img_v.png",
+        source  = joinpath(pkg_dir,"assets/static/images/img_v.png"),
         xref    = "paper",
         yref    = "paper",
         x       =  1.0,
@@ -658,7 +658,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
         yanchor = "bottom"
     ),
     attr(
-        source  = "assets/static/images/img_h.png",
+        source  = joinpath(pkg_dir,"assets/static/images/img_h.png"),
         xref    = "paper",
         yref    = "paper",
         x       =  1.0,
@@ -669,7 +669,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
         yanchor = "bottom"
     ),
     attr(
-        source  = "assets/static/images/img_h.png",
+        source  = joinpath(pkg_dir,"assets/static/images/img_h.png"),
         xref    = "paper",
         yref    = "paper",
         x       =  1.0,
@@ -686,7 +686,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
     dy = 1.0/(ticks+1)
 
 
-    frame[6] = attr(    source  = "assets/static/images/img_h_tick.png",
+    frame[6] = attr(    source  = joinpath(pkg_dir,"assets/static/images/img_h_tick.png"),
                             xref    = "paper",
                             yref    = "paper",
                             x       =  0.0,
@@ -701,7 +701,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
     n = 6
     for i=0:(ticks+1)
 
-        frame[n] = attr(    source  = "assets/static/images/img_h_tick.png",
+        frame[n] = attr(    source  = joinpath(pkg_dir,"assets/static/images/img_h_tick.png"),
                             xref    = "paper",
                             yref    = "paper",
                             # x       =  0.005,
@@ -713,7 +713,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
                             xanchor = "right", 
                             yanchor = "bottom"  )  
         n+=1
-        frame[n] = attr(    source  = "assets/static/images/img_h_tick.png",
+        frame[n] = attr(    source  = joinpath(pkg_dir,"assets/static/images/img_h_tick.png"),
                             xref    = "paper",
                             yref    = "paper",
                             # x       =  1.0,
@@ -725,7 +725,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
                             xanchor = "right", 
                             yanchor = "bottom"  )  
         n+=1
-        frame[n] = attr(    source  = "assets/static/images/img_v_tick.png",
+        frame[n] = attr(    source  = joinpath(pkg_dir,"assets/static/images/img_v_tick.png"),
                             xref    = "paper",
                             yref    = "paper",
                             x       =  dx*i,
@@ -737,7 +737,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
                             xanchor = "right", 
                             yanchor = "bottom"  )  
         n+=1
-        frame[n] = attr(    source  = "assets/static/images/img_v_tick.png",
+        frame[n] = attr(    source  = joinpath(pkg_dir,"assets/static/images/img_v_tick.png"),
                             xref    = "paper",
                             yref    = "paper",
                             x       =  dx*i,
