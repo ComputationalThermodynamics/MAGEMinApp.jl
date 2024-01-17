@@ -686,7 +686,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
     dy = 1.0/(ticks+1)
 
 
-    frame[6] = attr(    source  = "assets/static/images/img_h_tick.png",
+    frame[6] = attr(        source  = "assets/static/images/img_h_tick.png",
                             xref    = "paper",
                             yref    = "paper",
                             x       =  0.0,
@@ -701,7 +701,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
     n = 6
     for i=0:(ticks+1)
 
-        frame[n] = attr(    "assets/static/images/img_h_tick.png",
+        frame[n] = attr(    source  = "assets/static/images/img_h_tick.png",
                             xref    = "paper",
                             yref    = "paper",
                             # x       =  0.005,
@@ -713,7 +713,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
                             xanchor = "right", 
                             yanchor = "bottom"  )  
         n+=1
-        frame[n] = attr(    "assets/static/images/img_h_tick.png",
+        frame[n] = attr(    source  = "assets/static/images/img_h_tick.png",
                             xref    = "paper",
                             yref    = "paper",
                             # x       =  1.0,
@@ -725,7 +725,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
                             xanchor = "right", 
                             yanchor = "bottom"  )  
         n+=1
-        frame[n] = attr(    "assets/static/images/img_v_tick.png",
+        frame[n] = attr(    source  = "assets/static/images/img_v_tick.png",
                             xref    = "paper",
                             yref    = "paper",
                             x       =  dx*i,
@@ -737,7 +737,7 @@ function get_plot_frame(Xrange, Yrange, ticks)
                             xanchor = "right", 
                             yanchor = "bottom"  )  
         n+=1
-        frame[n] = attr(    "assets/static/images/img_v_tick.png",
+        frame[n] = attr(    source  = "assets/static/images/img_v_tick.png",
                             xref    = "paper",
                             yref    = "paper",
                             x       =  dx*i,
