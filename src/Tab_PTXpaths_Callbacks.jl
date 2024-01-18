@@ -62,6 +62,135 @@ function Tab_PTXpaths_Callbacks(app)
     end
 
 
+    callback!(
+        app,
+        Output("output-data-uploadn-ptx", "is_open"),
+        Output("output-data-uploadn-failed-ptx", "is_open"),
+        Input("upload-bulk-ptx", "contents"),
+        State("upload-bulk-ptx", "filename"),
+        prevent_initial_call=true,
+    ) do contents, filename
+
+        if !(contents isa Nothing)
+            status = parse_bulk_rock(contents, filename)
+            if status == 1
+                return "success", ""
+            else
+                return "", "failed"
+            end
+        end
+    end
+
+
+
+    """
+        Callback to compute and display PTX path
+    """
+    callback!(
+        app,
+        Output("ptx-plot",              "figure"),
+        Output("ptx-plot",              "config"),
+        Input("compute-path-button",    "n_clicks"),
+
+        State("n-steps-id-ptx",         "value"),
+        State("ptx-table",              "data"),
+        State("mode-dropdown-ptx",      "value"),
+        State("database-dropdown-ptx",  "value"),
+        State("buffer-dropdown-ptx",    "value"),
+        State("solver-dropdown-ptx",    "value"),    
+        State("verbose-dropdown-ptx",   "value"),   
+        State("table-bulk-rock-ptx",    "data"),  
+        State("buffer-1-mul-id-ptx",    "value"),  
+
+        State("mb-cpx-switch-ptx",      "value"),           # false,true -> 0,1
+        State("limit-ca-opx-id-ptx",    "value"),           # ON,OFF -> 0,1
+        State("ca-opx-val-id-ptx",      "value"),           # 0.0-1.0 -> 0,1
+
+        State("test-dropdown-ptx",      "value"),
+
+        prevent_initial_call = true,
+
+        ) do    compute,    nsteps,     PTdata,     mode,
+                dtb,        bufferType, solver,
+                verbose,    bulk,       bufferN,
+                cpx,        limOpx,     limOpxVal,  test  
+
+
+        bid                     = pushed_button( callback_context() )    # get which button has been pushed
+
+        title = db[(db.db .== dtb), :].title[test+1]
+
+        if bid == "compute-path-button"
+
+            global Out_PTX, ph_names, layout, data_plot
+
+            bufferN                 = Float64(bufferN)               # convert buffer_n to float
+            bulk_ini, bulk_ini, oxi = get_bulkrock_prop(bulk, bulk)  
+
+            compute_new_PTXpath(    nsteps,     PTdata,     mode,       bulk_ini,   oxi,
+                                    dtb,        bufferType, solver,
+                                    verbose,    bulk,       bufferN,
+                                    cpx,        limOpx,     limOpxVal                                  )
+
+
+            layout      = initialize_layout(title)
+
+            data_plot   = get_data_plot()
+
+            fig         = plot(data_plot,layout)
+
+
+        else
+            fig     = plot()
+        end
+
+            config   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
+                                        format   = "svg", # one of png, svg, jpeg, webp
+                                        filename =  replace(title, " " => "_"),
+                                        height   =  320,
+                                        width    =  640,
+                                        scale    =  2.0,       ).fields)
+
+        return fig, config
+    end
+
+
+    # callback to display ca-orthopyroxene limiter
+    callback!(
+        app,
+        Output("switch-opx-id-ptx", "style"),
+        Input("database-dropdown-ptx", "value"),
+    ) do value
+        # global db
+        if value == "ig"
+            style  = Dict("display" => "block")
+        elseif value == "igd"
+            style  = Dict("display" => "block")    
+        elseif value == "alk"
+            style  = Dict("display" => "block")  
+        else 
+            style  = Dict("display" => "none")
+        end
+        return style
+    end
+
+
+    # callback to display clinopyroxene choice for the metabasite database
+    callback!(
+        app,
+        Output("switch-cpx-id-ptx",     "style"),
+        Input("database-dropdown-ptx",  "value"),
+    ) do value
+        # global db
+        if value == "mb"
+            style  = Dict("display" => "block")
+        else 
+            style  = Dict("display" => "none")
+        end
+        return style
+    end
+
+
 
     # callback function to display to right set of variables as function of the diagram type
     callback!(

@@ -26,7 +26,8 @@ include(joinpath(pkg_dir,"src","data_plot.jl"))
 include(joinpath(pkg_dir,"src","MAGEMin_app_functions.jl"))
 include(joinpath(pkg_dir,"src","MAGEMin_app_Callbacks.jl"))   
 include(joinpath(pkg_dir,"src","Tab_Simulation_Callbacks.jl"))    
-include(joinpath(pkg_dir,"src","Tab_PhaseDiagram_Callbacks.jl"))   
+include(joinpath(pkg_dir,"src","Tab_PhaseDiagram_Callbacks.jl"))
+include(joinpath(pkg_dir,"src","PTXpaths_functions.jl"))   
 include(joinpath(pkg_dir,"src","Tab_PTXpaths_Callbacks.jl")) 
 
 """

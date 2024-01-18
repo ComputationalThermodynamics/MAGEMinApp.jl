@@ -30,6 +30,62 @@ function Tab_PTXpaths()
                                         html_div("Note that the chemical system can be different from database to another"),
                                                 ],target="database-dropdown-ptx"),
                                     ]),
+
+
+                                    #clinopyroxene for metabasite
+                                    html_div([
+                                        html_div("‎ "),  
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("clinopyroxene", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            ],width=6),
+                                            dbc_col([ 
+                                                html_div("Omphacite"),
+                                            ],width=3),
+                                            dbc_col([ 
+                                                dbc_row(dbc_switch(label="", id="mb-cpx-switch-ptx", value=false),justify="center"),
+                                            ]),
+                                            dbc_col([ 
+                                                html_div("Augite"),
+                                            ]),
+                                        ]),
+                                    ], style = Dict("display" => "none"), id      = "switch-cpx-id-ptx"), #none, block
+
+                                    #clinopyroxene for metabasite
+                                    html_div([
+                                        html_div("‎ "),  
+                                        dbc_row([
+                                            dbc_col([ 
+                                            ],width=6),
+
+                                            dbc_col([ 
+                                                dcc_checklist(
+                                                    id      ="limit-ca-opx-id-ptx",
+                                                    options = [
+                                                        Dict("label" => " Limit Ca-opx", "value" => "CAOPX"),
+                                                    ],
+                                                    value   = [""],
+                                                    inline  = true,
+                                                ),
+                                                dbc_tooltip("This activate a smaller range for compositional variable of opx for the igneous database sets",target="limit-ca-opx-id-ptx"),
+
+                                            ]),
+                                            dbc_col([ 
+                                                html_div([
+                                                dbc_input(
+                                                    id      = "ca-opx-val-id-ptx",
+                                                    type    = "number", 
+                                                    min     = 0.0, 
+                                                    max     = 1.0, 
+                                                    value   = 0.5   ),
+                                                ], style = Dict("marginTop" => -5)),
+                                            ],width=3),
+
+                                        ]),
+                                    ], style = Dict("display" => "block"), id      = "switch-opx-id-ptx"), #none, block
+
+
+
                                     # buffer
                                     dbc_row([
                                         dbc_col([ 
@@ -197,7 +253,6 @@ function Tab_PTXpaths()
                                                 html_div("‎ "),
                                                 dcc_textarea(
                                                     id="database-caption-ptx",
-                                                    # placeholder="Enter a value...",
                                                     value       = db[(db.db .== "ig") .& (db.test .== 0), :].db[1],
                                                     readOnly    = true,
                                                     disabled    = true,
@@ -227,6 +282,21 @@ function Tab_PTXpaths()
                         dbc_button("Path definition",id="button-path"),
                         dbc_collapse(
                         dbc_card(dbc_cardbody([
+
+                            dbc_row([
+                                dbc_col([ 
+                                    html_h1("Numbter of Steps", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                ]),
+                                dbc_col([ 
+                                        dbc_input(
+                                        id      = "n-steps-id-ptx",
+                                        type    = "number", 
+                                        min     = 1, 
+                                        max     = 1024, 
+                                        value   = 4   ),
+                                ]),
+                            ]),
+
                             dbc_row([
                                 path_plot(),
                             ]),
@@ -235,7 +305,7 @@ function Tab_PTXpaths()
                                 dash_datatable(
                                     id="ptx-table",
                                     columns=[Dict("name" => "P [kbar]", "id"    => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
-                                                Dict("name" => "T [°C]", "id"      => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")],
+                                                Dict("name" => "T [°C]", "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")],
                                     data=[
                                         Dict("col-1" => 5.0, "col-2"    => 500.0),
                                         Dict("col-1" => 10.0, "col-2"   => 800.0),
@@ -302,7 +372,15 @@ function Tab_PTXpaths()
 
                 ], width=3),
 
-                dbc_col([PTX_plot()], width=6),
+                dbc_col([
+                    dbc_row([
+                        PTX_plot()
+                    ]),
+                    # dbc_row([
+                    #     PTX2_plot()
+                    # ]),      
+                
+                ], width=6),
             ]),
 
     ])
