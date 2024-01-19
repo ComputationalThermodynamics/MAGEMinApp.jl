@@ -276,111 +276,186 @@ function Tab_PTXpaths()
                 ], width=3),
 
                 dbc_col([  
-
-                    dbc_row([
-
-                        dbc_button("Path definition",id="button-path"),
-                        dbc_collapse(
-                        dbc_card(dbc_cardbody([
-
+                    dbc_row([                                                                                     
+                        dbc_col([
                             dbc_row([
-                                dbc_col([ 
-                                    html_h1("Numbter of Steps", style = Dict("textAlign" => "center","font-size" => "120%")),
-                                ]),
-                                dbc_col([ 
-                                        dbc_input(
-                                        id      = "n-steps-id-ptx",
-                                        type    = "number", 
-                                        min     = 1, 
-                                        max     = 1024, 
-                                        value   = 4   ),
-                                ]),
+                                PTX_plot()
                             ]),
-
-                            dbc_row([
-                                path_plot(),
-                            ]),
-                            dbc_row([
-
-                                dash_datatable(
-                                    id="ptx-table",
-                                    columns=[Dict("name" => "P [kbar]", "id"    => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
-                                                Dict("name" => "T [°C]", "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")],
-                                    data=[
-                                        Dict("col-1" => 5.0, "col-2"    => 500.0),
-                                        Dict("col-1" => 10.0, "col-2"   => 800.0),
-                                    ],
-                                    style_cell      = (textAlign="center", fontSize="140%",),
-                                    style_header    = (fontWeight="bold",),
-                                    editable        = true,
-                                    row_deletable   = true
-                                ),
-
-                            ]),
-                            dbc_row([
-                                dbc_button("Add point",id="add-row-button", color="light", className="me-2", n_clicks=0,
-                                style       = Dict( "textAlign"     => "center",
-                                                    "font-size"     => "100%",
-                                                    "border"        =>"1px lightgray solid")), 
-                            ]),
-
-                        ])),
-                        id="collapse-path",
-                        is_open=true,
-                        ),
-                                                                            
-                    ])
-
-                    dbc_row([
-
-                        dbc_button("Path options",id="button-path-opt"),
-                        dbc_collapse(
-                            dbc_card(dbc_cardbody([
-
-                                # PTX mode
-                                dbc_row([
-                                    dbc_col([ 
-                                        html_h1("P-T-X Mode", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                    ], width=4),
-                                    dbc_col([ 
-                                        dcc_dropdown(   id      = "mode-dropdown-ptx",
-                                        options = [
-                                            (label = "Equilibrium",                 value = "eq"),
-                                            (label = "Fractional melting",          value = "fm"),
-                                            (label = "Fractional crystallization",  value = "fc"), 
-                                        ],
-                                        value       = "eq",
-                                        clearable   =  false,
-                                        multi       =  false    ),
-                                    ], width=8),
-                                ]),
-                                html_div("‎ "),
-                                dbc_row([
-                                    dbc_button("Compute path",id="compute-path-button", color="light", className="me-2", n_clicks=0,
-                                    style       = Dict( "textAlign"     => "center",
-                                                        "font-size"     => "100%",
-                                                        "border"        =>"1px lightgray solid")), 
-                                ]),
-
-
-                            ])),
-                            id="collapse-path-opt",
-                            is_open=true,
-                        ),
-                                                                            
-                    ])
-
-                ], width=3),
-
-                dbc_col([
-                    dbc_row([
-                        PTX_plot()
+                            # dbc_row([
+                            #     PTX2_plot()
+                            # ]),      
+                        
+                        ], width=12),
                     ]),
-                    # dbc_row([
-                    #     PTX2_plot()
-                    # ]),      
-                
-                ], width=6),
+                    html_div("‎ "),
+                    dbc_row([ 
+                        dbc_col([ 
+                        
+                            dbc_row([
+
+                                dbc_button("Path definition",id="button-pathdef"),
+                                dbc_collapse(
+                                dbc_card(dbc_cardbody([
+
+                                    dbc_row([
+
+                                        dash_datatable(
+                                            id="ptx-table",
+                                            columns=[Dict("name" => "P [kbar]", "id"    => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                                                        Dict("name" => "T [°C]", "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")],
+                                            data=[
+                                                Dict("col-1" => 5.0, "col-2"    => 500.0),
+                                                Dict("col-1" => 10.0, "col-2"   => 800.0),
+                                            ],
+                                            style_cell      = (textAlign="center", fontSize="140%",),
+                                            style_header    = (fontWeight="bold",),
+                                            editable        = true,
+                                            row_deletable   = true
+                                        ),
+
+                                    ]),
+                                    dbc_row([
+                                        dbc_button("Add point",id="add-row-button", color="light", className="me-2", n_clicks=0,
+                                        style       = Dict( "textAlign"     => "center",
+                                                            "font-size"     => "100%",
+                                                            "border"        =>"1px lightgray solid")), 
+                                    ]),
+
+                                ])),
+                                id="collapse-pathdef",
+                                is_open=true,
+                                ),
+                                                                                
+                            ])
+
+                        ], width=2),
+
+                        dbc_col([ 
+                        
+                            dbc_row([
+
+                                dbc_button("Path preview",id="button-path"),
+                                dbc_collapse(
+                                dbc_card(dbc_cardbody([
+
+                                    dbc_row([
+                                        path_plot(),
+                                    ]),
+                                    
+
+                                ])),
+                                id="collapse-path",
+                                is_open=true,
+                                ),
+                                                                                
+                            ])
+
+                        ], width=4),
+
+
+
+                        dbc_col([ 
+
+                            dbc_row([
+
+                                dbc_button("Path options",id="button-path-opt"),
+                                dbc_collapse(
+                                    dbc_card(dbc_cardbody([
+                                        # resolution is number of computational steps between two points
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("Resolution", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ], width=6),
+                                            dbc_col([ 
+                                                    dbc_input(
+                                                    id      = "n-steps-id-ptx",
+                                                    type    = "number", 
+                                                    min     = 1, 
+                                                    max     = 1024, 
+                                                    value   = 4   ),
+                                            ]),
+                                        ]),                               
+                                        # PTX mode
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("P-T-X Mode", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ], width=6),
+                                            dbc_col([ 
+                                                dcc_dropdown(   id      = "mode-dropdown-ptx",
+                                                options = [
+                                                    (label = "Equilibrium",                 value = "eq"),
+                                                    (label = "Fractional melting",          value = "fm"),
+                                                    (label = "Fractional crystallization",  value = "fc"), 
+                                                ],
+                                                value       = "eq",
+                                                clearable   =  false,
+                                                multi       =  false    ),
+                                            ]),
+                                        ]),
+                                        html_div("‎ "),
+                                        dbc_row([
+                                            dbc_button("Compute path",id="compute-path-button", color="light", className="me-2", n_clicks=0,
+                                            style       = Dict( "textAlign"     => "center",
+                                                                "font-size"     => "100%",
+                                                                "border"        =>"1px lightgray solid")), 
+                                        ]),
+
+
+                                    ])),
+                                    id="collapse-path-opt",
+                                    is_open=true,
+                                ),
+                                                                                
+                        #     ])
+
+                        # ], width=3),
+
+
+
+                        # dbc_col([ 
+
+                        #     dbc_row([
+
+                                dbc_button("Display options",id="button-disp-opt"),
+                                dbc_collapse(
+                                    dbc_card(dbc_cardbody([
+
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("System unit", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ], width=6),
+                                            dbc_col([ 
+                                                dcc_dropdown(   id      = "sys-unit-ptx",
+                                                options = [
+                                                    (label = "mol%",  value = "mol"),
+                                                    (label = "wt%",   value = "wt"),
+                                                    (label = "vol%",  value = "vol"), 
+                                                ],
+                                                value       = "mol",
+                                                clearable   =  false,
+                                                multi       =  false    ),
+                                            ]),
+                                        ]),
+   
+
+
+                                    ])),
+                                    id="collapse-disp-opt",
+                                    is_open=true,
+                                ),
+                                                                                
+                            ])
+
+                        ], width=3),
+
+
+
+                    ]),
+
+
+                ], width=9),
+
+
             ]),
 
     ])

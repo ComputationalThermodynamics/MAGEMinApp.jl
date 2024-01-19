@@ -12,7 +12,7 @@ end
 
 function PTX_plot()
 
-    fig = plot()
+    fig =  plot(    Layout( height= 320 ))
 
     dcc_graph(
                 id          = "ptx-plot",
@@ -22,7 +22,7 @@ end
 
 function path_plot()
 
-    fig = plot()
+    fig = plot(    Layout( height= 220 ))
 
     dcc_graph(
                 id          = "path-plot",

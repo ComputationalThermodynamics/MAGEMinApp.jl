@@ -6,11 +6,11 @@ using PlotlyJS, JSON3, Printf, Statistics, DataFrames, CSV, Dates, Base64
 using UUIDs, HTTP
 using JLD2, DelimitedFiles, Interpolations
 using ConcaveHull,PolygonOps
+using ProgressMeter
 
 using MAGEMin_C
 
 pkg_dir = Base.pkgdir(MAGEMin_app)
-
 
 
 export App

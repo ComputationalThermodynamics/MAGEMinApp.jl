@@ -91,6 +91,7 @@ function Tab_PTXpaths_Callbacks(app)
         Output("ptx-plot",              "figure"),
         Output("ptx-plot",              "config"),
         Input("compute-path-button",    "n_clicks"),
+        Input("sys-unit-ptx",           "value"),
 
         State("n-steps-id-ptx",         "value"),
         State("ptx-table",              "data"),
@@ -107,13 +108,15 @@ function Tab_PTXpaths_Callbacks(app)
         State("ca-opx-val-id-ptx",      "value"),           # 0.0-1.0 -> 0,1
 
         State("test-dropdown-ptx",      "value"),
+        State("sys-unit-ptx",           "value"),
+        
 
         prevent_initial_call = true,
 
-        ) do    compute,    nsteps,     PTdata,     mode,
+        ) do    compute,    upsys,      nsteps,     PTdata,     mode,
                 dtb,        bufferType, solver,
                 verbose,    bulk,       bufferN,
-                cpx,        limOpx,     limOpxVal,  test  
+                cpx,        limOpx,     limOpxVal,  test,   sysunit  
 
 
         bid                     = pushed_button( callback_context() )    # get which button has been pushed
@@ -133,22 +136,30 @@ function Tab_PTXpaths_Callbacks(app)
                                     cpx,        limOpx,     limOpxVal                                  )
 
 
-            layout      = initialize_layout(title)
+            layout      = initialize_layout(title,sysunit)
 
-            data_plot   = get_data_plot()
+            data_plot   = get_data_plot(sysunit)
 
             fig         = plot(data_plot,layout)
 
 
+        elseif bid == "sys-unit-ptx"
+            data_plot            = get_data_plot(sysunit)
+            ytitle               = "Phase fraction ["*sysunit*"%]"
+            
+            layout[:yaxis_title] = ytitle
+
+            fig         = plot(data_plot,layout)
+
         else
-            fig     = plot()
+            fig     = plot(    Layout( height= 320 ))
         end
 
             config   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
                                         format   = "svg", # one of png, svg, jpeg, webp
-                                        filename =  replace(title, " " => "_"),
+                                        filename =  "path_1_"*replace(title, " " => "_"),
                                         height   =  320,
-                                        width    =  640,
+                                        width    =  960,
                                         scale    =  2.0,       ).fields)
 
         return fig, config
@@ -245,9 +256,43 @@ function Tab_PTXpaths_Callbacks(app)
     end
 
     callback!(app,
+        Output("collapse-disp-opt", "is_open"),
+        [Input("button-disp-opt", "n_clicks")],
+        [State("collapse-disp-opt", "is_open")], ) do  n, is_open
+        
+        if isnothing(n); n=0 end
+
+        if n>0
+            if is_open==1
+                is_open = 0
+            elseif is_open==0
+                is_open = 1
+            end
+        end
+        return is_open    
+    end
+
+    callback!(app,
         Output("collapse-path-opt", "is_open"),
         [Input("button-path-opt", "n_clicks")],
         [State("collapse-path-opt", "is_open")], ) do  n, is_open
+        
+        if isnothing(n); n=0 end
+
+        if n>0
+            if is_open==1
+                is_open = 0
+            elseif is_open==0
+                is_open = 1
+            end
+        end
+        return is_open    
+    end
+
+    callback!(app,
+        Output("collapse-pathdef", "is_open"),
+        [Input("button-pathdef", "n_clicks")],
+        [State("collapse-pathdef", "is_open")], ) do  n, is_open
         
         if isnothing(n); n=0 end
 
