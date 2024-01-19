@@ -117,7 +117,7 @@ function get_data_plot(sysunit)
         ph = ph_names[i]
 
         for k=1:n_tot
-            x[k]    = string(round(Out_PTX[k].P_kbar,digits=3))*", "*string(round(Out_PTX[k].T_C,digits=3))
+            x[k]    = string(round(Out_PTX[k].P_kbar,digits=1))*", "*string(round(Out_PTX[k].T_C,digits=1))
             id      = findall(Out_PTX[k].ph .== ph)
 
             if sysunit == "mol"

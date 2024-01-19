@@ -56,6 +56,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         app,
         Output("click-data-left", "children"),
         Output("click-data-right", "children"),
+        Output("click-data-bottom", "children"),
         Input("phase-diagram", "clickData"),
         State("diagram-dropdown","value"),          # pt,px,tx
         prevent_initial_call = true,
@@ -73,32 +74,38 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             # left panel
             pLeft = "\n"
-            pLeft *= "|Variable &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;|Value &nbsp; &nbsp; &nbsp; &nbsp;| Unit |\n"
+            pLeft *= "| Variable &nbsp;|Value &nbsp; &nbsp; &nbsp; &nbsp;| Unit &nbsp; &nbsp; &nbsp; &nbsp;|\n"
             pLeft *= "|----------|-------|------|\n"
-            pLeft *= "| Pressure |"*string(round(Out_XY[point_id].P_kbar; digits = 3))*"| kbar |\n"
-            pLeft *= "| Temperature |"*string(round(Out_XY[point_id].T_C; digits = 3))*"| °C |\n"
-            pLeft *= "| Gibbs energy |"*string(round(Out_XY[point_id].G_system; digits = 3))*"| kJ |\n"
-            pLeft *= "| ρ_system |"*string(round(Out_XY[point_id].rho; digits = 1))*"| kg/m³   |\n"
+            pLeft *= "| P |"*string(round(Out_XY[point_id].P_kbar; digits = 3))*"| kbar |\n"
+            pLeft *= "| T |"*string(round(Out_XY[point_id].T_C; digits = 3))*"| °C |\n"
+            pLeft *= "| G |"*string(round(Out_XY[point_id].G_system; digits = 3))*"| kJ |\n"
+            pLeft *= "| ρ_sys |"*string(round(Out_XY[point_id].rho; digits = 1))*"| kg/m³   |\n"
 
             if "liq" in Out_XY[point_id].ph
                 pLeft *= "| ρ_solid |"*string(round(Out_XY[point_id].rho_S; digits = 1))*"| kg/m³ |\n"
                 pLeft *= "| ρ_melt |"*string(round(Out_XY[point_id].rho_M; digits = 1))*"| kg/m³ |\n"
             end
             
-            # X       = "Composition\t\t**mol**\t: "*join(round.(Out_XY[point_id].bulk; digits = 3)," ")*"\n"
-            
             # right panel
             pRight = "\n"
-            pRight *= "|Phase &nbsp; &nbsp;| Fraction |\n"
+            pRight *= "| Phase &nbsp;| Mode |\n"
             pRight *= "|-------|----------|\n"
             np      = length(Out_XY[point_id].ph)
             for i=1:np
-                pRight *= "| "*Out_XY[point_id].ph[i]*"|"*string(round.(Out_XY[point_id].ph_frac[i]; digits = 3))*"| \n"
+                pRight *= "| "*Out_XY[point_id].ph[i]*"|"*string(round.(Out_XY[point_id].ph_frac[i]; digits = 3))*"|\n"
             end
 
+            pBottom = "\n"
+            pBottom *= "| Oxide  &nbsp;| mol  &nbsp; &nbsp;|\n"
+            pBottom *= "|--------------|-----|\n"
+            for i=1:length(Out_XY[point_id].oxides)
+                pBottom *= "|"*Out_XY[point_id].oxides[i]*"|"*string(round.(Out_XY[point_id].bulk[i]; digits = 3))*"|\n"
+            end
+            # X       = "Composition\t\t**mol**\t: "*join(round.(Out_XY[point_id].bulk; digits = 3)," ")*"\n"
+                        
         end
 
-        return pLeft,pRight
+        return pLeft, pRight, pBottom
     end
 
     # Callback function to create compute the phase diagram using T8code for Adaptive Mesh Refinement

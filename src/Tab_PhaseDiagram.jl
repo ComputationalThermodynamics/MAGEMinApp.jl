@@ -36,52 +36,31 @@ function Tab_PhaseDiagram()
                                         ])
                                     ]),
 
-                                    # dbc_row([
-                                    #     dbc_col([ 
-                                    #         html_h1("# computed points", style = Dict("textAlign" => "center","font-size" => "120%")),
-                                    #     ], width=6),
-                                    #     dbc_col([ 
-                                    #         dbc_card([
-                                    #             dcc_markdown(   id          = "npoints-id", 
-                                    #                             children    = "",
-                                    #                             style       = Dict("white-space" => "pre"))
-                                    #             ])
-                                    #     ]),
-                                    # ]),
-                                    # dbc_row([
-                                    #     dbc_col([ 
-                                    #         html_h1("Minimization time [ms]", style = Dict("textAlign" => "center","font-size" => "120%")),
-                                    #     ], width=6),
-                                    #     dbc_col([ 
-                                    #         dbc_card([
-                                    #             dcc_markdown(   id          = "meant-id", 
-                                    #                             children    = "",
-                                    #                             style       = Dict("white-space" => "pre"))
-                                    #             ])
-                                    #     ]),
-                                    #     dbc_tooltip("This is the average minimization time per point: n_points/time_per_point",target="meant-id"),
-                                    # ]),
-
                                     html_div("‎ "),
                                     dbc_row([
-                                        
-                                            dbc_col([ 
-                                                dbc_card([
-                                                dcc_markdown(   id          = "click-data-left", 
-                                                                children    = "",
-                                                                style       = Dict("white-space" => "pre"))
-                                                ])
-                                            ]),
-                                            dbc_col([ 
-                                                dbc_card([
-                                                dcc_markdown(   id          = "click-data-right", 
-                                                                children    = "",
-                                                                style       = Dict("white-space" => "pre"))
-                                                ])
-                                            ]),
-
-                                        ]),
-
+                                        dbc_col([ 
+                                            dbc_card([
+                                            dcc_markdown(   id          = "click-data-left", 
+                                                            children    = "",
+                                                            style       = Dict("white-space" => "pre"))
+                                            ])
+                                        ], width=6),
+                                        dbc_col([ 
+                                            dbc_card([
+                                            dcc_markdown(   id          = "click-data-right", 
+                                                            children    = "",
+                                                            style       = Dict("white-space" => "pre"))
+                                            ])
+                                        ], width=3),
+                                        dbc_col([ 
+                                            dbc_card([
+                                            dcc_markdown(   id          = "click-data-bottom", 
+                                                            children    = "",
+                                                            style       = Dict("white-space" => "pre"))
+                                            ])
+                                        ], width=3),
+                                    ],className="g-0"),
+  
                                     html_div("‎ "),
 
                                     dbc_row([
@@ -512,12 +491,6 @@ function Tab_PhaseDiagram()
 
                     ])
                     ], width=3),
-                    # dbc_col([
-                    #     dbc_row([
-
-
-                    #     ]),
-                    # ], width=2),
 
                 ], justify="left"),
 
