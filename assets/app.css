@@ -45,7 +45,7 @@ html {
   @media (min-width: 1200px) {}
   
   /* Custom */
-  .modebar { top: 75px !important; }
+  .modebar { top: -5px !important; }
   
   /* For devices larger than 400px */
   @media (min-width: 400px) {
