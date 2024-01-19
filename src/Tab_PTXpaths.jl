@@ -315,7 +315,7 @@ function Tab_PTXpaths()
 
                                     ]),
                                     dbc_row([
-                                        dbc_button("Add point",id="add-row-button", color="light", className="me-2", n_clicks=0,
+                                        dbc_button("Add new point",id="add-row-button", color="light", className="me-2", n_clicks=0,
                                         style       = Dict( "textAlign"     => "center",
                                                             "font-size"     => "100%",
                                                             "border"        =>"1px lightgray solid")), 

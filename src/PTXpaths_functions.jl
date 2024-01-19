@@ -80,7 +80,22 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                     P = Pres[i] + (j-1)*( (Pres[i+1] - Pres[i])/ (nsteps+1) )
                     T = Temp[i] + (j-1)*( (Temp[i+1] - Temp[i])/ (nsteps+1) )
 
+                    if mode == "fm" || mode == "fc"
+                        gv      =  define_bulk_rock(gv, bulk_ini, oxi, sys_in, dtb);
+                    end
+
                     Out_PTX[k] = deepcopy( point_wise_minimization(P,T, gv, z_b, DB, splx_data, sys_in) )
+
+                    if mode == "fm"
+                        if Out_PTX[k].frac_S > 0.0
+                            bulk_ini .= Out_PTX[k].bulk_S
+                        end
+                    elseif mode == "fc"
+                        if Out_PTX[k].frac_M > 0.0
+                            bulk_ini .= Out_PTX[k].bulk_M
+                        end
+                    end
+
                     k += 1
                 end
             end
@@ -117,7 +132,7 @@ function get_data_plot(sysunit)
         ph = ph_names[i]
 
         for k=1:n_tot
-            x[k]    = string(round(Out_PTX[k].P_kbar,digits=1))*", "*string(round(Out_PTX[k].T_C,digits=1))
+            x[k]    = string(round(Out_PTX[k].P_kbar,digits=1))*"; "*string(round(Out_PTX[k].T_C,digits=1))
             id      = findall(Out_PTX[k].ph .== ph)
 
             if sysunit == "mol"
