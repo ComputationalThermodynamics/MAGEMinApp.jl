@@ -106,17 +106,20 @@ function Tab_PTXpaths_Callbacks(app)
         State("mb-cpx-switch-ptx",      "value"),           # false,true -> 0,1
         State("limit-ca-opx-id-ptx",    "value"),           # ON,OFF -> 0,1
         State("ca-opx-val-id-ptx",      "value"),           # 0.0-1.0 -> 0,1
-
         State("test-dropdown-ptx",      "value"),
         State("sys-unit-ptx",           "value"),
-        
 
+        State("connectivity-id",        "value"),
+        State("residual-id",            "value"),
+        
+    
         prevent_initial_call = true,
 
         ) do    compute,    upsys,      nsteps,     PTdata,     mode,
                 dtb,        bufferType, solver,
                 verbose,    bulk,       bufferN,
-                cpx,        limOpx,     limOpxVal,  test,   sysunit  
+                cpx,        limOpx,     limOpxVal,  test,   sysunit,
+                nCon,       nRes  
 
 
         bid                     = pushed_button( callback_context() )    # get which button has been pushed
@@ -133,7 +136,8 @@ function Tab_PTXpaths_Callbacks(app)
             compute_new_PTXpath(    nsteps,     PTdata,     mode,       bulk_ini,   oxi,
                                     dtb,        bufferType, solver,
                                     verbose,    bulk,       bufferN,
-                                    cpx,        limOpx,     limOpxVal                                  )
+                                    cpx,        limOpx,     limOpxVal,
+                                    nCon,       nRes                                  )
 
 
             layout      = initialize_layout(title,sysunit)
@@ -192,7 +196,7 @@ function Tab_PTXpaths_Callbacks(app)
         Output("switch-cpx-id-ptx",     "style"),
         Input("database-dropdown-ptx",  "value"),
     ) do value
-        # global db
+
         if value == "mb"
             style  = Dict("display" => "block")
         else 
@@ -201,6 +205,33 @@ function Tab_PTXpaths_Callbacks(app)
         return style
     end
 
+    callback!(
+        app,
+        Output("show-residual-id",      "style"),
+        Input("mode-dropdown-ptx",      "value"),
+    ) do value
+
+        if value == "fc"
+            style  = Dict("display" => "block")
+        else 
+            style  = Dict("display" => "none")
+        end
+        return style
+    end
+
+    callback!(
+        app,
+        Output("show-connectivity-id",  "style"),
+        Input("mode-dropdown-ptx",      "value"),
+    ) do value
+  
+        if value == "fm"
+            style  = Dict("display" => "block")
+        else 
+            style  = Dict("display" => "none")
+        end
+        return style
+    end
 
 
     # callback function to display to right set of variables as function of the diagram type

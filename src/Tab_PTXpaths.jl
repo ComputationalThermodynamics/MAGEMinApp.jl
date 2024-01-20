@@ -40,13 +40,13 @@ function Tab_PTXpaths()
                                                 html_h1("clinopyroxene", style = Dict("textAlign" => "center","font-size" => "120%")),
                                             ],width=6),
                                             dbc_col([ 
-                                                html_div("Omphacite"),
+                                                html_div("Omph"),
                                             ],width=3),
                                             dbc_col([ 
                                                 dbc_row(dbc_switch(label="", id="mb-cpx-switch-ptx", value=false),justify="center"),
                                             ]),
                                             dbc_col([ 
-                                                html_div("Augite"),
+                                                html_div("Aug"),
                                             ]),
                                         ]),
                                     ], style = Dict("display" => "none"), id      = "switch-cpx-id-ptx"), #none, block
@@ -276,18 +276,7 @@ function Tab_PTXpaths()
                 ], width=3),
 
                 dbc_col([  
-                    dbc_row([                                                                                     
-                        dbc_col([
-                            dbc_row([
-                                PTX_plot()
-                            ]),
-                            # dbc_row([
-                            #     PTX2_plot()
-                            # ]),      
-                        
-                        ], width=12),
-                    ]),
-                    html_div("‎ "),
+
                     dbc_row([ 
                         dbc_col([ 
                         
@@ -392,6 +381,45 @@ function Tab_PTXpaths()
                                                 multi       =  false    ),
                                             ]),
                                         ]),
+
+
+                                        # connectivity threshold for fracitonal melting
+                                        html_div([
+                                            dbc_row([
+                                                dbc_col([ 
+                                                    html_h1("Connectivity threshold [%]", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                ], width=6),
+                                                dbc_col([ 
+                                                        dbc_input(
+                                                        id      = "connectivity-id",
+                                                        type    = "number", 
+                                                        min     = 0, 
+                                                        max     = 100.0, 
+                                                        value   = 7.0   ),
+                                                ]),
+                                            ]), 
+                                        ], style = Dict("display" => "none"), id      = "show-connectivity-id"), #none, block
+
+                                        # residual fraction for fractional crystallization
+                                        html_div([
+                                            dbc_row([
+                                                dbc_col([ 
+                                                    html_h1("Residual fraction [%]", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                ], width=6),
+                                                dbc_col([ 
+                                                        dbc_input(
+                                                        id      = "residual-id",
+                                                        type    = "number", 
+                                                        min     = 0, 
+                                                        max     = 100.0, 
+                                                        value   = 7.0   ),
+                                                ]),
+                                            ]), 
+                                        ], style = Dict("display" => "none"), id      = "show-residual-id"), #none, block
+
+
+
+
                                         html_div("‎ "),
                                         dbc_row([
                                             dbc_button("Compute path",id="compute-path-button", color="light", className="me-2", n_clicks=0,
@@ -451,7 +479,18 @@ function Tab_PTXpaths()
 
 
                     ]),
-
+                    html_div("‎ "),
+                    dbc_row([                                                                                     
+                        dbc_col([
+                            dbc_row([
+                                PTX_plot()
+                            ]),
+                            # dbc_row([
+                            #     PTX2_plot()
+                            # ]),      
+                        
+                        ], width=12),
+                    ]),
 
                 ], width=9),
 
