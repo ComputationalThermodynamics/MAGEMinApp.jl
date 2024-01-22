@@ -874,13 +874,20 @@ function get_gridded_map(   fieldname   ::String,
         for i=1:np
             field[i] = Float64(len_ox - n_phase_XY[i] + 2.0);
         end
+    elseif fieldname == "Delta_rho"
+        for i=1:np
+            field[i] = 0.0
+            if (Out_XY[i].frac_M > 0.0 && Out_XY[i].frac_S > 0.0)
+                field[i] = Out_XY[i].rho_S - Out_XY[i].rho_M
+            end
+        end
     else
         for i=1:np
             field[i] = Float64(get_property(Out_XY[i], fieldname));
         end
 
         field[isnan.(field)] .= 0.0
-        if fieldname == "frac_M" || fieldname == "rho_M" || fieldname == "rho_S"
+        if fieldname == "frac_M" || fieldname == "rho_M" || fieldname == "rho_S" || fieldname == "Delta_rho"
             field[isless.(field, 1e-8)] .= 0.0              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
         elseif fieldname == "fO2"
             field .= log10.(field)
@@ -963,6 +970,13 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
     elseif fieldname == "Variance"
         for i=1:np
             field[i] = Float64(len_ox - n_phase_XY[i] + 2.0);
+        end
+    elseif fieldname == "Delta_rho"
+        for i=1:np
+            field[i] = 0.0
+            if (Out_XY[i].frac_M > 0.0 && Out_XY[i].frac_S > 0.0)
+                field[i] = Out_XY[i].rho_S - Out_XY[i].rho_M
+            end
         end
     else
         for i=1:np

@@ -411,6 +411,7 @@ function Tab_PhaseDiagram()
                                                             (label = "ρ_system",                value = "rho"),
                                                             (label = "ρ_solid",                 value = "rho_S"),
                                                             (label = "ρ_melt",                  value = "rho_M"),
+                                                            (label = "Δρ",                      value = "Delta_rho"),
                                                             (label = "Solid fraction",          value = "frac_S"),
                                                             (label = "Melt fraction",           value = "frac_M"),                                                            
                                                             (label = "Vp",                      value = "Vp"),
