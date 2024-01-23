@@ -128,7 +128,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         if bid == "compute-path-button"
 
-            global Out_PTX, ph_names, layout, data_plot
+            global Out_PTX, ph_names, layout, data_plot, fracEvol
 
             bufferN                 = Float64(bufferN)               # convert buffer_n to float
             bulk_ini, bulk_ini, oxi = get_bulkrock_prop(bulk, bulk)  

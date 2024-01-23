@@ -317,7 +317,7 @@ function Tab_PTXpaths()
                                                                                 
                             ])
 
-                        ], width=2),
+                        ], width=3),
 
                         dbc_col([ 
                         
@@ -486,7 +486,7 @@ function Tab_PTXpaths()
                                 PTX_plot()
                             ]),
                             # dbc_row([
-                            #     PTX2_plot()
+                            #     PTX_frac_plot()
                             # ]),      
                         
                         ], width=12),

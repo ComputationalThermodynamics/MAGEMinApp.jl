@@ -17,7 +17,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                 cpx,        limOpx,     limOpxVal,
                                 nCon,       nRes                                  )
 
-        global Out_PTX, ph_names
+        global Out_PTX, ph_names, fracEvol
 
 
         nsteps = Int64(nsteps)
@@ -48,6 +48,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             print("Cannot compute a path if at least 2 points are not defined! \n")
         else
             ph_names= Vector{String}()
+            fracEvol= Vector{Float64}()
             n_tot   = np + (np-1)*nsteps
             Out_PTX = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,n_tot)
 
@@ -71,7 +72,9 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             # define system unit and starting bulk rock composition
             sys_in  = "mol"
             gv      =  define_bulk_rock(gv, bulk_ini, oxi, sys_in, dtb);
-    
+
+
+            fracEvol[1] = 1.0;          # starting material fraction is always one as we want to measure the relative change here
             k = 1
             @showprogress for i = 1:np-1
                 for j = 1:nsteps+1
@@ -89,6 +92,9 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                             if nCon > 0.0
                                 if Out_PTX[k].frac_M > nCon/100.0
                                     bulk_ini .= Out_PTX[k].bulk_S .*((100.0-nCon)/100.0) .+ Out_PTX[k].bulk_M .*(nCon/100.0)
+                                    fracEvol[i+1] = fracEvol[i] *  
+                                else
+                                    fracEvol[i+1] = fracEvol[i]
                                 end
                             else
                                 bulk_ini .= Out_PTX[k].bulk_S
@@ -133,7 +139,7 @@ function get_data_plot(sysunit)
 
     n_ph    = length(ph_names)
     n_tot   = length(Out_PTX)
-    data_plot  = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_ph);
+    data_plot  = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_ph+1);
 
     x       = Vector{String}(undef, n_tot)
     Y       = zeros(Float64, n_ph, n_tot)
@@ -183,7 +189,6 @@ function get_data_plot(sysunit)
     end
 
     for i=1:n_ph
-
         data_plot[i] = scatter(;    x           =  x,
                                     y           =  Y[i,:],
                                     name        = ph_names[i],
@@ -191,9 +196,15 @@ function get_data_plot(sysunit)
                                     mode        = "lines",
                                     line        = attr(     width   =  0.5,
                                                             color   = colormap[i])  )
+     end
 
-    end
 
+     data_plot[n_ph+1] = scatter(   x               = B[:,1], 
+                                    y               = B[:,2], 
+                                    hoverinfo       = "skip",
+                                    showlegend      = false,
+                                    line            = attr( color   = "black", 
+                                                            width   = 1)                ) 
 
     return data_plot
 end

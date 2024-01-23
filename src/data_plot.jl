@@ -10,6 +10,17 @@ function diagram_plot()
             )
 end
 
+function PTX_frac_plot()
+
+    fig =  plot(    Layout( height= 320 ))
+
+    dcc_graph(
+                id          = "ptx-frac-plot",
+                figure      = fig,
+            )
+end
+
+
 function PTX_plot()
 
     fig =  plot(    Layout( height= 320 ))
