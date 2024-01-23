@@ -92,7 +92,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                             if nCon > 0.0
                                 if Out_PTX[k].frac_M > nCon/100.0
                                     bulk_ini .= Out_PTX[k].bulk_S .*((100.0-nCon)/100.0) .+ Out_PTX[k].bulk_M .*(nCon/100.0)
-                                    fracEvol[i+1] = fracEvol[i] *  
+                                    fracEvol[i+1] = fracEvol[i] * (Out_PTX[k].frac_C + nCon/100.0) 
                                 else
                                     fracEvol[i+1] = fracEvol[i]
                                 end
