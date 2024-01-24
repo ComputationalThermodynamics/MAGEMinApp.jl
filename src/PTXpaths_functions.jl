@@ -48,8 +48,9 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             print("Cannot compute a path if at least 2 points are not defined! \n")
         else
             ph_names= Vector{String}()
-            fracEvol= Vector{Float64}()
+
             n_tot   = np + (np-1)*nsteps
+            fracEvol= Matrix{Float64}(undef,n_tot,2)
             Out_PTX = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,n_tot)
 
             Pres    = zeros(Float64,np)
@@ -74,7 +75,8 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             gv      =  define_bulk_rock(gv, bulk_ini, oxi, sys_in, dtb);
 
 
-            fracEvol[1] = 1.0;          # starting material fraction is always one as we want to measure the relative change here
+            fracEvol[1,1] = 1.0;          # starting material fraction is always one as we want to measure the relative change here
+            fracEvol[1,2] = 0.0; 
             k = 1
             @showprogress for i = 1:np-1
                 for j = 1:nsteps+1
@@ -92,13 +94,21 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                             if nCon > 0.0
                                 if Out_PTX[k].frac_M > nCon/100.0
                                     bulk_ini .= Out_PTX[k].bulk_S .*((100.0-nCon)/100.0) .+ Out_PTX[k].bulk_M .*(nCon/100.0)
-                                    fracEvol[i+1] = fracEvol[i] * (Out_PTX[k].frac_C + nCon/100.0) 
+
+                                    fracEvol[k+1,1] = fracEvol[k,1] * (Out_PTX[k].frac_S + Out_PTX[k].frac_F + nCon/100.0) 
+                                    fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
                                 else
-                                    fracEvol[i+1] = fracEvol[i]
+                                    fracEvol[k+1,1] = fracEvol[k,1]
+                                    fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
                                 end
                             else
                                 bulk_ini .= Out_PTX[k].bulk_S
+                                fracEvol[k+1,1] = fracEvol[k,1]
+                                fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
                             end
+                        else
+                            fracEvol[k+1,1] = fracEvol[k,1]
+                            fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
                         end
                     elseif mode == "fc"
                         if Out_PTX[k].frac_M > 0.0
@@ -106,12 +116,21 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                             if nRes > 0.0
                                 if Out_PTX[k].frac_S > nRes/100.0
                                     bulk_ini .= Out_PTX[k].bulk_M .*((100.0-nRes)/100.0) .+ Out_PTX[k].bulk_S .*(nRes/100.0)
+
+                                    fracEvol[k+1,1] = fracEvol[k,1] * (Out_PTX[k].frac_M + nRes/100.0) 
+                                    fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
+                                else
+                                    fracEvol[k+1,1] = fracEvol[k,1] * (Out_PTX[k].frac_M + Out_PTX[k].frac_S) 
+                                    fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
                                 end
                             else
                                 bulk_ini .= Out_PTX[k].bulk_M
+                                fracEvol[k+1,1] = fracEvol[k,1] * (Out_PTX[k].frac_M) 
+                                fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
                             end
-
-                            
+                        else
+                            fracEvol[k+1,1] = fracEvol[k,1]
+                            fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
                         end
                     end
 
@@ -139,7 +158,7 @@ function get_data_plot(sysunit)
 
     n_ph    = length(ph_names)
     n_tot   = length(Out_PTX)
-    data_plot  = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_ph+1);
+    data_plot  = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_ph+2);
 
     x       = Vector{String}(undef, n_tot)
     Y       = zeros(Float64, n_ph, n_tot)
@@ -199,11 +218,17 @@ function get_data_plot(sysunit)
      end
 
 
-     data_plot[n_ph+1] = scatter(   x               = B[:,1], 
-                                    y               = B[:,2], 
+     data_plot[n_ph+1] = scatter(   x               = x,
+                                    y               = fracEvol[:,1].*100.0, 
                                     hoverinfo       = "skip",
                                     showlegend      = false,
                                     line            = attr( color   = "black", 
+                                                            width   = 1)                ) 
+     data_plot[n_ph+2] = scatter(   x               = x,
+                                    y               = fracEvol[:,2].*100.0, 
+                                    hoverinfo       = "skip",
+                                    showlegend      = false,
+                                    line            = attr( color   = "grey", 
                                                             width   = 1)                ) 
 
     return data_plot
