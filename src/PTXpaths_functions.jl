@@ -225,6 +225,9 @@ function get_data_plot(sysunit)
                                     name            = "removed %",
                                     y               = fracEvol[:,2].*100.0, 
                                     hoverinfo       = "skip",
+                                    mode            = "markers+lines",
+                                    marker          = attr(     size    = 5.0,
+                                                                color   = "black"),
                                     line            = attr( dash    = "dash",
                                                             color   = "black", 
                                                             width   = 0.5)                ) 
@@ -232,8 +235,16 @@ function get_data_plot(sysunit)
                                     y               = fracEvol[:,1].*100.0, 
                                     name            = "remaining %",
                                     hoverinfo       = "skip",
+                                    mode            = "markers+lines",
+                                    marker          = attr(     size    = 5.0,
+                                                                color   = "black"),
                                     line            = attr( color   = "black", 
                                                             width   = 0.5)                ) 
+
+
+
+
+
 
 
     # build phase list:

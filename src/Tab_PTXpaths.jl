@@ -278,6 +278,10 @@ function Tab_PTXpaths()
                 dbc_col([  
 
                     dbc_row([ 
+                        dbc_col([  
+                        ]), #, width=1
+
+
                         dbc_col([ 
                         
                             dbc_row([
@@ -319,6 +323,9 @@ function Tab_PTXpaths()
 
                         ], width=3),
 
+                        dbc_col([  
+                        ]), #, width=1
+
                         dbc_col([ 
                         
                             dbc_row([
@@ -341,7 +348,8 @@ function Tab_PTXpaths()
 
                         ], width=4),
 
-
+                        dbc_col([  
+                        ]), #, width=1
 
                         dbc_col([ 
 
@@ -464,46 +472,43 @@ function Tab_PTXpaths()
                                                                                 
                             ])
 
-                        ], width=3),
+                        ], width=4),
 
                     ]),
                     html_div("‎ "),
                     dbc_row([                                                                                     
                         dbc_col([
                             dbc_row([
-                                PTX_plot()
+                                dbc_card(dbc_cardbody([
+                                    PTX_plot()
+                                ])),
                             ]),
                             html_div("‎ "),
                             dbc_row([
-
-                                dbc_col([ 
-                                    PTX_frac_plot()
-                                ]),
-
-                                dbc_col([ 
+                                dbc_card(dbc_cardbody([
                                     dbc_row([
-        
-                                        html_div("‎ "),
-                                        html_div("‎ "),
-                                        html_div("‎ "),
-                                        html_div("‎ "),
-                                        dbc_card(dbc_cardbody([
-                                
-                                            # mineral list
-                                            dbc_row([
+                                        dbc_col([ 
+                                            PTX_frac_plot()
+                                        ], width=10)
+
+                                        dbc_col([ 
+                                            html_div("‎ "),
+                                            html_div("‎ "),
+                                            html_div("‎ "),
+                                            dbc_card(dbc_cardbody([
+
+                                                # mineral list
                                                 dcc_checklist(
                                                     id      = "phase-selector-id",
                                                     options = [],
                                                     value   = [],
                                                 )
-                                            ]),
 
-                                        ])),
+                                            ])),
 
+                                        ], width=2)
                                     ])
-        
-                                ], width=1)
-
+                                ])),
 
                             ]),      
                         
@@ -519,19 +524,3 @@ function Tab_PTXpaths()
 
 end
 
-
-# dash_datatable(
-#     id="adding-rows-table",
-#     columns=[Dict(
-#         "name" =>  "Column $i",
-#         "id" =>  "column-$i",
-#         "deletable" =>  true,
-#         "renamable" =>  true
-#     ) for i in 1:4],
-#     data=[
-#         Dict("column-$i" =>  (j + (i-1)*5)-1 for i in 1:4)
-#         for j in 1:5
-#     ],
-#     editable=true,
-#     row_deletable=true
-# ),
