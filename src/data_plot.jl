@@ -12,7 +12,7 @@ end
 
 function PTX_frac_plot()
 
-    fig =  plot(    Layout( height= 320 ))
+    fig =  plot(    Layout( height= 360 ))
 
     dcc_graph(
                 id          = "ptx-frac-plot",

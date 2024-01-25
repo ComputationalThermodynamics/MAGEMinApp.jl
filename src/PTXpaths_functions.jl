@@ -225,7 +225,6 @@ function get_data_plot(sysunit)
                                     name            = "removed %",
                                     y               = fracEvol[:,2].*100.0, 
                                     hoverinfo       = "skip",
-                                    # showlegend      = false,
                                     line            = attr( dash    = "dash",
                                                             color   = "black", 
                                                             width   = 0.5)                ) 
@@ -233,12 +232,111 @@ function get_data_plot(sysunit)
                                     y               = fracEvol[:,1].*100.0, 
                                     name            = "remaining %",
                                     hoverinfo       = "skip",
-                                    # showlegend      = false,
                                     line            = attr( color   = "black", 
                                                             width   = 0.5)                ) 
 
 
-    return data_plot
+    # build phase list:
+    phase_list = [Dict("label" => "  "*ph_names[i], "value" => ph_names[i]) for i=1:n_ph]
+
+
+    return data_plot, phase_list
+end
+
+
+"""
+    function get_data_comp_plot(sysunit,phases)
+
+    Gets the composition of selected stable phases accross the PTX paths and create a scatter plot
+"""
+function get_data_comp_plot(sysunit,phases)
+
+    n_ox    = length(Out_PTX[1].oxides)
+    oxides  = Out_PTX[1].oxides
+    n_ph    = length(phases)
+    n_tot   = length(Out_PTX)
+
+    data_comp_plot  = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_ox);
+
+    x       = Vector{Union{String,Missing}}(undef, (n_tot+1)*n_ph)
+    Y       = Matrix{Union{Float64,Missing}}(undef, n_ox, (n_tot+1)*n_ph) .= missing
+
+    colormap = get_jet_colormap(n_ox)
+ 
+    k = 1
+    for i=1:n_ph
+        ph      = phases[i]
+        for j=1:n_tot
+            
+            x[k]    = string(round(Out_PTX[j].P_kbar,digits=1))*"; "*string(round(Out_PTX[j].T_C,digits=1))
+            id      = findall(Out_PTX[j].ph .== ph)
+
+            if ~isempty(id)
+                n_solvi = length(id)
+                if sysunit == "mol"
+                    
+                    if n_solvi > 1      # then this is a solution phase as there is a solvus
+                        for n=1:n_solvi
+                            Y[:,k] += Out_PTX[j].SS_vec[id[n]].Comp ./ Float64(n_solvi) .*100.0
+                        end
+                    else
+                        id      = id[1]
+                        n_SS    = Out_PTX[j].n_SS
+                        if id > n_SS    # then this is a pure phase
+                            Y[:,k] = Out_PTX[j].PP_vec[id - n_SS].Comp .*100.0
+                        else            # else this is a solution phase
+                            Y[:,k] = Out_PTX[j].SS_vec[id].Comp .*100.0
+                        end
+
+                    end
+
+                elseif sysunit == "wt"
+
+                    if n_solvi > 1      # then this is a solution phase as there is a solvus
+                        for n=1:n_solvi
+                            Y[:,k] += Out_PTX[j].SS_vec[id[n]].Comp_wt ./ Float64(n_solvi) .*100.0
+                        end
+                    else
+                        id      = id[1]
+                        n_SS    = Out_PTX[j].n_SS
+                        if id > n_SS    # then this is a pure phase
+                            Y[:,k] = Out_PTX[j].PP_vec[id - n_SS].Comp_wt .*100.0
+                        else            # else this is a solution phase
+                            Y[:,k] = Out_PTX[j].SS_vec[id].Comp_wt .*100.0
+                        end
+
+                    end
+
+                end
+            else                    # else the phase is not stable therefore we don't fill the array
+                Y[:,k] .= missing
+            end
+            k+=1
+        
+        end
+        x[k]    = missing
+        Y[:,k] .= missing
+        k+=1
+
+    end 
+
+
+    for k=1:n_ox
+
+        data_comp_plot[k] = scatter(;   x           =  x,
+                                        y           =  Y[k,:],
+                                        name        = oxides[k],
+                                        mode        = "markers+lines",
+                                        marker      = attr(     size    = 5.0,
+                                                                color   = colormap[k]),
+
+                                        line        = attr(     width   = 1.0,
+                                                                color   = colormap[k])  )
+
+    end
+
+
+    return data_comp_plot
 end
 
 
@@ -268,4 +366,32 @@ function initialize_layout(title,sysunit)
     )
 
     return layout
+end
+
+function initialize_comp_layout(sysunit)
+    ytitle               = "oxide fraction ["*sysunit*"%]"
+    layout_comp  = Layout(
+
+        title= attr(
+            text    = "Phase composition",
+            x       = 0.5,
+            xanchor = "center",
+            yanchor = "top"
+        ),
+        margin      = attr(autoexpand = false, l=16, r=16, b=16, t=16),
+        hoverlabel = attr(
+            bgcolor     = "#566573",
+            bordercolor = "#f8f9f9",
+        ),
+        plot_bgcolor = "#FFF",
+        paper_bgcolor = "#FFF",
+        xaxis_title = "P-T conditions [kbar, °C]",
+        yaxis_title = ytitle,
+        # annotations = annotations,
+        # width       = 900,
+        height      = 360,
+        # autosize    = false,
+    )
+
+    return layout_comp
 end

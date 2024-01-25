@@ -434,16 +434,6 @@ function Tab_PTXpaths()
                                     is_open=true,
                                 ),
                                                                                 
-                        #     ])
-
-                        # ], width=3),
-
-
-
-                        # dbc_col([ 
-
-                        #     dbc_row([
-
                                 dbc_button("Display options",id="button-disp-opt"),
                                 dbc_collapse(
                                     dbc_card(dbc_cardbody([
@@ -476,8 +466,6 @@ function Tab_PTXpaths()
 
                         ], width=3),
 
-
-
                     ]),
                     html_div("‎ "),
                     dbc_row([                                                                                     
@@ -485,9 +473,39 @@ function Tab_PTXpaths()
                             dbc_row([
                                 PTX_plot()
                             ]),
-                            # dbc_row([
-                            #     PTX_frac_plot()
-                            # ]),      
+                            html_div("‎ "),
+                            dbc_row([
+
+                                dbc_col([ 
+                                    PTX_frac_plot()
+                                ]),
+
+                                dbc_col([ 
+                                    dbc_row([
+        
+                                        html_div("‎ "),
+                                        html_div("‎ "),
+                                        html_div("‎ "),
+                                        html_div("‎ "),
+                                        dbc_card(dbc_cardbody([
+                                
+                                            # mineral list
+                                            dbc_row([
+                                                dcc_checklist(
+                                                    id      = "phase-selector-id",
+                                                    options = [],
+                                                    value   = [],
+                                                )
+                                            ]),
+
+                                        ])),
+
+                                    ])
+        
+                                ], width=1)
+
+
+                            ]),      
                         
                         ], width=12),
                     ]),

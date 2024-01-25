@@ -88,11 +88,60 @@ function Tab_PTXpaths_Callbacks(app)
     """
     callback!(
         app,
+        Output("ptx-frac-plot",         "figure"),
+        Output("ptx-frac-plot",         "config"),
+        
+        Input("phase-selector-id",      "value"),
+
+        State("database-dropdown-ptx",  "value"),
+        State("test-dropdown-ptx",      "value"),
+        State("sys-unit-ptx",           "value"),
+
+        prevent_initial_call = true,
+
+        ) do    phases,
+                dtb,    test,   sysunit
+
+
+        bid         = pushed_button( callback_context() )    # get which button has been pushed
+        title       = db[(db.db .== dtb), :].title[test+1]
+
+
+        if ~isempty(phases)
+            layout_comp  = initialize_comp_layout(sysunit)
+
+            data_comp_plot = get_data_comp_plot(sysunit,phases)
+            
+            fig     = plot( data_comp_plot,layout_comp)
+        else
+            fig     =  plot(    Layout( height= 360 ))
+        end
+
+
+
+        config   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
+                                    format   = "svg", # one of png, svg, jpeg, webp
+                                    filename = "path_composition_"*replace(title, " " => "_"),
+                                    width    =  960,
+                                    height   =  360,
+                                    scale    =  2.0,       ).fields)
+
+        return fig, config
+    end
+
+    """
+        Callback to compute and display PTX path
+    """
+    callback!(
+        app,
         Output("ptx-plot",              "figure"),
         Output("ptx-plot",              "config"),
+        Output("phase-selector-id",     "options"),
+        
         Input("compute-path-button",    "n_clicks"),
         Input("sys-unit-ptx",           "value"),
 
+        State("phase-selector-id",      "options"),
         State("n-steps-id-ptx",         "value"),
         State("ptx-table",              "data"),
         State("mode-dropdown-ptx",      "value"),
@@ -115,7 +164,7 @@ function Tab_PTXpaths_Callbacks(app)
     
         prevent_initial_call = true,
 
-        ) do    compute,    upsys,      nsteps,     PTdata,     mode,
+        ) do    compute,    upsys,      phase_list, nsteps,     PTdata,     mode,
                 dtb,        bufferType, solver,
                 verbose,    bulk,       bufferN,
                 cpx,        limOpx,     limOpxVal,  test,   sysunit,
@@ -140,16 +189,16 @@ function Tab_PTXpaths_Callbacks(app)
                                     nCon,       nRes                                  )
 
 
-            layout      = initialize_layout(title,sysunit)
+            layout                  = initialize_layout(title,sysunit)
 
-            data_plot   = get_data_plot(sysunit)
+            data_plot, phase_list   = get_data_plot(sysunit)
 
-            fig         = plot(data_plot,layout)
+            fig                     = plot(data_plot,layout)
 
 
         elseif bid == "sys-unit-ptx"
-            data_plot            = get_data_plot(sysunit)
-            ytitle               = "Phase fraction ["*sysunit*"%]"
+            data_plot, phase_list   = get_data_plot(sysunit)
+            ytitle                  = "Phase fraction ["*sysunit*"%]"
             
             layout[:yaxis_title] = ytitle
 
@@ -159,14 +208,14 @@ function Tab_PTXpaths_Callbacks(app)
             fig     = plot(    Layout( height= 320 ))
         end
 
-            config   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
-                                        format   = "svg", # one of png, svg, jpeg, webp
-                                        filename =  "path_1_"*replace(title, " " => "_"),
-                                        height   =  320,
-                                        width    =  960,
-                                        scale    =  2.0,       ).fields)
+        config   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
+                                    format   = "svg", # one of png, svg, jpeg, webp
+                                    filename =  "path_1_"*replace(title, " " => "_"),
+                                    height   =  360,
+                                    width    =  960,
+                                    scale    =  2.0,       ).fields)
 
-        return fig, config
+        return fig, config, phase_list
     end
 
 
