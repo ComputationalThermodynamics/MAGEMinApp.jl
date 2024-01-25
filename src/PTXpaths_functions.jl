@@ -221,19 +221,22 @@ function get_data_plot(sysunit)
                                                             color   = colormap[i])  )
      end
 
-
      data_plot[n_ph+1] = scatter(   x               = x,
-                                    y               = fracEvol[:,1].*100.0, 
-                                    hoverinfo       = "skip",
-                                    showlegend      = false,
-                                    line            = attr( color   = "black", 
-                                                            width   = 1)                ) 
-     data_plot[n_ph+2] = scatter(   x               = x,
+                                    name            = "removed %",
                                     y               = fracEvol[:,2].*100.0, 
                                     hoverinfo       = "skip",
-                                    showlegend      = false,
-                                    line            = attr( color   = "grey", 
-                                                            width   = 1)                ) 
+                                    # showlegend      = false,
+                                    line            = attr( dash    = "dash",
+                                                            color   = "black", 
+                                                            width   = 0.5)                ) 
+     data_plot[n_ph+2] = scatter(   x               = x,
+                                    y               = fracEvol[:,1].*100.0, 
+                                    name            = "remaining %",
+                                    hoverinfo       = "skip",
+                                    # showlegend      = false,
+                                    line            = attr( color   = "black", 
+                                                            width   = 0.5)                ) 
+
 
     return data_plot
 end
@@ -260,7 +263,7 @@ function initialize_layout(title,sysunit)
         yaxis_title = ytitle,
         # annotations = annotations,
         # width       = 900,
-        height      = 320,
+        height      = 360,
         # autosize    = false,
     )
 

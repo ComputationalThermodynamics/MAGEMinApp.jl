@@ -23,7 +23,7 @@ end
 
 function PTX_plot()
 
-    fig =  plot(    Layout( height= 320 ))
+    fig =  plot(    Layout( height= 360 ))
 
     dcc_graph(
                 id          = "ptx-plot",
