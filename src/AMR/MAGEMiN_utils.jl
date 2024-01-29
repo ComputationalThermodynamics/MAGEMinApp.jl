@@ -93,7 +93,7 @@ function refine_MAGEMin(data,
                 Bvec[i] = bufferN1;
             end
         end
-        Out_XY_new  =   multi_point_minimization(Pvec, Tvec, MAGEMin_data, Xvec, B=Bvec, Xoxides=oxi, sys_in="mol");
+        Out_XY_new  =   multi_point_minimization(Pvec, Tvec, MAGEMin_data, X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol");
         
     end
 
