@@ -64,16 +64,25 @@ function Tab_PhaseDiagram()
                                     html_div("‎ "),
 
                                     dbc_row([
+                                        dbc_col([
+                                            html_h1("Save point", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                        ], width=3),
                                         dbc_col([ 
                                             dbc_input(
                                                 id      = "Filename-eq-id",
                                                 type    = "text", 
                                                 style   = Dict("textAlign" => "center") ,
-                                                value   = "... filename ..."   ),     
-                                        ], width=6),
+                                                value   = "filename"   ),     
+                                        ], width=4),
                                         dbc_col([    
                                             dbc_button(
-                                                "Save equilibrium data", id="save-eq-button", color="light",  n_clicks=0,
+                                                "Table", id="save-eq-table-button", color="light",  n_clicks=0,
+                                            ),
+                                            dcc_download(id="download-table-text"),  
+                                        # ]),
+                                        # dbc_col([    
+                                            dbc_button(
+                                                "Table light", id="save-eq-button", color="light",  n_clicks=0,
                                             ),
                                             dcc_download(id="download-text"),  
                                         ]),
@@ -92,38 +101,52 @@ function Tab_PhaseDiagram()
                                             is_open =false,
                                             duration=4000,
                                         ),
-                                        # html_div(id="data-eq-save"),
-                                    ]),
-                                    dbc_row([
-                                        dbc_col([ 
-                                            dbc_input(
-                                                id      = "Filename-all-id",
-                                                type    = "text", 
-                                                style   = Dict("textAlign" => "center") ,
-                                                value   = "... filename ..."   ),     
-                                        ], width=6),
-                                        dbc_col([    
-                                            dbc_button(
-                                                "Save all data points", id="save-all-button", color="light",  n_clicks=0,
-                                            ),
-                                            dcc_download(id="download-all-text"),  
-                                        ]),
-                                    ]),
-                                    dbc_row([
                                         dbc_alert(
-                                            "Successfully saved all data points information",
-                                            id      ="data-all-save",
+                                            "Successfully saved data point information",
+                                            id      ="data-eq-table-save",
                                             is_open =false,
                                             duration=4000,
                                         ),
                                         dbc_alert(
                                             "Provide a valid filename (without extension)",
                                             color="danger",
-                                            id      ="data-all-save-failed",
+                                            id      ="data-eq-save-table-failed",
                                             is_open =false,
                                             duration=4000,
                                         ),
-                                        # html_div(id="data-all-save"),
+                                    ]),
+                                    dbc_row([
+                                        dbc_col([
+                                            html_h1("Save all", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                        ], width=3),
+                                        dbc_col([ 
+                                            dbc_input(
+                                                id      = "Filename-all-id",
+                                                type    = "text", 
+                                                style   = Dict("textAlign" => "center") ,
+                                                value   = "filename"   ),     
+                                        ], width=4),
+                                        dbc_col([    
+                                            dbc_button(
+                                                "Table", id="save-all-table-button", color="light",  n_clicks=0,
+                                            ),
+                                            dcc_download(id="download-all-table-text"),  
+                                        ]),
+                                    ]),
+                                    dbc_row([
+                                        dbc_alert(
+                                            "Successfully saved all data points information",
+                                            id      ="data-all-table-save",
+                                            is_open =false,
+                                            duration=4000,
+                                        ),
+                                        dbc_alert(
+                                            "Provide a valid filename (without extension)",
+                                            color="danger",
+                                            id      ="data-all-save-table-failed",
+                                            is_open =false,
+                                            duration=4000,
+                                        ),
                                     ]),
 
                         

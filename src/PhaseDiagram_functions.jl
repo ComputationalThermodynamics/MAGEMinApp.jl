@@ -41,6 +41,19 @@ function get_computation_info(npoints, meant)
 end
 
 
+function prt(   in    ::Union{Float64,Vector{Float64}};
+                acc   ::Int64                             =   4)
+
+    if typeof(in) == Vector{Float64}
+        out = " $( join( round.( in, digits  =   acc)," ") )"
+    else
+        out = " $(       round( in, digits   =   acc)      )"
+    end
+
+    return out
+end
+
+
 function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
 
     PD_infos  = Vector{String}(undef,2)

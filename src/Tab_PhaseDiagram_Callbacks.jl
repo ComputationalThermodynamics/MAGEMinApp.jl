@@ -1,21 +1,47 @@
 function Tab_PhaseDiagram_Callbacks(app)
 
-    #save all to file
+
+    # save table to file
     callback!(
         app,
-        Output("download-all-text", "data"),
-        Output("data-all-save", "is_open"),
-        Output("data-all-save-failed", "is_open"),
-        Input("save-all-button", "n_clicks"),
+        Output("download-table-text", "data"),
+        Output("data-eq-table-save", "is_open"),
+        Output("data-eq-save-table-failed", "is_open"),
+        Input("save-eq-table-button", "n_clicks"),
+        State("Filename-eq-id", "value"),
+        State("database-dropdown","value"),
+        prevent_initial_call=true,
+    ) do n_clicks, fname, dtb
+
+        if fname != "filename"
+            datab   = "_"*dtb
+            fileout = fname*datab*".txt"
+            file    = MAGEMin_data2table(Out_XY[point_id])            #point_id is defined as global variable in clickData callback
+            output  = Dict("content" => file,"filename" => fileout)
+            
+            return output, "success", ""
+        else
+            return nothing, "", "failed"
+        end
+    end
+
+
+    #save all table to file
+    callback!(
+        app,
+        Output("download-all-table-text", "data"),
+        Output("data-all-table-save", "is_open"),
+        Output("data-all-save-table-failed", "is_open"),
+        Input("save-all-table-button", "n_clicks"),
         State("Filename-all-id", "value"),
         State("database-dropdown","value"),
         prevent_initial_call=true,
     ) do n_clicks, fname, dtb
 
-        if fname != "... filename ..."
+        if fname != "filename"
             datab   = "_"*dtb
             fileout = fname*datab*".txt"
-            file    = save_all_to_file(dtb)            #point_id is defined as global variable in clickData callback
+            file    = MAGEMin_data2table(Out_XY)            #point_id is defined as global variable in clickData callback
             output  = Dict("content" => file,"filename" => fileout)
             
             return output, "success", ""
@@ -24,6 +50,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             return output, "", "failed"
         end
     end
+
+
 
     # save to file
     callback!(
@@ -37,7 +65,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         prevent_initial_call=true,
     ) do n_clicks, fname, dtb
 
-        if fname != "... filename ..."
+        if fname != "filename"
             P       = "_Pkbar_"*string(Out_XY[point_id].P_kbar)
             T       = "_TC_"*string(Out_XY[point_id].T_C)
             datab   = "_"*dtb

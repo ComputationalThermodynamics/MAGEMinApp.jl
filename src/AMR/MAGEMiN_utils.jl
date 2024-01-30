@@ -1,11 +1,12 @@
-###
-# MAGEMin_Data(db, list_gv, list_z_b, list_DB, list_splx_data)
-#
-#
-#
-###
 
+"""
+    create_forest( tmin::Float64,
+                            tmax::Float64,
+                            pmin::Float64,
+                            pmax::Float64,
+                            sub::Int64)
 
+"""
 function create_forest( tmin::Float64,
                         tmax::Float64,
                         pmin::Float64,
@@ -25,6 +26,53 @@ function create_forest( tmin::Float64,
     return forest_data
 end
 
+
+"""
+    MAGEMin_data2table( out:: Union{Vector{MAGEMin_C.gmin_struct{Float64, Int64}}, MAGEMin_C.gmin_struct{Float64, Int64}})
+
+    Transform MAGEMin output into a table
+
+"""
+function MAGEMin_data2table( out:: Union{Vector{MAGEMin_C.gmin_struct{Float64, Int64}}, MAGEMin_C.gmin_struct{Float64, Int64}})
+
+    if typeof(out) == MAGEMin_C.gmin_struct{Float64, Int64}
+        out = [out]
+    end
+    np      = length(out)
+
+    table   =   "point[#] P[kbar] T[°C]" *" phase" * " mode[mol%]" * " mode[wt%]" * 
+                " density[kg/m3]" * " volume[cm3/mol]" * " heatCapacity[kJ/K]" * " alpha[1/K]" * " Entropy[J/K]" * "Enthalpy[J]" *
+                " Vp[km/s]" * " Vs[km/s]" * " BulkMod[GPa]" * " ShearMod[GPa]" *
+                " " *join(out[1].oxides.*"[mol%]", " ") * " " *join(out[1].oxides.*"[wt%]", " ") *"\n"
+    for k=1:np
+        np  = length(out[k].ph)
+        nss = out[k].n_SS
+        npp = np-nss
+        table *= "$k" * prt(out[k].P_kbar) * prt(out[k].T_C) * " system " * "100.0" * "100.0" * 
+        prt(out[k].rho) * prt(out[k].V) * prt(out[k].cp) * prt(out[k].alpha) * prt(out[k].entropy) * prt(out[k].enthalpy) *
+        prt(out[k].Vp) * prt(out[k].Vs) *prt(out[k].bulkMod) * prt(out[k].shearMod) *
+        prt(out[k].bulk.*100.0) * prt(out[k].bulk_wt.*100.0) * "\n"
+        for i=1:nss
+            table *= "$k" * prt(out[k].P_kbar) * prt(out[k].T_C) * " "*out[k].ph[i] * prt(out[k].ph_frac[i].*100.0) * prt(out[k].ph_frac_wt[i].*100.0) * 
+            prt(out[k].SS_vec[i].rho) * prt(out[k].SS_vec[i].V) * prt(out[k].SS_vec[i].cp) * prt(out[k].SS_vec[i].alpha) * prt(out[k].SS_vec[i].entropy) * prt(out[k].SS_vec[i].enthalpy) *
+            prt(out[k].SS_vec[i].Vp) * prt(out[k].SS_vec[i].Vs) * prt(out[k].SS_vec[i].bulkMod) * prt(out[k].SS_vec[i].shearMod) *
+            prt(out[k].SS_vec[i].Comp.*100.0) * prt(out[k].SS_vec[i].Comp_wt.*100.0) * "\n"
+        end
+
+        if npp > 0
+            for i=1:npp
+                table *= "$k" * prt(out[k].P_kbar) * prt(out[k].T_C) * " "*out[k].ph[i+nss] * prt(out[k].ph_frac[i].*100.0) * prt(out[k].ph_frac_wt[i].*100.0)  * 
+                prt(out[k].PP_vec[i].rho) * prt(out[k].PP_vec[i].V) * prt(out[k].PP_vec[i].cp) * prt(out[k].PP_vec[i].alpha) * prt(out[k].PP_vec[i].entropy) * prt(out[k].PP_vec[i].enthalpy) *
+                prt(out[k].PP_vec[i].Vp) * prt(out[k].PP_vec[i].Vs) * prt(out[k].PP_vec[i].bulkMod) * prt(out[k].PP_vec[i].shearMod) *
+                prt(out[k].PP_vec[i].Comp.*100.0) * prt(out[k].PP_vec[i].Comp_wt.*100.0) * "\n"
+            end
+        end
+
+    end
+
+
+    return table
+end
 
 function refine_MAGEMin(data, 
                         MAGEMin_data    :: MAGEMin_Data, 

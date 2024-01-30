@@ -1,5 +1,33 @@
 function Tab_PTXpaths_Callbacks(app)
 
+
+
+    #save all table to file
+    callback!(
+        app,
+        Output("download-all-table-ptx-text", "data"),
+        Output("data-all-table-ptx-save", "is_open"),
+        Output("data-all-save-table-ptx-failed", "is_open"),
+        Input("save-all-table-ptx-button", "n_clicks"),
+        State("Filename-all-ptx-id", "value"),
+        State("database-dropdown-ptx","value"),
+        prevent_initial_call=true,
+    ) do n_clicks, fname, dtb
+
+        if fname != "filename"
+            datab   = "_"*dtb
+            fileout = fname*datab*".txt"
+            file    = MAGEMin_data2table(Out_PTX)            #point_id is defined as global variable in clickData callback
+            output  = Dict("content" => file,"filename" => fileout)
+            
+            return output, "success", ""
+        else
+            output = nothing
+            return output, "", "failed"
+        end
+    end
+
+
     """
         Callback to update preview of PT path
     """
