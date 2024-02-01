@@ -31,6 +31,17 @@ function PTX_plot()
             )
 end
 
+function TAS_plot()
+
+    fig =  plot(    Layout(     width       = 740,
+                                height      = 400 ))
+
+    dcc_graph(
+                id          = "TAS-plot",
+                figure      = fig,
+            )
+end
+
 function path_plot()
 
     fig = plot(    Layout( height= 220 ))

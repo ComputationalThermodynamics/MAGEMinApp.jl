@@ -157,6 +157,49 @@ function Tab_PTXpaths_Callbacks(app)
         return fig, config
     end
 
+
+
+    """
+        Callback to compute and display TAS diagram
+    """
+    callback!(
+        app,
+        Output("TAS-plot",              "figure"),
+        Output("TAS-plot",              "config"),
+        
+        Input("phase-selector-id",      "value"),
+
+        State("database-dropdown-ptx",  "value"),
+        State("test-dropdown-ptx",      "value"),
+        State("sys-unit-ptx",           "value"),
+
+        prevent_initial_call = true,
+
+        ) do    phases,
+                dtb,    test,   sysunit
+
+
+        bid         = pushed_button( callback_context() )    # get which button has been pushed
+        title       = db[(db.db .== dtb), :].title[test+1]
+
+        if "liq" in phases
+            tas, layout = get_TAS_diagram(phases)
+            figTAS      = plot( tas, layout)
+        else
+            figTAS      =  plot(Layout( height= 360 ))
+        end
+
+        configTAS   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
+                                        format   = "svg", # one of png, svg, jpeg, webp
+                                        filename = "TAS_diagram_"*replace(title, " " => "_"),
+                                        width    =  960,
+                                        height   =  360,
+                                        scale    =  2.0,       ).fields)
+
+        return figTAS, configTAS
+    end
+
+
     """
         Callback to compute and display PTX path
     """
@@ -221,29 +264,28 @@ function Tab_PTXpaths_Callbacks(app)
 
             data_plot, phase_list   = get_data_plot(sysunit)
 
-            fig                     = plot(data_plot,layout)
-
+            figPTX                  = plot(data_plot,layout)
 
         elseif bid == "sys-unit-ptx"
             data_plot, phase_list   = get_data_plot(sysunit)
             ytitle                  = "Phase fraction ["*sysunit*"%]"
             
-            layout[:yaxis_title] = ytitle
+            layout[:yaxis_title]    = ytitle
 
-            fig         = plot(data_plot,layout)
+            figPTX                  = plot(data_plot,layout)
 
         else
-            fig     = plot(    Layout( height= 320 ))
+            figPTX                  = plot(    Layout( height= 320 ))
         end
 
-        config   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
+        configPTX   = PlotConfig(   toImageButtonOptions  = attr(     name     = "Download as svg",
                                     format   = "svg", # one of png, svg, jpeg, webp
                                     filename =  "path_1_"*replace(title, " " => "_"),
                                     height   =  360,
                                     width    =  960,
                                     scale    =  2.0,       ).fields)
 
-        return fig, config, phase_list
+        return figPTX, configPTX, phase_list
     end
 
 

@@ -11,13 +11,134 @@ function get_jet_colormap(n)
 end
 
 
+"""
+    Retrieve TAS diagram
+"""
+function get_TAS_diagram(phases)
+
+    tas  = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, 16);
+
+    F  = [35. 0; 41 0; 41 7; 45 9.4; 48.4 11.5; 52.5 14; 48 16; 35 16;35 0]
+    Pc = [41. 0; 45 0; 45 3; 41 3;41 0]
+    U1 = [41. 3; 45 3; 45 5; 49.4 7.3; 45 9.4; 41 7;41 3]
+    U2 = [49.4 7.3; 53 9.3; 48.4 11.5; 45 9.4;49.4 7.3]
+    U3 = [53. 9.3; 57.6 11.7; 52.5 14; 48.4 11.5;53 9.3]
+    Ph = [52.5 14; 57.6 11.7; 65 16; 48 16;52.5 14]
+    B  = [45. 0; 52 0; 52 5; 45 5;45 0]
+    S1 = [45. 5; 52 5; 49.4 7.3;45 5]
+    S2 = [52. 5; 57 5.9; 53 9.3; 49.4 7.3;52 5]
+    S3 = [57. 5.9; 63 7; 57.6 11.7; 53 9.3;57 5.9]
+    T  = [63. 7; 69 8; 69 16; 65 16; 57.6 11.7;63 7]
+    O1 = [52. 0; 57 0; 57 5.9; 52 5;52 0]
+    O2 = [57. 0; 63 0; 63 7; 57 5.9;57 0]
+    O3 = [63. 0; 77 0; 69 8; 63 7;63 0]
+    R  = [77. 0; 85 0; 85 16; 69 16; 69 8;77 0]
+
+    fields = (F,Pc,U1,U2,U3,Ph,B,S1,S2,S3,T,O1,O2,O3,R)
+
+    nf = length(fields)
+    name = ["foidite" "picrobasalt" "basanite" "phonotephrite" "tephriphonolite" "phonolite" "basalt" "trachybasalt" "basaltic<br>trachyandesite" "trachyandesite" "trachyte" "basaltic<br>andesite" "andesite" "dacite" "rhyolite"];
+       
+    for i = 1:nf
+        tas[i] = scatter(   x           = fields[i][:,1], 
+                            y           = fields[i][:,2], 
+                            hoverinfo   = "skip",
+                            mode        = "lines",
+                            showscale   = false,
+                            showlegend  = false,
+                            line        = attr( color   = "black", 
+                                                width   = 0.75)                )
+    end
+
+
+    n_ox    = length(Out_PTX[1].oxides)
+    oxides  = Out_PTX[1].oxides
+    n_ph    = length(phases)
+    n_tot   = length(Out_PTX)
+
+    data_comp_plot  = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_ox);
+    liq_tas         = Matrix{Union{Float64,Missing}}(undef, n_ox, (n_tot+1))      .= missing
+    colormap        = get_jet_colormap(n_ox)
+ 
+    for j=1:n_tot
+        id      = findall(Out_PTX[j].ph .== "liq")
+        if ~isempty(id)
+            liq_tas[:,j] = Out_PTX[j].SS_vec[id[1]].Comp_wt .*100.0
+        end
+    end
+
+    dry  = findall(oxides .!= "H2O") 
+    id_Y = findall(oxides .== "K2O" .|| oxides .== "Na2O")
+    id_X = findall(oxides .== "SiO2") 
+
+    if ~isempty(dry)
+        liq_tas ./=sum(liq_tas[dry,:],dims=1)
+        liq_tas .*= 100.0
+    end
+
+    tas[end] = scatter(     x           = liq_tas[id_X,:], 
+                            y           = sum(liq_tas[id_Y,:],dims=1), 
+                            hoverinfo   = "skip",
+                            mode        = "markers",
+                            showscale   = false,
+                            showlegend  = false,
+                            marker      = attr(     size    = 5.0,
+                                                    color   = "orange")    )
+
+    # print("liq_tas: $liq_tas\n")
+
+    annotations = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,nf)
+
+    for i=1:nf
+        annotations[i] =   attr(    xref        = "x",
+                                    yref        = "y",
+                                    x           = sum(fields[i][1:end-1,1])/(size(fields[i],1)-1.0),
+                                    y           = sum(fields[i][1:end-1,2])/(size(fields[i],1)-1.0),
+                                    # xshift      = -10,
+                                    # yshift      = +10,
+                                    text        = name[i],
+                                    showarrow   = false,
+                                    visible     = true,
+                                    font        = attr( size = 10, color = "#212121"),
+                                )  
+    end
+
+    layout  = Layout(
+
+        title= attr(
+            text    = "TAS Diagram",
+            x       = 0.5,
+            xanchor = "center",
+            yanchor = "top"
+        ),
+        margin      = attr(autoexpand = false, l=16, r=16, b=16, t=16),
+        hoverlabel = attr(
+            bgcolor     = "#566573",
+            bordercolor = "#f8f9f9",
+        ),
+        plot_bgcolor = "#FFF",
+        paper_bgcolor = "#FFF",
+        xaxis_title = "SiO2 [wt%]",
+        yaxis_title = "K2O + Na2O [wt%]",
+        xaxis_range = [35.0, 85.0], 
+        # yaxis_range = [0.0,15.0],
+        annotations = annotations,
+        width       = 740,
+        height      = 400,
+        # autosize    = false,
+    )
+
+   
+    return tas, layout
+end
+
 function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   oxi,
                                 dtb,        bufferType, solver,
                                 verbose,    bulk,       bufferN,
                                 cpx,        limOpx,     limOpxVal,
                                 nCon,       nRes                                  )
 
-        global Out_PTX, ph_names, fracEvol
+        global Out_PTX, ph_names, fracEvol, compo_matrix
 
 
         nsteps = Int64(nsteps)
@@ -86,7 +207,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                     if mode == "fm" || mode == "fc"
                         gv      =  define_bulk_rock(gv, bulk_ini, oxi, sys_in, dtb);
                     end
-                    # print("nCon: $nCon\n")
+
                     Out_PTX[k] = deepcopy( point_wise_minimization(P,T, gv, z_b, DB, splx_data, sys_in) )
 
                     if mode == "fm"
@@ -141,6 +262,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                     k += 1
                 end
             end
+            
             Out_PTX[k] = deepcopy( point_wise_minimization(Pres[np],Temp[np], gv, z_b, DB, splx_data, sys_in) )
   
             for k = 1:n_tot
@@ -225,26 +347,24 @@ function get_data_plot(sysunit)
                                     name            = "removed %",
                                     y               = fracEvol[:,2].*100.0, 
                                     hoverinfo       = "skip",
-                                    mode            = "markers+lines",
-                                    marker          = attr(     size    = 5.0,
-                                                                color   = "black"),
+                                    # mode            = "markers+lines",
+                                    mode            = "lines",
+                                    # marker          = attr(     size    = 5.0,
+                                    #                             color   = "black"),
                                     line            = attr( dash    = "dash",
                                                             color   = "black", 
-                                                            width   = 0.5)                ) 
+                                                            width   = 0.75)                ) 
+
      data_plot[n_ph+2] = scatter(   x               = x,
                                     y               = fracEvol[:,1].*100.0, 
                                     name            = "remaining %",
                                     hoverinfo       = "skip",
-                                    mode            = "markers+lines",
-                                    marker          = attr(     size    = 5.0,
-                                                                color   = "black"),
+                                    # mode            = "markers+lines",
+                                    mode            = "lines",
+                                    # marker          = attr(     size    = 5.0,
+                                    #                             color   = "black"),
                                     line            = attr( color   = "black", 
-                                                            width   = 0.5)                ) 
-
-
-
-
-
+                                                            width   = 0.75)                ) 
 
 
     # build phase list:
@@ -268,11 +388,9 @@ function get_data_comp_plot(sysunit,phases)
     n_tot   = length(Out_PTX)
 
     data_comp_plot  = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_ox);
-
-    x       = Vector{Union{String,Missing}}(undef, (n_tot+1)*n_ph)
-    Y       = Matrix{Union{Float64,Missing}}(undef, n_ox, (n_tot+1)*n_ph) .= missing
-
-    colormap = get_jet_colormap(n_ox)
+    x               = Vector{Union{String,Missing}}(undef, (n_tot+1)*n_ph)
+    compo_matrix    = Matrix{Union{Float64,Missing}}(undef, n_ox, (n_tot+1)*n_ph) .= missing
+    colormap        = get_jet_colormap(n_ox)
  
     k = 1
     for i=1:n_ph
@@ -288,15 +406,15 @@ function get_data_comp_plot(sysunit,phases)
                     
                     if n_solvi > 1      # then this is a solution phase as there is a solvus
                         for n=1:n_solvi
-                            Y[:,k] += Out_PTX[j].SS_vec[id[n]].Comp ./ Float64(n_solvi) .*100.0
+                            compo_matrix[:,k] += Out_PTX[j].SS_vec[id[n]].Comp ./ Float64(n_solvi) .*100.0
                         end
                     else
                         id      = id[1]
                         n_SS    = Out_PTX[j].n_SS
                         if id > n_SS    # then this is a pure phase
-                            Y[:,k] = Out_PTX[j].PP_vec[id - n_SS].Comp .*100.0
+                            compo_matrix[:,k] = Out_PTX[j].PP_vec[id - n_SS].Comp .*100.0
                         else            # else this is a solution phase
-                            Y[:,k] = Out_PTX[j].SS_vec[id].Comp .*100.0
+                            compo_matrix[:,k] = Out_PTX[j].SS_vec[id].Comp .*100.0
                         end
 
                     end
@@ -305,37 +423,36 @@ function get_data_comp_plot(sysunit,phases)
 
                     if n_solvi > 1      # then this is a solution phase as there is a solvus
                         for n=1:n_solvi
-                            Y[:,k] += Out_PTX[j].SS_vec[id[n]].Comp_wt ./ Float64(n_solvi) .*100.0
+                            compo_matrix[:,k] += Out_PTX[j].SS_vec[id[n]].Comp_wt ./ Float64(n_solvi) .*100.0
                         end
                     else
                         id      = id[1]
                         n_SS    = Out_PTX[j].n_SS
                         if id > n_SS    # then this is a pure phase
-                            Y[:,k] = Out_PTX[j].PP_vec[id - n_SS].Comp_wt .*100.0
+                            compo_matrix[:,k] = Out_PTX[j].PP_vec[id - n_SS].Comp_wt .*100.0
                         else            # else this is a solution phase
-                            Y[:,k] = Out_PTX[j].SS_vec[id].Comp_wt .*100.0
+                            compo_matrix[:,k] = Out_PTX[j].SS_vec[id].Comp_wt .*100.0
                         end
 
                     end
 
                 end
             else                    # else the phase is not stable therefore we don't fill the array
-                Y[:,k] .= missing
+                compo_matrix[:,k] .= missing
             end
             k+=1
         
         end
         x[k]    = missing
-        Y[:,k] .= missing
+        compo_matrix[:,k] .= missing
         k+=1
 
     end 
 
-
     for k=1:n_ox
 
         data_comp_plot[k] = scatter(;   x           =  x,
-                                        y           =  Y[k,:],
+                                        y           =  compo_matrix[k,:],
                                         name        = oxides[k],
                                         mode        = "markers+lines",
                                         marker      = attr(     size    = 5.0,

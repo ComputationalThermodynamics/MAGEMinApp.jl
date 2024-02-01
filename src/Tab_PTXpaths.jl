@@ -549,6 +549,18 @@ function Tab_PTXpaths()
                         ], width=12),
                     ]),
 
+                    html_div("‎ "),
+                    dbc_row([                                                                                     
+                        dbc_col([
+                            dbc_row([
+                                dbc_card(dbc_cardbody([
+                                    TAS_plot()
+                                ])),
+                            ]),
+                        ]),
+                    ]),
+
+
                 ], width=9),
 
 
