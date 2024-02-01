@@ -16,27 +16,43 @@ end
 """
 function get_TAS_diagram(phases)
 
-    tas  = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, 16);
+    tas      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, 16);
 
-    F  = [35. 0; 41 0; 41 7; 45 9.4; 48.4 11.5; 52.5 14; 48 16; 35 16;35 0]
-    Pc = [41. 0; 45 0; 45 3; 41 3;41 0]
-    U1 = [41. 3; 45 3; 45 5; 49.4 7.3; 45 9.4; 41 7;41 3]
-    U2 = [49.4 7.3; 53 9.3; 48.4 11.5; 45 9.4;49.4 7.3]
-    U3 = [53. 9.3; 57.6 11.7; 52.5 14; 48.4 11.5;53 9.3]
-    Ph = [52.5 14; 57.6 11.7; 65 16; 48 16;52.5 14]
-    B  = [45. 0; 52 0; 52 5; 45 5;45 0]
-    S1 = [45. 5; 52 5; 49.4 7.3;45 5]
-    S2 = [52. 5; 57 5.9; 53 9.3; 49.4 7.3;52 5]
-    S3 = [57. 5.9; 63 7; 57.6 11.7; 53 9.3;57 5.9]
-    T  = [63. 7; 69 8; 69 16; 65 16; 57.6 11.7;63 7]
-    O1 = [52. 0; 57 0; 57 5.9; 52 5;52 0]
-    O2 = [57. 0; 63 0; 63 7; 57 5.9;57 0]
-    O3 = [63. 0; 77 0; 69 8; 63 7;63 0]
-    R  = [77. 0; 85 0; 85 16; 69 16; 69 8;77 0]
+    F        = [35. 0; 41 0; 41 7; 45 9.4; 48.4 11.5; 52.5 14; 48 16; 35 16;35 0]
+    Pc       = [41. 0; 45 0; 45 3; 41 3;41 0]
+    U1       = [41. 3; 45 3; 45 5; 49.4 7.3; 45 9.4; 41 7;41 3]
+    U2       = [49.4 7.3; 53 9.3; 48.4 11.5; 45 9.4;49.4 7.3]
+    U3       = [53. 9.3; 57.6 11.7; 52.5 14; 48.4 11.5;53 9.3]
+    Ph       = [52.5 14; 57.6 11.7; 65 16; 48 16;52.5 14]
+    B        = [45. 0; 52 0; 52 5; 45 5;45 0]
+    S1       = [45. 5; 52 5; 49.4 7.3;45 5]
+    S2       = [52. 5; 57 5.9; 53 9.3; 49.4 7.3;52 5]
+    S3       = [57. 5.9; 63 7; 57.6 11.7; 53 9.3;57 5.9]
+    T        = [63. 7; 69 8; 69 16; 65 16; 57.6 11.7;63 7]
+    O1       = [52. 0; 57 0; 57 5.9; 52 5;52 0]
+    O2       = [57. 0; 63 0; 63 7; 57 5.9;57 0]
+    O3       = [63. 0; 77 0; 69 8; 63 7;63 0]
+    R        = [77. 0; 85 0; 85 16; 69 16; 69 8;77 0]
 
-    fields = (F,Pc,U1,U2,U3,Ph,B,S1,S2,S3,T,O1,O2,O3,R)
+    fields   = (F,Pc,U1,U2,U3,Ph,B,S1,S2,S3,T,O1,O2,O3,R)
+    nf       = length(fields)
+    xc       = zeros(nf)
+    yc       = zeros(nf)
 
-    nf = length(fields)
+    for i=1:nf
+        xc[i] = sum(fields[i][1:end-1,1])/(size(fields[i],1)-1.0)
+        yc[i] = sum(fields[i][1:end-1,2])/(size(fields[i],1)-1.0)
+    end
+    
+    # annotations shifts
+    xc[1]   -=4.0;
+    yc[1]   +=3.0;
+    yc[3]   +=1.0;
+    xc[6]   +=2.0;
+    yc[8]   -=0.25;
+    yc[9]   +=0.25;
+
+
     name = ["foidite" "picrobasalt" "basanite" "phonotephrite" "tephriphonolite" "phonolite" "basalt" "trachybasalt" "basaltic<br>trachyandesite" "trachyandesite" "trachyte" "basaltic<br>andesite" "andesite" "dacite" "rhyolite"];
        
     for i = 1:nf
@@ -53,12 +69,10 @@ function get_TAS_diagram(phases)
 
     n_ox    = length(Out_PTX[1].oxides)
     oxides  = Out_PTX[1].oxides
-    n_ph    = length(phases)
     n_tot   = length(Out_PTX)
 
-    data_comp_plot  = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_ox);
     liq_tas         = Matrix{Union{Float64,Missing}}(undef, n_ox, (n_tot+1))      .= missing
-    colormap        = get_jet_colormap(n_ox)
+    colormap        = get_jet_colormap(n_tot+1)
  
     for j=1:n_tot
         id      = findall(Out_PTX[j].ph .== "liq")
@@ -80,10 +94,13 @@ function get_TAS_diagram(phases)
                             y           = sum(liq_tas[id_Y,:],dims=1), 
                             hoverinfo   = "skip",
                             mode        = "markers",
+                            opacity     = 0.8,
                             showscale   = false,
                             showlegend  = false,
-                            marker      = attr(     size    = 5.0,
-                                                    color   = "orange")    )
+                            marker      = attr(     size        = fracEvol[:,1].*15.0 .+ 6.0,
+                                                    color       = colormap,
+                                                    line        = attr( width = 0.75,
+                                                                        color = "black" )    ))
 
     # print("liq_tas: $liq_tas\n")
 
@@ -92,10 +109,8 @@ function get_TAS_diagram(phases)
     for i=1:nf
         annotations[i] =   attr(    xref        = "x",
                                     yref        = "y",
-                                    x           = sum(fields[i][1:end-1,1])/(size(fields[i],1)-1.0),
-                                    y           = sum(fields[i][1:end-1,2])/(size(fields[i],1)-1.0),
-                                    # xshift      = -10,
-                                    # yshift      = +10,
+                                    x           = xc[i],
+                                    y           = yc[i],
                                     text        = name[i],
                                     showarrow   = false,
                                     visible     = true,
@@ -106,7 +121,7 @@ function get_TAS_diagram(phases)
     layout  = Layout(
 
         title= attr(
-            text    = "TAS Diagram",
+            text    = "TAS Diagram (Anhydrous)",
             x       = 0.5,
             xanchor = "center",
             yanchor = "top"
@@ -123,8 +138,8 @@ function get_TAS_diagram(phases)
         xaxis_range = [35.0, 85.0], 
         # yaxis_range = [0.0,15.0],
         annotations = annotations,
-        width       = 740,
-        height      = 400,
+        width       = 760,
+        height      = 480,
         # autosize    = false,
     )
 

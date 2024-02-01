@@ -192,8 +192,8 @@ function Tab_PTXpaths_Callbacks(app)
         configTAS   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
                                         format   = "svg", # one of png, svg, jpeg, webp
                                         filename = "TAS_diagram_"*replace(title, " " => "_"),
-                                        width    =  960,
-                                        height   =  360,
+                                        width       = 760,
+                                        height      = 480,
                                         scale    =  2.0,       ).fields)
 
         return figTAS, configTAS
