@@ -1,3 +1,5 @@
+<img src="./pics/readme_pd.png" alt="drawing" width="640" alt="centered image"/>
+
 # MAGEMinApp.jl
 
 `MAGEMinApp.jl` provides an easy-to-use web-based graphical user interface for `MAGEMin`. Available features:
