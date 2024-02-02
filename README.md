@@ -1,4 +1,4 @@
-<img src="./pics/readme_pd.png" alt="drawing" width="640" alt="centered image"/>
+<img src="https://raw.githubusercontent.com/ComputationalThermodynamics/repositories_pictures/main/MAGEMinApp/MAGEMin_app.png?raw=true" alt="drawing" width="820" alt="centered image"/>
 
 # MAGEMinApp.jl
 
