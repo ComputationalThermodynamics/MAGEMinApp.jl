@@ -1,4 +1,4 @@
-name = "MAGEMin_app"
+name = "MAGEMinApp"
 uuid = "3bfd43b6-b983-4998-9dd6-d5d715d830b7"
 authors = ["Nicolas Riel <nriel@uni-mainz.de>", "Boris Kaus <kaus@uni-mainz.de>"]
 version = "0.1.0"

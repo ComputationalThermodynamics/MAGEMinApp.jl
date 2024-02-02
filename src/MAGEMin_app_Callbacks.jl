@@ -1,4 +1,4 @@
-function MAGEMin_app_Callbacks(app)
+function MAGEMinApp_Callbacks(app)
 
 
     #save all to file

@@ -1,4 +1,4 @@
-# This is an example file on how to format bulk-rock composition to be loaded in MAGEMin_app
+# This is an example file on how to format bulk-rock composition to be loaded in MAGEMinApp
 # Commented lines start with '#'
 # Spaces before/after ";" do not matter
 # make sure the header line "title; comments; db; sysUnit; oxide; frac" is provided as first uncommented line
@@ -11,7 +11,7 @@
 # P,T-X bulk-rock composition:
 #-----------------------------
 # if you want to load two bulks for P-X or T-X diagrams simply add a second bulk after the first one (first bulk = left bound, second bulk = right bound)
-# Once the bulk-rock composition file is loaded in MAGEMin_app, make sure you select your bulk for the left and right table!
+# Once the bulk-rock composition file is loaded in MAGEMinApp, make sure you select your bulk for the left and right table!
 #
 # HEADER
 title; comments; db; sysUnit; oxide; frac; frac2

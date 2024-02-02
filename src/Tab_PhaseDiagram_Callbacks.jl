@@ -16,7 +16,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         if fname != "filename"
             datab   = "_"*dtb
             fileout = fname*datab*".txt"
-            file    = MAGEMin_data2table(Out_XY[point_id])            #point_id is defined as global variable in clickData callback
+            file    = MAGEMin_data2table(Out_XY[point_id],dtb)            #point_id is defined as global variable in clickData callback
             output  = Dict("content" => file,"filename" => fileout)
             
             return output, "success", ""
@@ -41,7 +41,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         if fname != "filename"
             datab   = "_"*dtb
             fileout = fname*datab*".txt"
-            file    = MAGEMin_data2table(Out_XY)            #point_id is defined as global variable in clickData callback
+            file    = MAGEMin_data2table(Out_XY,dtb)            #point_id is defined as global variable in clickData callback
             output  = Dict("content" => file,"filename" => fileout)
             
             return output, "success", ""

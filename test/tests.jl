@@ -1,10 +1,10 @@
 using Test
 
 using MAGEMin_C
-using MAGEMin_app
+using MAGEMinApp
 using PlotlyJS
 
-pkg_dir = Base.pkgdir(MAGEMin_app)
+pkg_dir = Base.pkgdir(MAGEMinApp)
 
 include(joinpath(pkg_dir,"src","initialize_MAGEMin_AMR.jl"))
 include(joinpath(pkg_dir,"src","PhaseDiagram_functions.jl"))

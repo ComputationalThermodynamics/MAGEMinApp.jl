@@ -17,7 +17,7 @@ function Tab_PTXpaths_Callbacks(app)
         if fname != "filename"
             datab   = "_"*dtb
             fileout = fname*datab*".txt"
-            file    = MAGEMin_data2table(Out_PTX)            #point_id is defined as global variable in clickData callback
+            file    = MAGEMin_data2table(Out_PTX,dtb)            #point_id is defined as global variable in clickData callback
             output  = Dict("content" => file,"filename" => fileout)
             
             return output, "success", ""
