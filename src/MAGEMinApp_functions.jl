@@ -48,13 +48,11 @@ function save_rho_for_LaMEM(    dtb         ::String,
     rho_S_min                        = minimum(gridded[:,:,2])
     rho_M_min                        = minimum(gridded[:,:,1])
 
-    gridded[gridded[:,:,2] .== 0.0,2] .= rho_S_min
-    gridded[isnan.(gridded[:,:,2]),2] .= rho_S_min
-
+    gridded[gridded[:,:,2] .== 0.0,2] .= 3000.0
+    gridded[isnan.(gridded[:,:,2]),2] .= 3000.0
     gridded[gridded[:,:,1] .== 0.0,1] .= 2000.0
     gridded[isnan.(gridded[:,:,1]),1] .= 2000.0
-
-
+    gridded[gridded[:,:,3] .> 1.0,3] .= 1.0
 
     # convert values
     T      .= T .+ 273.15            # --> to K
@@ -63,7 +61,7 @@ function save_rho_for_LaMEM(    dtb         ::String,
     nT      =  length(x)
     nP      =  length(y)
     dT      = (maximum(x)-minimum(x))/(nT-1);
-    dP      = (maximum(y)-minimum(y))/(nP-1);
+    dP      = (maximum(y)-minimum(y))/(nP-1)*1000.0;
 
     # retrieve bulk rock composition and associated oxide list
     n_ox    = length(bulk1);
