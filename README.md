@@ -1,6 +1,9 @@
-<img src="https://raw.githubusercontent.com/ComputationalThermodynamics/repositories_pictures/main/MAGEMinApp/MAGEMin_app.png?raw=true" alt="drawing" width="820" alt="centered image"/>
+[![Build Status](https://github.com/JuliaGeodynamics/LaMEM.jl/workflows/CI/badge.svg)](https://github.com/JuliaGeodynamics/LaMEM.jl/actions)
 
 # MAGEMinApp.jl
+
+<img src="https://raw.githubusercontent.com/ComputationalThermodynamics/repositories_pictures/main/MAGEMinApp/MAGEMin_app.png?raw=true" alt="drawing" width="820" alt="centered image"/>
+
 
 `MAGEMinApp.jl` provides an easy-to-use web-based graphical user interface for `MAGEMin`. Available features:
 
