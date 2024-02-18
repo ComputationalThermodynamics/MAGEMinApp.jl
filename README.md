@@ -1,4 +1,4 @@
-[![Build Status](https://github.com/JuliaGeodynamics/LaMEM.jl/workflows/CI/badge.svg)](https://github.com/JuliaGeodynamics/LaMEM.jl/actions)
+[![Build Status](https://github.com/ComputationalThermodynamics/MAGEMinApp.jl/workflows/CI/badge.svg)](https://github.com/ComputationalThermodynamics/MAGEMinApp.jl/actions)
 
 # MAGEMinApp.jl
 
