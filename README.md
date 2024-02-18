@@ -1,5 +1,10 @@
 [![Build Status](https://github.com/ComputationalThermodynamics/MAGEMinApp.jl/workflows/CI/badge.svg)](https://github.com/ComputationalThermodynamics/MAGEMinApp.jl/actions)
 
+> [!CAUTION]
+> As of now, `MAGEMinApp.jl` remains under development and the current release is a beta version. Reporting issues, potential improvement and contributions are most welcome.
+> Sometimes, installation on Windows systems "hangs". The current best workaround is to use Linux for Windows instead. This is quite easy to install, and also yield better performances. Details on how to install WSL are given here:
+> https://learn.microsoft.com/en-us/windows/wsl/install
+
 # MAGEMinApp.jl
 
 <img src="https://raw.githubusercontent.com/ComputationalThermodynamics/repositories_pictures/main/MAGEMinApp/MAGEMin_app.png?raw=true" alt="drawing" width="820" alt="centered image"/>
@@ -17,8 +22,6 @@
 
 As for `MAGEMin`, you can choose among several thermodynamic dataset: Metapelite (White et al., 2014), Metabasite (Green et al., 2016), Igneous (Holland et al., 2018) or Ultramafic (Evans & Frost, 2021).
 
-> [!CAUTION]
-> As of now, `MAGEMinApp.jl` remains under development and the current release is a beta version. Reporting issues, potential improvement and contributions are most welcome.
 
 ### Installation
 
