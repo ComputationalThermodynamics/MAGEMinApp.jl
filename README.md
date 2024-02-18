@@ -2,6 +2,8 @@
 
 > [!CAUTION]
 > As of now, `MAGEMinApp.jl` remains under development and the current release is a beta version. Reporting issues, potential improvement and contributions are most welcome.
+> 
+> [!CAUTION]
 > Sometimes, installation on Windows systems "hangs". The current best workaround is to use Linux for Windows instead. This is quite easy to install, and also yield better performances. Details on how to install WSL are given here:
 > https://learn.microsoft.com/en-us/windows/wsl/install
 
