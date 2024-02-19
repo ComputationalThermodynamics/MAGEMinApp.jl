@@ -460,7 +460,7 @@ function Tab_Simulation()
                                                                                     Dict("id" =>  "mol_fraction",   "name" =>  "mol_fraction",  "editable" => true)]
                                                                     ),
                                                                     data        =   [Dict(  "oxide"         => db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1][i],
-                                                                                            "mol_fraction"  => db[(db.db .== "ig") .& (db.test .== 0), :].frac[1][i])
+                                                                                            "mol_fraction"  => db[(db.db .== "ig") .& (db.test .== 0), :].frac2[1][i])
                                                                                                 for i=1:length(db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1]) ],
                                                                     style_cell  = (textAlign="center", fontSize="140%",),
                                                                     style_header= (fontWeight="bold",),

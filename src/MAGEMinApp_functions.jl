@@ -1063,10 +1063,10 @@ function bulk_file_to_db(datain)
         bulk   		= "custom";
 
         idx 		= findall(datain[1,:] .== "title")[1];
-        title   	= datain[i,idx];
+        title   	= string(datain[i,idx]);
 
         idx 		= findall(datain[1,:] .== "comments")[1];
-        comments   	= datain[i,idx];
+        comments   	= string(datain[i,idx]);
 
         idx 		= findall(datain[1,:] .== "db")[1];
         dbin   		= datain[i,idx];
@@ -1098,9 +1098,9 @@ function bulk_file_to_db(datain)
             frac2 		= replace.(frac2,r"\]"=>"",r"\["=>"");
             frac2		= parse.(Float64,frac2);
             bulkrock2, MAGEMin_ox   = convertBulk4MAGEMin(frac2,oxide,String(sysUnit),String(dbin)) 
-            bulkrock2  .= round.(bulkrock; digits = 4)
+            bulkrock2  .= round.(bulkrock2; digits = 4)
         else
-            bulkrock2 = []
+            bulkrock2   = deepcopy(bulkrock)
         end
 
         oxide                   = get_oxide_list(String(dbin))
@@ -1126,7 +1126,8 @@ function parse_bulk_rock(contents, filename)
         content_type, content_string = split(contents, ',');
         decoded = base64decode(content_string);
         input   = String(decoded) ;
-        datain  = strip.(readdlm(IOBuffer(input), ';', comments=true, comment_char='#'));
+        datain  = strip.(string.(readdlm(IOBuffer(input), ';', comments=true, comment_char='#')));
+
         bulk_file_to_db(datain);
 
         return 1
