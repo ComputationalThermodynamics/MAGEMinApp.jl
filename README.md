@@ -5,10 +5,14 @@
 
 > [!CAUTION]
 > Sometimes, installation on Windows systems "hangs". The current best workaround is to use Linux for Windows instead. This is quite easy to install, and also yield better performances. Open a powershell (click on start and type powershell) then enter the following commands:
+> 
 > `wsl --update`
+> 
 > `wsl --install --distribution Ubuntu-20.04`
+> 
 > Following this you may have to restart your computer. For more details check here https://learn.microsoft.com/en-us/windows/wsl/install
-> Once WSL is installed simply execute the following command in the linux  to install and set `Julia` path:
+> Once WSL is installed simply execute the following command in the linux terminal to install and set `Julia` path:
+> 
 > `curl -fsSL https://install.julialang.org | sh`
 
 # MAGEMinApp.jl
