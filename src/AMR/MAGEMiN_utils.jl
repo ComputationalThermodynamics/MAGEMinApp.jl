@@ -68,7 +68,8 @@ function MAGEMin_data2table( out:: Union{Vector{MAGEMin_C.gmin_struct{Float64, I
 
         if npp > 0
             for i=1:npp
-                table *= "$k" * prt(out[k].P_kbar) * prt(out[k].T_C) * " "*out[k].ph[i+nss] * prt(out[k].ph_frac[i].*100.0) * prt(out[k].ph_frac_wt[i].*100.0) * " -" *
+                pos = i + nss
+                table *= "$k" * prt(out[k].P_kbar) * prt(out[k].T_C) * " "*out[k].ph[pos] * prt(out[k].ph_frac[pos].*100.0) * prt(out[k].ph_frac_wt[pos].*100.0) * " -" *
                 prt(out[k].PP_vec[i].rho) * prt(out[k].PP_vec[i].V) * prt(out[k].PP_vec[i].cp) * prt(out[k].PP_vec[i].alpha) * prt(out[k].PP_vec[i].entropy) * prt(out[k].PP_vec[i].enthalpy) *
                 prt(out[k].PP_vec[i].Vp) * prt(out[k].PP_vec[i].Vs) * prt(out[k].PP_vec[i].bulkMod) * prt(out[k].PP_vec[i].shearMod) *
                 prt(out[k].PP_vec[i].Comp.*100.0) * prt(out[k].PP_vec[i].Comp_wt.*100.0) * "\n"
