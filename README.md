@@ -57,6 +57,8 @@ MAGEMinApp is designed is such a way that bulk-rock composition must be entered 
 
 * Commented lines must start with a `#`
 * Bulk-rock composition line must contain `title; comments; db; sysUnit; oxide; frac; frac2`
+
+> [!IMPORTANT] 
 > `db` must be either `mp` (metapelite, White et al., 2014) or `mb` (metabasite, Green et al., 2016) or `ig` (igneous, Holland et al., 2018) or `um` (ultramafic, Frost & Evans, 2021).
 > 
 > `sysUnit` must be `mol` or `wt`. Note that if `wt` is provided, the composition is converted and subsequently displayed in `mol` in `MAGEMinApp`.
