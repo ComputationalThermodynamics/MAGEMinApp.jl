@@ -93,7 +93,7 @@ function save_rho_for_LaMEM(    dtb         ::String,
     for i=1:4
         file   *= @sprintf("\n")
     end
-    file       *= @sprintf("Phase diagram produced using MAGEMin 1.3.6 with database %5s\n",dtb)
+    file       *= @sprintf("Phase diagram produced using MAGEMin v%s with database %5s\n",Out_XY[1].MAGEMin_ver,dtb)
     file       *= @sprintf("Bulk rock composition[mol fraction]\n")
     for i=1:n_ox
         file   *= @sprintf("%8s : %+5.10f\n",oxi[i],bulk[i])
