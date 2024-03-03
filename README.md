@@ -44,7 +44,7 @@ Next you can open [127.0.0.1:8050](127.0.0.1:8050) in your favorite browser, whi
 
 ### How to load custom bulk-rock composition
 
-MAGEMinApp is designed is such a way that bulk-rock composition must be entered in .dat file and loaded in the simulation tab. An example of how to properly structure a bulk-rock composition file is given in examples/bulk-rock_ref.dat
+MAGEMinApp is designed is such a way that bulk-rock composition must be entered in a `*.dat` file and loaded in the simulation tab. An example of how to properly structure a bulk-rock composition file is given in `examples/bulk-rock_ref.dat`
 
 * Commented lines must start with a `#`
 * Bulk-rock composition line must contain `title; comments; db; sysUnit; oxide; frac; frac2`
@@ -53,13 +53,13 @@ MAGEMinApp is designed is such a way that bulk-rock composition must be entered 
 `Test 2;Moo et al., 2000;ig;mol;[SiO2, Al2O3, CaO, MgO, FeO, K2O, Na2O, TiO2, O, Cr2O3, H2O];[48.97, 11.76, 13.87, 4.21, 8.97, 1.66, 10.66, 1.36, 1.66, 0.0, 5.0];`\
 
 > [!IMPORTANT] 
-> `db` must be either `mp` (metapelite, White et al., 2014) or `mb` (metabasite, Green et al., 2016) or `ig` (igneous, Holland et al., 2018) or `um` (ultramafic, Frost & Evans, 2021).
+> `db` must be either `mp` (metapelite, White et al., 2014), `mb` (metabasite, Green et al., 2016), `ig` (igneous, Holland et al., 2018) or `um` (ultramafic, Frost & Evans, 2021).
 > 
 > `sysUnit` must be `mol` or `wt`. Note that if `wt` is provided, the composition is converted and subsequently displayed in `mol` in `MAGEMinApp`.
 > 
-> `oxide` is the **complete** list of oxides of the selected database. Note however that either `FeO` and `O` **or** `FeO` and `Fe2O3` can be provided. `FeO` = `FeOt`.
+> `oxide` is the **complete** list of oxides of the selected database. You are not allowed to leave oxides out. Note however that either `FeO` and `O` **or** `FeO` and `Fe2O3` can be provided. `FeO` = `FeOt`.
 > 
-> `frac` is the `sysUnit` proportion of oxides. Set the oxide content to 0.0 to reduce the chemical system. If possible the calculation will be performed in a fully reduced chemica system, otherwise a low value will be automatically set (around 0.01 `mol%`).
+> `frac` is the `sysUnit` proportion of oxides. Set the oxide content to 0.0 to reduce the chemical system. If possible, the calculation will be performed in a fully reduced chemical system, otherwise a low value will be automatically set (around 0.01 `mol%`).
 > 
 > `frac2` is used only when computing T-X or P-X diagrams.
 
