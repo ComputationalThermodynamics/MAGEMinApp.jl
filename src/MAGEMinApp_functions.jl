@@ -237,6 +237,7 @@ function save_equilibrium_to_file(  out::MAGEMin_C.gmin_struct{Float64, Int64}  
 
     file *= @sprintf("System fugacity:\n")  
     file *= @sprintf(" %6s %g\n","fO2",out.fO2)  
+    file *= @sprintf(" %6s %g\n","dQFM",out.dQFM)  
     file *= @sprintf("\n\n") 
 
     file *= @sprintf("G-hyperplane distance[J]:\n")  
@@ -816,8 +817,8 @@ function get_gridded_map(   fieldname   ::String,
         field[isnan.(field)] .= 0.0
         if fieldname == "frac_M" || fieldname == "rho_M" || fieldname == "rho_S" || fieldname == "Delta_rho"
             field[isless.(field, 1e-8)] .= 0.0              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
-        elseif fieldname == "fO2"
-            field .= log10.(field)
+        # elseif fieldname == "fO2" || fieldname == "dQFM"
+        #     field .= log10.(field)
         end
     end
 
@@ -913,8 +914,8 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
         field[isnan.(field)] .= 0.0
         if fieldname == "frac_M" || fieldname == "rho_M" || fieldname == "rho_S"
             field[isless.(field, 1e-8)] .= 0.0              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
-        elseif fieldname == "fO2"
-            field .= log10.(field)
+        # elseif fieldname == "fO2" || fieldname == "dQFM"
+        #     field .= log10.(field)
         end
     end
 
@@ -987,8 +988,8 @@ function get_isopleth_map(  mod         ::String,
         field[isnan.(field)] .= missing
         if of == "frac_M" || of == "rho_M" || of == "rho_S"
             field[isless.(field, 1e-8)] .= 0.0              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
-        elseif of == "fO2"
-            field .= log10.(field)
+        # elseif of == "fO2" || of == "dQFM"
+        #     field .= log10.(field)
         end 
     end
 
