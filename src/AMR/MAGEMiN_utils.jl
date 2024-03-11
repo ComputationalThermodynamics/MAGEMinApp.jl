@@ -47,7 +47,7 @@ function MAGEMin_data2table( out:: Union{Vector{MAGEMin_C.gmin_struct{Float64, I
     np      = length(out)
 
     table   = "# MAGEMin " * " $(out[1].MAGEMin_ver);" * datetoday * ", " * rightnow * "; using database " * db_in.db_info * "\n"
-    table   *=   "point[#] P[kbar] T[°C]" *" phase" * " mode[mol%]" * " mode[wt%]" * " log10(fO2)" * " log10(dQFM)" * 
+    table   *=   "point[#] X[0.0-1.0] P[kbar] T[°C]" *" phase" * " mode[mol%]" * " mode[wt%]" * " log10(fO2)" * " log10(dQFM)" * 
                 " density[kg/m3]" * " volume[cm3/mol]" * " heatCapacity[kJ/K]" * " alpha[1/K]" * " Entropy[J/K]" * " Enthalpy[J]" *
                 " Vp[km/s]" * " Vs[km/s]" * " BulkMod[GPa]" * " ShearMod[GPa]" *
                 " " *join(out[1].oxides.*"[mol%]", " ") * " " *join(out[1].oxides.*"[wt%]", " ") *"\n"
@@ -55,12 +55,12 @@ function MAGEMin_data2table( out:: Union{Vector{MAGEMin_C.gmin_struct{Float64, I
         np  = length(out[k].ph)
         nss = out[k].n_SS
         npp = np-nss
-        table *= "$k" * prt(out[k].P_kbar) * prt(out[k].T_C) * " system" * " 100.0" * " 100.0" * " "*string(out[k].fO2) * " "*string(out[k].dQFM) *
+        table *= "$k" * prt(out[k].X[1])* prt(out[k].P_kbar) * prt(out[k].T_C) * " system" * " 100.0" * " 100.0" * " "*string(out[k].fO2) * " "*string(out[k].dQFM) *
         prt(out[k].rho) * prt(out[k].V) * prt(out[k].cp) * prt(out[k].alpha) * prt(out[k].entropy) * prt(out[k].enthalpy) *
         prt(out[k].Vp) * prt(out[k].Vs) *prt(out[k].bulkMod) * prt(out[k].shearMod) *
         prt(out[k].bulk.*100.0) * prt(out[k].bulk_wt.*100.0) * "\n"
         for i=1:nss
-            table *= "$k" * prt(out[k].P_kbar) * prt(out[k].T_C) * " "*out[k].ph[i] * prt(out[k].ph_frac[i].*100.0) * prt(out[k].ph_frac_wt[i].*100.0) * " -" *
+            table *= "$k" * prt(out[k].X[1])* prt(out[k].P_kbar) * prt(out[k].T_C) * " "*out[k].ph[i] * prt(out[k].ph_frac[i].*100.0) * prt(out[k].ph_frac_wt[i].*100.0) * " -" *
             prt(out[k].SS_vec[i].rho) * prt(out[k].SS_vec[i].V) * prt(out[k].SS_vec[i].cp) * prt(out[k].SS_vec[i].alpha) * prt(out[k].SS_vec[i].entropy) * prt(out[k].SS_vec[i].enthalpy) *
             prt(out[k].SS_vec[i].Vp) * prt(out[k].SS_vec[i].Vs) * prt(out[k].SS_vec[i].bulkMod) * prt(out[k].SS_vec[i].shearMod) *
             prt(out[k].SS_vec[i].Comp.*100.0) * prt(out[k].SS_vec[i].Comp_wt.*100.0) * "\n"
@@ -69,7 +69,7 @@ function MAGEMin_data2table( out:: Union{Vector{MAGEMin_C.gmin_struct{Float64, I
         if npp > 0
             for i=1:npp
                 pos = i + nss
-                table *= "$k" * prt(out[k].P_kbar) * prt(out[k].T_C) * " "*out[k].ph[pos] * prt(out[k].ph_frac[pos].*100.0) * prt(out[k].ph_frac_wt[pos].*100.0) * " -" *
+                table *= "$k" * prt(out[k].X[1]) * prt(out[k].P_kbar) * prt(out[k].T_C) * " "*out[k].ph[pos] * prt(out[k].ph_frac[pos].*100.0) * prt(out[k].ph_frac_wt[pos].*100.0) * " -" *
                 prt(out[k].PP_vec[i].rho) * prt(out[k].PP_vec[i].V) * prt(out[k].PP_vec[i].cp) * prt(out[k].PP_vec[i].alpha) * prt(out[k].PP_vec[i].entropy) * prt(out[k].PP_vec[i].enthalpy) *
                 prt(out[k].PP_vec[i].Vp) * prt(out[k].PP_vec[i].Vs) * prt(out[k].PP_vec[i].bulkMod) * prt(out[k].PP_vec[i].shearMod) *
                 prt(out[k].PP_vec[i].Comp.*100.0) * prt(out[k].PP_vec[i].Comp_wt.*100.0) * "\n"
@@ -184,7 +184,6 @@ function refine_MAGEMin(data,
             end
 
         end
-
     elseif refType == "em"
 
         for i=1:length(data.x)
@@ -197,10 +196,15 @@ function refine_MAGEMin(data,
             n_phase_XY[i]   = length(ph_em)
 
             if data.xc[i] == maxx && data.yc[i] == miny
-                Hash_XY[i]      = hash("pouet")
+                Hash_XY[i]  = hash("pouet")
             end
         end
+    end
 
+    if diagType == "tx" || diagType == "px"
+        for i=1:length(data.x)
+            Out_XY[i].X[1] = data.xc[i]
+        end
     end
 
     return Out_XY, Hash_XY, n_phase_XY
