@@ -203,7 +203,7 @@ function refine_MAGEMin(data,
 
     if diagType == "tx" || diagType == "px"
         for i=1:length(data.x)
-            Out_XY[i].X[1] = data.xc[i]
+            Out_XY[i].X .= data.xc[i]
         end
     end
 
