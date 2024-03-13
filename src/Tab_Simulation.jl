@@ -318,7 +318,22 @@ function Tab_Simulation()
                                             multi       = false),
                                         ]),
                                     ]),
-
+                                    #Specific cp from G_system
+                                    dbc_row([
+                                        dbc_col([ 
+                                            html_h1("Specific Cp", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                        ]),
+                                        dbc_col([ 
+                                            dcc_dropdown(   id      = "scp-dropdown",
+                                            options = [
+                                                (label = "G0",        value =  0),
+                                                (label = "G_system",  value =  1),
+                                            ],
+                                            value       = 0,
+                                            clearable   = false,
+                                            multi       = false),
+                                        ]),
+                                    ]),
                                 ])
                             ),
                             id="collapse-PT-conditions",

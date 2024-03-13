@@ -39,6 +39,7 @@ Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(  data,
                                                 "NONE",
                                                 0.0,
                                                 0.0,
+                                                0,
                                                 "ph"    )
 @test length(Out_XY) == 16
 
@@ -62,6 +63,7 @@ t = @elapsed Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(  data_new,
                                                             "NONE",
                                                             0.0,
                                                             0.0,
+                                                            0,
                                                             "ph", 
                                                             ind_map         = ind_map,
                                                             Out_XY_old      = Out_XY,

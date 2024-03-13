@@ -802,6 +802,10 @@ function get_gridded_map(   fieldname   ::String,
         for i=1:np
             field[i] = Float64(len_ox - n_phase_XY[i] + 2.0);
         end
+    elseif fieldname == "s_cp"
+        for i=1:np
+            field[i] = Out_XY[i].s_cp[1];
+        end
     elseif fieldname == "Delta_rho"
         for i=1:np
             field[i] = 0.0
@@ -898,6 +902,10 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
     elseif fieldname == "Variance"
         for i=1:np
             field[i] = Float64(len_ox - n_phase_XY[i] + 2.0);
+        end
+    elseif fieldname == "s_cp"
+        for i=1:np
+            field[i] = Out_XY[i].s_cp[1];
         end
     elseif fieldname == "Delta_rho"
         for i=1:np

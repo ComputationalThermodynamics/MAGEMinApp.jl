@@ -93,6 +93,7 @@ function refine_MAGEMin(data,
                         bufferType      :: String,
                         bufferN1        :: Float64,
                         bufferN2        :: Float64,
+                        scp             :: Int64,
                         refType         :: String;
                         ind_map          = nothing, 
                         Out_XY_old       = nothing, 
@@ -149,7 +150,7 @@ function refine_MAGEMin(data,
                 Bvec[i] = bufferN1;
             end
         end
-        Out_XY_new  =   multi_point_minimization(Pvec, Tvec, MAGEMin_data, X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol");
+        Out_XY_new  =   multi_point_minimization(Pvec, Tvec, MAGEMin_data, X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol", scp=scp);
         
     end
 
