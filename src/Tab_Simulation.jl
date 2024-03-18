@@ -258,7 +258,7 @@ function Tab_Simulation()
                                             dbc_input(
                                                 id      = "refinement-levels",
                                                 type    = "number", 
-                                                min     = 1,  
+                                                min     = 0,  
                                                 value   = 2   ),
                                         ]),
                                     ]),
