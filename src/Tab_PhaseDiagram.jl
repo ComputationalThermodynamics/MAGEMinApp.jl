@@ -386,7 +386,7 @@ function Tab_PhaseDiagram()
                                     dbc_col([
                                         dcc_dropdown(   id          = "show-grid",
                                                         options     =  ["true","false"],
-                                                        value       = "false" ,
+                                                        value       = "true" ,
                                                         clearable   =  false,
                                                         multi       =  false),
                                     ]), 

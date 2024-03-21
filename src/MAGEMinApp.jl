@@ -36,7 +36,7 @@ include(joinpath(pkg_dir,"src","Tab_PTXpaths_Callbacks.jl"))
 Starts the MAGEMin App.
 """
 function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
-    GUI_version = "0.1.5"   
+    GUI_version = "0.1.7"   
     cur_dir     = pwd()                 # directory from where you started the GUI
     pkg_dir     = pkgdir(MAGEMinApp)   # package dir
     cd(pkg_dir)
