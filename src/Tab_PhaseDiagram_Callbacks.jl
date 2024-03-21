@@ -190,6 +190,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("buffer-dropdown",    "value"),           # none,qfm,mw,qif,cco,hm,nno
         State("solver-dropdown",    "value"),           # pge,lp
         State("verbose-dropdown",   "value"),           # none,light,full -> -1,0,1
+        State("scp-dropdown",       "value"),           # none,light,full -> -1,0,1
 
         State("table-bulk-rock",    "data"),            # bulk-rock 1
         State("table-2-bulk-rock",  "data"),            # bulk-rock 2
@@ -221,7 +222,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             tmin,       tmax,       pmin,       pmax,
             fixT,       fixP,
             sub,        refType,    refLvl,
-            bufferType, solver,     verbose,
+            bufferType, solver,     verbose,    scp,
             bulk1,      bulk2,
             bufferN1,   bufferN2,
             test,
@@ -260,7 +261,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             data_plot, layout, npoints, meant  =  compute_new_phaseDiagram( xtitle,     ytitle,     lbl,
                                                                             Xrange,     Yrange,     fieldname,  customTitle,
-                                                                            dtb,        diagType,   verbose,    solver,
+                                                                            dtb,        diagType,   verbose,    scp,        solver,
                                                                             fixT,       fixP,
                                                                             sub,        refLvl,
                                                                             cpx,        limOpx,     limOpxVal,
@@ -278,7 +279,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             data_plot, layout, npoints, meant  =  refine_phaseDiagram(  xtitle,     ytitle,     lbl, 
                                                                         Xrange,     Yrange,     fieldname,  customTitle,
-                                                                        dtb,        diagType,   verbose,    solver,
+                                                                        dtb,        diagType,   verbose,    scp,    solver,
                                                                         fixT,       fixP,
                                                                         sub,        refLvl,
                                                                         cpx,        limOpx,     limOpxVal,

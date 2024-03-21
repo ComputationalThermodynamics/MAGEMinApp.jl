@@ -298,7 +298,7 @@ end
 """
     compute_new_phaseDiagram(   xtitle,     ytitle,     
                                 Xrange,     Yrange,     fieldname,
-                                dtb,        diagType,   verbose,
+                                dtb,        diagType,   verbose,    scp,    solver,
                                 fixT,       fixP,
                                 sub,        refLvl,
                                 cpx,        limOpx,     limOpxVal,
@@ -311,7 +311,7 @@ end
 """
 function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                     Xrange,     Yrange,     fieldname,  customTitle,
-                                    dtb,        diagType,   verbose,    solver,
+                                    dtb,        diagType,   verbose,    scp,    solver,
                                     fixT,       fixP,
                                     sub,        refLvl,
                                     cpx,        limOpx,     limOpxVal,
@@ -377,6 +377,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                                         bufferType,
                                                         bufferN1,
                                                         bufferN2,
+                                                        scp,
                                                         refType    )
                     
         #________________________________________________________________________________________#     
@@ -396,6 +397,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                                                         bufferType,
                                                                         bufferN1,
                                                                         bufferN2,
+                                                                        scp,
                                                                         refType, 
                                                                         ind_map         = ind_map,
                                                                         Out_XY_old      = Out_XY,
@@ -511,9 +513,9 @@ end
 
 
 """
-    refine_phaseDiagram(   xtitle,     ytitle,     
+    refine_phaseDiagram(            xtitle,     ytitle,     
                                     Xrange,     Yrange,     fieldname,
-                                    dtb,        diagType,   verbose,
+                                    dtb,        diagType,   verbose,    scp,    solver,
                                     fixT,       fixP,
                                     sub,        refLvl,
                                     cpx,        limOpx,     limOpxVal,
@@ -525,7 +527,7 @@ end
 """
 function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                 Xrange,     Yrange,     fieldname,  customTitle,
-                                dtb,        diagType,   verbose,    solver,
+                                dtb,        diagType,   verbose,    scp,    solver,
                                 fixT,       fixP,
                                 sub,        refLvl,
                                 cpx,        limOpx,     limOpxVal,
@@ -549,6 +551,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                                                 bufferType,
                                                                 bufferN1,
                                                                 bufferN2, 
+                                                                scp,
                                                                 refType,
                                                                 ind_map         = ind_map,
                                                                 Out_XY_old      = Out_XY,
@@ -866,29 +869,29 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
 
     data_isopleth.n_iso += 1
 
-    data_isopleth.isoP[data_isopleth.n_iso]= contour(     x                   = X,
-                                                y                   = Y,
-                                                z                   = gridded,
-                                                contours_coloring   = "lines",
-                                                colorscale          = [[0, isoColorLine], [1, isoColorLine]],
-                                                
-                                                contours_start      = minIso,
-                                                contours_end        = maxIso,
-                                                contours_size       = stepIso,
-                                                line_width          = 1,
-                                                showscale           = false,
-                                                hoverinfo           = "skip",
-                                                contours            =  attr(    coloring    = "lines",
-                                                                                showlabels  = true,
-                                                                                labelfont   = attr( size    = isoLabelSize,
-                                                                                                    color   = isoColorLine,  )
-                                                )
-                                            )
+    data_isopleth.isoP[data_isopleth.n_iso]= contour(   x                   = X,
+                                                        y                   = Y,
+                                                        z                   = gridded,
+                                                        contours_coloring   = "lines",
+                                                        colorscale          = [[0, isoColorLine], [1, isoColorLine]],
+                                                        
+                                                        contours_start      = minIso,
+                                                        contours_end        = maxIso,
+                                                        contours_size       = stepIso,
+                                                        line_width          = 1,
+                                                        showscale           = false,
+                                                        hoverinfo           = "skip",
+                                                        contours            =  attr(    coloring    = "lines",
+                                                                                        showlabels  = true,
+                                                                                        labelfont   = attr( size    = isoLabelSize,
+                                                                                                            color   = isoColorLine,  )
+                                                        )
+                                                    )
     data_isopleth.status[data_isopleth.n_iso]   = 1
     data_isopleth.label[data_isopleth.n_iso]    = name
     data_isopleth.value[data_isopleth.n_iso]    = data_isopleth.n_iso
-    data_isopleth.active                   = findall(data_isopleth.status .== 1)
-    n_act                             = length(data_isopleth.active)
+    data_isopleth.active                        = findall(data_isopleth.status .== 1)
+    n_act                                       = length(data_isopleth.active)
 
     isopleths = [Dict("label" => data_isopleth.label[data_isopleth.active[i]], "value" => data_isopleth.value[data_isopleth.active[i]])
                         for i=1:n_act]

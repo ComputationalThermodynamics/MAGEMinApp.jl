@@ -98,6 +98,9 @@ function save_rho_for_LaMEM(    dtb         ::String,
     for i=1:n_ox
         file   *= @sprintf("%8s : %+5.10f\n",oxi[i],bulk[i])
     end
+    for i=n_ox+1:11
+        file   *= @sprintf("\n")
+    end
     for i=1:20
         file   *= @sprintf("\n")
     end
@@ -802,6 +805,10 @@ function get_gridded_map(   fieldname   ::String,
         for i=1:np
             field[i] = Float64(len_ox - n_phase_XY[i] + 2.0);
         end
+    elseif fieldname == "s_cp"
+        for i=1:np
+            field[i] = Out_XY[i].s_cp[1];
+        end
     elseif fieldname == "Delta_rho"
         for i=1:np
             field[i] = 0.0
@@ -898,6 +905,10 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
     elseif fieldname == "Variance"
         for i=1:np
             field[i] = Float64(len_ox - n_phase_XY[i] + 2.0);
+        end
+    elseif fieldname == "s_cp"
+        for i=1:np
+            field[i] = Out_XY[i].s_cp[1];
         end
     elseif fieldname == "Delta_rho"
         for i=1:np
