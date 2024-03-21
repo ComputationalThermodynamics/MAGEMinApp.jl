@@ -7,11 +7,11 @@
 > There is still some issues with Windows machine. `] add MAGEMinApp` works well, however when `using MAGEMinApp` it may hang indefinitely. Currently, the workaround is to cancel `CTRL+C` and try `using MAGEMinApp` a couple of time.
 
 > [!TIP]
-> For Windows machine you can launch a threaded version of the Julia terminal (to perform computation in parallel using `MAGEMinApp`) by creating a `Julia_parallel.cmd` file adding:
->
-> set JULIA_NUM_THREADS=8
-> C:\YOUR_PATH_TO_JULIA\bin\julia.exe
->
+> For Windows machine you can launch a threaded version of the Julia terminal (to perform computation in parallel using `MAGEMinApp`) by creating a `Julia_parallel.cmd` file and adding:
+```
+set JULIA_NUM_THREADS=8
+C:\YOUR_PATH_TO_JULIA\bin\julia.exe
+```
 > Save the changes and execute the `Julia_parallel.cmd`
 
 
