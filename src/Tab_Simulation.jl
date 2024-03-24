@@ -118,7 +118,8 @@ function Tab_Simulation()
                                     html_div([
                                         dbc_row([                                            
                                             dbc_col([ 
-                                                html_h1("PT path", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                                html_h1("Pressure-Temperature path", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                                html_h1("(using pChip interpolation)", style = Dict("textAlign" => "center","font-size" => "120%")),
                                             ], width=6),
                                             dbc_col([ 
                                                 dbc_row([
