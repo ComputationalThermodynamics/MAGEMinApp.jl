@@ -235,7 +235,7 @@ function diagram_type(diagType, tmin, tmax, pmin, pmax)
         Xrange          = (Float64(0.0),Float64(1.0) )
         Yrange          = (Float64(0.0),Float64(1.0))
         xtitle = "Composition [X0 -> X1]"
-        ytitle = "Pressure/Temperature path"
+        ytitle = "Pressure-Temperature path"
     end
     return xtitle, ytitle, Xrange, Yrange
 end
