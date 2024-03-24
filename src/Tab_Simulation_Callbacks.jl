@@ -196,7 +196,24 @@ function Tab_Simulation_Callbacks(app)
         return b1, b2
     end
 
+    # add new entry to the PT-X path definition
+    callback!(app,
+        Output("pt-x-table", "data"),
+        Input("add-ptx-row-button", "n_clicks"),
+        State("pt-x-table", "data"),
+        State("pt-x-table", "columns"),
+        prevent_initial_call = true,
+        ) do n_clicks, data, columns
 
+        dataout = copy(data)
+
+        if n_clicks > 0
+            add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000)
+            push!(dataout,add)
+        end
+
+        return dataout
+    end
 
     # callback function to display to right set of variables as function of the diagram type
     callback!(
@@ -207,6 +224,7 @@ function Tab_Simulation_Callbacks(app)
         Output("pressure-id", "style"),
         Output("test-2-id", "style"),
         Output("table-2-id", "style"),
+        Output("pt-x-id", "style"),
         Input("diagram-dropdown", "value"),
     ) do value
 
@@ -217,23 +235,34 @@ function Tab_Simulation_Callbacks(app)
             Ps      = Dict("display" => "block")
             test2   = Dict("display" => "block")  
             table2  = Dict("display" => "block")  
+            PTx     = Dict("display" => "none")
         elseif value == "tx"
             Tstyle  = Dict("display" => "none")
             Pstyle  = Dict("display" => "block")
             Ts      = Dict("display" => "block")
             Ps      = Dict("display" => "none")
             test2   = Dict("display" => "block")  
-            table2  = Dict("display" => "block")  
-        else
+            table2  = Dict("display" => "block") 
+            PTx     = Dict("display" => "none")
+        elseif value == "pt"
             Tstyle  = Dict("display" => "none")
             Pstyle  = Dict("display" => "none")
             Ts      = Dict("display" => "block")
             Ps      = Dict("display" => "block")
             test2   = Dict("display" => "none")  
             table2  = Dict("display" => "none")  
+            PTx     = Dict("display" => "none")
+        elseif value == "ptx"
+            Tstyle  = Dict("display" => "none")
+            Pstyle  = Dict("display" => "none")
+            Ts      = Dict("display" => "none")
+            Ps      = Dict("display" => "none")
+            test2   = Dict("display" => "block")  
+            table2  = Dict("display" => "block") 
+            PTx     = Dict("display" => "block")
         end
 
-        return Tstyle, Pstyle, Ts, Ps, test2, table2
+        return Tstyle, Pstyle, Ts, Ps, test2, table2, PTx
     end
 
 

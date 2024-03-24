@@ -7,6 +7,7 @@ using UUIDs, HTTP
 using JLD2, DelimitedFiles, Interpolations
 using ConcaveHull,PolygonOps
 using ProgressMeter
+using PCHIPInterpolation
 
 using MAGEMin_C
 
