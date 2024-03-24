@@ -369,8 +369,8 @@ function get_diagram_labels(    fieldname   ::String,
     elseif refType == "em"
         for i = 1:np
             ph_em = get_dominant_en(    Out_XY[i].ph,
-                                        Out_XY[k].n_SS,
-                                        Out_XY[k].SS_vec)
+                                        Out_XY[i].n_SS,
+                                        Out_XY[i].SS_vec)
             phd[i]      = ""
             for k=1:length(ph_em)
                 phd[i] *= ph_em[k]*" "
@@ -378,8 +378,8 @@ function get_diagram_labels(    fieldname   ::String,
                     phd[i] *= "<br>" 
                 end
             end
+            ph[i]       = join(ph_em," ")  
         end
-        ph[i]       = join(ph_em," ")  
     end
 
     n_hull      = length(unique(Hash_XY))
