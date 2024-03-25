@@ -85,6 +85,7 @@ end
 function refine_MAGEMin(data, 
                         MAGEMin_data    :: MAGEMin_Data, 
                         diagType        :: String,
+                        PTpath,
                         fixT            :: Float64,
                         fixP            :: Float64,
                         oxi             :: Vector{String},
@@ -96,8 +97,7 @@ function refine_MAGEMin(data,
                         scp             :: Int64,
                         refType         :: String;
                         ind_map          = nothing, 
-                        Out_XY_old       = nothing, 
-                        n_phase_XY_old   = nothing)
+                        Out_XY_old       = nothing)
 
     if isnothing(ind_map)
         ind_map = - ones(length(data.xc));
@@ -138,7 +138,7 @@ function refine_MAGEMin(data,
                 Bvec[i] = bufferN1*(1.0 - data.xc[new_ind]) + bufferN2*data.xc[new_ind];
 
             end
-        else 
+        elseif diagType == "pt"
             Tvec = zeros(Float64,n_new_points);
             Pvec = zeros(Float64,n_new_points);
             Xvec = Vector{Vector{Float64}}(undef,n_new_points);
@@ -148,6 +148,32 @@ function refine_MAGEMin(data,
                 Pvec[i] = data.yc[new_ind];
                 Xvec[i] = bulk_L;
                 Bvec[i] = bufferN1;
+            end
+        elseif diagType == "ptx"
+
+            ptx_data    = copy(PTpath)
+            np      = length(ptx_data)
+            Pres    = zeros(Float64,np)
+            Temp    = zeros(Float64,np)
+            x       = zeros(Float64,np)
+            for i=1:np
+                Pres[i] = ptx_data[i][Symbol("col-1")]
+                Temp[i] = ptx_data[i][Symbol("col-2")]
+                x[i]    = (i-1)*(1.0/(np-1))
+            end
+
+            pChipInterp_P = Interpolator(x, Pres)
+            pChipInterp_T = Interpolator(x, Temp)
+
+            Tvec = zeros(Float64,n_new_points);
+            Pvec = zeros(Float64,n_new_points);
+            Xvec = Vector{Vector{Float64}}(undef,n_new_points);
+            Bvec = zeros(Float64,n_new_points);
+            for (i, new_ind) = enumerate(ind_new)
+                Tvec[i] = pChipInterp_T(data.yc[new_ind]); 
+                Pvec[i] = pChipInterp_P(data.yc[new_ind]);
+                Xvec[i] = bulk_L*(1.0 - data.xc[new_ind]) + bulk_R*data.xc[new_ind];
+                Bvec[i] = bufferN1*(1.0 - data.xc[new_ind]) + bufferN2*data.xc[new_ind];
             end
         end
         Out_XY_new  =   multi_point_minimization(Pvec, Tvec, MAGEMin_data, X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol", scp=scp);
@@ -173,7 +199,8 @@ function refine_MAGEMin(data,
 
     miny        = minimum(data.yc)
     maxx        = maximum(data.xc)
-
+    maxy        = maximum(data.yc)
+    minx        = minimum(data.xc)
     if refType == "ph"
 
         for i=1:length(data.x)
@@ -181,7 +208,10 @@ function refine_MAGEMin(data,
             n_phase_XY[i]   = length(Out_XY[i].ph)
 
             if data.xc[i] == maxx && data.yc[i] == miny
-                Hash_XY[i]      = hash("pouet")
+                Hash_XY[i]      = hash("doo")
+            end
+            if data.xc[i] == minx && data.yc[i] == maxy
+                Hash_XY[i]      = hash("foo")
             end
 
         end
@@ -197,12 +227,15 @@ function refine_MAGEMin(data,
             n_phase_XY[i]   = length(ph_em)
 
             if data.xc[i] == maxx && data.yc[i] == miny
-                Hash_XY[i]  = hash("pouet")
+                Hash_XY[i]      = hash("doo")
+            end
+            if data.xc[i] == minx && data.yc[i] == maxy
+                Hash_XY[i]      = hash("foo")
             end
         end
     end
 
-    if diagType == "tx" || diagType == "px"
+    if diagType == "tx" || diagType == "px" || diagType == "ptx"
         for i=1:length(data.x)
             Out_XY[i].X .= data.xc[i]
         end

@@ -26,10 +26,10 @@ function Tab_Simulation()
                                                             clearable   = false,
                                                             multi       = false),
                                         ]),
-                                        dbc_tooltip([
-                                            html_div("Here you can select the thermodynamic database you want"),
-                                            html_div("Note that the chemical system can be different from database to another"),
-                                                    ],target="database-dropdown"),
+                                        # dbc_tooltip([
+                                        #     html_div("Here you can select the thermodynamic database you want"),
+                                        #     html_div("Note that the chemical system can be different from database to another"),
+                                        #             ],target="database-dropdown"),
                                         ]),
 
                                     #diagram type
@@ -43,16 +43,18 @@ function Tab_Simulation()
                                                 (label = "P-T diagram",         value = "pt"),
                                                 (label = "P-X diagram",         value = "px"),
                                                 (label = "T-X diagram",         value = "tx"),
+                                                (label = "PT-X diagram",        value = "ptx"),
                                             ],
                                             value="pt" ,
                                             clearable   = false,
                                             multi   = false),
                                         ]),
                                         dbc_tooltip([
-                                            html_div("There is three types of phase diagram available: "),
+                                            html_div("There is 4 types of phase diagram available: "),
                                             html_div("1) pressure vs temperature"),
                                             html_div("2) pressure vs variable composition"),
-                                            html_div("3) temperature vs variable composition")
+                                            html_div("3) temperature vs variable composition"),
+                                            html_div("4) PT path vs variable composition")
                                                     ],target="diagram-dropdown"),
                                     ]),
 
@@ -108,21 +110,56 @@ function Tab_Simulation()
                                         ]),
                                     ], style = Dict("display" => "block"), id      = "switch-opx-id"), #none, block
 
-
                                     #PT caption 
                                     html_div("‎ "),  
                                     html_div("‎ "),  
-                                    dbc_row([
-                                        dbc_col([ 
-                                        ], width=6),
-                                        dbc_col([ 
-                                            html_h1("min", style = Dict("textAlign" => "center","font-size" => "100%")),
-                                        ]),
-                                        dbc_col([ 
-                                            html_h1("max", style = Dict("textAlign" => "center","font-size" => "100%")),
-                                        ]),
-                                    ]),
+
+                                    # PT path
                                     html_div([
+                                        dbc_row([                                            
+                                            dbc_col([ 
+                                                html_h1("Pressure-Temperature path", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                                html_h1("(using pChip interpolation)", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            ], width=6),
+                                            dbc_col([ 
+                                                dbc_row([
+                                                    dash_datatable(
+                                                        id="pt-x-table",
+                                                        columns=[Dict("name" => "P [kbar]", "id"    => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                                                                    Dict("name" => "T [°C]", "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")],
+                                                        data=[
+                                                            Dict("col-1" => 5.0, "col-2"    => 500.0),
+                                                            Dict("col-1" => 10.0, "col-2"   => 800.0),
+                                                        ],
+                                                        style_cell      = (textAlign="center", fontSize="140%",),
+                                                        style_header    = (fontWeight="bold",),
+                                                        editable        = true,
+                                                        row_deletable   = true
+                                                    ),
+
+                                                ]),
+                                                dbc_row([
+                                                    dbc_button("Add new point",id="add-ptx-row-button", color="light", className="me-2", n_clicks=0,
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"1px lightgray solid")), 
+                                                ]),
+                                            ]),
+                                        ]),
+                                    ], style = Dict("display" => "none"),id = "pt-x-id"), #none, block
+                                   
+
+                                    html_div([
+                                        dbc_row([
+                                            dbc_col([ 
+                                            ], width=6),
+                                            dbc_col([ 
+                                                html_h1("min", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                            ]),
+                                            dbc_col([ 
+                                                html_h1("max", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                            ]),
+                                        ]),
                                     #pressure
                                     dbc_row([
                                         dbc_col([ 
@@ -152,6 +189,16 @@ function Tab_Simulation()
                                     ], style = Dict("display" => "block"), id      = "pressure-id"), #none, block
 
                                     html_div([
+                                        dbc_row([
+                                            dbc_col([ 
+                                            ], width=6),
+                                            dbc_col([ 
+                                                html_h1("min", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                            ]),
+                                            dbc_col([ 
+                                                html_h1("max", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                            ]),
+                                        ]),
                                     #temperature                                                        
                                     dbc_row([
                                         dbc_col([ 

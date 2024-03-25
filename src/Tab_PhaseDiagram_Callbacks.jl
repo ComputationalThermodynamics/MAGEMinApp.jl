@@ -175,6 +175,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("limit-ca-opx-id",    "value"),           # ON,OFF -> 0,1
         State("ca-opx-val-id",      "value"),           # 0.0-1.0 -> 0,1
 
+        State("pt-x-table",         "data"),
         State("tmin-id",            "value"),           # tmin
         State("tmax-id",            "value"),           # tmax
         State("pmin-id",            "value"),           # pmin
@@ -218,7 +219,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
     ) do    grid,       full_grid,  lbl,        addIso,     removeIso,  removeAllIso,   isoShow,    isoHide,    n_clicks_mesh, n_clicks_refine, 
             colorMap,   smooth,     rangeColor, reverse,    fieldname,  updateTitle, customTitle,
-            diagType,   dtb,        cpx,        limOpx,     limOpxVal,
+            diagType,   dtb,        cpx,        limOpx,     limOpxVal,  PTpath,
             tmin,       tmax,       pmin,       pmax,
             fixT,       fixP,
             sub,        refType,    refLvl,
@@ -264,7 +265,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                             dtb,        diagType,   verbose,    scp,        solver,
                                                                             fixT,       fixP,
                                                                             sub,        refLvl,
-                                                                            cpx,        limOpx,     limOpxVal,
+                                                                            cpx,        limOpx,     limOpxVal,  PTpath,
                                                                             bulk_L,     bulk_R,     oxi,
                                                                             bufferType, bufferN1,   bufferN2,
                                                                             smooth,     colorm,     reverseColorMap,
@@ -282,7 +283,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                         dtb,        diagType,   verbose,    scp,    solver,
                                                                         fixT,       fixP,
                                                                         sub,        refLvl,
-                                                                        cpx,        limOpx,     limOpxVal,
+                                                                        cpx,        limOpx,     limOpxVal,  PTpath,
                                                                         bulk_L,     bulk_R,     oxi,
                                                                         bufferType, bufferN1,   bufferN2,
                                                                         smooth,     colorm,     reverseColorMap,

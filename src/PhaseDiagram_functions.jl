@@ -54,7 +54,18 @@ function prt(   in    ::Union{Float64,Vector{Float64}};
 end
 
 
-function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
+function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2, PTpath)
+
+    ptx_data    = copy(PTpath)
+    np      = length(ptx_data)
+    Pres    = zeros(Float64,np)
+    Temp    = zeros(Float64,np)
+    x       = zeros(Float64,np)
+    for i=1:np
+        Pres[i] = ptx_data[i][Symbol("col-1")]
+        Temp[i] = ptx_data[i][Symbol("col-2")]
+        x[i]    = (i-1)*(1.0/(np-1))
+    end
 
     PD_infos  = Vector{String}(undef,2)
 
@@ -66,8 +77,10 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         dgtype = "Pressure-Temperature, fixed composition"
     elseif diagType == "px"
         dgtype = "Pressure-Composition, fixed temperature"
-    else
+    elseif diagType == "tx"
         dgtype = "Temperature-Composition, fixed pressure"
+    elseif diagType == "ptx"
+        dgtype = "Pressure Temperature path-Composition"
     end
 
     if solver == "lp"
@@ -110,7 +123,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
             PD_infos[1] *= "Buffer factor <br>"
         end        
         PD_infos[1] *= "Fixed Temp <br>"
-    else
+    elseif diagType == "tx"
         PD_infos[1] *= "X1 comp [mol] <br>"
         if bufferType != "none"
             PD_infos[1] *= "Buffer factor <br>"
@@ -120,6 +133,18 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
             PD_infos[1] *= "Buffer factor <br>"
         end        
         PD_infos[1] *= "Fixed Pres <br>"
+    elseif diagType == "ptx"
+        PD_infos[1] *= "X1 comp [mol] <br>"
+        if bufferType != "none"
+            PD_infos[1] *= "Buffer factor <br>"
+        end        
+        PD_infos[1] *= "X2 comp [mol] <br>"
+        if bufferType != "none"
+            PD_infos[1] *= "Buffer factor <br>"
+        end        
+        PD_infos[1] *= "PT path [P kbar]<br>"
+        PD_infos[1] *= "PT path [T °C]<br>"
+        # add ptx path here
     end
     oxi_string = replace.(oxi,"2"=>"₂", "3"=>"₃");
 
@@ -152,7 +177,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
             PD_infos[2] *= string(bufferN2) *"<br>"
         end        
         PD_infos[2] *= join(fixT, " ") *"<br>"
-    else
+    elseif diagType == "tx"
         PD_infos[2] *= join(bulk_L, " ") *"<br>"
         if bufferType != "none"
             PD_infos[2] *= string(bufferN1) *"<br>"
@@ -162,6 +187,17 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
             PD_infos[2] *= string(bufferN2) *"<br>"
         end        
         PD_infos[2] *= join(fixP, " ") *"<br>"
+    elseif diagType == "ptx"
+        PD_infos[2] *= join(bulk_L, " ") *"<br>"
+        if bufferType != "none"
+            PD_infos[2] *= string(bufferN1) *"<br>"
+        end        
+        PD_infos[2] *= join(bulk_R, " ") *"<br>"
+        if bufferType != "none"
+            PD_infos[2] *= string(bufferN2) *"<br>"
+        end        
+        PD_infos[2] *= join(Pres, " ") *"<br>"
+        PD_infos[2] *= join(Temp, " ") *"<br>"
     end
     PD_infos[2] *= "_"
 
@@ -203,11 +239,16 @@ function diagram_type(diagType, tmin, tmax, pmin, pmax)
         Yrange          = (Float64(pmin),Float64(pmax))
         xtitle = "Composition [X0 -> X1]"
         ytitle = "Pressure [kbar]"
-    else # diagType == "tx"
+    elseif diagType == "tx"
         Xrange          = (Float64(0.0),Float64(1.0) )
         Yrange          = (Float64(tmin),Float64(tmax))
         xtitle = "Composition [X0 -> X1]"
         ytitle = "Temperature [Celsius]"
+    elseif diagType == "ptx"
+        Xrange          = (Float64(0.0),Float64(1.0) )
+        Yrange          = (Float64(0.0),Float64(1.0))
+        xtitle = "Composition [X0 -> X1]"
+        ytitle = "Pressure-Temperature path"
     end
     return xtitle, ytitle, Xrange, Yrange
 end
@@ -314,7 +355,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                     dtb,        diagType,   verbose,    scp,    solver,
                                     fixT,       fixP,
                                     sub,        refLvl,
-                                    cpx,        limOpx,     limOpxVal,
+                                    cpx,        limOpx,     limOpxVal,  PTpath,
                                     bulk_L,     bulk_R,     oxi,
                                     bufferType, bufferN1,   bufferN2,
                                     smooth,     colorm,     reverseColorMap,
@@ -369,6 +410,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
         Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(  data, 
                                                         MAGEMin_data,
                                                         diagType,
+                                                        PTpath,
                                                         fixT,
                                                         fixP,
                                                         oxi,
@@ -389,6 +431,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
             t = @elapsed Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(  data_new,
                                                                         MAGEMin_data,
                                                                         diagType,
+                                                                        PTpath,
                                                                         fixT,
                                                                         fixP,
                                                                         oxi,
@@ -400,8 +443,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                                                         scp,
                                                                         refType, 
                                                                         ind_map         = ind_map,
-                                                                        Out_XY_old      = Out_XY,
-                                                                        n_phase_XY_old  = n_phase_XY    ) # recompute points that have not been computed before
+                                                                        Out_XY_old      = Out_XY  ) # recompute points that have not been computed before
 
             println("Computed $(length(ind_map.<0)) new points in $t seconds")
             data    = data_new
@@ -428,7 +470,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                                                         Xrange,
                                                                         Yrange)
 
-        PT_infos                           = get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
+        PT_infos                           = get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath)
 
         data_plot, annotations = get_diagram_labels(    fieldname,
                                                         oxi,
@@ -530,7 +572,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                 dtb,        diagType,   verbose,    scp,    solver,
                                 fixT,       fixP,
                                 sub,        refLvl,
-                                cpx,        limOpx,     limOpxVal,
+                                cpx,        limOpx,     limOpxVal,  PTpath,
                                 bulk_L,     bulk_R,     oxi,
                                 bufferType, bufferN1,   bufferN2,
                                 smooth,     colorm,     reverseColorMap,
@@ -543,6 +585,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
     t = @elapsed Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(  data_new,
                                                                 MAGEMin_data,
                                                                 diagType,
+                                                                PTpath,
                                                                 fixT,
                                                                 fixP,
                                                                 oxi,
@@ -554,8 +597,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                                                 scp,
                                                                 refType,
                                                                 ind_map         = ind_map,
-                                                                Out_XY_old      = Out_XY,
-                                                                n_phase_XY_old  = n_phase_XY) # recompute points that have not been computed before
+                                                                Out_XY_old      = Out_XY) # recompute points that have not been computed before
 
     println("Computed $(length(ind_map.<0)) new points in $(round(t, digits=3)) seconds")
     data                = data_new
@@ -581,7 +623,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                                                     Xrange,
                                                                     Yrange )
     
-    PT_infos                           = get_phase_diagram_information(npoints,dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2)
+    PT_infos                           = get_phase_diagram_information(npoints,dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath)
                                                               
     data_plot, annotations = get_diagram_labels(    fieldname,
                                                     oxi,
