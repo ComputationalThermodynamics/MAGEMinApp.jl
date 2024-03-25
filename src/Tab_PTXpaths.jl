@@ -25,10 +25,10 @@ function Tab_PTXpaths()
                                                         clearable   = false,
                                                         multi       = false),
                                     ]),
-                                    dbc_tooltip([
-                                        html_div("Here you can select the thermodynamic database you want"),
-                                        html_div("Note that the chemical system can be different from database to another"),
-                                                ],target="database-dropdown-ptx"),
+                                    # dbc_tooltip([
+                                    #     html_div("Here you can select the thermodynamic database you want"),
+                                    #     html_div("Note that the chemical system can be different from database to another"),
+                                    #             ],target="database-dropdown-ptx"),
                                     ]),
 
 
