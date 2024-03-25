@@ -67,8 +67,7 @@ t = @elapsed Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(  data_new,
                                                             0,
                                                             "ph", 
                                                             ind_map         = ind_map,
-                                                            Out_XY_old      = Out_XY,
-                                                            n_phase_XY_old  = n_phase_XY    ) # recompute points that have not been computed before
+                                                            Out_XY_old      = Out_XY  ) # recompute points that have not been computed before
 
 res = "";
 res *= "results = [";
