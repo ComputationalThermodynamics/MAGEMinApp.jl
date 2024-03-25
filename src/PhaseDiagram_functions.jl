@@ -142,7 +142,8 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         if bufferType != "none"
             PD_infos[1] *= "Buffer factor <br>"
         end        
-        PD_infos[1] *= "Pressure-Temperature path <br>"
+        PD_infos[1] *= "PT path [P kbar]<br>"
+        PD_infos[1] *= "PT path [T °C]<br>"
         # add ptx path here
     end
     oxi_string = replace.(oxi,"2"=>"₂", "3"=>"₃");
