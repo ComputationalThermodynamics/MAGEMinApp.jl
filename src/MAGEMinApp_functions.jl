@@ -86,7 +86,7 @@ function save_rho_for_LaMEM(    dtb         ::String,
     file       *= @sprintf("50:    Lowest T [K]\n");
     file       *= @sprintf("51:    T increment\n");
     file       *= @sprintf("52:    # of T values\n");
-    file       *= @sprintf("53:    Lowest P [K]\n");
+    file       *= @sprintf("53:    Lowest P [bar]\n");
     file       *= @sprintf("54:    P increment\n");
     file       *= @sprintf("55:    # of P values\n");
 
@@ -113,6 +113,131 @@ function save_rho_for_LaMEM(    dtb         ::String,
     for j=1:nP
         for i=1:nT
             file   *= @sprintf("%5.6f %5.6f %5.6f %5.6f %5.6f\n",gridded[i,j,1],gridded[i,j,3],gridded[i,j,2],T[i],P[j])
+        end
+    end
+
+
+    return file
+end
+
+
+"""
+save_rho_for_GeoModel()
+    This function export parameters useful for geodynamic coupling -> P,T, rho_S, rho_M, Frac_M, Vp, Vs, s_cp
+"""
+function save_rho_for_GeoModel(     dtb         ::String,
+                                    sub         ::Int64,
+                                    refLvl      ::Int64,
+                                    Xrange,
+                                    Yrange,
+                                    bulk1                  )
+
+    np          = length(Out_XY)
+
+    field2save  = ["rho_M","rho_S","frac_M","Vp","Vs","s_cp"]
+    ncol        = length(field2save)
+    field       = Matrix{Union{Float64,Missing}}(undef,np,ncol);
+
+    for j=1:ncol
+        if field2save[j] == "s_cp"
+            for i=1:np
+                field[i,j] = Out_XY[i].s_cp[1];
+            end
+        else
+            for i=1:np
+                field[i,j] = Float64(get_property(Out_XY[i], field2save[j]));
+            end
+        end
+    end
+
+    n            = 2^(sub + refLvl + addedRefinementLvl)
+    x            = range(minimum(data.xc), stop = maximum(data.xc), length = n)
+    y            = range(minimum(data.yc), stop = maximum(data.yc), length = n)
+
+    T            = vcat(x)
+    P            = vcat(y)
+    gridded      = Array{Union{Float64,Missing}}(undef,n,n,ncol);
+
+    Xr           = (Xrange[2]-Xrange[1])/n
+    Yr           = (Yrange[2]-Yrange[1])/n
+
+    for l=1:ncol
+        for k=1:np
+            for i=data.x[k][1]+Xr/2 : Xr : data.x[k][3]
+                for j=data.y[k][1]+Yr/2 : Yr : data.y[k][3]
+                    ii                  = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
+                    jj                  = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
+                    gridded[ii,jj,l]    = field[k,l]
+                end
+            end
+        end
+    end
+
+    # filter some potential iffy values
+    gridded[gridded[:,:,2] .== 0.0,2] .= 3000.0
+    gridded[isnan.(gridded[:,:,2]),2] .= 3000.0
+    gridded[gridded[:,:,1] .== 0.0,1] .= 2000.0
+    gridded[isnan.(gridded[:,:,1]),1] .= 2000.0
+    gridded[gridded[:,:,3] .> 1.0,3]  .= 1.0
+
+    # convert values
+    T      .= T .+ 273.15            # --> to K
+    P      .= P .* 1e3               # --> to bar
+
+    nT      =  length(x)
+    nP      =  length(y)
+    dT      = (maximum(x)-minimum(x))/(nT-1);
+    dP      = (maximum(y)-minimum(y))/(nP-1)*1000.0;
+
+    # retrieve bulk rock composition and associated oxide list
+    n_ox    = length(bulk1);
+    bulk    = zeros(n_ox); 
+    oxi     = Vector{String}(undef, n_ox)
+    for i=1:n_ox
+        tmp = bulk1[i][:mol_fraction]
+        if typeof(tmp) == String
+            tmp = parse(Float64,tmp)
+        end
+        bulk[i]   = tmp;
+        oxi[i]    = bulk1[i][:oxide];
+    end
+
+    file        = ""
+    file       *= @sprintf("8\n")
+    file       *= @sprintf("\n\n")
+    file       *= @sprintf("       1               2                     3            4        5        6          7        8\n");
+    file       *= @sprintf("rho_melt[kg/m3]   melt_fraction[wt]   rho_solid[kg/m3]   T[K]   P[bar]    Vp[km/s]  Vs[km/s]  s_cp[J/kg/K]\n");
+    file       *= @sprintf("1-49:  Comments\n");
+    file       *= @sprintf("50:    Lowest T [K]\n");
+    file       *= @sprintf("51:    T increment\n");
+    file       *= @sprintf("52:    # of T values\n");
+    file       *= @sprintf("53:    Lowest P [bar]\n");
+    file       *= @sprintf("54:    P increment\n");
+    file       *= @sprintf("55:    # of P values\n");
+
+    for i=1:4
+        file   *= @sprintf("\n")
+    end
+    file       *= @sprintf("Phase diagram produced using MAGEMin v%s with database %5s\n",Out_XY[1].MAGEMin_ver,dtb)
+    file       *= @sprintf("Bulk rock composition[mol fraction]\n")
+    for i=1:n_ox
+        file   *= @sprintf("%8s : %+5.10f\n",oxi[i],bulk[i])
+    end
+    for i=n_ox+1:11
+        file   *= @sprintf("\n")
+    end
+    for i=1:20
+        file   *= @sprintf("\n")
+    end
+    file       *= @sprintf("%5.10f\n",minimum(T));
+    file       *= @sprintf("%5.10f\n",dT);
+    file       *= @sprintf("%d\n",nT);
+    file       *= @sprintf("%5.10f\n",minimum(P));
+    file       *= @sprintf("%5.10f\n",dP);
+    file       *= @sprintf("%d\n",nP);
+    for j=1:nP
+        for i=1:nT
+            file   *= @sprintf("%5.6f %5.6f %5.6f %5.6f %5.6f %5.6f %5.6f %5.6f\n",gridded[i,j,1],gridded[i,j,3],gridded[i,j,2],gridded[i,j,4],gridded[i,j,5],gridded[i,j,6],T[i],P[j])
         end
     end
 
@@ -426,7 +551,7 @@ function get_diagram_labels(    fieldname   ::String,
                                 mode        = "lines",
                                 hoverinfo   = "text",
                                 showlegend  = false,
-                                text        =  ph_list[i],
+                                text        = ph_list[i],
                                 );
     
     
