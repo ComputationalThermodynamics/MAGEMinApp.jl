@@ -37,7 +37,7 @@ include(joinpath(pkg_dir,"src","Tab_PTXpaths_Callbacks.jl"))
 Starts the MAGEMin App.
 """
 function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
-    GUI_version = "0.1.8"   
+    GUI_version = "0.1.9"   
     cur_dir     = pwd()                 # directory from where you started the GUI
     pkg_dir     = pkgdir(MAGEMinApp)   # package dir
     cd(pkg_dir)
@@ -73,15 +73,15 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                         dbc_dropdownmenuitem(                 "Export ρ for LaMEM", 
                                                                 id          = "export-to-lamem",
                                                                 disabled    = false                 ), 
-                                        dbc_dropdownmenuitem(                 "Export phase diagram", 
-                                                                id          = "export-figure",
+                                        dbc_dropdownmenuitem(                 "Export for GeoModel", 
+                                                                id          = "export-geomodel",
                                                                 disabled    = false                 ),           
                                     ],
                                     label="File",
                                     id="id-dropdown-file",
                                     color="secondary"),
                                     dcc_download(id="download-lamem-in"),  
-                                    dcc_download(id="download-figure"), 
+                                    dcc_download(id="download-geomodel-in"), 
                                     dbc_tooltip("Note that 3-4 refinement levels are more that necessary",target="export-to-lamem"),
                                 ]),
                             ]),
@@ -96,6 +96,19 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                     "Phase diagrams for LaMEM have to be PT",
                                     color="danger",
                                     id      ="export-to-lamem-text-failed",
+                                    is_open =false,
+                                    duration=4000,
+                                ),
+                                dbc_alert(
+                                    "Density diagram saved for LaMEM",
+                                    id      ="export-geomodel-text",
+                                    is_open =false,
+                                    duration=4000,
+                                ),
+                                dbc_alert(
+                                    "Phase diagrams for LaMEM have to be PT",
+                                    color="danger",
+                                    id      ="export-geomodel-text-failed",
                                     is_open =false,
                                     duration=4000,
                                 ),
