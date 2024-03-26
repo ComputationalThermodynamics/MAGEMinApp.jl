@@ -21,8 +21,8 @@ C:\YOUR_PATH_TO_JULIA\bin\julia.exe
 
 `MAGEMinApp.jl` provides an easy-to-use web-based graphical user interface for `MAGEMin`. Available features:
 
-1. Compute Pressure-Temperature iso-chemical phase diagrams (PT phase diagrams)
-2. Compute Pressure or Temperature versus variable composition diagrams (PX, TX phase diagrams)
+1. Compute Pressure-Temperature iso-chemical phase diagrams (P-T phase diagrams)
+2. Compute Pressure and/or Temperature versus variable composition diagrams (P-X, T-X, PT-X phase diagrams)
 3. Display iso-contour of phase fractions, densities, seismic velocities etc.
 4. Automatic labeling of the phase fields including listing the stable phase assemblage when the field is too small.
 5. Compute Pressure-Temperature path diagrams for fractional melting and crystallization.
@@ -34,7 +34,7 @@ As for `MAGEMin`, you can choose among several thermodynamic dataset: Metapelite
 
 ### Installation
 
-To install this, please install the local versions of `MAGEMin_jll` and `MAGEMin_C` first, after which you can install the App itself
+To install MAGEMinApp:
 ```julia
 julia>]
 pkg> add MAGEMinApp
@@ -52,7 +52,7 @@ Next you can open [127.0.0.1:8050](127.0.0.1:8050) in your favorite browser, whi
 
 ### How to load custom bulk-rock composition
 
-MAGEMinApp is designed is such a way that bulk-rock composition must be entered in a `*.dat` file and loaded in the simulation tab. An example of how to properly structure a bulk-rock composition file is given in `examples/bulk-rock_ref.dat`
+MAGEMinApp is designed is such a way that bulk-rock composition must be entered in a `*.dat` file and loaded in the simulation tab. An example of valid bulk-rock composition file is given in `examples/bulk-rock_ref.dat`
 
 * Commented lines must start with a `#`
 * Bulk-rock composition line must contain `title; comments; db; sysUnit; oxide; frac; frac2`
@@ -65,10 +65,18 @@ MAGEMinApp is designed is such a way that bulk-rock composition must be entered 
 > 
 > `sysUnit` must be `mol` or `wt`. Note that if `wt` is provided, the composition is converted and subsequently displayed in `mol` in `MAGEMinApp`.
 > 
-> `oxide` is the **complete** list of oxides of the selected database. You are not allowed to leave oxides out. Note however that either `FeO` and `O` **or** `FeO` and `Fe2O3` can be provided. `FeO` = `FeOt`.
+> `oxide` is the **complete** list of oxides of the selected database. You are not allowed to leave oxides out. If you don't need all oxides of the database simply set them to 0.0. Note, that either `FeO` and `O` **or** `FeO` and `Fe2O3` can be provided. In the first case `FeO` = `FeOt`.
 > 
-> `frac` is the `sysUnit` proportion of oxides. Set the oxide content to 0.0 to reduce the chemical system. If possible, the calculation will be performed in a fully reduced chemical system, otherwise a low value will be automatically set (around 0.01 `mol%`).
+> `frac` is the `sysUnit` proportion of oxides. Set the oxide content to 0.0 to reduce the chemical system. If possible, the calculation will be performed in a fully reduced chemical system, otherwise a low value will be automatically set (around 0.01 `mol%`). Generally, `TiO2`, `Cr2O3`, `MnO`, `O` and `H2O` can be effectively set to 0.0.
 > 
 > `frac2` is used only when computing T-X or P-X diagrams.
 
+
+### Remarks
+
+> [!IMPORTANT] 
+> In the simulation tab, bulk-rock composition are displayed in mol fraction. When using a bulk-rock composition file and the system unit is wt%, the bulk-rock are loaded and converted to mol%.
+
+> [!IMPORTANT] 
+> When computing PTX paths (fractional crystalllization or melting), if an oxide reaches low concentration (< 1e-5 mol fraction) and if this oxide can effectively be set to 0.0, MAGEMinApp will automatically set it to 0.0. Conversely if the same oxide cannot be put to 0.0 with the current solution phase formulation, it will be set to 1e-5. This ensures stability of the algorithm.
 
