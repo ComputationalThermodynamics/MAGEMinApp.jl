@@ -49,13 +49,13 @@ function Tab_Simulation()
                                             clearable   = false,
                                             multi   = false),
                                         ]),
-                                        dbc_tooltip([
-                                            html_div("There is 4 types of phase diagram available: "),
-                                            html_div("1) pressure vs temperature"),
-                                            html_div("2) pressure vs variable composition"),
-                                            html_div("3) temperature vs variable composition"),
-                                            html_div("4) PT path vs variable composition")
-                                                    ],target="diagram-dropdown"),
+                                        # dbc_tooltip([
+                                        #     html_div("There is 4 types of phase diagram available: "),
+                                        #     html_div("1) pressure vs temperature"),
+                                        #     html_div("2) pressure vs variable composition"),
+                                        #     html_div("3) temperature vs variable composition"),
+                                        #     html_div("4) PT path vs variable composition")
+                                        #             ],target="diagram-dropdown"),
                                     ]),
 
                                     #clinopyroxene for metabasite
