@@ -1,5 +1,5 @@
 using Test
-
+using ProgressMeter
 using MAGEMin_C
 using MAGEMinApp
 using PlotlyJS
