@@ -87,44 +87,44 @@ function Tab_Simulation_Callbacks(app)
 
 
 
-    # save phase diagram data callback
-    callback!(
-        app,
-        Output("data-save", "children"),
-        Input("save-button", "n_clicks"),
-        State("Filename-id", "value"),
-    ) do value, filename
+    # # save phase diagram data callback
+    # callback!(
+    #     app,
+    #     Output("data-save", "children"),
+    #     Input("save-button", "n_clicks"),
+    #     State("Filename-id", "value"),
+    # ) do value, filename
 
-        ctx = callback_context()
-        if length(ctx.triggered) == 0
-            bid = ""
-        else
-            bid = split(ctx.triggered[1].prop_id, ".")[1]
-        end
+    #     ctx = callback_context()
+    #     if length(ctx.triggered) == 0
+    #         bid = ""
+    #     else
+    #         bid = split(ctx.triggered[1].prop_id, ".")[1]
+    #     end
 
-        # if we compute a new phase diagram
-        if bid == "save-button"
+    #     # if we compute a new phase diagram
+    #     if bid == "save-button"
 
-            if filename == "..."
-                return html_div([
-                    "Provide a valid filename!"
-                ], style = Dict("textAlign" => "center","font-size" => "100%"))
-            else
-                try
-                    file = filename*".jld2"
-                    save_object(file, AppData.PseudosectionData)
-                catch e 
-                    print("File could not be saved: $e\n")
-                end
+    #         if filename == "..."
+    #             return html_div([
+    #                 "Provide a valid filename!"
+    #             ], style = Dict("textAlign" => "center","font-size" => "100%"))
+    #         else
+    #             try
+    #                 file = filename*".jld2"
+    #                 save_object(file, AppData.PseudosectionData)
+    #             catch e 
+    #                 print("File could not be saved: $e\n")
+    #             end
 
-                return html_div([
-                    "Phase diagram data saved"
-                ], style = Dict("textAlign" => "center","font-size" => "100%"))
-            end
-        else
-            return ""
-        end
-    end
+    #             return html_div([
+    #                 "Phase diagram data saved"
+    #             ], style = Dict("textAlign" => "center","font-size" => "100%"))
+    #         end
+    #     else
+    #         return ""
+    #     end
+    # end
 
 
     # callback to display ca-orthopyroxene limiter

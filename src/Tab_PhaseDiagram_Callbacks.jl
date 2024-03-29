@@ -29,7 +29,7 @@ function Tab_PhaseDiagram_Callbacks(app)
     #save all table to file
     callback!(
         app,
-        Output("download-all-table-text", "data"),
+        # Output("download-all-table-text", "data"),
         Output("data-all-table-save", "is_open"),
         Output("data-all-save-table-failed", "is_open"),
         Input("save-all-table-button", "n_clicks"),
@@ -40,14 +40,12 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         if fname != "filename"
             datab   = "_"*dtb
-            fileout = fname*datab*".txt"
-            file    = MAGEMin_data2table(Out_XY,dtb)            #point_id is defined as global variable in clickData callback
-            output  = Dict("content" => file,"filename" => fileout)
-            
-            return output, "success", ""
+            fileout = fname*datab
+
+            MAGEMin_data2dataframe(Out_XY,dtb,fileout)
+            return "success", ""
         else
-            output = nothing
-            return output, "", "failed"
+            return  "", "failed"
         end
     end
 
