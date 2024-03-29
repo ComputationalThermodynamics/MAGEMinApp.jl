@@ -615,36 +615,36 @@ function Tab_Simulation()
                                                 ]),
                                             ]),
 
-                                            #Filename
-                                            html_div("‎ "),
-                                            dbc_row([
-                                                dbc_col([ 
-                                                    html_h1("Filename", style = Dict("textAlign" => "center","font-size" => "120%")),
-                                                ], width=3),
-                                                dbc_col([ 
-                                                    dbc_input(
-                                                        id      = "Filename-id",
-                                                        type    = "text", 
-                                                        style   = Dict("textAlign" => "center") ,
-                                                        value   = "..."   ),            
-                                                ]),
-                                            ]),
-                                            # load save buttons
-                                            dbc_row([
-                                                dbc_col([ 
-                                                ], width=4),        
-                                                dbc_col([ 
-                                                    dbc_button(
-                                                        "Load", id="load-button", color="light",  n_clicks=0,
-                                                    ),
-                                                ]),
-                                                dbc_col([ 
-                                                    dbc_button(
-                                                        "Save", id="save-button", color="light",  n_clicks=0,
-                                                    ),
-                                                    html_div(id="data-save"),
-                                                ]),
-                                            ]),
+                                            # #Filename
+                                            # html_div("‎ "),
+                                            # dbc_row([
+                                            #     dbc_col([ 
+                                            #         html_h1("Filename", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            #     ], width=3),
+                                            #     dbc_col([ 
+                                            #         dbc_input(
+                                            #             id      = "Filename-id",
+                                            #             type    = "text", 
+                                            #             style   = Dict("textAlign" => "center") ,
+                                            #             value   = "..."   ),            
+                                            #     ]),
+                                            # ]),
+                                            # # load save buttons
+                                            # dbc_row([
+                                            #     dbc_col([ 
+                                            #     ], width=4),        
+                                            #     dbc_col([ 
+                                            #         dbc_button(
+                                            #             "Load", id="load-button", color="light",  n_clicks=0,
+                                            #         ),
+                                            #     ]),
+                                            #     dbc_col([ 
+                                            #         dbc_button(
+                                            #             "Save", id="save-button", color="light",  n_clicks=0,
+                                            #         ),
+                                            #         html_div(id="data-save"),
+                                            #     ]),
+                                            # ]),
 
                                             html_div("‎ "),
                                             dbc_row([

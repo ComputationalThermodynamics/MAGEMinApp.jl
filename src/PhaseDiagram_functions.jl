@@ -361,7 +361,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                     smooth,     colorm,     reverseColorMap,
                                     test,       refType                                  )
 
-        empty!(AppData.PseudosectionData);              #this empty the data from previous pseudosection computation
+        # empty!(AppData.PseudosectionData);              #this empty the data from previous pseudosection computation
 
         #________________________________________________________________________________________#
         # Create coarse mesh
@@ -451,7 +451,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
             
         end
 
-        push!(AppData.PseudosectionData,Out_XY);
+        # push!(AppData.PseudosectionData,Out_XY);
 
         #________________________________________________________________________________________#                   
         # Scatter plotly of the grid
@@ -604,8 +604,8 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
     forest              = forest_new
     addedRefinementLvl += 1;
 
-    empty!(AppData.PseudosectionData)
-    push!(AppData.PseudosectionData,Out_XY);
+    # empty!(AppData.PseudosectionData)
+    # push!(AppData.PseudosectionData,Out_XY);
 
     #________________________________________________________________________________________#                   
     # Scatter plotly of the grid

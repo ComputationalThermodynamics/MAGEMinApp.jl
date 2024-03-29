@@ -128,8 +128,11 @@ function Tab_PhaseDiagram()
                                         ], width=4),
                                         dbc_col([    
                                             dbc_button(
-                                                "Table", id="save-all-table-button", color="light",  n_clicks=0,
+                                                "csv file", id="save-all-table-button", color="light",  n_clicks=0,
                                             ),
+                                            dbc_tooltip([
+                                                html_div("Saving all data takes time and depends on the number of points"),
+                                                html_div("Output path and progress are displayed in the Julia terminal")],target="save-all-table-button"),
                                             dcc_download(id="download-all-table-text"),  
                                         ]),
                                     ]),

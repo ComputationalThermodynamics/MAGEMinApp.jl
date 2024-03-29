@@ -1,6 +1,6 @@
 global AppData
 
-PseudosectionData   = [];
+# PseudosectionData   = [];
 
 
 # LIST AVAILABLE DATABASE
@@ -241,5 +241,5 @@ push!(db,Dict(          :bulk       => "predefined",
 
 AppData = ( db                  = db,
             dba                 = dba,
-            PseudosectionData   = PseudosectionData )
+            #=PseudosectionData   = PseudosectionData=# )
             
