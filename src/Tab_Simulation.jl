@@ -239,7 +239,7 @@ function Tab_Simulation()
                                                 dbc_input(
                                                 id      = "fixed-pressure-val-id",
                                                 type    = "number", 
-                                                min     = 0.01, 
+                                                min     = 0.001, 
                                                 max     = 100.01, 
                                                 value   = 10.01   ),
                                         ]),
