@@ -114,27 +114,27 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
             PD_infos[1] *= "Buffer factor <br>"
         end       
     elseif diagType == "px"
-        PD_infos[1] *= "X1 comp [mol] <br>"
+        PD_infos[1] *= "X0 comp [mol] <br>"
         if bufferType != "none"
             PD_infos[1] *= "Buffer factor <br>"
         end
-        PD_infos[1] *= "X2 comp [mol] <br>"
+        PD_infos[1] *= "X1 comp [mol] <br>"
         if bufferType != "none"
             PD_infos[1] *= "Buffer factor <br>"
         end        
         PD_infos[1] *= "Fixed Temp <br>"
     elseif diagType == "tx"
-        PD_infos[1] *= "X1 comp [mol] <br>"
+        PD_infos[1] *= "X0 comp [mol] <br>"
         if bufferType != "none"
             PD_infos[1] *= "Buffer factor <br>"
         end        
-        PD_infos[1] *= "X2 comp [mol] <br>"
+        PD_infos[1] *= "X1 comp [mol] <br>"
         if bufferType != "none"
             PD_infos[1] *= "Buffer factor <br>"
         end        
         PD_infos[1] *= "Fixed Pres <br>"
     elseif diagType == "ptx"
-        PD_infos[1] *= "X1 comp [mol] <br>"
+        PD_infos[1] *= "X0 comp [mol] <br>"
         if bufferType != "none"
             PD_infos[1] *= "Buffer factor <br>"
         end        
