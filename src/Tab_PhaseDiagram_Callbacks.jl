@@ -270,6 +270,11 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                             test,       refType                          )
 
             infos           = get_computation_info(npoints, meant)
+            
+            if npoints == 644
+                print("$(Out_XY[644])\n")
+            end
+
             data_reaction   = show_hide_reaction_lines(sub,refLvl,Xrange,Yrange)
             data_grid       = show_hide_mesh_grid()
             active_tab      = "tab-phase-diagram" 
