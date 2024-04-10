@@ -8,6 +8,8 @@ function Tab_Simulation_Callbacks(app)
         Output("em-1-id","style"),
         Output("ss-1-id","style"),
         Output("of-1-id","style"),
+        Output("phase-selection","options"),
+        Output("phase-selection","value"),
         Input("database-dropdown","value"),
         Input("phase-dropdown","value"),
         
@@ -47,7 +49,12 @@ function Tab_Simulation_Callbacks(app)
             val         = db_in.data_pp[1]
         end
 
-        return opts_ph, val, style_em, style_ph, style_of
+        phase_selection_options = [Dict(    "label"     => " "*i,
+                                            "value"     => i )
+                                                for i in db_in.ss_name ]
+        phase_selection_value   = db_in.ss_name
+
+        return opts_ph, val, style_em, style_ph, style_of, phase_selection_options, phase_selection_value
     end
 
 
@@ -359,6 +366,26 @@ function Tab_Simulation_Callbacks(app)
         
         val         = t
         return data, opts, val                  
+    end
+
+
+    # open/close Curve interpretation box
+    callback!(app,
+        Output("collapse-phase-selection", "is_open"),
+        [Input("button-phase-selection", "n_clicks")],
+        [State("collapse-phase-selection", "is_open")], ) do  n, is_open
+        
+        if isnothing(n); n=0 end
+
+        if n>0
+            if is_open==1
+                is_open = 0
+            elseif is_open==0
+                is_open = 1
+            end
+        end
+        return is_open 
+            
     end
 
     # open/close Curve interpretation box

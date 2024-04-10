@@ -1,4 +1,4 @@
-function Tab_Simulation()
+function Tab_Simulation(db_inf)
     html_div([
     # one column for the plots
         dbc_col([
@@ -582,6 +582,29 @@ function Tab_Simulation()
 
                         dbc_col([ 
                             dbc_row([   
+                            dbc_button("Solution phase selection",id="button-phase-selection",color="primary"),
+                            dbc_collapse(
+                                dbc_card(dbc_cardbody([
+
+                                        dbc_col([ 
+
+                                            dcc_checklist(
+                                                id      = "phase-selection",
+                                                options = [Dict(    "label"     => " "*i,
+                                                                    "value"     => i )
+                                                                for i in db_inf.ss_name ],
+                                                value = db_inf.ss_name,
+                                            ),
+    
+                                        ]),
+
+                                    ])),
+                                    id="collapse-phase-selection",
+                                    is_open=false,
+                            ),
+                            ]),
+                            html_div("‎ "),
+                            dbc_row([   
                             dbc_button("General parameters",id="button-general-parameters",color="primary"),
                             dbc_collapse(
                                 dbc_card(dbc_cardbody([
@@ -662,7 +685,9 @@ function Tab_Simulation()
                                     is_open=true,
                             ),
                             ])
-                            ], width=3),
+
+
+                        ], width=3),
 
 
                     ]),
