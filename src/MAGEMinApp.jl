@@ -37,9 +37,10 @@ include(joinpath(pkg_dir,"src","Tab_PTXpaths_Callbacks.jl"))
 Starts the MAGEMin App.
 """
 function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
-    GUI_version = "0.2.3"   
+    GUI_version = "0.2.4"   
     cur_dir     = pwd()                 # directory from where you started the GUI
     pkg_dir     = pkgdir(MAGEMinApp)   # package dir
+    db_inf      = retrieve_solution_phase_information("ig");
     cd(pkg_dir)
     # Initialize MPI and T8Code
     COMM = Initialize_AMR()
@@ -126,7 +127,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                 [
                                     dbc_tab(    tab_id      = "tab-Simulation",
                                                 label       = "Simulation",
-                                                children    = [Tab_Simulation()],
+                                                children    = [Tab_Simulation(db_inf)],
                                             ),
                                     dbc_tab(    tab_id      = "tab-phase-diagram",
                                                 label       = "Phase Diagram",

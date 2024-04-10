@@ -2,3 +2,4 @@
 *.dylib
 .vscode
 Manifest.toml
+*libMAGEMin.dylib
