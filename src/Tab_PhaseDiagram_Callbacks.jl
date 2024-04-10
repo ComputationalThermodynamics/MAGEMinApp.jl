@@ -134,6 +134,19 @@ function Tab_PhaseDiagram_Callbacks(app)
         return pLeft, pRight, pBottom
     end
 
+    function string_vec_dif(phase_selection,dtb)
+
+        db_in                           = retrieve_solution_phase_information(dtb)
+        set_A                           = phase_selection
+        set_B                           = db_in.ss_name
+        phase_selection                 = setdiff(set_B, set_A)
+        if isempty(phase_selection)
+            phase_selection = nothing
+        end
+
+        return phase_selection
+    end
+
     # Callback function to create compute the phase diagram using T8code for Adaptive Mesh Refinement
     callback!(
         app,
@@ -172,6 +185,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("mb-cpx-switch",      "value"),           # false,true -> 0,1
         State("limit-ca-opx-id",    "value"),           # ON,OFF -> 0,1
         State("ca-opx-val-id",      "value"),           # 0.0-1.0 -> 0,1
+        State("phase-selection",    "value"),
 
         State("pt-x-table",         "data"),
         State("tmin-id",            "value"),           # tmin
@@ -216,8 +230,8 @@ function Tab_PhaseDiagram_Callbacks(app)
         prevent_initial_call = true,
 
     ) do    grid,       full_grid,  lbl,        addIso,     removeIso,  removeAllIso,   isoShow,    isoHide,    n_clicks_mesh, n_clicks_refine, 
-            colorMap,   smooth,     rangeColor, reverse,    fieldname,  updateTitle, customTitle,
-            diagType,   dtb,        cpx,        limOpx,     limOpxVal,  PTpath,
+            colorMap,   smooth,     rangeColor, reverse,    fieldname,  updateTitle,    customTitle,
+            diagType,   dtb,        cpx,        limOpx,     limOpxVal,  phase_selection,PTpath,
             tmin,       tmax,       pmin,       pmax,
             fixT,       fixP,
             sub,        refType,    refLvl,
@@ -229,6 +243,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             isoColorLine,           isoLabelSize,   
             minIso,     stepIso,    maxIso,     active_tab
 
+
+        phase_selection                 = remove_phases(string_vec_dif(phase_selection,dtb),dtb)
         smooth                          = smooth
         xtitle, ytitle, Xrange, Yrange  = diagram_type(diagType, tmin, tmax, pmin, pmax)                # get axis information
         bufferN1, bufferN2, fixT, fixP  = convert2Float64(bufferN1, bufferN2, fixT, fixP)               # convert buffer_n to float
@@ -240,6 +256,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         field2plot[1]    = 1
         if bid == "compute-button"
+
             smooth                      = "best"
       
             if @isdefined(MAGEMin_data)
@@ -260,7 +277,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             data_plot, layout, npoints, meant  =  compute_new_phaseDiagram( xtitle,     ytitle,     lbl,
                                                                             Xrange,     Yrange,     fieldname,  customTitle,
-                                                                            dtb,        diagType,   verbose,    scp,        solver,
+                                                                            dtb,        diagType,   verbose,    scp,        solver,     phase_selection,
                                                                             fixT,       fixP,
                                                                             sub,        refLvl,
                                                                             cpx,        limOpx,     limOpxVal,  PTpath,
@@ -283,7 +300,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             data_plot, layout, npoints, meant  =  refine_phaseDiagram(  xtitle,     ytitle,     lbl, 
                                                                         Xrange,     Yrange,     fieldname,  customTitle,
-                                                                        dtb,        diagType,   verbose,    scp,    solver,
+                                                                        dtb,        diagType,   verbose,    scp,    solver, phase_selection,
                                                                         fixT,       fixP,
                                                                         sub,        refLvl,
                                                                         cpx,        limOpx,     limOpxVal,  PTpath,

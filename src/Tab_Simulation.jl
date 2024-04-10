@@ -26,11 +26,41 @@ function Tab_Simulation(db_inf)
                                                             clearable   = false,
                                                             multi       = false),
                                         ]),
-                                        # dbc_tooltip([
-                                        #     html_div("Here you can select the thermodynamic database you want"),
-                                        #     html_div("Note that the chemical system can be different from database to another"),
-                                        #             ],target="database-dropdown"),
+                                    ]),
+
+                                    dbc_row([  
+                                        dbc_col([ 
+                                            html_h1("Solution phase selection", style = Dict("textAlign" => "center","font-size" => "120%")),
                                         ]),
+
+                                        dbc_col([ 
+                                            dbc_button( "", id="button-phase-selection", color="light", className="me-2", n_clicks=0,
+                                                                style       = Dict( "textAlign"     => "center",
+                                                                                    "font-size"     => "100%",
+                                                                                    "border"        =>"1px lightgray solid")), 
+                                            dbc_collapse(
+                                                dbc_card(dbc_cardbody([
+                
+                                                        dbc_col([ 
+                
+                                                            dcc_checklist(
+                                                                id      = "phase-selection",
+                                                                options = [Dict(    "label"     => " "*i,
+                                                                                    "value"     => i )
+                                                                                for i in db_inf.ss_name ],
+                                                                value = db_inf.ss_name,
+                                                                # inline = true,
+                                                            ),
+                    
+                                                        ]),
+                
+                                                    ])),
+                                                    id="collapse-phase-selection",
+                                                    is_open=false,
+                                            ),
+                                        ]),
+                                    ]),
+
 
                                     #diagram type
                                     dbc_row([
@@ -581,29 +611,30 @@ function Tab_Simulation(db_inf)
                         ]),
 
                         dbc_col([ 
-                            dbc_row([   
-                            dbc_button("Solution phase selection",id="button-phase-selection",color="primary"),
-                            dbc_collapse(
-                                dbc_card(dbc_cardbody([
+                            # dbc_row([   
+                            # dbc_button("Solution phase selection",id="button-phase-selection",color="primary"),
+                            # dbc_collapse(
+                            #     dbc_card(dbc_cardbody([
 
-                                        dbc_col([ 
+                            #             dbc_col([ 
 
-                                            dcc_checklist(
-                                                id      = "phase-selection",
-                                                options = [Dict(    "label"     => " "*i,
-                                                                    "value"     => i )
-                                                                for i in db_inf.ss_name ],
-                                                value = db_inf.ss_name,
-                                            ),
+                            #                 dcc_checklist(
+                            #                     id      = "phase-selection",
+                            #                     options = [Dict(    "label"     => " "*i,
+                            #                                         "value"     => i )
+                            #                                     for i in db_inf.ss_name ],
+                            #                     value = db_inf.ss_name,
+                            #                     # inline = true,
+                            #                 ),
     
-                                        ]),
+                            #             ]),
 
-                                    ])),
-                                    id="collapse-phase-selection",
-                                    is_open=false,
-                            ),
-                            ]),
-                            html_div("‎ "),
+                            #         ])),
+                            #         id="collapse-phase-selection",
+                            #         is_open=false,
+                            # ),
+                            # ]),
+                            # html_div("‎ "),
                             dbc_row([   
                             dbc_button("General parameters",id="button-general-parameters",color="primary"),
                             dbc_collapse(
