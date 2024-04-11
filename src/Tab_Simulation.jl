@@ -13,7 +13,7 @@ function Tab_Simulation(db_inf)
                                     #database
                                     dbc_row([
                                         dbc_col([ 
-                                            html_h1("Thermodynamic database", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            html_h1("Thermodynamic database", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
                                         ]),
                                         dbc_col([ 
                                             dcc_dropdown(   id      = "database-dropdown",
@@ -65,7 +65,7 @@ function Tab_Simulation(db_inf)
                                     #diagram type
                                     dbc_row([
                                         dbc_col([ 
-                                            html_h1("Diagram type", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            html_h1("Diagram type", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
                                         ]),
                                         dbc_col([ 
                                             dcc_dropdown(   id      = "diagram-dropdown",
@@ -193,7 +193,7 @@ function Tab_Simulation(db_inf)
                                     #pressure
                                     dbc_row([
                                         dbc_col([ 
-                                            html_h1("Pressure [kbar]", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            html_h1("Pressure [kbar]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
                                         ], width=6),
                                         dbc_col([ 
                                             dbc_row([
@@ -232,7 +232,7 @@ function Tab_Simulation(db_inf)
                                     #temperature                                                        
                                     dbc_row([
                                         dbc_col([ 
-                                            html_h1("Temperature [°C]", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            html_h1("Temperature [°C]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
                                         ], width=6),
                                         dbc_col([ 
                                             dbc_row([
@@ -263,7 +263,7 @@ function Tab_Simulation(db_inf)
                                     html_div([
                                     dbc_row([
                                         dbc_col([ 
-                                            html_h1("Fixed pressure", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            html_h1("Fixed pressure", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
                                         ]),
                                         dbc_col([ 
                                                 dbc_input(
@@ -280,7 +280,7 @@ function Tab_Simulation(db_inf)
                                     html_div([
                                     dbc_row([
                                         dbc_col([ 
-                                            html_h1("Fixed temperature", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            html_h1("Fixed temperature", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
                                         ]),
                                         dbc_col([ 
                                                 dbc_input(
@@ -298,7 +298,7 @@ function Tab_Simulation(db_inf)
                                     #subdivision
                                     dbc_row([
                                         dbc_col([ 
-                                            html_h1("Initial grid subdivision", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            html_h1("Initial grid subdivision", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
                                         ]),
                                         dbc_col([ 
                                                 dbc_input(
@@ -312,7 +312,7 @@ function Tab_Simulation(db_inf)
                                     #refinement type
                                     dbc_row([
                                         dbc_col([ 
-                                            html_h1("Refinement type", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            html_h1("Refinement type", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
                                         ]),
                                         dbc_col([ 
                                             dcc_dropdown(   id      = "refinement-dropdown",
@@ -329,7 +329,7 @@ function Tab_Simulation(db_inf)
                                     html_div("‎ "), 
                                     dbc_row([
                                         dbc_col([ 
-                                            html_h1("Refinement levels", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            html_h1("Refinement levels", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
                                         ]),
                                         dbc_col([ 
                                             dbc_input(
@@ -343,7 +343,7 @@ function Tab_Simulation(db_inf)
                                     #buffer
                                     dbc_row([
                                         dbc_col([ 
-                                            html_h1("Buffer", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            html_h1("Buffer", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
                                         ]),
                                         dbc_col([ 
                                             dcc_dropdown(   id      = "buffer-dropdown",
@@ -364,7 +364,7 @@ function Tab_Simulation(db_inf)
                                     #solver
                                     dbc_row([
                                         dbc_col([ 
-                                            html_h1("Solver", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            html_h1("Solver", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
                                         ]),
                                         dbc_col([ 
                                             dcc_dropdown(   id      = "solver-dropdown",
@@ -381,7 +381,7 @@ function Tab_Simulation(db_inf)
                                     #verbose
                                     dbc_row([
                                         dbc_col([ 
-                                            html_h1("Verbose", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            html_h1("Verbose", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
                                         ]),
                                         dbc_col([ 
                                             dcc_dropdown(   id      = "verbose-dropdown",
@@ -398,7 +398,7 @@ function Tab_Simulation(db_inf)
                                     #Specific cp from G_system
                                     dbc_row([
                                         dbc_col([ 
-                                            html_h1("Specific Cp", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            html_h1("Specific Cp", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
                                         ]),
                                         dbc_col([ 
                                             dcc_dropdown(   id      = "scp-dropdown",
