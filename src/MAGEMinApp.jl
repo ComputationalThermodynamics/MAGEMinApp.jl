@@ -30,6 +30,9 @@ include(joinpath(pkg_dir,"src","Tab_Simulation_Callbacks.jl"))
 include(joinpath(pkg_dir,"src","Tab_PhaseDiagram_Callbacks.jl"))
 include(joinpath(pkg_dir,"src","PTXpaths_functions.jl"))   
 include(joinpath(pkg_dir,"src","Tab_PTXpaths_Callbacks.jl")) 
+include(joinpath(pkg_dir,"src","Tab_isentropic.jl"))
+include(joinpath(pkg_dir,"src","Tab_isentropic_Callbacks.jl"))
+
 
 """
     App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
@@ -136,7 +139,11 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                     dbc_tab(    tab_id      = "tab-PTX-path",
                                                 label       = "PTX path",
                                                 children    = [Tab_PTXpaths()]
-                                        ),
+                                            ),
+                                    dbc_tab(    tab_id      = "tab-isentropic-path",
+                                                label       = "Isentropic path",
+                                                children    = [Tab_IsentropicPaths()]
+                                            ),
                                     dbc_tab(tab_id="tab-TEmodeling", label="TE-modeling",   children = []),
                 
                                 ],
@@ -167,7 +174,8 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
     app = Tab_Simulation_Callbacks(app)
     app = Tab_PhaseDiagram_Callbacks(app)
     app = Tab_PTXpaths_Callbacks(app)
-
+    app = Tab_isoSpaths_Callbacks(app)
+    
     run_server(app, host, port, debug=debug)
 
     cd(cur_dir) # go back to directory

@@ -42,6 +42,39 @@ function TAS_plot()
             )
 end
 
+
+function isoS_frac_plot()
+
+    fig =  plot(    Layout( height= 360 ))
+
+    dcc_graph(
+                id          = "isoS-frac-plot",
+                figure      = fig,
+            )
+end
+
+
+function isoS_plot()
+
+    fig =  plot(    Layout( height= 360 ))
+
+    dcc_graph(
+                id          = "isoS-plot",
+                figure      = fig,
+            )
+end
+
+function TAS_isoS_plot()
+
+    fig =  plot(    Layout(     width       = 740,
+                                height      = 400 ))
+
+    dcc_graph(
+                id          = "TAS-isoS-plot",
+                figure      = fig,
+            )
+end
+
 function path_plot()
 
     fig = plot(    Layout( height= 220 ))
