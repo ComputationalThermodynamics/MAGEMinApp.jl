@@ -293,7 +293,7 @@ function Tab_PTXpaths()
                                     dbc_row([
                                         dbc_col([ 
                                             dbc_row([
-                                                html_h1("Pressure", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
+                                                html_h1("Pressure [kbar]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
                                             ]),
                                             dbc_row([
                                                 html_h1("Tolerance [K]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
