@@ -178,13 +178,13 @@ end
 
 
 
-function compute_Tliq(          pressure,   bulk_ini,   oxi,
+function compute_Tliq(          pressure,   tolerance,  bulk_ini,   oxi,
                                 dtb,        bufferType, solver,
                                 verbose,    bulk,       bufferN,
                                 cpx,        limOpx,     limOpxVal       )
 
         Tsol        = 600.0;
-        Tliq        = 2200.0;
+        Tmax        = 2200.0;
                         
         out = MAGEMin_C.gmin_struct{Float64, Int64}
 
@@ -203,26 +203,24 @@ function compute_Tliq(          pressure,   bulk_ini,   oxi,
         sys_in  = "mol"
         gv      =  define_bulk_rock(gv, bulk_ini, oxi, sys_in, dtb);
 
-        out     = deepcopy( point_wise_minimization(pressure,Tliq, gv, z_b, DB, splx_data, sys_in) )
+        out     = deepcopy( point_wise_minimization(pressure, Tliq, gv, z_b, DB, splx_data, sys_in) )
         ref     = out.ph
         nph     = length(out.ph)
         if (nph > 1)
-            print("Warning at $Tliq °C, one or several solid phases are stable: $(out.ph)\n")
-            print(" - This likely means that one of the oxide of the database $dtb does not enter the melt chemical space!\n")
-            print(" - The current assemblage is therefore taken as a reference for supra-liquidus conditions\n")
+            print("Warning at $Tmax °C, one or several solution phases are stable: $(out.ph)\n")
+            print(" - This likely means that one of the oxide of the database $dtb does not enter the melt chemical space...\n")
+            print("   ... or fluid is stable, or a buffer is active!\n")
+            print(" - The current assemblage at $Tmax °C is therefore taken as a reference for supra-liquidus conditions\n\n")
         end
 
-
-        tol         = 1e-2
         n_max       = 32
 
         a           = Tsol
-        b           = Tliq
+        b           = Tmax
         n           = 1
         conv        = 0
         n           = 0
         sign_a      = -1
-
 
         while n < n_max && conv == 0
             c = (a+b)/2.0
@@ -238,7 +236,7 @@ function compute_Tliq(          pressure,   bulk_ini,   oxi,
 
             sign_c  = sign(result)
 
-            if abs(b-a) < tol
+            if abs(b-a) < tolerance
                 conv = 1
             else
                 if  sign_c == sign_a

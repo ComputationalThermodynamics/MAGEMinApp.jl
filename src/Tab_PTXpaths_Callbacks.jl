@@ -208,6 +208,7 @@ function Tab_PTXpaths_Callbacks(app)
         Output("display-liquidus-textarea",     "value"),
         Input("find-liquidus-button",           "n_clicks"),
         State("liquidus-pressure-val-id",       "value"),
+        State("liquidus-tolerance-val-id",      "value"),
 
         State("database-dropdown-ptx",  "value"),
         State("buffer-dropdown-ptx",    "value"),
@@ -224,7 +225,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         prevent_initial_call = true,
 
-        ) do    compute,    pressure,
+        ) do    compute,    pressure,   tolerance,
                 dtb,        bufferType, solver,
                 verbose,    bulk,       bufferN,
                 cpx,        limOpx,     limOpxVal,  test,   sysunit
@@ -236,7 +237,7 @@ function Tab_PTXpaths_Callbacks(app)
             bufferN                 = Float64(bufferN)               # convert buffer_n to float
             bulk_ini, bulk_ini, oxi = get_bulkrock_prop(bulk, bulk)  
 
-            Tliq = compute_Tliq(    pressure,   bulk_ini,   oxi,
+            Tliq = compute_Tliq(    pressure,   tolerance,  bulk_ini,   oxi,
                                     dtb,        bufferType, solver,
                                     verbose,    bulk,       bufferN,
                                     cpx,        limOpx,     limOpxVal  )

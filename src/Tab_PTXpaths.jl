@@ -296,6 +296,9 @@ function Tab_PTXpaths()
                                                 html_h1("Pressure", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
                                             ]),
                                             dbc_row([
+                                                html_h1("Tolerance [K]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
+                                            ]),
+                                            dbc_row([
                                                 dbc_button("Find liquidus",id="find-liquidus-button", color="light", className="me-2", n_clicks=0,
                                                 style       = Dict( "textAlign"     => "center",
                                                                     "font-size"     => "100%",
@@ -310,6 +313,14 @@ function Tab_PTXpaths()
                                                 min     = 0.001, 
                                                 max     = 100.01, 
                                                 value   = 10.0   ),
+                                            ]),
+                                            dbc_row([
+                                                dbc_input(
+                                                id      = "liquidus-tolerance-val-id",
+                                                type    = "number", 
+                                                min     = 1e-8, 
+                                                max     = 1.0, 
+                                                value   = 1e-2   ),
                                             ]),
                                             dbc_row([
                                                 dcc_textarea(
