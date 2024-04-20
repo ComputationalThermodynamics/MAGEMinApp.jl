@@ -203,7 +203,7 @@ function compute_Tliq(          pressure,   tolerance,  bulk_ini,   oxi,
         sys_in  = "mol"
         gv      =  define_bulk_rock(gv, bulk_ini, oxi, sys_in, dtb);
 
-        out     = deepcopy( point_wise_minimization(pressure, Tliq, gv, z_b, DB, splx_data, sys_in) )
+        out     = deepcopy( point_wise_minimization(pressure, Tmax, gv, z_b, DB, splx_data, sys_in) )
         ref     = out.ph
         nph     = length(out.ph)
         if (nph > 1)
