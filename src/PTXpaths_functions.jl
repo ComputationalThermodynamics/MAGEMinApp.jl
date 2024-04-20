@@ -147,16 +147,12 @@ function get_TAS_diagram(phases)
     return tas, layout
 end
 
-function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   oxi,
-                                dtb,        bufferType, solver,
-                                verbose,    bulk,       bufferN,
-                                cpx,        limOpx,     limOpxVal,
-                                nCon,       nRes                                  )
+function get_init_param(    dtb         :: String,
+                            solver      :: String,
+                            cpx,        
+                            limOpx,    
+                            limOpxVal   :: Float64 )   
 
-        global Out_PTX, ph_names, fracEvol, compo_matrix
-
-
-        nsteps = Int64(nsteps)
         # set clinopyroxene for the metabasite database
         mbCpx = 0
         if cpx == true && dtb =="mb"
@@ -175,6 +171,115 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
         elseif solver == "hyb" 
             sol = 2         
         end
+
+    return mbCpx,limitCaOpx,CaOpxLim,sol
+
+end
+
+
+
+function compute_Tliq(          pressure,   bulk_ini,   oxi,
+                                dtb,        bufferType, solver,
+                                verbose,    bulk,       bufferN,
+                                cpx,        limOpx,     limOpxVal       )
+
+
+        Tliq = "oki"
+
+
+        out = MAGEMin_C.gmin_struct{Float64, Int64}
+
+        mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb,        solver,
+                                                        cpx,        limOpx,     limOpxVal ) 
+
+
+        # initialize single thread MAGEMin 
+        gv, z_b, DB, splx_data = init_MAGEMin(  dtb;        
+                                                verbose     = verbose,
+                                                mbCpx       = mbCpx,
+                                                limitCaOpx  = limitCaOpx,
+                                                CaOpxLim    = CaOpxLim,
+                                                buffer      = bufferType,
+                                                solver      = sol    );
+        sys_in  = "mol"
+        gv      =  define_bulk_rock(gv, bulk_ini, oxi, sys_in, dtb);
+
+        out = deepcopy( point_wise_minimization(pressure,2000.0, gv, z_b, DB, splx_data, sys_in) )
+
+        print("$out\n")
+
+        LibMAGEMin.FreeDatabases(gv, DB, z_b)
+
+
+
+
+    # # allocate
+    # n_xeos      = SS_ref_db[ph_id].n_xeos
+    # n_pc        = SS_ref_db[ph_id].n_em
+
+    # pc_xeos     = zeros(n_pc,n_xeos)
+    # pc_comp     = zeros(n_pc,gv.len_ox)
+    # pc_G0       = zeros(n_pc)
+
+    # tol         = 1e-6
+    # target_dg   = 1e-4
+    # n_max       = 32
+
+    # for i=1:n_pc
+    #     bump        = (rand(SS_ref_db[ph_id].n_xeos).-0.5)./100
+    #     delta_g     = 1.0                                                   # initialize missfit
+    #     a           = 0.0
+    #     b           = 1.0
+    #     n           = 1
+    #     conv        = 0
+    #     n           = 0
+    #     sign_a      = -1
+
+
+    #     while n < n_max && conv == 0
+    #         c = (a+b)/2.0
+    #         delta_g, comp_norm, g0 = get_delta_g(mSS_vec,id,ph,ph_id,bump,c,SS_ref_db,gv,z_b,target_dg)
+    #         sign_c  = sign(delta_g)
+    #         # print("delta_g: $delta_g\n")
+    #         if abs(delta_g) < tol
+    #             conv = 1
+    #             pc_xeos[i,:] .= mSS_vec[id].xeos_Ppc .+ bump.*c
+    #             pc_comp[i,:] .= comp_norm
+    #             pc_G0[i]      = g0
+    #         else
+    #             if  sign_c == sign_a
+    #                 a = c
+    #                 sign_a = sign_c
+    #             else
+    #                 b = c
+    #             end
+                
+    #         end
+    #         n += 1
+    #     end
+
+    # end
+
+
+
+        return Tliq
+end
+
+
+
+function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   oxi,
+                                dtb,        bufferType, solver,
+                                verbose,    bulk,       bufferN,
+                                cpx,        limOpx,     limOpxVal,
+                                nCon,       nRes                                  )
+
+        global Out_PTX, ph_names, fracEvol, compo_matrix
+
+
+        nsteps = Int64(nsteps)
+
+        mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb,        solver,
+                                                        cpx,        limOpx,     limOpxVal ) 
 
         # retrieve PTX path
         data    = copy(PTdata)

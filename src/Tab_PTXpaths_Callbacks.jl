@@ -205,6 +205,52 @@ function Tab_PTXpaths_Callbacks(app)
     """
     callback!(
         app,
+        Output("display-liquidus-textarea",     "value"),
+        Input("find-liquidus-button",           "n_clicks"),
+        State("liquidus-pressure-val-id",       "value"),
+
+        State("database-dropdown-ptx",  "value"),
+        State("buffer-dropdown-ptx",    "value"),
+        State("solver-dropdown-ptx",    "value"),    
+        State("verbose-dropdown-ptx",   "value"),   
+        State("table-bulk-rock-ptx",    "data"),  
+        State("buffer-1-mul-id-ptx",    "value"),  
+
+        State("mb-cpx-switch-ptx",      "value"),           # false,true -> 0,1
+        State("limit-ca-opx-id-ptx",    "value"),           # ON,OFF -> 0,1
+        State("ca-opx-val-id-ptx",      "value"),           # 0.0-1.0 -> 0,1
+        State("test-dropdown-ptx",      "value"),
+        State("sys-unit-ptx",           "value"),
+
+        prevent_initial_call = true,
+
+        ) do    compute,    pressure,
+                dtb,        bufferType, solver,
+                verbose,    bulk,       bufferN,
+                cpx,        limOpx,     limOpxVal,  test,   sysunit
+
+        Tliq            = "test"
+        bid             = pushed_button( callback_context() )    # get which button has been pushed
+
+        if bid == "find-liquidus-button"
+            bufferN                 = Float64(bufferN)               # convert buffer_n to float
+            bulk_ini, bulk_ini, oxi = get_bulkrock_prop(bulk, bulk)  
+
+            Tliq = compute_Tliq(    pressure,   bulk_ini,   oxi,
+                                    dtb,        bufferType, solver,
+                                    verbose,    bulk,       bufferN,
+                                    cpx,        limOpx,     limOpxVal  )
+        end
+
+        return Tliq
+    end
+
+
+    """
+        Callback to compute and display PTX path
+    """
+    callback!(
+        app,
         Output("ptx-plot",              "figure"),
         Output("ptx-plot",              "config"),
         Output("phase-selector-id",     "options"),

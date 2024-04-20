@@ -291,6 +291,44 @@ function Tab_PTXpaths()
                                 dbc_card(dbc_cardbody([
 
                                     dbc_row([
+                                        dbc_col([ 
+                                            dbc_row([
+                                                html_h1("Pressure", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
+                                            ]),
+                                            dbc_row([
+                                                dbc_button("Find liquidus",id="find-liquidus-button", color="light", className="me-2", n_clicks=0,
+                                                style       = Dict( "textAlign"     => "center",
+                                                                    "font-size"     => "100%",
+                                                                    "border"        =>"1px lightgray solid")), 
+                                            ]),
+                                        ]),
+                                        dbc_col([ 
+                                            dbc_row([
+                                                dbc_input(
+                                                id      = "liquidus-pressure-val-id",
+                                                type    = "number", 
+                                                min     = 0.001, 
+                                                max     = 100.01, 
+                                                value   = 10.0   ),
+                                            ]),
+                                            dbc_row([
+                                                dcc_textarea(
+                                                    id="display-liquidus-textarea",
+                                                    value       = "",
+                                                    readOnly    = true,
+                                                    disabled    = true,
+                                                    draggable   = false,
+                                                    style       = Dict("textAlign" => "center","font-size" => "100%", "width"=> "100%", "height" => 24, "resize"=> "none")
+                                                ),
+                                            ]),
+
+
+                                        ]),
+                                    ]),
+  
+                                    html_div("‎ "), 
+                                    html_h1("Define P-T points", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                    dbc_row([
 
                                         dash_datatable(
                                             id="ptx-table",
