@@ -1,4 +1,4 @@
-function Tab_IsentropicPaths()
+function Tab_IsentropicPaths(db_inf)
     html_div([
         html_div("‎ "),
         dbc_row([ 

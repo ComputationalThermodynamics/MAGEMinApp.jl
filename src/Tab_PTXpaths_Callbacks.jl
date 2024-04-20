@@ -207,6 +207,7 @@ function Tab_PTXpaths_Callbacks(app)
         app,
         Output("display-liquidus-textarea",     "value"),
         Input("find-liquidus-button",           "n_clicks"),
+        State("phase-selection-PTX",            "value"),
         State("liquidus-pressure-val-id",       "value"),
         State("liquidus-tolerance-val-id",      "value"),
 
@@ -225,7 +226,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         prevent_initial_call = true,
 
-        ) do    compute,    pressure,   tolerance,
+        ) do    compute,    phase_selection,    pressure,   tolerance,
                 dtb,        bufferType, solver,
                 verbose,    bulk,       bufferN,
                 cpx,        limOpx,     limOpxVal,  test,   sysunit
@@ -237,7 +238,7 @@ function Tab_PTXpaths_Callbacks(app)
             bufferN                 = Float64(bufferN)               # convert buffer_n to float
             bulk_ini, bulk_ini, oxi = get_bulkrock_prop(bulk, bulk)  
 
-            Tliq = compute_Tliq(    pressure,   tolerance,  bulk_ini,   oxi,
+            Tliq = compute_Tliq(    pressure,   tolerance,  bulk_ini,   oxi,    phase_selection,
                                     dtb,        bufferType, solver,
                                     verbose,    bulk,       bufferN,
                                     cpx,        limOpx,     limOpxVal  )
@@ -259,6 +260,7 @@ function Tab_PTXpaths_Callbacks(app)
         Input("compute-path-button",    "n_clicks"),
         Input("sys-unit-ptx",           "value"),
 
+        State("phase-selection-PTX",    "value"),
         State("phase-selector-id",      "options"),
         State("n-steps-id-ptx",         "value"),
         State("ptx-table",              "data"),
@@ -282,7 +284,7 @@ function Tab_PTXpaths_Callbacks(app)
     
         prevent_initial_call = true,
 
-        ) do    compute,    upsys,      phase_list, nsteps,     PTdata,     mode,
+        ) do    compute,    upsys,      phase_selection,    phase_list, nsteps,     PTdata,     mode,
                 dtb,        bufferType, solver,
                 verbose,    bulk,       bufferN,
                 cpx,        limOpx,     limOpxVal,  test,   sysunit,
@@ -290,7 +292,7 @@ function Tab_PTXpaths_Callbacks(app)
 
 
         bid                     = pushed_button( callback_context() )    # get which button has been pushed
-
+        phase_selection         = remove_phases(string_vec_dif(phase_selection,dtb),dtb)
         title = db[(db.db .== dtb), :].title[test+1]
 
         if bid == "compute-path-button"
@@ -300,7 +302,7 @@ function Tab_PTXpaths_Callbacks(app)
             bufferN                 = Float64(bufferN)               # convert buffer_n to float
             bulk_ini, bulk_ini, oxi = get_bulkrock_prop(bulk, bulk)  
 
-            compute_new_PTXpath(    nsteps,     PTdata,     mode,       bulk_ini,   oxi,
+            compute_new_PTXpath(    nsteps,     PTdata,     mode,       bulk_ini,   oxi,    phase_selection,
                                     dtb,        bufferType, solver,
                                     verbose,    bulk,       bufferN,
                                     cpx,        limOpx,     limOpxVal,
@@ -424,6 +426,8 @@ function Tab_PTXpaths_Callbacks(app)
         Output("test-dropdown-ptx","options"),
         Output("test-dropdown-ptx","value"),
         Output("database-caption-ptx","value"),
+        Output("phase-selection-PTX","options"),
+        Output("phase-selection-PTX","value"),
         Input("test-dropdown-ptx","value"),
         Input("database-dropdown-ptx","value"),
         Input("output-data-uploadn-ptx", "is_open"),        # this listens for changes and updated the list
@@ -449,7 +453,16 @@ function Tab_PTXpaths_Callbacks(app)
         cap         = dba[(dba.acronym .== dtb) , :].database[1]      
         
         val         = t
-        return data, opts, val, cap                  
+
+        db_in       = retrieve_solution_phase_information(dtb)
+
+        phase_selection_options = [Dict(    "label"     => " "*i,
+                                            "value"     => i )
+                                                for i in db_in.ss_name ]
+        phase_selection_value   = db_in.ss_name
+
+
+        return data, opts, val, cap, phase_selection_options, phase_selection_value                 
     end
 
     callback!(app,
@@ -569,6 +582,26 @@ function Tab_PTXpaths_Callbacks(app)
             end
         end
         return is_open    
+    end
+
+
+    # open/close Curve interpretation box
+    callback!(app,
+        Output("collapse-phase-selection-PTX", "is_open"),
+        [Input("button-phase-selection-PTX", "n_clicks")],
+        [State("collapse-phase-selection-PTX", "is_open")], ) do  n, is_open
+        
+        if isnothing(n); n=0 end
+
+        if n>0
+            if is_open==1
+                is_open = 0
+            elseif is_open==0
+                is_open = 1
+            end
+        end
+        return is_open 
+            
     end
 
     callback!(app,

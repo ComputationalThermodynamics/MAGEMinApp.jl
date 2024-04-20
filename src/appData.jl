@@ -242,4 +242,3 @@ push!(db,Dict(          :bulk       => "predefined",
 AppData = ( db                  = db,
             dba                 = dba,
             #=PseudosectionData   = PseudosectionData=# )
-            

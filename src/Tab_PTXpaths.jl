@@ -1,4 +1,4 @@
-function Tab_PTXpaths()
+function Tab_PTXpaths(db_inf)
     html_div([
         html_div("‎ "),
         dbc_row([ 
@@ -31,6 +31,38 @@ function Tab_PTXpaths()
                                     #             ],target="database-dropdown-ptx"),
                                     ]),
 
+                                    dbc_row([  
+                                        dbc_col([ 
+                                            html_h1("Solution phase selection", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                        ]),
+
+                                        dbc_col([ 
+                                            dbc_button( "", id="button-phase-selection-PTX", color="light", className="me-2", n_clicks=0,
+                                                                style       = Dict( "textAlign"     => "center",
+                                                                                    "font-size"     => "100%",
+                                                                                    "border"        =>"1px lightgray solid")), 
+                                            dbc_collapse(
+                                                dbc_card(dbc_cardbody([
+                
+                                                        dbc_col([ 
+                
+                                                            dcc_checklist(
+                                                                id      = "phase-selection-PTX",
+                                                                options = [Dict(    "label"     => " "*i,
+                                                                                    "value"     => i )
+                                                                                for i in db_inf.ss_name ],
+                                                                value = db_inf.ss_name,
+                                                                # inline = true,
+                                                            ),
+                    
+                                                        ]),
+                
+                                                    ])),
+                                                    id="collapse-phase-selection-PTX",
+                                                    is_open=false,
+                                            ),
+                                        ]),
+                                    ]),
 
                                     #clinopyroxene for metabasite
                                     html_div([

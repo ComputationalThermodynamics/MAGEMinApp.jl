@@ -138,11 +138,11 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                             ),
                                     dbc_tab(    tab_id      = "tab-PTX-path",
                                                 label       = "PTX path",
-                                                children    = [Tab_PTXpaths()]
+                                                children    = [Tab_PTXpaths(db_inf)]
                                             ),
                                     dbc_tab(    tab_id      = "tab-isentropic-path",
                                                 label       = "Isentropic path",
-                                                children    = [Tab_IsentropicPaths()]
+                                                children    = [Tab_IsentropicPaths(db_inf)]
                                             ),
                                     dbc_tab(tab_id="tab-TEmodeling", label="TE-modeling",   children = []),
                 

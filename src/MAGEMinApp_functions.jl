@@ -1,4 +1,22 @@
 """
+    Function to retrieve active set of solution phases
+"""
+function string_vec_dif(phase_selection,dtb)
+
+    db_in                           = retrieve_solution_phase_information(dtb)
+    set_A                           = phase_selection
+    set_B                           = db_in.ss_name
+    phase_selection                 = setdiff(set_B, set_A)
+    if isempty(phase_selection)
+        phase_selection = nothing
+    end
+
+    return phase_selection
+end
+
+
+
+"""
     export_rho_for_LaMEM()
     This function export a density diagram in the the right format to be directly used in LaMEM
 """

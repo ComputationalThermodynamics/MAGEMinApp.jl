@@ -178,10 +178,14 @@ end
 
 
 
-function compute_Tliq(          pressure,   tolerance,  bulk_ini,   oxi,
+function compute_Tliq(          pressure,   tolerance,  bulk_ini,   oxi,    phase_selection,
                                 dtb,        bufferType, solver,
                                 verbose,    bulk,       bufferN,
                                 cpx,        limOpx,     limOpxVal       )
+
+    if "liq" in phase_selection 
+        
+        phase_selection = remove_phases(string_vec_dif(phase_selection,dtb),dtb)
 
         Tsol        = 600.0;
         Tmax        = 2200.0;
@@ -203,7 +207,7 @@ function compute_Tliq(          pressure,   tolerance,  bulk_ini,   oxi,
         sys_in  = "mol"
         gv      =  define_bulk_rock(gv, bulk_ini, oxi, sys_in, dtb);
 
-        out     = deepcopy( point_wise_minimization(pressure, Tmax, gv, z_b, DB, splx_data, sys_in) )
+        out     = deepcopy( point_wise_minimization(pressure, Tmax, gv, z_b, DB, splx_data, sys_in, rm_list=phase_selection) )
         ref     = out.ph
         nph     = length(out.ph)
         if (nph > 1)
@@ -253,12 +257,17 @@ function compute_Tliq(          pressure,   tolerance,  bulk_ini,   oxi,
         LibMAGEMin.FreeDatabases(gv, DB, z_b)
 
         Tliq  = string((a+b)/2.0)
-        return Tliq
+    else
+        print("Cannot compute liquidus temperature if liq is removed from the solution phase list\n") 
+        Tliq        = ""
+    end
+
+    return Tliq
 end
 
 
 
-function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   oxi,
+function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   oxi,    phase_selection,
                                 dtb,        bufferType, solver,
                                 verbose,    bulk,       bufferN,
                                 cpx,        limOpx,     limOpxVal,
@@ -319,7 +328,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                         gv      =  define_bulk_rock(gv, bulk_ini, oxi, sys_in, dtb);
                     end
 
-                    Out_PTX[k] = deepcopy( point_wise_minimization(P,T, gv, z_b, DB, splx_data, sys_in) )
+                    Out_PTX[k] = deepcopy( point_wise_minimization(P,T, gv, z_b, DB, splx_data, sys_in, rm_list=phase_selection) )
 
                     if mode == "fm"
                         if Out_PTX[k].frac_S > 0.0
@@ -374,7 +383,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                 end
             end
             
-            Out_PTX[k] = deepcopy( point_wise_minimization(Pres[np],Temp[np], gv, z_b, DB, splx_data, sys_in) )
+            Out_PTX[k] = deepcopy( point_wise_minimization(Pres[np],Temp[np], gv, z_b, DB, splx_data, sys_in, rm_list=phase_selection) )
   
             for k = 1:n_tot
                 for l=1:length(Out_PTX[k].ph)
