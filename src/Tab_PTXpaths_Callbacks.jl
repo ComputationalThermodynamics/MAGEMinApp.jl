@@ -329,7 +329,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         configPTX   = PlotConfig(   toImageButtonOptions  = attr(     name     = "Download as svg",
                                     format   = "svg", # one of png, svg, jpeg, webp
-                                    filename =  "path_1_"*replace(title, " " => "_"),
+                                    filename =  "PTX_path_"*replace(title, " " => "_"),
                                     height   =  360,
                                     width    =  960,
                                     scale    =  2.0,       ).fields)
@@ -464,6 +464,8 @@ function Tab_PTXpaths_Callbacks(app)
 
         return data, opts, val, cap, phase_selection_options, phase_selection_value                 
     end
+
+
 
     callback!(app,
         Output("collapse-disp-opt", "is_open"),

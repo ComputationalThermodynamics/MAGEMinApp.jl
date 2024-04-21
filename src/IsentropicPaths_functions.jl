@@ -1,7 +1,8 @@
+
 """
     Retrieve TAS diagram
 """
-function get_TAS_diagram(phases)
+function get_TAS_diagram_isoS(phases)
 
     tas      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, 16);
 
@@ -54,17 +55,17 @@ function get_TAS_diagram(phases)
     end
 
 
-    n_ox    = length(Out_PTX[1].oxides)
-    oxides  = Out_PTX[1].oxides
-    n_tot   = length(Out_PTX)
+    n_ox    = length(Out_ISOS[1].oxides)
+    oxides  = Out_ISOS[1].oxides
+    n_tot   = length(Out_ISOS)
 
     liq_tas         = Matrix{Union{Float64,Missing}}(undef, n_ox, (n_tot+1))      .= missing
     colormap        = get_jet_colormap(n_tot+1)
  
     for j=1:n_tot
-        id      = findall(Out_PTX[j].ph .== "liq")
+        id      = findall(Out_ISOS[j].ph .== "liq")
         if ~isempty(id)
-            liq_tas[:,j] = Out_PTX[j].SS_vec[id[1]].Comp_wt .*100.0
+            liq_tas[:,j] = Out_ISOS[j].SS_vec[id[1]].Comp_wt .*100.0
         end
     end
 
@@ -135,232 +136,111 @@ function get_TAS_diagram(phases)
 end
 
 
-function compute_Tliq(          pressure,   tolerance,  bulk_ini,   oxi,    phase_selection,
-                                dtb,        bufferType, solver,
-                                verbose,    bulk,       bufferN,
-                                cpx,        limOpx,     limOpxVal       )
+function compute_new_IsentropicPath(    nsteps,     bulk_ini,   oxi,    phase_selection,
+                                        Pini,       Tini,       Pfinal, tolerance,
+                                        dtb,        bufferType, solver,
+                                        verbose,    bulk,       bufferN,
+                                        cpx,        limOpx,     limOpxVal                                )
 
-    if "liq" in phase_selection 
-        
-        phase_selection = remove_phases(string_vec_dif(phase_selection,dtb),dtb)
+    global Out_ISOS, ph_names, fracEvol, compo_matrix
 
-        Tsol        = 600.0;
-        Tmax        = 2200.0;
-                        
-        out = MAGEMin_C.gmin_struct{Float64, Int64}
+    nsteps = Int64(nsteps)
 
-        mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb,        solver,
-                                                        cpx,        limOpx,     limOpxVal ) 
+    # get indexes of phases to remove
+    phase_selection = remove_phases(string_vec_dif(phase_selection,dtb),dtb)
 
+    # prepare flags
+    mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb,        solver,
+                                                    cpx,        limOpx,     limOpxVal ) 
 
-        # initialize single thread MAGEMin 
-        gv, z_b, DB, splx_data = init_MAGEMin(  dtb;        
-                                                verbose     = verbose,
-                                                mbCpx       = mbCpx,
-                                                limitCaOpx  = limitCaOpx,
-                                                CaOpxLim    = CaOpxLim,
-                                                buffer      = bufferType,
-                                                solver      = sol    );
-        sys_in  = "mol"
-        gv      =  define_bulk_rock(gv, bulk_ini, oxi, sys_in, dtb);
+    np       = 2
 
-        out     = deepcopy( point_wise_minimization(pressure, Tmax, gv, z_b, DB, splx_data, sys_in, rm_list=phase_selection) )
-        ref     = out.ph
-        nph     = length(out.ph)
-        if (nph > 1)
-            print("Warning at $Tmax °C, one or several solution phases are stable: $(out.ph)\n")
-            print(" - This likely means that one of the oxide of the database $dtb does not enter the melt chemical space...\n")
-            print("   ... or fluid is stable, or a buffer is active!\n")
-            print(" - The current assemblage at $Tmax °C is therefore taken as a reference for supra-liquidus conditions\n\n")
-        end
+    ph_names = Vector{String}()
+    n_tot    = np + nsteps
 
-        n_max       = 32
+    fracEvol = Matrix{Float64}(undef,n_tot,2)
 
-        a           = Tsol
-        b           = Tmax
-        n           = 1
-        conv        = 0
-        n           = 0
-        sign_a      = -1
+    # allocate memory
+    Out_ISOS = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,n_tot);
+    out      = MAGEMin_C.gmin_struct{Float64, Int64};
 
-        while n < n_max && conv == 0
-            c = (a+b)/2.0
+    # initialize single thread MAGEMin 
+    gv, z_b, DB, splx_data = init_MAGEMin(  dtb;        
+                                            verbose     = verbose,
+                                            mbCpx       = mbCpx,
+                                            limitCaOpx  = limitCaOpx,
+                                            CaOpxLim    = CaOpxLim,
+                                            buffer      = bufferType,
+                                            solver      = sol    );
 
-            out     = deepcopy( point_wise_minimization(pressure, c , gv, z_b, DB, splx_data, sys_in) )
-            cmp     = setdiff(out.ph,ref)
+    # define system unit and starting bulk rock composition
+    sys_in  = "mol"
+    gv      =  define_bulk_rock(gv, bulk_ini, oxi, sys_in, dtb);
 
-            if isempty(cmp)
-                result = 1;
-            else
-                result = -1;
-            end
+    # compute starting point
+    Out_ISOS[1] = deepcopy( point_wise_minimization(Pini,Tini, gv, z_b, DB, splx_data, sys_in, rm_list=phase_selection) )
 
-            sign_c  = sign(result)
+    # retrieve reference entropy of the system
+    Sref        = Out_ISOS[1].entropy;
+    n_max       = 32
 
-            if abs(b-a) < tolerance
-                conv = 1
-            else
-                if  sign_c == sign_a
-                    a = c
-                    sign_a = sign_c
+    delta_T     = (Pini-Pfinal)/(nsteps+1)*(8.0);
+
+    @showprogress for j = 2:n_tot
+
+            P = Pini + (j-1)*( (Pfinal - Pini)/ (nsteps+1) )
+
+            a           = Out_ISOS[j-1].T_C - 2*delta_T
+            b           = Out_ISOS[j-1].T_C
+            n           = 1
+            conv        = 0
+            n           = 0
+            sign_a      = -1
+    
+            while n < n_max && conv == 0
+                c = (a+b)/2.0
+                # print("$P $a $b $c\n")
+                out     = deepcopy( point_wise_minimization(P, c , gv, z_b, DB, splx_data, sys_in) )
+                result  = out.entropy - Sref
+
+                sign_c  = sign(result)
+    
+                if abs(b-a) < tolerance
+                    conv = 1
                 else
-                    b = c
+                    if  sign_c == sign_a
+                        a = c
+                        sign_a = sign_c
+                    else
+                        b = c
+                    end
+                    
                 end
-                
+                n += 1
             end
-            n += 1
-        end
 
-        LibMAGEMin.FreeDatabases(gv, DB, z_b)
-
-        Tliq  = string((a+b)/2.0)
-    else
-        print("Cannot compute liquidus temperature if liq is removed from the solution phase list\n") 
-        Tliq        = ""
+            Out_ISOS[j] = deepcopy(out)
     end
 
-    return Tliq
-end
 
+    #free MAGEMin
+    LibMAGEMin.FreeDatabases(gv, DB, z_b)
 
-
-function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   oxi,    phase_selection,
-                                dtb,        bufferType, solver,
-                                verbose,    bulk,       bufferN,
-                                cpx,        limOpx,     limOpxVal,
-                                nCon,       nRes                                  )
-
-        global Out_PTX, ph_names, fracEvol, compo_matrix
-
-
-        nsteps = Int64(nsteps)
-
-        mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb,        solver,
-                                                        cpx,        limOpx,     limOpxVal ) 
-
-        # retrieve PTX path
-        data    = copy(PTdata)
-        np      = length(data)
-
-        if np <= 1
-            print("Cannot compute a path if at least 2 points are not defined! \n")
-        else
-            ph_names= Vector{String}()
-
-            n_tot   = np + (np-1)*nsteps
-            fracEvol= Matrix{Float64}(undef,n_tot,2)
-            Out_PTX = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,n_tot)
-
-            Pres    = zeros(Float64,np)
-            Temp    = zeros(Float64,np)
-    
-            for i=1:np
-                Pres[i] = data[i][Symbol("col-1")]
-                Temp[i] = data[i][Symbol("col-2")]
+    for k = 1:nsteps+1
+        for l=1:length(Out_ISOS[k].ph)
+            if ~(Out_ISOS[k].ph[l] in ph_names)
+                push!(ph_names,Out_ISOS[k].ph[l])
             end
-
-            # initialize single thread MAGEMin 
-            gv, z_b, DB, splx_data = init_MAGEMin(  dtb;        
-                                                    verbose     = verbose,
-                                                    mbCpx       = mbCpx,
-                                                    limitCaOpx  = limitCaOpx,
-                                                    CaOpxLim    = CaOpxLim,
-                                                    buffer      = bufferType,
-                                                    solver      = sol    );
-    
-            # define system unit and starting bulk rock composition
-            sys_in  = "mol"
-            gv      =  define_bulk_rock(gv, bulk_ini, oxi, sys_in, dtb);
-
-
-            fracEvol[1,1] = 1.0;          # starting material fraction is always one as we want to measure the relative change here
-            fracEvol[1,2] = 0.0; 
-            k = 1
-            @showprogress for i = 1:np-1
-                for j = 1:nsteps+1
-                    P = Pres[i] + (j-1)*( (Pres[i+1] - Pres[i])/ (nsteps+1) )
-                    T = Temp[i] + (j-1)*( (Temp[i+1] - Temp[i])/ (nsteps+1) )
-
-                    if mode == "fm" || mode == "fc"
-                        gv      =  define_bulk_rock(gv, bulk_ini, oxi, sys_in, dtb);
-                    end
-
-                    Out_PTX[k] = deepcopy( point_wise_minimization(P,T, gv, z_b, DB, splx_data, sys_in, rm_list=phase_selection) )
-
-                    if mode == "fm"
-                        if Out_PTX[k].frac_S > 0.0
-                            if nCon > 0.0
-                                if Out_PTX[k].frac_M > nCon/100.0
-                                    bulk_ini .= Out_PTX[k].bulk_S .*((100.0-nCon)/100.0) .+ Out_PTX[k].bulk_M .*(nCon/100.0)
-
-                                    fracEvol[k+1,1] = fracEvol[k,1] * (Out_PTX[k].frac_S + Out_PTX[k].frac_F + nCon/100.0) 
-                                    fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
-                                else
-                                    fracEvol[k+1,1] = fracEvol[k,1]
-                                    fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
-                                end
-                            else
-                                bulk_ini .= Out_PTX[k].bulk_S
-                                fracEvol[k+1,1] = fracEvol[k,1]
-                                fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
-                            end
-                        else
-                            fracEvol[k+1,1] = fracEvol[k,1]
-                            fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
-                        end
-                    elseif mode == "fc"
-                        if Out_PTX[k].frac_M > 0.0
-
-                            if nRes > 0.0
-                                if Out_PTX[k].frac_S > nRes/100.0
-                                    bulk_ini .= Out_PTX[k].bulk_M .*((100.0-nRes)/100.0) .+ Out_PTX[k].bulk_S .*(nRes/100.0)
-
-                                    fracEvol[k+1,1] = fracEvol[k,1] * (Out_PTX[k].frac_M + nRes/100.0) 
-                                    fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
-                                else
-                                    fracEvol[k+1,1] = fracEvol[k,1] * (Out_PTX[k].frac_M + Out_PTX[k].frac_S) 
-                                    fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
-                                end
-                            else
-                                bulk_ini .= Out_PTX[k].bulk_M
-                                fracEvol[k+1,1] = fracEvol[k,1] * (Out_PTX[k].frac_M) 
-                                fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
-                            end
-                        else
-                            fracEvol[k+1,1] = fracEvol[k,1]
-                            fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
-                        end
-                    else
-                        fracEvol[k+1,1] = fracEvol[k,1]
-                        fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
-                    end
-
-
-                    k += 1
-                end
-            end
-            
-            Out_PTX[k] = deepcopy( point_wise_minimization(Pres[np],Temp[np], gv, z_b, DB, splx_data, sys_in, rm_list=phase_selection) )
-  
-            for k = 1:n_tot
-                for l=1:length(Out_PTX[k].ph)
-                    if ~(Out_PTX[k].ph[l] in ph_names)
-                        push!(ph_names,Out_PTX[k].ph[l])
-                    end
-                end
-            end
-            ph_names = sort(ph_names)
-
-            # free MAGEMin
-            LibMAGEMin.FreeDatabases(gv, DB, z_b)
         end
+    end
+    ph_names = sort(ph_names)
 
 end
 
-function get_data_plot(sysunit)
+function get_data_plot_isoS(sysunit)
 
     n_ph    = length(ph_names)
-    n_tot   = length(Out_PTX)
+    n_tot   = length(Out_ISOS)
     data_plot  = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_ph+2);
 
     x       = Vector{String}(undef, n_tot)
@@ -374,30 +254,30 @@ function get_data_plot(sysunit)
 
         for k=1:n_tot
             
-            x[k]    = string(round(Out_PTX[k].P_kbar,digits=1))*"; "*string(round(Out_PTX[k].T_C,digits=1))
-            id      = findall(Out_PTX[k].ph .== ph)
+            x[k]    = string(round(Out_ISOS[k].P_kbar,digits=1))*"; "*string(round(Out_ISOS[k].T_C,digits=1))
+            id      = findall(Out_ISOS[k].ph .== ph)
 
             if sysunit == "mol"
                 if ~isempty(id)
-                    Y[i,k] = sum(Out_PTX[k].ph_frac[id]) .*100.0                # we sum in case of solvi
+                    Y[i,k] = sum(Out_ISOS[k].ph_frac[id]) .*100.0                # we sum in case of solvi
                 end
             elseif sysunit == "wt"
                 if ~isempty(id)
-                    Y[i,k] = sum(Out_PTX[k].ph_frac_wt[id]) .*100.0                # we sum in case of solvi
+                    Y[i,k] = sum(Out_ISOS[k].ph_frac_wt[id]) .*100.0                # we sum in case of solvi
                 end
             elseif sysunit == "vol"
                 if ~isempty(id)
                     n_id = length(id)
                     rho = 0.0
                     for ii = 1:n_id
-                        if id[ii] <= Out_PTX[k].n_SS
-                            rho += Out_PTX[k].SS_vec[id[ii]].rho / n_id
+                        if id[ii] <= Out_ISOS[k].n_SS
+                            rho += Out_ISOS[k].SS_vec[id[ii]].rho / n_id
                         else
-                            rho += Out_PTX[k].PP_vec[id[ii]-Out_PTX[k].n_SS].rho / n_id
+                            rho += Out_ISOS[k].PP_vec[id[ii]-Out_ISOS[k].n_SS].rho / n_id
                         end
                     end
 
-                    Y[i,k] = sum(Out_PTX[k].ph_frac_wt[id])/rho                # we sum in case of solvi
+                    Y[i,k] = sum(Out_ISOS[k].ph_frac_wt[id])/rho                # we sum in case of solvi
 
                 end  
             end
@@ -457,12 +337,12 @@ end
 
     Gets the composition of selected stable phases accross the PTX paths and create a scatter plot
 """
-function get_data_comp_plot(sysunit,phases)
+function get_data_comp_plot_isoS(sysunit,phases)
 
-    n_ox    = length(Out_PTX[1].oxides)
-    oxides  = Out_PTX[1].oxides
+    n_ox    = length(Out_ISOS[1].oxides)
+    oxides  = Out_ISOS[1].oxides
     n_ph    = length(phases)
-    n_tot   = length(Out_PTX)
+    n_tot   = length(Out_ISOS)
 
     data_comp_plot  = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_ox);
     x               = Vector{Union{String,Missing}}(undef, (n_tot+1)*n_ph)
@@ -474,8 +354,8 @@ function get_data_comp_plot(sysunit,phases)
         ph      = phases[i]
         for j=1:n_tot
             
-            x[k]    = string(round(Out_PTX[j].P_kbar,digits=1))*"; "*string(round(Out_PTX[j].T_C,digits=1))
-            id      = findall(Out_PTX[j].ph .== ph)
+            x[k]    = string(round(Out_ISOS[j].P_kbar,digits=1))*"; "*string(round(Out_ISOS[j].T_C,digits=1))
+            id      = findall(Out_ISOS[j].ph .== ph)
 
             if ~isempty(id)
                 n_solvi = length(id)
@@ -483,15 +363,15 @@ function get_data_comp_plot(sysunit,phases)
                     
                     if n_solvi > 1      # then this is a solution phase as there is a solvus
                         for n=1:n_solvi
-                            compo_matrix[:,k] += Out_PTX[j].SS_vec[id[n]].Comp ./ Float64(n_solvi) .*100.0
+                            compo_matrix[:,k] += Out_ISOS[j].SS_vec[id[n]].Comp ./ Float64(n_solvi) .*100.0
                         end
                     else
                         id      = id[1]
-                        n_SS    = Out_PTX[j].n_SS
+                        n_SS    = Out_ISOS[j].n_SS
                         if id > n_SS    # then this is a pure phase
-                            compo_matrix[:,k] = Out_PTX[j].PP_vec[id - n_SS].Comp .*100.0
+                            compo_matrix[:,k] = Out_ISOS[j].PP_vec[id - n_SS].Comp .*100.0
                         else            # else this is a solution phase
-                            compo_matrix[:,k] = Out_PTX[j].SS_vec[id].Comp .*100.0
+                            compo_matrix[:,k] = Out_ISOS[j].SS_vec[id].Comp .*100.0
                         end
 
                     end
@@ -500,15 +380,15 @@ function get_data_comp_plot(sysunit,phases)
 
                     if n_solvi > 1      # then this is a solution phase as there is a solvus
                         for n=1:n_solvi
-                            compo_matrix[:,k] += Out_PTX[j].SS_vec[id[n]].Comp_wt ./ Float64(n_solvi) .*100.0
+                            compo_matrix[:,k] += Out_ISOS[j].SS_vec[id[n]].Comp_wt ./ Float64(n_solvi) .*100.0
                         end
                     else
                         id      = id[1]
-                        n_SS    = Out_PTX[j].n_SS
+                        n_SS    = Out_ISOS[j].n_SS
                         if id > n_SS    # then this is a pure phase
-                            compo_matrix[:,k] = Out_PTX[j].PP_vec[id - n_SS].Comp_wt .*100.0
+                            compo_matrix[:,k] = Out_ISOS[j].PP_vec[id - n_SS].Comp_wt .*100.0
                         else            # else this is a solution phase
-                            compo_matrix[:,k] = Out_PTX[j].SS_vec[id].Comp_wt .*100.0
+                            compo_matrix[:,k] = Out_ISOS[j].SS_vec[id].Comp_wt .*100.0
                         end
 
                     end
@@ -545,7 +425,7 @@ function get_data_comp_plot(sysunit,phases)
 end
 
 
-function initialize_layout(title,sysunit)
+function initialize_layout_isoS(title,sysunit)
     ytitle               = "Phase fraction ["*sysunit*"%]"
     layout  = Layout(
 
@@ -573,7 +453,7 @@ function initialize_layout(title,sysunit)
     return layout
 end
 
-function initialize_comp_layout(sysunit)
+function initialize_comp_layout_isoS(sysunit)
     ytitle               = "oxide fraction ["*sysunit*"%]"
     layout_comp  = Layout(
 

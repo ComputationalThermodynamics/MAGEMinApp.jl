@@ -32,7 +32,7 @@ include(joinpath(pkg_dir,"src","PTXpaths_functions.jl"))
 include(joinpath(pkg_dir,"src","Tab_PTXpaths_Callbacks.jl")) 
 include(joinpath(pkg_dir,"src","Tab_isentropic.jl"))
 include(joinpath(pkg_dir,"src","Tab_isentropic_Callbacks.jl"))
-
+include(joinpath(pkg_dir,"src","IsentropicPaths_functions.jl"))
 
 """
     App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)

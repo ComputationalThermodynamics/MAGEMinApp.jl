@@ -1,5 +1,270 @@
 function Tab_isoSpaths_Callbacks(app)
 
+
+
+    """
+        Callback to compute and display isentropic path
+    """
+    callback!(
+        app,
+        Output("isoS-plot",                 "figure"),
+        Output("isoS-plot",                 "config"),
+        Output("phase-selector-isoS-id",    "options"),
+        
+        Input("compute-path-button-isoS",   "n_clicks"),
+        Input("sys-unit-isoS",              "value"),
+
+        State("phase-selection-isoS",       "value"),
+        State("phase-selector-isoS-id",     "options"),
+
+        State("starting-pressure-isoS-id",  "value"),
+        State("starting-temperature-isoS-id",  "value"),
+        State("ending-pressure-isoS-id",    "value"),
+        State("tolerance-id-isoS",          "value"),      
+        
+        State("n-steps-id-isoS",         "value"),
+        State("database-dropdown-isoS",  "value"),
+        State("buffer-dropdown-isoS",    "value"),
+        State("solver-dropdown-isoS",    "value"),    
+        State("verbose-dropdown-isoS",   "value"),   
+        State("table-bulk-rock-isoS",    "data"),  
+        State("buffer-1-mul-id-isoS",    "value"),  
+
+        State("mb-cpx-switch-isoS",      "value"),           # false,true -> 0,1
+        State("limit-ca-opx-id-isoS",    "value"),           # ON,OFF -> 0,1
+        State("ca-opx-val-id-isoS",      "value"),           # 0.0-1.0 -> 0,1
+        State("test-dropdown-isoS",      "value"),
+        State("sys-unit-isoS",           "value"),
+
+    
+        prevent_initial_call = true,
+
+        ) do    compute,    upsys,      phase_selection,    phase_list,
+                Pini,       Tini,       Pfinal, tolerance,  nsteps,    
+                dtb,        bufferType, solver,
+                verbose,    bulk,       bufferN,
+                cpx,        limOpx,     limOpxVal,  test,   sysunit
+
+        bid                     = pushed_button( callback_context() )    # get which button has been pushed
+
+        title = db[(db.db .== dtb), :].title[test+1]
+
+        figIsoS = plot(    Layout( height= 320 ))
+
+        if bid == "compute-path-button-isoS"
+
+            global Out_ISOS, ph_names, layout, data_plot, fracEvol
+
+            bufferN                 = Float64(bufferN)               # convert buffer_n to float
+            bulk_ini, bulk_ini, oxi = get_bulkrock_prop(bulk, bulk)  
+
+            compute_new_IsentropicPath(     nsteps,     bulk_ini,   oxi,    phase_selection,
+                                            Pini,       Tini,       Pfinal, tolerance,
+                                            dtb,        bufferType, solver,
+                                            verbose,    bulk,       bufferN,
+                                            cpx,        limOpx,     limOpxVal    )
+
+
+            layout                  = initialize_layout_isoS(title,sysunit)
+
+            data_plot, phase_list   = get_data_plot_isoS(sysunit)
+
+            figIsoS                  = plot(data_plot,layout)
+
+        elseif bid == "sys-unit-isoS"
+            # data_plot, phase_list   = get_data_plot(sysunit)
+            # ytitle                  = "Phase fraction ["*sysunit*"%]"
+            
+            # layout[:yaxis_title]    = ytitle
+
+            # figIsoS                  = plot(data_plot,layout)
+
+        else
+            figIsoS                  = plot(    Layout( height= 320 ))
+        end
+
+        configIsoS   = PlotConfig(  toImageButtonOptions  = attr(     name     = "Download as svg",
+                                    format   = "svg", # one of png, svg, jpeg, webp
+                                    filename =  "isentropic_path_"*replace(title, " " => "_"),
+                                    height   =  360,
+                                    width    =  960,
+                                    scale    =  2.0,       ).fields)
+
+        return figIsoS, configIsoS, phase_list
+    end
+
+
+
+    callback!(app,
+        Output("collapse-path-opt-isoS", "is_open"),
+        [Input("button-path-opt-isoS", "n_clicks")],
+        [State("collapse-path-opt-isoS", "is_open")], ) do  n, is_open
+        
+        if isnothing(n); n=0 end
+
+        if n>0
+            if is_open==1
+                is_open = 0
+            elseif is_open==0
+                is_open = 1
+            end
+        end
+        return is_open    
+    end
+    callback!(app,
+        Output("collapse-disp-opt-isoS", "is_open"),
+        [Input("button-disp-opt-isoS", "n_clicks")],
+        [State("collapse-disp-opt-isoS", "is_open")], ) do  n, is_open
+        
+        if isnothing(n); n=0 end
+
+        if n>0
+            if is_open==1
+                is_open = 0
+            elseif is_open==0
+                is_open = 1
+            end
+        end
+        return is_open    
+    end
+
+    callback!(app,
+        Output("collapse-pathdef-isoS", "is_open"),
+        [Input("button-pathdef-isoS", "n_clicks")],
+        [State("collapse-pathdef-isoS", "is_open")], ) do  n, is_open
+        
+        if isnothing(n); n=0 end
+
+        if n>0
+            if is_open==1
+                is_open = 0
+            elseif is_open==0
+                is_open = 1
+            end
+        end
+        return is_open    
+    end
+
+    # callback to display ca-orthopyroxene limiter
+    callback!(
+        app,
+        Output("switch-opx-id-isoS", "style"),
+        Input("database-dropdown-isoS", "value"),
+    ) do value
+        # global db
+        if value == "ig"
+            style  = Dict("display" => "block")
+        elseif value == "igd"
+            style  = Dict("display" => "block")    
+        elseif value == "alk"
+            style  = Dict("display" => "block")  
+        else 
+            style  = Dict("display" => "none")
+        end
+        return style
+    end
+
+
+    # callback to display clinopyroxene choice for the metabasite database
+    callback!(
+        app,
+        Output("switch-cpx-id-isoS",     "style"),
+        Input("database-dropdown-isoS",  "value"),
+    ) do value
+
+        if value == "mb"
+            style  = Dict("display" => "block")
+        else 
+            style  = Dict("display" => "none")
+        end
+        return style
+    end
+
+
+    # callback function to display to right set of variables as function of the diagram type
+    callback!(
+        app,
+        Output("buffer-1-id-isoS", "style"),
+        Input("buffer-dropdown-isoS", "value"),
+    ) do value
+
+        if value != "none"
+            b1  = Dict("display" => "block")
+        else
+            b1  = Dict("display" => "none")
+        end
+
+        return b1
+    end
+
+
+    callback!(
+        app,
+        Output("table-bulk-rock-isoS","data"),
+        Output("test-dropdown-isoS","options"),
+        Output("test-dropdown-isoS","value"),
+        Output("database-caption-isoS","value"),
+        Output("phase-selection-isoS","options"),
+        Output("phase-selection-isoS","value"),
+        Input("test-dropdown-isoS","value"),
+        Input("database-dropdown-isoS","value"),
+        Input("output-data-uploadn-isoS", "is_open"),        # this listens for changes and updated the list
+        prevent_initial_call=true,
+    ) do test, dtb, update
+
+        # catching up some special cases
+        if test > length(db[(db.db .== dtb), :].test) - 1 
+            t = 0
+        else
+            t = test
+        end
+
+        data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
+                                "mol_fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac[1][i])
+                                    for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
+
+
+        opts        =  [Dict(   "label" => db[(db.db .== dtb), :].title[i],
+                                "value" => db[(db.db .== dtb), :].test[i]  )
+                                    for i=1:length(db[(db.db .== dtb), :].test)]
+
+        cap         = dba[(dba.acronym .== dtb) , :].database[1]      
+        
+        val         = t
+
+        db_in       = retrieve_solution_phase_information(dtb)
+
+        phase_selection_options = [Dict(    "label"     => " "*i,
+                                            "value"     => i )
+                                                for i in db_in.ss_name ]
+        phase_selection_value   = db_in.ss_name
+
+
+        return data, opts, val, cap, phase_selection_options, phase_selection_value                 
+    end
+
+
+
+    # open/close Curve interpretation box
+    callback!(app,
+        Output("collapse-phase-selection-isoS", "is_open"),
+        [Input("button-phase-selection-isoS", "n_clicks")],
+        [State("collapse-phase-selection-isoS", "is_open")], ) do  n, is_open
+        
+        if isnothing(n); n=0 end
+
+        if n>0
+            if is_open==1
+                is_open = 0
+            elseif is_open==0
+                is_open = 1
+            end
+        end
+        return is_open 
+            
+    end
+
+
     callback!(app,
         Output("collapse-config-isoS", "is_open"),
         [Input("button-config-isoS", "n_clicks")],

@@ -28,6 +28,39 @@ function Tab_IsentropicPaths(db_inf)
                                     ]),
 
 
+                                    dbc_row([  
+                                        dbc_col([ 
+                                            html_h1("Solution phase selection", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                        ]),
+
+                                        dbc_col([ 
+                                            dbc_button( "", id="button-phase-selection-isoS", color="light", className="me-2", n_clicks=0,
+                                                                style       = Dict( "textAlign"     => "center",
+                                                                                    "font-size"     => "100%",
+                                                                                    "border"        =>"1px lightgray solid")), 
+                                            dbc_collapse(
+                                                dbc_card(dbc_cardbody([
+                
+                                                        dbc_col([ 
+                
+                                                            dcc_checklist(
+                                                                id      = "phase-selection-isoS",
+                                                                options = [Dict(    "label"     => " "*i,
+                                                                                    "value"     => i )
+                                                                                for i in db_inf.ss_name ],
+                                                                value = db_inf.ss_name,
+                                                                # inline = true,
+                                                            ),
+                    
+                                                        ]),
+                
+                                                    ])),
+                                                    id="collapse-phase-selection-isoS",
+                                                    is_open=false,
+                                            ),
+                                        ]),
+                                    ]),
+
                                     #clinopyroxene for metabasite
                                     html_div([
                                         html_div("‎ "),  
@@ -271,7 +304,247 @@ function Tab_IsentropicPaths(db_inf)
  
                 ], width=3),
 
-                dbc_col([ ], width=9),
+                dbc_col([ 
+
+
+                    dbc_row([ 
+                        dbc_col([  
+                        ]), #, width=1
+
+
+                        dbc_col([ 
+                        
+                            dbc_row([
+
+                                dbc_button("Path definition",id="button-pathdef-isoS"),
+                                dbc_collapse(
+                                dbc_card(dbc_cardbody([
+
+                                    dbc_row([
+                                        dbc_col([ 
+                                             html_h1("Starting pressure [kbar]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
+                                        ]),
+                                        dbc_col([ 
+                                            dbc_input(
+                                            id      = "starting-pressure-isoS-id",
+                                            type    = "number", 
+                                            min     = 0.001, 
+                                            max     = 100.01, 
+                                            value   = 30.0   ),
+                                        ]),
+                                    ]),
+                                    dbc_row([
+                                        dbc_col([ 
+                                             html_h1("Starting temperature [°C]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
+                                        ]),
+                                        dbc_col([ 
+                                            dbc_input(
+                                            id      = "starting-temperature-isoS-id",
+                                            type    = "number", 
+                                            min     = 1.0, 
+                                            max     = 3000.0, 
+                                            value   = 1500.0   ),
+                                        ]),
+                                    ]),
+                                    dbc_row([
+                                        dbc_col([ 
+                                             html_h1("Ending pressure [kbar]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
+                                        ]),
+                                        dbc_col([ 
+                                            dbc_input(
+                                            id      = "ending-pressure-isoS-id",
+                                            type    = "number", 
+                                            min     = 0.001, 
+                                            max     = 100.01, 
+                                            value   = 1.0   ),
+                                        ]),
+                                    ]),
+
+
+                                ])),
+                                id="collapse-pathdef-isoS",
+                                is_open=true,
+                                ),
+                                                                                
+                            ])
+
+                        ], width=5),
+
+                        dbc_col([  
+                        ]), #, width=1
+
+                        dbc_col([ 
+
+                            dbc_row([
+
+                                dbc_button("Path options",id="button-path-opt-isoS"),
+                                dbc_collapse(
+                                    dbc_card(dbc_cardbody([
+                                        # resolution is number of computational steps between two points
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("Resolution", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ], width=6),
+                                            dbc_col([ 
+                                                    dbc_input(
+                                                    id      = "n-steps-id-isoS",
+                                                    type    = "number", 
+                                                    min     = 1, 
+                                                    max     = 1024, 
+                                                    value   = 4   ),
+                                            ]),
+                                        ]),                               
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("Tolerance", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ], width=6),
+                                            dbc_col([ 
+                                                    dbc_input(
+                                                    id      = "tolerance-id-isoS",
+                                                    type    = "number", 
+                                                    min     = 1e-8, 
+                                                    max     = 1.0, 
+                                                    value   = 1e-4   ),
+                                            ]),
+                                        ]),  
+
+                                        html_div("‎ "),
+                                        dbc_row([
+                                            dbc_button("Compute path",id="compute-path-button-isoS", color="light", className="me-2", n_clicks=0,
+                                            style       = Dict( "textAlign"     => "center",
+                                                                "font-size"     => "100%",
+                                                                "border"        =>"1px lightgray solid")), 
+                                        ]),
+                                        html_div("‎ "),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Save path", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),    
+                                            ], width=4),
+                                            dbc_col([ 
+                                                dbc_input(
+                                                    id      = "Filename-all-isoS-id",
+                                                    type    = "text", 
+                                                    style   = Dict("textAlign" => "center") ,
+                                                    value   = "filename"   ),     
+                                            ], width=4),
+                                            dbc_col([    
+                                                dbc_button(
+                                                    "Table", id="save-all-table-isoS-button", color="light",  n_clicks=0,
+                                                ),
+                                                dcc_download(id="download-all-table-isoS-text"),  
+                                            ]),
+                                        ]),
+                                        dbc_row([
+                                            dbc_alert(
+                                                "Successfully saved all data points information",
+                                                id      ="data-all-table-isoS-save",
+                                                is_open =false,
+                                                duration=4000,
+                                            ),
+                                            dbc_alert(
+                                                "Provide a valid filename (without extension)",
+                                                color="danger",
+                                                id      ="data-all-save-table-isoS-failed",
+                                                is_open =false,
+                                                duration=4000,
+                                            ),
+                                        ]),
+
+
+                                    ])),
+                                    id="collapse-path-opt-isoS",
+                                    is_open=true,
+                                ),
+                                                                                
+                                dbc_button("Display options",id="button-disp-opt-isoS"),
+                                dbc_collapse(
+                                    dbc_card(dbc_cardbody([
+
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("System unit", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ], width=6),
+                                            dbc_col([ 
+                                                dcc_dropdown(   id      = "sys-unit-isoS",
+                                                options = [
+                                                    (label = "mol%",  value = "mol"),
+                                                    (label = "wt%",   value = "wt"),
+                                                    (label = "vol%",  value = "vol"), 
+                                                ],
+                                                value       = "mol",
+                                                clearable   =  false,
+                                                multi       =  false    ),
+                                            ]),
+                                        ]),
+
+
+
+                                    ])),
+                                    id="collapse-disp-opt-isoS",
+                                    is_open=true,
+                                ),
+                                                                                
+                            ])
+
+                        ], width=5),
+
+                    ]),
+
+                    html_div("‎ "),
+                    dbc_row([                                                                                     
+                        dbc_col([
+                            dbc_row([
+                                dbc_card(dbc_cardbody([
+                                    isoS_plot()
+                                ])),
+                            ]),
+                            html_div("‎ "),
+                            dbc_row([
+                                dbc_card(dbc_cardbody([
+                                    dbc_row([
+                                        dbc_col([ 
+                                            isoS_frac_plot()
+                                        ], width=10)
+
+                                        dbc_col([ 
+                                            html_div("‎ "),
+                                            html_div("‎ "),
+                                            html_div("‎ "),
+                                            dbc_card(dbc_cardbody([
+
+                                                # mineral list
+                                                dcc_checklist(
+                                                    id      = "phase-selector-isoS-id",
+                                                    options = [],
+                                                    value   = [],
+                                                )
+
+                                            ])),
+
+                                        ], width=2)
+                                    ])
+                                ])),
+
+                            ]),      
+                        
+                        ], width=12),
+                    ]),
+
+                    html_div("‎ "),
+                    dbc_row([                                                                                     
+                        dbc_col([
+                            dbc_row([
+                                dbc_card(dbc_cardbody([
+                                    TAS_isoS_plot()
+                                ])),
+                            ]),
+                        ]),
+                    ]),
+
+
+
+
+                ], width=9),
 
 
             ]),
