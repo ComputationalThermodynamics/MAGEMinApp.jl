@@ -1,6 +1,31 @@
 function Tab_isoSpaths_Callbacks(app)
 
 
+    #save all table to file
+    callback!(
+        app,
+        Output("download-all-table-isoS-text", "data"),
+        Output("data-all-table-isoS-save", "is_open"),
+        Output("data-all-save-table-isoS-failed", "is_open"),
+        Input("save-all-table-isoS-button", "n_clicks"),
+        State("Filename-all-isoS-id", "value"),
+        State("database-dropdown-isoS","value"),
+        prevent_initial_call=true,
+    ) do n_clicks, fname, dtb
+
+        if fname != "filename"
+            datab   = "_"*dtb
+            fileout = fname*datab*".txt"
+            file    = MAGEMin_data2table(Out_ISOS,dtb)            #point_id is defined as global variable in clickData callback
+            output  = Dict("content" => file,"filename" => fileout)
+            
+            return output, "success", ""
+        else
+            output = nothing
+            return output, "", "failed"
+        end
+    end
+
 
     """
         Callback to compute and display isentropic path
@@ -10,6 +35,8 @@ function Tab_isoSpaths_Callbacks(app)
         Output("isoS-plot",                 "figure"),
         Output("isoS-plot",                 "config"),
         Output("phase-selector-isoS-id",    "options"),
+        Output("display-entropy-textarea",  "value"),
+        
         
         Input("compute-path-button-isoS",   "n_clicks"),
         Input("sys-unit-isoS",              "value"),
@@ -45,11 +72,10 @@ function Tab_isoSpaths_Callbacks(app)
                 verbose,    bulk,       bufferN,
                 cpx,        limOpx,     limOpxVal,  test,   sysunit
 
-        bid                     = pushed_button( callback_context() )    # get which button has been pushed
-
-        title = db[(db.db .== dtb), :].title[test+1]
-
-        figIsoS = plot(    Layout( height= 320 ))
+        bid             = pushed_button( callback_context() )    # get which button has been pushed
+        entropy         = ""
+        title           = db[(db.db .== dtb), :].title[test+1]
+        figIsoS         = plot(    Layout( height= 320 ))
 
         if bid == "compute-path-button-isoS"
 
@@ -69,18 +95,19 @@ function Tab_isoSpaths_Callbacks(app)
 
             data_plot, phase_list   = get_data_plot_isoS(sysunit)
 
-            figIsoS                  = plot(data_plot,layout)
+            figIsoS                 = plot(data_plot,layout)
+            entropy                 = Out_ISOS[1].entropy
 
         elseif bid == "sys-unit-isoS"
-            # data_plot, phase_list   = get_data_plot(sysunit)
-            # ytitle                  = "Phase fraction ["*sysunit*"%]"
+            data_plot, phase_list   = get_data_plot_isoS(sysunit)
+            ytitle                  = "Phase fraction ["*sysunit*"%]"
             
-            # layout[:yaxis_title]    = ytitle
+            layout[:yaxis_title]    = ytitle
 
-            # figIsoS                  = plot(data_plot,layout)
-
+            figIsoS                 = plot(data_plot,layout)
+            entropy                 = Out_ISOS[1].entropy
         else
-            figIsoS                  = plot(    Layout( height= 320 ))
+            figIsoS                 = plot(    Layout( height= 320 ))
         end
 
         configIsoS   = PlotConfig(  toImageButtonOptions  = attr(     name     = "Download as svg",
@@ -90,10 +117,75 @@ function Tab_isoSpaths_Callbacks(app)
                                     width    =  960,
                                     scale    =  2.0,       ).fields)
 
-        return figIsoS, configIsoS, phase_list
+        return figIsoS, configIsoS, phase_list, string( round(entropy,digits=5) )
     end
 
 
+
+
+
+    """
+        Callback to compute and display PTX path
+    """
+    callback!(
+        app,
+        Output("isoS-frac-plot",         "figure"),
+        Output("isoS-frac-plot",         "config"),
+        
+        Input("phase-selector-isoS-id",      "value"),
+
+        State("database-dropdown-isoS",  "value"),
+        State("test-dropdown-isoS",      "value"),
+        State("sys-unit-isoS",           "value"),
+
+        prevent_initial_call = true,
+
+        ) do    phases,
+                dtb,    test,   sysunit
+
+
+        bid         = pushed_button( callback_context() )    # get which button has been pushed
+        title       = db[(db.db .== dtb), :].title[test+1]
+
+        if ~isempty(phases)
+            layout_comp  = initialize_comp_layout(sysunit)
+
+            data_comp_plot = get_data_comp_plot_isoS(sysunit,phases)
+            
+            fig     = plot( data_comp_plot,layout_comp)
+        else
+            fig     =  plot(    Layout( height= 360 ))
+        end
+
+
+        config   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
+                                    format   = "svg", # one of png, svg, jpeg, webp
+                                    filename = "path_composition_"*replace(title, " " => "_"),
+                                    width    =  960,
+                                    height   =  360,
+                                    scale    =  2.0,       ).fields)
+
+        return fig, config
+    end
+
+
+
+    callback!(app,
+        Output("collapse-isoS-path", "is_open"),
+        [Input("button-isoS-path", "n_clicks")],
+        [State("collapse-isoS-path", "is_open")], ) do  n, is_open
+        
+        if isnothing(n); n=0 end
+
+        if n>0
+            if is_open==1
+                is_open = 0
+            elseif is_open==0
+                is_open = 1
+            end
+        end
+        return is_open    
+    end
 
     callback!(app,
         Output("collapse-path-opt-isoS", "is_open"),
@@ -111,6 +203,7 @@ function Tab_isoSpaths_Callbacks(app)
         end
         return is_open    
     end
+
     callback!(app,
         Output("collapse-disp-opt-isoS", "is_open"),
         [Input("button-disp-opt-isoS", "n_clicks")],
@@ -132,6 +225,23 @@ function Tab_isoSpaths_Callbacks(app)
         Output("collapse-pathdef-isoS", "is_open"),
         [Input("button-pathdef-isoS", "n_clicks")],
         [State("collapse-pathdef-isoS", "is_open")], ) do  n, is_open
+        
+        if isnothing(n); n=0 end
+
+        if n>0
+            if is_open==1
+                is_open = 0
+            elseif is_open==0
+                is_open = 1
+            end
+        end
+        return is_open    
+    end
+
+    callback!(app,
+        Output("collapse-pathinformation-isoS", "is_open"),
+        [Input("button-pathinformation-isoS", "n_clicks")],
+        [State("collapse-pathinformation-isoS", "is_open")], ) do  n, is_open
         
         if isnothing(n); n=0 end
 

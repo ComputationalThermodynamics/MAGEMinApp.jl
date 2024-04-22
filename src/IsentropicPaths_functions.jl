@@ -200,7 +200,7 @@ function compute_new_IsentropicPath(    nsteps,     bulk_ini,   oxi,    phase_se
             while n < n_max && conv == 0
                 c = (a+b)/2.0
                 # print("$P $a $b $c\n")
-                out     = deepcopy( point_wise_minimization(P, c , gv, z_b, DB, splx_data, sys_in) )
+                out     = deepcopy( point_wise_minimization(P, c , gv, z_b, DB, splx_data, sys_in, rm_list=phase_selection) )
                 result  = out.entropy - Sref
 
                 sign_c  = sign(result)
@@ -241,7 +241,7 @@ function get_data_plot_isoS(sysunit)
 
     n_ph    = length(ph_names)
     n_tot   = length(Out_ISOS)
-    data_plot  = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_ph+2);
+    data_plot  = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_ph);
 
     x       = Vector{String}(undef, n_tot)
     Y       = zeros(Float64, n_ph, n_tot)
@@ -267,23 +267,11 @@ function get_data_plot_isoS(sysunit)
                 end
             elseif sysunit == "vol"
                 if ~isempty(id)
-                    n_id = length(id)
-                    rho = 0.0
-                    for ii = 1:n_id
-                        if id[ii] <= Out_ISOS[k].n_SS
-                            rho += Out_ISOS[k].SS_vec[id[ii]].rho / n_id
-                        else
-                            rho += Out_ISOS[k].PP_vec[id[ii]-Out_ISOS[k].n_SS].rho / n_id
-                        end
-                    end
-
-                    Y[i,k] = sum(Out_ISOS[k].ph_frac_wt[id])/rho                # we sum in case of solvi
-
-                end  
+                    Y[i,k] = sum(Out_ISOS[k].ph_frac_vol[id]) .*100.0                # we sum in case of solvi
+                end
             end
         
         end
-
     end 
 
     for k=1:n_tot
@@ -300,33 +288,8 @@ function get_data_plot_isoS(sysunit)
                                                             color   = colormap[i])  )
      end
 
-     data_plot[n_ph+1] = scatter(   x               = x,
-                                    name            = "removed %",
-                                    y               = fracEvol[:,2].*100.0, 
-                                    hoverinfo       = "skip",
-                                    # mode            = "markers+lines",
-                                    mode            = "lines",
-                                    # marker          = attr(     size    = 5.0,
-                                    #                             color   = "black"),
-                                    line            = attr( dash    = "dash",
-                                                            color   = "black", 
-                                                            width   = 0.75)                ) 
-
-     data_plot[n_ph+2] = scatter(   x               = x,
-                                    y               = fracEvol[:,1].*100.0, 
-                                    name            = "remaining %",
-                                    hoverinfo       = "skip",
-                                    # mode            = "markers+lines",
-                                    mode            = "lines",
-                                    # marker          = attr(     size    = 5.0,
-                                    #                             color   = "black"),
-                                    line            = attr( color   = "black", 
-                                                            width   = 0.75)                ) 
-
-
     # build phase list:
     phase_list = [Dict("label" => "  "*ph_names[i], "value" => ph_names[i]) for i=1:n_ph]
-
 
     return data_plot, phase_list
 end

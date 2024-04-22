@@ -387,23 +387,11 @@ function get_data_plot(sysunit)
                 end
             elseif sysunit == "vol"
                 if ~isempty(id)
-                    n_id = length(id)
-                    rho = 0.0
-                    for ii = 1:n_id
-                        if id[ii] <= Out_PTX[k].n_SS
-                            rho += Out_PTX[k].SS_vec[id[ii]].rho / n_id
-                        else
-                            rho += Out_PTX[k].PP_vec[id[ii]-Out_PTX[k].n_SS].rho / n_id
-                        end
-                    end
-
-                    Y[i,k] = sum(Out_PTX[k].ph_frac_wt[id])/rho                # we sum in case of solvi
-
-                end  
+                    Y[i,k] = sum(Out_PTX[k].ph_frac_vol[id]) .*100.0                # we sum in case of solvi
+                end
             end
         
         end
-
     end 
 
     for k=1:n_tot

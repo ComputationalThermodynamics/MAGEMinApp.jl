@@ -366,12 +366,64 @@ function Tab_IsentropicPaths(db_inf)
                                 is_open=true,
                                 ),
                                                                                 
+                            ]),
+                            dbc_row([
+
+                                dbc_button("Path information",id="button-pathinformation-isoS"),
+                                dbc_collapse(
+                                dbc_card(dbc_cardbody([
+
+                                    dbc_row([
+                                        dbc_col([ 
+                                            html_h1("Entropy [J/K]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
+                                        ]),
+                                        dbc_col([ 
+                                            dcc_textarea(
+                                                id="display-entropy-textarea",
+                                                value       = "",
+                                                readOnly    = true,
+                                                disabled    = true,
+                                                draggable   = false,
+                                                style       = Dict("textAlign" => "center","font-size" => "100%", "width"=> "100%", "height" => 24, "resize"=> "none")
+                                            ),
+                                        ]),
+                                    ]),
+                                ])),
+                                id="collapse-pathinformation-isoS",
+                                is_open=true,
+                                ),
+                                                                                
                             ])
 
-                        ], width=5),
+                        ], width=4),
 
                         dbc_col([  
                         ]), #, width=1
+
+                        dbc_col([ 
+                        
+                            dbc_row([
+
+                                dbc_button("P-T isentropic path", id="button-isoS-path"),
+                                dbc_collapse(
+                                dbc_card(dbc_cardbody([
+
+                                    dbc_row([
+                                        path_isoS_plot(),
+                                    ]),
+                                    
+                                ])),
+                                id="collapse-isoS-path",
+                                is_open=true,
+                                ),
+                                                                                
+                            ])
+
+                        ], width=4),
+
+                        dbc_col([  
+                        ]), #, width=1
+
 
                         dbc_col([ 
 
@@ -486,7 +538,7 @@ function Tab_IsentropicPaths(db_inf)
                                                                                 
                             ])
 
-                        ], width=5),
+                        ], width=3),
 
                     ]),
 
@@ -529,20 +581,6 @@ function Tab_IsentropicPaths(db_inf)
                         
                         ], width=12),
                     ]),
-
-                    html_div("‎ "),
-                    dbc_row([                                                                                     
-                        dbc_col([
-                            dbc_row([
-                                dbc_card(dbc_cardbody([
-                                    TAS_isoS_plot()
-                                ])),
-                            ]),
-                        ]),
-                    ]),
-
-
-
 
                 ], width=9),
 

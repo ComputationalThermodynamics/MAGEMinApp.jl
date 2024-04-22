@@ -64,16 +64,6 @@ function isoS_plot()
             )
 end
 
-function TAS_isoS_plot()
-
-    fig =  plot(    Layout(     width       = 740,
-                                height      = 400 ))
-
-    dcc_graph(
-                id          = "TAS-isoS-plot",
-                figure      = fig,
-            )
-end
 
 function path_plot()
 
@@ -81,6 +71,16 @@ function path_plot()
 
     dcc_graph(
                 id          = "path-plot",
+                figure      = fig,
+            )
+end
+
+function path_isoS_plot()
+
+    fig = plot(    Layout( height= 220 ))
+
+    dcc_graph(
+                id          = "path-isoS-plot",
                 figure      = fig,
             )
 end
