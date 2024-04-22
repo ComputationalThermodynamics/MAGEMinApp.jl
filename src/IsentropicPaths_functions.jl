@@ -1,141 +1,4 @@
 
-"""
-    Retrieve TAS diagram
-"""
-function get_TAS_diagram_isoS(phases)
-
-    tas      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, 16);
-
-    F        = [35. 0; 41 0; 41 7; 45 9.4; 48.4 11.5; 52.5 14; 48 16; 35 16;35 0]
-    Pc       = [41. 0; 45 0; 45 3; 41 3;41 0]
-    U1       = [41. 3; 45 3; 45 5; 49.4 7.3; 45 9.4; 41 7;41 3]
-    U2       = [49.4 7.3; 53 9.3; 48.4 11.5; 45 9.4;49.4 7.3]
-    U3       = [53. 9.3; 57.6 11.7; 52.5 14; 48.4 11.5;53 9.3]
-    Ph       = [52.5 14; 57.6 11.7; 65 16; 48 16;52.5 14]
-    B        = [45. 0; 52 0; 52 5; 45 5;45 0]
-    S1       = [45. 5; 52 5; 49.4 7.3;45 5]
-    S2       = [52. 5; 57 5.9; 53 9.3; 49.4 7.3;52 5]
-    S3       = [57. 5.9; 63 7; 57.6 11.7; 53 9.3;57 5.9]
-    T        = [63. 7; 69 8; 69 16; 65 16; 57.6 11.7;63 7]
-    O1       = [52. 0; 57 0; 57 5.9; 52 5;52 0]
-    O2       = [57. 0; 63 0; 63 7; 57 5.9;57 0]
-    O3       = [63. 0; 77 0; 69 8; 63 7;63 0]
-    R        = [77. 0; 85 0; 85 16; 69 16; 69 8;77 0]
-
-    fields   = (F,Pc,U1,U2,U3,Ph,B,S1,S2,S3,T,O1,O2,O3,R)
-    nf       = length(fields)
-    xc       = zeros(nf)
-    yc       = zeros(nf)
-
-    for i=1:nf
-        xc[i] = sum(fields[i][1:end-1,1])/(size(fields[i],1)-1.0)
-        yc[i] = sum(fields[i][1:end-1,2])/(size(fields[i],1)-1.0)
-    end
-    
-    # annotations shifts
-    xc[1]   -=4.0;
-    yc[1]   +=3.0;
-    yc[3]   +=1.0;
-    xc[6]   +=2.0;
-    yc[8]   -=0.25;
-    yc[9]   +=0.25;
-
-
-    name = ["foidite" "picrobasalt" "basanite" "phonotephrite" "tephriphonolite" "phonolite" "basalt" "trachybasalt" "basaltic<br>trachyandesite" "trachyandesite" "trachyte" "basaltic<br>andesite" "andesite" "dacite" "rhyolite"];
-       
-    for i = 1:nf
-        tas[i] = scatter(   x           = fields[i][:,1], 
-                            y           = fields[i][:,2], 
-                            hoverinfo   = "skip",
-                            mode        = "lines",
-                            showscale   = false,
-                            showlegend  = false,
-                            line        = attr( color   = "black", 
-                                                width   = 0.75)                )
-    end
-
-
-    n_ox    = length(Out_ISOS[1].oxides)
-    oxides  = Out_ISOS[1].oxides
-    n_tot   = length(Out_ISOS)
-
-    liq_tas         = Matrix{Union{Float64,Missing}}(undef, n_ox, (n_tot+1))      .= missing
-    colormap        = get_jet_colormap(n_tot+1)
- 
-    for j=1:n_tot
-        id      = findall(Out_ISOS[j].ph .== "liq")
-        if ~isempty(id)
-            liq_tas[:,j] = Out_ISOS[j].SS_vec[id[1]].Comp_wt .*100.0
-        end
-    end
-
-    dry  = findall(oxides .!= "H2O") 
-    id_Y = findall(oxides .== "K2O" .|| oxides .== "Na2O")
-    id_X = findall(oxides .== "SiO2") 
-
-    if ~isempty(dry)
-        liq_tas ./=sum(liq_tas[dry,:],dims=1)
-        liq_tas .*= 100.0
-    end
-
-    tas[end] = scatter(     x           = liq_tas[id_X,:], 
-                            y           = sum(liq_tas[id_Y,:],dims=1), 
-                            hoverinfo   = "skip",
-                            mode        = "markers",
-                            opacity     = 0.8,
-                            showscale   = false,
-                            showlegend  = false,
-                            marker      = attr(     size        = fracEvol[:,1].*15.0 .+ 6.0,
-                                                    color       = colormap,
-                                                    line        = attr( width = 0.75,
-                                                                        color = "black" )    ))
-
-    # print("liq_tas: $liq_tas\n")
-
-    annotations = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,nf)
-
-    for i=1:nf
-        annotations[i] =   attr(    xref        = "x",
-                                    yref        = "y",
-                                    x           = xc[i],
-                                    y           = yc[i],
-                                    text        = name[i],
-                                    showarrow   = false,
-                                    visible     = true,
-                                    font        = attr( size = 10, color = "#212121"),
-                                )  
-    end
-
-    layout  = Layout(
-
-        title= attr(
-            text    = "TAS Diagram (Anhydrous)",
-            x       = 0.5,
-            xanchor = "center",
-            yanchor = "top"
-        ),
-        margin      = attr(autoexpand = false, l=16, r=16, b=16, t=16),
-        hoverlabel = attr(
-            bgcolor     = "#566573",
-            bordercolor = "#f8f9f9",
-        ),
-        plot_bgcolor = "#FFF",
-        paper_bgcolor = "#FFF",
-        xaxis_title = "SiO2 [wt%]",
-        yaxis_title = "K2O + Na2O [wt%]",
-        xaxis_range = [35.0, 85.0], 
-        # yaxis_range = [0.0,15.0],
-        annotations = annotations,
-        width       = 760,
-        height      = 480,
-        # autosize    = false,
-    )
-
-   
-    return tas, layout
-end
-
-
 function compute_new_IsentropicPath(    nsteps,     bulk_ini,   oxi,    phase_selection,
                                         Pini,       Tini,       Pfinal, tolerance,
                                         dtb,        bufferType, solver,
@@ -236,6 +99,26 @@ function compute_new_IsentropicPath(    nsteps,     bulk_ini,   oxi,    phase_se
     ph_names = sort(ph_names)
 
 end
+
+
+function get_data_plot_isoS_path()
+
+    n_tot   = length(Out_ISOS)
+
+    x       = Vector{Float64}(undef, n_tot)
+    y       = Vector{Float64}(undef, n_tot)
+
+    for i=1:n_tot
+        x[i] = Out_ISOS[i].T_C
+        y[i] = Out_ISOS[i].P_kbar
+    end
+
+    df_path_plot = DataFrame(   x=x,
+                                y=y     )
+
+    return df_path_plot
+end
+
 
 function get_data_plot_isoS(sysunit)
 
@@ -387,6 +270,24 @@ function get_data_comp_plot_isoS(sysunit,phases)
     return data_comp_plot
 end
 
+
+function initialize_layout_isoS_path(   Pini :: Float64,
+                                        Tini :: Float64,
+                                        Pfinal :: Float64   )
+
+    layout  = Layout(   font        = attr(size = 10),
+                        height      = 240,
+                        margin      = attr(autoexpand = false, l=16, r=16, b=16, t=16),
+                        autosize    = false,
+                        xaxis_title = "Temperature [°C]",
+                        yaxis_title = "Pressure [kbar]",
+                        xaxis_range = [Tini-300,Tini+100], 
+                        yaxis_range = [0.0,Pini+5.0],
+                        showlegend  = false,
+    )
+
+    return layout
+end
 
 function initialize_layout_isoS(title,sysunit)
     ytitle               = "Phase fraction ["*sysunit*"%]"

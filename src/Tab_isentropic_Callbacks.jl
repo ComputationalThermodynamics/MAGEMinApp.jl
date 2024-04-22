@@ -36,8 +36,9 @@ function Tab_isoSpaths_Callbacks(app)
         Output("isoS-plot",                 "config"),
         Output("phase-selector-isoS-id",    "options"),
         Output("display-entropy-textarea",  "value"),
-        
-        
+        Output("path-isoS-plot",            "figure"),
+        Output("path-isoS-plot",            "config"),   
+
         Input("compute-path-button-isoS",   "n_clicks"),
         Input("sys-unit-isoS",              "value"),
 
@@ -72,6 +73,8 @@ function Tab_isoSpaths_Callbacks(app)
                 verbose,    bulk,       bufferN,
                 cpx,        limOpx,     limOpxVal,  test,   sysunit
 
+        Pini = Float64(Pini);   Tini = Float64(Tini);  Pfinal = Float64(Pfinal);
+
         bid             = pushed_button( callback_context() )    # get which button has been pushed
         entropy         = ""
         title           = db[(db.db .== dtb), :].title[test+1]
@@ -79,7 +82,7 @@ function Tab_isoSpaths_Callbacks(app)
 
         if bid == "compute-path-button-isoS"
 
-            global Out_ISOS, ph_names, layout, data_plot, fracEvol
+            global Out_ISOS, ph_names, layout, layout_path, data_plot, df_path_plot, fracEvol
 
             bufferN                 = Float64(bufferN)               # convert buffer_n to float
             bulk_ini, bulk_ini, oxi = get_bulkrock_prop(bulk, bulk)  
@@ -92,12 +95,14 @@ function Tab_isoSpaths_Callbacks(app)
 
 
             layout                  = initialize_layout_isoS(title,sysunit)
+            layout_path             = initialize_layout_isoS_path(Pini, Tini, Pfinal)
 
             data_plot, phase_list   = get_data_plot_isoS(sysunit)
+            df_path_plot            = get_data_plot_isoS_path()
 
             figIsoS                 = plot(data_plot,layout)
+            figIsoSPath             = plot(df_path_plot, x=:x, y=:y, layout_path)
             entropy                 = Out_ISOS[1].entropy
-
         elseif bid == "sys-unit-isoS"
             data_plot, phase_list   = get_data_plot_isoS(sysunit)
             ytitle                  = "Phase fraction ["*sysunit*"%]"
@@ -105,6 +110,7 @@ function Tab_isoSpaths_Callbacks(app)
             layout[:yaxis_title]    = ytitle
 
             figIsoS                 = plot(data_plot,layout)
+            figIsoSPath             = plot(df_path_plot, x=:x, y=:y, layout_path)
             entropy                 = Out_ISOS[1].entropy
         else
             figIsoS                 = plot(    Layout( height= 320 ))
@@ -112,12 +118,19 @@ function Tab_isoSpaths_Callbacks(app)
 
         configIsoS   = PlotConfig(  toImageButtonOptions  = attr(     name     = "Download as svg",
                                     format   = "svg", # one of png, svg, jpeg, webp
-                                    filename =  "isentropic_path_"*replace(title, " " => "_"),
+                                    filename =  "isentropic_path_mode_"*replace(title, " " => "_"),
                                     height   =  360,
                                     width    =  960,
                                     scale    =  2.0,       ).fields)
 
-        return figIsoS, configIsoS, phase_list, string( round(entropy,digits=5) )
+        configPathIsoS   = PlotConfig(  toImageButtonOptions  = attr(     name     = "Download as svg",
+                                    format   = "svg", # one of png, svg, jpeg, webp
+                                    filename =  "isentropic_path_PT_"*replace(title, " " => "_"),
+                                    height   =  640,
+                                    width    =  640,
+                                    scale    =  2.0,       ).fields)
+
+        return figIsoS, configIsoS, phase_list, string( round(entropy,digits=5) ), figIsoSPath, configPathIsoS
     end
 
 

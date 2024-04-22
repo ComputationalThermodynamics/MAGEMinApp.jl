@@ -443,7 +443,7 @@ function Tab_IsentropicPaths(db_inf)
                                                     type    = "number", 
                                                     min     = 1, 
                                                     max     = 1024, 
-                                                    value   = 4   ),
+                                                    value   = 16   ),
                                             ]),
                                         ]),                               
                                         dbc_row([
