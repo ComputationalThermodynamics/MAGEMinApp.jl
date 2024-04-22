@@ -1,5 +1,25 @@
 function Tab_isoSpaths_Callbacks(app)
   
+    callback!(
+        app,
+        Output("output-data-uploadn-isoS", "is_open"),
+        Output("output-data-uploadn-failed-isoS", "is_open"),
+        Input("upload-bulk-isoS", "contents"),
+        State("upload-bulk-isoS", "filename"),
+        prevent_initial_call=true,
+    ) do contents, filename
+
+        if !(contents isa Nothing)
+            status = parse_bulk_rock(contents, filename)
+            if status == 1
+                return "success", ""
+            else
+                return "", "failed"
+            end
+        end
+    end
+
+
     #save all table to file
     callback!(
         app,
