@@ -11,12 +11,12 @@ function MAGEMinApp_Callbacks(app)
         State("database-dropdown",              "value"     ),
         State("diagram-dropdown",               "value"     ),
         State("gsub-id",                        "value"     ),                   # n subdivision
-        State("refinement-levels",              "value"     ),         # level
+        State("refinement-levels",              "value"     ),                   # level
         State("tmin-id",                        "value"     ),                   # tmin
         State("tmax-id",                        "value"     ),                   # tmax
         State("pmin-id",                        "value"     ),                   # pmin
         State("pmax-id",                        "value"     ),                   # pmax
-        State("table-bulk-rock",                "data"      ),            # bulk-rock 1
+        State("table-bulk-rock",                "data"      ),                   # bulk-rock 1
         State("test-dropdown",                  "value"     ),
 
         prevent_initial_call=true,

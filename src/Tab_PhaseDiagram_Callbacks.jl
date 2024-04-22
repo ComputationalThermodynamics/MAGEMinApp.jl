@@ -134,19 +134,6 @@ function Tab_PhaseDiagram_Callbacks(app)
         return pLeft, pRight, pBottom
     end
 
-    function string_vec_dif(phase_selection,dtb)
-
-        db_in                           = retrieve_solution_phase_information(dtb)
-        set_A                           = phase_selection
-        set_B                           = db_in.ss_name
-        phase_selection                 = setdiff(set_B, set_A)
-        if isempty(phase_selection)
-            phase_selection = nothing
-        end
-
-        return phase_selection
-    end
-
     # Callback function to create compute the phase diagram using T8code for Adaptive Mesh Refinement
     callback!(
         app,

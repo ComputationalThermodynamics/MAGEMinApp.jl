@@ -30,6 +30,9 @@ include(joinpath(pkg_dir,"src","Tab_Simulation_Callbacks.jl"))
 include(joinpath(pkg_dir,"src","Tab_PhaseDiagram_Callbacks.jl"))
 include(joinpath(pkg_dir,"src","PTXpaths_functions.jl"))   
 include(joinpath(pkg_dir,"src","Tab_PTXpaths_Callbacks.jl")) 
+include(joinpath(pkg_dir,"src","Tab_isentropic.jl"))
+include(joinpath(pkg_dir,"src","Tab_isentropic_Callbacks.jl"))
+include(joinpath(pkg_dir,"src","IsentropicPaths_functions.jl"))
 
 """
     App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
@@ -37,7 +40,7 @@ include(joinpath(pkg_dir,"src","Tab_PTXpaths_Callbacks.jl"))
 Starts the MAGEMin App.
 """
 function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
-    GUI_version = "0.2.4"   
+    GUI_version = "0.2.5"   
     cur_dir     = pwd()                 # directory from where you started the GUI
     pkg_dir     = pkgdir(MAGEMinApp)   # package dir
     db_inf      = retrieve_solution_phase_information("ig");
@@ -135,8 +138,12 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                             ),
                                     dbc_tab(    tab_id      = "tab-PTX-path",
                                                 label       = "PTX path",
-                                                children    = [Tab_PTXpaths()]
-                                        ),
+                                                children    = [Tab_PTXpaths(db_inf)]
+                                            ),
+                                    dbc_tab(    tab_id      = "tab-isentropic-path",
+                                                label       = "Isentropic path",
+                                                children    = [Tab_IsentropicPaths(db_inf)]
+                                            ),
                                     dbc_tab(tab_id="tab-TEmodeling", label="TE-modeling",   children = []),
                 
                                 ],
@@ -167,7 +174,8 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
     app = Tab_Simulation_Callbacks(app)
     app = Tab_PhaseDiagram_Callbacks(app)
     app = Tab_PTXpaths_Callbacks(app)
-
+    app = Tab_isoSpaths_Callbacks(app)
+    
     run_server(app, host, port, debug=debug)
 
     cd(cur_dir) # go back to directory

@@ -1,4 +1,4 @@
-function Tab_PTXpaths(db_inf)
+function Tab_IsentropicPaths(db_inf)
     html_div([
         html_div("‎ "),
         dbc_row([ 
@@ -7,7 +7,7 @@ function Tab_PTXpaths(db_inf)
 
                     dbc_row([
 
-                        dbc_button("Configuration",id="button-config"),
+                        dbc_button("Configuration",id="button-config-isoS"),
                         dbc_collapse(
                             dbc_card(dbc_cardbody([
                                 dbc_row([
@@ -15,7 +15,7 @@ function Tab_PTXpaths(db_inf)
                                         html_h1("Thermodynamic database", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 2)),
                                     ]),
                                     dbc_col([ 
-                                        dcc_dropdown(   id      = "database-dropdown-ptx",
+                                        dcc_dropdown(   id      = "database-dropdown-isoS",
                                                         options = [
                                                             Dict(   "label" => dba.database[i],
                                                                     "value" => dba.acronym[i]  )
@@ -25,11 +25,8 @@ function Tab_PTXpaths(db_inf)
                                                         clearable   = false,
                                                         multi       = false),
                                     ]),
-                                    # dbc_tooltip([
-                                    #     html_div("Here you can select the thermodynamic database you want"),
-                                    #     html_div("Note that the chemical system can be different from database to another"),
-                                    #             ],target="database-dropdown-ptx"),
                                     ]),
+
 
                                     dbc_row([  
                                         dbc_col([ 
@@ -37,7 +34,7 @@ function Tab_PTXpaths(db_inf)
                                         ]),
 
                                         dbc_col([ 
-                                            dbc_button( "", id="button-phase-selection-PTX", color="light", className="me-2", n_clicks=0,
+                                            dbc_button( "", id="button-phase-selection-isoS", color="light", className="me-2", n_clicks=0,
                                                                 style       = Dict( "textAlign"     => "center",
                                                                                     "font-size"     => "100%",
                                                                                     "border"        =>"1px lightgray solid")), 
@@ -47,7 +44,7 @@ function Tab_PTXpaths(db_inf)
                                                         dbc_col([ 
                 
                                                             dcc_checklist(
-                                                                id      = "phase-selection-PTX",
+                                                                id      = "phase-selection-isoS",
                                                                 options = [Dict(    "label"     => " "*i,
                                                                                     "value"     => i )
                                                                                 for i in db_inf.ss_name ],
@@ -58,7 +55,7 @@ function Tab_PTXpaths(db_inf)
                                                         ]),
                 
                                                     ])),
-                                                    id="collapse-phase-selection-PTX",
+                                                    id="collapse-phase-selection-isoS",
                                                     is_open=false,
                                             ),
                                         ]),
@@ -75,13 +72,13 @@ function Tab_PTXpaths(db_inf)
                                                 html_div("Omph"),
                                             ],width=3),
                                             dbc_col([ 
-                                                dbc_row(dbc_switch(label="", id="mb-cpx-switch-ptx", value=false),justify="center"),
+                                                dbc_row(dbc_switch(label="", id="mb-cpx-switch-isoS", value=false),justify="center"),
                                             ]),
                                             dbc_col([ 
                                                 html_div("Aug"),
                                             ]),
                                         ]),
-                                    ], style = Dict("display" => "none"), id      = "switch-cpx-id-ptx"), #none, block
+                                    ], style = Dict("display" => "none"), id      = "switch-cpx-id-isoS"), #none, block
 
                                     #clinopyroxene for metabasite
                                     html_div([
@@ -92,20 +89,20 @@ function Tab_PTXpaths(db_inf)
 
                                             dbc_col([ 
                                                 dcc_checklist(
-                                                    id      ="limit-ca-opx-id-ptx",
+                                                    id      ="limit-ca-opx-id-isoS",
                                                     options = [
                                                         Dict("label" => " Limit Ca-opx", "value" => "CAOPX"),
                                                     ],
                                                     value   = [""],
                                                     inline  = true,
                                                 ),
-                                                dbc_tooltip("This activate a smaller range for compositional variable of opx for the igneous database sets",target="limit-ca-opx-id-ptx"),
+                                                dbc_tooltip("This activate a smaller range for compositional variable of opx for the igneous database sets",target="limit-ca-opx-id-isoS"),
 
                                             ]),
                                             dbc_col([ 
                                                 html_div([
                                                 dbc_input(
-                                                    id      = "ca-opx-val-id-ptx",
+                                                    id      = "ca-opx-val-id-isoS",
                                                     type    = "number", 
                                                     min     = 0.0, 
                                                     max     = 1.0, 
@@ -114,7 +111,7 @@ function Tab_PTXpaths(db_inf)
                                             ],width=3),
 
                                         ]),
-                                    ], style = Dict("display" => "block"), id      = "switch-opx-id-ptx"), #none, block
+                                    ], style = Dict("display" => "block"), id      = "switch-opx-id-isoS"), #none, block
 
 
 
@@ -124,7 +121,7 @@ function Tab_PTXpaths(db_inf)
                                             html_h1("Buffer", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                         ]),
                                         dbc_col([ 
-                                            dcc_dropdown(   id      = "buffer-dropdown-ptx",
+                                            dcc_dropdown(   id      = "buffer-dropdown-isoS",
                                             options = [
                                                 (label = "no buffer",value = "none"),
                                                 (label = "QFM",      value = "qfm"),
@@ -145,7 +142,7 @@ function Tab_PTXpaths(db_inf)
                                             html_h1("Solver", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                         ]),
                                         dbc_col([ 
-                                            dcc_dropdown(   id      = "solver-dropdown-ptx",
+                                            dcc_dropdown(   id      = "solver-dropdown-isoS",
                                             options = [
                                                 (label = "PGE",         value = "pge"),
                                                 (label = "Legacy",      value = "lp"),
@@ -162,7 +159,7 @@ function Tab_PTXpaths(db_inf)
                                             html_h1("Verbose", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                         ]),
                                         dbc_col([ 
-                                            dcc_dropdown(   id      = "verbose-dropdown-ptx",
+                                            dcc_dropdown(   id      = "verbose-dropdown-isoS",
                                             options = [
                                                 (label = "none",        value = -1),
                                                 (label = "light",       value =  0),
@@ -175,14 +172,14 @@ function Tab_PTXpaths(db_inf)
                                     ]),
 
                                 ])),
-                                id="collapse-config",
+                                id="collapse-config-isoS",
                                 is_open=true,
                         ),
                     
                     ])
 
 
-                    dbc_row([dbc_button("Bulk-rock composition",id="button-bulk-ptx"),
+                    dbc_row([dbc_button("Bulk-rock composition",id="button-bulk-isoS"),
                     dbc_collapse(
                         dbc_card(dbc_cardbody([
 
@@ -190,7 +187,7 @@ function Tab_PTXpaths(db_inf)
                                             dbc_col([
 
                                                 dcc_upload(
-                                                    id="upload-bulk-ptx",
+                                                    id="upload-bulk-isoS",
                                                     children=html_div([
                                                         "Drag and drop or select bulk-rock file",
                                                     ]),
@@ -208,14 +205,14 @@ function Tab_PTXpaths(db_inf)
                                                 ),
                                                 dbc_alert(
                                                     "Bulk-rock(s) composition(s) successfully loaded",
-                                                    id      = "output-data-uploadn-ptx",
+                                                    id      = "output-data-uploadn-isoS",
                                                     is_open = false,
                                                     duration= 4000,
                                                 ),
                                                 dbc_alert(
                                                     "Bulk-rock(s) composition(s) failed to load, check input file format",
                                                     color="danger",
-                                                    id      ="output-data-uploadn-failed-ptx",
+                                                    id      ="output-data-uploadn-failed-isoS",
                                                     is_open = false,
                                                     duration= 4000,
                                                 ),
@@ -224,13 +221,13 @@ function Tab_PTXpaths(db_inf)
                                                     html_div("An example of file providing bulk-rock compositions is given in the 'examples' folder"),
                                                     html_div("The structure of the file should comply with the following structure:"),
                                                     html_div("title::String; comments::String; db::String; sysUnit::String; oxide::Vector{String}; frac::Vector{Float64}")
-                                                            ],target="upload-bulk-ptx"),
+                                                            ],target="upload-bulk-isoS"),
 
                                                 html_div("‎ "),
                                                 dbc_row([
 
                                                     html_div([
-                                                        dcc_dropdown(   id      = "test-dropdown-ptx",
+                                                        dcc_dropdown(   id      = "test-dropdown-isoS",
                                                         options = [
                                                             Dict(   "label" => db[(db.db .== "ig"), :].title[i],
                                                                     "value" => db[(db.db .== "ig"), :].test[i]  )
@@ -239,7 +236,7 @@ function Tab_PTXpaths(db_inf)
                                                         value       = 0,
                                                         clearable   = false,
                                                         multi       = false),
-                                                    ], style = Dict("display" => "block"), id      = "test-1-id-ptx"),
+                                                    ], style = Dict("display" => "block"), id      = "test-1-id-isoS"),
                                                 ]),
 
 
@@ -248,7 +245,7 @@ function Tab_PTXpaths(db_inf)
                                                     
                                                             html_div([
                                                                 dash_datatable(
-                                                                    id="table-bulk-rock-ptx",
+                                                                    id="table-bulk-rock-isoS",
                                                                     columns=(  [    Dict("id" =>  "oxide",          "name" =>  "oxide",         "editable" => false),
                                                                                     Dict("id" =>  "mol_fraction",   "name" =>  "mol_fraction",  "editable" => true)]
                                                                     ),
@@ -269,22 +266,22 @@ function Tab_PTXpaths(db_inf)
                                                                     ]),
                                                                     dbc_col([ 
                                                                             dbc_input(
-                                                                            id      = "buffer-1-mul-id-ptx",
+                                                                            id      = "buffer-1-mul-id-isoS",
                                                                             type    = "number", 
                                                                             min     = -50.0, 
                                                                             max     = +50.0, 
                                                                             value   = 0.0   ),
                                                                     ]),
                                                                 ]),
-                                                                ], style = Dict("display" => "none"), id      = "buffer-1-id-ptx"), #none, block
+                                                                ], style = Dict("display" => "none"), id      = "buffer-1-id-isoS"), #none, block
 
-                                                            ], style = Dict("display" => "block"), id      = "table-1-id-ptx"), #none, block
+                                                            ], style = Dict("display" => "block"), id      = "table-1-id-isoS"), #none, block
                                                 ]),
 
 
                                                 html_div("‎ "),
                                                 dcc_textarea(
-                                                    id="database-caption-ptx",
+                                                    id="database-caption-isoS",
                                                     value       = db[(db.db .== "ig") .& (db.test .== 0), :].db[1],
                                                     readOnly    = true,
                                                     disabled    = true,
@@ -297,7 +294,7 @@ function Tab_PTXpaths(db_inf)
                                             ], justify="center"),
                                             ])
                                         ),
-                                        id="collapse-bulk-ptx",
+                                        id="collapse-bulk-isoS",
                                         is_open=true,
                                 ),
 
@@ -307,7 +304,8 @@ function Tab_PTXpaths(db_inf)
  
                 ], width=3),
 
-                dbc_col([  
+                dbc_col([ 
+
 
                     dbc_row([ 
                         dbc_col([  
@@ -318,85 +316,80 @@ function Tab_PTXpaths(db_inf)
                         
                             dbc_row([
 
-                                dbc_button("Path definition",id="button-pathdef"),
+                                dbc_button("Path definition",id="button-pathdef-isoS"),
                                 dbc_collapse(
                                 dbc_card(dbc_cardbody([
 
                                     dbc_row([
                                         dbc_col([ 
-                                            dbc_row([
-                                                html_h1("Pressure [kbar]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
-                                            ]),
-                                            dbc_row([
-                                                html_h1("Tolerance [K]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
-                                            ]),
-                                            dbc_row([
-                                                dbc_button("Find liquidus",id="find-liquidus-button", color="light", className="me-2", n_clicks=0,
-                                                style       = Dict( "textAlign"     => "center",
-                                                                    "font-size"     => "100%",
-                                                                    "border"        =>"1px lightgray solid")), 
-                                            ]),
+                                             html_h1("Starting pressure [kbar]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
                                         ]),
                                         dbc_col([ 
-                                            dbc_row([
-                                                dbc_input(
-                                                id      = "liquidus-pressure-val-id",
-                                                type    = "number", 
-                                                min     = 0.001, 
-                                                max     = 100.01, 
-                                                value   = 10.0   ),
-                                            ]),
-                                            dbc_row([
-                                                dbc_input(
-                                                id      = "liquidus-tolerance-val-id",
-                                                type    = "number", 
-                                                min     = 1e-8, 
-                                                max     = 1.0, 
-                                                value   = 1e-2   ),
-                                            ]),
-                                            dbc_row([
-                                                dcc_textarea(
-                                                    id="display-liquidus-textarea",
-                                                    value       = "",
-                                                    readOnly    = true,
-                                                    disabled    = true,
-                                                    draggable   = false,
-                                                    style       = Dict("textAlign" => "center","font-size" => "100%", "width"=> "100%", "height" => 24, "resize"=> "none")
-                                                ),
-                                            ]),
-
-
+                                            dbc_input(
+                                            id      = "starting-pressure-isoS-id",
+                                            type    = "number", 
+                                            min     = 0.001, 
+                                            max     = 100.01, 
+                                            value   = 30.0   ),
                                         ]),
                                     ]),
-  
-                                    html_div("‎ "), 
-                                    html_h1("Define P-T points", style = Dict("textAlign" => "center","font-size" => "120%")),
                                     dbc_row([
-
-                                        dash_datatable(
-                                            id="ptx-table",
-                                            columns=[Dict("name" => "P [kbar]", "id"    => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
-                                                        Dict("name" => "T [°C]", "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")],
-                                            data=[
-                                                Dict("col-1" => 5.0, "col-2"    => 500.0),
-                                                Dict("col-1" => 10.0, "col-2"   => 800.0),
-                                            ],
-                                            style_cell      = (textAlign="center", fontSize="140%",),
-                                            style_header    = (fontWeight="bold",),
-                                            editable        = true,
-                                            row_deletable   = true
-                                        ),
-
+                                        dbc_col([ 
+                                             html_h1("Starting temperature [°C]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
+                                        ]),
+                                        dbc_col([ 
+                                            dbc_input(
+                                            id      = "starting-temperature-isoS-id",
+                                            type    = "number", 
+                                            min     = 1.0, 
+                                            max     = 3000.0, 
+                                            value   = 1500.0   ),
+                                        ]),
                                     ]),
                                     dbc_row([
-                                        dbc_button("Add new point",id="add-row-button", color="light", className="me-2", n_clicks=0,
-                                        style       = Dict( "textAlign"     => "center",
-                                                            "font-size"     => "100%",
-                                                            "border"        =>"1px lightgray solid")), 
+                                        dbc_col([ 
+                                             html_h1("Ending pressure [kbar]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
+                                        ]),
+                                        dbc_col([ 
+                                            dbc_input(
+                                            id      = "ending-pressure-isoS-id",
+                                            type    = "number", 
+                                            min     = 0.001, 
+                                            max     = 100.01, 
+                                            value   = 1.0   ),
+                                        ]),
                                     ]),
+
 
                                 ])),
-                                id="collapse-pathdef",
+                                id="collapse-pathdef-isoS",
+                                is_open=true,
+                                ),
+                                                                                
+                            ]),
+                            dbc_row([
+
+                                dbc_button("Path information",id="button-pathinformation-isoS"),
+                                dbc_collapse(
+                                dbc_card(dbc_cardbody([
+
+                                    dbc_row([
+                                        dbc_col([ 
+                                            html_h1("Entropy [J/K]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
+                                        ]),
+                                        dbc_col([ 
+                                            dcc_textarea(
+                                                id="display-entropy-textarea",
+                                                value       = "",
+                                                readOnly    = true,
+                                                disabled    = true,
+                                                draggable   = false,
+                                                style       = Dict("textAlign" => "center","font-size" => "100%", "width"=> "100%", "height" => 24, "resize"=> "none")
+                                            ),
+                                        ]),
+                                    ]),
+                                ])),
+                                id="collapse-pathinformation-isoS",
                                 is_open=true,
                                 ),
                                                                                 
@@ -411,17 +404,16 @@ function Tab_PTXpaths(db_inf)
                         
                             dbc_row([
 
-                                dbc_button("Path preview",id="button-path"),
+                                dbc_button("P-T isentropic path", id="button-isoS-path"),
                                 dbc_collapse(
                                 dbc_card(dbc_cardbody([
 
                                     dbc_row([
-                                        path_plot(),
+                                        path_isoS_plot(),
                                     ]),
                                     
-
                                 ])),
-                                id="collapse-path",
+                                id="collapse-isoS-path",
                                 is_open=true,
                                 ),
                                                                                 
@@ -432,11 +424,12 @@ function Tab_PTXpaths(db_inf)
                         dbc_col([  
                         ]), #, width=1
 
+
                         dbc_col([ 
 
                             dbc_row([
 
-                                dbc_button("Path options",id="button-path-opt"),
+                                dbc_button("Path options",id="button-path-opt-isoS"),
                                 dbc_collapse(
                                     dbc_card(dbc_cardbody([
                                         # resolution is number of computational steps between two points
@@ -446,72 +439,30 @@ function Tab_PTXpaths(db_inf)
                                             ], width=6),
                                             dbc_col([ 
                                                     dbc_input(
-                                                    id      = "n-steps-id-ptx",
+                                                    id      = "n-steps-id-isoS",
                                                     type    = "number", 
                                                     min     = 1, 
                                                     max     = 1024, 
-                                                    value   = 4   ),
+                                                    value   = 16   ),
                                             ]),
                                         ]),                               
-                                        # PTX mode
                                         dbc_row([
                                             dbc_col([ 
-                                                html_h1("P-T-X Mode", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                html_h1("Tolerance", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                             ], width=6),
                                             dbc_col([ 
-                                                dcc_dropdown(   id      = "mode-dropdown-ptx",
-                                                options = [
-                                                    (label = "Equilibrium",                 value = "eq"),
-                                                    (label = "Fractional melting",          value = "fm"),
-                                                    (label = "Fractional crystallization",  value = "fc"), 
-                                                ],
-                                                value       = "eq",
-                                                clearable   =  false,
-                                                multi       =  false    ),
+                                                    dbc_input(
+                                                    id      = "tolerance-id-isoS",
+                                                    type    = "number", 
+                                                    min     = 1e-8, 
+                                                    max     = 1.0, 
+                                                    value   = 1e-4   ),
                                             ]),
-                                        ]),
-
-
-                                        # connectivity threshold for fracitonal melting
-                                        html_div([
-                                            dbc_row([
-                                                dbc_col([ 
-                                                    html_h1("Connectivity threshold [%]", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                                ], width=6),
-                                                dbc_col([ 
-                                                        dbc_input(
-                                                        id      = "connectivity-id",
-                                                        type    = "number", 
-                                                        min     = 0, 
-                                                        max     = 100.0, 
-                                                        value   = 7.0   ),
-                                                ]),
-                                            ]), 
-                                        ], style = Dict("display" => "none"), id      = "show-connectivity-id"), #none, block
-
-                                        # residual fraction for fractional crystallization
-                                        html_div([
-                                            dbc_row([
-                                                dbc_col([ 
-                                                    html_h1("Residual fraction [%]", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                                ], width=6),
-                                                dbc_col([ 
-                                                        dbc_input(
-                                                        id      = "residual-id",
-                                                        type    = "number", 
-                                                        min     = 0, 
-                                                        max     = 100.0, 
-                                                        value   = 7.0   ),
-                                                ]),
-                                            ]), 
-                                        ], style = Dict("display" => "none"), id      = "show-residual-id"), #none, block
-
-
-
+                                        ]),  
 
                                         html_div("‎ "),
                                         dbc_row([
-                                            dbc_button("Compute path",id="compute-path-button", color="light", className="me-2", n_clicks=0,
+                                            dbc_button("Compute path",id="compute-path-button-isoS", color="light", className="me-2", n_clicks=0,
                                             style       = Dict( "textAlign"     => "center",
                                                                 "font-size"     => "100%",
                                                                 "border"        =>"1px lightgray solid")), 
@@ -523,48 +474,48 @@ function Tab_PTXpaths(db_inf)
                                             ], width=3),
                                             dbc_col([ 
                                                 dbc_input(
-                                                    id      = "Filename-all-ptx-id",
+                                                    id      = "Filename-all-isoS-id",
                                                     type    = "text", 
                                                     style   = Dict("textAlign" => "center") ,
                                                     value   = "filename"   ),     
                                             ], width=4),
                                             dbc_col([    
                                                 dbc_button(
-                                                    "Table", id="save-all-table-ptx-button", color="light",  n_clicks=0,
+                                                    "Table", id="save-all-table-isoS-button", color="light",  n_clicks=0,
                                                 ),
-                                                dcc_download(id="download-all-table-ptx-text"),  
+                                                dcc_download(id="download-all-table-isoS-text"),  
                                             ]),
                                             dbc_col([    
                                                 dbc_button(
-                                                    "csv file", id="save-all-csv-ptx-button", color="light",  n_clicks=0,
+                                                    "csv file", id="save-all-csv-isoS-button", color="light",  n_clicks=0,
                                                 ),
-                                                dcc_download(id="download-all-csv-ptx-text"),  
+                                                dcc_download(id="download-all-csv-isoS-text"),  
                                             ]),
                                         ]),
                                         dbc_row([
                                             dbc_alert(
                                                 "Successfully saved all data points information",
-                                                id      ="data-all-table-ptx-save",
+                                                id      ="data-all-table-isoS-save",
                                                 is_open =false,
                                                 duration=4000,
                                             ),
                                             dbc_alert(
                                                 "Provide a valid filename (without extension)",
                                                 color="danger",
-                                                id      ="data-all-save-table-ptx-failed",
+                                                id      ="data-all-save-table-isoS-failed",
                                                 is_open =false,
                                                 duration=4000,
                                             ),
                                             dbc_alert(
                                                 "Successfully saved all data points information",
-                                                id      ="data-all-csv-ptx-save",
+                                                id      ="data-all-csv-isoS-save",
                                                 is_open =false,
                                                 duration=4000,
                                             ),
                                             dbc_alert(
                                                 "Provide a valid filename (without extension)",
                                                 color="danger",
-                                                id      ="data-all-save-csv-ptx-failed",
+                                                id      ="data-all-save-csv-isoS-failed",
                                                 is_open =false,
                                                 duration=4000,
                                             ),
@@ -572,11 +523,11 @@ function Tab_PTXpaths(db_inf)
 
 
                                     ])),
-                                    id="collapse-path-opt",
+                                    id="collapse-path-opt-isoS",
                                     is_open=true,
                                 ),
                                                                                 
-                                dbc_button("Display options",id="button-disp-opt"),
+                                dbc_button("Display options",id="button-disp-opt-isoS"),
                                 dbc_collapse(
                                     dbc_card(dbc_cardbody([
 
@@ -585,7 +536,7 @@ function Tab_PTXpaths(db_inf)
                                                 html_h1("System unit", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                             ], width=6),
                                             dbc_col([ 
-                                                dcc_dropdown(   id      = "sys-unit-ptx",
+                                                dcc_dropdown(   id      = "sys-unit-isoS",
                                                 options = [
                                                     (label = "mol%",  value = "mol"),
                                                     (label = "wt%",   value = "wt"),
@@ -596,11 +547,11 @@ function Tab_PTXpaths(db_inf)
                                                 multi       =  false    ),
                                             ]),
                                         ]),
-   
+
 
 
                                     ])),
-                                    id="collapse-disp-opt",
+                                    id="collapse-disp-opt-isoS",
                                     is_open=true,
                                 ),
                                                                                 
@@ -609,12 +560,13 @@ function Tab_PTXpaths(db_inf)
                         ], width=4),
 
                     ]),
+
                     html_div("‎ "),
                     dbc_row([                                                                                     
                         dbc_col([
                             dbc_row([
                                 dbc_card(dbc_cardbody([
-                                    PTX_plot()
+                                    isoS_plot()
                                 ])),
                             ]),
                             html_div("‎ "),
@@ -622,7 +574,7 @@ function Tab_PTXpaths(db_inf)
                                 dbc_card(dbc_cardbody([
                                     dbc_row([
                                         dbc_col([ 
-                                            PTX_frac_plot()
+                                            isoS_frac_plot()
                                         ], width=10)
 
                                         dbc_col([ 
@@ -633,7 +585,7 @@ function Tab_PTXpaths(db_inf)
 
                                                 # mineral list
                                                 dcc_checklist(
-                                                    id      = "phase-selector-id",
+                                                    id      = "phase-selector-isoS-id",
                                                     options = [],
                                                     value   = [],
                                                 )
@@ -648,18 +600,6 @@ function Tab_PTXpaths(db_inf)
                         
                         ], width=12),
                     ]),
-
-                    html_div("‎ "),
-                    dbc_row([                                                                                     
-                        dbc_col([
-                            dbc_row([
-                                dbc_card(dbc_cardbody([
-                                    TAS_plot()
-                                ])),
-                            ]),
-                        ]),
-                    ]),
-
 
                 ], width=9),
 
