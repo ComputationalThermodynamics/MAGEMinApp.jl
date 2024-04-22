@@ -2,6 +2,31 @@ function Tab_PTXpaths_Callbacks(app)
 
 
 
+  
+    #save all table to file
+    callback!(
+        app,
+        Output("data-all-csv-ptx-save", "is_open"),
+        Output("data-all-save-csv-ptx-failed", "is_open"),
+        Input("save-all-csv-ptx-button", "n_clicks"),
+        State("Filename-all-ptx-id", "value"),
+        State("database-dropdown-ptx","value"),
+        prevent_initial_call=true,
+    ) do n_clicks, fname, dtb
+
+        if fname != "filename"
+            datab   = "_"*dtb
+            fileout = fname*datab
+
+            MAGEMin_data2dataframe(Out_PTX,dtb,fileout)
+            return "success", ""
+        else
+            return  "", "failed"
+        end
+    end
+
+
+
     #save all table to file
     callback!(
         app,

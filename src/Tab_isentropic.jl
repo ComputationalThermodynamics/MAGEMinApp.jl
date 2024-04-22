@@ -395,7 +395,7 @@ function Tab_IsentropicPaths(db_inf)
                                                                                 
                             ])
 
-                        ], width=4),
+                        ], width=3),
 
                         dbc_col([  
                         ]), #, width=1
@@ -471,7 +471,7 @@ function Tab_IsentropicPaths(db_inf)
                                         dbc_row([
                                             dbc_col([
                                                 html_h1("Save path", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),    
-                                            ], width=4),
+                                            ], width=3),
                                             dbc_col([ 
                                                 dbc_input(
                                                     id      = "Filename-all-isoS-id",
@@ -485,6 +485,12 @@ function Tab_IsentropicPaths(db_inf)
                                                 ),
                                                 dcc_download(id="download-all-table-isoS-text"),  
                                             ]),
+                                            dbc_col([    
+                                                dbc_button(
+                                                    "csv file", id="save-all-csv-isoS-button", color="light",  n_clicks=0,
+                                                ),
+                                                dcc_download(id="download-all-csv-isoS-text"),  
+                                            ]),
                                         ]),
                                         dbc_row([
                                             dbc_alert(
@@ -497,6 +503,19 @@ function Tab_IsentropicPaths(db_inf)
                                                 "Provide a valid filename (without extension)",
                                                 color="danger",
                                                 id      ="data-all-save-table-isoS-failed",
+                                                is_open =false,
+                                                duration=4000,
+                                            ),
+                                            dbc_alert(
+                                                "Successfully saved all data points information",
+                                                id      ="data-all-csv-isoS-save",
+                                                is_open =false,
+                                                duration=4000,
+                                            ),
+                                            dbc_alert(
+                                                "Provide a valid filename (without extension)",
+                                                color="danger",
+                                                id      ="data-all-save-csv-isoS-failed",
                                                 is_open =false,
                                                 duration=4000,
                                             ),
@@ -538,7 +557,7 @@ function Tab_IsentropicPaths(db_inf)
                                                                                 
                             ])
 
-                        ], width=3),
+                        ], width=4),
 
                     ]),
 

@@ -520,7 +520,7 @@ function Tab_PTXpaths(db_inf)
                                         dbc_row([
                                             dbc_col([
                                                 html_h1("Save path", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),    
-                                            ], width=4),
+                                            ], width=3),
                                             dbc_col([ 
                                                 dbc_input(
                                                     id      = "Filename-all-ptx-id",
@@ -534,6 +534,12 @@ function Tab_PTXpaths(db_inf)
                                                 ),
                                                 dcc_download(id="download-all-table-ptx-text"),  
                                             ]),
+                                            dbc_col([    
+                                                dbc_button(
+                                                    "csv file", id="save-all-csv-ptx-button", color="light",  n_clicks=0,
+                                                ),
+                                                dcc_download(id="download-all-csv-ptx-text"),  
+                                            ]),
                                         ]),
                                         dbc_row([
                                             dbc_alert(
@@ -546,6 +552,19 @@ function Tab_PTXpaths(db_inf)
                                                 "Provide a valid filename (without extension)",
                                                 color="danger",
                                                 id      ="data-all-save-table-ptx-failed",
+                                                is_open =false,
+                                                duration=4000,
+                                            ),
+                                            dbc_alert(
+                                                "Successfully saved all data points information",
+                                                id      ="data-all-csv-ptx-save",
+                                                is_open =false,
+                                                duration=4000,
+                                            ),
+                                            dbc_alert(
+                                                "Provide a valid filename (without extension)",
+                                                color="danger",
+                                                id      ="data-all-save-csv-ptx-failed",
                                                 is_open =false,
                                                 duration=4000,
                                             ),

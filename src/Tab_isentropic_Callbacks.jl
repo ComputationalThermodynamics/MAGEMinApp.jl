@@ -1,4 +1,26 @@
 function Tab_isoSpaths_Callbacks(app)
+  
+    #save all table to file
+    callback!(
+        app,
+        Output("data-all-csv-isoS-save", "is_open"),
+        Output("data-all-save-csv-isoS-failed", "is_open"),
+        Input("save-all-csv-isoS-button", "n_clicks"),
+        State("Filename-all-isoS-id", "value"),
+        State("database-dropdown-isoS","value"),
+        prevent_initial_call=true,
+    ) do n_clicks, fname, dtb
+
+        if fname != "filename"
+            datab   = "_"*dtb
+            fileout = fname*datab
+
+            MAGEMin_data2dataframe(Out_ISOS,dtb,fileout)
+            return "success", ""
+        else
+            return  "", "failed"
+        end
+    end
 
 
     #save all table to file
