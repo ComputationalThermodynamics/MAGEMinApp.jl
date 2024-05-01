@@ -492,6 +492,65 @@ function Tab_PTXpaths_Callbacks(app)
 
 
 
+    callback!(
+        app,
+        Output("table-2-bulk-rock-ptx","data"),
+        Output("test-2-dropdown-ptx","options"),
+        Output("test-2-dropdown-ptx","value"),
+        Input("test-2-dropdown-ptx","value"),
+        Input("database-dropdown-ptx","value"),
+        Input("output-data-uploadn-ptx", "is_open"),        # this listens for changes and updated the list
+        prevent_initial_call=true,
+    ) do test, dtb, update
+
+        # catching up some special cases
+        if test > length(db[(db.db .== dtb), :].test) - 1 
+            t = 0
+        else
+            t = test
+        end
+
+        if (~isempty(db[(db.db .== dtb) .& (db.test .== t), :].frac2[1]))
+            data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
+                                    "mol_fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac2[1][i])
+                                        for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
+        else
+            data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
+                                    "mol_fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac[1][i])
+                                        for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
+        end
+
+        opts        =  [Dict(   "label" => db[(db.db .== dtb), :].title[i],
+                                "value" => db[(db.db .== dtb), :].test[i]  )
+                                    for i=1:length(db[(db.db .== dtb), :].test)]
+
+        # cap         = dba[(dba.acronym .== dtb) , :].database[1]      
+        
+        val         = t
+        return data, opts, val                  
+    end
+
+
+    # callback function to display to right set of variables as function of the diagram type
+    callback!(
+        app,
+        Output("table-2-id-ptx", "style"),
+        Output("test-2-id-ptx", "style"),
+        Input("assimilation-dropdown-ptx", "value"),
+    ) do value
+
+        if value == "true"
+            table2  = Dict("display" => "block")  
+            test2   = Dict("display" => "block")  
+        else
+            table2  = Dict("display" => "none") 
+            test2   = Dict("display" => "none") 
+        end
+
+        return table2, test2
+    end
+
+
     callback!(app,
         Output("collapse-disp-opt", "is_open"),
         [Input("button-disp-opt", "n_clicks")],
@@ -633,20 +692,36 @@ function Tab_PTXpaths_Callbacks(app)
 
     callback!(app,
         Output("ptx-table", "data"),
+        Output("ptx-table", "columns"),
         Input("add-row-button", "n_clicks"),
+        State("assimilation-dropdown-ptx", "value"),
         State("ptx-table", "data"),
         State("ptx-table", "columns"),
         prevent_initial_call = true,
-        ) do n_clicks, data, columns
+        ) do n_clicks, assim, data, columns
 
-        dataout = copy(data)
+        if assim == "true"
+            colout = [  Dict("name" => "P [kbar]",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                        Dict("name" => "T [°C]",    "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                        Dict("name" => "Add [wt%]", "id"   => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric")]
 
-        if n_clicks > 0
-            add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000)
-            push!(dataout,add)
+            dataout = copy(data)
+            if n_clicks > 0
+                add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0, Symbol("col-3") => 0.0)
+                push!(dataout,add)
+            end
+        else
+            colout = [  Dict("name" => "P [kbar]",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                        Dict("name" => "T [°C]",    "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")]
+
+            dataout = copy(data)
+            if n_clicks > 0
+                add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0)
+                push!(dataout,add)
+            end
         end
 
-        return dataout
+        return dataout, colout
     end
 
     return app
