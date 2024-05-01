@@ -434,8 +434,8 @@ function Tab_PTXpaths(db_inf)
                                             columns =[  Dict("name" => "P [kbar]",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
                                                         Dict("name" => "T [°C]",    "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")],
                                             data=[
-                                                Dict("col-1" => 5.0,    "col-2"   => 500.0 ),
-                                                Dict("col-1" => 10.0,   "col-2"   => 800.0 ),
+                                                Dict("col-1" => 5.0,    "col-2"   => 500.0 , Symbol("col-3") => 0.0),
+                                                Dict("col-1" => 10.0,   "col-2"   => 800.0 , Symbol("col-3") => 0.0),
                                             ],
                                             style_cell      = (textAlign="center", fontSize="140%",),
                                             style_header    = (fontWeight="bold",),

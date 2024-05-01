@@ -530,27 +530,6 @@ function Tab_PTXpaths_Callbacks(app)
         return data, opts, val                  
     end
 
-
-    # callback function to display to right set of variables as function of the diagram type
-    callback!(
-        app,
-        Output("table-2-id-ptx", "style"),
-        Output("test-2-id-ptx", "style"),
-        Input("assimilation-dropdown-ptx", "value"),
-    ) do value
-
-        if value == "true"
-            table2  = Dict("display" => "block")  
-            test2   = Dict("display" => "block")  
-        else
-            table2  = Dict("display" => "none") 
-            test2   = Dict("display" => "none") 
-        end
-
-        return table2, test2
-    end
-
-
     callback!(app,
         Output("collapse-disp-opt", "is_open"),
         [Input("button-disp-opt", "n_clicks")],
@@ -690,23 +669,41 @@ function Tab_PTXpaths_Callbacks(app)
             
     end
 
+
     callback!(app,
         Output("ptx-table", "data"),
         Output("ptx-table", "columns"),
+        Output("table-2-id-ptx", "style"),
+        Output("test-2-id-ptx", "style"),
+
+        Input("assimilation-dropdown-ptx", "value"),
         Input("add-row-button", "n_clicks"),
+
         State("assimilation-dropdown-ptx", "value"),
         State("ptx-table", "data"),
         State("ptx-table", "columns"),
         prevent_initial_call = true,
-        ) do n_clicks, assim, data, columns
+
+        ) do value, n_clicks, assim, data, colout
+
+        bid                     = pushed_button( callback_context() )    # get which button has been pushed
+
+        dataout = copy(data)
+        if value == "true"
+            table2  = Dict("display" => "block")  
+            test2   = Dict("display" => "block")  
+        else
+            table2  = Dict("display" => "none") 
+            test2   = Dict("display" => "none") 
+        end
 
         if assim == "true"
             colout = [  Dict("name" => "P [kbar]",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
                         Dict("name" => "T [°C]",    "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric"),
                         Dict("name" => "Add [wt%]", "id"   => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric")]
 
-            dataout = copy(data)
-            if n_clicks > 0
+            # dataout = copy(data)
+            if n_clicks > 0 && bid == "add-row-button"
                 add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0, Symbol("col-3") => 0.0)
                 push!(dataout,add)
             end
@@ -714,14 +711,14 @@ function Tab_PTXpaths_Callbacks(app)
             colout = [  Dict("name" => "P [kbar]",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
                         Dict("name" => "T [°C]",    "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")]
 
-            dataout = copy(data)
-            if n_clicks > 0
-                add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0)
+            # dataout = copy(data)
+            if n_clicks > 0 && bid == "add-row-button"
+                add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0, Symbol("col-3") => 0.0)
                 push!(dataout,add)
             end
         end
 
-        return dataout, colout
+        return dataout, colout, table2, test2
     end
 
     return app
