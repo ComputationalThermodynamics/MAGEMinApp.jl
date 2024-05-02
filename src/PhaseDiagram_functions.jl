@@ -620,6 +620,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                                     data.xc,
                                                     data.yc,
                                                     PT_infos )
+                                           
     layout[:annotations] = annotations 
     layout[:title] = attr(
         text    = customTitle,

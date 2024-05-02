@@ -131,7 +131,7 @@ function get_TAS_diagram(phases)
     )
 
    
-    return tas, layout
+    return tas, layout_ptx
 end
 
 
@@ -224,9 +224,9 @@ end
 
 
 
-function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   oxi,    phase_selection,
+function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   bulk_assim, oxi,    phase_selection,    assim,
                                 dtb,        bufferType, solver,
-                                verbose,    bulk,       bufferN,
+                                verbose,    bufferN,
                                 cpx,        limOpx,     limOpxVal,
                                 nCon,       nRes                                  )
 
@@ -253,10 +253,24 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
 
             Pres    = zeros(Float64,np)
             Temp    = zeros(Float64,np)
-    
+            Add     = zeros(Float64,np)
+
             for i=1:np
                 Pres[i] = data[i][Symbol("col-1")]
                 Temp[i] = data[i][Symbol("col-2")]
+            end
+            if assim == "true"
+                for i=1:np
+                    Add[i] = data[i][Symbol("col-3")]
+                    if Add[i] < 0.0
+                        Add[i] = 0.0
+                        print(" warning, value of point $i is < 0.0 mol%, setting it back to 0.0\n")
+                    elseif Add[i] > 100.0
+                        Add[i] = 100.0
+                        print(" warning, value of point $i is > 100.0 mol%, setting it back to 100.0\n")
+                    end
+                end
+                Add ./= 100.0;
             end
 
             # initialize single thread MAGEMin 
@@ -270,7 +284,8 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
     
             # define system unit and starting bulk rock composition
             sys_in  = "mol"
-            gv      =  define_bulk_rock(gv, bulk_ini, oxi, sys_in, dtb);
+            bulk    = copy(bulk_ini)
+            gv      =  define_bulk_rock(gv, bulk, oxi, sys_in, dtb);
 
 
             fracEvol[1,1] = 1.0;          # starting material fraction is always one as we want to measure the relative change here
@@ -281,9 +296,12 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                     P = Pres[i] + (j-1)*( (Pres[i+1] - Pres[i])/ (nsteps+1) )
                     T = Temp[i] + (j-1)*( (Temp[i+1] - Temp[i])/ (nsteps+1) )
 
-                    if mode == "fm" || mode == "fc"
-                        gv      =  define_bulk_rock(gv, bulk_ini, oxi, sys_in, dtb);
+                    if assim == "true"
+                        A       = Add[i] + (j-1)*( (Add[i+1] - Add[i])/ (nsteps+1) )
+                        bulk   .= (1.0 .- A).*bulk .+ A.*bulk_assim
+
                     end
+                        gv      =  define_bulk_rock(gv, bulk, oxi, sys_in, dtb);
 
                     Out_PTX[k] = deepcopy( point_wise_minimization(P,T, gv, z_b, DB, splx_data, sys_in, rm_list=phase_selection) )
 
@@ -291,7 +309,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                         if Out_PTX[k].frac_S > 0.0
                             if nCon > 0.0
                                 if Out_PTX[k].frac_M > nCon/100.0
-                                    bulk_ini .= Out_PTX[k].bulk_S .*((100.0-nCon)/100.0) .+ Out_PTX[k].bulk_M .*(nCon/100.0)
+                                    bulk .= Out_PTX[k].bulk_S .*((100.0-nCon)/100.0) .+ Out_PTX[k].bulk_M .*(nCon/100.0)
 
                                     fracEvol[k+1,1] = fracEvol[k,1] * (Out_PTX[k].frac_S + Out_PTX[k].frac_F + nCon/100.0) 
                                     fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
@@ -300,7 +318,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                     fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
                                 end
                             else
-                                bulk_ini .= Out_PTX[k].bulk_S
+                                bulk .= Out_PTX[k].bulk_S
                                 fracEvol[k+1,1] = fracEvol[k,1]
                                 fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
                             end
@@ -313,7 +331,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
 
                             if nRes > 0.0
                                 if Out_PTX[k].frac_S > nRes/100.0
-                                    bulk_ini .= Out_PTX[k].bulk_M .*((100.0-nRes)/100.0) .+ Out_PTX[k].bulk_S .*(nRes/100.0)
+                                    bulk .= Out_PTX[k].bulk_M .*((100.0-nRes)/100.0) .+ Out_PTX[k].bulk_S .*(nRes/100.0)
 
                                     fracEvol[k+1,1] = fracEvol[k,1] * (Out_PTX[k].frac_M + nRes/100.0) 
                                     fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
@@ -322,7 +340,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                     fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
                                 end
                             else
-                                bulk_ini .= Out_PTX[k].bulk_M
+                                bulk .= Out_PTX[k].bulk_M
                                 fracEvol[k+1,1] = fracEvol[k,1] * (Out_PTX[k].frac_M) 
                                 fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
                             end
@@ -535,7 +553,7 @@ end
 
 function initialize_layout(title,sysunit)
     ytitle               = "Phase fraction ["*sysunit*"%]"
-    layout  = Layout(
+    layout_ptx  = Layout(
 
         title= attr(
             text    = title,
@@ -558,7 +576,7 @@ function initialize_layout(title,sysunit)
         # autosize    = false,
     )
 
-    return layout
+    return layout_ptx
 end
 
 function initialize_comp_layout(sysunit)
