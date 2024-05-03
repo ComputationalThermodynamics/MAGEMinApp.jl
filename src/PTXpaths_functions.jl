@@ -105,7 +105,7 @@ function get_TAS_diagram(phases)
                                 )  
     end
 
-    layout  = Layout(
+    layout_ptx  = Layout(
 
         title= attr(
             text    = "TAS Diagram (Anhydrous)",
