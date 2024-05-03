@@ -285,6 +285,11 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             # define system unit and starting bulk rock composition
             sys_in  = "mol"
             bulk    = copy(bulk_ini)
+
+            if assim == "true"
+                 bulk   .= (1.0 - Add[1]) .* bulk + Add[1].* bulk_assim
+            end
+
             gv      =  define_bulk_rock(gv, bulk, oxi, sys_in, dtb);
 
 
@@ -292,14 +297,19 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             fracEvol[1,2] = 0.0; 
             k = 1
             @showprogress for i = 1:np-1
+                # if we assimilate a second bulk then we compute the assimilated fraction per step
+                if assim == "true"
+                    A       = Add[i+1]
+                    val     = A / (1.0 - A)
+                    step    = val/(nsteps+1)
+                end
+
                 for j = 1:nsteps+1
                     P = Pres[i] + (j-1)*( (Pres[i+1] - Pres[i])/ (nsteps+1) )
                     T = Temp[i] + (j-1)*( (Temp[i+1] - Temp[i])/ (nsteps+1) )
 
                     if assim == "true"
-                        A       = Add[i] + (j-1)*( (Add[i+1] - Add[i])/ (nsteps+1) )
-                        bulk   .= (1.0 .- A).*bulk .+ A.*bulk_assim
-
+                        bulk   .= (1.0 .- step ./ (1.0 .+ step .* j)) .* bulk .+ (step ./ (1.0 .+ step .* j)) .* bulk_assim
                     end
                         gv      =  define_bulk_rock(gv, bulk, oxi, sys_in, dtb);
 
