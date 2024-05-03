@@ -228,24 +228,41 @@ function Tab_PTXpaths(db_inf)
 
                                                 html_div("‎ "),
                                                 dbc_row([
+                                                    dbc_col([
+                                                        html_div([
+                                                            dcc_dropdown(   id      = "test-dropdown-ptx",
+                                                            options = [
+                                                                Dict(   "label" => db[(db.db .== "ig"), :].title[i],
+                                                                        "value" => db[(db.db .== "ig"), :].test[i]  )
+                                                                            for i=1:length(db[(db.db .== "ig"), :].test)
+                                                            ],
+                                                            value       = 0,
+                                                            clearable   = false,
+                                                            multi       = false),
+                                                        ], style = Dict("display" => "block"), id      = "test-1-id-ptx"),
+                                                    ]),
 
-                                                    html_div([
-                                                        dcc_dropdown(   id      = "test-dropdown-ptx",
-                                                        options = [
-                                                            Dict(   "label" => db[(db.db .== "ig"), :].title[i],
-                                                                    "value" => db[(db.db .== "ig"), :].test[i]  )
-                                                                        for i=1:length(db[(db.db .== "ig"), :].test)
-                                                        ],
-                                                        value       = 0,
-                                                        clearable   = false,
-                                                        multi       = false),
-                                                    ], style = Dict("display" => "block"), id      = "test-1-id-ptx"),
+                                                        
+                                                    dbc_col([
+                                                        html_div([
+                                                            dcc_dropdown(   id      = "test-2-dropdown-ptx",
+                                                            options = [
+                                                                Dict(   "label" => db[(db.db .== "ig"), :].title[i],
+                                                                        "value" => db[(db.db .== "ig"), :].test[i]  )
+                                                                            for i=1:length(db[(db.db .== "ig"), :].test)
+                                                            ],
+                                                            value       = 0,
+                                                            clearable   = false,
+                                                            multi       = false),
+                                                        ], style = Dict("display" => "none"), id      = "test-2-id-ptx"),
+                                                    ]),
+
                                                 ]),
 
 
                                                 html_div("‎ "),
                                                 dbc_row([
-                                                    
+                                                        dbc_col([
                                                             html_div([
                                                                 dash_datatable(
                                                                     id="table-bulk-rock-ptx",
@@ -279,6 +296,45 @@ function Tab_PTXpaths(db_inf)
                                                                 ], style = Dict("display" => "none"), id      = "buffer-1-id-ptx"), #none, block
 
                                                             ], style = Dict("display" => "block"), id      = "table-1-id-ptx"), #none, block
+
+                                                        ]),
+                                                        dbc_col([
+                                                            html_div([
+                                                                dash_datatable(
+                                                                    id="table-2-bulk-rock-ptx",
+                                                                    columns=(  [    Dict("id" =>  "oxide",          "name" =>  "oxide",         "editable" => false),
+                                                                                    Dict("id" =>  "mol_fraction",   "name" =>  "mol_fraction",  "editable" => true)]
+                                                                    ),
+                                                                    data        =   [Dict(  "oxide"         => db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1][i],
+                                                                                            "mol_fraction"  => db[(db.db .== "ig") .& (db.test .== 0), :].frac2[1][i])
+                                                                                                for i=1:length(db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1]) ],
+                                                                    style_cell  = (textAlign="center", fontSize="140%",),
+                                                                    style_header= (fontWeight="bold",),
+                                                                    # editable    = true
+                                                                ),
+
+
+                                                                    # Buffer multiplier
+                                                                    html_div([
+                                                                    html_div("‎ "),
+                                                                    dbc_row([
+                                                                        dbc_col([ 
+                                                                            html_h1("Buffer multiplier", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                                                        ]),
+                                                                        dbc_col([ 
+                                                                                dbc_input(
+                                                                                id      = "buffer-2-mul-id-ptx",
+                                                                                type    = "number", 
+                                                                                min     = -50.0, 
+                                                                                max     = +50.0, 
+                                                                                value   = 0.0   ),
+                                                                        ]),
+                                                                    ]),
+                                                                    ], style = Dict("display" => "none"), id      = "buffer-2-id-ptx"), #none, block
+
+                                                            ], style = Dict("display" => "none"), id      = "table-2-id-ptx"), #none, block
+                                                        ]),
+
                                                 ]),
 
 
@@ -374,12 +430,12 @@ function Tab_PTXpaths(db_inf)
                                     dbc_row([
 
                                         dash_datatable(
-                                            id="ptx-table",
-                                            columns=[Dict("name" => "P [kbar]", "id"    => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
-                                                        Dict("name" => "T [°C]", "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")],
+                                            id      = "ptx-table",
+                                            columns =[  Dict("name" => "P [kbar]",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                                                        Dict("name" => "T [°C]",    "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")],
                                             data=[
-                                                Dict("col-1" => 5.0, "col-2"    => 500.0),
-                                                Dict("col-1" => 10.0, "col-2"   => 800.0),
+                                                Dict("col-1" => 5.0,    "col-2"   => 500.0 , Symbol("col-3") => 0.0),
+                                                Dict("col-1" => 10.0,   "col-2"   => 800.0 , Symbol("col-3") => 0.0),
                                             ],
                                             style_cell      = (textAlign="center", fontSize="140%",),
                                             style_header    = (fontWeight="bold",),
@@ -470,7 +526,22 @@ function Tab_PTXpaths(db_inf)
                                                 multi       =  false    ),
                                             ]),
                                         ]),
-
+                                        # PTX mode
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("Assimilation", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ], width=6),
+                                            dbc_col([ 
+                                                dcc_dropdown(   id      = "assimilation-dropdown-ptx",
+                                                options = [
+                                                    (label = "true",           value = "true"),
+                                                    (label = "false",          value = "false"),
+                                                ],
+                                                value       = "false",
+                                                clearable   =  false,
+                                                multi       =  false    ),
+                                            ]),
+                                        ]),
 
                                         # connectivity threshold for fracitonal melting
                                         html_div([

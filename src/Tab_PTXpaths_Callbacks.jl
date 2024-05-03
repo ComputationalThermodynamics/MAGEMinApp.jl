@@ -96,7 +96,7 @@ function Tab_PTXpaths_Callbacks(app)
             y=y,
         )
     
-        layout  = Layout(
+        layout_ptx  = Layout(
             font        = attr(size = 10),
             height      = 240,
             margin      = attr(autoexpand = false, l=16, r=16, b=16, t=16),
@@ -109,7 +109,7 @@ function Tab_PTXpaths_Callbacks(app)
             showlegend  = false,
         )
 
-        fig = plot(df, x=:x, y=:y, layout)
+        fig = plot(df, x=:x, y=:y, layout_ptx)
     
         return fig
     end
@@ -208,8 +208,8 @@ function Tab_PTXpaths_Callbacks(app)
         title       = db[(db.db .== dtb), :].title[test+1]
 
         if "liq" in phases
-            tas, layout = get_TAS_diagram(phases)
-            figTAS      = plot( tas, layout)
+            tas, layout_ptx = get_TAS_diagram(phases)
+            figTAS      = plot( tas, layout_ptx)
         else
             figTAS      =  plot(Layout( height= 360 ))
         end
@@ -290,11 +290,14 @@ function Tab_PTXpaths_Callbacks(app)
         State("n-steps-id-ptx",         "value"),
         State("ptx-table",              "data"),
         State("mode-dropdown-ptx",      "value"),
+        State("assimilation-dropdown-ptx",      "value"),
+
         State("database-dropdown-ptx",  "value"),
         State("buffer-dropdown-ptx",    "value"),
         State("solver-dropdown-ptx",    "value"),    
         State("verbose-dropdown-ptx",   "value"),   
         State("table-bulk-rock-ptx",    "data"),  
+        State("table-2-bulk-rock-ptx",  "data"),  
         State("buffer-1-mul-id-ptx",    "value"),  
 
         State("mb-cpx-switch-ptx",      "value"),           # false,true -> 0,1
@@ -309,9 +312,9 @@ function Tab_PTXpaths_Callbacks(app)
     
         prevent_initial_call = true,
 
-        ) do    compute,    upsys,      phase_selection,    phase_list, nsteps,     PTdata,     mode,
+        ) do    compute,    upsys,      phase_selection,    phase_list, nsteps,     PTdata,     mode,   assim,
                 dtb,        bufferType, solver,
-                verbose,    bulk,       bufferN,
+                verbose,    bulk,       bulk2,      bufferN,
                 cpx,        limOpx,     limOpxVal,  test,   sysunit,
                 nCon,       nRes  
 
@@ -322,31 +325,31 @@ function Tab_PTXpaths_Callbacks(app)
 
         if bid == "compute-path-button"
 
-            global Out_PTX, ph_names, layout, data_plot, fracEvol
+            global Out_PTX, ph_names, layout_ptx, data_plot, fracEvol
 
             bufferN                 = Float64(bufferN)               # convert buffer_n to float
-            bulk_ini, bulk_ini, oxi = get_bulkrock_prop(bulk, bulk)  
+            bulk_ini, bulk_assim, oxi = get_bulkrock_prop(bulk, bulk2)  
 
-            compute_new_PTXpath(    nsteps,     PTdata,     mode,       bulk_ini,   oxi,    phase_selection,
+            compute_new_PTXpath(    nsteps,     PTdata,     mode,       bulk_ini,  bulk_assim,  oxi,    phase_selection,    assim,
                                     dtb,        bufferType, solver,
-                                    verbose,    bulk,       bufferN,
+                                    verbose,    bufferN,
                                     cpx,        limOpx,     limOpxVal,
                                     nCon,       nRes                                  )
 
 
-            layout                  = initialize_layout(title,sysunit)
+            layout_ptx                  = initialize_layout(title,sysunit)
 
             data_plot, phase_list   = get_data_plot(sysunit)
 
-            figPTX                  = plot(data_plot,layout)
+            figPTX                  = plot(data_plot,layout_ptx)
 
         elseif bid == "sys-unit-ptx"
             data_plot, phase_list   = get_data_plot(sysunit)
             ytitle                  = "Phase fraction ["*sysunit*"%]"
             
-            layout[:yaxis_title]    = ytitle
+            layout_ptx[:yaxis_title]    = ytitle
 
-            figPTX                  = plot(data_plot,layout)
+            figPTX                  = plot(data_plot,layout_ptx)
 
         else
             figPTX                  = plot(    Layout( height= 320 ))
@@ -492,6 +495,44 @@ function Tab_PTXpaths_Callbacks(app)
 
 
 
+    callback!(
+        app,
+        Output("table-2-bulk-rock-ptx","data"),
+        Output("test-2-dropdown-ptx","options"),
+        Output("test-2-dropdown-ptx","value"),
+        Input("test-2-dropdown-ptx","value"),
+        Input("database-dropdown-ptx","value"),
+        Input("output-data-uploadn-ptx", "is_open"),        # this listens for changes and updated the list
+        prevent_initial_call=true,
+    ) do test, dtb, update
+
+        # catching up some special cases
+        if test > length(db[(db.db .== dtb), :].test) - 1 
+            t = 0
+        else
+            t = test
+        end
+
+        if (~isempty(db[(db.db .== dtb) .& (db.test .== t), :].frac2[1]))
+            data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
+                                    "mol_fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac2[1][i])
+                                        for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
+        else
+            data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
+                                    "mol_fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac[1][i])
+                                        for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
+        end
+
+        opts        =  [Dict(   "label" => db[(db.db .== dtb), :].title[i],
+                                "value" => db[(db.db .== dtb), :].test[i]  )
+                                    for i=1:length(db[(db.db .== dtb), :].test)]
+
+        # cap         = dba[(dba.acronym .== dtb) , :].database[1]      
+        
+        val         = t
+        return data, opts, val                  
+    end
+
     callback!(app,
         Output("collapse-disp-opt", "is_open"),
         [Input("button-disp-opt", "n_clicks")],
@@ -631,22 +672,56 @@ function Tab_PTXpaths_Callbacks(app)
             
     end
 
+
     callback!(app,
         Output("ptx-table", "data"),
+        Output("ptx-table", "columns"),
+        Output("table-2-id-ptx", "style"),
+        Output("test-2-id-ptx", "style"),
+
+        Input("assimilation-dropdown-ptx", "value"),
         Input("add-row-button", "n_clicks"),
+
+        State("assimilation-dropdown-ptx", "value"),
         State("ptx-table", "data"),
         State("ptx-table", "columns"),
         prevent_initial_call = true,
-        ) do n_clicks, data, columns
+
+        ) do value, n_clicks, assim, data, colout
+
+        bid                     = pushed_button( callback_context() )    # get which button has been pushed
 
         dataout = copy(data)
-
-        if n_clicks > 0
-            add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000)
-            push!(dataout,add)
+        if value == "true"
+            table2  = Dict("display" => "block")  
+            test2   = Dict("display" => "block")  
+        else
+            table2  = Dict("display" => "none") 
+            test2   = Dict("display" => "none") 
         end
 
-        return dataout
+        if assim == "true"
+            colout = [  Dict("name" => "P [kbar]",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                        Dict("name" => "T [°C]",    "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                        Dict("name" => "Add [mol%]", "id"   => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric")]
+
+            # dataout = copy(data)
+            if n_clicks > 0 && bid == "add-row-button"
+                add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0, Symbol("col-3") => 0.0)
+                push!(dataout,add)
+            end
+        else
+            colout = [  Dict("name" => "P [kbar]",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                        Dict("name" => "T [°C]",    "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")]
+
+            # dataout = copy(data)
+            if n_clicks > 0 && bid == "add-row-button"
+                add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0, Symbol("col-3") => 0.0)
+                push!(dataout,add)
+            end
+        end
+
+        return dataout, colout, table2, test2
     end
 
     return app
