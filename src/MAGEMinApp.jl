@@ -40,13 +40,14 @@ include(joinpath(pkg_dir,"src","IsentropicPaths_functions.jl"))
 Starts the MAGEMin App.
 """
 function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
-    GUI_version = "0.2.7"   
+    GUI_version = "0.2.8"   
     cur_dir     = pwd()                 # directory from where you started the GUI
     pkg_dir     = pkgdir(MAGEMinApp)   # package dir
     db_inf      = retrieve_solution_phase_information("ig");
     cd(pkg_dir)
+
     # Initialize MPI and T8Code
-    COMM = Initialize_AMR()
+    COMM        = Initialize_AMR()
 
     app         = dash(external_stylesheets = [dbc_themes.BOOTSTRAP], prevent_initial_callbacks=false)
     app.title   = "MAGEMin app"
@@ -117,13 +118,9 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                     duration=4000,
                                 ),
                             ]),
-                            # dbc_col([
-                            #     html_div(id="export-to-lamem-text"),
-                            # ]),
 
                             dbc_row([
                                 html_div("‎ "),
-
                             ]),
 
                             dbc_tabs(

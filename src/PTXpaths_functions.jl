@@ -363,7 +363,6 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                         fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
                     end
 
-
                     k += 1
                 end
             end
