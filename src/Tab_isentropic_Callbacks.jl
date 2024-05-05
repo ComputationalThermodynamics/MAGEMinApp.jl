@@ -163,7 +163,7 @@ function Tab_isoSpaths_Callbacks(app)
 
         if bid == "compute-path-button-isoS"
 
-            global Out_ISOS, ph_names, layout, layout_path, data_plot, df_path_plot, fracEvol
+            global Out_ISOS, ph_names, layout_isoS, layout_path, data_plot, df_path_plot, fracEvol
 
             bufferN                 = Float64(bufferN)               # convert buffer_n to float
             bulk_ini, bulk_ini, oxi = get_bulkrock_prop(bulk, bulk)  
@@ -175,22 +175,22 @@ function Tab_isoSpaths_Callbacks(app)
                                             cpx,        limOpx,     limOpxVal    )
 
 
-            layout                  = initialize_layout_isoS(title,sysunit)
+            layout_isoS             = initialize_layout_isoS(title,sysunit)
             layout_path             = initialize_layout_isoS_path(Pini, Tini, Pfinal)
 
             data_plot, phase_list   = get_data_plot_isoS(sysunit)
             df_path_plot            = get_data_plot_isoS_path()
 
-            figIsoS                 = plot(data_plot,layout)
+            figIsoS                 = plot(data_plot,layout_isoS)
             figIsoSPath             = plot(df_path_plot, x=:x, y=:y, layout_path)
             entropy                 = Out_ISOS[1].entropy
         elseif bid == "sys-unit-isoS"
             data_plot, phase_list   = get_data_plot_isoS(sysunit)
             ytitle                  = "Phase fraction ["*sysunit*"%]"
             
-            layout[:yaxis_title]    = ytitle
+            layout_isoS[:yaxis_title]    = ytitle
 
-            figIsoS                 = plot(data_plot,layout)
+            figIsoS                 = plot(data_plot,layout_isoS)
             figIsoSPath             = plot(df_path_plot, x=:x, y=:y, layout_path)
             entropy                 = Out_ISOS[1].entropy
         else

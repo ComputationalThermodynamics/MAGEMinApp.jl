@@ -154,6 +154,7 @@ function compute_Tliq(          pressure,   tolerance,  bulk_ini,   oxi,    phas
 
 
         # initialize single thread MAGEMin 
+        GC.gc() 
         gv, z_b, DB, splx_data = init_MAGEMin(  dtb;        
                                                 verbose     = verbose,
                                                 mbCpx       = mbCpx,
@@ -274,6 +275,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             end
 
             # initialize single thread MAGEMin 
+            GC.gc() 
             gv, z_b, DB, splx_data = init_MAGEMin(  dtb;        
                                                     verbose     = verbose,
                                                     mbCpx       = mbCpx,
