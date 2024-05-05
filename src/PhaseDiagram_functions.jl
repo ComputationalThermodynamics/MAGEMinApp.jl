@@ -394,25 +394,8 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
         global addedRefinementLvl  = 0;
         global MAGEMin_data;
 
-        # set clinopyroxene for the metabasite database
-        mbCpx = 0
-        if cpx == true && dtb =="mb"
-            mbCpx = 1;
-        end
-        limitCaOpx  = 0
-        CaOpxLim    = 1.0
-        if limOpx == "ON" && (dtb =="mb" || dtb =="ig" || dtb =="igd" || dtb =="alk")
-            limitCaOpx   = 1
-            CaOpxLim     = limOpxVal
-        end
-        if solver == "pge"
-            sol = 1
-        elseif solver == "lp"
-            sol = 0
-        elseif solver == "hyb" 
-            sol = 2         
-        end
-
+        mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb,        solver,
+                                                        cpx,        limOpx,     limOpxVal ) 
         MAGEMin_data    =   Initialize_MAGEMin( dtb;
                                                 verbose     = false,
                                                 limitCaOpx  = limitCaOpx,
@@ -600,26 +583,10 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                 smooth,     colorm,     reverseColorMap,
                                 test,       refType                                 )
 
-    global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels, addedRefinementLvl, layout, n_lbl
+    global forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels, addedRefinementLvl, layout, n_lbl
 
-    # set clinopyroxene for the metabasite database
-    mbCpx = 0
-    if cpx == true && dtb =="mb"
-        mbCpx = 1;
-    end
-    limitCaOpx  = 0
-    CaOpxLim    = 1.0
-    if limOpx == "ON" && (dtb =="mb" || dtb =="ig" || dtb =="igd" || dtb =="alk")
-        limitCaOpx   = 1
-        CaOpxLim     = limOpxVal
-    end
-    if solver == "pge"
-        sol = 1
-    elseif solver == "lp"
-        sol = 0
-    elseif solver == "hyb" 
-        sol = 2         
-    end
+    mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb,        solver,
+                                                    cpx,        limOpx,     limOpxVal ) 
 
     MAGEMin_data    =   Initialize_MAGEMin( dtb;
                                             verbose     = false,
@@ -628,7 +595,6 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                             mbCpx       = mbCpx,
                                             buffer      = bufferType,
                                             solver      = sol    );
-
 
     refine_elements                          = refine_phase_boundaries(forest, Hash_XY);
     forest_new, data_new, ind_map            = adapt_forest(forest, refine_elements, data);     # Adapt the mesh; also returns the new coordinates and a mapping from old->new

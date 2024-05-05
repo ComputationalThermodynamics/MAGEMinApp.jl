@@ -296,7 +296,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             # GC.gc()         # garbage collector should be place after freeing the threads, otherwise this leads to issues
             
             # declare set of global variables needed to generate, refine and display phase diagrams
-            global fig, MAGEMin_data, forest, data, Hash_XY, Out_XY, Out_TE_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, npoints, PhasesLabels
+            global fig, forest, data, Hash_XY, Out_XY, Out_TE_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, npoints, PhasesLabels
             global addedRefinementLvl   = 0;
             global n_lbl                = 0;
             global iso_show             = 1;

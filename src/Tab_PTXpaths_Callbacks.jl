@@ -360,7 +360,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         if bid == "compute-path-button"
 
-            global Out_PTX, ph_names, layout_ptx, data_plot, fracEvol
+            global Out_PTX, ph_names_ptx, layout_ptx, data_plot_ptx, fracEvol
 
             bufferN                 = Float64(bufferN)               # convert buffer_n to float
             bulk_ini, bulk_assim, oxi = get_bulkrock_prop(bulk, bulk2)  
@@ -374,17 +374,17 @@ function Tab_PTXpaths_Callbacks(app)
 
             layout_ptx                  = initialize_layout(title,sysunit)
 
-            data_plot, phase_list   = get_data_plot(sysunit)
+            data_plot_ptx, phase_list   = get_data_plot(sysunit)
 
-            figPTX                  = plot(data_plot,layout_ptx)
+            figPTX                  = plot(data_plot_ptx,layout_ptx)
 
         elseif bid == "sys-unit-ptx"
-            data_plot, phase_list   = get_data_plot(sysunit)
+            data_plot_ptx, phase_list   = get_data_plot(sysunit)
             ytitle                  = "Phase fraction ["*sysunit*"%]"
             
             layout_ptx[:yaxis_title]    = ytitle
 
-            figPTX                  = plot(data_plot,layout_ptx)
+            figPTX                  = plot(data_plot_ptx,layout_ptx)
 
         else
             figPTX                  = plot(    Layout( height= 320 ))
