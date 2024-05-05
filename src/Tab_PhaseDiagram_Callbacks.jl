@@ -288,12 +288,12 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             smooth                      = "best"
       
-            if @isdefined(MAGEMin_data)
-                for i = 1:Threads.nthreads()
-                    finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i])
-                end
-            end
-            GC.gc()         # garbage collector should be place after freeing the threads, otherwise this leads to issues
+            # if @isdefined(MAGEMin_data)
+            #     for i = 1:Threads.nthreads()
+            #         finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i])
+            #     end
+            # end
+            # GC.gc()         # garbage collector should be place after freeing the threads, otherwise this leads to issues
             
             # declare set of global variables needed to generate, refine and display phase diagrams
             global fig, MAGEMin_data, forest, data, Hash_XY, Out_XY, Out_TE_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, npoints, PhasesLabels

@@ -469,6 +469,10 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
             
         end
 
+        for i = 1:Threads.nthreads()
+            finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i])
+        end
+        
         # push!(AppData.PseudosectionData,Out_XY);
 
         #________________________________________________________________________________________#                   
@@ -598,6 +602,34 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
 
     global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels, addedRefinementLvl, layout, n_lbl
 
+    # set clinopyroxene for the metabasite database
+    mbCpx = 0
+    if cpx == true && dtb =="mb"
+        mbCpx = 1;
+    end
+    limitCaOpx  = 0
+    CaOpxLim    = 1.0
+    if limOpx == "ON" && (dtb =="mb" || dtb =="ig" || dtb =="igd" || dtb =="alk")
+        limitCaOpx   = 1
+        CaOpxLim     = limOpxVal
+    end
+    if solver == "pge"
+        sol = 1
+    elseif solver == "lp"
+        sol = 0
+    elseif solver == "hyb" 
+        sol = 2         
+    end
+
+    MAGEMin_data    =   Initialize_MAGEMin( dtb;
+                                            verbose     = false,
+                                            limitCaOpx  = limitCaOpx,
+                                            CaOpxLim    = CaOpxLim,
+                                            mbCpx       = mbCpx,
+                                            buffer      = bufferType,
+                                            solver      = sol    );
+
+
     refine_elements                          = refine_phase_boundaries(forest, Hash_XY);
     forest_new, data_new, ind_map            = adapt_forest(forest, refine_elements, data);     # Adapt the mesh; also returns the new coordinates and a mapping from old->new
     t = @elapsed Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(  data_new,
@@ -623,6 +655,9 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
     forest              = forest_new
     addedRefinementLvl += 1;
 
+    for i = 1:Threads.nthreads()
+        finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i])
+    end
     # empty!(AppData.PseudosectionData)
     # push!(AppData.PseudosectionData,Out_XY);
 

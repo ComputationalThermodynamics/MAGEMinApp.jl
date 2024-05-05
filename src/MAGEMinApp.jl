@@ -124,16 +124,22 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                 html_div("‎ "),
                             ]),
 
-                            dbc_tabs(
-                                [
-                                    dbc_tab(    tab_id      = "tab-Simulation",
-                                                label       = "Simulation",
-                                                children    = [Tab_Simulation(db_inf)],
+                            dbc_tabs([
+
+                                    dbc_tab(    tab_id      = "phase-diagrams",
+                                                label       = "Phase diagrams",
+                                                children    = [dbc_tabs([
+                                                                    dbc_tab(    tab_id      = "tab-Simulation",
+                                                                                label       = "Setup",
+                                                                                children    = [Tab_Simulation(db_inf)],
+                                                                            ),
+                                                                    dbc_tab(    tab_id      = "tab-phase-diagram",
+                                                                                label       = "Diagram",
+                                                                                children    = [Tab_PhaseDiagram()]
+                                                                            ),
+                                                            ], id = "tabs"), ]
                                             ),
-                                    dbc_tab(    tab_id      = "tab-phase-diagram",
-                                                label       = "Phase Diagram",
-                                                children    = [Tab_PhaseDiagram()]
-                                            ),
+
                                     dbc_tab(    tab_id      = "tab-PTX-path",
                                                 label       = "PTX path",
                                                 children    = [Tab_PTXpaths(db_inf)]
@@ -144,7 +150,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                             ),
 
                                 ],
-                            id = "tabs", active_tab="tab-Simulation",
+                             active_tab="phase-diagrams",
                             ),
 
                     ], width=12),
