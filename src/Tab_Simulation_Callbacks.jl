@@ -251,6 +251,8 @@ function Tab_Simulation_Callbacks(app)
         Output("test-2-id", "style"),
         Output("table-2-id", "style"),
         Output("pt-x-id", "style"),
+        Output("test-2-te-id", "style"),
+        Output("table-2-te-id", "style"),
         Input("diagram-dropdown", "value"),
     ) do value
 
@@ -262,6 +264,8 @@ function Tab_Simulation_Callbacks(app)
             test2   = Dict("display" => "block")  
             table2  = Dict("display" => "block")  
             PTx     = Dict("display" => "none")
+            testte2 = Dict("display" => "block")  
+            tabte2  = Dict("display" => "block")  
         elseif value == "tx"
             Tstyle  = Dict("display" => "none")
             Pstyle  = Dict("display" => "block")
@@ -270,6 +274,8 @@ function Tab_Simulation_Callbacks(app)
             test2   = Dict("display" => "block")  
             table2  = Dict("display" => "block") 
             PTx     = Dict("display" => "none")
+            testte2 = Dict("display" => "block")  
+            tabte2  = Dict("display" => "block") 
         elseif value == "pt"
             Tstyle  = Dict("display" => "none")
             Pstyle  = Dict("display" => "none")
@@ -278,6 +284,8 @@ function Tab_Simulation_Callbacks(app)
             test2   = Dict("display" => "none")  
             table2  = Dict("display" => "none")  
             PTx     = Dict("display" => "none")
+            testte2 = Dict("display" => "none")  
+            tabte2  = Dict("display" => "none") 
         elseif value == "ptx"
             Tstyle  = Dict("display" => "none")
             Pstyle  = Dict("display" => "none")
@@ -286,9 +294,11 @@ function Tab_Simulation_Callbacks(app)
             test2   = Dict("display" => "block")  
             table2  = Dict("display" => "block") 
             PTx     = Dict("display" => "block")
+            testte2 = Dict("display" => "block")  
+            tabte2  = Dict("display" => "block") 
         end
 
-        return Tstyle, Pstyle, Ts, Ps, test2, table2, PTx
+        return Tstyle, Pstyle, Ts, Ps, test2, table2, PTx, testte2, tabte2
     end
 
 
@@ -395,9 +405,7 @@ function Tab_Simulation_Callbacks(app)
         Output("table-te-rock","data"),
         Output("test-te-dropdown","options"),
         Output("test-te-dropdown","value"),
-        # Output("database-caption","value"),
         Input("test-te-dropdown","value"),
-        # Input("database-dropdown","value"),
         Input("output-te-uploadn", "is_open"),        # this listens for changes and updated the list
         prevent_initial_call=true,
     ) do test, update
@@ -410,7 +418,7 @@ function Tab_Simulation_Callbacks(app)
         end
 
         data        =   [Dict(  "elements"  => dbte[(dbte.test .== t), :].elements[1][i],
-                                "ppm"       => dbte[(dbte.test .== t), :].ppm[1][i])
+                                "μg_g"       => dbte[(dbte.test .== t), :].μg_g[1][i])
                                     for i=1:length(dbte[(dbte.test .== t), :].elements[1]) ]
 
         opts        =  [Dict(   "label" => dbte.title[i],
@@ -424,12 +432,11 @@ function Tab_Simulation_Callbacks(app)
 
     callback!(
         app,
-        Output("table-2-te-rock","data"),
+        Output("table-te-2-rock","data"),
         Output("test-2-te-dropdown","options"),
         Output("test-2-te-dropdown","value"),
-        # Output("database-caption","value"),
+
         Input("test-2-te-dropdown","value"),
-        # Input("database-dropdown","value"),
         Input("output-te-uploadn", "is_open"),        # this listens for changes and updated the list
         prevent_initial_call=true,
     ) do test, update
@@ -442,7 +449,7 @@ function Tab_Simulation_Callbacks(app)
         end
 
         data        =   [Dict(  "elements"  => dbte[(dbte.test .== t), :].elements[1][i],
-                                "ppm"       => dbte[(dbte.test .== t), :].ppm2[1][i])
+                                "μg_g"       => dbte[(dbte.test .== t), :].μg_g2[1][i])
                                     for i=1:length(dbte[(dbte.test .== t), :].elements[1]) ]
 
         opts        =  [Dict(   "label" => dbte.title[i],

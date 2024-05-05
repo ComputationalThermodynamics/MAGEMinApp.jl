@@ -37,7 +37,7 @@ function Tab_Simulation(db_inf)
                                             dbc_button( "", id="button-phase-selection", color="light", className="me-2", n_clicks=0,
                                                                 style       = Dict( "textAlign"     => "center",
                                                                                     "font-size"     => "100%",
-                                                                                    "border"        =>"1px lightgray solid")), 
+                                                                                    "border"        =>"2px grey solid")), 
                                             dbc_collapse(
                                                 dbc_card(dbc_cardbody([
                 
@@ -696,7 +696,7 @@ function Tab_Simulation(db_inf)
                                                     "Compute phase diagram", id="compute-button", color="light", className="me-2", n_clicks=0,
                                                     style       = Dict( "textAlign"     => "center",
                                                                         "font-size"     => "100%",
-                                                                        "border"        =>"1px grey solid")
+                                                                        "border"        =>"2px grey solid")
                                                 ),
                                             ]),
                                         ])
@@ -785,10 +785,10 @@ function Tab_Simulation(db_inf)
                                                                     dash_datatable(
                                                                         id="table-te-rock",
                                                                         columns=(  [    Dict("id" =>  "elements",   "name" =>  "elements",   "editable" => false),
-                                                                                        Dict("id" =>  "ppm",        "name" =>  "ppm",        "editable" => true)]
+                                                                                        Dict("id" =>  "μg_g",        "name" =>  "μg/g",        "editable" => true)]
                                                                         ),
                                                                         data        =   [Dict(  "elements"      => dbte[(dbte.test .== 0), :].elements[1][i],
-                                                                                                "ppm"           => dbte[(dbte.test .== 0), :].ppm[1][i])
+                                                                                                "μg_g"           => dbte[(dbte.test .== 0), :].μg_g[1][i])
                                                                                                     for i=1:length(dbte[(dbte.test .== 0), :].elements[1]) ],
                                                                         style_cell  = (textAlign="center", fontSize="140%",),
                                                                         style_header= (fontWeight="bold",),
@@ -804,10 +804,10 @@ function Tab_Simulation(db_inf)
                                                                 dash_datatable(
                                                                     id="table-te-2-rock",
                                                                     columns=(  [    Dict("id" =>  "elements",   "name" =>  "elements",   "editable" => false),
-                                                                                    Dict("id" =>  "ppm",        "name" =>  "ppm",        "editable" => true)]
+                                                                                    Dict("id" =>  "μg_g",        "name" =>  "μg/g",        "editable" => true)]
                                                                     ),
                                                                     data        =   [Dict(  "elements"      => dbte[(dbte.test .== 0), :].elements[1][i],
-                                                                                            "ppm"           => dbte[(dbte.test .== 0), :].ppm2[1][i])
+                                                                                            "μg_g"           => dbte[(dbte.test .== 0), :].μg_g2[1][i])
                                                                                                 for i=1:length(dbte[(dbte.test .== 0), :].elements[1]) ],
                                                                     style_cell  = (textAlign="center", fontSize="140%",),
                                                                     style_header= (fontWeight="bold",),

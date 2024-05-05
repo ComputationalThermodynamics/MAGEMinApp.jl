@@ -318,6 +318,40 @@ function get_bulkrock_prop(bulk1, bulk2)
 end
 
 
+
+
+"""
+    get_terock_prop(bulkte1, bulkte2)
+
+    retrieve trace element compositions
+"""
+function get_terock_prop(bulkte1, bulkte2)
+ 
+    n_el        = length(bulkte1);
+    bulkte_L    = zeros(n_el); 
+    bulkte_R    = zeros(n_el);
+    elem        = Vector{String}(undef, n_el)
+    # in case the bulk rock is entered manually, the inputed values can be a string, this ensures convertion to float64
+    for i=1:n_el
+        tmp = bulkte1[i][:μg_g]
+        if typeof(tmp) == String
+            tmp = parse(Float64,tmp)
+        end
+        tmp2 = bulkte2[i][:μg_g]
+        if typeof(tmp2) == String
+            tmp2 = parse(Float64,tmp2)
+        end
+        bulkte_L[i]     = tmp;
+        bulkte_R[i]     = tmp2;
+        elem[i]         = bulkte1[i][:elements];
+    end
+
+    return bulkte_L, bulkte_R, elem
+end
+
+
+
+
 """
     compute_new_phaseDiagram(   xtitle,     ytitle,     
                                 Xrange,     Yrange,     fieldname,

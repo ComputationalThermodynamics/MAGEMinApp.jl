@@ -50,6 +50,41 @@ function Tab_PhaseDiagram_Callbacks(app)
     end
 
 
+    #save references to bibtex
+    callback!(
+        app,
+        Output("export-citation-save", "is_open"),
+        Output("export-citation-failed", "is_open"),
+        Input("export-citation-button", "n_clicks"),
+        State("export-citation-id", "value"),
+        State("database-dropdown","value"),
+        prevent_initial_call=true,
+    ) do n_clicks, fname, dtb
+
+        if fname != "filename"
+            output_bib      = "_"*dtb*".bib"
+            fileout         = fname*output_bib
+            magemin         = "MAGEMin"
+            bib             = import_bibtex("./references/references.bib")
+            
+            print("\nSaving references for computed phase diagram\n")
+            print("output path: $(pwd())\n")
+
+            n_ref           = length(bib.keys)
+            id_db           = findfirst(bib[bib.keys[i]].fields["info"] .== dtb for i=1:n_ref)
+            id_magemin      = findfirst(bib[bib.keys[i]].fields["info"] .== magemin for i=1:n_ref)
+            
+            selection       = [bib.keys[id_db], bib.keys[id_magemin]]
+            selected_bib    = Bibliography.select(bib, selection)
+            
+            export_bibtex(fileout, selected_bib)
+
+            return "success", ""
+        else
+            return  "", "failed"
+        end
+    end
+
 
     # save to file
     callback!(
@@ -137,15 +172,15 @@ function Tab_PhaseDiagram_Callbacks(app)
     # Callback function to create compute the phase diagram using T8code for Adaptive Mesh Refinement
     callback!(
         app,
-        Output("show-grid",         "value"), 
-        Output("show-full-grid",    "value"), 
-        Output("phase-diagram",     "figure"),
-        Output("phase-diagram",     "config"),
-        Output("computation-info-id",       "children"),        
+        Output("show-grid",             "value"), 
+        Output("show-full-grid",        "value"), 
+        Output("phase-diagram",         "figure"),
+        Output("phase-diagram",         "config"),
+        Output("computation-info-id",   "children"),        
 
-        Output("isopleth-dropdown", "options"),
-        Output("smooth-colormap",   "value"),
-        Output("tabs",              "active_tab"),                 # currently active tab
+        Output("isopleth-dropdown",     "options"),
+        Output("smooth-colormap",       "value"),
+        Output("tabs",                  "active_tab"),      # currently active tab
 
         Input("show-grid",                  "value"), 
         Input("show-full-grid",             "value"), 
@@ -156,63 +191,69 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("button-show-all-isopleth",   "n_clicks"),
         Input("button-hide-all-isopleth",   "n_clicks"),
 
-        Input("compute-button",     "n_clicks"),
-        Input("refine-pb-button",   "n_clicks"),
+        Input("compute-button",         "n_clicks"),
+        Input("refine-pb-button",       "n_clicks"),
 
-        Input("colormaps_cross",    "value"),
-        Input("smooth-colormap",    "value"),
-        Input("range-slider-color", "value"),
-        Input("reverse-colormap",   "value"),
-        Input("fields-dropdown",    "value"),
-        Input("update-title-button","n_clicks"),
-        State("title-id",           "value"),
+        Input("colormaps_cross",        "value"),
+        Input("smooth-colormap",        "value"),
+        Input("range-slider-color",     "value"),
+        Input("reverse-colormap",       "value"),
+        Input("fields-dropdown",        "value"),
+        Input("update-title-button",    "n_clicks"),
+        State("title-id",               "value"),
 
-        State("diagram-dropdown",   "value"),           # pt, px, tx
-        State("database-dropdown",  "value"),           # mp, mb, ig ,igd, um, alk
-        State("mb-cpx-switch",      "value"),           # false,true -> 0,1
-        State("limit-ca-opx-id",    "value"),           # ON,OFF -> 0,1
-        State("ca-opx-val-id",      "value"),           # 0.0-1.0 -> 0,1
-        State("phase-selection",    "value"),
+        State("diagram-dropdown",       "value"),           # pt, px, tx
+        State("database-dropdown",      "value"),           # mp, mb, ig ,igd, um, alk
+        State("mb-cpx-switch",          "value"),           # false,true -> 0,1
+        State("limit-ca-opx-id",        "value"),           # ON,OFF -> 0,1
+        State("ca-opx-val-id",          "value"),           # 0.0-1.0 -> 0,1
+        State("phase-selection",        "value"),
 
-        State("pt-x-table",         "data"),
-        State("tmin-id",            "value"),           # tmin
-        State("tmax-id",            "value"),           # tmax
-        State("pmin-id",            "value"),           # pmin
-        State("pmax-id",            "value"),           # pmax
+        State("pt-x-table",             "data"),
+        State("tmin-id",                "value"),           # tmin
+        State("tmax-id",                "value"),           # tmax
+        State("pmin-id",                "value"),           # pmin
+        State("pmax-id",                "value"),           # pmax
 
-        State("fixed-temperature-val-id","value"),      # fix T
-        State("fixed-pressure-val-id",   "value"),      # fix P
+        State("fixed-temperature-val-id","value"),          # fix T
+        State("fixed-pressure-val-id",  "value"),           # fix P
 
-        State("gsub-id",            "value"),           # n subdivision
-        State("refinement-dropdown","value"),           # ph,em
-        State("refinement-levels",  "value"),           # level
+        State("gsub-id",                "value"),           # n subdivision
+        State("refinement-dropdown",    "value"),           # ph,em
+        State("refinement-levels",      "value"),           # level
 
-        State("buffer-dropdown",    "value"),           # none,qfm,mw,qif,cco,hm,nno
-        State("solver-dropdown",    "value"),           # pge,lp
-        State("verbose-dropdown",   "value"),           # none,light,full -> -1,0,1
-        State("scp-dropdown",       "value"),           # none,light,full -> -1,0,1
+        State("buffer-dropdown",        "value"),           # none,qfm,mw,qif,cco,hm,nno
+        State("solver-dropdown",        "value"),           # pge,lp
+        State("verbose-dropdown",       "value"),           # none,light,full -> -1,0,1
+        State("scp-dropdown",           "value"),           # none,light,full -> -1,0,1
 
-        State("table-bulk-rock",    "data"),            # bulk-rock 1
-        State("table-2-bulk-rock",  "data"),            # bulk-rock 2
+        State("table-bulk-rock",        "data"),            # bulk-rock 1
+        State("table-2-bulk-rock",      "data"),            # bulk-rock 2
         
-        State("buffer-1-mul-id",    "value"),           # buffer n 1
-        State("buffer-2-mul-id",    "value"),           # buffer n 2
+        State("table-te-rock",          "data"),            # te-rock 1
+        State("table-te-2-rock",        "data"),            # te-rock 2
+        State("tepm-dropdown",          "value"),           # tepm active?  
+        State("kds-dropdown",           "value"),           # tepm active?  
+        State("zrsat-dropdown",         "value"),           # tepm active?  
 
-        State("test-dropdown",      "value"),           # test number
+        State("buffer-1-mul-id",        "value"),           # buffer n 1
+        State("buffer-2-mul-id",        "value"),           # buffer n 2
+
+        State("test-dropdown",          "value"),           # test number
 
         # block related to isopleth plotting
-        State("isopleth-dropdown",  "options"),
-        State("isopleth-dropdown",  "value"),
-        State("phase-dropdown",     "value"),
-        State("ss-dropdown",        "value"),
-        State("em-dropdown",        "value"),
-        State("of-dropdown",        "value"),
-        State("colorpicker_isoL",   "value"),
-        State("iso-text-size-id",   "value"),
-        State("iso-min-id",         "value"),
-        State("iso-step-id",        "value"),
-        State("iso-max-id",         "value"),
-        State("tabs",               "active_tab"),      # currently active tab
+        State("isopleth-dropdown",      "options"),
+        State("isopleth-dropdown",      "value"),
+        State("phase-dropdown",         "value"),
+        State("ss-dropdown",            "value"),
+        State("em-dropdown",            "value"),
+        State("of-dropdown",            "value"),
+        State("colorpicker_isoL",       "value"),
+        State("iso-text-size-id",       "value"),
+        State("iso-min-id",             "value"),
+        State("iso-step-id",            "value"),
+        State("iso-max-id",             "value"),
+        State("tabs",                   "active_tab"),      # currently active tab
 
         prevent_initial_call = true,
 
@@ -223,7 +264,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             fixT,       fixP,
             sub,        refType,    refLvl,
             bufferType, solver,     verbose,    scp,
-            bulk1,      bulk2,
+            bulk1,      bulk2,      bulkte1,    bulkte2,    tepm,       Kds,    zrsat,
             bufferN1,   bufferN2,
             test,
             isopleths,  isoplethsID,phase,      ss,         em,         of,  
@@ -238,6 +279,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         bid                             = pushed_button( callback_context() )                           # get the ID of the last pushed button
         colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)              # get colormap information
         bulk_L, bulk_R, oxi             = get_bulkrock_prop(bulk1, bulk2)                               # get bulk rock composition information
+        bulkte_L, bulkte_R, elem        = get_terock_prop(bulkte1, bulkte2)
         fieldNames                      = ["data_plot","data_reaction","data_grid","data_isopleth_out"]
         field2plot                      = zeros(Int64,4)
 
@@ -254,7 +296,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             GC.gc()         # garbage collector should be place after freeing the threads, otherwise this leads to issues
             
             # declare set of global variables needed to generate, refine and display phase diagrams
-            global fig, MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, npoints, PhasesLabels
+            global fig, MAGEMin_data, forest, data, Hash_XY, Out_XY, Out_TE_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, npoints, PhasesLabels
             global addedRefinementLvl   = 0;
             global n_lbl                = 0;
             global iso_show             = 1;
@@ -274,10 +316,6 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                             test,       refType                          )
 
             infos           = get_computation_info(npoints, meant)
-            
-            if npoints == 644
-                print("$(Out_XY[644])\n")
-            end
 
             data_reaction   = show_hide_reaction_lines(sub,refLvl,Xrange,Yrange)
             data_grid       = show_hide_mesh_grid()

@@ -1,5 +1,44 @@
 function Tab_isoSpaths_Callbacks(app)
   
+
+
+    #save references to bibtex
+    callback!(
+        app,
+        Output("export-citation-save-isoS", "is_open"),
+        Output("export-citation-failed-isoS", "is_open"),
+        Input("export-citation-button-isoS", "n_clicks"),
+        State("export-citation-id-isoS", "value"),
+        State("database-dropdown-isoS","value"),
+        prevent_initial_call=true,
+    ) do n_clicks, fname, dtb
+
+        if fname != "filename"
+            output_bib      = "_"*dtb*".bib"
+            fileout         = fname*output_bib
+            magemin         = "MAGEMin"
+            bib             = import_bibtex("./references/references.bib")
+            
+            print("\nSaving references for computed phase diagram\n")
+            print("output path: $(pwd())\n")
+
+            n_ref           = length(bib.keys)
+            id_db           = findfirst(bib[bib.keys[i]].fields["info"] .== dtb for i=1:n_ref)
+            id_magemin      = findfirst(bib[bib.keys[i]].fields["info"] .== magemin for i=1:n_ref)
+            
+            selection       = [bib.keys[id_db], bib.keys[id_magemin]]
+            selected_bib    = Bibliography.select(bib, selection)
+            
+            export_bibtex(fileout, selected_bib)
+
+            return "success", ""
+        else
+            return  "", "failed"
+        end
+    end
+
+
+
     callback!(
         app,
         Output("output-data-uploadn-isoS", "is_open"),

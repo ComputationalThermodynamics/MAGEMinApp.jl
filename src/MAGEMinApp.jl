@@ -8,7 +8,8 @@ using JLD2, DelimitedFiles, Interpolations
 using ConcaveHull,PolygonOps
 using ProgressMeter
 using PCHIPInterpolation
-
+using Bibliography
+            
 using MAGEMin_C
 
 pkg_dir = Base.pkgdir(MAGEMinApp)
@@ -141,8 +142,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                                 label       = "Isentropic path",
                                                 children    = [Tab_IsentropicPaths(db_inf)]
                                             ),
-                                    dbc_tab(tab_id="tab-TEmodeling", label="TE-modeling",   children = []),
-                
+
                                 ],
                             id = "tabs", active_tab="tab-Simulation",
                             ),

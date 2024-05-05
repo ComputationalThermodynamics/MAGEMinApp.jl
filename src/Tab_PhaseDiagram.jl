@@ -17,7 +17,7 @@ function Tab_PhaseDiagram()
                                             "Refine phase boundaries", id="refine-pb-button", color="light", className="me-2", n_clicks=0,
                                             style       = Dict( "textAlign"     => "center",
                                                                 "font-size"     => "100%",
-                                                                "border"        =>"1px lightgray solid")), 
+                                                                "border"        =>"2px grey solid")), 
                                     ]),
                                 ])),
                                 id="collapse-refinement",
@@ -75,15 +75,17 @@ function Tab_PhaseDiagram()
                                                 value   = "filename"   ),     
                                         ], width=4),
                                         dbc_col([    
-                                            dbc_button(
-                                                "Table", id="save-eq-table-button", color="light",  n_clicks=0,
-                                            ),
+                                            dbc_button("Table", id="save-eq-table-button", color="light",  n_clicks=0,
+                                            style       = Dict( "textAlign"     => "center",
+                                                                "font-size"     => "100%",
+                                                                "border"        =>"2px grey solid")), 
                                             dcc_download(id="download-table-text"),  
-                                        # ]),
-                                        # dbc_col([    
-                                            dbc_button(
-                                                "Table light", id="save-eq-button", color="light",  n_clicks=0,
-                                            ),
+                                        ]),
+                                        dbc_col([    
+                                            dbc_button("Formatted", id="save-eq-button", color="light",  n_clicks=0,
+                                            style       = Dict( "textAlign"     => "center",
+                                                                "font-size"     => "100%",
+                                                                "border"        =>"2px grey solid")), 
                                             dcc_download(id="download-text"),  
                                         ]),
                                     ]),
@@ -127,26 +129,51 @@ function Tab_PhaseDiagram()
                                                 value   = "filename"   ),     
                                         ], width=4),
                                         dbc_col([    
-                                            dbc_button(
-                                                "csv file", id="save-all-table-button", color="light",  n_clicks=0,
-                                            ),
+                                            dbc_button("csv file", id="save-all-table-button", color="light",  n_clicks=0,
+                                            style       = Dict( "textAlign"     => "center",
+                                                                "font-size"     => "100%",
+                                                                "border"        =>"2px grey solid")), 
                                             dbc_tooltip([
                                                 html_div("Saving all data takes time and depends on the number of points"),
                                                 html_div("Output path and progress are displayed in the Julia terminal")],target="save-all-table-button"),
                                             dcc_download(id="download-all-table-text"),  
                                         ]),
                                     ]),
+
+                                    html_div("‎ "),
+                                    dbc_row([
+                                        dbc_col([
+                                            html_h1("Export references", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 0)),    
+                                        ], width=3),
+                                        dbc_col([ 
+                                            dbc_input(
+                                                id      = "export-citation-id",
+                                                type    = "text", 
+                                                style   = Dict("textAlign" => "center") ,
+                                                value   = "filename"   ),     
+                                        ], width=4),
+                                        dbc_col([    
+                                            dbc_button("bibtex file", id="export-citation-button", color="light",  n_clicks=0,
+                                            style       = Dict( "textAlign"     => "center",
+                                                                "font-size"     => "100%",
+                                                                "border"        =>"2px grey solid")), 
+                                            dbc_tooltip([
+                                                html_div("Saving list of citation for the computed phase diagram"),
+                                                html_div("Output path and progress are displayed in the Julia terminal")],target="export-citation-button"),
+                                        ]),
+                                    ]),
+
                                     dbc_row([
                                         dbc_alert(
                                             "Successfully saved all data points information",
-                                            id      ="data-all-table-save",
+                                            id      ="export-citation-save",
                                             is_open =false,
                                             duration=4000,
                                         ),
                                         dbc_alert(
                                             "Provide a valid filename (without extension)",
                                             color="danger",
-                                            id      ="data-all-save-table-failed",
+                                            id      ="export-citation-failed",
                                             is_open =false,
                                             duration=4000,
                                         ),
