@@ -82,7 +82,7 @@ function Tab_PhaseDiagram()
                                             dcc_download(id="download-table-text"),  
                                         ]),
                                         dbc_col([    
-                                            dbc_button("Formatted", id="save-eq-button", color="light",  n_clicks=0,
+                                            dbc_button("text", id="save-eq-button", color="light",  n_clicks=0,
                                             style       = Dict( "textAlign"     => "center",
                                                                 "font-size"     => "100%",
                                                                 "border"        =>"2px grey solid")), 
