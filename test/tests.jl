@@ -28,21 +28,22 @@ bulk            = [0.38451319035870185, 0.017740308257833806, 0.0282086883559249
 oxides          = ["SiO2", "Al2O3", "CaO", "MgO", "FeO", "K2O", "Na2O", "TiO2", "O", "Cr2O3", "H2O"]
 
 println("  Test P-T diagram computation")
-Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(  data, 
-                                                MAGEMin_data,
-                                                "pt",
-                                                0.0,
-                                                nothing,
-                                                0.0,
-                                                0.0,
-                                                oxides,
-                                                bulk,
-                                                bulk,
-                                                "NONE",
-                                                0.0,
-                                                0.0,
-                                                0,
-                                                "ph"    )
+Out_XY, Hash_XY, n_phase_XY, Out_TE_XY  = refine_MAGEMin(   data, 
+                                                            MAGEMin_data,
+                                                            "pt",
+                                                            0.0,
+                                                            nothing,
+                                                            0.0,
+                                                            0.0,
+                                                            oxides,
+                                                            bulk,
+                                                            bulk,
+                                                            [0.0,0.0],[0.0,0.0],["none","none"],"false","none","none",
+                                                            "NONE",
+                                                            0.0,
+                                                            0.0,
+                                                            0,
+                                                            "ph"    )
 @test length(Out_XY) == 16
 
 results = [ -793.507476796513; -814.5314225719396; -786.4198598213416; -807.3608185564824; -837.7454922302667; -863.1027328483825; -830.5026234026736; -855.661064809689; -779.4056071550851; -800.2904063921558; -772.4548395043978; -793.271877227124; -823.3720345214499; -848.3891117825796; -816.279035791287; -841.228711264553]
@@ -54,23 +55,25 @@ end
 println("  Test refinement")
 refine_elements                          = refine_phase_boundaries(forest, Hash_XY);
 forest_new, data_new, ind_map            = adapt_forest(forest, refine_elements, data);     # Adapt the mesh; also returns the new coordinates and a mapping from old->new
-t = @elapsed Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(  data_new,
-                                                            MAGEMin_data,
-                                                            "pt",
-                                                            0.0,
-                                                            nothing,
-                                                            0.0,
-                                                            0.0,
-                                                            oxides,
-                                                            bulk,
-                                                            bulk,
-                                                            "NONE",
-                                                            0.0,
-                                                            0.0,
-                                                            0,
-                                                            "ph", 
-                                                            ind_map         = ind_map,
-                                                            Out_XY_old      = Out_XY) # recompute points that have not been computed before
+t = @elapsed Out_XY, Hash_XY, n_phase_XY, Out_TE_XY = refine_MAGEMin(   data_new,
+                                                                        MAGEMin_data,
+                                                                        "pt",
+                                                                        0.0,
+                                                                        nothing,
+                                                                        0.0,
+                                                                        0.0,
+                                                                        oxides,
+                                                                        bulk,
+                                                                        bulk,
+                                                                        [0.0,0.0],[0.0,0.0],["none","none"],"false","none","none",
+                                                                        "NONE",
+                                                                        0.0,
+                                                                        0.0,
+                                                                        0,
+                                                                        "ph", 
+                                                                        ind_map         = ind_map,
+                                                                        Out_XY_old      = Out_XY,
+                                                                        Out_TE_XY_old   = Out_TE_XY  ) # recompute points that have not been computed before
 
 @test length(Out_XY) == 64
 

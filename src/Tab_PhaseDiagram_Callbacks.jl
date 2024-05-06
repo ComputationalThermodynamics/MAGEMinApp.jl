@@ -288,13 +288,6 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             smooth                      = "best"
       
-            # if @isdefined(MAGEMin_data)
-            #     for i = 1:Threads.nthreads()
-            #         finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i])
-            #     end
-            # end
-            # GC.gc()         # garbage collector should be place after freeing the threads, otherwise this leads to issues
-            
             # declare set of global variables needed to generate, refine and display phase diagrams
             global fig, forest, data, Hash_XY, Out_XY, Out_TE_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, npoints, PhasesLabels
             global addedRefinementLvl   = 0;
@@ -311,6 +304,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                             sub,        refLvl,
                                                                             cpx,        limOpx,     limOpxVal,  PTpath,
                                                                             bulk_L,     bulk_R,     oxi,
+                                                                            bulkte_L,   bulkte_R,   elem,       tepm,       Kds,    zrsat,
                                                                             bufferType, bufferN1,   bufferN2,
                                                                             smooth,     colorm,     reverseColorMap,
                                                                             test,       refType                          )
@@ -330,6 +324,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                         sub,        refLvl,
                                                                         cpx,        limOpx,     limOpxVal,  PTpath,
                                                                         bulk_L,     bulk_R,     oxi,
+                                                                        bulkte_L,   bulkte_R,   elem,       tepm,       Kds,    zrsat,
                                                                         bufferType, bufferN1,   bufferN2,
                                                                         smooth,     colorm,     reverseColorMap,
                                                                         test,       refType                             )

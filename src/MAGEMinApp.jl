@@ -1,3 +1,5 @@
+# HELP:
+
 module MAGEMinApp
 
 using Dash
@@ -13,7 +15,6 @@ using Bibliography
 using MAGEMin_C
 
 pkg_dir = Base.pkgdir(MAGEMinApp)
-
 
 export App
 
