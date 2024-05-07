@@ -2,6 +2,41 @@ function Tab_PTXpaths_Callbacks(app)
 
 
 
+    #save references to bibtex
+    callback!(
+        app,
+        Output("export-citation-save-ptx", "is_open"),
+        Output("export-citation-failed-ptx", "is_open"),
+        Input("export-citation-button-ptx", "n_clicks"),
+        State("export-citation-id-ptx", "value"),
+        State("database-dropdown-ptx","value"),
+        prevent_initial_call=true,
+    ) do n_clicks, fname, dtb
+
+        if fname != "filename"
+            output_bib      = "_"*dtb*".bib"
+            fileout         = fname*output_bib
+            magemin         = "MAGEMin"
+            bib             = import_bibtex("./references/references.bib")
+            
+            print("\nSaving references for computed phase diagram\n")
+            print("output path: $(pwd())\n")
+
+            n_ref           = length(bib.keys)
+            id_db           = findfirst(bib[bib.keys[i]].fields["info"] .== dtb for i=1:n_ref)
+            id_magemin      = findfirst(bib[bib.keys[i]].fields["info"] .== magemin for i=1:n_ref)
+            
+            selection       = [bib.keys[id_db], bib.keys[id_magemin]]
+            selected_bib    = Bibliography.select(bib, selection)
+            
+            export_bibtex(fileout, selected_bib)
+
+            return "success", ""
+        else
+            return  "", "failed"
+        end
+    end
+
   
     #save all table to file
     callback!(
@@ -325,7 +360,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         if bid == "compute-path-button"
 
-            global Out_PTX, ph_names, layout_ptx, data_plot, fracEvol
+            global Out_PTX, ph_names_ptx, layout_ptx, data_plot_ptx, fracEvol
 
             bufferN                 = Float64(bufferN)               # convert buffer_n to float
             bulk_ini, bulk_assim, oxi = get_bulkrock_prop(bulk, bulk2)  
@@ -339,17 +374,17 @@ function Tab_PTXpaths_Callbacks(app)
 
             layout_ptx                  = initialize_layout(title,sysunit)
 
-            data_plot, phase_list   = get_data_plot(sysunit)
+            data_plot_ptx, phase_list   = get_data_plot(sysunit)
 
-            figPTX                  = plot(data_plot,layout_ptx)
+            figPTX                  = plot(data_plot_ptx,layout_ptx)
 
         elseif bid == "sys-unit-ptx"
-            data_plot, phase_list   = get_data_plot(sysunit)
+            data_plot_ptx, phase_list   = get_data_plot(sysunit)
             ytitle                  = "Phase fraction ["*sysunit*"%]"
             
             layout_ptx[:yaxis_title]    = ytitle
 
-            figPTX                  = plot(data_plot,layout_ptx)
+            figPTX                  = plot(data_plot_ptx,layout_ptx)
 
         else
             figPTX                  = plot(    Layout( height= 320 ))

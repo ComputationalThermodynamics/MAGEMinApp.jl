@@ -28,6 +28,7 @@ function compute_new_IsentropicPath(    nsteps,     bulk_ini,   oxi,    phase_se
     out      = MAGEMin_C.gmin_struct{Float64, Int64};
 
     # initialize single thread MAGEMin 
+    GC.gc() 
     gv, z_b, DB, splx_data = init_MAGEMin(  dtb;        
                                             verbose     = verbose,
                                             mbCpx       = mbCpx,
@@ -275,7 +276,7 @@ function initialize_layout_isoS_path(   Pini :: Float64,
                                         Tini :: Float64,
                                         Pfinal :: Float64   )
 
-    layout  = Layout(   font        = attr(size = 10),
+    layout_isoS  = Layout(   font        = attr(size = 10),
                         height      = 240,
                         margin      = attr(autoexpand = false, l=16, r=16, b=16, t=16),
                         autosize    = false,
@@ -286,12 +287,12 @@ function initialize_layout_isoS_path(   Pini :: Float64,
                         showlegend  = false,
     )
 
-    return layout
+    return layout_isoS
 end
 
 function initialize_layout_isoS(title,sysunit)
     ytitle               = "Phase fraction ["*sysunit*"%]"
-    layout  = Layout(
+    layout_isoS  = Layout(
 
         title= attr(
             text    = title,
@@ -314,7 +315,7 @@ function initialize_layout_isoS(title,sysunit)
         # autosize    = false,
     )
 
-    return layout
+    return layout_isoS
 end
 
 function initialize_comp_layout_isoS(sysunit)

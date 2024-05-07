@@ -318,6 +318,40 @@ function get_bulkrock_prop(bulk1, bulk2)
 end
 
 
+
+
+"""
+    get_terock_prop(bulkte1, bulkte2)
+
+    retrieve trace element compositions
+"""
+function get_terock_prop(bulkte1, bulkte2)
+ 
+    n_el        = length(bulkte1);
+    bulkte_L    = zeros(n_el); 
+    bulkte_R    = zeros(n_el);
+    elem        = Vector{String}(undef, n_el)
+    # in case the bulk rock is entered manually, the inputed values can be a string, this ensures convertion to float64
+    for i=1:n_el
+        tmp = bulkte1[i][:μg_g]
+        if typeof(tmp) == String
+            tmp = parse(Float64,tmp)
+        end
+        tmp2 = bulkte2[i][:μg_g]
+        if typeof(tmp2) == String
+            tmp2 = parse(Float64,tmp2)
+        end
+        bulkte_L[i]     = tmp;
+        bulkte_R[i]     = tmp2;
+        elem[i]         = bulkte1[i][:elements];
+    end
+
+    return bulkte_L, bulkte_R, elem
+end
+
+
+
+
 """
     compute_new_phaseDiagram(   xtitle,     ytitle,     
                                 Xrange,     Yrange,     fieldname,
@@ -360,25 +394,8 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
         global addedRefinementLvl  = 0;
         global MAGEMin_data;
 
-        # set clinopyroxene for the metabasite database
-        mbCpx = 0
-        if cpx == true && dtb =="mb"
-            mbCpx = 1;
-        end
-        limitCaOpx  = 0
-        CaOpxLim    = 1.0
-        if limOpx == "ON" && (dtb =="mb" || dtb =="ig" || dtb =="igd" || dtb =="alk")
-            limitCaOpx   = 1
-            CaOpxLim     = limOpxVal
-        end
-        if solver == "pge"
-            sol = 1
-        elseif solver == "lp"
-            sol = 0
-        elseif solver == "hyb" 
-            sol = 2         
-        end
-
+        mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb,        solver,
+                                                        cpx,        limOpx,     limOpxVal ) 
         MAGEMin_data    =   Initialize_MAGEMin( dtb;
                                                 verbose     = false,
                                                 limitCaOpx  = limitCaOpx,
@@ -389,21 +406,12 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
 
         #________________________________________________________________________________________#                      
         # initial optimization on regular grid
-        Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(  data, 
-                                                        MAGEMin_data,
-                                                        diagType,
-                                                        PTpath,
-                                                        phase_selection,
-                                                        fixT,
-                                                        fixP,
-                                                        oxi,
-                                                        bulk_L,
-                                                        bulk_R,
-                                                        bufferType,
-                                                        bufferN1,
-                                                        bufferN2,
-                                                        scp,
-                                                        refType    )
+
+        Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(   data, MAGEMin_data, diagType, PTpath,
+                                                                    phase_selection, fixT, fixP,
+                                                                    oxi, bulk_L, bulk_R,
+                                                                    bufferType, bufferN1, bufferN2,
+                                                                    scp, refType    )
                     
         #________________________________________________________________________________________#     
         # Refine the mesh along phase boundaries
@@ -411,30 +419,25 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
         for irefine = 1:refLvl
             refine_elements                          = refine_phase_boundaries(forest, Hash_XY);
             forest_new, data_new, ind_map            = adapt_forest(forest, refine_elements, data);     # Adapt the mesh; also returns the new coordinates and a mapping from old->new
-            t = @elapsed Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(  data_new,
-                                                                        MAGEMin_data,
-                                                                        diagType,
-                                                                        PTpath,
-                                                                        phase_selection,
-                                                                        fixT,
-                                                                        fixP,
-                                                                        oxi,
-                                                                        bulk_L,
-                                                                        bulk_R,
-                                                                        bufferType,
-                                                                        bufferN1,
-                                                                        bufferN2,
-                                                                        scp,
-                                                                        refType, 
-                                                                        ind_map         = ind_map,
-                                                                        Out_XY_old      = Out_XY  ) # recompute points that have not been computed before
-
+ 
+            t = @elapsed Out_XY, Hash_XY, n_phase_XY, = refine_MAGEMin( data_new, MAGEMin_data, diagType, PTpath,
+                                                                                    phase_selection, fixT, fixP,
+                                                                                    oxi, bulk_L, bulk_R,
+                                                                                    bufferType, bufferN1, bufferN2,
+                                                                                    scp, refType, 
+                                                                                    ind_map         = ind_map,
+                                                                                    Out_XY_old      = Out_XY  ) # recompute points that have not been computed before
+                                                                     
             println("Computed $(length(ind_map.<0)) new points in $t seconds")
             data    = data_new
             forest  = forest_new
             
         end
 
+        for i = 1:Threads.nthreads()
+            finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i])
+        end
+        
         # push!(AppData.PseudosectionData,Out_XY);
 
         #________________________________________________________________________________________#                   
@@ -562,35 +565,38 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                 smooth,     colorm,     reverseColorMap,
                                 test,       refType                                 )
 
-    global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels, addedRefinementLvl, layout, n_lbl
+    global forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels, addedRefinementLvl, layout, n_lbl
+
+    mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb,        solver,
+                                                    cpx,        limOpx,     limOpxVal ) 
+
+    MAGEMin_data    =   Initialize_MAGEMin( dtb;
+                                            verbose     = false,
+                                            limitCaOpx  = limitCaOpx,
+                                            CaOpxLim    = CaOpxLim,
+                                            mbCpx       = mbCpx,
+                                            buffer      = bufferType,
+                                            solver      = sol    );
 
     refine_elements                          = refine_phase_boundaries(forest, Hash_XY);
     forest_new, data_new, ind_map            = adapt_forest(forest, refine_elements, data);     # Adapt the mesh; also returns the new coordinates and a mapping from old->new
-    t = @elapsed Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(  data_new,
-                                                                MAGEMin_data,
-                                                                diagType,
-                                                                PTpath,
-                                                                phase_selection,
-                                                                fixT,
-                                                                fixP,
-                                                                oxi,
-                                                                bulk_L,
-                                                                bulk_R,
-                                                                bufferType,
-                                                                bufferN1,
-                                                                bufferN2, 
-                                                                scp,
-                                                                refType,
-                                                                ind_map         = ind_map,
-                                                                Out_XY_old      = Out_XY) # recompute points that have not been computed before
+
+    t = @elapsed Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin( data_new, MAGEMin_data, diagType, PTpath,
+                                                                            phase_selection, fixT, fixP,
+                                                                            oxi, bulk_L, bulk_R,
+                                                                            bufferType, bufferN1, bufferN2, 
+                                                                            scp, refType,
+                                                                            ind_map         = ind_map,
+                                                                            Out_XY_old      = Out_XY) # recompute points that have not been computed before
 
     println("Computed $(length(ind_map.<0)) new points in $(round(t, digits=3)) seconds")
     data                = data_new
     forest              = forest_new
     addedRefinementLvl += 1;
 
-    # empty!(AppData.PseudosectionData)
-    # push!(AppData.PseudosectionData,Out_XY);
+    for i = 1:Threads.nthreads()
+        finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i])
+    end
 
     #________________________________________________________________________________________#                   
     # Scatter plotly of the grid

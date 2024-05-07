@@ -134,6 +134,26 @@ function Tab_Simulation_Callbacks(app)
     # end
 
 
+    # callback to display trace element predictive model options
+    callback!(
+        app,
+        Output("tepm-options-id",   "style"),
+        Output("te-panel-id",       "style"),
+        Input("tepm-dropdown",      "value"),
+    ) do value
+
+        if value == "false"
+            opt     = Dict("display" => "none")
+            panel   = Dict("display" => "none")
+        elseif value == "true"
+            opt     = Dict("display" => "block")    
+            panel   = Dict("display" => "block")
+        end
+
+        return opt, panel
+    end
+
+
     # callback to display ca-orthopyroxene limiter
     callback!(
         app,
@@ -183,7 +203,6 @@ function Tab_Simulation_Callbacks(app)
         return title
     end
 
-
     # callback function to display to right set of variables as function of the diagram type
     callback!(
         app,
@@ -232,6 +251,8 @@ function Tab_Simulation_Callbacks(app)
         Output("test-2-id", "style"),
         Output("table-2-id", "style"),
         Output("pt-x-id", "style"),
+        Output("test-2-te-id", "style"),
+        Output("table-2-te-id", "style"),
         Input("diagram-dropdown", "value"),
     ) do value
 
@@ -243,6 +264,8 @@ function Tab_Simulation_Callbacks(app)
             test2   = Dict("display" => "block")  
             table2  = Dict("display" => "block")  
             PTx     = Dict("display" => "none")
+            testte2 = Dict("display" => "block")  
+            tabte2  = Dict("display" => "block")  
         elseif value == "tx"
             Tstyle  = Dict("display" => "none")
             Pstyle  = Dict("display" => "block")
@@ -251,6 +274,8 @@ function Tab_Simulation_Callbacks(app)
             test2   = Dict("display" => "block")  
             table2  = Dict("display" => "block") 
             PTx     = Dict("display" => "none")
+            testte2 = Dict("display" => "block")  
+            tabte2  = Dict("display" => "block") 
         elseif value == "pt"
             Tstyle  = Dict("display" => "none")
             Pstyle  = Dict("display" => "none")
@@ -259,6 +284,8 @@ function Tab_Simulation_Callbacks(app)
             test2   = Dict("display" => "none")  
             table2  = Dict("display" => "none")  
             PTx     = Dict("display" => "none")
+            testte2 = Dict("display" => "none")  
+            tabte2  = Dict("display" => "none") 
         elseif value == "ptx"
             Tstyle  = Dict("display" => "none")
             Pstyle  = Dict("display" => "none")
@@ -267,9 +294,11 @@ function Tab_Simulation_Callbacks(app)
             test2   = Dict("display" => "block")  
             table2  = Dict("display" => "block") 
             PTx     = Dict("display" => "block")
+            testte2 = Dict("display" => "block")  
+            tabte2  = Dict("display" => "block") 
         end
 
-        return Tstyle, Pstyle, Ts, Ps, test2, table2, PTx
+        return Tstyle, Pstyle, Ts, Ps, test2, table2, PTx, testte2, tabte2
     end
 
 
@@ -369,6 +398,69 @@ function Tab_Simulation_Callbacks(app)
     end
 
 
+
+
+    callback!(
+        app,
+        Output("table-te-rock","data"),
+        Output("test-te-dropdown","options"),
+        Output("test-te-dropdown","value"),
+        Input("test-te-dropdown","value"),
+        Input("output-te-uploadn", "is_open"),        # this listens for changes and updated the list
+        prevent_initial_call=true,
+    ) do test, update
+
+        # catching up some special cases
+        if test > length(dbte.test) - 1 
+            t = 0
+        else
+            t = test
+        end
+
+        data        =   [Dict(  "elements"  => dbte[(dbte.test .== t), :].elements[1][i],
+                                "μg_g"       => dbte[(dbte.test .== t), :].μg_g[1][i])
+                                    for i=1:length(dbte[(dbte.test .== t), :].elements[1]) ]
+
+        opts        =  [Dict(   "label" => dbte.title[i],
+                                "value" => dbte.test[i]  )
+                                    for i=1:length(dbte.test)]
+
+        val         = t
+        return data, opts, val                  
+    end
+
+
+    callback!(
+        app,
+        Output("table-te-2-rock","data"),
+        Output("test-2-te-dropdown","options"),
+        Output("test-2-te-dropdown","value"),
+
+        Input("test-2-te-dropdown","value"),
+        Input("output-te-uploadn", "is_open"),        # this listens for changes and updated the list
+        prevent_initial_call=true,
+    ) do test, update
+
+        # catching up some special cases
+        if test > length(dbte.test) - 1 
+            t = 0
+        else
+            t = test
+        end
+
+        data        =   [Dict(  "elements"  => dbte[(dbte.test .== t), :].elements[1][i],
+                                "μg_g"       => dbte[(dbte.test .== t), :].μg_g2[1][i])
+                                    for i=1:length(dbte[(dbte.test .== t), :].elements[1]) ]
+
+        opts        =  [Dict(   "label" => dbte.title[i],
+                                "value" => dbte.test[i]  )
+                                    for i=1:length(dbte.test)]
+
+        val         = t
+        return data, opts, val                  
+    end
+
+
     # open/close Curve interpretation box
     callback!(app,
         Output("collapse-phase-selection", "is_open"),
@@ -431,6 +523,25 @@ function Tab_Simulation_Callbacks(app)
         Output("collapse-bulk", "is_open"),
         [Input("button-bulk", "n_clicks")],
         [State("collapse-bulk", "is_open")], ) do  n, is_open
+        
+        if isnothing(n); n=0 end
+
+        if n>0
+            if is_open==1
+                is_open = 0
+            elseif is_open==0
+                is_open = 1
+            end
+        end
+        return is_open 
+            
+    end
+
+    # open/close Curve interpretation box
+    callback!(app,
+        Output("collapse-te", "is_open"),
+        [Input("button-te", "n_clicks")],
+        [State("collapse-te", "is_open")], ) do  n, is_open
         
         if isnothing(n); n=0 end
 

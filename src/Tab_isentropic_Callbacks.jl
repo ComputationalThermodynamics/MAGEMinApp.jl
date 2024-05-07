@@ -1,5 +1,44 @@
 function Tab_isoSpaths_Callbacks(app)
   
+
+
+    #save references to bibtex
+    callback!(
+        app,
+        Output("export-citation-save-isoS", "is_open"),
+        Output("export-citation-failed-isoS", "is_open"),
+        Input("export-citation-button-isoS", "n_clicks"),
+        State("export-citation-id-isoS", "value"),
+        State("database-dropdown-isoS","value"),
+        prevent_initial_call=true,
+    ) do n_clicks, fname, dtb
+
+        if fname != "filename"
+            output_bib      = "_"*dtb*".bib"
+            fileout         = fname*output_bib
+            magemin         = "MAGEMin"
+            bib             = import_bibtex("./references/references.bib")
+            
+            print("\nSaving references for computed phase diagram\n")
+            print("output path: $(pwd())\n")
+
+            n_ref           = length(bib.keys)
+            id_db           = findfirst(bib[bib.keys[i]].fields["info"] .== dtb for i=1:n_ref)
+            id_magemin      = findfirst(bib[bib.keys[i]].fields["info"] .== magemin for i=1:n_ref)
+            
+            selection       = [bib.keys[id_db], bib.keys[id_magemin]]
+            selected_bib    = Bibliography.select(bib, selection)
+            
+            export_bibtex(fileout, selected_bib)
+
+            return "success", ""
+        else
+            return  "", "failed"
+        end
+    end
+
+
+
     callback!(
         app,
         Output("output-data-uploadn-isoS", "is_open"),
@@ -124,7 +163,7 @@ function Tab_isoSpaths_Callbacks(app)
 
         if bid == "compute-path-button-isoS"
 
-            global Out_ISOS, ph_names, layout, layout_path, data_plot, df_path_plot, fracEvol
+            global Out_ISOS, ph_names, layout_isoS, layout_path, data_plot, df_path_plot, fracEvol
 
             bufferN                 = Float64(bufferN)               # convert buffer_n to float
             bulk_ini, bulk_ini, oxi = get_bulkrock_prop(bulk, bulk)  
@@ -136,22 +175,22 @@ function Tab_isoSpaths_Callbacks(app)
                                             cpx,        limOpx,     limOpxVal    )
 
 
-            layout                  = initialize_layout_isoS(title,sysunit)
+            layout_isoS             = initialize_layout_isoS(title,sysunit)
             layout_path             = initialize_layout_isoS_path(Pini, Tini, Pfinal)
 
             data_plot, phase_list   = get_data_plot_isoS(sysunit)
             df_path_plot            = get_data_plot_isoS_path()
 
-            figIsoS                 = plot(data_plot,layout)
+            figIsoS                 = plot(data_plot,layout_isoS)
             figIsoSPath             = plot(df_path_plot, x=:x, y=:y, layout_path)
             entropy                 = Out_ISOS[1].entropy
         elseif bid == "sys-unit-isoS"
             data_plot, phase_list   = get_data_plot_isoS(sysunit)
             ytitle                  = "Phase fraction ["*sysunit*"%]"
             
-            layout[:yaxis_title]    = ytitle
+            layout_isoS[:yaxis_title]    = ytitle
 
-            figIsoS                 = plot(data_plot,layout)
+            figIsoS                 = plot(data_plot,layout_isoS)
             figIsoSPath             = plot(df_path_plot, x=:x, y=:y, layout_path)
             entropy                 = Out_ISOS[1].entropy
         else

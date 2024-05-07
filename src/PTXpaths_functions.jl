@@ -154,6 +154,7 @@ function compute_Tliq(          pressure,   tolerance,  bulk_ini,   oxi,    phas
 
 
         # initialize single thread MAGEMin 
+        GC.gc() 
         gv, z_b, DB, splx_data = init_MAGEMin(  dtb;        
                                                 verbose     = verbose,
                                                 mbCpx       = mbCpx,
@@ -230,7 +231,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                 cpx,        limOpx,     limOpxVal,
                                 nCon,       nRes                                  )
 
-        global Out_PTX, ph_names, fracEvol, compo_matrix
+        global Out_PTX, ph_names_ptx, fracEvol, compo_matrix
 
 
         nsteps = Int64(nsteps)
@@ -245,7 +246,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
         if np <= 1
             print("Cannot compute a path if at least 2 points are not defined! \n")
         else
-            ph_names= Vector{String}()
+            ph_names_ptx= Vector{String}()
 
             n_tot   = np + (np-1)*nsteps
             fracEvol= Matrix{Float64}(undef,n_tot,2)
@@ -274,6 +275,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             end
 
             # initialize single thread MAGEMin 
+            GC.gc() 
             gv, z_b, DB, splx_data = init_MAGEMin(  dtb;        
                                                     verbose     = verbose,
                                                     mbCpx       = mbCpx,
@@ -363,7 +365,6 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                         fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
                     end
 
-
                     k += 1
                 end
             end
@@ -372,12 +373,12 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
   
             for k = 1:n_tot
                 for l=1:length(Out_PTX[k].ph)
-                    if ~(Out_PTX[k].ph[l] in ph_names)
-                        push!(ph_names,Out_PTX[k].ph[l])
+                    if ~(Out_PTX[k].ph[l] in ph_names_ptx)
+                        push!(ph_names_ptx,Out_PTX[k].ph[l])
                     end
                 end
             end
-            ph_names = sort(ph_names)
+            ph_names_ptx = sort(ph_names_ptx)
 
             # free MAGEMin
             LibMAGEMin.FreeDatabases(gv, DB, z_b)
@@ -387,9 +388,9 @@ end
 
 function get_data_plot(sysunit)
 
-    n_ph    = length(ph_names)
+    n_ph    = length(ph_names_ptx)
     n_tot   = length(Out_PTX)
-    data_plot  = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_ph+2);
+    data_plot_ptx  = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_ph+2);
 
     x       = Vector{String}(undef, n_tot)
     Y       = zeros(Float64, n_ph, n_tot)
@@ -398,7 +399,7 @@ function get_data_plot(sysunit)
  
     for i=1:n_ph
 
-        ph = ph_names[i]
+        ph = ph_names_ptx[i]
 
         for k=1:n_tot
             
@@ -427,16 +428,16 @@ function get_data_plot(sysunit)
     end
 
     for i=1:n_ph
-        data_plot[i] = scatter(;    x           =  x,
+        data_plot_ptx[i] = scatter(;    x           =  x,
                                     y           =  Y[i,:],
-                                    name        = ph_names[i],
+                                    name        = ph_names_ptx[i],
                                     stackgroup  = "one",
                                     mode        = "lines",
                                     line        = attr(     width   =  0.5,
                                                             color   = colormap[i])  )
      end
 
-     data_plot[n_ph+1] = scatter(   x               = x,
+     data_plot_ptx[n_ph+1] = scatter(   x               = x,
                                     name            = "removed %",
                                     y               = fracEvol[:,2].*100.0, 
                                     hoverinfo       = "skip",
@@ -448,7 +449,7 @@ function get_data_plot(sysunit)
                                                             color   = "black", 
                                                             width   = 0.75)                ) 
 
-     data_plot[n_ph+2] = scatter(   x               = x,
+     data_plot_ptx[n_ph+2] = scatter(   x               = x,
                                     y               = fracEvol[:,1].*100.0, 
                                     name            = "remaining %",
                                     hoverinfo       = "skip",
@@ -461,10 +462,10 @@ function get_data_plot(sysunit)
 
 
     # build phase list:
-    phase_list = [Dict("label" => "  "*ph_names[i], "value" => ph_names[i]) for i=1:n_ph]
+    phase_list = [Dict("label" => "  "*ph_names_ptx[i], "value" => ph_names_ptx[i]) for i=1:n_ph]
 
 
-    return data_plot, phase_list
+    return data_plot_ptx, phase_list
 end
 
 

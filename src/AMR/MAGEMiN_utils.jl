@@ -282,6 +282,7 @@ function MAGEMin_data2table( out:: Union{Vector{MAGEMin_C.gmin_struct{Float64, I
     return table
 end
 
+
 function refine_MAGEMin(data, 
                         MAGEMin_data    :: MAGEMin_Data, 
                         diagType        :: String,
@@ -308,12 +309,12 @@ function refine_MAGEMin(data,
         MAGEMin_data.gv[i].buffer = pointer(bufferType)
     end
 
-    Out_XY = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,length(data.x))
-
     # Step 1: determine all points that have not been computed yet
-    ind_new      = findall( ind_map .< 0)
-    n_new_points = length(ind_new)
-    Out_XY_new   = []
+    ind_new         = findall( ind_map .< 0)
+    n_new_points    = length(ind_new)
+
+    Out_XY      = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,length(data.x))
+    Out_XY_new  = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,n_new_points)
     if n_new_points > 0
        
         if diagType == "tx"
@@ -377,8 +378,8 @@ function refine_MAGEMin(data,
                 Bvec[i] = bufferN1*(1.0 - data.xc[new_ind]) + bufferN2*data.xc[new_ind];
             end
         end
-        Out_XY_new  =   multi_point_minimization(Pvec, Tvec, MAGEMin_data, X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol", scp=scp, rm_list=phase_selection);
-        
+
+        Out_XY_new  =   multi_point_minimization(Pvec, Tvec, MAGEMin_data, X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol", scp=scp, rm_list=phase_selection); 
     end
 
     # Step 2: Collect new and old results
@@ -391,7 +392,6 @@ function refine_MAGEMin(data,
             Out_XY[i] = Out_XY_new[new_point]
         end
     end
-
     Out_XY_new = []
 
     # Compute hash for all points
@@ -442,8 +442,9 @@ function refine_MAGEMin(data,
         end
     end
 
-    return Out_XY, Hash_XY, n_phase_XY
+    return Out_XY, Hash_XY, n_phase_XY  
 end
+
 
 
 function get_dominant_en(   ph,
