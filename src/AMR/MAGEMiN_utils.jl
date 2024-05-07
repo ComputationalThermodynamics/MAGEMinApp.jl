@@ -293,20 +293,13 @@ function refine_MAGEMin(data,
                         oxi             :: Vector{String},
                         bulk_L          :: Vector{Float64},
                         bulk_R          :: Vector{Float64},
-                        bulkte_L        :: Vector{Float64},
-                        bulkte_R        :: Vector{Float64},
-                        elem            :: Vector{String},
-                        tepm            :: String,
-                        Kds             :: String,
-                        zrsat           :: String,
                         bufferType      :: String,
                         bufferN1        :: Float64,
                         bufferN2        :: Float64,
                         scp             :: Int64,
                         refType         :: String;
                         ind_map          = nothing, 
-                        Out_XY_old       = nothing,
-                        Out_TE_XY_old    = nothing)
+                        Out_XY_old       = nothing)
 
     if isnothing(ind_map)
         ind_map = - ones(length(data.xc));
@@ -319,14 +312,6 @@ function refine_MAGEMin(data,
     # Step 1: determine all points that have not been computed yet
     ind_new         = findall( ind_map .< 0)
     n_new_points    = length(ind_new)
-
-    if tepm == "true"
-        Out_TE_XY       = Vector{MAGEMin_C.tepm_struct{Float64}}(undef,length(data.x))
-        Out_TE_XY_new   = Vector{MAGEMin_C.tepm_struct{Float64}}(undef,n_new_points)
-    else
-        Out_TE_XY       = []
-        Out_TE_XY_new   = []
-    end
 
     Out_XY      = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,length(data.x))
     Out_XY_new  = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,n_new_points)
@@ -394,32 +379,7 @@ function refine_MAGEMin(data,
             end
         end
 
-        # if trace element predictive model is called
-        if tepm == "true"
-
-            TEvec = Vector{Vector{Float64}}(undef,n_new_points);
-
-            if diagType == "pt"
-                for (i, new_ind) = enumerate(ind_new)
-                    TEvec[i] = bulkte_L;
-                end
-            else
-                for (i, new_ind) = enumerate(ind_new)
-                    TEvec[i] = bulkte_L*(1.0 - data.xc[new_ind]) + bulkte_R*data.xc[new_ind];
-                end
-            end
-
-            Out_XY_new, Out_TE_XY_new =   multi_point_minimization( Pvec, Tvec, MAGEMin_data, X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol", scp=scp,
-                                                                    rm_list = phase_selection,
-                                                                    tepm    = 1,
-                                                                    te_db   = Kds,
-                                                                    zr_sat  = zrsat,
-                                                                    te_X    = TEvec ); 
-
-        else
-            Out_XY_new  =   multi_point_minimization(Pvec, Tvec, MAGEMin_data, X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol", scp=scp, rm_list=phase_selection); 
-        end
-
+        Out_XY_new  =   multi_point_minimization(Pvec, Tvec, MAGEMin_data, X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol", scp=scp, rm_list=phase_selection); 
     end
 
     # Step 2: Collect new and old results
@@ -433,20 +393,6 @@ function refine_MAGEMin(data,
         end
     end
     Out_XY_new = []
-
-    if tepm == "true"
-        new_point = 0;
-        for (i, map) = enumerate(ind_map)
-            if map>0
-                Out_TE_XY[i] = Out_TE_XY_old[map]
-            else
-                new_point += 1
-                Out_TE_XY[i] = Out_TE_XY_new[new_point]
-            end
-        end
-        Out_TE_XY_new = []
-    end
-
 
     # Compute hash for all points
     Hash_XY     = Vector{UInt64}(undef,length(data.x))
@@ -496,7 +442,7 @@ function refine_MAGEMin(data,
         end
     end
 
-    return Out_XY, Hash_XY, n_phase_XY, Out_TE_XY  
+    return Out_XY, Hash_XY, n_phase_XY  
 end
 
 

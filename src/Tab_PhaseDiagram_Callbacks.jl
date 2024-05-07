@@ -229,12 +229,6 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         State("table-bulk-rock",        "data"),            # bulk-rock 1
         State("table-2-bulk-rock",      "data"),            # bulk-rock 2
-        
-        State("table-te-rock",          "data"),            # te-rock 1
-        State("table-te-2-rock",        "data"),            # te-rock 2
-        State("tepm-dropdown",          "value"),           # tepm active?  
-        State("kds-dropdown",           "value"),           # tepm active?  
-        State("zrsat-dropdown",         "value"),           # tepm active?  
 
         State("buffer-1-mul-id",        "value"),           # buffer n 1
         State("buffer-2-mul-id",        "value"),           # buffer n 2
@@ -264,7 +258,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             fixT,       fixP,
             sub,        refType,    refLvl,
             bufferType, solver,     verbose,    scp,
-            bulk1,      bulk2,      bulkte1,    bulkte2,    tepm,       Kds,    zrsat,
+            bulk1,      bulk2,
             bufferN1,   bufferN2,
             test,
             isopleths,  isoplethsID,phase,      ss,         em,         of,  
@@ -279,7 +273,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         bid                             = pushed_button( callback_context() )                           # get the ID of the last pushed button
         colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)              # get colormap information
         bulk_L, bulk_R, oxi             = get_bulkrock_prop(bulk1, bulk2)                               # get bulk rock composition information
-        bulkte_L, bulkte_R, elem        = get_terock_prop(bulkte1, bulkte2)
+        # bulkte_L, bulkte_R, elem        = get_terock_prop(bulkte1, bulkte2)
         fieldNames                      = ["data_plot","data_reaction","data_grid","data_isopleth_out"]
         field2plot                      = zeros(Int64,4)
 
@@ -289,7 +283,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             smooth                      = "best"
       
             # declare set of global variables needed to generate, refine and display phase diagrams
-            global fig, forest, data, Hash_XY, Out_XY, Out_TE_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, npoints, PhasesLabels
+            global fig, forest, data, Hash_XY, Out_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, npoints, PhasesLabels
             global addedRefinementLvl   = 0;
             global n_lbl                = 0;
             global iso_show             = 1;
@@ -304,7 +298,6 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                             sub,        refLvl,
                                                                             cpx,        limOpx,     limOpxVal,  PTpath,
                                                                             bulk_L,     bulk_R,     oxi,
-                                                                            bulkte_L,   bulkte_R,   elem,       tepm,       Kds,    zrsat,
                                                                             bufferType, bufferN1,   bufferN2,
                                                                             smooth,     colorm,     reverseColorMap,
                                                                             test,       refType                          )
@@ -324,7 +317,6 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                         sub,        refLvl,
                                                                         cpx,        limOpx,     limOpxVal,  PTpath,
                                                                         bulk_L,     bulk_R,     oxi,
-                                                                        bulkte_L,   bulkte_R,   elem,       tepm,       Kds,    zrsat,
                                                                         bufferType, bufferN1,   bufferN2,
                                                                         smooth,     colorm,     reverseColorMap,
                                                                         test,       refType                             )

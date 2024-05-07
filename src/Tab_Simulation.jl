@@ -134,6 +134,7 @@ function Tab_Simulation(db_inf)
                                     ], style = Dict("display" => "block"), id      = "switch-opx-id"), #none, block
 
                                     #Trace element predictive models
+                                    html_div([
                                     html_div("‎ "),  
                                     html_div("‎ "),  
                                     dbc_row([
@@ -151,6 +152,7 @@ function Tab_Simulation(db_inf)
                                             multi       =  false),
                                         ]),
                                     ]),
+                                    ], style = Dict("display" => "none"), id      = "tepm-id"), #none, block
 
                                     #options for trace element predictive modelling
                                     html_div([

@@ -373,7 +373,6 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                     sub,        refLvl,
                                     cpx,        limOpx,     limOpxVal,  PTpath,
                                     bulk_L,     bulk_R,     oxi,
-                                    bulkte_L,   bulkte_R,   elem,       tepm,       Kds,    zrsat,
                                     bufferType, bufferN1,   bufferN2,
                                     smooth,     colorm,     reverseColorMap,
                                     test,       refType                                  )
@@ -391,7 +390,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
 
         #________________________________________________________________________________________#
         # initialize database
-        global forest, data, Hash_XY, Out_XY, Out_TE_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels, layout, n_lbl
+        global forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels, layout, n_lbl
         global addedRefinementLvl  = 0;
         global MAGEMin_data;
 
@@ -408,10 +407,9 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
         #________________________________________________________________________________________#                      
         # initial optimization on regular grid
 
-        Out_XY, Hash_XY, n_phase_XY, Out_TE_XY  = refine_MAGEMin(   data, MAGEMin_data, diagType, PTpath,
+        Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(   data, MAGEMin_data, diagType, PTpath,
                                                                     phase_selection, fixT, fixP,
                                                                     oxi, bulk_L, bulk_R,
-                                                                    bulkte_L,   bulkte_R,   elem,       tepm,       Kds,    zrsat,
                                                                     bufferType, bufferN1, bufferN2,
                                                                     scp, refType    )
                     
@@ -422,15 +420,13 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
             refine_elements                          = refine_phase_boundaries(forest, Hash_XY);
             forest_new, data_new, ind_map            = adapt_forest(forest, refine_elements, data);     # Adapt the mesh; also returns the new coordinates and a mapping from old->new
  
-            t = @elapsed Out_XY, Hash_XY, n_phase_XY, Out_TE_XY   = refine_MAGEMin( data_new, MAGEMin_data, diagType, PTpath,
+            t = @elapsed Out_XY, Hash_XY, n_phase_XY, = refine_MAGEMin( data_new, MAGEMin_data, diagType, PTpath,
                                                                                     phase_selection, fixT, fixP,
                                                                                     oxi, bulk_L, bulk_R,
-                                                                                    bulkte_L,   bulkte_R,   elem,       tepm,       Kds,    zrsat,
                                                                                     bufferType, bufferN1, bufferN2,
                                                                                     scp, refType, 
                                                                                     ind_map         = ind_map,
-                                                                                    Out_XY_old      = Out_XY,
-                                                                                    Out_TE_XY_old   = Out_TE_XY  ) # recompute points that have not been computed before
+                                                                                    Out_XY_old      = Out_XY  ) # recompute points that have not been computed before
                                                                      
             println("Computed $(length(ind_map.<0)) new points in $t seconds")
             data    = data_new
@@ -565,12 +561,11 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                 sub,        refLvl,
                                 cpx,        limOpx,     limOpxVal,  PTpath,
                                 bulk_L,     bulk_R,     oxi,
-                                bulkte_L,   bulkte_R,   elem,       tepm,       Kds,    zrsat,
                                 bufferType, bufferN1,   bufferN2,
                                 smooth,     colorm,     reverseColorMap,
                                 test,       refType                                 )
 
-    global forest, data, Hash_XY, Out_XY, Out_TE_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels, addedRefinementLvl, layout, n_lbl
+    global forest, data, Hash_XY, Out_XY, n_phase_XY, field, data_plot, gridded, gridded_info, X, Y, PhasesLabels, addedRefinementLvl, layout, n_lbl
 
     mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb,        solver,
                                                     cpx,        limOpx,     limOpxVal ) 
@@ -586,15 +581,13 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
     refine_elements                          = refine_phase_boundaries(forest, Hash_XY);
     forest_new, data_new, ind_map            = adapt_forest(forest, refine_elements, data);     # Adapt the mesh; also returns the new coordinates and a mapping from old->new
 
-    t = @elapsed Out_XY, Hash_XY, n_phase_XY, Out_TE_XY   = refine_MAGEMin( data_new, MAGEMin_data, diagType, PTpath,
+    t = @elapsed Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin( data_new, MAGEMin_data, diagType, PTpath,
                                                                             phase_selection, fixT, fixP,
                                                                             oxi, bulk_L, bulk_R,
-                                                                            bulkte_L,   bulkte_R,   elem,       tepm,       Kds,    zrsat,
                                                                             bufferType, bufferN1, bufferN2, 
                                                                             scp, refType,
                                                                             ind_map         = ind_map,
-                                                                            Out_XY_old      = Out_XY,
-                                                                            Out_TE_XY_old   = Out_TE_XY) # recompute points that have not been computed before
+                                                                            Out_XY_old      = Out_XY) # recompute points that have not been computed before
 
     println("Computed $(length(ind_map.<0)) new points in $(round(t, digits=3)) seconds")
     data                = data_new
@@ -604,11 +597,6 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
     for i = 1:Threads.nthreads()
         finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i])
     end
-
-
-    # for i=1:length(Out_TE_XY)
-    #     print("Out_TE_XY: $(Out_TE_XY[i].zr_wt_pc)\n")
-    # end
 
     #________________________________________________________________________________________#                   
     # Scatter plotly of the grid

@@ -28,7 +28,7 @@ bulk            = [0.38451319035870185, 0.017740308257833806, 0.0282086883559249
 oxides          = ["SiO2", "Al2O3", "CaO", "MgO", "FeO", "K2O", "Na2O", "TiO2", "O", "Cr2O3", "H2O"]
 
 println("  Test P-T diagram computation")
-Out_XY, Hash_XY, n_phase_XY, Out_TE_XY  = refine_MAGEMin(   data, 
+Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(              data, 
                                                             MAGEMin_data,
                                                             "pt",
                                                             0.0,
@@ -38,7 +38,6 @@ Out_XY, Hash_XY, n_phase_XY, Out_TE_XY  = refine_MAGEMin(   data,
                                                             oxides,
                                                             bulk,
                                                             bulk,
-                                                            [0.0,0.0],[0.0,0.0],["none","none"],"false","none","none",
                                                             "NONE",
                                                             0.0,
                                                             0.0,
@@ -55,7 +54,7 @@ end
 println("  Test refinement")
 refine_elements                          = refine_phase_boundaries(forest, Hash_XY);
 forest_new, data_new, ind_map            = adapt_forest(forest, refine_elements, data);     # Adapt the mesh; also returns the new coordinates and a mapping from old->new
-t = @elapsed Out_XY, Hash_XY, n_phase_XY, Out_TE_XY = refine_MAGEMin(   data_new,
+t = @elapsed Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(              data_new,
                                                                         MAGEMin_data,
                                                                         "pt",
                                                                         0.0,
@@ -65,15 +64,13 @@ t = @elapsed Out_XY, Hash_XY, n_phase_XY, Out_TE_XY = refine_MAGEMin(   data_new
                                                                         oxides,
                                                                         bulk,
                                                                         bulk,
-                                                                        [0.0,0.0],[0.0,0.0],["none","none"],"false","none","none",
                                                                         "NONE",
                                                                         0.0,
                                                                         0.0,
                                                                         0,
                                                                         "ph", 
                                                                         ind_map         = ind_map,
-                                                                        Out_XY_old      = Out_XY,
-                                                                        Out_TE_XY_old   = Out_TE_XY  ) # recompute points that have not been computed before
+                                                                        Out_XY_old      = Out_XY ) # recompute points that have not been computed before
 
 @test length(Out_XY) == 64
 
