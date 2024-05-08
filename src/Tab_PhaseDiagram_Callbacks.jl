@@ -193,10 +193,6 @@ function Tab_PhaseDiagram_Callbacks(app)
             Out_TE_XY = tepm_function(  diagType, dtb,
                                         kds_mod, zrsat_mod, bulkte_L, bulkte_R)
             output = "block"
-
-            for i=1:length(Out_TE_XY)
-                print("$(Out_TE_XY[i].zrc_wt)\n")
-            end
         end
         output = "none"
         
