@@ -728,7 +728,7 @@ function get_diagram_labels(    fieldname   ::String,
                                         font        = attr( size = 10),
                                         )   
     n_lbl = n_trace
-    println("\rGet phase diagram labels $(round(time()-t0, digits=3)) s"); 
+    println("\rGet phase diagram labels $(round(time()-t0, digits=3)) seconds"); 
 
     return traces, annotations 
 end
@@ -1044,7 +1044,7 @@ function get_gridded_map(   fieldname   ::String,
         end
 
     end
-    println("\rInterpolate data on grid $(round(time()-t0, digits=3)) s"); 
+    println("\rInterpolate data on grid $(round(time()-t0, digits=3)) seconds"); 
     
     return gridded, gridded_info, X, Y, npoints, meant
 end
@@ -1133,7 +1133,7 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
         jj              = Int64(round((yc[k]-Yrange[1] + Yr/2)/(Yr))) 
         gridded[ii,jj]  = field[k] 
     end
-    println("\rInterpolate data on grid $(round(time()-t0, digits=3)) s"); 
+    println("\rInterpolate data on grid $(round(time()-t0, digits=3)) seconds"); 
     return gridded, X, Y, npoints, meant
 end
 

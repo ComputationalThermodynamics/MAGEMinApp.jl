@@ -170,35 +170,6 @@ function Tab_PhaseDiagram_Callbacks(app)
     end
 
 
-    callback!(
-        app,
-        Output("test-te-id",            "style"),
-        Input("trace-elements-button",  "n_clicks"),
-        State("diagram-dropdown",       "value"),
-        State("database-dropdown",      "value"), 
-        State("tepm-dropdown",          "value"),
-        State("kds-dropdown",           "value"),
-        State("zrsat-dropdown",         "value"),
-        State("table-te-rock",          "data"),            # bulk-rock 1
-        State("table-te-2-rock",        "data"),            # bulk-rock 2
-        prevent_initial_call = true,
-
-    ) do  n_click_te, diagType, dtb, tepm, kds_mod, zrsat_mod, bulkte1, bulkte2
-
-        global Out_TE_XY
-        bid                             = pushed_button( callback_context() )                           # get the ID of the last pushed button
-        bulkte_L, bulkte_R, elem        = get_terock_prop(bulkte1, bulkte2)
-
-        if bid == "trace-elements-button" &&  tepm == "true"
-            Out_TE_XY = tepm_function(  diagType, dtb,
-                                        kds_mod, zrsat_mod, bulkte_L, bulkte_R)
-            output = "block"
-        end
-        output = "none"
-        
-        return output
-    end
-
     # Callback function to create compute the phase diagram using T8code for Adaptive Mesh Refinement
     callback!(
         app,
@@ -263,6 +234,12 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("buffer-1-mul-id",        "value"),           # buffer n 1
         State("buffer-2-mul-id",        "value"),           # buffer n 2
 
+        State("tepm-dropdown",          "value"),
+        State("kds-dropdown",           "value"),
+        State("zrsat-dropdown",         "value"),
+        State("table-te-rock",          "data"),            # bulk-rock 1
+        State("table-te-2-rock",        "data"),  
+
         State("test-dropdown",          "value"),           # test number
 
         # block related to isopleth plotting
@@ -290,6 +267,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             bufferType, solver,     verbose,    scp,
             bulk1,      bulk2,      
             bufferN1,   bufferN2,
+            tepm,       kds_mod,    zrsat_mod,  bulkte1,    bulkte2,
             test,
             isopleths,  isoplethsID,phase,      ss,         em,         of,  
             isoColorLine,           isoLabelSize,   
@@ -301,6 +279,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         xtitle, ytitle, Xrange, Yrange  = diagram_type(diagType, tmin, tmax, pmin, pmax)                # get axis information
         bufferN1, bufferN2, fixT, fixP  = convert2Float64(bufferN1, bufferN2, fixT, fixP)               # convert buffer_n to float
         bid                             = pushed_button( callback_context() )                           # get the ID of the last pushed button
+        bulkte_L, bulkte_R, elem        = get_terock_prop(bulkte1, bulkte2)
         colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)              # get colormap information
         bulk_L, bulk_R, oxi             = get_bulkrock_prop(bulk1, bulk2)                               # get bulk rock composition information
         fieldNames                      = ["data_plot","data_reaction","data_grid","data_isopleth_out"]
@@ -312,7 +291,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             smooth                      = "best"
       
             # declare set of global variables needed to generate, refine and display phase diagrams
-            global fig, forest, data, Hash_XY, Out_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, npoints, PhasesLabels
+            global fig, forest, data, Hash_XY, Out_XY, Out_TE_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, npoints, PhasesLabels
             global addedRefinementLvl   = 0;
             global n_lbl                = 0;
             global iso_show             = 1;
@@ -330,7 +309,12 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                             bufferType, bufferN1,   bufferN2,
                                                                             smooth,     colorm,     reverseColorMap,
                                                                             test,       refType                          )
+            if tepm == "true"
+                t = @elapsed Out_TE_XY = tepm_function(     diagType, dtb,
+                                                            kds_mod, zrsat_mod, bulkte_L, bulkte_R)
 
+                println("Computed trace element partitioning in $t seconds")
+            end
 
             infos           = get_computation_info(npoints, meant)
 
@@ -350,6 +334,13 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                         bufferType, bufferN1,   bufferN2,
                                                                         smooth,     colorm,     reverseColorMap,
                                                                         test,       refType                             )
+
+            if tepm == "true"
+                t = @elapsed Out_TE_XY = tepm_function(     diagType, dtb,
+                                                            kds_mod, zrsat_mod, bulkte_L, bulkte_R)
+
+                println("Computed trace element partitioning in $t s")
+            end
 
             infos           = get_computation_info(npoints, meant)
             data_reaction   = show_hide_reaction_lines(sub,refLvl,Xrange,Yrange)

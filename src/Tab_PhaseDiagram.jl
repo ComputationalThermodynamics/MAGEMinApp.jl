@@ -19,15 +19,6 @@ function Tab_PhaseDiagram()
                                                                 "font-size"     => "100%",
                                                                 "border"        =>"2px grey solid")), 
                                     ]),
-                                    html_div("‎ "),
-                                    dbc_row([
-                                        dbc_button(
-                                            "Compute trace-elements", id="trace-elements-button", color="light", className="me-2", n_clicks=0,
-                                            style       = Dict( "textAlign"     => "center",
-                                                                "font-size"     => "100%",
-                                                                "border"        =>"2px grey solid")), 
-                                    ]),
-                                    html_div(["pouet"],  style = Dict("display" => "none"), id      = "test-te-id"),
                                 ])),
                                 id="collapse-refinement",
                                 is_open=true,
