@@ -169,6 +169,40 @@ function Tab_PhaseDiagram_Callbacks(app)
         return pLeft, pRight, pBottom
     end
 
+
+    callback!(
+        app,
+        Output("test-te-id",            "style"),
+        Input("trace-elements-button",  "n_clicks"),
+        State("diagram-dropdown",       "value"),
+        State("database-dropdown",      "value"), 
+        State("tepm-dropdown",          "value"),
+        State("kds-dropdown",           "value"),
+        State("zrsat-dropdown",         "value"),
+        State("table-te-rock",          "data"),            # bulk-rock 1
+        State("table-te-2-rock",        "data"),            # bulk-rock 2
+        prevent_initial_call = true,
+
+    ) do  n_click_te, diagType, dtb, tepm, kds_mod, zrsat_mod, bulkte1, bulkte2
+
+        global Out_TE_XY
+        bid                             = pushed_button( callback_context() )                           # get the ID of the last pushed button
+        bulkte_L, bulkte_R, elem        = get_terock_prop(bulkte1, bulkte2)
+
+        if bid == "trace-elements-button" &&  tepm == "true"
+            Out_TE_XY = tepm_function(  diagType, dtb,
+                                        kds_mod, zrsat_mod, bulkte_L, bulkte_R)
+            output = "block"
+
+            for i=1:length(Out_TE_XY)
+                print("$(Out_TE_XY[i].zrc_wt)\n")
+            end
+        end
+        output = "none"
+        
+        return output
+    end
+
     # Callback function to create compute the phase diagram using T8code for Adaptive Mesh Refinement
     callback!(
         app,
@@ -258,7 +292,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             fixT,       fixP,
             sub,        refType,    refLvl,
             bufferType, solver,     verbose,    scp,
-            bulk1,      bulk2,
+            bulk1,      bulk2,      
             bufferN1,   bufferN2,
             test,
             isopleths,  isoplethsID,phase,      ss,         em,         of,  
@@ -273,7 +307,6 @@ function Tab_PhaseDiagram_Callbacks(app)
         bid                             = pushed_button( callback_context() )                           # get the ID of the last pushed button
         colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)              # get colormap information
         bulk_L, bulk_R, oxi             = get_bulkrock_prop(bulk1, bulk2)                               # get bulk rock composition information
-        # bulkte_L, bulkte_R, elem        = get_terock_prop(bulkte1, bulkte2)
         fieldNames                      = ["data_plot","data_reaction","data_grid","data_isopleth_out"]
         field2plot                      = zeros(Int64,4)
 
@@ -301,6 +334,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                             bufferType, bufferN1,   bufferN2,
                                                                             smooth,     colorm,     reverseColorMap,
                                                                             test,       refType                          )
+
 
             infos           = get_computation_info(npoints, meant)
 

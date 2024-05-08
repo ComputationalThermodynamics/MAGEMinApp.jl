@@ -351,6 +351,36 @@ end
 
 
 
+function tepm_function( dtb         :: String,
+                        diagType    :: String,
+                        kds_mod     :: String,
+                        zrsat_mod   :: String,
+                        bulkte_L    :: Vector{Float64},
+                        bulkte_R    :: Vector{Float64} )
+
+    np          = length(Out_XY)
+
+    Out_TE_XY   = Vector{MAGEMin_C.out_tepm}(undef,np)
+    TEvec       = Vector{Float64};
+
+    # KDs_dtb     = get_OL_KDs_database();
+
+    for i = 1:np
+
+        if diagType != "pt"
+            TEvec = bulkte_L*(1.0 - Out_XY[i].X[1]) + bulkte_R*Out_XY[i].X[1];
+        else
+            TEvec = bulkte_L
+        end
+
+        Out_TE_XY[i]  = TE_prediction(TEvec,KDs_dtb, zrsat_mod,Out_XY[i],dtb);
+
+    end
+
+    return Out_TE_XY
+end
+
+
 
 """
     compute_new_phaseDiagram(   xtitle,     ytitle,     
@@ -407,12 +437,13 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
         #________________________________________________________________________________________#                      
         # initial optimization on regular grid
 
-        Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(   data, MAGEMin_data, diagType, PTpath,
-                                                                    phase_selection, fixT, fixP,
-                                                                    oxi, bulk_L, bulk_R,
-                                                                    bufferType, bufferN1, bufferN2,
-                                                                    scp, refType    )
-                    
+        Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(  data, MAGEMin_data, diagType, PTpath,
+                                                        phase_selection, fixT, fixP,
+                                                        oxi, bulk_L, bulk_R,
+                                                        bufferType, bufferN1, bufferN2,
+                                                        scp, refType    )
+
+        
         #________________________________________________________________________________________#     
         # Refine the mesh along phase boundaries
 
@@ -437,8 +468,6 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
         for i = 1:Threads.nthreads()
             finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i])
         end
-        
-        # push!(AppData.PseudosectionData,Out_XY);
 
         #________________________________________________________________________________________#                   
         # Scatter plotly of the grid
@@ -561,6 +590,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                 sub,        refLvl,
                                 cpx,        limOpx,     limOpxVal,  PTpath,
                                 bulk_L,     bulk_R,     oxi,
+                                tepm,       kds_mod,    zrsat_mod,  bulkte_L, bulkte_R,
                                 bufferType, bufferN1,   bufferN2,
                                 smooth,     colorm,     reverseColorMap,
                                 test,       refType                                 )

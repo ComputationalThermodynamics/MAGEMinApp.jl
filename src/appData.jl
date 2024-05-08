@@ -1,6 +1,5 @@
 global AppData
 
-
 # LIST AVAILABLE DATABASE
 dba = DataFrame(        database     = String[],
                         acronym      = String[],
@@ -266,8 +265,9 @@ push!(dbte,Dict(    :composition=> "predefined",
                 ), cols=:union)
 
 
+KDs_dtb     = get_OL_KDs_database();
 
 AppData = ( db                  = db,
             dba                 = dba,
             dbte                = dbte,
-          )
+            KDs_dtb             = KDs_dtb)

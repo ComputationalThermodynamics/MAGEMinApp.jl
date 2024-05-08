@@ -17,11 +17,9 @@ using MAGEMin_C
 pkg_dir = Base.pkgdir(MAGEMinApp)
 
 export App
-
 # include helper functions
 include(joinpath(pkg_dir,"src","initialize_MAGEMin_AMR.jl"))
 include(joinpath(pkg_dir,"src","PhaseDiagram_functions.jl"))
-include(joinpath(pkg_dir,"src","appData.jl"))
 include(joinpath(pkg_dir,"src","Tab_Simulation.jl"))
 include(joinpath(pkg_dir,"src","Tab_PhaseDiagram.jl"))
 include(joinpath(pkg_dir,"src","Tab_PTXpaths.jl"))
@@ -42,9 +40,15 @@ include(joinpath(pkg_dir,"src","IsentropicPaths_functions.jl"))
 Starts the MAGEMin App.
 """
 function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
+
+
     GUI_version = "0.2.9"   
     cur_dir     = pwd()                 # directory from where you started the GUI
     pkg_dir     = pkgdir(MAGEMinApp)   # package dir
+    
+    include(joinpath(pkg_dir,"src","appData.jl"))
+
+    
     db_inf      = retrieve_solution_phase_information("ig");
     cd(pkg_dir)
 
