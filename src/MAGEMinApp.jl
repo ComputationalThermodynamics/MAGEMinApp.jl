@@ -20,14 +20,16 @@ export App
 # include helper functions
 include(joinpath(pkg_dir,"src","initialize_MAGEMin_AMR.jl"))
 include(joinpath(pkg_dir,"src","PhaseDiagram_functions.jl"))
+include(joinpath(pkg_dir,"src","TraceElement_functions.jl"))
 include(joinpath(pkg_dir,"src","Tab_Simulation.jl"))
 include(joinpath(pkg_dir,"src","Tab_PhaseDiagram.jl"))
+include(joinpath(pkg_dir,"src","Tab_TraceElement.jl"))
 include(joinpath(pkg_dir,"src","Tab_PTXpaths.jl"))
 include(joinpath(pkg_dir,"src","data_plot.jl"))
-include(joinpath(pkg_dir,"src","MAGEMinApp_functions.jl"))
 include(joinpath(pkg_dir,"src","MAGEMinApp_Callbacks.jl"))   
 include(joinpath(pkg_dir,"src","Tab_Simulation_Callbacks.jl"))    
 include(joinpath(pkg_dir,"src","Tab_PhaseDiagram_Callbacks.jl"))
+include(joinpath(pkg_dir,"src","Tab_TraceElement_Callbacks.jl"))
 include(joinpath(pkg_dir,"src","PTXpaths_functions.jl"))   
 include(joinpath(pkg_dir,"src","Tab_PTXpaths_Callbacks.jl")) 
 include(joinpath(pkg_dir,"src","Tab_isentropic.jl"))
@@ -47,7 +49,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
     pkg_dir     = pkgdir(MAGEMinApp)   # package dir
     
     include(joinpath(pkg_dir,"src","appData.jl"))
-
+    include(joinpath(pkg_dir,"src","MAGEMinApp_functions.jl"))
     
     db_inf      = retrieve_solution_phase_information("ig");
     cd(pkg_dir)
@@ -142,6 +144,10 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                                                                 label       = "Diagram",
                                                                                 children    = [Tab_PhaseDiagram()]
                                                                             ),
+                                                                    dbc_tab(    tab_id      = "tab-te",
+                                                                                label       = "Trace-elements",
+                                                                                children    = [Tab_TraceElement()],
+                                                                            ),
                                                             ], id = "tabs"), ]
                                             ),
 
@@ -181,6 +187,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
     app = MAGEMinApp_Callbacks(app)
     app = Tab_Simulation_Callbacks(app)
     app = Tab_PhaseDiagram_Callbacks(app)
+    app = Tab_TraceElement_Callbacks(app)
     app = Tab_PTXpaths_Callbacks(app)
     app = Tab_isoSpaths_Callbacks(app)
     

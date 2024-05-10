@@ -1,6 +1,5 @@
 function Tab_PhaseDiagram_Callbacks(app)
 
-
     # save table to file
     callback!(
         app,
@@ -443,7 +442,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         end
 
 
-        # check state of unchanged variables ["data_plot","data_reaction","data_grid","data_isopleth_out"]
+        # check state of unchanged variables ["data_plot","data_reaction","data_grid"]
         if grid == "true"
             field2plot[2] = 1
         end

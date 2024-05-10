@@ -5,7 +5,19 @@ function Tab_PhaseDiagram()
             # html_div("‎ "),
             dbc_row([ 
 
-                    dbc_col([diagram_plot()], width=9),
+                    dbc_col([
+                        # dbc_tabs([
+                        #     dbc_tab(    tab_id      = "tab-general",
+                        #                 label       = "General",
+                        #                 children    = [diagram_plot()],
+                        #     ),
+                        #     dbc_tab(    tab_id      = "tab-te",
+                        #                 label       = "Trace-elements",
+                        #                 children    = [],
+                        #     ),
+                            diagram_plot()
+                        # ], active_tab="tab-major"),
+                    ], width=9),
                     dbc_col([  
                         dbc_row([
 
@@ -19,6 +31,7 @@ function Tab_PhaseDiagram()
                                                                 "font-size"     => "100%",
                                                                 "border"        =>"2px grey solid")), 
                                     ]),
+
                                 ])),
                                 id="collapse-refinement",
                                 is_open=true,

@@ -953,8 +953,10 @@ end
     Function interpolate AMR grid to regular grid
 """
 function get_gridded_map(   fieldname   ::String,
+                            type        ::String,
                             oxi         ::Vector{String},
                             Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
+                            Out_TE_XY   ::Union{Nothing,Vector{MAGEMin_C.out_tepm}},
                             Hash_XY     ::Vector{UInt64},
                             sub         ::Int64,
                             refLvl      ::Int64,
@@ -969,7 +971,7 @@ function get_gridded_map(   fieldname   ::String,
     print("Interpolate data on grid ..."); t0 = time()
     np          = length(data.x)
     len_ox      = length(oxi)
-    field       = Vector{Union{Float64,Missing}}(undef,np);
+    field       = Vector{Union{Float64,Missing,Nothing}}(undef,np);
  
     npoints     = np
 
@@ -980,42 +982,47 @@ function get_gridded_map(   fieldname   ::String,
     meant      /= npoints
     meant       = round(meant; digits = 3)
 
-    if fieldname == "#Phases"
+    if type == "te"
         for i=1:np
-            field[i] = Float64(length(Out_XY[i].ph));
+            field[i] = get_property(Out_TE_XY[i], fieldname);
         end
-    elseif fieldname == "Hash"
-        for i=1:np
-            field[i] = Hash_XY[i];
-        end 
-    elseif fieldname == "Variance"
-        for i=1:np
-            field[i] = Float64(len_ox - n_phase_XY[i] + 2.0);
-        end
-    elseif fieldname == "s_cp"
-        for i=1:np
-            field[i] = Out_XY[i].s_cp[1];
-        end
-    elseif fieldname == "Delta_rho"
-        for i=1:np
-            field[i] = 0.0
-            if (Out_XY[i].frac_M > 0.0 && Out_XY[i].frac_S > 0.0)
-                field[i] = Out_XY[i].rho_S - Out_XY[i].rho_M
+
+        field[isnothing.(field)] .= 0.0
+    else
+        if fieldname == "#Phases"
+            for i=1:np
+                field[i] = Float64(length(Out_XY[i].ph));
+            end
+        elseif fieldname == "Hash"
+            for i=1:np
+                field[i] = Hash_XY[i];
+            end 
+        elseif fieldname == "Variance"
+            for i=1:np
+                field[i] = Float64(len_ox - n_phase_XY[i] + 2.0);
+            end
+        elseif fieldname == "s_cp"
+            for i=1:np
+                field[i] = Out_XY[i].s_cp[1];
+            end
+        elseif fieldname == "Delta_rho"
+            for i=1:np
+                field[i] = 0.0
+                if (Out_XY[i].frac_M > 0.0 && Out_XY[i].frac_S > 0.0)
+                    field[i] = Out_XY[i].rho_S - Out_XY[i].rho_M
+                end
+            end
+        else
+            for i=1:np
+                field[i] = Float64(get_property(Out_XY[i], fieldname));
+            end
+
+            field[isnan.(field)] .= 0.0
+            if fieldname == "frac_M" || fieldname == "rho_M" || fieldname == "rho_S" || fieldname == "Delta_rho"
+                field[isless.(field, 1e-8)] .= 0.0              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
             end
         end
-    else
-        for i=1:np
-            field[i] = Float64(get_property(Out_XY[i], fieldname));
-        end
-
-        field[isnan.(field)] .= 0.0
-        if fieldname == "frac_M" || fieldname == "rho_M" || fieldname == "rho_S" || fieldname == "Delta_rho"
-            field[isless.(field, 1e-8)] .= 0.0              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
-        # elseif fieldname == "fO2" || fieldname == "dQFM"
-        #     field .= log10.(field)
-        end
     end
-
     n            = 2^(sub + refLvl)
     x            = range(minimum(xc), stop = maximum(xc), length = n)
     y            = range(minimum(yc), stop = maximum(yc), length = n)
@@ -1054,8 +1061,10 @@ end
     Function interpolate AMR grid to regular grid
 """
 function get_gridded_map_no_lbl(    fieldname   ::String,
+                                    type        ::String,
                                     oxi         ::Vector{String},
                                     Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
+                                    Out_TE_XY   ::Union{Nothing,Vector{MAGEMin_C.out_tepm}},
                                     Hash_XY     ::Vector{UInt64},
                                     sub         ::Int64,
                                     refLvl      ::Int64,
@@ -1070,7 +1079,7 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
     print("Interpolate data on grid ..."); t0 = time()
     np          = length(data.x)
     len_ox      = length(oxi)
-    field       = Vector{Union{Float64,Missing}}(undef,np);
+    field       = Vector{Union{Float64,Missing,Nothing}}(undef,np);
  
     npoints     = np
 
@@ -1080,40 +1089,47 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
     end
     meant      /= npoints
     meant       = round(meant; digits = 3)
+    if type == "te"
+        for i=1:np
+            field[i] = get_property(Out_TE_XY[i], fieldname);
+        end
 
-    if fieldname == "#Phases"
-        for i=1:np
-            field[i] = Float64(length(Out_XY[i].ph));
-        end
-    elseif fieldname == "Hash"
-        for i=1:np
-            field[i] = Hash_XY[i];
-        end 
-    elseif fieldname == "Variance"
-        for i=1:np
-            field[i] = Float64(len_ox - n_phase_XY[i] + 2.0);
-        end
-    elseif fieldname == "s_cp"
-        for i=1:np
-            field[i] = Out_XY[i].s_cp[1];
-        end
-    elseif fieldname == "Delta_rho"
-        for i=1:np
-            field[i] = 0.0
-            if (Out_XY[i].frac_M > 0.0 && Out_XY[i].frac_S > 0.0)
-                field[i] = Out_XY[i].rho_S - Out_XY[i].rho_M
-            end
-        end
+        field[isnothing.(field)] .= 0.0
     else
-        for i=1:np
-            field[i] = Float64(get_property(Out_XY[i], fieldname));
-        end
+        if fieldname == "#Phases"
+            for i=1:np
+                field[i] = Float64(length(Out_XY[i].ph));
+            end
+        elseif fieldname == "Hash"
+            for i=1:np
+                field[i] = Hash_XY[i];
+            end 
+        elseif fieldname == "Variance"
+            for i=1:np
+                field[i] = Float64(len_ox - n_phase_XY[i] + 2.0);
+            end
+        elseif fieldname == "s_cp"
+            for i=1:np
+                field[i] = Out_XY[i].s_cp[1];
+            end
+        elseif fieldname == "Delta_rho"
+            for i=1:np
+                field[i] = 0.0
+                if (Out_XY[i].frac_M > 0.0 && Out_XY[i].frac_S > 0.0)
+                    field[i] = Out_XY[i].rho_S - Out_XY[i].rho_M
+                end
+            end
+        else
+            for i=1:np
+                field[i] = Float64(get_property(Out_XY[i], fieldname));
+            end
 
-        field[isnan.(field)] .= 0.0
-        if fieldname == "frac_M" || fieldname == "rho_M" || fieldname == "rho_S"
-            field[isless.(field, 1e-8)] .= 0.0              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
-        # elseif fieldname == "fO2" || fieldname == "dQFM"
-        #     field .= log10.(field)
+            field[isnan.(field)] .= 0.0
+            if fieldname == "frac_M" || fieldname == "rho_M" || fieldname == "rho_S"
+                field[isless.(field, 1e-8)] .= 0.0              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
+            # elseif fieldname == "fO2" || fieldname == "dQFM"
+            #     field .= log10.(field)
+            end
         end
     end
 

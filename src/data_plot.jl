@@ -10,6 +10,17 @@ function diagram_plot()
             )
 end
 
+function diagram_plot_te()
+
+    fig = plot()
+
+    dcc_graph(
+                id          = "phase-diagram-te",
+                figure      = fig,
+            )
+end
+
+
 function PTX_frac_plot()
 
     fig =  plot(    Layout( height= 360 ))
@@ -98,3 +109,4 @@ function plot_diagram(data_plot,layout)
 
     return fig
 end
+
