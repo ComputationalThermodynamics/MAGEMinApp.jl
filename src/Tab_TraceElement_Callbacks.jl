@@ -1,6 +1,24 @@
 function Tab_TraceElement_Callbacks(app)
 
 
+    callback!(
+        app,
+        Output("show-zircon-id",            "style"),
+        Output("show-trace-element-id",     "style"),
+        Input("field-type-dropdown-te",     "value"),
+    ) do value
+  
+        if value == "zircon"
+            style   = Dict("display" => "block")
+            style2  = Dict("display" => "none")
+        else 
+            style   = Dict("display" => "none")
+            style2  = Dict("display" => "block")
+        end
+        return style, style2
+    end
+
+
     callback!(app,
         Output("show-grid-te",              "value"     ), 
         Output("show-full-grid-te",         "value"     ), 

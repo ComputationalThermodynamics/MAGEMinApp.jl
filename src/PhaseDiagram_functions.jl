@@ -362,8 +362,7 @@ function tepm_function( dtb         :: String,
 
     Out_TE_XY   = Vector{MAGEMin_C.out_tepm}(undef,np)
     TEvec       = Vector{Float64};
-
-    # KDs_dtb     = get_OL_KDs_database();
+    all_TE_ph   = []
 
     for i = 1:np
 
@@ -375,9 +374,17 @@ function tepm_function( dtb         :: String,
 
         Out_TE_XY[i]  = TE_prediction(TEvec,KDs_dtb, zrsat_mod,Out_XY[i],dtb);
 
+        if ~isnothing(Out_TE_XY[i].ph_TE)
+            for j in Out_TE_XY[i].ph_TE
+                if !(j in all_TE_ph)
+                    push!(all_TE_ph,string(j))
+                end
+            end
+        end
+
     end
 
-    return Out_TE_XY
+    return Out_TE_XY, all_TE_ph
 end
 
 

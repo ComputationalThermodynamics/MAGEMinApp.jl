@@ -290,7 +290,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             smooth                      = "best"
       
             # declare set of global variables needed to generate, refine and display phase diagrams
-            global fig, forest, data, Hash_XY, Out_XY, Out_TE_XY, n_phase_XY, field, gridded, gridded_info, X, Y, meant, npoints, PhasesLabels
+            global fig, forest, data, Hash_XY, Out_XY, Out_TE_XY, all_TE_ph, n_phase_XY, field, gridded, gridded_info, X, Y, meant, npoints, PhasesLabels
             global addedRefinementLvl   = 0;
             global n_lbl                = 0;
             global iso_show             = 1;
@@ -309,10 +309,10 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                             smooth,     colorm,     reverseColorMap,
                                                                             test,       refType                          )
             if tepm == "true"
-                t = @elapsed Out_TE_XY = tepm_function(     diagType, dtb,
-                                                            kds_mod, zrsat_mod, bulkte_L, bulkte_R)
+                t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
+                                                                    kds_mod, zrsat_mod, bulkte_L, bulkte_R)
 
-                println("Computed trace element partitioning in $t seconds")
+                println("Computed trace element partitioning in $t s")
             end
 
             infos           = get_computation_info(npoints, meant)
@@ -335,8 +335,8 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                         test,       refType                             )
 
             if tepm == "true"
-                t = @elapsed Out_TE_XY = tepm_function(     diagType, dtb,
-                                                            kds_mod, zrsat_mod, bulkte_L, bulkte_R)
+                t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
+                                                                    kds_mod, zrsat_mod, bulkte_L, bulkte_R)
 
                 println("Computed trace element partitioning in $t s")
             end

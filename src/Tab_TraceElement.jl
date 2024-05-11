@@ -70,7 +70,24 @@ function Tab_TraceElement()
                                 ]), 
                             ]),
 
-
+                            html_div("‎ "),
+                            html_h1("Selection", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                            dbc_row([
+                                dbc_col([ 
+                                    html_h1("Field type", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                ], width=5),
+                                dbc_col([
+                                    dcc_dropdown(   id      = "field-type-dropdown-te",
+                                                    options = [
+                                                        (label = "Zircon",              value = "zircon"            ),
+                                                        (label = "Trace element",       value = "trace-element"     ),
+                                                    ],
+                                                    value="zircon" ,
+                                                    clearable   = false,
+                                                    multi       = false),
+                                ]), 
+                            ]),
+                            html_div([
                             dbc_row([
                                 dbc_col([ 
                                     html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
@@ -87,7 +104,31 @@ function Tab_TraceElement()
                                                     multi       = false),
                                 ]), 
                             ]),
+                            ], style = Dict("display" => "block"), id      = "show-zircon-id"), #none, bloc
 
+                            html_div([
+                                dbc_row([
+                                    dbc_col([ 
+                                        html_h1("Variable builder", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                    ], width=5),
+                                    dbc_col([
+                                        dbc_input(
+                                            id      = "input-te-id",
+                                            type    = "text", 
+                                            value   = " s.Y "   ),
+                                    ]), 
+                                ]),
+                                dbc_row([
+                                    dbc_button(
+                                        "Compute and display", id="compute-display-te", color="light", className="me-2", n_clicks=0,
+                                        style       = Dict( "textAlign"     => "center",
+                                                            "font-size"     => "100%",
+                                                            "border"        =>"2px grey solid")), 
+                                ]),
+                            ], style = Dict("display" => "none"), id      = "show-trace-element-id"), #none, bloc
+
+                            html_div("‎ "),
+                            html_h1("Color options", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                             dbc_row([
                                     dbc_col([ 
                                         html_h1("Colormap", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
