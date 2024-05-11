@@ -140,7 +140,21 @@ function Tab_PhaseDiagram()
                                             dcc_download(id="download-all-table-text"),  
                                         ]),
                                     ]),
-
+                                    dbc_row([
+                                        dbc_alert(
+                                            "Successfully saved all data points information",
+                                            id      ="data-all-table-save",
+                                            is_open =false,
+                                            duration=4000,
+                                        ),
+                                        dbc_alert(
+                                            "Provide a valid filename (without extension)",
+                                            color="danger",
+                                            id      ="data-all-save-table-failed",
+                                            is_open =false,
+                                            duration=4000,
+                                        ),
+                                    ]),
                                     html_div("‎ "),
                                     dbc_row([
                                         dbc_col([
@@ -166,7 +180,7 @@ function Tab_PhaseDiagram()
 
                                     dbc_row([
                                         dbc_alert(
-                                            "Successfully saved all data points information",
+                                            "Successfully saved references",
                                             id      ="export-citation-save",
                                             is_open =false,
                                             duration=4000,
