@@ -838,6 +838,7 @@ function  update_diplayed_field_phaseDiagram(   xtitle,     ytitle,
 
     gridded, X, Y, npoints, meant = get_gridded_map_no_lbl(     fieldname,
                                                                 "major",
+                                                                "none",
                                                                 oxi,
                                                                 Out_XY,
                                                                 nothing,

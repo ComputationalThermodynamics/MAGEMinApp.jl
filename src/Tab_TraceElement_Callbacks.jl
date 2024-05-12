@@ -5,17 +5,26 @@ function Tab_TraceElement_Callbacks(app)
         app,
         Output("show-zircon-id",            "style"),
         Output("show-trace-element-id",     "style"),
+        Output("phase-te-info-id",          "children"), 
         Input("field-type-dropdown-te",     "value"),
     ) do value
-  
-        if value == "zircon"
+    
+        if @isdefined(all_TE_ph)
+             tmp = join(all_TE_ph, " ")
+
+             phase_te_list = "**"*tmp*"**"
+        else
+            phase_te_list = " "
+        end
+
+        if value == "zr"
             style   = Dict("display" => "block")
             style2  = Dict("display" => "none")
         else 
             style   = Dict("display" => "none")
             style2  = Dict("display" => "block")
         end
-        return style, style2
+        return style, style2, phase_te_list
     end
 
 
@@ -24,8 +33,11 @@ function Tab_TraceElement_Callbacks(app)
         Output("show-full-grid-te",         "value"     ), 
         Output("phase-diagram-te",          "figure"    ),
         Output("phase-diagram-te",          "config"    ),
+        Output("field-type-dropdown-te",    "value"     ),
+
         Input("load-button-te",             "n_clicks"  ),
-        Input("fields-dropdown-te",         "value"     ),
+        Input("compute-display-te",         "n_clicks"  ),
+        Input("fields-dropdown-zr",         "value"     ),
 
         Input("show-grid-te",               "value"     ), 
         Input("show-full-grid-te",          "value"     ), 
@@ -36,10 +48,12 @@ function Tab_TraceElement_Callbacks(app)
         Input("range-slider-color-te",      "value"     ),
         Input("reverse-colormap-te",        "value"     ),
         Input("update-title-button",        "n_clicks"  ),
+    
         State("title-id",                   "value"     ),
-
         State("tepm-dropdown",              "value"     ),
-
+        State("input-te-id",                "value"     ),
+        State("field-type-dropdown-te",     "value"     ),
+        
         State("database-dropdown",      "value"),           # mp, mb, ig ,igd, um, alk
         State("diagram-dropdown",       "value"),           # pt, px, tx
         State("tmin-id",                "value"),           # tmin
@@ -64,10 +78,10 @@ function Tab_TraceElement_Callbacks(app)
 
         prevent_initial_call = true,
 
-        ) do    n,          fieldname,  
+        ) do    n,          n2,         fieldname,  
                 grid,       full_grid,  lbl, 
                 colorMap,   smooth,     rangeColor, reverse,
-                updateTitle,customTitle,tepm,
+                updateTitle,customTitle,tepm,       varBuilder, type,
                 dtb,        diagType,   tmin,       tmax,       pmin,       pmax,
                 bulk1,      bulk2,
                 sub,        refType,    refLvl,
@@ -79,15 +93,17 @@ function Tab_TraceElement_Callbacks(app)
         bid                             = pushed_button( callback_context() )                           # get the ID of the last pushed button
         fieldNames                      = ["data_plot_te","data_reaction","data_grid"]
         field2plot                      = zeros(Int64,3)
+        fieldType                       = type
 
         field2plot[1]    = 1
         if bid == "load-button-te"
+            fieldType = "zr"
             global gridded_te, gridded_info_te, X_te, Y_te, npoints_te, meant_te
             global layout_te, n_lbl, addedRefinementLvl
             global data_plot_te,  data_reaction_te, data_grid_te, PT_infos_te 
 
             gridded_te, gridded_info_te, X_te, Y_te, npoints_te, meant_te = get_gridded_map(    fieldname,
-                                                                                                "te",
+                                                                                                "zr",
                                                                                                 oxi,
                                                                                                 Out_XY,
                                                                                                 Out_TE_XY,
@@ -200,14 +216,20 @@ function Tab_TraceElement_Callbacks(app)
 
         elseif bid == "colormaps_cross-te" || bid == "smooth-colormap-te" || bid == "range-slider-color-te" || bid == "reverse-colormap-te"
 
-            data_plot_te, layout_te =  update_colormap_phaseDiagram_te(     xtitle,     ytitle,     
+            data_plot_te, layout_te =  update_colormap_phaseDiagram_te(     xtitle,     ytitle,     type,               varBuilder,   
                                                                             Xrange,     Yrange,     fieldname,
                                                                             dtb,        diagType,
                                                                             smooth,     colorm,     reverseColorMap                                                   )
+        elseif bid == "compute-display-te"
 
-        elseif bid == "fields-dropdown-te"
+            data_plot_te, layout_te =  update_diplayed_field_phaseDiagram_te(   xtitle,     ytitle,     "te",                  varBuilder,
+                                                                                Xrange,     Yrange,     fieldname,
+                                                                                dtb,        oxi,
+                                                                                sub,        refLvl,
+                                                                                smooth,     colorm,     reverseColorMap,       refType                                 )
+        elseif bid == "fields-dropdown-zr"
 
-            data_plot_te, layout_te =  update_diplayed_field_phaseDiagram_te(   xtitle,     ytitle,     
+            data_plot_te, layout_te =  update_diplayed_field_phaseDiagram_te(   xtitle,     ytitle,     "zr",                  varBuilder,
                                                                                 Xrange,     Yrange,     fieldname,
                                                                                 dtb,        oxi,
                                                                                 sub,        refLvl,
@@ -273,7 +295,7 @@ function Tab_TraceElement_Callbacks(app)
                                                                     scale    =  2.0,       ).fields)
 
         
-        return grid, full_grid, fig_te, config
+        return grid, full_grid, fig_te, config, fieldType
             
     end
 

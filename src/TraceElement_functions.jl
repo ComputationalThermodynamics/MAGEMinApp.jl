@@ -8,11 +8,15 @@
                                                 test                                  )
     Updates the colormap configuration of the phase diagram
 """
-function update_colormap_phaseDiagram_te(       xtitle,     ytitle,     
-                                                Xrange,     Yrange,     fieldname,
+function update_colormap_phaseDiagram_te(       xtitle,     ytitle,     type,       varBuilder,
+                                                Xrange,     Yrange,     fieldname, 
                                                 dtb,        diagType,
                                                 smooth,     colorm,     reverseColorMap)
     global PT_infos_te, layout_te
+
+    if type == "te"
+        fieldname = varBuilder
+    end
 
     data_plot_te[1] = heatmap(  x               =  X_te,
                                 y               =  Y_te,
@@ -44,7 +48,7 @@ end
                                                     test                                  )
     Updates the field displayed
 """
-function  update_diplayed_field_phaseDiagram_te(    xtitle,     ytitle,     
+function  update_diplayed_field_phaseDiagram_te(    xtitle,     ytitle,     type,                  varBuilder,
                                                     Xrange,     Yrange,     fieldname,
                                                     dtb,        oxi,
                                                     sub,        refLvl,
@@ -52,8 +56,9 @@ function  update_diplayed_field_phaseDiagram_te(    xtitle,     ytitle,
 
     global data, Out_XY, Out_TE_XY, data_plot_te, gridded_te, gridded_info_te, X_te, Y_te, PhasesLabels, addedRefinementLvl, PT_infos_te, layout_te
 
-    gridded_te, X_te, Y_te, npoints, meant = get_gridded_map_no_lbl(     fieldname,
-                                                                        "te",
+    gridded_te, X_te, Y_te, npoints, meant = get_gridded_map_no_lbl(    fieldname,
+                                                                        type,
+                                                                        varBuilder,
                                                                         oxi,
                                                                         Out_XY,
                                                                         Out_TE_XY,
@@ -68,7 +73,10 @@ function  update_diplayed_field_phaseDiagram_te(    xtitle,     ytitle,
                                                                         Xrange,
                                                                         Yrange )
 
-
+    if type == "te"
+        fieldname = varBuilder
+    end
+    
     data_plot_te[1] = heatmap(  x               = X_te,
                                 y               = Y_te,
                                 z               = gridded_te,

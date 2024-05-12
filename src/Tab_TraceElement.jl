@@ -79,10 +79,10 @@ function Tab_TraceElement()
                                 dbc_col([
                                     dcc_dropdown(   id      = "field-type-dropdown-te",
                                                     options = [
-                                                        (label = "Zircon",              value = "zircon"            ),
-                                                        (label = "Trace element",       value = "trace-element"     ),
+                                                        (label = "Zircon",              value = "zr"     ),
+                                                        (label = "Trace element",       value = "te"     ),
                                                     ],
-                                                    value="zircon" ,
+                                                    value="zr" ,
                                                     clearable   = false,
                                                     multi       = false),
                                 ]), 
@@ -93,7 +93,7 @@ function Tab_TraceElement()
                                     html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                 ], width=5),
                                 dbc_col([
-                                    dcc_dropdown(   id      = "fields-dropdown-te",
+                                    dcc_dropdown(   id      = "fields-dropdown-zr",
                                                     options = [
                                                         (label = "Sat_zr_liq",              value = "Sat_zr_liq"    ),
                                                         (label = "Cliq_Zr",                 value = "Cliq_Zr"       ),
@@ -107,15 +107,27 @@ function Tab_TraceElement()
                             ], style = Dict("display" => "block"), id      = "show-zircon-id"), #none, bloc
 
                             html_div([
+
+                                dbc_row([
+                                    html_h1("Available phases", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                ]),
+                                dbc_row([
+                                    dbc_card([
+                                        dcc_markdown(   id          = "phase-te-info-id", 
+                                                        children    = "",
+                                                        style       = Dict("white-space" => "pre"))
+                                    ])
+                                ]),
+
                                 dbc_row([
                                     dbc_col([ 
-                                        html_h1("Variable builder", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                        html_h1("Field builder", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                     ], width=5),
                                     dbc_col([
                                         dbc_input(
                                             id      = "input-te-id",
                                             type    = "text", 
-                                            value   = " s.Y "   ),
+                                            value   = "M_Dy / M_Yb"   ),
                                     ]), 
                                 ]),
                                 dbc_row([

@@ -982,7 +982,7 @@ function get_gridded_map(   fieldname   ::String,
     meant      /= npoints
     meant       = round(meant; digits = 3)
 
-    if type == "te"
+    if type == "zr"
         for i=1:np
             field[i] = get_property(Out_TE_XY[i], fieldname);
         end
@@ -1057,11 +1057,84 @@ function get_gridded_map(   fieldname   ::String,
 end
 
 
+
+"""
+    parse use input
+"""
+function get_parsed_command(    point       :: Int64;
+                                varBuilder  :: String = "M_Dy / M_Yb")
+
+    if ~isnothing(Out_TE_XY[point].Cliq)
+        terms       = split(varBuilder)
+        terms_out   = copy(terms)
+        idx         = 1
+
+        for i in terms
+            term2   = split(i,"_")
+            nsubs   = length(term2)
+            if nsubs == 2
+                if (term2[1] == "S")
+                    part1 = "Out_TE_XY["*string(point)*"].Csol"
+                    id_el = findfirst(Out_TE_XY[point].elements  .== term2[2])
+                    if isnothing(id_el)
+                        part1, part2 = "break", "break"
+                        print("wrong element name!\n")
+                    else
+                        part2 = "["*string(id_el)*"]"
+                    end
+                elseif (term2[1] == "M")
+                    part1 = "Out_TE_XY["*string(point)*"].Cliq"
+                    id_el = findfirst(Out_TE_XY[point].elements  .== term2[2])
+                    if isnothing(id_el)
+                        part1, part2 = "break", "break"
+                        print("wrong element name!\n")
+                    else
+                        part2 = "["*string(id_el)*"]"
+                    end
+                else
+                    id = findfirst(Out_TE_XY[point].ph_TE .== term2[1])
+                    if isnothing(id)
+                        part1, part2 = "break", "break"
+                    else
+                        part1 = "Out_TE_XY["*string(point)*"].Cmin"
+                        id_el = findfirst(Out_TE_XY[point].elements  .== term2[2])
+                        if isnothing(id_el)
+                            part1, part2 = "break", "break"
+                            print("wrong element name!\n")
+                        else
+                            part2 = "["*string(id)*","*string(id_el)*"]"
+                        end
+                    end
+                end
+        
+                if part1 == "break" || part2 == "break"
+                    terms_out[idx] = "NaN"
+                else
+                    terms_out[idx] = part1*part2
+                end
+            elseif nsubs > 2
+                print("something is fishy, check that spaces are correctly placed\n")
+                break;
+            end
+            idx += 1
+        end
+
+        cat     = join(string.(terms_out))
+    else
+        cat = "NaN"
+    end
+
+    command = Meta.parse(cat)
+
+    return command
+end
+
 """
     Function interpolate AMR grid to regular grid
 """
 function get_gridded_map_no_lbl(    fieldname   ::String,
                                     type        ::String,
+                                    varBuilder  ::String,
                                     oxi         ::Vector{String},
                                     Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
                                     Out_TE_XY   ::Union{Nothing,Vector{MAGEMin_C.out_tepm}},
@@ -1089,12 +1162,19 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
     end
     meant      /= npoints
     meant       = round(meant; digits = 3)
-    if type == "te"
+    if type == "zr"
         for i=1:np
             field[i] = get_property(Out_TE_XY[i], fieldname);
         end
 
         field[isnothing.(field)] .= 0.0
+    elseif type == "te"
+        global i
+        for i=1:np
+            cmd = get_parsed_command( i;  varBuilder) 
+            field[i] = eval(cmd)
+        end
+        field[isnan.(field)] .= 0.0
     else
         if fieldname == "#Phases"
             for i=1:np
@@ -1127,8 +1207,6 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
             field[isnan.(field)] .= 0.0
             if fieldname == "frac_M" || fieldname == "rho_M" || fieldname == "rho_S"
                 field[isless.(field, 1e-8)] .= 0.0              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
-            # elseif fieldname == "fO2" || fieldname == "dQFM"
-            #     field .= log10.(field)
             end
         end
     end
@@ -1202,8 +1280,6 @@ function get_isopleth_map(  mod         ::String,
         field[isnan.(field)] .= missing
         if of == "frac_M" || of == "rho_M" || of == "rho_S"
             field[isless.(field, 1e-8)] .= 0.0              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
-        # elseif of == "fO2" || of == "dQFM"
-        #     field .= log10.(field)
         end 
     end
 
