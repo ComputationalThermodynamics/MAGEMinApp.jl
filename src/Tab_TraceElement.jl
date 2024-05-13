@@ -9,7 +9,7 @@ function Tab_TraceElement()
                 dbc_col([  
                     dbc_row([
 
-                    dbc_button("Display options",id="display-options-te-button"),
+                    dbc_button("General options",id="display-options-te-button"),
                     dbc_collapse(
                         dbc_card(dbc_cardbody([
                                 dbc_row([
@@ -18,6 +18,83 @@ function Tab_TraceElement()
                                         style       = Dict( "textAlign"     => "center",
                                                             "font-size"     => "100%",
                                                             "border"        =>"2px grey solid")), 
+                                ]),
+
+                                html_div("‎ "),
+                                dbc_row([
+                                    dbc_col([
+                                        html_h1("Save all", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                    ], width=3),
+                                    dbc_col([ 
+                                        dbc_input(
+                                            id      = "Filename-all-id-te",
+                                            type    = "text", 
+                                            style   = Dict("textAlign" => "center") ,
+                                            value   = "filename"   ),     
+                                    ], width=4),
+                                    dbc_col([    
+                                        dbc_button("csv file", id="save-all-table-button-te", color="light",  n_clicks=0,
+                                        style       = Dict( "textAlign"     => "center",
+                                                            "font-size"     => "100%",
+                                                            "border"        =>"2px grey solid")), 
+                                        dbc_tooltip([
+                                            html_div("Saving all data takes time and depends on the number of points"),
+                                            html_div("Output path and progress are displayed in the Julia terminal")],target="save-all-table-button"),
+                                        dcc_download(id="download-all-table-text-te"),  
+                                    ]),
+                                ]),
+                                dbc_row([
+                                    dbc_alert(
+                                        "Successfully saved all data points information",
+                                        id      ="data-all-table-save-te",
+                                        is_open =false,
+                                        duration=4000,
+                                    ),
+                                    dbc_alert(
+                                        "Provide a valid filename (without extension)",
+                                        color="danger",
+                                        id      ="data-all-save-table-failed-te",
+                                        is_open =false,
+                                        duration=4000,
+                                    ),
+                                ]),
+                                html_div("‎ "),
+                                dbc_row([
+                                    dbc_col([
+                                        html_h1("Export references", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 0)),    
+                                    ], width=3),
+                                    dbc_col([ 
+                                        dbc_input(
+                                            id      = "export-citation-id-te",
+                                            type    = "text", 
+                                            style   = Dict("textAlign" => "center") ,
+                                            value   = "filename"   ),     
+                                    ], width=4),
+                                    dbc_col([    
+                                        dbc_button("bibtex file", id="export-citation-button-te", color="light",  n_clicks=0,
+                                        style       = Dict( "textAlign"     => "center",
+                                                            "font-size"     => "100%",
+                                                            "border"        =>"2px grey solid")), 
+                                        dbc_tooltip([
+                                            html_div("Saving list of citation for the computed phase diagram"),
+                                            html_div("Output path and progress are displayed in the Julia terminal")],target="export-citation-button-te"),
+                                    ]),
+                                ]),
+
+                                dbc_row([
+                                    dbc_alert(
+                                        "Successfully saved references",
+                                        id      ="export-citation-save-te",
+                                        is_open =false,
+                                        duration=4000,
+                                    ),
+                                    dbc_alert(
+                                        "Provide a valid filename (without extension)",
+                                        color="danger",
+                                        id      ="export-citation-failed-te",
+                                        is_open =false,
+                                        duration=4000,
+                                    ),
                                 ]),
 
                             ])),

@@ -300,6 +300,75 @@ function Tab_TraceElement_Callbacks(app)
     end
 
 
+    #save all table to file
+    callback!(
+        app,
+        # Output("download-all-table-text", "data"),
+        Output("data-all-table-save-te", "is_open"),
+        Output("data-all-save-table-failed-te", "is_open"),
+        Input("save-all-table-button-te", "n_clicks"),
+        State("Filename-all-id-te", "value"),
+        State("database-dropdown","value"),
+        State("kds-dropdown","value"),
+        State("zrsat-dropdown","value"),
+    
+        prevent_initial_call=true,
+    ) do n_clicks, fname, dtb, kds, zrsat
+
+        if fname != "filename"
+            datab   = "_"*dtb*"_"*kds*"_"*zrsat
+            fileout = fname*datab
+
+            MAGEMin_dataTE2dataframe(Out_XY,Out_TE_XY,dtb,fileout)
+            return "success", ""
+        else
+            return  "", "failed"
+        end
+    end
+
+
+
+    #save references to bibtex
+    callback!(
+        app,
+        Output("export-citation-save-te", "is_open"),
+        Output("export-citation-failed-te", "is_open"),
+        Input("export-citation-button-te", "n_clicks"),
+        State("export-citation-id-te", "value"),
+        State("kds-dropdown","value"),
+        State("zrsat-dropdown","value"),
+
+        prevent_initial_call=true,
+
+    ) do n_clicks, fname, kds, zrc
+
+        if fname != "filename"
+            output_bib      = "_"*kds*".bib"
+            fileout         = fname*output_bib
+            magemin         = "MAGEMin"
+            bib             = import_bibtex("./references/references.bib")
+            
+            print("\nSaving references for computed trace-element diagram\n")
+            print("output path: $(pwd())\n")
+
+            n_ref           = length(bib.keys)
+
+            id_zrc          = findfirst(bib[bib.keys[i]].fields["info"] .== zrc for i=1:n_ref)
+            id_kds          = findfirst(bib[bib.keys[i]].fields["info"] .== kds for i=1:n_ref)
+            id_magemin      = findfirst(bib[bib.keys[i]].fields["info"] .== magemin for i=1:n_ref)
+            
+            selection       = [bib.keys[id_kds], bib.keys[id_zrc],bib.keys[id_magemin]]
+            selected_bib    = Bibliography.select(bib, selection)
+            
+            export_bibtex(fileout, selected_bib)
+
+            return "success", ""
+        else
+            return  "", "failed"
+        end
+    end
+
+
 
     callback!(app,
         Output("collapse-opt-te", "is_open"),
