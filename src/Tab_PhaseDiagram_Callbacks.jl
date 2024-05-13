@@ -309,10 +309,14 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                             smooth,     colorm,     reverseColorMap,
                                                                             test,       refType                          )
             if tepm == "true"
-                t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
-                                                                    kds_mod, zrsat_mod, bulkte_L, bulkte_R)
+                if dtb != "um"
+                    t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
+                                                                        kds_mod, zrsat_mod, bulkte_L, bulkte_R)
 
-                println("Computed trace element partitioning in $t s")
+                    println("Computed trace element partitioning in $t s")
+                else
+                    println("Cannot compute trace-element partitioning for $dtb database as it does not include a melt model\n")
+                end
             end
 
             infos           = get_computation_info(npoints, meant)
@@ -335,10 +339,14 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                         test,       refType                             )
 
             if tepm == "true"
-                t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
-                                                                    kds_mod, zrsat_mod, bulkte_L, bulkte_R)
+                if dtb != "um"
+                    t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
+                                                                        kds_mod, zrsat_mod, bulkte_L, bulkte_R)
 
-                println("Computed trace element partitioning in $t s")
+                    println("Computed trace element partitioning in $t s")
+                else
+                    println("Cannot compute trace-element partitioning for $dtb database as it does not include a melt model\n")
+                end
             end
 
             infos           = get_computation_info(npoints, meant)
