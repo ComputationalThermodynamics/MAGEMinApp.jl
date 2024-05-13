@@ -304,11 +304,11 @@ function Tab_Simulation_Callbacks(app)
 
     callback!(
         app,
-        Output("output-te-uploadn", "is_open"),
-        Output("output-te-uploadn-failed", "is_open"),
-        Input("upload-te",          "contents"),
-        State("upload-te",          "filename"),
-        State("kds-dropdown",       "value"),
+        Output("output-te-uploadn",         "is_open"),
+        Output("output-te-uploadn-failed",  "is_open"),
+        Input("upload-te",                  "contents"),
+        State("upload-te",                  "filename"),
+        State("kds-dropdown",               "value"),
         prevent_initial_call=true,
     ) do contents, filename, kdsDB
 

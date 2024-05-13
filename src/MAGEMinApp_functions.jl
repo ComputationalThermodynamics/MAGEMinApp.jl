@@ -1396,7 +1396,6 @@ function bulk_file_to_db(datain)
 
         oxide                   = get_oxide_list(String(dbin))
 
-
         push!(db,Dict(  :bulk       => bulk,
                         :title      => title,
                         :comments   => comments,
@@ -1429,77 +1428,6 @@ function parse_bulk_rock(contents, filename)
   end
 
 
-
-
-"""
-  function to parse bulk-te composition file
-"""
-function te_bulk_file_to_db(datain,kdsDB)
-
-    global dbte;
-
-    dbte = db[(db.bulk .== "predefined"), :];
-
-    for i=2:size(datain,1)
-        bulk   	    = "custom";
-
-        idx 		= findall(datain[1,:] .== "title")[1];
-        title   	= string(datain[i,idx]);
-
-        idx 		= findall(datain[1,:] .== "comments")[1];
-        comments    = string(datain[i,idx]);
-
-        test 		= length(db[(db.db .== dbin), :].test);
-
-        idx 		= findall(datain[1,:] .== "elements")[1];
-        elements    = rsplit(datain[i,idx],",");
-        elements 	= strip.(convert.(String,oxide));
-        elements 	= replace.(elements,r"\]"=>"",r"\["=>"");
-
-        idx 		= findall(datain[1,:] .== "frac")[1];
-        frac   	    = rsplit(datain[i,idx],",");
-        frac 		= strip.(convert.(String,frac));
-        frac 		= replace.(frac,r"\]"=>"",r"\["=>"");
-        frac 		= parse.(Float64,frac);
-
-        if kdsDB == "OL"
-            KDs_dtb = get_OL_KDs_database();    #has to take into account possible other Kds database
-        else
-            print("Kd's database $kdsDB not implemented\n")
-        end
-
-        elements    = KDs_dtb.element_name
-
-        bulkte      = adjust_chemical_system(    KDs_dtb,frac,elements);
-        bulkte     .= round.(bulkte; digits = 4)
-
-        idx 		= findall(datain[1,:] .== "frac2")[1];
-        if ~isempty(datain[i,idx])
-            frac2  		= rsplit(datain[i,idx],",");
-            frac2 		= strip.(convert.(String,frac2));
-            frac2 		= replace.(frac2,r"\]"=>"",r"\["=>"");
-            frac2		= parse.(Float64,frac2);
-            bulkte2     = adjust_chemical_system(    KDs_dtb,frac2,elements);
-            bulkte2    .= round.(bulkte2; digits = 4)
-        else
-            bulkte2     = deepcopy(bulkte)
-        end
-
-
-        push!(dbte,Dict(    :composition    => bulk,
-                            :title          => title,
-                            :comments       => comments,
-                            :test           => test,
-                            :elements       => elements,
-                            :μg_g           => bulkte,
-                            :μg_g2          => bulkte2,
-                    ), cols=:union)
-    end
-
-end
-
-
-
   function parse_bulk_te(contents, filename, kdsDB)
     try
         content_type, content_string = split(contents, ',');
@@ -1515,4 +1443,74 @@ end
     end
 
   end
+
+"""
+  function to parse bulk-te composition file
+"""
+function te_bulk_file_to_db(datain, kdsDB)
+
+    global dbte;
+
+    dbte = dbte[(dbte.composition .== "predefined"), :];
+
+    if kdsDB == "OL"
+        KDs_dtb = get_OL_KDs_database();    #has to take into account possible other Kds database
+    else
+        print("Kd's database $kdsDB not implemented\n")
+    end
+
+    for i=2:size(datain, 1)
+        composition = "custom";
+
+        idx 		= findall(datain[1,:] .== "title")[1];
+        title   	= string(datain[i,idx]);
+
+        idx 		= findall(datain[1,:] .== "comments")[1];
+        comments    = string(datain[i,idx]);
+
+        test 		= length(dbte.test);
+
+        idx 		= findall(datain[1,:] .== "elements")[1];
+        elements    = rsplit(datain[i,idx],",");
+        elements 	= strip.(convert.(String,elements));
+        elements 	= replace.(elements,r"\]"=>"",r"\["=>"");
+
+        idx 		= findall(datain[1,:] .== "frac")[1];
+        frac   	    = rsplit(datain[i,idx],",");
+        frac 		= strip.(convert.(String,frac));
+        frac 		= replace.(frac,r"\]"=>"",r"\["=>"");
+        frac 		= parse.(Float64,frac);
+
+        bulkte      = adjust_chemical_system( KDs_dtb, frac, elements);
+        bulkte     .= round.(bulkte; digits = 4)
+
+        idx 		= findall(datain[1,:] .== "frac2")[1];
+        if ~isempty(datain[i,idx])
+            frac2  		= rsplit(datain[i,idx],",");
+            frac2 		= strip.(convert.(String,frac2));
+            frac2 		= replace.(frac2,r"\]"=>"",r"\["=>"");
+            frac2		= parse.(Float64,frac2);
+            bulkte2     = adjust_chemical_system( KDs_dtb, frac2, elements);
+            bulkte2    .= round.(bulkte2; digits = 4)
+        else
+            bulkte2     = deepcopy(bulkte)
+        end
+
+        elements    = KDs_dtb.element_name
+
+        push!(dbte,Dict(    :composition    => composition,
+                            :title          => title,
+                            :comments       => comments,
+                            :test           => test,
+                            :elements       => elements,
+                            :μg_g           => bulkte,
+                            :μg_g2          => bulkte2,
+                    ), cols=:union)
+    end
+
+end
+
+
+
+
 
