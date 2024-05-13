@@ -1342,7 +1342,7 @@ function get_oxide_list(dbin::String)
 end
 
 """
-    function to parce bulk-rock composition file
+    function to parse bulk-rock composition file
 """
 function bulk_file_to_db(datain)
 
@@ -1427,3 +1427,93 @@ function parse_bulk_rock(contents, filename)
     end
 
   end
+
+
+
+
+"""
+  function to parse bulk-te composition file
+"""
+function te_bulk_file_to_db(datain)
+
+  global dbte;
+  
+  dbte = db[(db.bulk .== "predefined"), :];
+
+#   for i=2:size(datain,1)
+#       bulk   		= "custom";
+
+#       idx 		= findall(datain[1,:] .== "title")[1];
+#       title   	= string(datain[i,idx]);
+
+#       idx 		= findall(datain[1,:] .== "comments")[1];
+#       comments   	= string(datain[i,idx]);
+
+#       idx 		= findall(datain[1,:] .== "db")[1];
+#       dbin   		= datain[i,idx];
+
+#       test 		= length(db[(db.db .== dbin), :].test);
+
+#       idx 		= findall(datain[1,:] .== "sysUnit")[1];
+#       sysUnit   	= datain[i,idx];
+
+#       idx 		= findall(datain[1,:] .== "oxide")[1];
+#       oxide   	= rsplit(datain[i,idx],",");
+#       oxide 		= strip.(convert.(String,oxide));
+#       oxide 		= replace.(oxide,r"\]"=>"",r"\["=>"");
+
+#       idx 		= findall(datain[1,:] .== "frac")[1];
+#       frac   		= rsplit(datain[i,idx],",");
+#       frac 		= strip.(convert.(String,frac));
+#       frac 		= replace.(frac,r"\]"=>"",r"\["=>"");
+#       frac 		= parse.(Float64,frac);
+
+#       idx 		= findall(datain[1,:] .== "frac2")[1];
+#       bulkrock, MAGEMin_ox    = convertBulk4MAGEMin(frac,oxide,String(sysUnit),String(dbin)) 
+#       bulkrock   .= round.(bulkrock; digits = 4)
+
+
+#       if ~isempty(datain[i,idx])
+#           frac2  		= rsplit(datain[i,idx],",");
+#           frac2 		= strip.(convert.(String,frac2));
+#           frac2 		= replace.(frac2,r"\]"=>"",r"\["=>"");
+#           frac2		= parse.(Float64,frac2);
+#           bulkrock2, MAGEMin_ox   = convertBulk4MAGEMin(frac2,oxide,String(sysUnit),String(dbin)) 
+#           bulkrock2  .= round.(bulkrock2; digits = 4)
+#       else
+#           bulkrock2   = deepcopy(bulkrock)
+#       end
+
+#       oxide                   = get_oxide_list(String(dbin))
+
+
+      push!(dbte,Dict(  :composition    => bulk,
+                        :title          => title,
+                        :comments       => comments,
+                        :test           => test,
+                        :elements       => oxide,
+                        :μg_g           => bulkrock,
+                        :μg_g2          => bulkrock2,
+                    ), cols=:union)
+  end
+
+end
+
+
+
+  function parse_bulk_te(contents, filename)
+    try
+        content_type, content_string = split(contents, ',');
+        decoded = base64decode(content_string);
+        input   = String(decoded) ;
+        datain  = strip.(string.(readdlm(IOBuffer(input), ';', comments=true, comment_char='#')));
+
+        te_bulk_file_to_db(datain);
+
+        return 1
+    catch e
+        return 0
+    end
+
+  end
+

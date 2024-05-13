@@ -302,6 +302,25 @@ function Tab_Simulation_Callbacks(app)
     end
 
 
+    callback!(
+        app,
+        Output("output-te-uploadn", "is_open"),
+        Output("output-te-uploadn-failed", "is_open"),
+        Input("upload-te", "contents"),
+        State("upload-te", "filename"),
+        prevent_initial_call=true,
+    ) do contents, filename
+
+        if !(contents isa Nothing)
+            status = parse_bulk_te(contents, filename)
+            if status == 1
+                return "success", ""
+            else
+                return "", "failed"
+            end
+        end
+    end
+
 
     callback!(
         app,
