@@ -306,13 +306,14 @@ function Tab_Simulation_Callbacks(app)
         app,
         Output("output-te-uploadn", "is_open"),
         Output("output-te-uploadn-failed", "is_open"),
-        Input("upload-te", "contents"),
-        State("upload-te", "filename"),
+        Input("upload-te",          "contents"),
+        State("upload-te",          "filename"),
+        State("kds-dropdown",       "value"),
         prevent_initial_call=true,
-    ) do contents, filename
+    ) do contents, filename, kdsDB
 
         if !(contents isa Nothing)
-            status = parse_bulk_te(contents, filename)
+            status = parse_bulk_te(contents, filename, kdsDB)
             if status == 1
                 return "success", ""
             else
