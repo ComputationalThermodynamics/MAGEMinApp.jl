@@ -1441,7 +1441,7 @@ function te_bulk_file_to_db(datain,kdsDB)
     dbte = db[(db.bulk .== "predefined"), :];
 
     for i=2:size(datain,1)
-        bulk   	= "custom";
+        bulk   	    = "custom";
 
         idx 		= findall(datain[1,:] .== "title")[1];
         title   	= string(datain[i,idx]);
@@ -1463,13 +1463,15 @@ function te_bulk_file_to_db(datain,kdsDB)
         frac 		= parse.(Float64,frac);
 
         if kdsDB == "OL"
-            KDs_dtb   = get_OL_KDs_database();    #has to take into account possible other Kds database
+            KDs_dtb = get_OL_KDs_database();    #has to take into account possible other Kds database
         else
             print("Kd's database $kdsDB not implemented\n")
         end
 
-        bulkte    = adjust_chemical_system(    KDs_dtb,frac,elements);
-        bulkte   .= round.(bulkte; digits = 4)
+        elements    = KDs_dtb.element_name
+
+        bulkte      = adjust_chemical_system(    KDs_dtb,frac,elements);
+        bulkte     .= round.(bulkte; digits = 4)
 
         idx 		= findall(datain[1,:] .== "frac2")[1];
         if ~isempty(datain[i,idx])
@@ -1478,21 +1480,19 @@ function te_bulk_file_to_db(datain,kdsDB)
             frac2 		= replace.(frac2,r"\]"=>"",r"\["=>"");
             frac2		= parse.(Float64,frac2);
             bulkte2     = adjust_chemical_system(    KDs_dtb,frac2,elements);
-            bulkte2    .= round.(bulkte; digits = 4)
+            bulkte2    .= round.(bulkte2; digits = 4)
         else
-            bulkte2     = deepcopy(bulkte2)
+            bulkte2     = deepcopy(bulkte)
         end
 
-        elements        = KDs_dtb.element_name
 
-
-        push!(dbte,Dict(  :composition    => bulk,
-                        :title          => title,
-                        :comments       => comments,
-                        :test           => test,
-                        :elements       => elements,
-                        :μg_g           => bulkte,
-                        :μg_g2          => bulkte2,
+        push!(dbte,Dict(    :composition    => bulk,
+                            :title          => title,
+                            :comments       => comments,
+                            :test           => test,
+                            :elements       => elements,
+                            :μg_g           => bulkte,
+                            :μg_g2          => bulkte2,
                     ), cols=:union)
     end
 
