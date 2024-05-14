@@ -1,30 +1,58 @@
 """
     Retrieve layout for rare earth elements figure
 """
-function get_layout_ree(customTitle)
+function get_layout_ree()
 
     layout_ree      =  Layout(
-        title= attr(
-            text    = customTitle,
-            x       = 0.4,
-            xanchor = "center",
-            yanchor = "top"
-        ),
         font        = attr(size = 10),
         height      = 240,
-        margin      = attr(autoexpand = false, l=16, r=16, b=10, t=16),
+        margin      = attr(autoexpand = false, l=12, r=16, b=8, t=32),
         autosize    = false,
         xaxis_title = "Rare Earth Element",
-        yaxis_title = "Concentration [μg/g]",
+        yaxis_title = "Concentration log10[μg/g]",
         # xaxis_range = [Xmin,Xmax], 
         # yaxis_range = [Ymin,Ymax],
         # annotations = annotations,
-        showlegend  = false,
+        showlegend  = true,
     )
 
     return layout_ree
 end
 
+
+function get_data_ree_plot(point_id_te)
+
+    ree     = ["La", "Ce", "Pr", "Nd", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu"]
+    n_ree   = length(ree)
+    n_ph    = length(Out_TE_XY[point_id_te].ph_TE)
+
+    data_ree_plot   = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_ph);
+
+    names           = Vector{Union{String,Missing}}(undef, n_ph)
+    compo_matrix    = Matrix{Union{Float64,Missing}}(undef, n_ph, n_ree) .= missing
+    colormap        = get_jet_colormap(n_ph)
+
+    ree_idx   = [findfirst(isequal(x), Out_TE_XY[point_id_te].elements) for x in ree];
+    for i=1:n_ph
+        names[i]            = Out_TE_XY[point_id_te].ph_TE[i]
+        compo_matrix[i,:]   = Out_TE_XY[point_id_te].Cmin[i,ree_idx]
+    end
+
+    for k=1:n_ph
+
+        data_ree_plot[k] =  scatter(;   x           = ree,
+                                        y           = log10.(compo_matrix[k,:]),
+                                        name        = names[k],
+                                        mode        = "markers+lines",
+                                        marker      = attr(     size    = 5.0,
+                                                                color   = colormap[k]),
+
+                                        line        = attr(     width   = 1.0,
+                                                                color   = colormap[k])  )
+    end
+
+    return data_ree_plot
+end
 
 """
     update_colormap_phaseDiagram(      xtitle,     ytitle,     

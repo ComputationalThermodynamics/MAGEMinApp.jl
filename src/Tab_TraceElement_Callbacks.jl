@@ -1,16 +1,14 @@
 function Tab_TraceElement_Callbacks(app)
 
-
-
     # clickData callback
     callback!(
         app,
-        Output("display-ree-te",        "style"     ),
         Output("ree-spectrum-te",       "figure"    ),
         Output("ree-spectrum-te",       "config"    ),
         Input("phase-diagram-te",       "clickData" ),
 
         prevent_initial_call = true,
+
     ) do click_info
 
         global point_id_te
@@ -20,31 +18,24 @@ function Tab_TraceElement_Callbacks(app)
 
         customTitle = "Rare Earth Elements spectrum"
 
-        layout_ree = get_layout_ree(customTitle)
+        layout_ree = get_layout_ree()
            
         if tmp !== nothing
             point_id_te = tmp.match
             point_id_te = parse(Int64,replace.(point_id_te,r"#"=>""))
 
+            data_ree_plot = get_data_ree_plot(point_id_te)
+            fig_ree = plot(data_ree_plot,layout_ree)
 
-            ree_list = ["La", "Ce", "Pr", "Nd", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu"]
-
-            fig_ree = plot(layout_ree)
-            style   = Dict("display" => "block")
-        else
-            style   = Dict("display" => "none")
-            fig_ree = plot()
+            config   = PlotConfig(    toImageButtonOptions  = attr(     name     = "Download as svg",
+            format   = "svg",
+            filename =  replace(customTitle, " " => "_"),
+            height   =  220,
+            width    =  900,
+            scale    =  2.0,       ).fields)
         end
 
-        config   = PlotConfig(    toImageButtonOptions  = attr(     name     = "Download as svg",
-                                                                    format   = "svg", # one of png, svg, jpeg, webp
-                                                                    filename =  replace(customTitle, " " => "_"),
-                                                                    height   =  220,
-                                                                    width    =  900,
-                                                                    scale    =  2.0,       ).fields)
-
-
-        return style, fig_ree, config
+        return fig_ree, config
     end
 
 
@@ -213,7 +204,7 @@ function Tab_TraceElement_Callbacks(app)
                             width       = 900,
                             height      = 900,
                             autosize    = false,
-                            margin      = attr(autoexpand = false, l=50, r=280, b=260, t=70, pad=4),
+                            margin      = attr(autoexpand = false, l=50, r=280, b=260, t=50, pad=4),
                             xaxis_range = Xrange, 
                             yaxis_range = Yrange,
                             xaxis       = attr(     tickmode    = "linear",
@@ -336,7 +327,7 @@ function Tab_TraceElement_Callbacks(app)
 
 
         config   = PlotConfig(    toImageButtonOptions  = attr(     name     = "Download as svg",
-                                                                    format   = "svg", # one of png, svg, jpeg, webp
+                                                                    format   = "svg",
                                                                     filename =  replace(customTitle, " " => "_"),
                                                                     height   =  900,
                                                                     width    =  900,
@@ -440,6 +431,23 @@ function Tab_TraceElement_Callbacks(app)
         Output("collapse-display-options-te", "is_open"),
         [Input("display-options-te-button", "n_clicks")],
         [State("collapse-display-options-te", "is_open")], ) do  n, is_open
+        
+        if isnothing(n); n=0 end
+
+        if n>0
+            if is_open==1
+                is_open = 0
+            elseif is_open==0
+                is_open = 1
+            end
+        end
+        return is_open    
+    end
+
+    callback!(app,
+        Output("collapse-spectrum", "is_open"),
+        [Input("button-spectrum", "n_clicks")],
+        [State("collapse-spectrum", "is_open")], ) do  n, is_open
         
         if isnothing(n); n=0 end
 

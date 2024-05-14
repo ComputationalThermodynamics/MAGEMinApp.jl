@@ -478,7 +478,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         end
 
         config   = PlotConfig(    toImageButtonOptions  = attr(     name     = "Download as svg",
-                                                                    format   = "svg", # one of png, svg, jpeg, webp
+                                                                    format   = "svg",
                                                                     filename =  replace(customTitle, " " => "_"),
                                                                     height   =  900,
                                                                     width    =  900,

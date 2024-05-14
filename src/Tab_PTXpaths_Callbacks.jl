@@ -208,7 +208,7 @@ function Tab_PTXpaths_Callbacks(app)
 
 
         config   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
-                                    format   = "svg", # one of png, svg, jpeg, webp
+                                    format   = "svg",
                                     filename = "path_composition_"*replace(title, " " => "_"),
                                     width    =  960,
                                     height   =  360,
@@ -250,7 +250,7 @@ function Tab_PTXpaths_Callbacks(app)
         end
 
         configTAS   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
-                                        format   = "svg", # one of png, svg, jpeg, webp
+                                        format   = "svg",
                                         filename = "TAS_diagram_"*replace(title, " " => "_"),
                                         width       = 760,
                                         height      = 480,
@@ -391,7 +391,7 @@ function Tab_PTXpaths_Callbacks(app)
         end
 
         configPTX   = PlotConfig(   toImageButtonOptions  = attr(     name     = "Download as svg",
-                                    format   = "svg", # one of png, svg, jpeg, webp
+                                    format   = "svg",
                                     filename =  "PTX_path_"*replace(title, " " => "_"),
                                     height   =  360,
                                     width    =  960,

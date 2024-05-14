@@ -7,8 +7,18 @@ function Tab_TraceElement()
 
                 dbc_col([
                     dbc_row([
-                        html_div(id = "display-ree-te", style = Dict("display" => "none"), children=[spectrum_plot_te()]), #none, block
+                        dbc_button("Rare Earth Elements spectrum",id="button-spectrum"),
+                        dbc_collapse(
+                            dbc_card(dbc_cardbody([
+                                        dbc_row([
+                                            spectrum_plot_te()
+                                        ]),
+                                    ])),
+                                    id="collapse-spectrum",
+                                    is_open=false,
+                            ),
                     ]),
+                    html_div("‎ "),
                     dbc_row([
                         diagram_plot_te()
                     ]),
