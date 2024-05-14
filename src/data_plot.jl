@@ -20,7 +20,15 @@ function diagram_plot_te()
             )
 end
 
+function spectrum_plot_te()
 
+    fig = plot(    Layout( height= 220 ))
+
+    dcc_graph(
+                id          = "ree-spectrum-te",
+                figure      = fig,
+            )
+end
 function PTX_frac_plot()
 
     fig =  plot(    Layout( height= 360 ))

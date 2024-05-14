@@ -1,6 +1,54 @@
 function Tab_TraceElement_Callbacks(app)
 
 
+
+    # clickData callback
+    callback!(
+        app,
+        Output("display-ree-te",        "style"     ),
+        Output("ree-spectrum-te",       "figure"    ),
+        Output("ree-spectrum-te",       "config"    ),
+        Input("phase-diagram-te",       "clickData" ),
+
+        prevent_initial_call = true,
+    ) do click_info
+
+        global point_id_te
+
+        sp  = click_info[:points][][:text]
+        tmp = match(r"#([^# ]+)#", sp)
+
+        customTitle = "Rare Earth Elements spectrum"
+
+        layout_ree = get_layout_ree(customTitle)
+           
+        if tmp !== nothing
+            point_id_te = tmp.match
+            point_id_te = parse(Int64,replace.(point_id_te,r"#"=>""))
+
+
+            ree_list = ["La", "Ce", "Pr", "Nd", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu"]
+
+            fig_ree = plot(layout_ree)
+            style   = Dict("display" => "block")
+        else
+            style   = Dict("display" => "none")
+            fig_ree = plot()
+        end
+
+        config   = PlotConfig(    toImageButtonOptions  = attr(     name     = "Download as svg",
+                                                                    format   = "svg", # one of png, svg, jpeg, webp
+                                                                    filename =  replace(customTitle, " " => "_"),
+                                                                    height   =  220,
+                                                                    width    =  900,
+                                                                    scale    =  2.0,       ).fields)
+
+
+        return style, fig_ree, config
+    end
+
+
+
     callback!(
         app,
         Output("show-zircon-id",            "style"),

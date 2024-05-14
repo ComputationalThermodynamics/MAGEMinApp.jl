@@ -5,7 +5,14 @@ function Tab_TraceElement()
 
             dbc_row([ 
 
-                dbc_col([diagram_plot_te()], width=9),
+                dbc_col([
+                    dbc_row([
+                        html_div(id = "display-ree-te", style = Dict("display" => "none"), children=[spectrum_plot_te()]), #none, block
+                    ]),
+                    dbc_row([
+                        diagram_plot_te()
+                    ]),
+                ], width=9),
                 dbc_col([  
                     dbc_row([
 

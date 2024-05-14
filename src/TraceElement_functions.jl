@@ -1,3 +1,29 @@
+"""
+    Retrieve layout for rare earth elements figure
+"""
+function get_layout_ree(customTitle)
+
+    layout_ree      =  Layout(
+        title= attr(
+            text    = customTitle,
+            x       = 0.4,
+            xanchor = "center",
+            yanchor = "top"
+        ),
+        font        = attr(size = 10),
+        height      = 240,
+        margin      = attr(autoexpand = false, l=16, r=16, b=10, t=16),
+        autosize    = false,
+        xaxis_title = "Rare Earth Element",
+        yaxis_title = "Concentration [μg/g]",
+        # xaxis_range = [Xmin,Xmax], 
+        # yaxis_range = [Ymin,Ymax],
+        # annotations = annotations,
+        showlegend  = false,
+    )
+
+    return layout_ree
+end
 
 
 """
