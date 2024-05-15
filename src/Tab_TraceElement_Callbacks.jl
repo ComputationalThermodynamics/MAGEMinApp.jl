@@ -5,26 +5,29 @@ function Tab_TraceElement_Callbacks(app)
         app,
         Output("ree-spectrum-te",       "figure"    ),
         Output("ree-spectrum-te",       "config"    ),
+        Output("click-data-left-spectrum","children"    ),
         Input("phase-diagram-te",       "clickData" ),
-
+        Input("normalization-te",       "n_clicks" ),
+        Input("normalization-te",       "value" ),
+        Input("show-spectrum-te",       "n_clicks" ),
+        Input("show-spectrum-te",       "value" ),
+        
         prevent_initial_call = true,
 
-    ) do click_info
-
-        global point_id_te
+    ) do click_info, norn_click, norm, show_click, show_type
 
         sp  = click_info[:points][][:text]
         tmp = match(r"#([^# ]+)#", sp)
 
         customTitle = "Rare Earth Elements spectrum"
 
-        layout_ree = get_layout_ree()
+        layout_ree = get_layout_ree(norm, show_type)
            
         if tmp !== nothing
             point_id_te = tmp.match
             point_id_te = parse(Int64,replace.(point_id_te,r"#"=>""))
 
-            data_ree_plot = get_data_ree_plot(point_id_te)
+            data_ree_plot = get_data_ree_plot(point_id_te, norm, show_type)
             fig_ree = plot(data_ree_plot,layout_ree)
 
             config   = PlotConfig(    toImageButtonOptions  = attr(     name     = "Download as svg",
@@ -33,9 +36,18 @@ function Tab_TraceElement_Callbacks(app)
             height   =  220,
             width    =  900,
             scale    =  2.0,       ).fields)
+
+            infos = "\n"
+            infos *= "| Variable &nbsp;|Value &nbsp; &nbsp; &nbsp; &nbsp;| Unit &nbsp; &nbsp; &nbsp; &nbsp;|\n"
+            infos *= "|----------|-------|------|\n"
+            infos *= "| P |"*string(round(Out_XY[point_id_te].P_kbar; digits = 3))*"| kbar |\n"
+            infos *= "| T |"*string(round(Out_XY[point_id_te].T_C; digits = 3))*"| °C |\n"
+            infos *= "| X |"*string(round(Out_XY[point_id_te].X[1]; digits = 3))*"| -  |\n"
+            infos *= "| G |"*string(round(Out_XY[point_id_te].G_system; digits = 3))*"| kJ |\n"
+            infos *= "| ρ_sys |"*string(round(Out_XY[point_id_te].rho; digits = 1))*"| kg/m³   |\n"
         end
 
-        return fig_ree, config
+        return fig_ree, config, infos
     end
 
 

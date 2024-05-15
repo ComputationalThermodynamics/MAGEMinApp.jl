@@ -11,7 +11,46 @@ function Tab_TraceElement()
                         dbc_collapse(
                             dbc_card(dbc_cardbody([
                                         dbc_row([
-                                            spectrum_plot_te()
+                                            dbc_col([
+                                                spectrum_plot_te()
+                                            ], width=10),
+                                            dbc_col([
+                                                
+                                                dbc_row([
+                                                    dbc_card([
+                                                        dcc_markdown(   id          = "click-data-left-spectrum", 
+                                                                        children    = "",
+                                                                        style       = Dict("white-space" => "pre"))
+                                                    ]),
+                                                ]),
+                                                html_div("‎ "),
+                                                dbc_row([
+                                                    dbc_col([ 
+                                                        html_h1("Show", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                    ], width=6),
+                                                    dbc_col([
+                                                        dcc_dropdown(   id          = "show-spectrum-te",
+                                                                        options     =  ["ree","all"],
+                                                                        value       = "ree" ,
+                                                                        clearable   =  false,
+                                                                        multi       =  false),
+                                                    ], width=6), 
+                                                ]),
+                                                dbc_row([
+                                                    dbc_col([ 
+                                                        html_h1("Norm.", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                    ]),
+                                                    dbc_col([
+                                                        dcc_dropdown(   id          = "normalization-te",
+                                                                        options     =  ["bulk","chondrite"],
+                                                                        value       = "bulk" ,
+                                                                        clearable   =  false,
+                                                                        multi       =  false),
+                                                    ], width=6), 
+                                                ]),
+
+
+                                            ], width=2),  
                                         ]),
                                     ])),
                                     id="collapse-spectrum",
@@ -242,7 +281,7 @@ function Tab_TraceElement()
                                     dbc_col([
                                         dcc_dropdown(   id          = "colormaps_cross-te",
                                                         options     = ["blackbody","Blues","cividis","Greens","Greys","hot","jet","RdBu","Reds","viridis","YlGnBu","YlOrRd"],
-                                                        value       = "Blues",
+                                                        value       = "RdBu",
                                                         clearable   = false,
                                                         placeholder = "Colormap")
                                     ]), 
@@ -285,7 +324,7 @@ function Tab_TraceElement()
                                     dbc_col([
                                         dcc_dropdown(   id          = "reverse-colormap-te",
                                                         options     = ["true","false"],
-                                                        value       = "false",
+                                                        value       = "true",
                                                         clearable   = false)
                                     ]), 
                                 ]),

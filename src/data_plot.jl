@@ -22,18 +22,8 @@ end
 
 function spectrum_plot_te()
 
-    layout_ree      =  Layout(
-        font        = attr(size = 10),
-        height      =  220,
-        width       =  900,
-        margin      = attr(autoexpand = false, l=12, r=16, b=8, t=32),
-        autosize    = false,
-        xaxis_title = "Rare Earth Element",
-        yaxis_title = "Concentration [μg/g]",
-        showlegend  = false,
-    )
 
-    fig = plot(layout_ree)
+    fig = plot()
 
     dcc_graph(
                 id          = "ree-spectrum-te",
