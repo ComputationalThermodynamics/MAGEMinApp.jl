@@ -95,7 +95,7 @@ function get_data_ree_plot(point_id_te, norm, show_type)
                                             y           = compo_matrix[k,:]./C_norm,
                                             name        = names[k],
                                             mode        = "markers+lines",
-                                            marker      = attr(     size    = 5.0,
+                                            marker      = attr(     size    = 4.0,
                                                                     color   = colormap[k]),
 
                                             line        = attr(     width   = 1.0,
@@ -128,7 +128,7 @@ function get_data_ree_plot(point_id_te, norm, show_type)
                                         name        = names[k],
                                         mode        = "markers+lines",
 
-                                        marker          = attr(     size    = 4.0,
+                                        marker          = attr(     size    = 6.0,
                                                                     color   = "red"),
                                         line            = attr( color   = "red", 
                                                                 width   = 1.0)                ) 
@@ -144,7 +144,7 @@ function get_data_ree_plot(point_id_te, norm, show_type)
                                         name        = names[k],
                                         mode        = "markers+lines",
 
-                                        marker          = attr(     size    = 4.0,
+                                        marker          = attr(     size    = 6.0,
                                                                     color   = "black"),
                                         line            = attr( color   = "black", 
                                                                 width   = 1.0)                ) 
