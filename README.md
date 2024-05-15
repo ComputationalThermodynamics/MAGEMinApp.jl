@@ -1,13 +1,5 @@
 [![Build Status](https://github.com/ComputationalThermodynamics/MAGEMinApp.jl/workflows/CI/badge.svg)](https://github.com/ComputationalThermodynamics/MAGEMinApp.jl/actions)
 
-> [!TIP]
-> For Windows machine you can launch a multi-threaded (parallel) version of the Julia terminal (to perform computation in parallel using `MAGEMinApp`) by creating a `Julia_parallel.cmd` file and adding the following lines (changing `8` to the number of threads your machine can support (type `versioninfo()` in a Julia terminal)). Then save the changes and execute  `Julia_parallel.cmd`.
-```
-set JULIA_NUM_THREADS=8
-C:\YOUR_PATH_TO_JULIA\bin\julia.exe
-```
-
-
 # MAGEMinApp.jl
 
 <img src="https://raw.githubusercontent.com/ComputationalThermodynamics/repositories_pictures/main/MAGEMinApp/MAGEMin_app.png?raw=true" alt="drawing" width="820" alt="centered image"/>
@@ -67,6 +59,13 @@ MAGEMinApp is designed is such a way that bulk-rock composition must be entered 
 
 
 ### Remarks
+
+> [!TIP]
+> For Windows machine you can launch a multi-threaded (parallel) version of the Julia terminal (to perform computation in parallel using `MAGEMinApp`) by creating a `Julia_parallel.cmd` file and adding the following lines (changing `8` to the number of threads your machine can support (type `versioninfo()` in a Julia terminal)). Then save the changes and execute  `Julia_parallel.cmd`.
+```
+set JULIA_NUM_THREADS=8
+C:\YOUR_PATH_TO_JULIA\bin\julia.exe
+```
 
 > [!CAUTION]
 > As of now, `MAGEMinApp.jl` remains under development and the current release is a beta version. Reporting issues, potential improvement and contributions are most welcome.
