@@ -18,6 +18,7 @@ pkg_dir = Base.pkgdir(MAGEMinApp)
 
 export App
 # include helper functions
+include(joinpath(pkg_dir,"src","fetch.jl"))
 include(joinpath(pkg_dir,"src","initialize_MAGEMin_AMR.jl"))
 include(joinpath(pkg_dir,"src","PhaseDiagram_functions.jl"))
 include(joinpath(pkg_dir,"src","TraceElement_functions.jl"))
@@ -36,21 +37,21 @@ include(joinpath(pkg_dir,"src","Tab_isentropic.jl"))
 include(joinpath(pkg_dir,"src","Tab_isentropic_Callbacks.jl"))
 include(joinpath(pkg_dir,"src","IsentropicPaths_functions.jl"))
 
+
 """
     App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
 
 Starts the MAGEMin App.
 """
 function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
-
-
+    message     = fetch_message()
     GUI_version = "0.2.9"   
     cur_dir     = pwd()                 # directory from where you started the GUI
     pkg_dir     = pkgdir(MAGEMinApp)   # package dir
     
     include(joinpath(pkg_dir,"src","appData.jl"))
     include(joinpath(pkg_dir,"src","MAGEMinApp_functions.jl"))
-    
+
     db_inf      = retrieve_solution_phase_information("ig");
     cd(pkg_dir)
 
@@ -71,11 +72,16 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                             style   = Dict("height" => 55, "width" => 230)),
                                 ], width="auto" ),
                         dbc_col([
+                            html_div("‎ "),
+                            html_div(message),
+                        ], width="auto" ),
+                        dbc_col([
                             dbc_cardimg(    id      = "magemin-img",
                                             src     = "assets/static/images/MAGEMin_light.jpg",
                                             style   = Dict("height" => 70, "width" => 190)),
                                 ], width="auto" )
-                            ], justify="between"),
+
+                    ], justify="between"),
                     
                     dbc_row([
                             dbc_col([
