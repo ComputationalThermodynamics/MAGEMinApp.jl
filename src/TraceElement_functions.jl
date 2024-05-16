@@ -66,7 +66,7 @@ function get_data_ree_plot(point_id_te, norm, show_type)
     data_ree_plot   = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_traces);
     names           = Vector{Union{String,Missing}}(undef, n_traces)
     compo_matrix    = Matrix{Union{Float64,Missing}}(undef, n_traces, n_ree) .= missing
-    colormap        = get_jet_colormap(n_traces)
+    colormap        = get_lines_colormap()
 
     # te_idx   = [findfirst(isequal(x), Out_TE_XY[point_id_te].elements) for x in ree];
     k = 1
@@ -115,7 +115,7 @@ function get_data_ree_plot(point_id_te, norm, show_type)
                                         mode        = "lines",
                                         line        = attr( dash    = "dash",
                                                             color   = "black", 
-                                                            width   = 0.75)                ) 
+                                                            width   = 2.0)                ) 
 
         k += 1
     end
@@ -129,9 +129,9 @@ function get_data_ree_plot(point_id_te, norm, show_type)
                                         mode        = "markers+lines",
 
                                         marker          = attr(     size    = 6.0,
-                                                                    color   = "red"),
-                                        line            = attr( color   = "red", 
-                                                                width   = 1.0)                ) 
+                                                                    color   = "RGB(176,0,0)"),
+                                        line            = attr( color   = "RGB(176,0,0)", 
+                                                                width   = 2.0)                ) 
 
         k += 1
     end
@@ -147,7 +147,7 @@ function get_data_ree_plot(point_id_te, norm, show_type)
                                         marker          = attr(     size    = 6.0,
                                                                     color   = "black"),
                                         line            = attr( color   = "black", 
-                                                                width   = 1.0)                ) 
+                                                                width   = 2.0)                ) 
 
         k += 1
     end

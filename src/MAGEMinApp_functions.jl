@@ -10,7 +10,25 @@ function get_jet_colormap(n)
 
 end
 
+function get_lines_colormap()
 
+    color_lines = [ "RGB(182,69,91)",
+                    "RGB(182,69,156)",
+                    "RGB(174,69,182)",
+                    "RGB(107,69,182)",
+                    "RGB(69,84,182)",
+                    "RGB(69,152,182)",
+                    "RGB(69,182,152)",
+                    "RGB(69,182,91)",
+                    "RGB(107,182,69)",
+                    "RGB(159,182,69)",
+                    "RGB(182,156,69)",
+                    "RGB(182,122,69)",
+                    "RGB(182,76,69)"]
+
+    return color_lines
+
+end
 
 function get_init_param(    dtb         :: String,
                             solver      :: String,
