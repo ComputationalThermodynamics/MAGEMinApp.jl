@@ -16,6 +16,8 @@ function Tab_TraceElement_Callbacks(app)
 
     ) do click_info, norn_click, norm, show_click, show_type
 
+        global point_id_te
+
         sp  = click_info[:points][][:text]
         tmp = match(r"#([^# ]+)#", sp)
 
@@ -371,6 +373,35 @@ function Tab_TraceElement_Callbacks(app)
             fileout = fname*datab
 
             MAGEMin_dataTE2dataframe(Out_XY,Out_TE_XY,dtb,fileout)
+            return "success", ""
+        else
+            return  "", "failed"
+        end
+    end
+
+
+    #save all table to file
+    callback!(
+        app,
+        # Output("download-all-table-text", "data"),
+        Output("data-point-table-save-te", "is_open"),
+        Output("data-point-save-table-failed-te", "is_open"),
+        Input("save-point-table-button-te", "n_clicks"),
+        State("Filename-point-id-te", "value"),
+        State("database-dropdown","value"),
+        State("kds-dropdown","value"),
+        State("zrsat-dropdown","value"),
+    
+        prevent_initial_call=true,
+    ) do n_clicks, fname, dtb, kds, zrsat
+
+        if fname != "filename"
+            P       = "_Pkbar_"*string(Out_XY[point_id_te].P_kbar)
+            T       = "_TC_"*string(Out_XY[point_id_te].T_C)
+            datab   = "_"*dtb*P*T*"_"*kds*"_"*zrsat
+            fileout = fname*datab
+
+            MAGEMin_dataTE2dataframe(Out_XY[point_id_te],Out_TE_XY[point_id_te],dtb,fileout)
             return "success", ""
         else
             return  "", "failed"

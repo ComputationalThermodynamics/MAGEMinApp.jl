@@ -608,7 +608,7 @@ function get_diagram_labels(    fieldname   ::String,
         if np > 2
             id             += 1
             points          = [[ t2[i]+rand()/100, p2[i]+rand()/100] for i=1:np]
-            hull_list[id]   = concave_hull(points,1024)
+            hull_list[id]   = concave_hull(points,length(points))
             ph_list[id]     = phase[1]
             phd_list[id]    = phased[1]
         end

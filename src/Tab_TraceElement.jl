@@ -79,6 +79,43 @@ function Tab_TraceElement()
                                 html_div("‎ "),
                                 dbc_row([
                                     dbc_col([
+                                        html_h1("Save point", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                    ], width=3),
+                                    dbc_col([ 
+                                        dbc_input(
+                                            id      = "Filename-point-id-te",
+                                            type    = "text", 
+                                            style   = Dict("textAlign" => "center") ,
+                                            value   = "filename"   ),     
+                                    ], width=4),
+                                    dbc_col([    
+                                        dbc_button("csv file", id="save-point-table-button-te", color="light",  n_clicks=0,
+                                        style       = Dict( "textAlign"     => "center",
+                                                            "font-size"     => "100%",
+                                                            "border"        =>"2px grey solid")), 
+                                        dbc_tooltip([
+                                            html_div("Saving point data takes time and depends on the number of points"),
+                                            html_div("Output path and progress are displayed in the Julia terminal")],target="save-point-table-button-te"),
+                                        dcc_download(id="download-point-table-text-te"),  
+                                    ]),
+                                ]),
+                                dbc_row([
+                                    dbc_alert(
+                                        "Successfully saved all data points information",
+                                        id      ="data-point-table-save-te",
+                                        is_open =false,
+                                        duration=4000,
+                                    ),
+                                    dbc_alert(
+                                        "Provide a valid filename (without extension)",
+                                        color="danger",
+                                        id      ="data-point-save-table-failed-te",
+                                        is_open =false,
+                                        duration=4000,
+                                    ),
+                                ]),
+                                dbc_row([
+                                    dbc_col([
                                         html_h1("Save all", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
                                     ], width=3),
                                     dbc_col([ 
@@ -95,7 +132,7 @@ function Tab_TraceElement()
                                                             "border"        =>"2px grey solid")), 
                                         dbc_tooltip([
                                             html_div("Saving all data takes time and depends on the number of points"),
-                                            html_div("Output path and progress are displayed in the Julia terminal")],target="save-all-table-button"),
+                                            html_div("Output path and progress are displayed in the Julia terminal")],target="save-all-table-button-te"),
                                         dcc_download(id="download-all-table-text-te"),  
                                     ]),
                                 ]),
