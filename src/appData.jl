@@ -265,6 +265,15 @@ push!(dbte,Dict(    :composition=> "predefined",
                 ), cols=:union)
 
 
+push!(dbte,Dict(    :composition=> "predefined",
+                    :title      => "Pyrolite (Primitive Mantle)",
+                    :comments   => "McDonough and Sun, 1995",
+                    :test       => 2,
+                    :elements   => ["Rb", "Ba", "Th", "U", "Nb", "Ta", "La", "Ce", "Pb", "Pr", "Sr", "Nd", "Zr", "Hf", "Sm", "Eu", "Gd", "Tb", "Dy", "Y", "Ho", "Er", "Tm", "Yb", "Lu", "V", "Sc"],
+                    :μg_g        => [0.6,6.6,0.0795,0.0203,0.658,0.037,0.648,1.675,0.150,0.254,19.9,1.25,10.5,0.283,0.406,0.154,0.544,0.099,0.674,4.30,0.149,0.438,0.068,0.441,0.0675,8.2,16.2],
+                    :μg_g2       => 
+                ), cols=:union)
+
 KDs_dtb     = get_OL_KDs_database();
 
 AppData = ( db                  = db,
