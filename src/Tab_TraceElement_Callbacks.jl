@@ -149,167 +149,172 @@ function Tab_TraceElement_Callbacks(app)
         fieldType                       = type
 
         field2plot[1]    = 1
-        if bid == "load-button-te"
-            fieldType = "zr"
-            global gridded_te, gridded_info_te, X_te, Y_te, npoints_te, meant_te
-            global layout_te, n_lbl, addedRefinementLvl
-            global data_plot_te,  data_reaction_te, data_grid_te, PT_infos_te 
+        if @isdefined(Out_TE_XY) && length(Out_XY) == length(Out_TE_XY)
+            if bid == "load-button-te"
+                fieldType = "zr"
+                global gridded_te, gridded_info_te, X_te, Y_te, npoints_te, meant_te
+                global layout_te, n_lbl, addedRefinementLvl
+                global data_plot_te,  data_reaction_te, data_grid_te, PT_infos_te 
 
-            gridded_te, gridded_info_te, X_te, Y_te, npoints_te, meant_te = get_gridded_map(    fieldname,
-                                                                                                "zr",
-                                                                                                oxi,
-                                                                                                Out_XY,
-                                                                                                Out_TE_XY,
-                                                                                                Hash_XY,
-                                                                                                sub,
-                                                                                                refLvl + addedRefinementLvl,
-                                                                                                refType,
-                                                                                                data.xc,
-                                                                                                data.yc,
-                                                                                                data.x,
-                                                                                                data.y,
-                                                                                                Xrange,
-                                                                                                Yrange)
+                gridded_te, gridded_info_te, X_te, Y_te, npoints_te, meant_te = get_gridded_map(    fieldname,
+                                                                                                    "zr",
+                                                                                                    oxi,
+                                                                                                    Out_XY,
+                                                                                                    Out_TE_XY,
+                                                                                                    Hash_XY,
+                                                                                                    sub,
+                                                                                                    refLvl + addedRefinementLvl,
+                                                                                                    refType,
+                                                                                                    data.xc,
+                                                                                                    data.yc,
+                                                                                                    data.x,
+                                                                                                    data.y,
+                                                                                                    Xrange,
+                                                                                                    Yrange)
 
 
-            PT_infos_te  = get_phase_diagram_information(   npoints_te,
-                                                            dtb,
-                                                            diagType,
-                                                            solver,
-                                                            bulk_L,
-                                                            bulk_R,
-                                                            oxi,
-                                                            fixT,
-                                                            fixP,
-                                                            bufferType,
-                                                            bufferN1,
-                                                            bufferN2,
-                                                            PTpath)
-
-            data_plot_te, annotations = get_diagram_labels(     fieldname,
+                PT_infos_te  = get_phase_diagram_information(   npoints_te,
+                                                                dtb,
+                                                                diagType,
+                                                                solver,
+                                                                bulk_L,
+                                                                bulk_R,
                                                                 oxi,
-                                                                Out_XY,
-                                                                Hash_XY,
-                                                                sub,
-                                                                refLvl,
-                                                                refType,
-                                                                data.xc,
-                                                                data.yc,
-                                                                PT_infos_te )
-            ticks       = 4
-            frame       = get_plot_frame(Xrange,Yrange, ticks)                                  
-            layout_te   = Layout(
-                            images=frame,
-                            title= attr(
-                                text    = customTitle,
-                                x       = 0.4,
-                                xanchor = "center",
-                                yanchor = "top"
-                            ),
-                            hoverlabel = attr(
-                                bgcolor     = "#566573",
-                                bordercolor = "#f8f9f9",
-                            ),
-                            plot_bgcolor = "#FFF",
-                            paper_bgcolor = "#FFF",
-                            xaxis_title = xtitle,
-                            yaxis_title = ytitle,
-                            annotations = annotations,
-                            width       = 900,
-                            height      = 900,
-                            autosize    = false,
-                            margin      = attr(autoexpand = false, l=50, r=280, b=260, t=50, pad=4),
-                            xaxis_range = Xrange, 
-                            yaxis_range = Yrange,
-                            xaxis       = attr(     tickmode    = "linear",
-                                                    tick0       = Xrange[1],
-                                                    dtick       = (Xrange[2]-Xrange[1])/(ticks+1)
+                                                                fixT,
+                                                                fixP,
+                                                                bufferType,
+                                                                bufferN1,
+                                                                bufferN2,
+                                                                PTpath)
+
+                data_plot_te, annotations = get_diagram_labels(     fieldname,
+                                                                    oxi,
+                                                                    Out_XY,
+                                                                    Hash_XY,
+                                                                    sub,
+                                                                    refLvl,
+                                                                    refType,
+                                                                    data.xc,
+                                                                    data.yc,
+                                                                    PT_infos_te )
+                ticks       = 4
+                frame       = get_plot_frame(Xrange,Yrange, ticks)                                  
+                layout_te   = Layout(
+                                images=frame,
+                                title= attr(
+                                    text    = customTitle,
+                                    x       = 0.4,
+                                    xanchor = "center",
+                                    yanchor = "top"
+                                ),
+                                hoverlabel = attr(
+                                    bgcolor     = "#566573",
+                                    bordercolor = "#f8f9f9",
+                                ),
+                                plot_bgcolor = "#FFF",
+                                paper_bgcolor = "#FFF",
+                                xaxis_title = xtitle,
+                                yaxis_title = ytitle,
+                                annotations = annotations,
+                                width       = 900,
+                                height      = 900,
+                                autosize    = false,
+                                margin      = attr(autoexpand = false, l=50, r=280, b=260, t=50, pad=4),
+                                xaxis_range = Xrange, 
+                                yaxis_range = Yrange,
+                                xaxis       = attr(     tickmode    = "linear",
+                                                        tick0       = Xrange[1],
+                                                        dtick       = (Xrange[2]-Xrange[1])/(ticks+1)
+                                                    ),
+                                yaxis       = attr(     tickmode    = "linear",
+                                                        tick0       = Yrange[1],
+                                                        dtick       = (Yrange[2]-Yrange[1])/(ticks+1)
                                                 ),
-                            yaxis       = attr(     tickmode    = "linear",
-                                                    tick0       = Yrange[1],
-                                                    dtick       = (Yrange[2]-Yrange[1])/(ticks+1)
-                                            ),
-                        )
-                            
-            heat_map = heatmap( x               = X_te,
-                                y               = Y_te,
-                                z               = gridded_te,
-                                zsmooth         = smooth,
-                                connectgaps     = true,
-                                type            = "heatmap",
-                                colorscale      = colorm,
-                                reversescale    = reverseColorMap,
-                                colorbar_title  = fieldname,
-                                hoverinfo       = "skip",
-                                showlegend      = false,
-                                colorbar        = attr(     lenmode         = "fraction",
-                                                            len             =  0.75,
-                                                            thicknessmode   = "fraction",
-                                                            tickness        =  0.5,
-                                                            x               =  1.005,
-                                                            y               =  0.5         ),)
-
-            hover_lbl = heatmap(    x               = X_te,
+                            )
+                                
+                heat_map = heatmap( x               = X_te,
                                     y               = Y_te,
-                                    z               = X_te,
+                                    z               = gridded_te,
+                                    zsmooth         = smooth,
+                                    connectgaps     = true,
                                     type            = "heatmap",
-                                    showscale       = false,
-                                    opacity         = 0.0,
-                                    hoverinfo       = "text",
+                                    colorscale      = colorm,
+                                    reversescale    = reverseColorMap,
+                                    colorbar_title  = fieldname,
+                                    hoverinfo       = "skip",
                                     showlegend      = false,
-                                    text            = gridded_info_te )
+                                    colorbar        = attr(     lenmode         = "fraction",
+                                                                len             =  0.75,
+                                                                thicknessmode   = "fraction",
+                                                                tickness        =  0.5,
+                                                                x               =  1.005,
+                                                                y               =  0.5         ),)
+
+                hover_lbl = heatmap(    x               = X_te,
+                                        y               = Y_te,
+                                        z               = X_te,
+                                        type            = "heatmap",
+                                        showscale       = false,
+                                        opacity         = 0.0,
+                                        hoverinfo       = "text",
+                                        showlegend      = false,
+                                        text            = gridded_info_te )
 
 
-            data_plot_te[1]    = heat_map
+                data_plot_te[1]    = heat_map
 
-            data_reaction_te   = show_hide_reaction_lines(sub,refLvl,Xrange,Yrange)
-            data_grid_te       = show_hide_mesh_grid()
+                data_reaction_te   = show_hide_reaction_lines(sub,refLvl,Xrange,Yrange)
+                data_grid_te       = show_hide_mesh_grid()
 
-            data_plot_te       = vcat(data_plot_te,hover_lbl)
+                data_plot_te       = vcat(data_plot_te,hover_lbl)
 
-        elseif bid == "colormaps_cross-te" || bid == "smooth-colormap-te" || bid == "range-slider-color-te" || bid == "reverse-colormap-te"
+            elseif bid == "colormaps_cross-te" || bid == "smooth-colormap-te" || bid == "range-slider-color-te" || bid == "reverse-colormap-te"
 
-            data_plot_te, layout_te =  update_colormap_phaseDiagram_te(     xtitle,     ytitle,     type,               varBuilder,   
-                                                                            Xrange,     Yrange,     fieldname,
-                                                                            dtb,        diagType,
-                                                                            smooth,     colorm,     reverseColorMap                                                   )
-        elseif bid == "compute-display-te"
-
-            data_plot_te, layout_te =  update_diplayed_field_phaseDiagram_te(   xtitle,     ytitle,     "te",                  varBuilder,
+                data_plot_te, layout_te =  update_colormap_phaseDiagram_te(     xtitle,     ytitle,     type,               varBuilder,   
                                                                                 Xrange,     Yrange,     fieldname,
-                                                                                dtb,        oxi,
-                                                                                sub,        refLvl,
-                                                                                smooth,     colorm,     reverseColorMap,       refType                                 )
-        elseif bid == "fields-dropdown-zr"
+                                                                                dtb,        diagType,
+                                                                                smooth,     colorm,     reverseColorMap                                                   )
+            elseif bid == "compute-display-te"
 
-            data_plot_te, layout_te =  update_diplayed_field_phaseDiagram_te(   xtitle,     ytitle,     "zr",                  varBuilder,
-                                                                                Xrange,     Yrange,     fieldname,
-                                                                                dtb,        oxi,
-                                                                                sub,        refLvl,
-                                                                                smooth,     colorm,     reverseColorMap,       refType                                 )
+                data_plot_te, layout_te =  update_diplayed_field_phaseDiagram_te(   xtitle,     ytitle,     "te",                  varBuilder,
+                                                                                    Xrange,     Yrange,     fieldname,
+                                                                                    dtb,        oxi,
+                                                                                    sub,        refLvl,
+                                                                                    smooth,     colorm,     reverseColorMap,       refType                                 )
+            elseif bid == "fields-dropdown-zr"
 
-        elseif bid == "show-grid-te"
+                data_plot_te, layout_te =  update_diplayed_field_phaseDiagram_te(   xtitle,     ytitle,     "zr",                  varBuilder,
+                                                                                    Xrange,     Yrange,     fieldname,
+                                                                                    dtb,        oxi,
+                                                                                    sub,        refLvl,
+                                                                                    smooth,     colorm,     reverseColorMap,       refType                                 )
 
-            if grid == "true"
-                field2plot[2] = 1
-            end
+            elseif bid == "show-grid-te"
 
-        elseif bid == "show-full-grid-te"
-
-            if full_grid == "true"
-                field2plot[3] = 1
-            end
-        elseif bid == "show-lbl-id-te"
-
-            if lbl == "true"
-                for i=1:n_lbl+1
-                    layout_te[:annotations][i][:visible] = true
+                if grid == "true"
+                    field2plot[2] = 1
                 end
+
+            elseif bid == "show-full-grid-te"
+
+                if full_grid == "true"
+                    field2plot[3] = 1
+                end
+            elseif bid == "show-lbl-id-te"
+
+                if lbl == "true"
+                    for i=1:n_lbl+1
+                        layout_te[:annotations][i][:visible] = true
+                    end
+                else
+                    for i=1:n_lbl+1
+                        layout_te[:annotations][i][:visible] = false
+                    end
+                end         
             else
-                for i=1:n_lbl+1
-                    layout_te[:annotations][i][:visible] = false
-                end
-            end         
+                fig_te = plot()
+                print("Compute a phase diagram with activated trace-element in the Setup tab first!\n")
+            end
         else
             fig_te = plot()
             print("Compute a phase diagram with activated trace-element in the Setup tab first!\n")
