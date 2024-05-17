@@ -23,7 +23,7 @@ end
 function spectrum_plot_te()
 
 
-    fig = plot()
+    fig = plot(     Layout( height= 220 ))
 
     dcc_graph(
                 id          = "ree-spectrum-te",

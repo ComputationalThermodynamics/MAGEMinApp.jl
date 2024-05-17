@@ -54,7 +54,7 @@ function Tab_TraceElement()
                                         ]),
                                     ])),
                                     id="collapse-spectrum",
-                                    is_open=false,
+                                    is_open=true,
                             ),
                     ]),
                     html_div("‎ "),

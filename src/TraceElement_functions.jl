@@ -18,6 +18,11 @@ function get_layout_ree(norm,show_type)
         yaxis_type  = "log",
         showlegend  = true,
         dragmode    = false,
+
+        xaxis       = attr(     fixedrange    = true,
+                            ),
+        yaxis       = attr(     fixedrange    = true,
+                            ),
     )
 
     return layout_ree

@@ -534,11 +534,13 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                     yaxis_range = Yrange,
                     xaxis       = attr(     tickmode    = "linear",
                                             tick0       = Xrange[1],
-                                            dtick       = (Xrange[2]-Xrange[1])/(ticks+1)
+                                            dtick       = (Xrange[2]-Xrange[1])/(ticks+1),
+                                            fixedrange    = true,
                                         ),
                     yaxis       = attr(     tickmode    = "linear",
                                             tick0       = Yrange[1],
-                                            dtick       = (Yrange[2]-Yrange[1])/(ticks+1)
+                                            dtick       = (Yrange[2]-Yrange[1])/(ticks+1),
+                                            fixedrange    = true,
                                     ),
                 )
                 

@@ -142,6 +142,10 @@ function Tab_PTXpaths_Callbacks(app)
             yaxis_range = [Ymin,Ymax],
             annotations = annotations,
             showlegend  = false,
+            xaxis       = attr(     fixedrange    = true,
+                            ),
+            yaxis       = attr(     fixedrange    = true,
+                            ),
         )
 
         fig = plot(df, x=:x, y=:y, layout_ptx)

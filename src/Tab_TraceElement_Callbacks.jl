@@ -3,14 +3,14 @@ function Tab_TraceElement_Callbacks(app)
     # clickData callback
     callback!(
         app,
-        Output("ree-spectrum-te",       "figure"    ),
-        Output("ree-spectrum-te",       "config"    ),
-        Output("click-data-left-spectrum","children"    ),
-        Input("phase-diagram-te",       "clickData" ),
-        Input("normalization-te",       "n_clicks" ),
-        Input("normalization-te",       "value" ),
-        Input("show-spectrum-te",       "n_clicks" ),
-        Input("show-spectrum-te",       "value" ),
+        Output("ree-spectrum-te",           "figure"    ),
+        Output("ree-spectrum-te",           "config"    ),
+        Output("click-data-left-spectrum",  "children"  ),
+        Input("phase-diagram-te",           "clickData" ),
+        Input("normalization-te",           "n_clicks"  ),
+        Input("normalization-te",           "value"     ),
+        Input("show-spectrum-te",           "n_clicks"  ),
+        Input("show-spectrum-te",           "value"     ),
         
         prevent_initial_call = true,
 
@@ -33,11 +33,11 @@ function Tab_TraceElement_Callbacks(app)
             fig_ree = plot(data_ree_plot,layout_ree)
 
             config   = PlotConfig(    toImageButtonOptions  = attr(     name     = "Download as svg",
-            format   = "svg",
-            filename =  replace(customTitle, " " => "_"),
-            height   =  220,
-            width    =  900,
-            scale    =  2.0,       ).fields)
+                                                                        format   = "svg",
+                                                                        filename =  replace(customTitle, " " => "_"),
+                                                                        height   =  220,
+                                                                        width    =  900,
+                                                                        scale    =  2.0,       ).fields)
 
             infos = "\n"
             infos *= "| Variable &nbsp;|Value &nbsp; &nbsp; &nbsp; &nbsp;| Unit &nbsp; &nbsp; &nbsp; &nbsp;|\n"
@@ -224,11 +224,13 @@ function Tab_TraceElement_Callbacks(app)
                                 yaxis_range = Yrange,
                                 xaxis       = attr(     tickmode    = "linear",
                                                         tick0       = Xrange[1],
-                                                        dtick       = (Xrange[2]-Xrange[1])/(ticks+1)
+                                                        dtick       = (Xrange[2]-Xrange[1])/(ticks+1),
+                                                        fixedrange    = true,
                                                     ),
                                 yaxis       = attr(     tickmode    = "linear",
                                                         tick0       = Yrange[1],
-                                                        dtick       = (Yrange[2]-Yrange[1])/(ticks+1)
+                                                        dtick       = (Yrange[2]-Yrange[1])/(ticks+1),
+                                                        fixedrange    = true,
                                                 ),
                             )
                                 
