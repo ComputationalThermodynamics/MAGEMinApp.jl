@@ -73,7 +73,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                 ], width="auto" ),
                         dbc_col([
                             html_div("‎ "),
-                            html_div(message),
+                            html_div(message, style = Dict("textAlign" => "center","font-size" => "120%")),
                         ], width="auto" ),
                         dbc_col([
                             dbc_cardimg(    id      = "magemin-img",
