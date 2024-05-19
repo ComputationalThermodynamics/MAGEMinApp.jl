@@ -1,3 +1,6 @@
+
+
+
 function get_jet_colormap(n)
 
     jet256 = ["RGB(0,0,127)", "RGB(0,0,132)", "RGB(0,0,136)", "RGB(0,0,141)", "RGB(0,0,145)", "RGB(0,0,150)", "RGB(0,0,154)", "RGB(0,0,159)", "RGB(0,0,163)", "RGB(0,0,168)", "RGB(0,0,172)", "RGB(0,0,177)", "RGB(0,0,182)", "RGB(0,0,186)", "RGB(0,0,191)", "RGB(0,0,195)", "RGB(0,0,200)", "RGB(0,0,204)", "RGB(0,0,209)", "RGB(0,0,213)", "RGB(0,0,218)", "RGB(0,0,222)", "RGB(0,0,227)", "RGB(0,0,232)", "RGB(0,0,236)", "RGB(0,0,241)", "RGB(0,0,245)", "RGB(0,0,250)", "RGB(0,0,254)", "RGB(0,0,255)", "RGB(0,0,255)", "RGB(0,0,255)", "RGB(0,0,255)", "RGB(0,4,255)", "RGB(0,8,255)", "RGB(0,12,255)", "RGB(0,16,255)", "RGB(0,20,255)", "RGB(0,24,255)", "RGB(0,28,255)", "RGB(0,32,255)", "RGB(0,36,255)", "RGB(0,40,255)", "RGB(0,44,255)", "RGB(0,48,255)", "RGB(0,52,255)", "RGB(0,56,255)", "RGB(0,60,255)", "RGB(0,64,255)", "RGB(0,68,255)", "RGB(0,72,255)", "RGB(0,76,255)", "RGB(0,80,255)", "RGB(0,84,255)", "RGB(0,88,255)", "RGB(0,92,255)", "RGB(0,96,255)", "RGB(0,100,255)", "RGB(0,104,255)", "RGB(0,108,255)", "RGB(0,112,255)", "RGB(0,116,255)", "RGB(0,120,255)", "RGB(0,124,255)", "RGB(0,128,255)", "RGB(0,132,255)", "RGB(0,136,255)", "RGB(0,140,255)", "RGB(0,144,255)", "RGB(0,148,255)", "RGB(0,152,255)", "RGB(0,156,255)", "RGB(0,160,255)", "RGB(0,164,255)", "RGB(0,168,255)", "RGB(0,172,255)", "RGB(0,176,255)", "RGB(0,180,255)", "RGB(0,184,255)", "RGB(0,188,255)", "RGB(0,192,255)", "RGB(0,196,255)", "RGB(0,200,255)", "RGB(0,204,255)", "RGB(0,208,255)", "RGB(0,212,255)", "RGB(0,216,255)", "RGB(0,220,254)", "RGB(0,224,250)", "RGB(0,228,247)", "RGB(2,232,244)", "RGB(5,236,241)", "RGB(8,240,237)", "RGB(12,244,234)", "RGB(15,248,231)", "RGB(18,252,228)", "RGB(21,255,225)", "RGB(24,255,221)", "RGB(28,255,218)", "RGB(31,255,215)", "RGB(34,255,212)", "RGB(37,255,208)", "RGB(41,255,205)", "RGB(44,255,202)", "RGB(47,255,199)", "RGB(50,255,195)", "RGB(54,255,192)", "RGB(57,255,189)", "RGB(60,255,186)", "RGB(63,255,183)", "RGB(66,255,179)", "RGB(70,255,176)", "RGB(73,255,173)", "RGB(76,255,170)", "RGB(79,255,166)", "RGB(83,255,163)", "RGB(86,255,160)", "RGB(89,255,157)", "RGB(92,255,154)", "RGB(95,255,150)", "RGB(99,255,147)", "RGB(102,255,144)", "RGB(105,255,141)", "RGB(108,255,137)", "RGB(112,255,134)", "RGB(115,255,131)", "RGB(118,255,128)", "RGB(121,255,125)", "RGB(124,255,121)", "RGB(128,255,118)", "RGB(131,255,115)", "RGB(134,255,112)", "RGB(137,255,108)", "RGB(141,255,105)", "RGB(144,255,102)", "RGB(147,255,99)", "RGB(150,255,95)", "RGB(154,255,92)", "RGB(157,255,89)", "RGB(160,255,86)", "RGB(163,255,83)", "RGB(166,255,79)", "RGB(170,255,76)", "RGB(173,255,73)", "RGB(176,255,70)", "RGB(179,255,66)", "RGB(183,255,63)", "RGB(186,255,60)", "RGB(189,255,57)", "RGB(192,255,54)", "RGB(195,255,50)", "RGB(199,255,47)", "RGB(202,255,44)", "RGB(205,255,41)", "RGB(208,255,37)", "RGB(212,255,34)", "RGB(215,255,31)", "RGB(218,255,28)", "RGB(221,255,24)", "RGB(224,255,21)", "RGB(228,255,18)", "RGB(231,255,15)", "RGB(234,255,12)", "RGB(237,255,8)", "RGB(241,252,5)", "RGB(244,248,2)", "RGB(247,244,0)", "RGB(250,240,0)", "RGB(254,237,0)", "RGB(255,233,0)", "RGB(255,229,0)", "RGB(255,226,0)", "RGB(255,222,0)", "RGB(255,218,0)", "RGB(255,215,0)", "RGB(255,211,0)", "RGB(255,207,0)", "RGB(255,203,0)", "RGB(255,200,0)", "RGB(255,196,0)", "RGB(255,192,0)", "RGB(255,189,0)", "RGB(255,185,0)", "RGB(255,181,0)", "RGB(255,177,0)", "RGB(255,174,0)", "RGB(255,170,0)", "RGB(255,166,0)", "RGB(255,163,0)", "RGB(255,159,0)", "RGB(255,155,0)", "RGB(255,152,0)", "RGB(255,148,0)", "RGB(255,144,0)", "RGB(255,140,0)", "RGB(255,137,0)", "RGB(255,133,0)", "RGB(255,129,0)", "RGB(255,126,0)", "RGB(255,122,0)", "RGB(255,118,0)", "RGB(255,115,0)", "RGB(255,111,0)", "RGB(255,107,0)", "RGB(255,103,0)", "RGB(255,100,0)", "RGB(255,96,0)", "RGB(255,92,0)", "RGB(255,89,0)", "RGB(255,85,0)", "RGB(255,81,0)", "RGB(255,77,0)", "RGB(255,74,0)", "RGB(255,70,0)", "RGB(255,66,0)", "RGB(255,63,0)", "RGB(255,59,0)", "RGB(255,55,0)", "RGB(255,52,0)", "RGB(255,48,0)", "RGB(255,44,0)", "RGB(255,40,0)", "RGB(255,37,0)", "RGB(255,33,0)", "RGB(255,29,0)", "RGB(255,26,0)", "RGB(255,22,0)", "RGB(254,18,0)", "RGB(250,15,0)", "RGB(245,11,0)", "RGB(241,7,0)", "RGB(236,3,0)", "RGB(232,0,0)", "RGB(227,0,0)", "RGB(222,0,0)", "RGB(218,0,0)", "RGB(213,0,0)", "RGB(209,0,0)", "RGB(204,0,0)", "RGB(200,0,0)", "RGB(195,0,0)", "RGB(191,0,0)", "RGB(186,0,0)", "RGB(182,0,0)", "RGB(177,0,0)", "RGB(172,0,0)", "RGB(168,0,0)", "RGB(163,0,0)", "RGB(159,0,0)", "RGB(154,0,0)", "RGB(150,0,0)", "RGB(145,0,0)", "RGB(141,0,0)", "RGB(136,0,0)", "RGB(132,0,0)", "RGB(127,0,0)"]
@@ -10,7 +13,25 @@ function get_jet_colormap(n)
 
 end
 
+function get_lines_colormap()
 
+    color_lines = [ "RGB(182,69,91)",
+                    "RGB(182,69,156)",
+                    "RGB(174,69,182)",
+                    "RGB(107,69,182)",
+                    "RGB(69,84,182)",
+                    "RGB(69,152,182)",
+                    "RGB(69,182,152)",
+                    "RGB(69,182,91)",
+                    "RGB(107,182,69)",
+                    "RGB(159,182,69)",
+                    "RGB(182,156,69)",
+                    "RGB(182,122,69)",
+                    "RGB(182,76,69)"]
+
+    return color_lines
+
+end
 
 function get_init_param(    dtb         :: String,
                             solver      :: String,
@@ -587,7 +608,7 @@ function get_diagram_labels(    fieldname   ::String,
         if np > 2
             id             += 1
             points          = [[ t2[i]+rand()/100, p2[i]+rand()/100] for i=1:np]
-            hull_list[id]   = concave_hull(points,1024)
+            hull_list[id]   = concave_hull(points,length(points))
             ph_list[id]     = phase[1]
             phd_list[id]    = phased[1]
         end
@@ -728,7 +749,7 @@ function get_diagram_labels(    fieldname   ::String,
                                         font        = attr( size = 10),
                                         )   
     n_lbl = n_trace
-    println("\rGet phase diagram labels $(round(time()-t0, digits=3)) s"); 
+    println("\rGet phase diagram labels $(round(time()-t0, digits=3)) seconds"); 
 
     return traces, annotations 
 end
@@ -953,8 +974,10 @@ end
     Function interpolate AMR grid to regular grid
 """
 function get_gridded_map(   fieldname   ::String,
+                            type        ::String,
                             oxi         ::Vector{String},
                             Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
+                            Out_TE_XY   ::Union{Nothing,Vector{MAGEMin_C.out_tepm}},
                             Hash_XY     ::Vector{UInt64},
                             sub         ::Int64,
                             refLvl      ::Int64,
@@ -969,7 +992,7 @@ function get_gridded_map(   fieldname   ::String,
     print("Interpolate data on grid ..."); t0 = time()
     np          = length(data.x)
     len_ox      = length(oxi)
-    field       = Vector{Union{Float64,Missing}}(undef,np);
+    field       = Vector{Union{Float64,Missing,Nothing}}(undef,np);
  
     npoints     = np
 
@@ -980,42 +1003,47 @@ function get_gridded_map(   fieldname   ::String,
     meant      /= npoints
     meant       = round(meant; digits = 3)
 
-    if fieldname == "#Phases"
+    if type == "zr"
         for i=1:np
-            field[i] = Float64(length(Out_XY[i].ph));
+            field[i] = get_property(Out_TE_XY[i], fieldname);
         end
-    elseif fieldname == "Hash"
-        for i=1:np
-            field[i] = Hash_XY[i];
-        end 
-    elseif fieldname == "Variance"
-        for i=1:np
-            field[i] = Float64(len_ox - n_phase_XY[i] + 2.0);
-        end
-    elseif fieldname == "s_cp"
-        for i=1:np
-            field[i] = Out_XY[i].s_cp[1];
-        end
-    elseif fieldname == "Delta_rho"
-        for i=1:np
-            field[i] = 0.0
-            if (Out_XY[i].frac_M > 0.0 && Out_XY[i].frac_S > 0.0)
-                field[i] = Out_XY[i].rho_S - Out_XY[i].rho_M
+
+        field[isnothing.(field)] .= 0.0
+    else
+        if fieldname == "#Phases"
+            for i=1:np
+                field[i] = Float64(length(Out_XY[i].ph));
+            end
+        elseif fieldname == "Hash"
+            for i=1:np
+                field[i] = Hash_XY[i];
+            end 
+        elseif fieldname == "Variance"
+            for i=1:np
+                field[i] = Float64(len_ox - n_phase_XY[i] + 2.0);
+            end
+        elseif fieldname == "s_cp"
+            for i=1:np
+                field[i] = Out_XY[i].s_cp[1];
+            end
+        elseif fieldname == "Delta_rho"
+            for i=1:np
+                field[i] = 0.0
+                if (Out_XY[i].frac_M > 0.0 && Out_XY[i].frac_S > 0.0)
+                    field[i] = Out_XY[i].rho_S - Out_XY[i].rho_M
+                end
+            end
+        else
+            for i=1:np
+                field[i] = Float64(get_property(Out_XY[i], fieldname));
+            end
+
+            field[isnan.(field)] .= 0.0
+            if fieldname == "frac_M" || fieldname == "rho_M" || fieldname == "rho_S" || fieldname == "Delta_rho"
+                field[isless.(field, 1e-8)] .= 0.0              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
             end
         end
-    else
-        for i=1:np
-            field[i] = Float64(get_property(Out_XY[i], fieldname));
-        end
-
-        field[isnan.(field)] .= 0.0
-        if fieldname == "frac_M" || fieldname == "rho_M" || fieldname == "rho_S" || fieldname == "Delta_rho"
-            field[isless.(field, 1e-8)] .= 0.0              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
-        # elseif fieldname == "fO2" || fieldname == "dQFM"
-        #     field .= log10.(field)
-        end
     end
-
     n            = 2^(sub + refLvl)
     x            = range(minimum(xc), stop = maximum(xc), length = n)
     y            = range(minimum(yc), stop = maximum(yc), length = n)
@@ -1044,18 +1072,93 @@ function get_gridded_map(   fieldname   ::String,
         end
 
     end
-    println("\rInterpolate data on grid $(round(time()-t0, digits=3)) s"); 
+    println("\rInterpolate data on grid $(round(time()-t0, digits=3)) seconds"); 
     
     return gridded, gridded_info, X, Y, npoints, meant
 end
 
 
+
+"""
+    parse use input
+"""
+function get_parsed_command(    point       :: Int64;
+                                varBuilder  :: String = "M_Dy / M_Yb")
+
+    if ~isnothing(Out_TE_XY[point].Cliq)
+        terms       = split(varBuilder)
+        terms_out   = copy(terms)
+        idx         = 1
+
+        for i in terms
+            term2   = split(i,"_")
+            nsubs   = length(term2)
+            if nsubs == 2
+                if (term2[1] == "S")
+                    part1 = "Out_TE_XY["*string(point)*"].Csol"
+                    id_el = findfirst(Out_TE_XY[point].elements  .== term2[2])
+                    if isnothing(id_el)
+                        part1, part2 = "break", "break"
+                        print("wrong element name!\n")
+                    else
+                        part2 = "["*string(id_el)*"]"
+                    end
+                elseif (term2[1] == "M")
+                    part1 = "Out_TE_XY["*string(point)*"].Cliq"
+                    id_el = findfirst(Out_TE_XY[point].elements  .== term2[2])
+                    if isnothing(id_el)
+                        part1, part2 = "break", "break"
+                        print("wrong element name!\n")
+                    else
+                        part2 = "["*string(id_el)*"]"
+                    end
+                else
+                    id = findfirst(Out_TE_XY[point].ph_TE .== term2[1])
+                    if isnothing(id)
+                        part1, part2 = "break", "break"
+                    else
+                        part1 = "Out_TE_XY["*string(point)*"].Cmin"
+                        id_el = findfirst(Out_TE_XY[point].elements  .== term2[2])
+                        if isnothing(id_el)
+                            part1, part2 = "break", "break"
+                            print("wrong element name!\n")
+                        else
+                            part2 = "["*string(id)*","*string(id_el)*"]"
+                        end
+                    end
+                end
+        
+                if part1 == "break" || part2 == "break"
+                    terms_out[idx] = "NaN"
+                else
+                    terms_out[idx] = part1*part2
+                end
+            elseif nsubs > 2
+                print("something is fishy, check that spaces are correctly placed\n")
+                break;
+            end
+            idx += 1
+        end
+
+        cat     = join(string.(terms_out))
+    else
+        cat = "NaN"
+    end
+
+    command = Meta.parse(cat)
+
+    return command
+end
+
 """
     Function interpolate AMR grid to regular grid
 """
 function get_gridded_map_no_lbl(    fieldname   ::String,
+                                    type        ::String,
+                                    varBuilder  ::String,
                                     oxi         ::Vector{String},
                                     Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
+                                    Out_TE_XY   ::Union{Nothing,Vector{MAGEMin_C.out_tepm}},
                                     Hash_XY     ::Vector{UInt64},
                                     sub         ::Int64,
                                     refLvl      ::Int64,
@@ -1070,7 +1173,7 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
     print("Interpolate data on grid ..."); t0 = time()
     np          = length(data.x)
     len_ox      = length(oxi)
-    field       = Vector{Union{Float64,Missing}}(undef,np);
+    field       = Vector{Union{Float64,Missing,Nothing}}(undef,np);
  
     npoints     = np
 
@@ -1080,40 +1183,52 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
     end
     meant      /= npoints
     meant       = round(meant; digits = 3)
-
-    if fieldname == "#Phases"
+    if type == "zr"
         for i=1:np
-            field[i] = Float64(length(Out_XY[i].ph));
-        end
-    elseif fieldname == "Hash"
-        for i=1:np
-            field[i] = Hash_XY[i];
-        end 
-    elseif fieldname == "Variance"
-        for i=1:np
-            field[i] = Float64(len_ox - n_phase_XY[i] + 2.0);
-        end
-    elseif fieldname == "s_cp"
-        for i=1:np
-            field[i] = Out_XY[i].s_cp[1];
-        end
-    elseif fieldname == "Delta_rho"
-        for i=1:np
-            field[i] = 0.0
-            if (Out_XY[i].frac_M > 0.0 && Out_XY[i].frac_S > 0.0)
-                field[i] = Out_XY[i].rho_S - Out_XY[i].rho_M
-            end
-        end
-    else
-        for i=1:np
-            field[i] = Float64(get_property(Out_XY[i], fieldname));
+            field[i] = get_property(Out_TE_XY[i], fieldname);
         end
 
+        field[isnothing.(field)] .= 0.0
+    elseif type == "te"
+        global i
+        for i=1:np
+            cmd = get_parsed_command( i;  varBuilder) 
+            field[i] = eval(cmd)
+        end
         field[isnan.(field)] .= 0.0
-        if fieldname == "frac_M" || fieldname == "rho_M" || fieldname == "rho_S"
-            field[isless.(field, 1e-8)] .= 0.0              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
-        # elseif fieldname == "fO2" || fieldname == "dQFM"
-        #     field .= log10.(field)
+    else
+        if fieldname == "#Phases"
+            for i=1:np
+                field[i] = Float64(length(Out_XY[i].ph));
+            end
+        elseif fieldname == "Hash"
+            for i=1:np
+                field[i] = Hash_XY[i];
+            end 
+        elseif fieldname == "Variance"
+            for i=1:np
+                field[i] = Float64(len_ox - n_phase_XY[i] + 2.0);
+            end
+        elseif fieldname == "s_cp"
+            for i=1:np
+                field[i] = Out_XY[i].s_cp[1];
+            end
+        elseif fieldname == "Delta_rho"
+            for i=1:np
+                field[i] = 0.0
+                if (Out_XY[i].frac_M > 0.0 && Out_XY[i].frac_S > 0.0)
+                    field[i] = Out_XY[i].rho_S - Out_XY[i].rho_M
+                end
+            end
+        else
+            for i=1:np
+                field[i] = Float64(get_property(Out_XY[i], fieldname));
+            end
+
+            field[isnan.(field)] .= 0.0
+            if fieldname == "frac_M" || fieldname == "rho_M" || fieldname == "rho_S"
+                field[isless.(field, 1e-8)] .= 0.0              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
+            end
         end
     end
 
@@ -1133,7 +1248,7 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
         jj              = Int64(round((yc[k]-Yrange[1] + Yr/2)/(Yr))) 
         gridded[ii,jj]  = field[k] 
     end
-    println("\rInterpolate data on grid $(round(time()-t0, digits=3)) s"); 
+    println("\rInterpolate data on grid $(round(time()-t0, digits=3)) seconds"); 
     return gridded, X, Y, npoints, meant
 end
 
@@ -1186,8 +1301,6 @@ function get_isopleth_map(  mod         ::String,
         field[isnan.(field)] .= missing
         if of == "frac_M" || of == "rho_M" || of == "rho_S"
             field[isless.(field, 1e-8)] .= 0.0              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
-        # elseif of == "fO2" || of == "dQFM"
-        #     field .= log10.(field)
         end 
     end
 
@@ -1250,7 +1363,7 @@ function get_oxide_list(dbin::String)
 end
 
 """
-    function to parce bulk-rock composition file
+    function to parse bulk-rock composition file
 """
 function bulk_file_to_db(datain)
 
@@ -1304,7 +1417,6 @@ function bulk_file_to_db(datain)
 
         oxide                   = get_oxide_list(String(dbin))
 
-
         push!(db,Dict(  :bulk       => bulk,
                         :title      => title,
                         :comments   => comments,
@@ -1335,3 +1447,91 @@ function parse_bulk_rock(contents, filename)
     end
 
   end
+
+
+  function parse_bulk_te(contents, filename, kdsDB)
+    try
+        content_type, content_string = split(contents, ',');
+        decoded = base64decode(content_string);
+        input   = String(decoded) ;
+        datain  = strip.(string.(readdlm(IOBuffer(input), ';', comments=true, comment_char='#')));
+
+        te_bulk_file_to_db(datain, kdsDB);
+
+        return 1
+    catch e
+        return 0
+    end
+
+  end
+
+"""
+  function to parse bulk-te composition file
+"""
+function te_bulk_file_to_db(datain, kdsDB)
+
+    global dbte;
+
+    dbte = dbte[(dbte.composition .== "predefined"), :];
+
+    if kdsDB == "OL"
+        KDs_dtb = get_OL_KDs_database();    #has to take into account possible other Kds database
+    else
+        print("Kd's database $kdsDB not implemented\n")
+    end
+
+    for i=2:size(datain, 1)
+        composition = "custom";
+
+        idx 		= findall(datain[1,:] .== "title")[1];
+        title   	= string(datain[i,idx]);
+
+        idx 		= findall(datain[1,:] .== "comments")[1];
+        comments    = string(datain[i,idx]);
+
+        test 		= length(dbte.test);
+
+        idx 		= findall(datain[1,:] .== "elements")[1];
+        elements    = rsplit(datain[i,idx],",");
+        elements 	= strip.(convert.(String,elements));
+        elements 	= replace.(elements,r"\]"=>"",r"\["=>"");
+
+        idx 		= findall(datain[1,:] .== "frac")[1];
+        frac   	    = rsplit(datain[i,idx],",");
+        frac 		= strip.(convert.(String,frac));
+        frac 		= replace.(frac,r"\]"=>"",r"\["=>"");
+        frac 		= parse.(Float64,frac);
+
+        bulkte      = adjust_chemical_system( KDs_dtb, frac, elements);
+        bulkte     .= round.(bulkte; digits = 4)
+
+        idx 		= findall(datain[1,:] .== "frac2")[1];
+        if ~isempty(datain[i,idx])
+            frac2  		= rsplit(datain[i,idx],",");
+            frac2 		= strip.(convert.(String,frac2));
+            frac2 		= replace.(frac2,r"\]"=>"",r"\["=>"");
+            frac2		= parse.(Float64,frac2);
+            bulkte2     = adjust_chemical_system( KDs_dtb, frac2, elements);
+            bulkte2    .= round.(bulkte2; digits = 4)
+        else
+            bulkte2     = deepcopy(bulkte)
+        end
+
+        elements    = KDs_dtb.element_name
+
+        push!(dbte,Dict(    :composition    => composition,
+                            :title          => title,
+                            :comments       => comments,
+                            :test           => test,
+                            :elements       => elements,
+                            :μg_g           => bulkte,
+                            :μg_g2          => bulkte2,
+                    ), cols=:union)
+    end
+
+end
+
+
+
+
+

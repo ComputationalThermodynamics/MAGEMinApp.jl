@@ -17,24 +17,26 @@ using MAGEMin_C
 pkg_dir = Base.pkgdir(MAGEMinApp)
 
 export App
-
 # include helper functions
+include(joinpath(pkg_dir,"src","fetch.jl"))
 include(joinpath(pkg_dir,"src","initialize_MAGEMin_AMR.jl"))
 include(joinpath(pkg_dir,"src","PhaseDiagram_functions.jl"))
-include(joinpath(pkg_dir,"src","appData.jl"))
+include(joinpath(pkg_dir,"src","TraceElement_functions.jl"))
 include(joinpath(pkg_dir,"src","Tab_Simulation.jl"))
 include(joinpath(pkg_dir,"src","Tab_PhaseDiagram.jl"))
+include(joinpath(pkg_dir,"src","Tab_TraceElement.jl"))
 include(joinpath(pkg_dir,"src","Tab_PTXpaths.jl"))
 include(joinpath(pkg_dir,"src","data_plot.jl"))
-include(joinpath(pkg_dir,"src","MAGEMinApp_functions.jl"))
 include(joinpath(pkg_dir,"src","MAGEMinApp_Callbacks.jl"))   
 include(joinpath(pkg_dir,"src","Tab_Simulation_Callbacks.jl"))    
 include(joinpath(pkg_dir,"src","Tab_PhaseDiagram_Callbacks.jl"))
+include(joinpath(pkg_dir,"src","Tab_TraceElement_Callbacks.jl"))
 include(joinpath(pkg_dir,"src","PTXpaths_functions.jl"))   
 include(joinpath(pkg_dir,"src","Tab_PTXpaths_Callbacks.jl")) 
 include(joinpath(pkg_dir,"src","Tab_isentropic.jl"))
 include(joinpath(pkg_dir,"src","Tab_isentropic_Callbacks.jl"))
 include(joinpath(pkg_dir,"src","IsentropicPaths_functions.jl"))
+
 
 """
     App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
@@ -42,9 +44,14 @@ include(joinpath(pkg_dir,"src","IsentropicPaths_functions.jl"))
 Starts the MAGEMin App.
 """
 function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
-    GUI_version = "0.2.8"   
+    message     = fetch_message()
+    GUI_version = "0.2.9"   
     cur_dir     = pwd()                 # directory from where you started the GUI
     pkg_dir     = pkgdir(MAGEMinApp)   # package dir
+    
+    include(joinpath(pkg_dir,"src","appData.jl"))
+    include(joinpath(pkg_dir,"src","MAGEMinApp_functions.jl"))
+
     db_inf      = retrieve_solution_phase_information("ig");
     cd(pkg_dir)
 
@@ -65,11 +72,16 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                             style   = Dict("height" => 55, "width" => 230)),
                                 ], width="auto" ),
                         dbc_col([
+                            html_div("‎ "),
+                            html_div(message, style = Dict("textAlign" => "center","font-size" => "120%")),
+                        ], width="auto" ),
+                        dbc_col([
                             dbc_cardimg(    id      = "magemin-img",
                                             src     = "assets/static/images/MAGEMin_light.jpg",
                                             style   = Dict("height" => 70, "width" => 190)),
                                 ], width="auto" )
-                            ], justify="between"),
+
+                    ], justify="between"),
                     
                     dbc_row([
                             dbc_col([
@@ -138,6 +150,10 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                                                                 label       = "Diagram",
                                                                                 children    = [Tab_PhaseDiagram()]
                                                                             ),
+                                                                    dbc_tab(    tab_id      = "tab-te",
+                                                                                label       = "Trace-elements",
+                                                                                children    = [Tab_TraceElement()],
+                                                                            ),
                                                             ], id = "tabs"), ]
                                             ),
 
@@ -177,6 +193,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
     app = MAGEMinApp_Callbacks(app)
     app = Tab_Simulation_Callbacks(app)
     app = Tab_PhaseDiagram_Callbacks(app)
+    app = Tab_TraceElement_Callbacks(app)
     app = Tab_PTXpaths_Callbacks(app)
     app = Tab_isoSpaths_Callbacks(app)
     

@@ -198,14 +198,14 @@ function Tab_isoSpaths_Callbacks(app)
         end
 
         configIsoS   = PlotConfig(  toImageButtonOptions  = attr(     name     = "Download as svg",
-                                    format   = "svg", # one of png, svg, jpeg, webp
+                                    format   = "svg",
                                     filename =  "isentropic_path_mode_"*replace(title, " " => "_"),
                                     height   =  360,
                                     width    =  960,
                                     scale    =  2.0,       ).fields)
 
         configPathIsoS   = PlotConfig(  toImageButtonOptions  = attr(     name     = "Download as svg",
-                                    format   = "svg", # one of png, svg, jpeg, webp
+                                    format   = "svg",
                                     filename =  "isentropic_path_PT_"*replace(title, " " => "_"),
                                     height   =  640,
                                     width    =  640,
@@ -253,7 +253,7 @@ function Tab_isoSpaths_Callbacks(app)
 
 
         config   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
-                                    format   = "svg", # one of png, svg, jpeg, webp
+                                    format   = "svg",
                                     filename = "path_composition_"*replace(title, " " => "_"),
                                     width    =  960,
                                     height   =  360,

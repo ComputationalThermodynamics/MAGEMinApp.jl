@@ -351,6 +351,43 @@ end
 
 
 
+function tepm_function( dtb         :: String,
+                        diagType    :: String,
+                        kds_mod     :: String,
+                        zrsat_mod   :: String,
+                        bulkte_L    :: Vector{Float64},
+                        bulkte_R    :: Vector{Float64} )
+
+    np          = length(Out_XY)
+
+    Out_TE_XY   = Vector{MAGEMin_C.out_tepm}(undef,np)
+    TEvec       = Vector{Float64};
+    all_TE_ph   = []
+
+    for i = 1:np
+
+        if diagType != "pt"
+            TEvec = bulkte_L*(1.0 - Out_XY[i].X[1]) + bulkte_R*Out_XY[i].X[1];
+        else
+            TEvec = bulkte_L
+        end
+
+        Out_TE_XY[i]  = TE_prediction(TEvec,KDs_dtb, zrsat_mod,Out_XY[i],dtb);
+
+        if ~isnothing(Out_TE_XY[i].ph_TE)
+            for j in Out_TE_XY[i].ph_TE
+                if !(j in all_TE_ph)
+                    push!(all_TE_ph,string(j))
+                end
+            end
+        end
+
+    end
+
+    return Out_TE_XY, all_TE_ph
+end
+
+
 
 """
     compute_new_phaseDiagram(   xtitle,     ytitle,     
@@ -407,12 +444,13 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
         #________________________________________________________________________________________#                      
         # initial optimization on regular grid
 
-        Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(   data, MAGEMin_data, diagType, PTpath,
-                                                                    phase_selection, fixT, fixP,
-                                                                    oxi, bulk_L, bulk_R,
-                                                                    bufferType, bufferN1, bufferN2,
-                                                                    scp, refType    )
-                    
+        Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(  data, MAGEMin_data, diagType, PTpath,
+                                                        phase_selection, fixT, fixP,
+                                                        oxi, bulk_L, bulk_R,
+                                                        bufferType, bufferN1, bufferN2,
+                                                        scp, refType    )
+
+        
         #________________________________________________________________________________________#     
         # Refine the mesh along phase boundaries
 
@@ -437,15 +475,15 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
         for i = 1:Threads.nthreads()
             finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i])
         end
-        
-        # push!(AppData.PseudosectionData,Out_XY);
 
         #________________________________________________________________________________________#                   
         # Scatter plotly of the grid
 
         gridded, gridded_info, X, Y, npoints, meant = get_gridded_map(  fieldname,
+                                                                        "major",
                                                                         oxi,
                                                                         Out_XY,
+                                                                        nothing,
                                                                         Hash_XY,
                                                                         sub,
                                                                         refLvl,
@@ -496,11 +534,13 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                     yaxis_range = Yrange,
                     xaxis       = attr(     tickmode    = "linear",
                                             tick0       = Xrange[1],
-                                            dtick       = (Xrange[2]-Xrange[1])/(ticks+1)
+                                            dtick       = (Xrange[2]-Xrange[1])/(ticks+1),
+                                            fixedrange    = true,
                                         ),
                     yaxis       = attr(     tickmode    = "linear",
                                             tick0       = Yrange[1],
-                                            dtick       = (Yrange[2]-Yrange[1])/(ticks+1)
+                                            dtick       = (Yrange[2]-Yrange[1])/(ticks+1),
+                                            fixedrange    = true,
                                     ),
                 )
                 
@@ -601,8 +641,10 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
     #________________________________________________________________________________________#                   
     # Scatter plotly of the grid
     gridded, gridded_info, X, Y, npoints, meant = get_gridded_map(  fieldname,
+                                                                    "major",
                                                                     oxi,
                                                                     Out_XY,
+                                                                    nothing,
                                                                     Hash_XY,
                                                                     sub,
                                                                     refLvl + addedRefinementLvl,
@@ -797,8 +839,11 @@ function  update_diplayed_field_phaseDiagram(   xtitle,     ytitle,
     global data, Out_XY, data_plot, gridded, gridded_info, X, Y, PhasesLabels, addedRefinementLvl, PT_infos, layout
 
     gridded, X, Y, npoints, meant = get_gridded_map_no_lbl(     fieldname,
+                                                                "major",
+                                                                "none",
                                                                 oxi,
                                                                 Out_XY,
+                                                                nothing,
                                                                 Hash_XY,
                                                                 sub,
                                                                 refLvl + addedRefinementLvl,

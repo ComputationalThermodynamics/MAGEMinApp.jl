@@ -127,7 +127,10 @@ function get_TAS_diagram(phases)
         annotations = annotations,
         width       = 760,
         height      = 480,
-        # autosize    = false,
+        xaxis       = attr(     fixedrange    = true,
+                            ),
+        yaxis       = attr(     fixedrange    = true,
+                            ),
     )
 
    
@@ -584,7 +587,10 @@ function initialize_layout(title,sysunit)
         # annotations = annotations,
         # width       = 900,
         height      = 360,
-        # autosize    = false,
+        xaxis       = attr(     fixedrange    = true,
+                            ),
+        yaxis       = attr(     fixedrange    = true,
+                            ),
     )
 
     return layout_ptx
@@ -612,7 +618,10 @@ function initialize_comp_layout(sysunit)
         # annotations = annotations,
         # width       = 900,
         height      = 360,
-        # autosize    = false,
+        xaxis       = attr(     fixedrange    = true,
+                            ),
+        yaxis       = attr(     fixedrange    = true,
+                            ),
     )
 
     return layout_comp

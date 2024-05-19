@@ -134,7 +134,7 @@ function Tab_Simulation(db_inf)
                                     ], style = Dict("display" => "block"), id      = "switch-opx-id"), #none, block
 
                                     #Trace element predictive models
-                                    html_div([
+                                    # html_div([
                                     html_div("‎ "),  
                                     html_div("‎ "),  
                                     dbc_row([
@@ -152,7 +152,7 @@ function Tab_Simulation(db_inf)
                                             multi       =  false),
                                         ]),
                                     ]),
-                                    ], style = Dict("display" => "none"), id      = "tepm-id"), #none, block
+                                    # ], style = Dict("display" => "none"), id      = "tepm-id"), #none, block
 
                                     #options for trace element predictive modelling
                                     html_div([
@@ -401,6 +401,12 @@ function Tab_Simulation(db_inf)
                                                 (label = "CCO",      value = "cco"),
                                                 (label = "HM",       value = "hm"), 
                                                 (label = "NNO",      value = "nno"), 
+                                                (label = "aH2O",     value = "aH2O"), 
+                                                (label = "aO2",      value = "aO2"), 
+                                                (label = "aFeO",     value = "aFeO"), 
+                                                (label = "aMgO",     value = "aMgO"), 
+                                                (label = "aAl2O3",   value = "aAl2O3"), 
+                                                (label = "aTiO2",    value = "aTiO2"), 
                                             ],
                                             value="none" ,
                                             clearable   = false,

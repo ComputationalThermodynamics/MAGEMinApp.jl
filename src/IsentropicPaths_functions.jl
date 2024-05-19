@@ -257,7 +257,7 @@ function get_data_comp_plot_isoS(sysunit,phases)
 
         data_comp_plot[k] = scatter(;   x           =  x,
                                         y           =  compo_matrix[k,:],
-                                        name        = oxides[k],
+                                        name        =  oxides[k],
                                         mode        = "markers+lines",
                                         marker      = attr(     size    = 5.0,
                                                                 color   = colormap[k]),
@@ -285,6 +285,10 @@ function initialize_layout_isoS_path(   Pini :: Float64,
                         xaxis_range = [Tini-300,Tini+100], 
                         yaxis_range = [0.0,Pini+5.0],
                         showlegend  = false,
+                        xaxis       = attr(     fixedrange    = true,
+                                            ),
+                         yaxis       = attr(     fixedrange    = true,
+                                            ),
     )
 
     return layout_isoS
@@ -312,7 +316,10 @@ function initialize_layout_isoS(title,sysunit)
         # annotations = annotations,
         # width       = 900,
         height      = 360,
-        # autosize    = false,
+        xaxis       = attr(     fixedrange    = true,
+                            ),
+        yaxis       = attr(     fixedrange    = true,
+                            ),
     )
 
     return layout_isoS
