@@ -36,7 +36,7 @@ include(joinpath(pkg_dir,"src","Tab_PTXpaths_Callbacks.jl"))
 include(joinpath(pkg_dir,"src","Tab_isentropic.jl"))
 include(joinpath(pkg_dir,"src","Tab_isentropic_Callbacks.jl"))
 include(joinpath(pkg_dir,"src","IsentropicPaths_functions.jl"))
-
+include(joinpath(pkg_dir,"src","MAGEMinApp_functions.jl"))
 
 """
     App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
@@ -50,7 +50,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
     pkg_dir     = pkgdir(MAGEMinApp)   # package dir
     
     include(joinpath(pkg_dir,"src","appData.jl"))
-    include(joinpath(pkg_dir,"src","MAGEMinApp_functions.jl"))
+    # include(joinpath(pkg_dir,"src","MAGEMinApp_functions.jl"))
 
     db_inf      = retrieve_solution_phase_information("ig");
     cd(pkg_dir)
