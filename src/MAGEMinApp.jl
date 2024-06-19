@@ -45,7 +45,7 @@ Starts the MAGEMin App.
 """
 function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
     message     = fetch_message()
-    GUI_version = "0.3.0"   
+    GUI_version = "0.3.1"   
     cur_dir     = pwd()                 # directory from where you started the GUI
     pkg_dir     = pkgdir(MAGEMinApp)   # package dir
     
