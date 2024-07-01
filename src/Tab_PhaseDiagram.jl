@@ -281,7 +281,11 @@ function Tab_PhaseDiagram()
                                                     (label = "Solid fraction",          value = "frac_S"),
                                                     (label = "Melt fraction",           value = "frac_M"),                                                            
                                                     (label = "Vp",                      value = "Vp"),
-                                                    (label = "Vs",                      value = "Vs"),
+                                                    (label = "Vs",                      value = "Vs"),                                                            
+                                                    (label = "Vp_S",                    value = "Vp_S"),
+                                                    (label = "Vs_S",                    value = "Vs_S"),
+                                                    
+                                                    
                                                 ],
                                                 value       = "G_system",
                                                 clearable   = false,
@@ -493,7 +497,9 @@ function Tab_PhaseDiagram()
                                                             (label = "Solid fraction",          value = "frac_S"),
                                                             (label = "Melt fraction",           value = "frac_M"),                                                            
                                                             (label = "Vp",                      value = "Vp"),
-                                                            (label = "Vs",                      value = "Vs"),
+                                                            (label = "Vs",                      value = "Vs"),                                                            
+                                                            (label = "Vp_S",                    value = "Vp_S"),
+                                                            (label = "Vs_S",                    value = "Vs_S"),
                                                             (label = "Bulk residual (norm)",    value = "bulk_res_norm"),
                                                             (label = "Computation time (ms)",   value = "time_ms"),
                                                             (label = "Status",                  value = "status"),
