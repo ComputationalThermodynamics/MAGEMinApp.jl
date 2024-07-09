@@ -190,7 +190,7 @@ function compute_Tliq(          pressure,   tolerance,  bulk_ini,   oxi,    phas
         while n < n_max && conv == 0
             c = (a+b)/2.0
 
-            out     = deepcopy( point_wise_minimization(pressure, c , gv, z_b, DB, splx_data, sys_in) )
+            out     = deepcopy( point_wise_minimization(pressure, c , gv, z_b, DB, splx_data, sys_in, rm_list=phase_selection) )
             cmp     = setdiff(out.ph,ref)
 
             if isempty(cmp)
@@ -284,7 +284,7 @@ function compute_Tsol(          pressure,   tolerance,  bulk_ini,   oxi,    phas
         while n < n_max && conv == 0
             c = (a+b)/2.0
 
-            out     = deepcopy( point_wise_minimization(pressure, c , gv, z_b, DB, splx_data, sys_in) )
+            out     = deepcopy( point_wise_minimization(pressure, c , gv, z_b, DB, splx_data, sys_in, rm_list=phase_selection) )
             # cmp     = setdiff(out.ph,ref)
 
             if "liq" in out.ph

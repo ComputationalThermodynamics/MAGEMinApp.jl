@@ -12,7 +12,7 @@ function Tab_Simulation_Callbacks(app)
         Output("phase-selection","value"),
         Input("database-dropdown","value"),
         Input("phase-dropdown","value"),
-        
+
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
     ) do dtb, phase
 
