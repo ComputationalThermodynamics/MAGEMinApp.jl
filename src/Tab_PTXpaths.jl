@@ -384,6 +384,54 @@ function Tab_PTXpaths(db_inf)
                                 dbc_collapse(
                                 dbc_card(dbc_cardbody([
 
+
+                                    dbc_row([
+                                        dbc_col([ 
+                                            dbc_row([
+                                                html_h1("Pressure [kbar]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
+                                            ]),
+                                            dbc_row([
+                                                html_h1("Tolerance [K]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
+                                            ]),
+                                            dbc_row([
+                                                dbc_button("Find solidus",id="find-solidus-button", color="light", className="me-2", n_clicks=0,
+                                                style       = Dict( "textAlign"     => "center",
+                                                                    "font-size"     => "100%",
+                                                                    "border"        =>"1px lightgray solid")), 
+                                            ]),
+                                        ]),
+                                        dbc_col([ 
+                                            dbc_row([
+                                                dbc_input(
+                                                id      = "solidus-pressure-val-id",
+                                                type    = "number", 
+                                                min     = 0.001, 
+                                                max     = 100.01, 
+                                                value   = 10.0   ),
+                                            ]),
+                                            dbc_row([
+                                                dbc_input(
+                                                id      = "solidus-tolerance-val-id",
+                                                type    = "number", 
+                                                min     = 1e-8, 
+                                                max     = 1.0, 
+                                                value   = 1e-2   ),
+                                            ]),
+                                            dbc_row([
+                                                dcc_textarea(
+                                                    id="display-solidus-textarea",
+                                                    value       = "",
+                                                    readOnly    = true,
+                                                    disabled    = true,
+                                                    draggable   = false,
+                                                    style       = Dict("textAlign" => "center","font-size" => "100%", "width"=> "100%", "height" => 24, "resize"=> "none")
+                                                ),
+                                            ]),
+
+
+                                        ]),
+                                    ]),
+
                                     dbc_row([
                                         dbc_col([ 
                                             dbc_row([
