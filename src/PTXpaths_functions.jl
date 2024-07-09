@@ -228,6 +228,101 @@ end
 
 
 
+
+function compute_Tsol(          pressure,   tolerance,  bulk_ini,   oxi,    phase_selection,
+                                dtb,        bufferType, solver,
+                                verbose,    bulk,       bufferN,
+                                cpx,        limOpx,     limOpxVal       )
+
+    if "liq" in phase_selection 
+        
+        phase_selection = remove_phases(string_vec_dif(phase_selection,dtb),dtb)
+
+        Tmin        = 500.0;
+        Tliq        = 2200.0;
+                        
+        out = MAGEMin_C.gmin_struct{Float64, Int64}
+
+        mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb,        solver,
+                                                        cpx,        limOpx,     limOpxVal ) 
+
+
+        # initialize single thread MAGEMin 
+        GC.gc() 
+        gv, z_b, DB, splx_data = init_MAGEMin(  dtb;        
+                                                verbose     = verbose,
+                                                mbCpx       = mbCpx,
+                                                limitCaOpx  = limitCaOpx,
+                                                CaOpxLim    = CaOpxLim,
+                                                buffer      = bufferType,
+                                                solver      = sol    );
+        sys_in  = "mol"
+        gv      =  define_bulk_rock(gv, bulk_ini, oxi, sys_in, dtb);
+
+        out     = deepcopy( point_wise_minimization(pressure, Tliq, gv, z_b, DB, splx_data, sys_in, rm_list=phase_selection) )
+        # if "liq" in out.ph
+        #     print("Warning at $Tmin °C, liq seems to be stable, there is likely something wrong with the stable phase prediction or the bulk-rock composition\n")
+        # end
+        # ref     = out.ph
+        # nph     = length(out.ph)
+        # if (nph > 1)
+        #     print("Warning at $Tmax °C, one or several solution phases are stable: $(out.ph)\n")
+        #     print(" - This likely means that one of the oxide of the database $dtb does not enter the melt chemical space...\n")
+        #     print("   ... or fluid is stable, or a buffer is active!\n")
+        #     print(" - The current assemblage at $Tmax °C is therefore taken as a reference for supra-liquidus conditions\n\n")
+        # end
+
+        n_max       = 32
+
+        a           = Tmin
+        b           = Tliq
+        n           = 1
+        conv        = 0
+        n           = 0
+        sign_a      = -1
+
+        while n < n_max && conv == 0
+            c = (a+b)/2.0
+
+            out     = deepcopy( point_wise_minimization(pressure, c , gv, z_b, DB, splx_data, sys_in) )
+            # cmp     = setdiff(out.ph,ref)
+
+            if "liq" in out.ph
+                result = 1;
+            else
+                result = -1;
+            end
+
+            sign_c  = sign(result)
+
+            if abs(b-a) < tolerance
+                conv = 1
+            else
+                if  sign_c == sign_a
+                    a = c
+                    sign_a = sign_c
+                else
+                    b = c
+                end
+                
+            end
+            n += 1
+        end
+
+        LibMAGEMin.FreeDatabases(gv, DB, z_b)
+
+        Tsol  = string((a+b)/2.0)
+    else
+        print("Cannot compute solidus temperature if liq is removed from the solution phase list\n") 
+        Tsol        = ""
+    end
+
+    return Tsol
+end
+
+
+
+
 function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   bulk_assim, oxi,    phase_selection,    assim,
                                 dtb,        bufferType, solver,
                                 verbose,    bufferN,

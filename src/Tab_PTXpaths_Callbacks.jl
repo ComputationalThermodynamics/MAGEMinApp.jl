@@ -270,10 +270,17 @@ function Tab_PTXpaths_Callbacks(app)
     callback!(
         app,
         Output("display-liquidus-textarea",     "value"),
-        Input("find-liquidus-button",           "n_clicks"),
+        Output("display-solidus-textarea",     "value"),
+        Input("find-liquidus-button",          "n_clicks"),
+        Input("find-solidus-button",           "n_clicks"),
         State("phase-selection-PTX",            "value"),
         State("liquidus-pressure-val-id",       "value"),
         State("liquidus-tolerance-val-id",      "value"),
+        State("solidus-pressure-val-id",       "value"),
+        State("solidus-tolerance-val-id",      "value"),
+
+        State("display-liquidus-textarea",     "value"),
+        State("display-solidus-textarea",     "value"),
 
         State("database-dropdown-ptx",  "value"),
         State("buffer-dropdown-ptx",    "value"),
@@ -290,12 +297,12 @@ function Tab_PTXpaths_Callbacks(app)
 
         prevent_initial_call = true,
 
-        ) do    compute,    phase_selection,    pressure,   tolerance,
-                dtb,        bufferType, solver,
-                verbose,    bulk,       bufferN,
-                cpx,        limOpx,     limOpxVal,  test,   sysunit
+        ) do    compute,    compute_sol,     phase_selection,   pressure,   tolerance, sol_pressure, sol_tolerance,
+                Tliq,       Tsol,
+                dtb,        bufferType,     solver,
+                verbose,    bulk,           bufferN,
+                cpx,        limOpx,         limOpxVal,          test,       sysunit
 
-        Tliq            = "test"
         bid             = pushed_button( callback_context() )    # get which button has been pushed
 
         if bid == "find-liquidus-button"
@@ -306,9 +313,17 @@ function Tab_PTXpaths_Callbacks(app)
                                     dtb,        bufferType, solver,
                                     verbose,    bulk,       bufferN,
                                     cpx,        limOpx,     limOpxVal  )
+        elseif bid == "find-solidus-button"
+            bufferN                 = Float64(bufferN)               # convert buffer_n to float
+            bulk_ini, bulk_ini, oxi = get_bulkrock_prop(bulk, bulk)  
+
+            Tsol = compute_Tsol(    sol_pressure,   sol_tolerance,  bulk_ini,   oxi,    phase_selection,
+                                    dtb,        bufferType, solver,
+                                    verbose,    bulk,       bufferN,
+                                    cpx,        limOpx,     limOpxVal  )
         end
 
-        return Tliq
+        return Tliq, Tsol
     end
 
 
