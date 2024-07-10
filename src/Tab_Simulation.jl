@@ -697,6 +697,40 @@ function Tab_Simulation(db_inf)
                                                     ),
                                                 ]),
                                             ]),
+                                            html_div("‎ "),
+                                            dbc_row([
+                                                dbc_col([ 
+                                                    dbc_input(
+                                                        id      = "save-state-filename-id",
+                                                        type    = "text", 
+                                                        style   = Dict("textAlign" => "center") ,
+                                                        value   = "filename"   ),     
+                                                ], width=6),
+                                                dbc_col([    
+                                                    dbc_button("Save state", id="save-state-diagram-button", color="light",  n_clicks=0,
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"2px grey solid")), 
+                                                ]),
+                                                dbc_col([    
+                                                    dbc_button("Load state", id="load-state-diagram-button", color="light",  n_clicks=0,
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"2px grey solid")), 
+                                                ]),
+                                            ]),
+                                            dbc_alert(
+                                                "Saved phase diagram state successfully",
+                                                id      = "save-options-diagram-success",
+                                                is_open = false,
+                                                duration= 4000,
+                                            ),
+                                            dbc_alert(
+                                                "Loaded phase diagram state successfully",
+                                                id      = "load-options-diagram-success",
+                                                is_open = false,
+                                                duration= 4000,
+                                            ),
 
                                             html_div("‎ "),
                                             dbc_row([
