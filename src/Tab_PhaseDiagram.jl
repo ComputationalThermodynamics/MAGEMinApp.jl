@@ -62,8 +62,44 @@ function Tab_PhaseDiagram()
                                         ], width=3),
                                     ],className="g-0"),
   
-                                    html_div("‎ "),
+                                    # # LOAD SAVE STATE
+                                    # html_div("‎ "),
+                                    # dbc_row([
+                                    #     dbc_col([ 
+                                    #         dbc_input(
+                                    #             id      = "save-diagram-filename-id",
+                                    #             type    = "text", 
+                                    #             style   = Dict("textAlign" => "center") ,
+                                    #             value   = "filename"   ),     
+                                    #     ], width=7),
+                                    #     dbc_col([    
+                                    #         dbc_button("Save state", id="save-diagram-button", color="light",  n_clicks=0,
+                                    #         style       = Dict( "textAlign"     => "center",
+                                    #                             "font-size"     => "100%",
+                                    #                             "border"        =>"2px grey solid")), 
+                                    #     ]),
+                                    #     dbc_col([    
+                                    #         dbc_button("Load state", id="load-diagram-button", color="light",  n_clicks=0,
+                                    #         style       = Dict( "textAlign"     => "center",
+                                    #                             "font-size"     => "100%",
+                                    #                             "border"        =>"2px grey solid")), 
+                                    #     ]),
+                                    # ]),
+                                    # dbc_alert(
+                                    #     "Saved phase diagram successfully",
+                                    #     id      = "save-diagram-success",
+                                    #     is_open = false,
+                                    #     duration= 4000,
+                                    # ),
+                                    # dbc_alert(
+                                    #     "Loaded phase diagram successfully",
+                                    #     id      = "load-diagram-success",
+                                    #     is_open = false,
+                                    #     duration= 4000,
+                                    # ),
 
+                                    # SAVE POINTS INFORMATION
+                                    html_div("‎ "),
                                     dbc_row([
                                         dbc_col([
                                             html_h1("Save point", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
