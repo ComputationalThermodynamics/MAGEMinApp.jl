@@ -739,7 +739,6 @@ function Tab_Simulation(db_inf)
                                                 duration= 4000,
                                             ),
 
-
                                             html_div("‎ "),
                                             dbc_row([
                                                 dbc_button(
@@ -749,6 +748,17 @@ function Tab_Simulation(db_inf)
                                                                         "border"        =>"2px grey solid")
                                                 ),
                                             ]),
+
+                                            html_div("‎ "),
+                                            dcc_textarea(
+                                                id          ="state-directory",
+                                                value       = "State/CSV directory: $(pwd())",
+                                                readOnly    = true,
+                                                disabled    = true,
+                                                draggable   = false,
+                                                style       = Dict("textAlign" => "center","font-size" => "100%", "width"=> "100%", "resize"=> "none")
+                                            ),
+
                                         ])
 
                                     ])),
