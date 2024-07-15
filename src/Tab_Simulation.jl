@@ -697,6 +697,47 @@ function Tab_Simulation(db_inf)
                                                     ),
                                                 ]),
                                             ]),
+                                            html_div("‎ "),
+                                            dbc_row([
+                                                dbc_col([ 
+                                                    dbc_input(
+                                                        id      = "save-state-filename-id",
+                                                        type    = "text", 
+                                                        style   = Dict("textAlign" => "center") ,
+                                                        value   = "filename"   ),     
+                                                ], width=6),
+                                                dbc_col([    
+                                                    dbc_button("Save state", id="save-state-diagram-button", color="light",  n_clicks=0,
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"2px grey solid")), 
+                                                ]),
+                                                dbc_col([    
+                                                    dbc_button("Load state", id="load-state-diagram-button", color="light",  n_clicks=0,
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"2px grey solid")), 
+                                                ]),
+                                            ]),
+                                            dbc_alert(
+                                                "Saved phase diagram state successfully",
+                                                id      = "save-options-diagram-success",
+                                                is_open = false,
+                                                duration= 4000,
+                                            ),
+                                            dbc_alert(
+                                                "Loaded phase diagram state successfully",
+                                                id      = "load-options-diagram-success",
+                                                is_open = false,
+                                                duration= 4000,
+                                            ),
+                                            dbc_alert(
+                                                "Phase diagram state composition(s) failed to load, check input file format",
+                                                color="danger",
+                                                id      ="load-options-diagram-failed",
+                                                is_open = false,
+                                                duration= 4000,
+                                            ),
 
                                             html_div("‎ "),
                                             dbc_row([
@@ -707,6 +748,17 @@ function Tab_Simulation(db_inf)
                                                                         "border"        =>"2px grey solid")
                                                 ),
                                             ]),
+
+                                            html_div("‎ "),
+                                            dcc_textarea(
+                                                id          ="state-directory",
+                                                value       = "State/CSV directory: $(pwd())",
+                                                readOnly    = true,
+                                                disabled    = true,
+                                                draggable   = false,
+                                                style       = Dict("textAlign" => "center","font-size" => "100%", "width"=> "100%", "resize"=> "none")
+                                            ),
+
                                         ])
 
                                     ])),

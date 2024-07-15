@@ -1,5 +1,54 @@
 function Tab_PhaseDiagram_Callbacks(app)
 
+    # # update the dictionary of the solution phases and end-members for isopleths
+    # callback!(
+    #     app,
+    #     Output( "save-diagram-success",         "is_open"     ),
+    #     Input(  "save-diagram-button",          "n_clicks"    ),
+    #     State(  "save-diagram-filename-id",     "value"       ),
+
+    #     prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
+    # ) do click, filename
+
+    #     global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, X, Y, addedRefinementLvl, layout, n_lbl
+    #     file = String(filename)*"_diagram.jld2"
+
+    #     print("saving diagram to jld2 file (file can be heavy saving can take up to a few minutes)\n"); t0 = time()
+    #     @save file MAGEMin_data forest data Hash_XY Out_XY n_phase_XY data_plot gridded gridded_info X Y addedRefinementLvl layout n_lbl
+    #     print(" -> took $(round(time()-t0, digits=3)) seconds\n"); 
+
+    #     status = "success"
+
+    #     return status
+    # end
+
+
+    # # update the dictionary of the solution phases and end-members for isopleths
+    # callback!(
+    #     app,
+    #     Output( "load-diagram-success",       "is_open"      ),
+    #     Input(  "load-diagram-button",        "n_clicks"     ),
+    #     State(  "save-diagram-filename-id",   "value"        ),
+        
+    #     prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
+    # ) do click, filename
+
+    #     global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, X, Y, addedRefinementLvl, layout, n_lbl
+
+    #     file = String(filename)*"_diagram.jld2"
+    #     print("$filename\n")
+
+    #     # using JSON3, JLD2
+    #     print("loading diagram from jld2 file\n"); t0 = time()
+    #     @load file MAGEMin_data forest data Hash_XY Out_XY n_phase_XY data_plot gridded gridded_info X Y addedRefinementLvl layout n_lbl
+    #     print(" -> took $(round(time()-t0, digits=3)) seconds\n"); 
+
+    #     status = "success"
+
+    #     return status
+    # end
+
+
     # save table to file
     callback!(
         app,
@@ -257,9 +306,9 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         prevent_initial_call = true,
 
-    ) do    grid,       full_grid,  lbl,        addIso,     removeIso,  removeAllIso,   isoShow,    isoHide,    n_clicks_mesh, n_clicks_refine, 
-            colorMap,   smooth,     rangeColor, reverse,    fieldname,  updateTitle,    customTitle,
-            diagType,   dtb,        cpx,        limOpx,     limOpxVal,  phase_selection,PTpath,
+    ) do    grid,       full_grid,  lbl,        addIso,     removeIso,  removeAllIso,    isoShow,    isoHide,    n_clicks_mesh, n_clicks_refine, 
+            colorMap,   smooth,     rangeColor, reverse,    fieldname,  updateTitle,     customTitle,
+            diagType,   dtb,        cpx,        limOpx,     limOpxVal,  phase_selection, PTpath,
             tmin,       tmax,       pmin,       pmax,
             fixT,       fixP,
             sub,        refType,    refLvl,
@@ -290,7 +339,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             smooth                      = "best"
       
             # declare set of global variables needed to generate, refine and display phase diagrams
-            global fig, forest, data, Hash_XY, Out_XY, Out_TE_XY, all_TE_ph, n_phase_XY, field, gridded, gridded_info, X, Y, meant, npoints, PhasesLabels
+            global fig, forest, data, Hash_XY, Out_XY, Out_TE_XY, all_TE_ph, n_phase_XY, gridded, gridded_info, X, Y, meant, npoints
             global addedRefinementLvl   = 0;
             global n_lbl                = 0;
             global iso_show             = 1;

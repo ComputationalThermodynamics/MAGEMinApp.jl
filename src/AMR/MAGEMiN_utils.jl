@@ -152,10 +152,10 @@ function refine_MAGEMin(data,
         elseif diagType == "ptx"
 
             ptx_data    = copy(PTpath)
-            np      = length(ptx_data)
-            Pres    = zeros(Float64,np)
-            Temp    = zeros(Float64,np)
-            x       = zeros(Float64,np)
+            np          = length(ptx_data)
+            Pres        = zeros(Float64,np)
+            Temp        = zeros(Float64,np)
+            x           = zeros(Float64,np)
             for i=1:np
                 Pres[i] = ptx_data[i][Symbol("col-1")]
                 Temp[i] = ptx_data[i][Symbol("col-2")]

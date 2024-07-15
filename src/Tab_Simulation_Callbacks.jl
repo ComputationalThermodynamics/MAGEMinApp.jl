@@ -1,5 +1,141 @@
 function Tab_Simulation_Callbacks(app)
 
+
+
+    # update the dictionary of the solution phases and end-members for isopleths
+    callback!(
+        app,
+        Output( "save-options-diagram-success",     "is_open"     ),
+        Input(  "save-state-diagram-button",        "n_clicks"    ),
+
+        State(  "save-state-filename-id",           "value"       ),
+        State(  "database-dropdown",                "value"       ),
+        
+        State(  "diagram-dropdown",                 "value"       ),
+        State(  "mb-cpx-switch",                    "value"       ),
+        State(  "limit-ca-opx-id",                  "value"       ),
+        State(  "ca-opx-val-id",                    "value"       ),
+
+        State(  "tepm-dropdown",                    "value"       ),
+        State(  "kds-dropdown",                     "value"       ),
+        State(  "zrsat-dropdown",                   "value"       ),
+
+        State(  "pt-x-table",                       "data"        ),
+        State(  "pmin-id",                          "value"       ),
+        State(  "pmax-id",                          "value"       ),
+        State(  "tmin-id",                          "value"       ),
+        State(  "tmax-id",                          "value"       ),
+        State(  "fixed-pressure-val-id",            "value"       ),
+        State(  "fixed-temperature-val-id",         "value"       ),
+
+        State(  "gsub-id",                          "value"       ),
+        State(  "refinement-dropdown",              "value"       ),
+        State(  "refinement-levels",                "value"       ),
+
+        State(  "buffer-dropdown",                  "value"       ),
+        State(  "solver-dropdown",                  "value"       ),
+        State(  "verbose-dropdown",                 "value"       ),
+        State(  "scp-dropdown",                     "value"       ),
+
+        State(  "test-dropdown",                    "value"       ),
+        State(  "test-2-dropdown",                  "value"       ),
+        State(  "buffer-1-mul-id",                  "value"       ),
+        State(  "buffer-2-mul-id",                  "value"       ),
+
+        State(  "test-te-dropdown",                 "value"       ),
+        State(  "test-2-te-dropdown",               "value"       ),
+
+       
+        
+        prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
+    ) do click, filename,
+
+        database, diagram_type, mb_cpx, limit_ca_opx, ca_opx_val,
+        tepm, kds_dtb, zrsat_dtb,
+        ptx_table, 
+        pmin, pmax, tmin, tmax, pfix, tfix,
+        grid_sub, refinement, refinement_level,
+        buffer, solver, verbose, scp,
+        test, test2,
+        buffer1, buffer2,
+        te_test, te_test2
+
+        global db, dbte
+
+        file = String(filename)*".jld2"
+
+        @save file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ptx_table pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver verbose scp test test2 buffer1 buffer2 te_test te_test2
+
+        status = "success"
+        print("saving phase diagram state in: $(pwd()) ...")
+
+        return status
+    end
+
+
+
+    # update the dictionary of the solution phases and end-members for isopleths
+    callback!(
+        app,
+        Output( "load-options-diagram-success",     "is_open"      ),
+        Output( "load-options-diagram-failed",     "is_open"      ),
+
+        Output(  "database-dropdown",                "value"       ),
+        
+        Output(  "diagram-dropdown",                 "value"       ),
+        Output(  "mb-cpx-switch",                    "value"       ),
+        Output(  "limit-ca-opx-id",                  "value"       ),
+        Output(  "ca-opx-val-id",                    "value"       ),
+
+        Output(  "tepm-dropdown",                    "value"       ),
+        Output(  "kds-dropdown",                     "value"       ),
+        Output(  "zrsat-dropdown",                   "value"       ),
+
+        # Output(  "pt-x-table",                       "data"        ),
+        Output(  "pmin-id",                          "value"       ),
+        Output(  "pmax-id",                          "value"       ),
+        Output(  "tmin-id",                          "value"       ),
+        Output(  "tmax-id",                          "value"       ),
+        Output(  "fixed-pressure-val-id",            "value"       ),
+        Output(  "fixed-temperature-val-id",         "value"       ),
+
+        Output(  "gsub-id",                          "value"       ),
+        Output(  "refinement-dropdown",              "value"       ),
+        Output(  "refinement-levels",                "value"       ),
+
+        Output(  "buffer-dropdown",                  "value"       ),
+        Output(  "solver-dropdown",                  "value"       ),
+        Output(  "verbose-dropdown",                 "value"       ),
+        Output(  "scp-dropdown",                     "value"       ),
+
+        Output(  "buffer-1-mul-id",                  "value"       ),
+        Output(  "buffer-2-mul-id",                  "value"       ),
+
+        Input(  "load-state-diagram-button",        "n_clicks"     ),
+        State(  "save-state-filename-id",           "value"        ),
+        
+        prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
+    ) do click, filename
+
+        global db, dbte
+
+        file = String(filename)*".jld2"
+        try 
+            # using JSON3, JLD2
+            @load file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver verbose scp buffer1 buffer2
+
+            success, failed = "success", ""
+            return success, failed, database, diagram_type, mb_cpx, limit_ca_opx, ca_opx_val, tepm, kds_dtb, zrsat_dtb, pmin, pmax, tmin, tmax, pfix, tfix, grid_sub, refinement, refinement_level, buffer, solver, verbose, scp, buffer1, buffer2
+        catch e
+            success, failed = "", "failed"
+            return success, failed, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing 
+    
+        end
+
+    end
+
+
+
     # update the dictionary of the solution phases and end-members for isopleths
     callback!(
         app,
@@ -224,21 +360,36 @@ function Tab_Simulation_Callbacks(app)
 
     # add new entry to the PT-X path definition
     callback!(app,
-        Output("pt-x-table", "data"),
-        Input("add-ptx-row-button", "n_clicks"),
-        State("pt-x-table", "data"),
-        State("pt-x-table", "columns"),
+        Output( "pt-x-table",               "data"      ),
+        Input(  "add-ptx-row-button",       "n_clicks"  ),
+        Input(  "load-state-diagram-button","n_clicks"  ),
+        State(  "save-state-filename-id",   "value"     ),
+        State(  "pt-x-table",               "data"      ),
+        State(  "pt-x-table",               "columns"   ),
+
         prevent_initial_call = true,
-        ) do n_clicks, data, columns
 
-        dataout = copy(data)
+        ) do n_clicks, n_clicks_load, filename, data, columns
 
-        if n_clicks > 0
-            add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000)
-            push!(dataout,add)
+        bid  = pushed_button( callback_context() )     
+
+        if bid == "add-ptx-row-button"
+            dataout = copy(data)
+
+            if n_clicks > 0
+                add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000)
+                push!(dataout,add)
+            end
+
+            return dataout
+
+        elseif bid ==  "load-state-diagram-button"
+            file = String(filename)*".jld2"
+
+            @load file ptx_table
+
+            return ptx_table
         end
-
-        return dataout
     end
 
     # callback function to display to right set of variables as function of the diagram type
@@ -342,39 +493,63 @@ function Tab_Simulation_Callbacks(app)
         end
     end
 
-
     callback!(
         app,
         Output("table-bulk-rock","data"),
         Output("test-dropdown","options"),
         Output("test-dropdown","value"),
         Output("database-caption","value"),
+        
         Input("test-dropdown","value"),
         Input("database-dropdown","value"),
-        Input("output-data-uploadn", "is_open"),        # this listens for changes and updated the list
-        prevent_initial_call=true,
-    ) do test, dtb, update
+        Input("output-data-uploadn", "is_open"),  
+        
+        Input( "load-state-diagram-button","n_clicks"  ),
+        State(  "save-state-filename-id",   "value"    ),
 
-        # catching up some special cases
-        if test > length(db[(db.db .== dtb), :].test) - 1 
-            t = 0
+        State("table-bulk-rock","data"),
+        State("test-dropdown","options"),
+        State("database-caption","value"),
+
+        prevent_initial_call=true,
+
+    ) do    test, dtb, update,
+            n_clicks_load, filename,
+            tb_data, test_opts, db_cap
+
+        bid  = pushed_button( callback_context() )  
+
+        if bid ==  "load-state-diagram-button"
+            file = String(filename)*".jld2"
+
+            @load file test
+
+            val = test
+            # return tb_data, test_opts, test, db_cap
         else
-            t = test
+            # catching up some special cases
+            if test > length(db[(db.db .== dtb), :].test) - 1 
+                val = 0
+            else
+                val = test
+            end
         end
 
-        data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
-                                "mol_fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac[1][i])
-                                    for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
+            data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== val), :].oxide[1][i],
+                                    "mol_fraction"  => db[(db.db .== dtb) .& (db.test .== val), :].frac[1][i])
+                                        for i=1:length(db[(db.db .== dtb) .& (db.test .== val), :].oxide[1]) ]
 
 
-        opts        =  [Dict(   "label" => db[(db.db .== dtb), :].title[i],
-                                "value" => db[(db.db .== dtb), :].test[i]  )
-                                    for i=1:length(db[(db.db .== dtb), :].test)]
+            opts        =  [Dict(   "label" => db[(db.db .== dtb), :].title[i],
+                                    "value" => db[(db.db .== dtb), :].test[i]  )
+                                        for i=1:length(db[(db.db .== dtb), :].test)]
 
-        cap         = dba[(dba.acronym .== dtb) , :].database[1]      
-        
-        val         = t
-        return data, opts, val, cap                  
+            cap         = dba[(dba.acronym .== dtb) , :].database[1]  
+
+            return data, opts, val, cap    
+        # end
+
+               
     end
 
 
@@ -384,40 +559,60 @@ function Tab_Simulation_Callbacks(app)
         Output("table-2-bulk-rock","data"),
         Output("test-2-dropdown","options"),
         Output("test-2-dropdown","value"),
+        # Input("output-data-uploadn", "is_open"),
         Input("test-2-dropdown","value"),
         Input("database-dropdown","value"),
-        Input("output-data-uploadn", "is_open"),        # this listens for changes and updated the list
+
+        Input(  "load-state-diagram-button","n_clicks"  ),
+        State(  "save-state-filename-id",   "value"     ),
+
+        State("table-2-bulk-rock","data"),
+        State("test-2-dropdown","options"),
+
         prevent_initial_call=true,
-    ) do test, dtb, update
 
-        # catching up some special cases
-        if test > length(db[(db.db .== dtb), :].test) - 1 
-            t = 0
-        else
-            t = test
+    ) do    test, dtb, 
+            n_clicks_load, filename,
+            tb2_data, test2_opts
+
+         bid  = pushed_button( callback_context() )     
+
+         if bid == "load-state-diagram-button"
+            file = String(filename)*".jld2"
+
+            @load file test2
+            val = test2
+            # return tb2_data, test2_opts, test2
+
+         else
+
+            # catching up some special cases
+            if test > length(db[(db.db .== dtb), :].test) - 1 
+                val = 0
+            else
+                val = test
+            end
         end
 
-        if (~isempty(db[(db.db .== dtb) .& (db.test .== t), :].frac2[1]))
-            data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
-                                    "mol_fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac2[1][i])
-                                        for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
-        else
-            data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
-                                    "mol_fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac[1][i])
-                                        for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
-        end
+            if (~isempty(db[(db.db .== dtb) .& (db.test .== val), :].frac2[1]))
+                data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== val), :].oxide[1][i],
+                                        "mol_fraction"  => db[(db.db .== dtb) .& (db.test .== val), :].frac2[1][i])
+                                            for i=1:length(db[(db.db .== dtb) .& (db.test .== val), :].oxide[1]) ]
+            else
+                data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== val), :].oxide[1][i],
+                                        "mol_fraction"  => db[(db.db .== dtb) .& (db.test .== val), :].frac[1][i])
+                                            for i=1:length(db[(db.db .== dtb) .& (db.test .== val), :].oxide[1]) ]
+            end
 
-        opts        =  [Dict(   "label" => db[(db.db .== dtb), :].title[i],
-                                "value" => db[(db.db .== dtb), :].test[i]  )
-                                    for i=1:length(db[(db.db .== dtb), :].test)]
+            opts        =  [Dict(   "label" => db[(db.db .== dtb), :].title[i],
+                                    "value" => db[(db.db .== dtb), :].test[i]  )
+                                        for i=1:length(db[(db.db .== dtb), :].test)]
 
-        # cap         = dba[(dba.acronym .== dtb) , :].database[1]      
-        
-        val         = t
-        return data, opts, val                  
+            # cap         = dba[(dba.acronym .== dtb) , :].database[1]      
+            
+            return data, opts, val 
+        # end                 
     end
-
-
 
 
     callback!(
@@ -427,15 +622,26 @@ function Tab_Simulation_Callbacks(app)
         Output("test-te-dropdown","value"),
         Input("test-te-dropdown","value"),
         Input("output-te-uploadn", "is_open"),        # this listens for changes and updated the list
-        prevent_initial_call=true,
-    ) do test, update
+        Input(  "load-state-diagram-button","n_clicks"  ),
+        State(  "save-state-filename-id",   "value"     ),    prevent_initial_call=true,
+    ) do test, update,
+        n_clicks_load, filename
+
+        bid  = pushed_button( callback_context() )  
 
         # catching up some special cases
-        if test > length(dbte.test) - 1 
-            t = 0
+        if bid ==  "load-state-diagram-button"
+            file = String(filename)*".jld2"
+
+            @load file te_test
+            t = te_test
         else
-            t = test
-        end
+            if test > length(dbte.test) - 1 
+                t = 0
+            else
+                t = test
+            end
+        end 
 
         data        =   [Dict(  "elements"  => dbte[(dbte.test .== t), :].elements[1][i],
                                 "μg_g"       => dbte[(dbte.test .== t), :].μg_g[1][i])
@@ -458,15 +664,27 @@ function Tab_Simulation_Callbacks(app)
 
         Input("test-2-te-dropdown","value"),
         Input("output-te-uploadn", "is_open"),        # this listens for changes and updated the list
-        prevent_initial_call=true,
-    ) do test, update
+        Input(  "load-state-diagram-button","n_clicks"  ),
+        State(  "save-state-filename-id",   "value"     ),        prevent_initial_call=true,
+    ) do test, update,
+        n_clicks_load, filename
+        
+        bid  = pushed_button( callback_context() )  
 
         # catching up some special cases
-        if test > length(dbte.test) - 1 
-            t = 0
+        if bid ==  "load-state-diagram-button"
+            file = String(filename)*".jld2"
+
+            @load file te_test2
+            t = te_test2
         else
-            t = test
-        end
+            if test > length(dbte.test) - 1 
+                t = 0
+            else
+                t = test
+            end
+        end 
+
 
         data        =   [Dict(  "elements"  => dbte[(dbte.test .== t), :].elements[1][i],
                                 "μg_g"       => dbte[(dbte.test .== t), :].μg_g2[1][i])

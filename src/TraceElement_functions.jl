@@ -215,7 +215,7 @@ function  update_diplayed_field_phaseDiagram_te(    xtitle,     ytitle,     type
                                                     sub,        refLvl,
                                                     smooth,     colorm,     reverseColorMap,       refType )
 
-    global data, Out_XY, Out_TE_XY, data_plot_te, gridded_te, gridded_info_te, X_te, Y_te, PhasesLabels, addedRefinementLvl, PT_infos_te, layout_te
+    global data, Out_XY, Out_TE_XY, data_plot_te, gridded_te, gridded_info_te, X_te, Y_te, addedRefinementLvl, PT_infos_te, layout_te
 
     gridded_te, X_te, Y_te, npoints, meant = get_gridded_map_no_lbl(    fieldname,
                                                                         type,
