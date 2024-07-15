@@ -67,7 +67,7 @@ function Tab_Simulation_Callbacks(app)
         @save file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ptx_table pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver verbose scp test test2 buffer1 buffer2 te_test te_test2
 
         status = "success"
-        print("saving phase diagram state ($(pwd()))...")
+        print("saving phase diagram state in: $(pwd()) ...")
 
         return status
     end
