@@ -731,6 +731,14 @@ function Tab_Simulation(db_inf)
                                                 is_open = false,
                                                 duration= 4000,
                                             ),
+                                            dbc_alert(
+                                                "Phase diagram state composition(s) failed to load, check input file format",
+                                                color="danger",
+                                                id      ="load-options-diagram-failed",
+                                                is_open = false,
+                                                duration= 4000,
+                                            ),
+
 
                                             html_div("‎ "),
                                             dbc_row([

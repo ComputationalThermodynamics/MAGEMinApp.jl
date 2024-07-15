@@ -67,6 +67,7 @@ function Tab_Simulation_Callbacks(app)
         @save file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ptx_table pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver verbose scp test test2 buffer1 buffer2 te_test te_test2
 
         status = "success"
+        print("saving phase diagram state ($(pwd()))...")
 
         return status
     end
@@ -77,6 +78,7 @@ function Tab_Simulation_Callbacks(app)
     callback!(
         app,
         Output( "load-options-diagram-success",     "is_open"      ),
+        Output( "load-options-diagram-failed",     "is_open"      ),
 
         Output(  "database-dropdown",                "value"       ),
         
@@ -118,13 +120,17 @@ function Tab_Simulation_Callbacks(app)
         global db, dbte
 
         file = String(filename)*".jld2"
+        try 
+            # using JSON3, JLD2
+            @load file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver verbose scp buffer1 buffer2
 
-        # using JSON3, JLD2
-        @load file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver verbose scp buffer1 buffer2
-
-        status = "success"
-
-        return status, database, diagram_type, mb_cpx, limit_ca_opx, ca_opx_val, tepm, kds_dtb, zrsat_dtb, pmin, pmax, tmin, tmax, pfix, tfix, grid_sub, refinement, refinement_level, buffer, solver, verbose, scp, buffer1, buffer2
+            success, failed = "success", ""
+            return success, failed, database, diagram_type, mb_cpx, limit_ca_opx, ca_opx_val, tepm, kds_dtb, zrsat_dtb, pmin, pmax, tmin, tmax, pfix, tfix, grid_sub, refinement, refinement_level, buffer, solver, verbose, scp, buffer1, buffer2
+        catch e
+            success, failed = "", "failed"
+            return success, failed, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing 
+    
+        end
 
     end
 
