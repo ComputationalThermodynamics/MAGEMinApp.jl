@@ -527,12 +527,12 @@ function get_data_plot(sysunit)
 
     for i=1:n_ph
         data_plot_ptx[i] = scatter(;    x           =  x,
-                                    y           =  Y[i,:],
-                                    name        = ph_names_ptx[i],
-                                    stackgroup  = "one",
-                                    mode        = "lines",
-                                    line        = attr(     width   =  0.5,
-                                                            color   = colormap[i])  )
+                                        y           =  Y[i,:],
+                                        name        = ph_names_ptx[i],
+                                        stackgroup  = "one",
+                                        mode        = "lines",
+                                        line        = attr(     width   =  0.5,
+                                                                color   = colormap[i])  )
      end
 
      data_plot_ptx[n_ph+1] = scatter(   x               = x,
@@ -591,15 +591,18 @@ function get_data_comp_plot(sysunit,phases)
             
             x[k]    = string(round(Out_PTX[j].P_kbar,digits=1))*"; "*string(round(Out_PTX[j].T_C,digits=1))
             id      = findall(Out_PTX[j].ph .== ph)
-
             if ~isempty(id)
                 n_solvi = length(id)
                 if sysunit == "mol"
                     
                     if n_solvi > 1      # then this is a solution phase as there is a solvus
+                        if ismissing(compo_matrix[1,k])
+                            compo_matrix[:,k] .= 0.0
+                        end
                         for n=1:n_solvi
                             compo_matrix[:,k] += Out_PTX[j].SS_vec[id[n]].Comp ./ Float64(n_solvi) .*100.0
                         end
+                        
                     else
                         id      = id[1]
                         n_SS    = Out_PTX[j].n_SS
@@ -612,8 +615,10 @@ function get_data_comp_plot(sysunit,phases)
                     end
 
                 elseif sysunit == "wt"
-
                     if n_solvi > 1      # then this is a solution phase as there is a solvus
+                        if ismissing(compo_matrix[1,k])
+                            compo_matrix[:,k] .= 0.0
+                        end
                         for n=1:n_solvi
                             compo_matrix[:,k] += Out_PTX[j].SS_vec[id[n]].Comp_wt ./ Float64(n_solvi) .*100.0
                         end
@@ -652,7 +657,6 @@ function get_data_comp_plot(sysunit,phases)
 
                                         line        = attr(     width   = 1.0,
                                                                 color   = colormap[k])  )
-
     end
 
 
