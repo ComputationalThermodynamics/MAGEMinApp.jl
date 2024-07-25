@@ -95,7 +95,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     db_in     = retrieve_solution_phase_information(dtb)
 
 
-    PD_infos[1]  = "Phase Diagram computed using MAGEMin v"*Out_XY[1].MAGEMin_ver*"<br>"
+    PD_infos[1]  = "Phase Diagram computed using MAGEMin v"*Out_XY[1].MAGEMin_ver*" (GUI v0.4.0<br>)"
     PD_infos[1] *= "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾<br>"
     PD_infos[1] *= "Number of points <br>"
     
@@ -154,8 +154,8 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     PD_infos[2] *= string(npoints) * "<br>"
     
     PD_infos[2] *= datetoday * ", " * rightnow * "<br>"
-    PD_infos[2] *= db_in.db_info * "<br>"
-    
+    PD_infos[2] *= db_in.db_info *"; "* Out_XY[1].dataset * "<br>" 
+
     PD_infos[2] *= dgtype *"<br>"
     PD_infos[2] *= solv *"<br>"
     PD_infos[2] *= join(oxi_string, " ") *"<br>"
