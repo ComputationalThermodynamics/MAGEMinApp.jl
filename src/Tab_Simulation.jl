@@ -249,7 +249,7 @@ function Tab_Simulation(db_inf)
                                                 dbc_input(
                                                     id="pmin-id",
                                                     type="number", 
-                                                    min=0.01, 
+                                                    min=0.001, 
                                                     max=100.01, 
                                                     value=0.01   ),
                                             ]),
@@ -257,7 +257,7 @@ function Tab_Simulation(db_inf)
                                                 dbc_input(
                                                     id="pmax-id",
                                                     type="number", 
-                                                    min=0.01, 
+                                                    min=0.001, 
                                                     max=100.01, 
                                                     value=20.01   ),
                                             ]), 
