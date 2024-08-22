@@ -5,7 +5,7 @@ function compute_new_IsentropicPath(    nsteps,     bulk_ini,   oxi,    phase_se
                                         verbose,    bulk,       bufferN,
                                         cpx,        limOpx,     limOpxVal                                )
 
-    global Out_ISOS, ph_names, fracEvol, compo_matrix
+    global Out_ISOS, ph_names, compo_matrix
 
     nsteps = Int64(nsteps)
 
@@ -20,8 +20,6 @@ function compute_new_IsentropicPath(    nsteps,     bulk_ini,   oxi,    phase_se
 
     ph_names = Vector{String}()
     n_tot    = np + nsteps
-
-    fracEvol = Matrix{Float64}(undef,n_tot,2)
 
     # allocate memory
     Out_ISOS = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,n_tot);
