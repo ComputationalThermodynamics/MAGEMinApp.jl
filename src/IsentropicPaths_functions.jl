@@ -40,7 +40,7 @@ function compute_new_IsentropicPath(    nsteps,     bulk_ini,   oxi,    phase_se
     gv      =  define_bulk_rock(gv, bulk_ini, oxi, sys_in, dtb);
 
     # compute starting point
-    Out_ISOS[1] = deepcopy( point_wise_minimization(Pini,Tini, gv, z_b, DB, splx_data, sys_in; rm_list=phase_selection) )
+    Out_ISOS[1] = deepcopy( point_wise_minimization(Pini,Tini, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection) )
 
     # retrieve reference entropy of the system
     Sref        = Out_ISOS[1].entropy;
@@ -60,9 +60,8 @@ function compute_new_IsentropicPath(    nsteps,     bulk_ini,   oxi,    phase_se
             sign_a      = -1
     
             while n < n_max && conv == 0
-                c = (a+b)/2.0
-                out     = deepcopy( point_wise_minimization(P, c , gv, z_b, DB, splx_data, sys_in, rm_list=phase_selection) )
-                # out     = point_wise_minimization(P, c , gv, z_b, DB, splx_data, sys_in; rm_list=phase_selection)
+                c       = (a+b)/2.0
+                out     = deepcopy( point_wise_minimization(P, c , gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection) )
                 result  = out.entropy - Sref
 
                 sign_c  = sign(result)

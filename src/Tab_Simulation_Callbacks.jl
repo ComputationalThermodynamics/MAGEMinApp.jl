@@ -404,6 +404,7 @@ function Tab_Simulation_Callbacks(app)
         Output("pt-x-id", "style"),
         Output("test-2-te-id", "style"),
         Output("table-2-te-id", "style"),
+        Output("subsolsat-id", "style"),
         Input("diagram-dropdown", "value"),
     ) do value
 
@@ -417,6 +418,7 @@ function Tab_Simulation_Callbacks(app)
             PTx     = Dict("display" => "none")
             testte2 = Dict("display" => "block")  
             tabte2  = Dict("display" => "block")  
+            watsat  = Dict("display" => "none")  
         elseif value == "tx"
             Tstyle  = Dict("display" => "none")
             Pstyle  = Dict("display" => "block")
@@ -427,6 +429,7 @@ function Tab_Simulation_Callbacks(app)
             PTx     = Dict("display" => "none")
             testte2 = Dict("display" => "block")  
             tabte2  = Dict("display" => "block") 
+            watsat  = Dict("display" => "none")  
         elseif value == "pt"
             Tstyle  = Dict("display" => "none")
             Pstyle  = Dict("display" => "none")
@@ -437,6 +440,7 @@ function Tab_Simulation_Callbacks(app)
             PTx     = Dict("display" => "none")
             testte2 = Dict("display" => "none")  
             tabte2  = Dict("display" => "none") 
+            watsat  = Dict("display" => "block")  
         elseif value == "ptx"
             Tstyle  = Dict("display" => "none")
             Pstyle  = Dict("display" => "none")
@@ -447,9 +451,10 @@ function Tab_Simulation_Callbacks(app)
             PTx     = Dict("display" => "block")
             testte2 = Dict("display" => "block")  
             tabte2  = Dict("display" => "block") 
+            watsat  = Dict("display" => "none")  
         end
 
-        return Tstyle, Pstyle, Ts, Ps, test2, table2, PTx, testte2, tabte2
+        return Tstyle, Pstyle, Ts, Ps, test2, table2, PTx, testte2, tabte2, watsat
     end
 
 

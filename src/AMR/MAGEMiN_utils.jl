@@ -1,3 +1,132 @@
+function get_wat_sat_functions(     Yrange,     bulk_ini,   oxi,    phase_selection,
+                                    dtb,        bufferType, solver,
+                                    verbose,    bufferN,
+                                    cpx,        limOpx,     limOpxVal)
+   
+    id_h2o      = findall(oxi .== "H2O")[1]   
+    hydrated    = 1;
+    if bulk_ini[id_h2o] == 0.0
+        hydrated = 0;
+    end
+
+    liq = 1;
+    if ~isnothing(phase_selection) && "liq" in phase_selection
+        liq = 0;
+    end
+
+    if liq == 1 && hydrated == 1                                
+        println("Computing water-saturation at sub-solidus. Make sure you provided enough water to oversaturate below solidus.")
+        stp     = (Yrange[2] - Yrange[1])/49.0                        
+        Prange  = Vector(Yrange[1]:stp:Yrange[2])
+
+        # prepare flags
+        mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb,        solver,
+                                                        cpx,        limOpx,     limOpxVal ) 
+
+        # initialize single thread MAGEMin 
+        GC.gc() 
+        gv, z_b, DB, splx_data = init_MAGEMin(  dtb;        
+                                                verbose     = verbose,
+                                                mbCpx       = mbCpx,
+                                                limitCaOpx  = limitCaOpx,
+                                                CaOpxLim    = CaOpxLim,
+                                                buffer      = bufferType,
+                                                solver      = sol    );
+
+        sys_in  = "mol"
+        gv      =  define_bulk_rock(gv, bulk_ini, oxi, sys_in, dtb);
+
+        Tmin    = 500.0;
+        Tliq    = 2200.0;
+        tolerance = 0.1;      
+
+        Tsol    = zeros(Float64,length(Prange))
+        SatSol  = zeros(Float64,length(Prange))
+
+        @showprogress 1 "Computing sub-solidus water-saturating curve..." for i = 1:length(Prange)
+
+            pressure    = Prange[i]
+
+            out         = deepcopy( point_wise_minimization(pressure, Tliq, gv, z_b, DB, splx_data, sys_in;buffer_n=bufferN, rm_list=phase_selection) )
+
+            n_max       = 32
+
+            a           = Tmin
+            b           = Tliq
+            n           = 1
+            conv        = 0
+            n           = 0
+            sign_a      = -1
+
+            while n < n_max && conv == 0
+                c = (a+b)/2.0
+
+                out     = deepcopy( point_wise_minimization(pressure, c, gv, z_b, DB, splx_data, sys_in;buffer_n=bufferN, rm_list=phase_selection) )
+
+                if "liq" in out.ph
+                    result = 1;
+                else
+                    result = -1;
+                end
+
+                sign_c  = sign(result)
+
+                if abs(b-a) < tolerance
+                    conv = 1
+                else
+                    if  sign_c == sign_a
+                        a = c
+                        sign_a = sign_c
+                    else
+                        b = c
+                    end
+                    
+                end
+                n += 1
+            end
+
+            Tsol[i]  = (a+b)/2.0
+
+            out     = deepcopy( point_wise_minimization(pressure, Tsol[i] - 0.5 , gv, z_b, DB, splx_data, sys_in;buffer_n=bufferN, rm_list=phase_selection) )
+
+            id_dry  = findall(out.oxides .!= "H2O")
+            id_h2o  = findall(out.oxides .== "H2O")[1]
+
+            tmp_bulk = deepcopy(out.bulk)
+
+            # extracting excess water
+            if "H2O" in out.ph
+                id_fl = findall(out.ph .== "H2O")[1]
+                tmp_bulk .-= out.PP_vec[id_fl - out.n_SS].Comp .* out.ph_frac[id_fl]
+            else
+                id_fl = findall(out.ph .== "fl")[1]
+                tmp_bulk .-= out.SS_vec[id_fl].Comp .* out.ph_frac[id_fl]
+            end
+
+            # normalize to 100%
+            tmp_bulk ./= sum(tmp_bulk)
+
+            # normalize on anhydrous basis, to get water content
+            tmp_bulk ./= sum(tmp_bulk[id_dry])
+            
+            SatSol[i] = tmp_bulk[id_h2o]
+        end
+
+        pChip_wat   = Interpolator(Prange, SatSol)
+        pChip_T     = Interpolator(Prange, Tsol)
+
+        LibMAGEMin.FreeDatabases(gv, DB, z_b)
+ 
+    else
+        println("To compute water-saturation at sub-solidus liq must be part of the solution phase model and the bulk composition must contain water")
+        println("Phase diagram will be computed without water-saturation at sub-solidus...")
+        pChip_wat, pChip_T = nothing, nothing
+    end
+
+    return pChip_wat, pChip_T
+end
+
+
 
 """
     create_forest( tmin::Float64,
@@ -95,7 +224,9 @@ function refine_MAGEMin(data,
                         bufferN1        :: Float64,
                         bufferN2        :: Float64,
                         scp             :: Int64,
-                        refType         :: String;
+                        refType         :: String,
+                        pChip_wat       , 
+                        pChip_T         ;        
                         ind_map          = nothing, 
                         Out_XY_old       = nothing)
 
@@ -139,15 +270,36 @@ function refine_MAGEMin(data,
 
             end
         elseif diagType == "pt"
+
+            id_h2o      = findall(oxi .== "H2O")[1]
+            id_dry      = findall(oxi .!= "H2O")
+            
             Tvec = zeros(Float64,n_new_points);
             Pvec = zeros(Float64,n_new_points);
             Xvec = Vector{Vector{Float64}}(undef,n_new_points);
             Bvec = zeros(Float64,n_new_points);
             for (i, new_ind) = enumerate(ind_new)
+
                 Tvec[i] = data.xc[new_ind];
                 Pvec[i] = data.yc[new_ind];
-                Xvec[i] = bulk_L;
                 Bvec[i] = bufferN1;
+
+                # here we check if the water need to be saturated at sub-solidus
+                if ~isnothing(pChip_wat)
+                    TsatSol     = pChip_T(Pvec[i])
+                    waterSat    = pChip_wat(Pvec[i])
+                    if Tvec[i] > TsatSol        # if we are above the solidus then we use the water content from the sub-solidus curve
+                        bulk_tmp              = deepcopy(bulk_L)
+                        bulk_tmp            ./= sum(bulk_tmp[id_dry])
+                        bulk_tmp[id_h2o]      = waterSat
+                        bulk_tmp            ./= sum(bulk_tmp)
+                        Xvec[i]               = bulk_tmp
+                    else
+                        Xvec[i] = bulk_L;
+                    end
+                else
+                    Xvec[i] = bulk_L;
+                end
             end
         elseif diagType == "ptx"
 

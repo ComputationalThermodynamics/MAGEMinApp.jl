@@ -42,7 +42,9 @@ Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(              data,
                                                             0.0,
                                                             0.0,
                                                             0,
-                                                            "ph"    )
+                                                            "ph",
+                                                            nothing,
+                                                            nothing    )
 @test length(Out_XY) == 16
 
 results = [ -793.507476796513; -814.5314225719396; -786.4198598213416; -807.3608185564824; -837.7454922302667; -863.1027328483825; -830.5026234026736; -855.661064809689; -779.4056071550851; -800.2904063921558; -772.4548395043978; -793.271877227124; -823.3720345214499; -848.3891117825796; -816.279035791287; -841.228711264553]
@@ -68,7 +70,9 @@ t = @elapsed Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(              data_new
                                                                         0.0,
                                                                         0.0,
                                                                         0,
-                                                                        "ph", 
+                                                                        "ph",
+                                                                        nothing,
+                                                                        nothing; 
                                                                         ind_map         = ind_map,
                                                                         Out_XY_old      = Out_XY ) # recompute points that have not been computed before
 

@@ -168,7 +168,7 @@ function compute_Tliq(          pressure,   tolerance,  bulk_ini,   oxi,    phas
         sys_in  = "mol"
         gv      =  define_bulk_rock(gv, bulk_ini, oxi, sys_in, dtb);
 
-        out     = deepcopy( point_wise_minimization(pressure, Tmax, gv, z_b, DB, splx_data, sys_in, rm_list=phase_selection) )
+        out     = deepcopy( point_wise_minimization(pressure, Tmax, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection) )
         ref     = out.ph
         nph     = length(out.ph)
         if (nph > 1)
@@ -190,7 +190,7 @@ function compute_Tliq(          pressure,   tolerance,  bulk_ini,   oxi,    phas
         while n < n_max && conv == 0
             c = (a+b)/2.0
 
-            out     = deepcopy( point_wise_minimization(pressure, c , gv, z_b, DB, splx_data, sys_in, rm_list=phase_selection) )
+            out     = deepcopy( point_wise_minimization(pressure, c , gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection) )
             cmp     = setdiff(out.ph,ref)
 
             if isempty(cmp)
@@ -259,18 +259,7 @@ function compute_Tsol(          pressure,   tolerance,  bulk_ini,   oxi,    phas
         sys_in  = "mol"
         gv      =  define_bulk_rock(gv, bulk_ini, oxi, sys_in, dtb);
 
-        out     = deepcopy( point_wise_minimization(pressure, Tliq, gv, z_b, DB, splx_data, sys_in, rm_list=phase_selection) )
-        # if "liq" in out.ph
-        #     print("Warning at $Tmin °C, liq seems to be stable, there is likely something wrong with the stable phase prediction or the bulk-rock composition\n")
-        # end
-        # ref     = out.ph
-        # nph     = length(out.ph)
-        # if (nph > 1)
-        #     print("Warning at $Tmax °C, one or several solution phases are stable: $(out.ph)\n")
-        #     print(" - This likely means that one of the oxide of the database $dtb does not enter the melt chemical space...\n")
-        #     print("   ... or fluid is stable, or a buffer is active!\n")
-        #     print(" - The current assemblage at $Tmax °C is therefore taken as a reference for supra-liquidus conditions\n\n")
-        # end
+        out     = deepcopy( point_wise_minimization(pressure, Tliq, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection) )
 
         n_max       = 32
 
@@ -284,7 +273,7 @@ function compute_Tsol(          pressure,   tolerance,  bulk_ini,   oxi,    phas
         while n < n_max && conv == 0
             c = (a+b)/2.0
 
-            out     = deepcopy( point_wise_minimization(pressure, c , gv, z_b, DB, splx_data, sys_in, rm_list=phase_selection) )
+            out     = deepcopy( point_wise_minimization(pressure, c , gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection) )
             # cmp     = setdiff(out.ph,ref)
 
             if "liq" in out.ph
@@ -413,7 +402,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                     end
                         gv      =  define_bulk_rock(gv, bulk, oxi, sys_in, dtb);
 
-                    Out_PTX[k] = deepcopy( point_wise_minimization(P,T, gv, z_b, DB, splx_data, sys_in, rm_list=phase_selection) )
+                    Out_PTX[k] = deepcopy( point_wise_minimization(P,T, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection) )
 
                     if mode == "fm"
                         if Out_PTX[k].frac_S > 0.0
@@ -467,7 +456,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                 end
             end
             
-            Out_PTX[k] = deepcopy( point_wise_minimization(Pres[np],Temp[np], gv, z_b, DB, splx_data, sys_in, rm_list=phase_selection) )
+            Out_PTX[k] = deepcopy( point_wise_minimization(Pres[np],Temp[np], gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection) )
   
             for k = 1:n_tot
                 for l=1:length(Out_PTX[k].ph)

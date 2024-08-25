@@ -408,7 +408,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                     dtb,        diagType,   verbose,    scp,    solver,     phase_selection,
                                     fixT,       fixP,
                                     sub,        refLvl,
-                                    cpx,        limOpx,     limOpxVal,  PTpath,
+                                    watsat,     cpx,        limOpx,     limOpxVal,  PTpath,
                                     bulk_L,     bulk_R,     oxi,
                                     bufferType, bufferN1,   bufferN2,
                                     smooth,     colorm,     reverseColorMap,
@@ -433,6 +433,18 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
 
         mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb,        solver,
                                                         cpx,        limOpx,     limOpxVal ) 
+
+
+        global pChip_wat, pChip_T;
+        if diagType == "pt" && watsat == "true"
+            pChip_wat, pChip_T = get_wat_sat_functions(         Yrange,     bulk_L,     oxi,    phase_selection,
+                                                                dtb,        bufferType, solver,
+                                                                verbose,    bufferN1,
+                                                                cpx,        limOpx,     limOpxVal)
+        else
+            pChip_wat, pChip_T = nothing, nothing
+        end
+                                                
         MAGEMin_data    =   Initialize_MAGEMin( dtb;
                                                 verbose     = false,
                                                 limitCaOpx  = limitCaOpx,
@@ -448,7 +460,8 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                                         phase_selection, fixT, fixP,
                                                         oxi, bulk_L, bulk_R,
                                                         bufferType, bufferN1, bufferN2,
-                                                        scp, refType    )
+                                                        scp, refType,
+                                                        pChip_wat, pChip_T    )
 
         
         #________________________________________________________________________________________#     
@@ -458,11 +471,12 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
             refine_elements                          = refine_phase_boundaries(forest, Hash_XY);
             forest_new, data_new, ind_map            = adapt_forest(forest, refine_elements, data);     # Adapt the mesh; also returns the new coordinates and a mapping from old->new
  
-            t = @elapsed Out_XY, Hash_XY, n_phase_XY, = refine_MAGEMin( data_new, MAGEMin_data, diagType, PTpath,
+            t = @elapsed Out_XY, Hash_XY, n_phase_XY, = refine_MAGEMin(             data_new, MAGEMin_data, diagType, PTpath,
                                                                                     phase_selection, fixT, fixP,
                                                                                     oxi, bulk_L, bulk_R,
                                                                                     bufferType, bufferN1, bufferN2,
-                                                                                    scp, refType, 
+                                                                                    scp, refType,
+                                                                                    pChip_wat, pChip_T, 
                                                                                     ind_map         = ind_map,
                                                                                     Out_XY_old      = Out_XY  ) # recompute points that have not been computed before
                                                                      
@@ -605,7 +619,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                 smooth,     colorm,     reverseColorMap,
                                 test,       refType                                 )
 
-    global forest, data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, X, Y, addedRefinementLvl, layout, n_lbl
+    global forest, data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, X, Y, addedRefinementLvl, layout, n_lbl, pChip_wat, pChip_T
 
     mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb,        solver,
                                                     cpx,        limOpx,     limOpxVal ) 
@@ -626,6 +640,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                                                             oxi, bulk_L, bulk_R,
                                                                             bufferType, bufferN1, bufferN2, 
                                                                             scp, refType,
+                                                                            pChip_wat,  pChip_T,
                                                                             ind_map         = ind_map,
                                                                             Out_XY_old      = Out_XY) # recompute points that have not been computed before
 

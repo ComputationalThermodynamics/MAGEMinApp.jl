@@ -80,6 +80,23 @@ function Tab_Simulation(db_inf)
                                             multi   = false),
                                         ]),
                                     ]),
+                                    html_div([
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("H2O-saturated at solidus", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ]),
+                                            dbc_col([ 
+                                                dcc_dropdown(   id      = "watsat-dropdown",
+                                                options = [
+                                                    (label = "true",         value = "true"),
+                                                    (label = "false",        value = "false"),
+                                                ],
+                                                value       = "false" ,
+                                                clearable   =  false,
+                                                multi       =  false),
+                                            ]),
+                                        ]),
+                                    ], style = Dict("display" => "block"), id      = "subsolsat-id"), #none, block
 
                                     #clinopyroxene for metabasite
                                     html_div([
