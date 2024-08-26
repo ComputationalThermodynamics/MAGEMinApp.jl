@@ -1,3 +1,6 @@
+"""
+    
+"""
 function get_wat_sat_functions(     Yrange,     bulk_ini,   oxi,    phase_selection,
                                     dtb,        bufferType, solver,
                                     verbose,    bufferN,
@@ -24,7 +27,7 @@ function get_wat_sat_functions(     Yrange,     bulk_ini,   oxi,    phase_select
                                                         cpx,        limOpx,     limOpxVal ) 
 
         # initialize single thread MAGEMin 
-        GC.gc() 
+
         gv, z_b, DB, splx_data = init_MAGEMin(  dtb;        
                                                 verbose     = verbose,
                                                 mbCpx       = mbCpx,
@@ -59,8 +62,7 @@ function get_wat_sat_functions(     Yrange,     bulk_ini,   oxi,    phase_select
             sign_a      = -1
 
             while n < n_max && conv == 0
-                c = (a+b)/2.0
-
+                c       = (a+b)/2.0
                 out     = deepcopy( point_wise_minimization(pressure, c, gv, z_b, DB, splx_data, sys_in;buffer_n=bufferN, rm_list=phase_selection) )
 
                 if "liq" in out.ph
@@ -85,36 +87,30 @@ function get_wat_sat_functions(     Yrange,     bulk_ini,   oxi,    phase_select
                 n += 1
             end
 
-            Tsol[i]  = (a+b)/2.0
+            Tsol[i]     = (a+b)/2.0
+            out         = deepcopy( point_wise_minimization(pressure, Tsol[i] + 0.5 , gv, z_b, DB, splx_data, sys_in;buffer_n=bufferN, rm_list=phase_selection) )
 
-            out     = deepcopy( point_wise_minimization(pressure, Tsol[i] - 0.5 , gv, z_b, DB, splx_data, sys_in;buffer_n=bufferN, rm_list=phase_selection) )
+            id_dry      = findall(out.oxides .!= "H2O")
+            id_h2o      = findall(out.oxides .== "H2O")[1]
 
-            id_dry  = findall(out.oxides .!= "H2O")
-            id_h2o  = findall(out.oxides .== "H2O")[1]
-
-            tmp_bulk = deepcopy(out.bulk)
+            tmp_bulk    = deepcopy(out.bulk)
 
             # extracting excess water
             if "H2O" in out.ph
-                id_fl = findall(out.ph .== "H2O")[1]
-                tmp_bulk .-= out.PP_vec[id_fl - out.n_SS].Comp .* out.ph_frac[id_fl]
-            else
-                id_fl = findall(out.ph .== "fl")[1]
-                tmp_bulk .-= out.SS_vec[id_fl].Comp .* out.ph_frac[id_fl]
-            end
+                id = findall(out.ph .== "H2O")[1]
+                tmp_bulk .-= out.PP_vec[id - out.n_SS].Comp .* out.ph_frac[id]
+            elseif "fl" in out.ph
+                id = findall(out.ph .== "fl")[1]
+                tmp_bulk .-= out.SS_vec[id].Comp .* out.ph_frac[id]
+            end            
 
-            # normalize to 100%
-            tmp_bulk ./= sum(tmp_bulk)
-
-            # normalize on anhydrous basis, to get water content
-            tmp_bulk ./= sum(tmp_bulk[id_dry])
+            tmp_bulk ./= sum(tmp_bulk)              # normalize to 100%
+            tmp_bulk ./= sum(tmp_bulk[id_dry])      # normalize on anhydrous basis, to get water content
             
-            SatSol[i] = tmp_bulk[id_h2o]
+            SatSol[i]  = tmp_bulk[id_h2o]
         end
-
         pChip_wat   = Interpolator(Prange, SatSol)
         pChip_T     = Interpolator(Prange, Tsol)
-
         LibMAGEMin.FreeDatabases(gv, DB, z_b)
  
     else
