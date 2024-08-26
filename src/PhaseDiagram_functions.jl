@@ -54,7 +54,7 @@ function prt(   in    ::Union{Float64,Vector{Float64}};
 end
 
 
-function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2, PTpath)
+function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2, PTpath, watsat)
 
     ptx_data    = copy(PTpath)
     np      = length(ptx_data)
@@ -95,13 +95,16 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     db_in     = retrieve_solution_phase_information(dtb)
 
 
-    PD_infos[1]  = "Phase Diagram computed using MAGEMin v"*Out_XY[1].MAGEMin_ver*"<br>"
+    PD_infos[1]  = "Phase Diagram computed using MAGEMin v"*Out_XY[1].MAGEMin_ver*" (GUI v0.4.0) <br>"
     PD_infos[1] *= "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾<br>"
     PD_infos[1] *= "Number of points <br>"
     
     PD_infos[1] *= "Date & time <br>"
     PD_infos[1] *= "Database <br>"
     PD_infos[1] *= "Diagram type <br>"
+    if watsat == "true"
+        PD_infos[1] *= "Water saturation<br>"
+    end
     PD_infos[1] *= "Solver <br>"
     PD_infos[1] *= "Oxide list <br>"
     if bufferType != "none"
@@ -154,10 +157,16 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     PD_infos[2] *= string(npoints) * "<br>"
     
     PD_infos[2] *= datetoday * ", " * rightnow * "<br>"
-    PD_infos[2] *= db_in.db_info * "<br>"
-    
+    PD_infos[2] *= db_in.db_info *"; "* Out_XY[1].dataset * "<br>" 
+
     PD_infos[2] *= dgtype *"<br>"
+
+    if watsat == "true"
+        PD_infos[2] *= "Computed at solidus <br>"
+    end
+
     PD_infos[2] *= solv *"<br>"
+
     PD_infos[2] *= join(oxi_string, " ") *"<br>"
     if bufferType != "none"
         PD_infos[2] *= bufferType *"<br>"
@@ -408,7 +417,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                     dtb,        diagType,   verbose,    scp,    solver,     phase_selection,
                                     fixT,       fixP,
                                     sub,        refLvl,
-                                    cpx,        limOpx,     limOpxVal,  PTpath,
+                                    watsat,     cpx,        limOpx,     limOpxVal,  PTpath,
                                     bulk_L,     bulk_R,     oxi,
                                     bufferType, bufferN1,   bufferN2,
                                     smooth,     colorm,     reverseColorMap,
@@ -433,6 +442,18 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
 
         mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb,        solver,
                                                         cpx,        limOpx,     limOpxVal ) 
+
+
+        global pChip_wat, pChip_T;
+        if diagType == "pt" && watsat == "true"
+            pChip_wat, pChip_T = get_wat_sat_functions(         Yrange,     bulk_L,     oxi,    phase_selection,
+                                                                dtb,        bufferType, solver,
+                                                                verbose,    bufferN1,
+                                                                cpx,        limOpx,     limOpxVal)
+        else
+            pChip_wat, pChip_T = nothing, nothing
+        end
+                                                
         MAGEMin_data    =   Initialize_MAGEMin( dtb;
                                                 verbose     = false,
                                                 limitCaOpx  = limitCaOpx,
@@ -448,7 +469,8 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                                         phase_selection, fixT, fixP,
                                                         oxi, bulk_L, bulk_R,
                                                         bufferType, bufferN1, bufferN2,
-                                                        scp, refType    )
+                                                        scp, refType,
+                                                        pChip_wat, pChip_T    )
 
         
         #________________________________________________________________________________________#     
@@ -458,11 +480,12 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
             refine_elements                          = refine_phase_boundaries(forest, Hash_XY);
             forest_new, data_new, ind_map            = adapt_forest(forest, refine_elements, data);     # Adapt the mesh; also returns the new coordinates and a mapping from old->new
  
-            t = @elapsed Out_XY, Hash_XY, n_phase_XY, = refine_MAGEMin( data_new, MAGEMin_data, diagType, PTpath,
+            t = @elapsed Out_XY, Hash_XY, n_phase_XY, = refine_MAGEMin(             data_new, MAGEMin_data, diagType, PTpath,
                                                                                     phase_selection, fixT, fixP,
                                                                                     oxi, bulk_L, bulk_R,
                                                                                     bufferType, bufferN1, bufferN2,
-                                                                                    scp, refType, 
+                                                                                    scp, refType,
+                                                                                    pChip_wat, pChip_T, 
                                                                                     ind_map         = ind_map,
                                                                                     Out_XY_old      = Out_XY  ) # recompute points that have not been computed before
                                                                      
@@ -495,7 +518,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                                                         Xrange,
                                                                         Yrange)
 
-        PT_infos                           = get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath)
+        PT_infos                           = get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat)
 
         data_plot, annotations = get_diagram_labels(    fieldname,
                                                         oxi,
@@ -596,7 +619,8 @@ end
 """
 function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                 Xrange,     Yrange,     fieldname,  customTitle,
-                                dtb,        diagType,   verbose,    scp,    solver, phase_selection,
+                                dtb,        diagType,   watsat,     
+                                verbose,    scp,        solver, phase_selection,
                                 fixT,       fixP,
                                 sub,        refLvl,
                                 cpx,        limOpx,     limOpxVal,  PTpath,
@@ -605,7 +629,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                 smooth,     colorm,     reverseColorMap,
                                 test,       refType                                 )
 
-    global forest, data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, X, Y, addedRefinementLvl, layout, n_lbl
+    global forest, data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, X, Y, addedRefinementLvl, layout, n_lbl, pChip_wat, pChip_T
 
     mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb,        solver,
                                                     cpx,        limOpx,     limOpxVal ) 
@@ -626,6 +650,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                                                             oxi, bulk_L, bulk_R,
                                                                             bufferType, bufferN1, bufferN2, 
                                                                             scp, refType,
+                                                                            pChip_wat,  pChip_T,
                                                                             ind_map         = ind_map,
                                                                             Out_XY_old      = Out_XY) # recompute points that have not been computed before
 
@@ -656,7 +681,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                                                     Xrange,
                                                                     Yrange )
     
-    PT_infos                           = get_phase_diagram_information(npoints,dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath)
+    PT_infos                           = get_phase_diagram_information(npoints,dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat)
                                                               
     data_plot, annotations = get_diagram_labels(    fieldname,
                                                     oxi,

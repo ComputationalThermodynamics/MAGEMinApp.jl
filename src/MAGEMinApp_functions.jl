@@ -1295,8 +1295,14 @@ function get_isopleth_map(  mod         ::String,
             end
         end 
     elseif mod == "of_mod"
-        for i=1:np
-            field[i] = Float64(get_property(Out_XY[i], of));
+        if of == "s_cp"
+            for i=1:np
+                field[i] = Out_XY[i].s_cp[1];
+            end
+        else
+            for i=1:np
+                field[i] = Float64(get_property(Out_XY[i], of));
+            end
         end
         field[isnan.(field)] .= missing
         if of == "frac_M" || of == "rho_M" || of == "rho_S"

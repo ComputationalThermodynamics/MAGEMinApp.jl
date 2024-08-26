@@ -163,7 +163,7 @@ function Tab_isoSpaths_Callbacks(app)
 
         if bid == "compute-path-button-isoS"
 
-            global Out_ISOS, ph_names, layout_isoS, layout_path, data_plot, df_path_plot, fracEvol
+            global Out_ISOS, ph_names, layout_isoS, layout_path, data_plot, df_path_plot
 
             bufferN                 = Float64(bufferN)               # convert buffer_n to float
             bulk_ini, bulk_ini, oxi = get_bulkrock_prop(bulk, bulk)  
@@ -173,7 +173,6 @@ function Tab_isoSpaths_Callbacks(app)
                                             dtb,        bufferType, solver,
                                             verbose,    bulk,       bufferN,
                                             cpx,        limOpx,     limOpxVal    )
-
 
             layout_isoS             = initialize_layout_isoS(title,sysunit)
             layout_path             = initialize_layout_isoS_path(Pini, Tini, Pfinal)
