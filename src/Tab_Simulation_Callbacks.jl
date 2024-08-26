@@ -45,7 +45,7 @@ function Tab_Simulation_Callbacks(app)
         State(  "test-te-dropdown",                 "value"       ),
         State(  "test-2-te-dropdown",               "value"       ),
 
-       
+        State("watsat-dropdown",                    "value"       ),
         
         prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
     ) do click, filename,
@@ -58,13 +58,14 @@ function Tab_Simulation_Callbacks(app)
         buffer, solver, verbose, scp,
         test, test2,
         buffer1, buffer2,
-        te_test, te_test2
+        te_test, te_test2,
+        watsat
 
         global db, dbte
 
         file = String(filename)*".jld2"
 
-        @save file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ptx_table pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver verbose scp test test2 buffer1 buffer2 te_test te_test2
+        @save file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ptx_table pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver verbose scp test test2 buffer1 buffer2 te_test te_test2 watsat
 
         status = "success"
         print("saving phase diagram state in: $(pwd()) ...")
@@ -111,6 +112,8 @@ function Tab_Simulation_Callbacks(app)
         Output(  "buffer-1-mul-id",                  "value"       ),
         Output(  "buffer-2-mul-id",                  "value"       ),
 
+        Output("watsat-dropdown",                    "value"       ),
+
         Input(  "load-state-diagram-button",        "n_clicks"     ),
         State(  "save-state-filename-id",           "value"        ),
         
@@ -122,13 +125,13 @@ function Tab_Simulation_Callbacks(app)
         file = String(filename)*".jld2"
         try 
             # using JSON3, JLD2
-            @load file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver verbose scp buffer1 buffer2
+            @load file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver verbose scp buffer1 buffer2 watsat
 
             success, failed = "success", ""
-            return success, failed, database, diagram_type, mb_cpx, limit_ca_opx, ca_opx_val, tepm, kds_dtb, zrsat_dtb, pmin, pmax, tmin, tmax, pfix, tfix, grid_sub, refinement, refinement_level, buffer, solver, verbose, scp, buffer1, buffer2
+            return success, failed, database, diagram_type, mb_cpx, limit_ca_opx, ca_opx_val, tepm, kds_dtb, zrsat_dtb, pmin, pmax, tmin, tmax, pfix, tfix, grid_sub, refinement, refinement_level, buffer, solver, verbose, scp, buffer1, buffer2, watsat
         catch e
             success, failed = "", "failed"
-            return success, failed, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing 
+            return success, failed, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing
     
         end
 

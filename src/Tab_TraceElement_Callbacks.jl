@@ -185,7 +185,8 @@ function Tab_TraceElement_Callbacks(app)
                                                                 bufferType,
                                                                 bufferN1,
                                                                 bufferN2,
-                                                                PTpath)
+                                                                PTpath,
+                                                                "false")
 
                 data_plot_te, annotations = get_diagram_labels(     fieldname,
                                                                     oxi,

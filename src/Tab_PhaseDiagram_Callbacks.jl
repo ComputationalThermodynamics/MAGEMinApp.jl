@@ -379,7 +379,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             data_plot, layout, npoints, meant  =  refine_phaseDiagram(  xtitle,     ytitle,     lbl, 
                                                                         Xrange,     Yrange,     fieldname,  customTitle,
-                                                                        dtb,        diagType,   verbose,    scp,    solver, phase_selection,
+                                                                        dtb,        diagType,   watsat, verbose,    scp,    solver, phase_selection,
                                                                         fixT,       fixP,
                                                                         sub,        refLvl,
                                                                         cpx,        limOpx,     limOpxVal,  PTpath,

@@ -54,7 +54,7 @@ function prt(   in    ::Union{Float64,Vector{Float64}};
 end
 
 
-function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2, PTpath)
+function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2, PTpath, watsat)
 
     ptx_data    = copy(PTpath)
     np      = length(ptx_data)
@@ -102,6 +102,9 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     PD_infos[1] *= "Date & time <br>"
     PD_infos[1] *= "Database <br>"
     PD_infos[1] *= "Diagram type <br>"
+    if watsat == "true"
+        PD_infos[1] *= "Water saturation<br>"
+    end
     PD_infos[1] *= "Solver <br>"
     PD_infos[1] *= "Oxide list <br>"
     if bufferType != "none"
@@ -157,7 +160,13 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     PD_infos[2] *= db_in.db_info *"; "* Out_XY[1].dataset * "<br>" 
 
     PD_infos[2] *= dgtype *"<br>"
+
+    if watsat == "true"
+        PD_infos[2] *= "Computed at solidus <br>"
+    end
+
     PD_infos[2] *= solv *"<br>"
+
     PD_infos[2] *= join(oxi_string, " ") *"<br>"
     if bufferType != "none"
         PD_infos[2] *= bufferType *"<br>"
@@ -509,7 +518,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                                                         Xrange,
                                                                         Yrange)
 
-        PT_infos                           = get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath)
+        PT_infos                           = get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat)
 
         data_plot, annotations = get_diagram_labels(    fieldname,
                                                         oxi,
@@ -610,7 +619,8 @@ end
 """
 function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                 Xrange,     Yrange,     fieldname,  customTitle,
-                                dtb,        diagType,   verbose,    scp,    solver, phase_selection,
+                                dtb,        diagType,   watsat,     
+                                verbose,    scp,        solver, phase_selection,
                                 fixT,       fixP,
                                 sub,        refLvl,
                                 cpx,        limOpx,     limOpxVal,  PTpath,
@@ -671,7 +681,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                                                     Xrange,
                                                                     Yrange )
     
-    PT_infos                           = get_phase_diagram_information(npoints,dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath)
+    PT_infos                           = get_phase_diagram_information(npoints,dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat)
                                                               
     data_plot, annotations = get_diagram_labels(    fieldname,
                                                     oxi,
