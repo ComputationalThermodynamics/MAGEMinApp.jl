@@ -1,5 +1,12 @@
+
 """
+    get_wat_sat_functions(     Yrange,     bulk_ini,   oxi,    phase_selection,
+                                dtb,        bufferType, solver,
+                                verbose,    bufferN,
+                                cpx,        limOpx,     limOpxVal)
     
+    Computes water-saturation at sub-solidus
+
 """
 function get_wat_sat_functions(     Yrange,     bulk_ini,   oxi,    phase_selection,
                                     dtb,        bufferType, solver,
@@ -36,24 +43,21 @@ function get_wat_sat_functions(     Yrange,     bulk_ini,   oxi,    phase_select
                                                 buffer      = bufferType,
                                                 solver      = sol    );
 
-        sys_in  = "mol"
-        gv      =  define_bulk_rock(gv, bulk_ini, oxi, sys_in, dtb);
+        sys_in      = "mol"
+        gv          =  define_bulk_rock(gv, bulk_ini, oxi, sys_in, dtb);
 
-        Tmin    = 500.0;
-        Tliq    = 2200.0;
-        tolerance = 0.1;      
+        Tmin        = 500.0;
+        Tliq        = 2200.0;
+        tolerance   = 0.1;      
 
-        Tsol    = zeros(Float64,length(Prange))
-        SatSol  = zeros(Float64,length(Prange))
+        Tsol        = zeros(Float64,length(Prange))
+        SatSol      = zeros(Float64,length(Prange))
 
         @showprogress 1 "Computing sub-solidus water-saturating curve..." for i = 1:length(Prange)
 
             pressure    = Prange[i]
-
             out         = deepcopy( point_wise_minimization(pressure, Tliq, gv, z_b, DB, splx_data, sys_in;buffer_n=bufferN, rm_list=phase_selection) )
-
             n_max       = 32
-
             a           = Tmin
             b           = Tliq
             n           = 1
@@ -130,7 +134,6 @@ end
                             pmin::Float64,
                             pmax::Float64,
                             sub::Int64)
-
 """
 function create_forest( tmin::Float64,
                         tmax::Float64,
