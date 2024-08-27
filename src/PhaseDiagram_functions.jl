@@ -95,7 +95,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     db_in     = retrieve_solution_phase_information(dtb)
 
 
-    PD_infos[1]  = "Phase Diagram computed using MAGEMin v"*Out_XY[1].MAGEMin_ver*" (GUI v0.4.0) <br>"
+    PD_infos[1]  = "Phase Diagram computed using MAGEMin v"*Out_XY[1].MAGEMin_ver*" (GUI v0.4.1) <br>"
     PD_infos[1] *= "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾<br>"
     PD_infos[1] *= "Number of points <br>"
     
@@ -446,7 +446,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
 
         global pChip_wat, pChip_T;
         if diagType == "pt" && watsat == "true"
-            pChip_wat, pChip_T = get_wat_sat_functions(         Yrange,     bulk_L,     oxi,    phase_selection,
+            pChip_wat, pChip_T = get_wat_sat_function(         Yrange,     bulk_L,     oxi,    phase_selection,
                                                                 dtb,        bufferType, solver,
                                                                 verbose,    bufferN1,
                                                                 cpx,        limOpx,     limOpxVal)

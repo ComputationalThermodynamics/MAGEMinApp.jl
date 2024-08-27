@@ -1,6 +1,6 @@
 
 """
-    get_wat_sat_functions(     Yrange,     bulk_ini,   oxi,    phase_selection,
+    get_wat_sat_function(     Yrange,     bulk_ini,   oxi,    phase_selection,
                                 dtb,        bufferType, solver,
                                 verbose,    bufferN,
                                 cpx,        limOpx,     limOpxVal)
@@ -8,7 +8,7 @@
     Computes water-saturation at sub-solidus
 
 """
-function get_wat_sat_functions(     Yrange,     bulk_ini,   oxi,    phase_selection,
+function get_wat_sat_function(     Yrange,     bulk_ini,   oxi,    phase_selection,
                                     dtb,        bufferType, solver,
                                     verbose,    bufferN,
                                     cpx,        limOpx,     limOpxVal)
