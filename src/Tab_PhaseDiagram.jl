@@ -342,8 +342,8 @@ function Tab_PhaseDiagram()
                                             dbc_input(
                                                 id="iso-min-id",
                                                 type="number", 
-                                                min=-2.0, 
-                                                max= 2.0, 
+                                                min=-1e8, 
+                                                max= 1e8, 
                                                 value=0.0   ),
                                         ]),
                                     ]),
@@ -355,8 +355,8 @@ function Tab_PhaseDiagram()
                                             dbc_input(
                                                 id="iso-step-id",
                                                 type="number", 
-                                                min= 0.0, 
-                                                max= 2.0, 
+                                                min=-1e8, 
+                                                max= 1e8, 
                                                 value=0.1   ),
                                         ]),
                                     ]),
@@ -368,8 +368,8 @@ function Tab_PhaseDiagram()
                                             dbc_input(
                                                 id="iso-max-id",
                                                 type="number", 
-                                                min=-2.0, 
-                                                max= 2.0, 
+                                                min=-1e8, 
+                                                max= 1e8, 
                                                 value=1.0   ),
                                         ]),
                                     ]),
