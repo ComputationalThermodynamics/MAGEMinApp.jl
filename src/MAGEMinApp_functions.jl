@@ -1073,7 +1073,7 @@ function get_gridded_map(   fieldname   ::String,
 
     end
     println("\rInterpolate data on grid $(round(time()-t0, digits=3)) seconds"); 
-    
+
     return gridded, gridded_info, X, Y, npoints, meant
 end
 
@@ -1248,6 +1248,24 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
         jj              = Int64(round((yc[k]-Yrange[1] + Yr/2)/(Yr))) 
         gridded[ii,jj]  = field[k] 
     end
+
+    # for k=1:np
+ 
+    #     for i=xf[k][1]+Xr/2 : Xr : xf[k][3]
+    #         for j=yf[k][1]+Yr/2 : Yr : yf[k][3]
+    #             iii                  = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
+    #             jjj                  = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
+
+    #             # tmp                 = replace(string(Out_XY[k].ph), "\""=>"", "]"=>"", "["=>"", ","=>"")
+    #             gridded[iii,jjj] = field[k] 
+    #         end
+    #     end
+
+    # end
+
+    # @save "gridded.jld2" gridded
+    
+
     println("\rInterpolate data on grid $(round(time()-t0, digits=3)) seconds"); 
     return gridded, X, Y, npoints, meant
 end
