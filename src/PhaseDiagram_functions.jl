@@ -360,8 +360,8 @@ end
 
 
 
-function tepm_function( dtb         :: String,
-                        diagType    :: String,
+function tepm_function( diagType    :: String,
+                        dtb         :: String,
                         kds_mod     :: String,
                         zrsat_mod   :: String,
                         bulkte_L    :: Vector{Float64},
