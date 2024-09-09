@@ -20,7 +20,11 @@ push!(dba,Dict(         :database    => "Ultramafic (Evans & Frost., 2021)",
                         :acronym     => "um",
                         ), cols=:union)
 
+push!(dba,Dict(         :database    => "Ultramafic extended (Evans & Frost., 2021) + pl, hb and aug from Green et al., 2016",
+                        :acronym     => "ume",
+                        ), cols=:union)
 
+                    
 
 db = DataFrame(         bulk        = String[],
                         title       = String[],
@@ -236,6 +240,41 @@ push!(db,Dict(          :bulk       => "predefined",
                         ), cols=:union)
     
 
+#ULTRAMAFIC EXTENDED DATABASE
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "Barberton komatiite",
+                        :comments   => "Tamblyn et al., 2022",
+                        :db         => "ume",
+                        :test       => 0,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","MgO","FeO","O","H2O","S","CaO","Na2O"],
+                        :frac       => [38.51, 2.25, 29.03, 4.65, 0.5, 16.0, 0.1, 6.92, 0.25],
+                        :frac2      => [38.51, 2.25, 29.03, 4.65, 0.5, 16.0, 0.1, 6.92, 0.25],
+                        ), cols=:union)
+
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "Serpentine oxidized",
+                        :comments   => "Evans & Forst, 2021",
+                        :db         => "ume",
+                        :test       => 1,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","MgO","FeO","O","H2O","S","CaO","Na2O"],
+                        :frac       => [20.044,  0.6256, 29.24, 3.149, 0.7324, 46.755, 0.3,2.0,0.15],
+                        :frac2      => [20.044,  0.6256, 29.24, 3.149, 0.7324, 46.755, 0.3,2.0,0.15],
+                        ), cols=:union)
+    
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "Serpentine reduced",
+                        :comments   => "Evans & Forst, 2021",
+                        :db         => "ume",
+                        :test       => 2,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","MgO","FeO","O","H2O","S","CaO","Na2O"],
+                        :frac       => [20.044,  0.6256, 29.24, 3.149, 0.1324, 46.755, 0.3,2.0,0.15],
+                        :frac2      => [20.044,  0.6256, 29.24, 3.149, 0.1324, 46.755, 0.3,2.0,0.15],
+                        ), cols=:union)
+
+                    
 dbte = DataFrame(       composition = String[],
                         title       = String[],
                         comments    = String[],

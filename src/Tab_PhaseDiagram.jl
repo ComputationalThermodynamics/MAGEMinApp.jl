@@ -25,6 +25,7 @@ function Tab_PhaseDiagram()
                                 is_open=true,
                         ),
                         html_div("‎ "),
+
                         dbc_button("Phase diagram information",id="infos-phase-diagram"),
                         dbc_collapse(
                             dbc_card(dbc_cardbody([
@@ -37,7 +38,16 @@ function Tab_PhaseDiagram()
                                         ])
                                     ]),
 
-                                    html_div("‎ "),
+                                    html_hr(),
+
+
+                                    dbc_row([
+                                        dbc_col([ 
+                                            pie_plot(),
+                                        ]#=, width=6=#),
+                                    ]),
+
+
                                     dbc_row([
                                         dbc_col([ 
                                             dbc_card([
@@ -62,44 +72,9 @@ function Tab_PhaseDiagram()
                                         ], width=3),
                                     ],className="g-0"),
   
-                                    # # LOAD SAVE STATE
-                                    # html_div("‎ "),
-                                    # dbc_row([
-                                    #     dbc_col([ 
-                                    #         dbc_input(
-                                    #             id      = "save-diagram-filename-id",
-                                    #             type    = "text", 
-                                    #             style   = Dict("textAlign" => "center") ,
-                                    #             value   = "filename"   ),     
-                                    #     ], width=7),
-                                    #     dbc_col([    
-                                    #         dbc_button("Save state", id="save-diagram-button", color="light",  n_clicks=0,
-                                    #         style       = Dict( "textAlign"     => "center",
-                                    #                             "font-size"     => "100%",
-                                    #                             "border"        =>"2px grey solid")), 
-                                    #     ]),
-                                    #     dbc_col([    
-                                    #         dbc_button("Load state", id="load-diagram-button", color="light",  n_clicks=0,
-                                    #         style       = Dict( "textAlign"     => "center",
-                                    #                             "font-size"     => "100%",
-                                    #                             "border"        =>"2px grey solid")), 
-                                    #     ]),
-                                    # ]),
-                                    # dbc_alert(
-                                    #     "Saved phase diagram successfully",
-                                    #     id      = "save-diagram-success",
-                                    #     is_open = false,
-                                    #     duration= 4000,
-                                    # ),
-                                    # dbc_alert(
-                                    #     "Loaded phase diagram successfully",
-                                    #     id      = "load-diagram-success",
-                                    #     is_open = false,
-                                    #     duration= 4000,
-                                    # ),
 
                                     # SAVE POINTS INFORMATION
-                                    html_div("‎ "),
+                                    html_hr(),
                                     dbc_row([
                                         dbc_col([
                                             html_h1("Save point", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
@@ -191,7 +166,7 @@ function Tab_PhaseDiagram()
                                             duration=4000,
                                         ),
                                     ]),
-                                    html_div("‎ "),
+                                    html_hr(),
                                     dbc_row([
                                         dbc_col([
                                             html_h1("Export references", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 0)),    
@@ -213,6 +188,57 @@ function Tab_PhaseDiagram()
                                                 html_div("Output path and progress are displayed in the Julia terminal")],target="export-citation-button"),
                                         ]),
                                     ]),
+
+                                    html_hr(),
+                                    dbc_row([
+
+                                        dbc_col([
+                                            html_h1("Export diagram", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 0)),    
+                                        ], width=3),
+
+                                        dbc_col([    
+                                            dbc_button("Export ρ for LaMEM", id="export-to-lamem", color="light",  n_clicks=0,
+                                            style       = Dict( "textAlign"     => "center",
+                                                                "font-size"     => "100%",
+                                                                "border"        =>"2px grey solid")), 
+                                        ]),
+
+                                        dbc_col([    
+                                            dbc_button("Export for GeoModel", id="export-geomodel", color="light",  n_clicks=0,
+                                            style       = Dict( "textAlign"     => "center",
+                                                                "font-size"     => "100%",
+                                                                "border"        =>"2px grey solid")), 
+                                        ]),
+                                        dcc_download(id="download-lamem-in"),  
+                                        dcc_download(id="download-geomodel-in"), 
+                                        dbc_alert(
+                                            "Density diagram saved for LaMEM",
+                                            id      ="export-to-lamem-text",
+                                            is_open =false,
+                                            duration=4000,
+                                        ),
+                                        dbc_alert(
+                                            "Phase diagrams for LaMEM have to be PT",
+                                            color="danger",
+                                            id      ="export-to-lamem-text-failed",
+                                            is_open =false,
+                                            duration=4000,
+                                        ),
+                                        dbc_alert(
+                                            "Density diagram saved for LaMEM",
+                                            id      ="export-geomodel-text",
+                                            is_open =false,
+                                            duration=4000,
+                                        ),
+                                        dbc_alert(
+                                            "Phase diagrams for LaMEM have to be PT",
+                                            color="danger",
+                                            id      ="export-geomodel-text-failed",
+                                            is_open =false,
+                                            duration=4000,
+                                        ),
+                                    ]),
+
 
                                     dbc_row([
                                         dbc_alert(

@@ -152,8 +152,7 @@ function Tab_Simulation(db_inf)
 
                                     #Trace element predictive models
                                     # html_div([
-                                    html_div("‎ "),  
-                                    html_div("‎ "),  
+                                    html_hr(),
                                     dbc_row([
                                         dbc_col([ 
                                             html_h1("TE predictive model", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
@@ -206,9 +205,7 @@ function Tab_Simulation(db_inf)
                                     ], style = Dict("display" => "none"), id      = "tepm-options-id"), #none, block
 
                                     #PT caption 
-                                    html_div("‎ "),  
-                                    html_div("‎ "),  
-
+                                    html_hr(),
                                     # PT path
                                     html_div([
                                         dbc_row([                                            
@@ -359,7 +356,7 @@ function Tab_Simulation(db_inf)
                                     ], style = Dict("display" => "none"),id = "fixed-temperature-id"), #none, block
                                    
 
-                                    html_div("‎ "),
+                                    html_hr(),
                                     #subdivision
                                     dbc_row([
                                         dbc_col([ 
@@ -402,7 +399,7 @@ function Tab_Simulation(db_inf)
                                                 value   = 2   ),
                                         ]),
                                     ]),
-                                    html_div("‎ "), 
+                                    html_hr(),
                                     #buffer
                                     dbc_row([
                                         dbc_col([ 

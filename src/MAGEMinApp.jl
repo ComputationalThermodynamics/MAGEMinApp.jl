@@ -90,60 +90,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
 
                     ], justify="between"),
                     
-                    dbc_row([
-                            dbc_col([
-                                dbc_dropdownmenu(
-                                    [   dbc_dropdownmenuitem("Load state", disabled=true),
-                                        dbc_dropdownmenuitem("Save state", disabled=true),
-                                        dbc_dropdownmenuitem(divider=true),
-                                        dbc_dropdownmenuitem(                 "Export ρ for LaMEM", 
-                                                                id          = "export-to-lamem",
-                                                                disabled    = false                 ), 
-                                        dbc_dropdownmenuitem(                 "Export for GeoModel", 
-                                                                id          = "export-geomodel",
-                                                                disabled    = false                 ),           
-                                    ],
-                                    label="File",
-                                    id="id-dropdown-file",
-                                    color="secondary"),
-                                    dcc_download(id="download-lamem-in"),  
-                                    dcc_download(id="download-geomodel-in"), 
-                                    dbc_tooltip("Note that 3-4 refinement levels are more that necessary",target="export-to-lamem"),
-                                ]),
-                            ]),
-                            dbc_col([
-                                dbc_alert(
-                                    "Density diagram saved for LaMEM",
-                                    id      ="export-to-lamem-text",
-                                    is_open =false,
-                                    duration=4000,
-                                ),
-                                dbc_alert(
-                                    "Phase diagrams for LaMEM have to be PT",
-                                    color="danger",
-                                    id      ="export-to-lamem-text-failed",
-                                    is_open =false,
-                                    duration=4000,
-                                ),
-                                dbc_alert(
-                                    "Density diagram saved for LaMEM",
-                                    id      ="export-geomodel-text",
-                                    is_open =false,
-                                    duration=4000,
-                                ),
-                                dbc_alert(
-                                    "Phase diagrams for LaMEM have to be PT",
-                                    color="danger",
-                                    id      ="export-geomodel-text-failed",
-                                    is_open =false,
-                                    duration=4000,
-                                ),
-                            ]),
-
-                            dbc_row([
-                                html_div("‎ "),
-                            ]),
-
+                    
                             dbc_tabs([
 
                                     dbc_tab(    tab_id      = "phase-diagrams",

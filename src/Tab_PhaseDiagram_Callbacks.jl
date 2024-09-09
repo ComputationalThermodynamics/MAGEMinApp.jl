@@ -1,52 +1,92 @@
 function Tab_PhaseDiagram_Callbacks(app)
 
-    # # update the dictionary of the solution phases and end-members for isopleths
-    # callback!(
-    #     app,
-    #     Output( "save-diagram-success",         "is_open"     ),
-    #     Input(  "save-diagram-button",          "n_clicks"    ),
-    #     State(  "save-diagram-filename-id",     "value"       ),
+    #save all to file
+    callback!(
+        app,
+        Output("download-lamem-in",             "data"      ),
+        Output("export-to-lamem-text",          "is_open"   ),
+        Output("export-to-lamem-text-failed",   "is_open"   ),
+        Input("export-to-lamem",                "n_clicks"  ),
+        State("database-dropdown",              "value"     ),
+        State("diagram-dropdown",               "value"     ),
+        State("gsub-id",                        "value"     ),                   # n subdivision
+        State("refinement-levels",              "value"     ),                   # level
+        State("tmin-id",                        "value"     ),                   # tmin
+        State("tmax-id",                        "value"     ),                   # tmax
+        State("pmin-id",                        "value"     ),                   # pmin
+        State("pmax-id",                        "value"     ),                   # pmax
+        State("table-bulk-rock",                "data"      ),                   # bulk-rock 1
+        State("test-dropdown",                  "value"     ),
 
-    #     prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
-    # ) do click, filename
-
-    #     global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, X, Y, addedRefinementLvl, layout, n_lbl
-    #     file = String(filename)*"_diagram.jld2"
-
-    #     print("saving diagram to jld2 file (file can be heavy saving can take up to a few minutes)\n"); t0 = time()
-    #     @save file MAGEMin_data forest data Hash_XY Out_XY n_phase_XY data_plot gridded gridded_info X Y addedRefinementLvl layout n_lbl
-    #     print(" -> took $(round(time()-t0, digits=3)) seconds\n"); 
-
-    #     status = "success"
-
-    #     return status
-    # end
-
-
-    # # update the dictionary of the solution phases and end-members for isopleths
-    # callback!(
-    #     app,
-    #     Output( "load-diagram-success",       "is_open"      ),
-    #     Input(  "load-diagram-button",        "n_clicks"     ),
-    #     State(  "save-diagram-filename-id",   "value"        ),
+        prevent_initial_call=true,
         
-    #     prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
-    # ) do click, filename
+    ) do n_clicks, dtb, dtype, sub, refLvl,
+            tmin, tmax, pmin, pmax, bulk1, t
 
-    #     global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, X, Y, addedRefinementLvl, layout, n_lbl
+        if dtype == "pt"
+            Xrange          = (Float64(tmin),Float64(tmax))
+            Yrange          = (Float64(pmin),Float64(pmax))
 
-    #     file = String(filename)*"_diagram.jld2"
-    #     print("$filename\n")
+            testName = replace(db[(db.db .== dtb), :].title[t+1], " " => "_")
+            fileout = testName*".in";
+            file    = save_rho_for_LaMEM(   dtb,
+                                            sub,
+                                            refLvl,
+                                            Xrange,
+                                            Yrange,
+                                            bulk1 )
+            output  = Dict("content" => file,"filename" => fileout)
+            return output, "success", ""
+        else
+            output = nothing
+            return output, "", "failed"
+        end
 
-    #     # using JSON3, JLD2
-    #     print("loading diagram from jld2 file\n"); t0 = time()
-    #     @load file MAGEMin_data forest data Hash_XY Out_XY n_phase_XY data_plot gridded gridded_info X Y addedRefinementLvl layout n_lbl
-    #     print(" -> took $(round(time()-t0, digits=3)) seconds\n"); 
+    end
 
-    #     status = "success"
 
-    #     return status
-    # end
+
+    #save all to file
+    callback!(
+        app,
+        Output("download-geomodel-in", "data"),
+        Output("export-geomodel-text", "is_open"),
+        Output("export-geomodel-text-failed", "is_open"),
+        Input("export-geomodel",    "n_clicks"),
+        State("database-dropdown","value"),
+        State("diagram-dropdown",   "value"),
+        State("gsub-id","value"),                   # n subdivision
+        State("refinement-levels","value"),         # level
+        State("tmin-id","value"),                   # tmin
+        State("tmax-id","value"),                   # tmax
+        State("pmin-id","value"),                   # pmin
+        State("pmax-id","value"),                   # pmax
+        State("table-bulk-rock","data"),            # bulk-rock 1
+        State("test-dropdown",      "value"),
+        prevent_initial_call=true,
+    ) do n_clicks, dtb, dtype, sub, refLvl,
+            tmin, tmax, pmin, pmax, bulk1, t
+
+        if dtype == "pt"
+            Xrange          = (Float64(tmin),Float64(tmax))
+            Yrange          = (Float64(pmin),Float64(pmax))
+
+            testName = replace(db[(db.db .== dtb), :].title[t+1], " " => "_")
+            fileout = testName*".in";
+            file    = save_rho_for_GeoModel(    dtb,
+                                                sub,
+                                                refLvl,
+                                                Xrange,
+                                                Yrange,
+                                                bulk1 )
+            output  = Dict("content" => file,"filename" => fileout)
+            return output, "success", ""
+        else
+            output = nothing
+            return output, "", "failed"
+        end
+
+    end
 
 
     # save table to file
@@ -163,9 +203,10 @@ function Tab_PhaseDiagram_Callbacks(app)
     # clickData callback
     callback!(
         app,
-        Output("click-data-left", "children"),
-        Output("click-data-right", "children"),
+        Output("click-data-left",   "children"),
+        Output("click-data-right",  "children"),
         Output("click-data-bottom", "children"),
+        Output("pie-diagram",       "figure"),
         Input("phase-diagram", "clickData"),
         State("diagram-dropdown","value"),          # pt,px,tx
         prevent_initial_call = true,
@@ -176,8 +217,8 @@ function Tab_PhaseDiagram_Callbacks(app)
         sp  = click_info[:points][][:text]
         tmp = match(r"#([^# ]+)#", sp)
 
-
         if tmp !== nothing
+
             point_id = tmp.match
             point_id = parse(Int64,replace.(point_id,r"#"=>""))
 
@@ -211,10 +252,22 @@ function Tab_PhaseDiagram_Callbacks(app)
                 pBottom *= "|"*Out_XY[point_id].oxides[i]*"|"*string(round.(Out_XY[point_id].bulk[i]; digits = 3))*"|\n"
             end
             # X       = "Composition\t\t**mol**\t: "*join(round.(Out_XY[point_id].bulk; digits = 3)," ")*"\n"
-                        
+                 
+            layout = Layout(    font        = attr(size = 10),
+                                height      = 220,
+                                margin      = attr(autoexpand = false, l=16, r=16, b=16, t=16),
+                                autosize    = false,
+                                title       = attr(text="Phase proportion [mol%]", x=0.5, y=0.95),
+                                titlefont   = attr(size=12))
+
+            labels  = Out_XY[point_id].ph
+            values  = Out_XY[point_id].ph_frac .* 100.0
+            trace   = pie(;labels=labels, values=values,domain=attr(x=[0.1, 0.9], y=[0.1, 0.9]))
+            fig     = plot(trace,layout)
+
         end
 
-        return pLeft, pRight, pBottom
+        return pLeft, pRight, pBottom, fig
     end
 
 
@@ -359,7 +412,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                             smooth,     colorm,     reverseColorMap,
                                                                             test,       refType                          )
             if tepm == "true"
-                if dtb != "um"
+                if dtb != "um" && dtb != "ume"
                     t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
                                                                         kds_mod, zrsat_mod, bulkte_L, bulkte_R)
 
@@ -389,7 +442,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                         test,       refType                             )
 
             if tepm == "true"
-                if dtb != "um"
+                if dtb != "um" && dtb != "ume"
                     t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
                                                                         kds_mod, zrsat_mod, bulkte_L, bulkte_R)
 
