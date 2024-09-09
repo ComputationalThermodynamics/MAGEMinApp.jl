@@ -73,7 +73,7 @@ function Tab_TraceElement()
                                         "Load/Reload trace-elements", id="load-button-te", color="light", className="me-2", n_clicks=0,
                                         style       = Dict( "textAlign"     => "center",
                                                             "font-size"     => "100%",
-                                                            "border"        =>"2px grey solid")), 
+                                                            "border"        =>"1px grey solid")), 
                                 ]),
 
                                 html_div("‎ "),
@@ -92,7 +92,7 @@ function Tab_TraceElement()
                                         dbc_button("csv file", id="save-point-table-button-te", color="light",  n_clicks=0,
                                         style       = Dict( "textAlign"     => "center",
                                                             "font-size"     => "100%",
-                                                            "border"        =>"2px grey solid")), 
+                                                            "border"        =>"1px grey solid")), 
                                         dbc_tooltip([
                                             html_div("Saving point data takes time and depends on the number of points"),
                                             html_div("Output path and progress are displayed in the Julia terminal")],target="save-point-table-button-te"),
@@ -129,7 +129,7 @@ function Tab_TraceElement()
                                         dbc_button("csv file", id="save-all-table-button-te", color="light",  n_clicks=0,
                                         style       = Dict( "textAlign"     => "center",
                                                             "font-size"     => "100%",
-                                                            "border"        =>"2px grey solid")), 
+                                                            "border"        =>"1px grey solid")), 
                                         dbc_tooltip([
                                             html_div("Saving all data takes time and depends on the number of points"),
                                             html_div("Output path and progress are displayed in the Julia terminal")],target="save-all-table-button-te"),
@@ -167,7 +167,7 @@ function Tab_TraceElement()
                                         dbc_button("bibtex file", id="export-citation-button-te", color="light",  n_clicks=0,
                                         style       = Dict( "textAlign"     => "center",
                                                             "font-size"     => "100%",
-                                                            "border"        =>"2px grey solid")), 
+                                                            "border"        =>"1px grey solid")), 
                                         dbc_tooltip([
                                             html_div("Saving list of citation for the computed phase diagram"),
                                             html_div("Output path and progress are displayed in the Julia terminal")],target="export-citation-button-te"),
@@ -305,7 +305,7 @@ function Tab_TraceElement()
                                         "Compute and display", id="compute-display-te", color="light", className="me-2", n_clicks=0,
                                         style       = Dict( "textAlign"     => "center",
                                                             "font-size"     => "100%",
-                                                            "border"        =>"2px grey solid")), 
+                                                            "border"        =>"1px grey solid")), 
                                 ]),
                             ], style = Dict("display" => "none"), id      = "show-trace-element-id"), #none, bloc
 

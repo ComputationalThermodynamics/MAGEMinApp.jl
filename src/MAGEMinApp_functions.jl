@@ -670,7 +670,7 @@ function get_diagram_labels(    fieldname   ::String,
                                         showarrow   = true,
                                         arrowhead   = 1,
                                         visible     = true,
-                                        font        = attr( size = 10, color = "#212121"),
+                                        font        = attr( size = 9, color = "#212121"),
                                     )  
             txt_list *= string(cnt)*") "*ph_list[i]*"<br>"
             cnt +=1

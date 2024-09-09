@@ -37,7 +37,7 @@ function Tab_Simulation(db_inf)
                                             dbc_button( "", id="button-phase-selection", color="light", className="me-2", n_clicks=0,
                                                                 style       = Dict( "textAlign"     => "center",
                                                                                     "font-size"     => "100%",
-                                                                                    "border"        =>"2px grey solid")), 
+                                                                                    "border"        =>"1px grey solid")), 
                                             dbc_collapse(
                                                 dbc_card(dbc_cardbody([
                 
@@ -724,13 +724,13 @@ function Tab_Simulation(db_inf)
                                                     dbc_button("Save state", id="save-state-diagram-button", color="light",  n_clicks=0,
                                                     style       = Dict( "textAlign"     => "center",
                                                                         "font-size"     => "100%",
-                                                                        "border"        =>"2px grey solid")), 
+                                                                        "border"        =>"1px grey solid")), 
                                                 ]),
                                                 dbc_col([    
                                                     dbc_button("Load state", id="load-state-diagram-button", color="light",  n_clicks=0,
                                                     style       = Dict( "textAlign"     => "center",
                                                                         "font-size"     => "100%",
-                                                                        "border"        =>"2px grey solid")), 
+                                                                        "border"        =>"1px grey solid")), 
                                                 ]),
                                             ]),
                                             dbc_alert(
@@ -759,7 +759,7 @@ function Tab_Simulation(db_inf)
                                                     "Compute phase diagram", id="compute-button", color="light", className="me-2", n_clicks=0,
                                                     style       = Dict( "textAlign"     => "center",
                                                                         "font-size"     => "100%",
-                                                                        "border"        =>"2px grey solid")
+                                                                        "border"        =>"1px grey solid")
                                                 ),
                                             ]),
 

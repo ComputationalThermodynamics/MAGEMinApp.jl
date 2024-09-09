@@ -203,9 +203,9 @@ function Tab_PhaseDiagram_Callbacks(app)
     # clickData callback
     callback!(
         app,
-        Output("click-data-left",   "children"),
-        Output("click-data-right",  "children"),
-        Output("click-data-bottom", "children"),
+        # Output("click-data-left",   "children"),
+        # Output("click-data-right",  "children"),
+        # Output("click-data-bottom", "children"),
         Output("pie-diagram",       "figure"),
         Input("phase-diagram", "clickData"),
         State("diagram-dropdown","value"),          # pt,px,tx
@@ -223,53 +223,66 @@ function Tab_PhaseDiagram_Callbacks(app)
             point_id = parse(Int64,replace.(point_id,r"#"=>""))
 
             # left panel
-            pLeft = "\n"
-            pLeft *= "| Variable &nbsp;|Value &nbsp; &nbsp; &nbsp; &nbsp;| Unit &nbsp; &nbsp; &nbsp; &nbsp;|\n"
-            pLeft *= "|----------|-------|------|\n"
-            pLeft *= "| P |"*string(round(Out_XY[point_id].P_kbar; digits = 3))*"| kbar |\n"
-            pLeft *= "| T |"*string(round(Out_XY[point_id].T_C; digits = 3))*"| °C |\n"
-            pLeft *= "| G |"*string(round(Out_XY[point_id].G_system; digits = 3))*"| kJ |\n"
-            pLeft *= "| ρ_sys |"*string(round(Out_XY[point_id].rho; digits = 1))*"| kg/m³   |\n"
+            # pLeft = "\n"
+            # pLeft *= "| Variable &nbsp;|Value &nbsp; &nbsp; &nbsp; &nbsp;| Unit &nbsp; &nbsp; &nbsp; &nbsp;|\n"
+            # pLeft *= "|----------|-------|------|\n"
+            # pLeft *= "| Pressure |"*string(round(Out_XY[point_id].P_kbar; digits = 3))*"| kbar |\n"
+            # pLeft *= "| Temperature |"*string(round(Out_XY[point_id].T_C; digits = 3))*"| °C |\n"
+            # pLeft *= "| G |"*string(round(Out_XY[point_id].G_system; digits = 3))*"| kJ |\n"
+            # pLeft *= "| ρ_sys |"*string(round(Out_XY[point_id].rho; digits = 1))*"| kg/m³   |\n"
 
-            if "liq" in Out_XY[point_id].ph
-                pLeft *= "| ρ_solid |"*string(round(Out_XY[point_id].rho_S; digits = 1))*"| kg/m³ |\n"
-                pLeft *= "| ρ_melt |"*string(round(Out_XY[point_id].rho_M; digits = 1))*"| kg/m³ |\n"
-            end
+            # if "liq" in Out_XY[point_id].ph
+            #     pLeft *= "| ρ_solid |"*string(round(Out_XY[point_id].rho_S; digits = 1))*"| kg/m³ |\n"
+            #     pLeft *= "| ρ_melt |"*string(round(Out_XY[point_id].rho_M; digits = 1))*"| kg/m³ |\n"
+            # end
             
-            # right panel
-            pRight = "\n"
-            pRight *= "| Phase &nbsp;| Mode |\n"
-            pRight *= "|-------|----------|\n"
-            np      = length(Out_XY[point_id].ph)
-            for i=1:np
-                pRight *= "| "*Out_XY[point_id].ph[i]*"|"*string(round.(Out_XY[point_id].ph_frac[i]; digits = 3))*"|\n"
-            end
+            # # right panel
+            # pRight = "\n"
+            # pRight *= "| Phase &nbsp;| Mode |\n"
+            # pRight *= "|-------|----------|\n"
+            # np      = length(Out_XY[point_id].ph)
+            # for i=1:np
+            #     pRight *= "| "*Out_XY[point_id].ph[i]*"|"*string(round.(Out_XY[point_id].ph_frac[i]; digits = 3))*"|\n"
+            # end
 
-            pBottom = "\n"
-            pBottom *= "| Oxide  &nbsp;| mol  &nbsp; &nbsp;|\n"
-            pBottom *= "|--------------|-----|\n"
-            for i=1:length(Out_XY[point_id].oxides)
-                pBottom *= "|"*Out_XY[point_id].oxides[i]*"|"*string(round.(Out_XY[point_id].bulk[i]; digits = 3))*"|\n"
-            end
-            # X       = "Composition\t\t**mol**\t: "*join(round.(Out_XY[point_id].bulk; digits = 3)," ")*"\n"
-                 
+            # pBottom = "\n"
+            # pBottom *= "| Oxide  &nbsp;| mol  &nbsp; &nbsp;|\n"
+            # pBottom *= "|--------------|-----|\n"
+            # for i=1:length(Out_XY[point_id].oxides)
+            #     pBottom *= "|"*Out_XY[point_id].oxides[i]*"|"*string(round.(Out_XY[point_id].bulk[i]; digits = 3))*"|\n"
+            # end
+   
             layout = Layout(    font        = attr(size = 10),
                                 height      = 220,
-                                margin      = attr(autoexpand = false, l=8, r=8, b=16, t=16),
+                                margin      = attr(autoexpand = false, l=8, r=8, b=8, t=24),
                                 autosize    = false,
-                                title       = attr(text="Phase proportion [mol%]", x=0.5, y=0.98),
+                                title       = attr(text="P: $(round(Out_XY[point_id].P_kbar; digits = 3)) T: $(round(Out_XY[point_id].T_C; digits = 3)) Mode [mol%]", x=0.5, y=0.98),
                                 titlefont   = attr(size=12))
 
             ids     = reverse(sortperm(Out_XY[point_id].ph_frac))   #this gets the ids in descending order of phase fraction
+            # n_SS = Out_XY[point_id].n_SS
+            # hover_text = []
+            # for i = 1:length(ids)
+            #     if i <= n_SS
+            #         push!(hover_text, Out_XY[point_id].SS_vec[i].Comp)
+            #     else
+            #         push!(hover_text, Out_XY[point_id].PP_vec[i-n_SS].Comp)
+            #     end
+            # end
 
             labels  = Out_XY[point_id].ph[ids]
             values  = Out_XY[point_id].ph_frac[ids] .* 100.0
-            trace   = pie(;labels=labels, values=values,domain=attr(x=[0.1, 0.9], y=[0.1, 0.9]))
+            trace   = pie(; labels          = labels,
+                            values          = values,
+                            domain          = attr(x=[0.0, 0.95], y=[0.0, 0.9]),
+                            hoverinfo       = "label+percent",
+                            textposition    = "inside" #=,
+                            hovertext   = hover_text[ids] =# )
             fig     = plot(trace,layout)
 
         end
 
-        return pLeft, pRight, pBottom, fig
+        return #=pLeft, pRight, pBottom,=# fig
     end
 
 
@@ -612,25 +625,6 @@ function Tab_PhaseDiagram_Callbacks(app)
         return is_open 
             
     end
-
-
-    callback!(app,
-        Output("collapse-refinement", "is_open"),
-        [Input("button-refinement", "n_clicks")],
-        [State("collapse-refinement", "is_open")], ) do  n, is_open
-        
-        if isnothing(n); n=0 end
-
-        if n>0
-            if is_open==1
-                is_open = 0
-            elseif is_open==0
-                is_open = 1
-            end
-        end
-        return is_open    
-    end
-
 
     callback!(app,
         Output("collapse-infos-phase-diagram", "is_open"),
