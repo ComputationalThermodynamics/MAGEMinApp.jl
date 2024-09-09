@@ -255,7 +255,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                  
             layout = Layout(    font        = attr(size = 10),
                                 height      = 220,
-                                margin      = attr(autoexpand = false, l=16, r=16, b=16, t=16),
+                                margin      = attr(autoexpand = false, l=8, r=8, b=16, t=16),
                                 autosize    = false,
                                 title       = attr(text="Phase proportion [mol%]", x=0.5, y=0.98),
                                 titlefont   = attr(size=12))

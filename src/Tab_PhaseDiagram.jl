@@ -38,8 +38,7 @@ function Tab_PhaseDiagram()
                                         ])
                                     ]),
 
-                                    html_hr(),
-
+                                    # html_hr(),
 
                                     dbc_row([
                                         dbc_col([ 
