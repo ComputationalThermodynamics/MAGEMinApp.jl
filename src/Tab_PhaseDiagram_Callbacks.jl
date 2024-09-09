@@ -257,7 +257,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                 height      = 220,
                                 margin      = attr(autoexpand = false, l=16, r=16, b=16, t=16),
                                 autosize    = false,
-                                title       = attr(text="Phase proportion [mol%]", x=0.5, y=0.95),
+                                title       = attr(text="Phase proportion [mol%]", x=0.5, y=0.98),
                                 titlefont   = attr(size=12))
 
             labels  = Out_XY[point_id].ph
