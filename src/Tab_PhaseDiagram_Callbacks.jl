@@ -260,8 +260,10 @@ function Tab_PhaseDiagram_Callbacks(app)
                                 title       = attr(text="Phase proportion [mol%]", x=0.5, y=0.98),
                                 titlefont   = attr(size=12))
 
-            labels  = Out_XY[point_id].ph
-            values  = Out_XY[point_id].ph_frac .* 100.0
+            ids     = reverse(sortperm(Out_XY[point_id].ph_frac))   #this gets the ids in descending order of phase fraction
+
+            labels  = Out_XY[point_id].ph[ids]
+            values  = Out_XY[point_id].ph_frac[ids] .* 100.0
             trace   = pie(;labels=labels, values=values,domain=attr(x=[0.1, 0.9], y=[0.1, 0.9]))
             fig     = plot(trace,layout)
 
