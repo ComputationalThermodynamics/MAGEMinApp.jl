@@ -266,7 +266,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             for i=1:length(all_ox)
                 if all_ox[i] in act_ox
                     push!(sys_chem, all_acr[i])
-                    push!(id_sys,findfirst(act_ox .== all_acr[i]))
+                    push!(id_sys,findfirst(act_ox .== all_ox[i]))
                 end
             end
             sys_chem = join(sys_chem)
