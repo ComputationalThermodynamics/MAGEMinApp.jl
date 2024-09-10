@@ -40,7 +40,7 @@ function Tab_PTXpaths(db_inf)
                                             dbc_button( "", id="button-phase-selection-PTX", color="light", className="me-2", n_clicks=0,
                                                                 style       = Dict( "textAlign"     => "center",
                                                                                     "font-size"     => "100%",
-                                                                                    "border"        =>"2px grey solid")), 
+                                                                                    "border"        =>"1px grey solid")), 
                                             dbc_collapse(
                                                 dbc_card(dbc_cardbody([
                 
@@ -639,7 +639,7 @@ function Tab_PTXpaths(db_inf)
                                             dbc_button("Compute path",id="compute-path-button", color="light", className="me-2", n_clicks=0,
                                             style       = Dict( "textAlign"     => "center",
                                                                 "font-size"     => "100%",
-                                                                "border"        =>"2px grey solid")), 
+                                                                "border"        =>"1px grey solid")), 
                                         ]),
                                         html_div("‎ "),
                                         dbc_row([
@@ -657,14 +657,14 @@ function Tab_PTXpaths(db_inf)
                                                 dbc_button("Table", id="save-all-table-ptx-button", color="light",  n_clicks=0,
                                                 style       = Dict( "textAlign"     => "center",
                                                                     "font-size"     => "100%",
-                                                                    "border"        =>"2px grey solid")), 
+                                                                    "border"        =>"1px grey solid")), 
                                                 dcc_download(id="download-all-table-ptx-text"),  
                                             ]),
                                             dbc_col([    
                                                 dbc_button("csv file", id="save-all-csv-ptx-button", color="light",  n_clicks=0,
                                                 style       = Dict( "textAlign"     => "center",
                                                                     "font-size"     => "100%",
-                                                                    "border"        =>"2px grey solid")), 
+                                                                    "border"        =>"1px grey solid")), 
                                                 dcc_download(id="download-all-csv-ptx-text"),  
                                             ]),
                                         ]),
@@ -714,7 +714,7 @@ function Tab_PTXpaths(db_inf)
                                                 dbc_button("bibtex file", id="export-citation-button-ptx", color="light",  n_clicks=0,
                                                 style       = Dict( "textAlign"     => "center",
                                                                     "font-size"     => "100%",
-                                                                    "border"        =>"2px grey solid")), 
+                                                                    "border"        =>"1px grey solid")), 
                                                 dbc_tooltip([
                                                     html_div("Saving list of citation for the computed phase diagram"),
                                                     html_div("Output path and progress are displayed in the Julia terminal")],target="export-citation-button"),

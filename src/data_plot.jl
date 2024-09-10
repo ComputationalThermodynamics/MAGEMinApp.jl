@@ -9,6 +9,15 @@ function diagram_plot()
                 figure      = fig,
             )
 end
+function pie_plot()
+
+    fig = plot( Layout( height= 220 ) )
+
+    dcc_graph(
+                id          = "pie-diagram",
+                figure      = fig,
+            )
+end
 
 function diagram_plot_te()
 

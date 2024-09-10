@@ -670,7 +670,7 @@ function get_diagram_labels(    fieldname   ::String,
                                         showarrow   = true,
                                         arrowhead   = 1,
                                         visible     = true,
-                                        font        = attr( size = 10, color = "#212121"),
+                                        font        = attr( size = 9, color = "#212121"),
                                     )  
             txt_list *= string(cnt)*") "*ph_list[i]*"<br>"
             cnt +=1
@@ -1376,6 +1376,8 @@ function get_oxide_list(dbin::String)
         MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "H2O"];     
     elseif dbin == "um"
         MAGEMin_ox      = ["SiO2"; "Al2O3"; "MgO" ;"FeO"; "O"; "H2O"; "S"];
+    elseif dbin == "ume"
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "MgO" ;"FeO"; "O"; "H2O"; "S"; "CaO"; "Na2O"];        
     elseif dbin == "mp"
         MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "MnO"; "H2O"];
     else

@@ -37,7 +37,7 @@ function Tab_Simulation(db_inf)
                                             dbc_button( "", id="button-phase-selection", color="light", className="me-2", n_clicks=0,
                                                                 style       = Dict( "textAlign"     => "center",
                                                                                     "font-size"     => "100%",
-                                                                                    "border"        =>"2px grey solid")), 
+                                                                                    "border"        =>"1px grey solid")), 
                                             dbc_collapse(
                                                 dbc_card(dbc_cardbody([
                 
@@ -152,8 +152,7 @@ function Tab_Simulation(db_inf)
 
                                     #Trace element predictive models
                                     # html_div([
-                                    html_div("‎ "),  
-                                    html_div("‎ "),  
+                                    html_hr(),
                                     dbc_row([
                                         dbc_col([ 
                                             html_h1("TE predictive model", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
@@ -206,9 +205,7 @@ function Tab_Simulation(db_inf)
                                     ], style = Dict("display" => "none"), id      = "tepm-options-id"), #none, block
 
                                     #PT caption 
-                                    html_div("‎ "),  
-                                    html_div("‎ "),  
-
+                                    html_hr(),
                                     # PT path
                                     html_div([
                                         dbc_row([                                            
@@ -359,7 +356,7 @@ function Tab_Simulation(db_inf)
                                     ], style = Dict("display" => "none"),id = "fixed-temperature-id"), #none, block
                                    
 
-                                    html_div("‎ "),
+                                    html_hr(),
                                     #subdivision
                                     dbc_row([
                                         dbc_col([ 
@@ -372,6 +369,10 @@ function Tab_Simulation(db_inf)
                                                 min     = 2,  
                                                 value   = 3   ),
                                         ]),
+                                        dbc_tooltip([
+                                            html_div("Initial resolution of the uniform grid defined as 2^n × 2^n"),
+                                            html_div("e.g., n = 3 yields a 8 × 8 grid, i.e., 64 points"),
+                                                    ],target="gsub-id"),
                                     ]),
                                     #refinement type
                                     dbc_row([
@@ -402,7 +403,7 @@ function Tab_Simulation(db_inf)
                                                 value   = 2   ),
                                         ]),
                                     ]),
-                                    html_div("‎ "), 
+                                    html_hr(),
                                     #buffer
                                     dbc_row([
                                         dbc_col([ 
@@ -727,13 +728,13 @@ function Tab_Simulation(db_inf)
                                                     dbc_button("Save state", id="save-state-diagram-button", color="light",  n_clicks=0,
                                                     style       = Dict( "textAlign"     => "center",
                                                                         "font-size"     => "100%",
-                                                                        "border"        =>"2px grey solid")), 
+                                                                        "border"        =>"1px grey solid")), 
                                                 ]),
                                                 dbc_col([    
                                                     dbc_button("Load state", id="load-state-diagram-button", color="light",  n_clicks=0,
                                                     style       = Dict( "textAlign"     => "center",
                                                                         "font-size"     => "100%",
-                                                                        "border"        =>"2px grey solid")), 
+                                                                        "border"        =>"1px grey solid")), 
                                                 ]),
                                             ]),
                                             dbc_alert(
@@ -762,7 +763,7 @@ function Tab_Simulation(db_inf)
                                                     "Compute phase diagram", id="compute-button", color="light", className="me-2", n_clicks=0,
                                                     style       = Dict( "textAlign"     => "center",
                                                                         "font-size"     => "100%",
-                                                                        "border"        =>"2px grey solid")
+                                                                        "border"        =>"1px grey solid")
                                                 ),
                                             ]),
 

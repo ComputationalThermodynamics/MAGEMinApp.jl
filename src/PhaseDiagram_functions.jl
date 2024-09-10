@@ -28,6 +28,13 @@ mutable struct isopleth_data
 end
 
 
+function get_system_comp_acronyme(bulk,oxides)
+
+    return acronym
+end
+
+
+
 """
     function to format the markdown text area to display general informations of the computation
 """
@@ -95,7 +102,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     db_in     = retrieve_solution_phase_information(dtb)
 
 
-    PD_infos[1]  = "Phase Diagram computed using MAGEMin v"*Out_XY[1].MAGEMin_ver*" (GUI v0.4.2) <br>"
+    PD_infos[1]  = "Phase Diagram computed using MAGEMin v"*Out_XY[1].MAGEMin_ver*" (GUI v0.4.3) <br>"
     PD_infos[1] *= "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾<br>"
     PD_infos[1] *= "Number of points <br>"
     
@@ -360,8 +367,8 @@ end
 
 
 
-function tepm_function( dtb         :: String,
-                        diagType    :: String,
+function tepm_function( diagType    :: String,
+                        dtb         :: String,
                         kds_mod     :: String,
                         zrsat_mod   :: String,
                         bulkte_L    :: Vector{Float64},
@@ -552,7 +559,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                     width       = 900,
                     height      = 900,
                     autosize    = false,
-                    margin      = attr(autoexpand = false, l=50, r=280, b=260, t=70, pad=4),
+                    margin      = attr(autoexpand = false, l=50, r=280, b=260, t=50, pad=4),
                     xaxis_range = Xrange, 
                     yaxis_range = Yrange,
                     xaxis       = attr(     tickmode    = "linear",

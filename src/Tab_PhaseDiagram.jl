@@ -2,29 +2,88 @@ function Tab_PhaseDiagram()
     html_div([
     # one column for the plots
         dbc_col([
-            # html_div("‎ "),
+            html_div("‎ "),
             dbc_row([ 
 
-                    dbc_col([diagram_plot()], width=9),
+                    dbc_col([
+                        dbc_row([
+                            dbc_col([    
+                                dbc_buttongroup([
+                                    dbc_button("Export ρ for LaMEM", id="export-to-lamem", color="light",  n_clicks=0,
+                                    style       = Dict( "textAlign"     => "center",
+                                                        "font-size"     => "100%",
+                                                        "border"        =>"1px grey solid")), 
+                                    dbc_button("Export for GeoModel", id="export-geomodel", color="light",  n_clicks=0,
+                                    style       = Dict( "textAlign"     => "center",
+                                                        "font-size"     => "100%",
+                                                        "border"        =>"1px grey solid")), 
+                                ]),
+                            ], width=3),
+
+                            # dbc_col([  
+                            # ], width=1),
+
+                            dbc_col([    
+                                dcc_textarea(
+                                    id          ="system-chemistry-id",
+                                    value       = "",
+                                    readOnly    = true,
+                                    disabled    = true,
+                                    draggable   = false,
+                                    style       = Dict("height" => "26px","resize"=> "none","textAlign" => "center","font-size" => "100%", "width"=> "100%",),
+                                ),
+                            ], width=7),
+
+                            # dbc_col([  
+                            #     ], width=1),
+    
+                            dbc_col([
+                                dbc_button(
+                                    "Refine phase boundaries", id="refine-pb-button", color="light", className="me-2", n_clicks=0,
+                                    style       = Dict( "textAlign"     => "center",
+                                                        "font-size"     => "100%",
+                                                        "border"        =>"1px grey solid")), 
+                            ], width=2), 
+                            ]), 
+                        dbc_row([
+                            dcc_download(id="download-lamem-in"),  
+                            dcc_download(id="download-geomodel-in"), 
+                            dbc_alert(
+                                "Density diagram saved for LaMEM",
+                                id      ="export-to-lamem-text",
+                                is_open =false,
+                                duration=4000,
+                            ),
+                            dbc_alert(
+                                "Phase diagrams for LaMEM have to be PT",
+                                color="danger",
+                                id      ="export-to-lamem-text-failed",
+                                is_open =false,
+                                duration=4000,
+                            ),
+                            dbc_alert(
+                                "Density diagram saved for LaMEM",
+                                id      ="export-geomodel-text",
+                                is_open =false,
+                                duration=4000,
+                            ),
+                            dbc_alert(
+                                "Phase diagrams for LaMEM have to be PT",
+                                color="danger",
+                                id      ="export-geomodel-text-failed",
+                                is_open =false,
+                                duration=4000,
+                            ),
+                        ]),    
+                        # html_hr(),  
+                        html_div("‎ "), 
+                        dbc_row([
+                            diagram_plot()
+                        ]),
+                    ], width=9),
                     dbc_col([  
                         dbc_row([
 
-                        dbc_button("Grid refinement",id="button-refinement"),
-                        dbc_collapse(
-                            dbc_card(dbc_cardbody([
-                                    dbc_row([
-                                        dbc_button(
-                                            "Refine phase boundaries", id="refine-pb-button", color="light", className="me-2", n_clicks=0,
-                                            style       = Dict( "textAlign"     => "center",
-                                                                "font-size"     => "100%",
-                                                                "border"        =>"2px grey solid")), 
-                                    ]),
-
-                                ])),
-                                id="collapse-refinement",
-                                is_open=true,
-                        ),
-                        html_div("‎ "),
                         dbc_button("Phase diagram information",id="infos-phase-diagram"),
                         dbc_collapse(
                             dbc_card(dbc_cardbody([
@@ -36,70 +95,30 @@ function Tab_PhaseDiagram()
                                                             style       = Dict("white-space" => "pre"))
                                         ])
                                     ]),
-
-                                    html_div("‎ "),
                                     dbc_row([
                                         dbc_col([ 
-                                            dbc_card([
-                                            dcc_markdown(   id          = "click-data-left", 
-                                                            children    = "",
-                                                            style       = Dict("white-space" => "pre"))
-                                            ])
-                                        ], width=6),
-                                        dbc_col([ 
-                                            dbc_card([
-                                            dcc_markdown(   id          = "click-data-right", 
-                                                            children    = "",
-                                                            style       = Dict("white-space" => "pre"))
-                                            ])
+                                            dcc_dropdown(   id      = "select-pie-unit",
+                                            options = [
+                                                (label = "mol%",                value = 1),
+                                                (label = "wt%",                 value = 2),
+                                                (label = "vol%",                value = 3), 
+                                            ],
+                                            value       = 1,
+                                            style       = Dict("border" => "none"),
+                                            clearable   = false,
+                                            multi       = false),
                                         ], width=3),
+                                    ]),
+
+                                    dbc_row([
                                         dbc_col([ 
-                                            dbc_card([
-                                            dcc_markdown(   id          = "click-data-bottom", 
-                                                            children    = "",
-                                                            style       = Dict("white-space" => "pre"))
-                                            ])
-                                        ], width=3),
-                                    ],className="g-0"),
-  
-                                    # # LOAD SAVE STATE
-                                    # html_div("‎ "),
-                                    # dbc_row([
-                                    #     dbc_col([ 
-                                    #         dbc_input(
-                                    #             id      = "save-diagram-filename-id",
-                                    #             type    = "text", 
-                                    #             style   = Dict("textAlign" => "center") ,
-                                    #             value   = "filename"   ),     
-                                    #     ], width=7),
-                                    #     dbc_col([    
-                                    #         dbc_button("Save state", id="save-diagram-button", color="light",  n_clicks=0,
-                                    #         style       = Dict( "textAlign"     => "center",
-                                    #                             "font-size"     => "100%",
-                                    #                             "border"        =>"2px grey solid")), 
-                                    #     ]),
-                                    #     dbc_col([    
-                                    #         dbc_button("Load state", id="load-diagram-button", color="light",  n_clicks=0,
-                                    #         style       = Dict( "textAlign"     => "center",
-                                    #                             "font-size"     => "100%",
-                                    #                             "border"        =>"2px grey solid")), 
-                                    #     ]),
-                                    # ]),
-                                    # dbc_alert(
-                                    #     "Saved phase diagram successfully",
-                                    #     id      = "save-diagram-success",
-                                    #     is_open = false,
-                                    #     duration= 4000,
-                                    # ),
-                                    # dbc_alert(
-                                    #     "Loaded phase diagram successfully",
-                                    #     id      = "load-diagram-success",
-                                    #     is_open = false,
-                                    #     duration= 4000,
-                                    # ),
+                                            pie_plot(),
+                                        ]#=, width=6=#),
+                                    ]),
+
 
                                     # SAVE POINTS INFORMATION
-                                    html_div("‎ "),
+                                    html_hr(),
                                     dbc_row([
                                         dbc_col([
                                             html_h1("Save point", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
@@ -115,14 +134,14 @@ function Tab_PhaseDiagram()
                                             dbc_button("Table", id="save-eq-table-button", color="light",  n_clicks=0,
                                             style       = Dict( "textAlign"     => "center",
                                                                 "font-size"     => "100%",
-                                                                "border"        =>"2px grey solid")), 
+                                                                "border"        =>"1px grey solid")), 
                                             dcc_download(id="download-table-text"),  
                                         ]),
                                         dbc_col([    
                                             dbc_button("text", id="save-eq-button", color="light",  n_clicks=0,
                                             style       = Dict( "textAlign"     => "center",
                                                                 "font-size"     => "100%",
-                                                                "border"        =>"2px grey solid")), 
+                                                                "border"        =>"1px grey solid")), 
                                             dcc_download(id="download-text"),  
                                         ]),
                                     ]),
@@ -169,7 +188,7 @@ function Tab_PhaseDiagram()
                                             dbc_button("csv file", id="save-all-table-button", color="light",  n_clicks=0,
                                             style       = Dict( "textAlign"     => "center",
                                                                 "font-size"     => "100%",
-                                                                "border"        =>"2px grey solid")), 
+                                                                "border"        =>"1px grey solid")), 
                                             dbc_tooltip([
                                                 html_div("Saving all data takes time and depends on the number of points"),
                                                 html_div("Output path and progress are displayed in the Julia terminal")],target="save-all-table-button"),
@@ -207,7 +226,7 @@ function Tab_PhaseDiagram()
                                             dbc_button("bibtex file", id="export-citation-button", color="light",  n_clicks=0,
                                             style       = Dict( "textAlign"     => "center",
                                                                 "font-size"     => "100%",
-                                                                "border"        =>"2px grey solid")), 
+                                                                "border"        =>"1px grey solid")), 
                                             dbc_tooltip([
                                                 html_div("Saving list of citation for the computed phase diagram"),
                                                 html_div("Output path and progress are displayed in the Julia terminal")],target="export-citation-button"),

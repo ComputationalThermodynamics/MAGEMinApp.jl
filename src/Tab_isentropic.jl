@@ -37,7 +37,7 @@ function Tab_IsentropicPaths(db_inf)
                                             dbc_button( "", id="button-phase-selection-isoS", color="light", className="me-2", n_clicks=0,
                                                                 style       = Dict( "textAlign"     => "center",
                                                                                     "font-size"     => "100%",
-                                                                                    "border"        =>"2px grey solid")), 
+                                                                                    "border"        =>"1px grey solid")), 
                                             dbc_collapse(
                                                 dbc_card(dbc_cardbody([
                 
@@ -471,7 +471,7 @@ function Tab_IsentropicPaths(db_inf)
                                             dbc_button("Compute path",id="compute-path-button-isoS", color="light", className="me-2", n_clicks=0,
                                             style       = Dict( "textAlign"     => "center",
                                                                 "font-size"     => "100%",
-                                                                "border"        =>"2px grey solid")), 
+                                                                "border"        =>"1px grey solid")), 
                                         ]),
                                         html_div("‎ "),
                                         dbc_row([
@@ -489,14 +489,14 @@ function Tab_IsentropicPaths(db_inf)
                                                 dbc_button("Table", id="save-all-table-isoS-button", color="light",  n_clicks=0,
                                                 style       = Dict( "textAlign"     => "center",
                                                                     "font-size"     => "100%",
-                                                                    "border"        =>"2px grey solid")), 
+                                                                    "border"        =>"1px grey solid")), 
                                                 dcc_download(id="download-all-table-isoS-text"),  
                                             ]),
                                             dbc_col([    
                                                 dbc_button("csv file", id="save-all-csv-isoS-button", color="light",  n_clicks=0,
                                                 style       = Dict( "textAlign"     => "center",
                                                                     "font-size"     => "100%",
-                                                                    "border"        =>"2px grey solid")), 
+                                                                    "border"        =>"1px grey solid")), 
                                                 dcc_download(id="download-all-csv-isoS-text"),  
                                             ]),
                                         ]),
@@ -529,8 +529,6 @@ function Tab_IsentropicPaths(db_inf)
                                             ),
                                         ]),
 
-
-
                                         html_div("‎ "),
                                         dbc_row([
                                             dbc_col([
@@ -547,7 +545,7 @@ function Tab_IsentropicPaths(db_inf)
                                                 dbc_button("bibtex file", id="export-citation-button-isoS", color="light",  n_clicks=0,
                                                 style       = Dict( "textAlign"     => "center",
                                                                     "font-size"     => "100%",
-                                                                    "border"        =>"2px grey solid")), 
+                                                                    "border"        =>"1px grey solid")), 
 
                                                 dbc_tooltip([
                                                     html_div("Saving list of citation for the computed phase diagram"),

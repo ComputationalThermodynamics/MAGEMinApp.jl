@@ -1,52 +1,92 @@
 function Tab_PhaseDiagram_Callbacks(app)
 
-    # # update the dictionary of the solution phases and end-members for isopleths
-    # callback!(
-    #     app,
-    #     Output( "save-diagram-success",         "is_open"     ),
-    #     Input(  "save-diagram-button",          "n_clicks"    ),
-    #     State(  "save-diagram-filename-id",     "value"       ),
+    #save all to file
+    callback!(
+        app,
+        Output("download-lamem-in",             "data"      ),
+        Output("export-to-lamem-text",          "is_open"   ),
+        Output("export-to-lamem-text-failed",   "is_open"   ),
+        Input("export-to-lamem",                "n_clicks"  ),
+        State("database-dropdown",              "value"     ),
+        State("diagram-dropdown",               "value"     ),
+        State("gsub-id",                        "value"     ),                   # n subdivision
+        State("refinement-levels",              "value"     ),                   # level
+        State("tmin-id",                        "value"     ),                   # tmin
+        State("tmax-id",                        "value"     ),                   # tmax
+        State("pmin-id",                        "value"     ),                   # pmin
+        State("pmax-id",                        "value"     ),                   # pmax
+        State("table-bulk-rock",                "data"      ),                   # bulk-rock 1
+        State("test-dropdown",                  "value"     ),
 
-    #     prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
-    # ) do click, filename
-
-    #     global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, X, Y, addedRefinementLvl, layout, n_lbl
-    #     file = String(filename)*"_diagram.jld2"
-
-    #     print("saving diagram to jld2 file (file can be heavy saving can take up to a few minutes)\n"); t0 = time()
-    #     @save file MAGEMin_data forest data Hash_XY Out_XY n_phase_XY data_plot gridded gridded_info X Y addedRefinementLvl layout n_lbl
-    #     print(" -> took $(round(time()-t0, digits=3)) seconds\n"); 
-
-    #     status = "success"
-
-    #     return status
-    # end
-
-
-    # # update the dictionary of the solution phases and end-members for isopleths
-    # callback!(
-    #     app,
-    #     Output( "load-diagram-success",       "is_open"      ),
-    #     Input(  "load-diagram-button",        "n_clicks"     ),
-    #     State(  "save-diagram-filename-id",   "value"        ),
+        prevent_initial_call=true,
         
-    #     prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
-    # ) do click, filename
+    ) do n_clicks, dtb, dtype, sub, refLvl,
+            tmin, tmax, pmin, pmax, bulk1, t
 
-    #     global MAGEMin_data, forest, data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, X, Y, addedRefinementLvl, layout, n_lbl
+        if dtype == "pt"
+            Xrange          = (Float64(tmin),Float64(tmax))
+            Yrange          = (Float64(pmin),Float64(pmax))
 
-    #     file = String(filename)*"_diagram.jld2"
-    #     print("$filename\n")
+            testName = replace(db[(db.db .== dtb), :].title[t+1], " " => "_")
+            fileout = testName*".in";
+            file    = save_rho_for_LaMEM(   dtb,
+                                            sub,
+                                            refLvl,
+                                            Xrange,
+                                            Yrange,
+                                            bulk1 )
+            output  = Dict("content" => file,"filename" => fileout)
+            return output, "success", ""
+        else
+            output = nothing
+            return output, "", "failed"
+        end
 
-    #     # using JSON3, JLD2
-    #     print("loading diagram from jld2 file\n"); t0 = time()
-    #     @load file MAGEMin_data forest data Hash_XY Out_XY n_phase_XY data_plot gridded gridded_info X Y addedRefinementLvl layout n_lbl
-    #     print(" -> took $(round(time()-t0, digits=3)) seconds\n"); 
+    end
 
-    #     status = "success"
 
-    #     return status
-    # end
+
+    #save all to file
+    callback!(
+        app,
+        Output("download-geomodel-in", "data"),
+        Output("export-geomodel-text", "is_open"),
+        Output("export-geomodel-text-failed", "is_open"),
+        Input("export-geomodel",    "n_clicks"),
+        State("database-dropdown","value"),
+        State("diagram-dropdown",   "value"),
+        State("gsub-id","value"),                   # n subdivision
+        State("refinement-levels","value"),         # level
+        State("tmin-id","value"),                   # tmin
+        State("tmax-id","value"),                   # tmax
+        State("pmin-id","value"),                   # pmin
+        State("pmax-id","value"),                   # pmax
+        State("table-bulk-rock","data"),            # bulk-rock 1
+        State("test-dropdown",      "value"),
+        prevent_initial_call=true,
+    ) do n_clicks, dtb, dtype, sub, refLvl,
+            tmin, tmax, pmin, pmax, bulk1, t
+
+        if dtype == "pt"
+            Xrange          = (Float64(tmin),Float64(tmax))
+            Yrange          = (Float64(pmin),Float64(pmax))
+
+            testName = replace(db[(db.db .== dtb), :].title[t+1], " " => "_")
+            fileout = testName*".in";
+            file    = save_rho_for_GeoModel(    dtb,
+                                                sub,
+                                                refLvl,
+                                                Xrange,
+                                                Yrange,
+                                                bulk1 )
+            output  = Dict("content" => file,"filename" => fileout)
+            return output, "success", ""
+        else
+            output = nothing
+            return output, "", "failed"
+        end
+
+    end
 
 
     # save table to file
@@ -163,58 +203,82 @@ function Tab_PhaseDiagram_Callbacks(app)
     # clickData callback
     callback!(
         app,
-        Output("click-data-left", "children"),
-        Output("click-data-right", "children"),
-        Output("click-data-bottom", "children"),
-        Input("phase-diagram", "clickData"),
-        State("diagram-dropdown","value"),          # pt,px,tx
+        Output("pie-diagram",           "figure"),
+        Output("system-chemistry-id",   "value"),
+        Input("phase-diagram",          "clickData"),
+        Input("select-pie-unit",        "value"),
+        State("diagram-dropdown",       "value"),          # pt,px,tx
         prevent_initial_call = true,
-    ) do click_info, diagType
+    ) do click_info, pie_unit, diagType
 
         global point_id
+
+        all_ox  = ["CO2","Cl","MnO","Na2O","CaO","K2O","FeO","MgO","Al2O3","SiO2","H2O","TiO2","O","S"];
+        all_acr = ["CO2","Cl","Mn","N","C","K","F","M","A","S","H","T","O","S"];
 
         sp  = click_info[:points][][:text]
         tmp = match(r"#([^# ]+)#", sp)
 
-
         if tmp !== nothing
+
             point_id = tmp.match
             point_id = parse(Int64,replace.(point_id,r"#"=>""))
 
-            # left panel
-            pLeft = "\n"
-            pLeft *= "| Variable &nbsp;|Value &nbsp; &nbsp; &nbsp; &nbsp;| Unit &nbsp; &nbsp; &nbsp; &nbsp;|\n"
-            pLeft *= "|----------|-------|------|\n"
-            pLeft *= "| P |"*string(round(Out_XY[point_id].P_kbar; digits = 3))*"| kbar |\n"
-            pLeft *= "| T |"*string(round(Out_XY[point_id].T_C; digits = 3))*"| °C |\n"
-            pLeft *= "| G |"*string(round(Out_XY[point_id].G_system; digits = 3))*"| kJ |\n"
-            pLeft *= "| ρ_sys |"*string(round(Out_XY[point_id].rho; digits = 1))*"| kg/m³   |\n"
+            ids     = reverse(sortperm(Out_XY[point_id].ph_frac))   #this gets the ids in descending order of phase fraction
 
-            if "liq" in Out_XY[point_id].ph
-                pLeft *= "| ρ_solid |"*string(round(Out_XY[point_id].rho_S; digits = 1))*"| kg/m³ |\n"
-                pLeft *= "| ρ_melt |"*string(round(Out_XY[point_id].rho_M; digits = 1))*"| kg/m³ |\n"
-            end
-            
-            # right panel
-            pRight = "\n"
-            pRight *= "| Phase &nbsp;| Mode |\n"
-            pRight *= "|-------|----------|\n"
-            np      = length(Out_XY[point_id].ph)
-            for i=1:np
-                pRight *= "| "*Out_XY[point_id].ph[i]*"|"*string(round.(Out_XY[point_id].ph_frac[i]; digits = 3))*"|\n"
+            labels  = Out_XY[point_id].ph[ids]
+            if pie_unit == 1
+                values  = Out_XY[point_id].ph_frac[ids]     .* 100.0
+                sys     = "mol%"
+            elseif pie_unit == 2
+                values  = Out_XY[point_id].ph_frac_wt[ids]  .* 100.0
+                sys     = "wt%"
+            elseif pie_unit == 3
+                values  = Out_XY[point_id].ph_frac_vol[ids] .* 100.0
+                sys     = "vol%"
             end
 
-            pBottom = "\n"
-            pBottom *= "| Oxide  &nbsp;| mol  &nbsp; &nbsp;|\n"
-            pBottom *= "|--------------|-----|\n"
-            for i=1:length(Out_XY[point_id].oxides)
-                pBottom *= "|"*Out_XY[point_id].oxides[i]*"|"*string(round.(Out_XY[point_id].bulk[i]; digits = 3))*"|\n"
+            title = "P: $(round(Out_XY[point_id].P_kbar; digits = 3)) T: $(round(Out_XY[point_id].T_C; digits = 3)) Mode [$(sys)]"
+            layout = Layout(    font        = attr(size = 10),
+                                height      = 220,
+                                margin      = attr(autoexpand = false, l=8, r=8, b=8, t=24),
+                                autosize    = false,
+                                title       = attr(text=title, x=0.5, y=0.98),
+                                titlefont   = attr(size=12))
+
+
+            trace   = pie(; labels          = labels,
+                            values          = values,
+                            domain          = attr(x=[0.0, 0.95], y=[0.0, 0.9]),
+                            hoverinfo       = "label+percent",
+                            textposition    = "inside" #=,
+                            hovertext   = hover_text[ids] =# )
+            fig     = plot(trace,layout)
+
+
+            # retrieve info to be displayed in the top textbox
+            ids     = (Out_XY[1].bulk .!= 0.0)
+            act_ox  = Out_XY[1].oxides[ids]
+    
+
+            sys_chem = []
+            id_sys   = []
+            for i=1:length(all_ox)
+                if all_ox[i] in act_ox
+                    push!(sys_chem, all_acr[i])
+                    push!(id_sys,findfirst(act_ox .== all_ox[i]))
+                end
             end
-            # X       = "Composition\t\t**mol**\t: "*join(round.(Out_XY[point_id].bulk; digits = 3)," ")*"\n"
-                        
+            sys_chem = join(sys_chem)
+            bk       = join(round.(Out_XY[point_id].bulk[id_sys] .*100.0; digits = 3),"; ")
+    
+            text = sys_chem*" (mol%)"*" - ["*bk*"]"
         end
 
-        return pLeft, pRight, pBottom
+
+
+        
+        return fig, text
     end
 
 
@@ -359,7 +423,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                             smooth,     colorm,     reverseColorMap,
                                                                             test,       refType                          )
             if tepm == "true"
-                if dtb != "um"
+                if dtb != "um" && dtb != "ume"
                     t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
                                                                         kds_mod, zrsat_mod, bulkte_L, bulkte_R)
 
@@ -389,7 +453,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                         test,       refType                             )
 
             if tepm == "true"
-                if dtb != "um"
+                if dtb != "um" && dtb != "ume"
                     t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
                                                                         kds_mod, zrsat_mod, bulkte_L, bulkte_R)
 
@@ -557,25 +621,6 @@ function Tab_PhaseDiagram_Callbacks(app)
         return is_open 
             
     end
-
-
-    callback!(app,
-        Output("collapse-refinement", "is_open"),
-        [Input("button-refinement", "n_clicks")],
-        [State("collapse-refinement", "is_open")], ) do  n, is_open
-        
-        if isnothing(n); n=0 end
-
-        if n>0
-            if is_open==1
-                is_open = 0
-            elseif is_open==0
-                is_open = 1
-            end
-        end
-        return is_open    
-    end
-
 
     callback!(app,
         Output("collapse-infos-phase-diagram", "is_open"),
