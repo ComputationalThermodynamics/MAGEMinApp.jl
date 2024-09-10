@@ -28,6 +28,13 @@ mutable struct isopleth_data
 end
 
 
+function get_system_comp_acronyme(bulk,oxides)
+
+    return acronym
+end
+
+
+
 """
     function to format the markdown text area to display general informations of the computation
 """

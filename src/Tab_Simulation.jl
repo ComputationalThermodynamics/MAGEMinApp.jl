@@ -369,6 +369,10 @@ function Tab_Simulation(db_inf)
                                                 min     = 2,  
                                                 value   = 3   ),
                                         ]),
+                                        dbc_tooltip([
+                                            html_div("Initial resolution of the uniform grid defined as 2^n × 2^n"),
+                                            html_div("e.g., n = 3 yields a 8 × 8 grid, i.e., 64 points"),
+                                                    ],target="gsub-id"),
                                     ]),
                                     #refinement type
                                     dbc_row([

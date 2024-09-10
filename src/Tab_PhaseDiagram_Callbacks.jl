@@ -203,16 +203,18 @@ function Tab_PhaseDiagram_Callbacks(app)
     # clickData callback
     callback!(
         app,
-        # Output("click-data-left",   "children"),
-        # Output("click-data-right",  "children"),
-        # Output("click-data-bottom", "children"),
-        Output("pie-diagram",       "figure"),
-        Input("phase-diagram", "clickData"),
-        State("diagram-dropdown","value"),          # pt,px,tx
+        Output("pie-diagram",           "figure"),
+        Output("system-chemistry-id",   "value"),
+        Input("phase-diagram",          "clickData"),
+        Input("select-pie-unit",        "value"),
+        State("diagram-dropdown",       "value"),          # pt,px,tx
         prevent_initial_call = true,
-    ) do click_info, diagType
+    ) do click_info, pie_unit, diagType
 
         global point_id
+
+        all_ox  = ["CO2","Cl","MnO","Na2O","CaO","K2O","FeO","MgO","Al2O3","SiO2","H2O","TiO2","O","S"];
+        all_acr = ["CO2","Cl","Mn","N","C","K","F","M","A","S","H","T","O","S"];
 
         sp  = click_info[:points][][:text]
         tmp = match(r"#([^# ]+)#", sp)
@@ -222,56 +224,29 @@ function Tab_PhaseDiagram_Callbacks(app)
             point_id = tmp.match
             point_id = parse(Int64,replace.(point_id,r"#"=>""))
 
-            # left panel
-            # pLeft = "\n"
-            # pLeft *= "| Variable &nbsp;|Value &nbsp; &nbsp; &nbsp; &nbsp;| Unit &nbsp; &nbsp; &nbsp; &nbsp;|\n"
-            # pLeft *= "|----------|-------|------|\n"
-            # pLeft *= "| Pressure |"*string(round(Out_XY[point_id].P_kbar; digits = 3))*"| kbar |\n"
-            # pLeft *= "| Temperature |"*string(round(Out_XY[point_id].T_C; digits = 3))*"| °C |\n"
-            # pLeft *= "| G |"*string(round(Out_XY[point_id].G_system; digits = 3))*"| kJ |\n"
-            # pLeft *= "| ρ_sys |"*string(round(Out_XY[point_id].rho; digits = 1))*"| kg/m³   |\n"
+            ids     = reverse(sortperm(Out_XY[point_id].ph_frac))   #this gets the ids in descending order of phase fraction
 
-            # if "liq" in Out_XY[point_id].ph
-            #     pLeft *= "| ρ_solid |"*string(round(Out_XY[point_id].rho_S; digits = 1))*"| kg/m³ |\n"
-            #     pLeft *= "| ρ_melt |"*string(round(Out_XY[point_id].rho_M; digits = 1))*"| kg/m³ |\n"
-            # end
-            
-            # # right panel
-            # pRight = "\n"
-            # pRight *= "| Phase &nbsp;| Mode |\n"
-            # pRight *= "|-------|----------|\n"
-            # np      = length(Out_XY[point_id].ph)
-            # for i=1:np
-            #     pRight *= "| "*Out_XY[point_id].ph[i]*"|"*string(round.(Out_XY[point_id].ph_frac[i]; digits = 3))*"|\n"
-            # end
+            labels  = Out_XY[point_id].ph[ids]
+            if pie_unit == 1
+                values  = Out_XY[point_id].ph_frac[ids]     .* 100.0
+                sys     = "mol%"
+            elseif pie_unit == 2
+                values  = Out_XY[point_id].ph_frac_wt[ids]  .* 100.0
+                sys     = "wt%"
+            elseif pie_unit == 3
+                values  = Out_XY[point_id].ph_frac_vol[ids] .* 100.0
+                sys     = "vol%"
+            end
 
-            # pBottom = "\n"
-            # pBottom *= "| Oxide  &nbsp;| mol  &nbsp; &nbsp;|\n"
-            # pBottom *= "|--------------|-----|\n"
-            # for i=1:length(Out_XY[point_id].oxides)
-            #     pBottom *= "|"*Out_XY[point_id].oxides[i]*"|"*string(round.(Out_XY[point_id].bulk[i]; digits = 3))*"|\n"
-            # end
-   
+            title = "P: $(round(Out_XY[point_id].P_kbar; digits = 3)) T: $(round(Out_XY[point_id].T_C; digits = 3)) Mode [$(sys)]"
             layout = Layout(    font        = attr(size = 10),
                                 height      = 220,
                                 margin      = attr(autoexpand = false, l=8, r=8, b=8, t=24),
                                 autosize    = false,
-                                title       = attr(text="P: $(round(Out_XY[point_id].P_kbar; digits = 3)) T: $(round(Out_XY[point_id].T_C; digits = 3)) Mode [mol%]", x=0.5, y=0.98),
+                                title       = attr(text=title, x=0.5, y=0.98),
                                 titlefont   = attr(size=12))
 
-            ids     = reverse(sortperm(Out_XY[point_id].ph_frac))   #this gets the ids in descending order of phase fraction
-            # n_SS = Out_XY[point_id].n_SS
-            # hover_text = []
-            # for i = 1:length(ids)
-            #     if i <= n_SS
-            #         push!(hover_text, Out_XY[point_id].SS_vec[i].Comp)
-            #     else
-            #         push!(hover_text, Out_XY[point_id].PP_vec[i-n_SS].Comp)
-            #     end
-            # end
 
-            labels  = Out_XY[point_id].ph[ids]
-            values  = Out_XY[point_id].ph_frac[ids] .* 100.0
             trace   = pie(; labels          = labels,
                             values          = values,
                             domain          = attr(x=[0.0, 0.95], y=[0.0, 0.9]),
@@ -280,9 +255,30 @@ function Tab_PhaseDiagram_Callbacks(app)
                             hovertext   = hover_text[ids] =# )
             fig     = plot(trace,layout)
 
+
+            # retrieve info to be displayed in the top textbox
+            ids     = (Out_XY[1].bulk .!= 0.0)
+            act_ox  = Out_XY[1].oxides[ids]
+    
+
+            sys_chem = []
+            id_sys   = []
+            for i=1:length(all_ox)
+                if all_ox[i] in act_ox
+                    push!(sys_chem, all_acr[i])
+                    push!(id_sys,findfirst(act_ox .== all_acr[i]))
+                end
+            end
+            sys_chem = join(sys_chem)
+            bk       = join(round.(Out_XY[point_id].bulk[id_sys] .*100.0; digits = 3),"; ")
+    
+            text = sys_chem*" (mol%)"*" - ["*bk*"]"
         end
 
-        return #=pLeft, pRight, pBottom,=# fig
+
+
+        
+        return fig, text
     end
 
 

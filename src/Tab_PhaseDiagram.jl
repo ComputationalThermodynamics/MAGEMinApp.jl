@@ -18,10 +18,25 @@ function Tab_PhaseDiagram()
                                                         "font-size"     => "100%",
                                                         "border"        =>"1px grey solid")), 
                                 ]),
-                            ], width=4),
-                            dbc_col([    
+                            ], width=3),
 
-                            ], width=6),
+                            # dbc_col([  
+                            # ], width=1),
+
+                            dbc_col([    
+                                dcc_textarea(
+                                    id          ="system-chemistry-id",
+                                    value       = "",
+                                    readOnly    = true,
+                                    disabled    = true,
+                                    draggable   = false,
+                                    style       = Dict("height" => "26px","resize"=> "none","textAlign" => "center","font-size" => "100%", "width"=> "100%",),
+                                ),
+                            ], width=7),
+
+                            # dbc_col([  
+                            #     ], width=1),
+    
                             dbc_col([
                                 dbc_button(
                                     "Refine phase boundaries", id="refine-pb-button", color="light", className="me-2", n_clicks=0,
@@ -80,8 +95,20 @@ function Tab_PhaseDiagram()
                                                             style       = Dict("white-space" => "pre"))
                                         ])
                                     ]),
-
-                                    html_div("‎ "),
+                                    dbc_row([
+                                        dbc_col([ 
+                                            dcc_dropdown(   id      = "select-pie-unit",
+                                            options = [
+                                                (label = "mol%",                value = 1),
+                                                (label = "wt%",                 value = 2),
+                                                (label = "vol%",                value = 3), 
+                                            ],
+                                            value       = 1,
+                                            style       = Dict("border" => "none"),
+                                            clearable   = false,
+                                            multi       = false),
+                                        ], width=3),
+                                    ]),
 
                                     dbc_row([
                                         dbc_col([ 
@@ -89,31 +116,6 @@ function Tab_PhaseDiagram()
                                         ]#=, width=6=#),
                                     ]),
 
-
-                                    # dbc_row([
-                                        # dbc_col([ 
-                                        #     dbc_card([
-                                        #     dcc_markdown(   id          = "click-data-left", 
-                                        #                     children    = "",
-                                        #                     style       = Dict("white-space" => "pre"))
-                                        #     ])
-                                        # ]),
-                                        # dbc_col([ 
-                                        #     dbc_card([
-                                        #     dcc_markdown(   id          = "click-data-right", 
-                                        #                     children    = "",
-                                        #                     style       = Dict("white-space" => "pre"))
-                                        #     ])
-                                        # ], width=3),
-                                        # dbc_col([ 
-                                        #     dbc_card([
-                                        #     dcc_markdown(   id          = "click-data-bottom", 
-                                        #                     children    = "",
-                                        #                     style       = Dict("white-space" => "pre"))
-                                        #     ])
-                                        # ], width=3),
-                                    # ],className="g-0"),
-  
 
                                     # SAVE POINTS INFORMATION
                                     html_hr(),
