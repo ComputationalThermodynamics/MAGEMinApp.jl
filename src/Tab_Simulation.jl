@@ -83,7 +83,7 @@ function Tab_Simulation(db_inf)
                                     html_div([
                                         dbc_row([
                                             dbc_col([ 
-                                                html_h1("H2O-saturated at solidus", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                                html_h1("H₂O-saturated at solidus", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
                                             ]),
                                             dbc_col([ 
                                                 dcc_dropdown(   id      = "watsat-dropdown",
