@@ -302,13 +302,31 @@ function Tab_PhaseDiagram()
                                             ]),
                                             dbc_col([
                                                 dcc_dropdown(   id      = "em-dropdown",
-                                                options = [],
+                                                options = ["none"],
                                                 value       = 0,
                                                 clearable   = false,
                                                 multi       = false),
                                             ]),
                                         ]),
                                     ], style = Dict("display" => "none"), id      = "em-1-id"),
+
+                                    html_div([
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Other", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                            ]),
+                                            dbc_col([
+                                                dcc_dropdown(   id      = "other-dropdown",
+                                                options = [
+                                                    (label = "Mg#",             value = "MgNum"),
+                                                    ],
+                                                value       = "MgNum",
+                                                clearable   = false,
+                                                multi       = false),
+                                            ]),
+                                        ]),
+                                    ], style = Dict("display" => "none"), id      = "other-1-id"),
+
 
                                     html_div([
                                         dbc_row([
@@ -591,6 +609,42 @@ function Tab_PhaseDiagram()
                                         ]), 
                                     ]),
 
+                                    html_div("‎ "),
+                                    dbc_row([
+                                        dbc_col([ 
+                                        ], width=5),
+                                        dbc_col([ 
+                                            html_h1("min", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                        ]),
+                                        dbc_col([ 
+                                            html_h1("max", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                        ]),
+                                    ]),
+                                    dbc_row([
+                                        dbc_col([ 
+                                            html_h1("Value range", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                        ], width=5),
+                                        dbc_col([ 
+                                            dbc_row([
+                                            dbc_col([ 
+                                                    dbc_input(
+                                                        id="min-color-id",
+                                                        type="number", 
+                                                        min=0.0, 
+                                                        max=2000.0, 
+                                                        value=800.0   ),
+                                                ]),
+                                                dbc_col([ 
+                                                    dbc_input(
+                                                        id      = "max-color-id",
+                                                        type    = "number", 
+                                                        min     = 0.0, 
+                                                        max     = 2000.0,
+                                                        value   = 1400.0   ),
+                                                ]),
+                                            ]),
+                                        ]),
+                                    ]),
 
                                     html_div("‎ "),
                                     dbc_row([

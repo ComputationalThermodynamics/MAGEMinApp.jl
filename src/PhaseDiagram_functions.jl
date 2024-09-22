@@ -944,7 +944,7 @@ end
 function add_isopleth_phaseDiagram(         Xrange,     Yrange, 
                                             sub,        refLvl,
                                             dtb,        oxi,
-                                            isopleths,  phase,      ss,     em,     of,
+                                            isopleths,  phase,      ss,     em,     of,     ot,
                                             isoColorLine,           isoLabelSize,       
                                             minIso,     stepIso,    maxIso      )
 
@@ -966,7 +966,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
 
     global data_isopleth, nIsopleths, data, Out_XY, data_plot, X, Y, addedRefinementLvl
 
-    gridded, X, Y = get_isopleth_map(   mod, ss, em, of,
+    gridded, X, Y = get_isopleth_map(   mod, ss, em, of,    ot,
                                         oxi,
                                         Out_XY,
                                         sub,

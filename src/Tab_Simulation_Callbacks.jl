@@ -184,7 +184,6 @@ function Tab_Simulation_Callbacks(app)
             style_em    = Dict("display" => "none")
             style_ph    = Dict("display" => "block")
             style_of    = Dict("display" => "none")
-
             val         = db_in.data_pp[1]
         end
 
@@ -197,6 +196,7 @@ function Tab_Simulation_Callbacks(app)
     end
 
 
+
     # update the dictionary of the solution phases and end-members for isopleth
     callback!(
         app,
@@ -205,9 +205,11 @@ function Tab_Simulation_Callbacks(app)
         Input("database-dropdown","value"),
         Input("ss-dropdown","value"),
         State("phase-dropdown","value"),
+
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
     ) do dtb, id, ph
-        # bid  = pushed_button( callback_context() ) 
+        bid  = pushed_button( callback_context() ) 
+
         if ph == "ss"
             db_in          = retrieve_solution_phase_information(dtb)
 
@@ -223,12 +225,35 @@ function Tab_Simulation_Callbacks(app)
             opts_em     =  [Dict(   "label" => db_in.data_ss[ssid].ss_em[i],
                                     "value" => db_in.data_ss[ssid].ss_em[i] )
                                         for i=1:n_em ]
-                
+
             return opts_em, val
         else
             return "", ""
         end
+
     end
+
+
+    # # update the dictionary of the solution phases and end-members for isopleth
+    # callback!(
+    #     app,
+    #     Output("other-1-id","style"),
+    #     Input("em-dropdown","value"),
+
+    #     prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
+    # ) do em
+    #     bid  = pushed_button( callback_context() ) 
+
+    #     if em == "none"
+    #         style_ot    = Dict("display" => "block") 
+    #     else
+    #         style_ot    = Dict("display" => "none") 
+    #     end
+        
+    #     return style_ot
+    # end
+
+
 
     # callback to display trace element predictive model options
     callback!(
