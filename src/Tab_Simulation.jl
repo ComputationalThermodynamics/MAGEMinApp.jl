@@ -332,7 +332,7 @@ function Tab_Simulation(db_inf)
                                                 id      = "fixed-pressure-val-id",
                                                 type    = "number", 
                                                 min     = 0.001, 
-                                                max     = 100.01, 
+                                                max     = 500.01, 
                                                 value   = 10.01   ),
                                         ]),
                                     ]),
