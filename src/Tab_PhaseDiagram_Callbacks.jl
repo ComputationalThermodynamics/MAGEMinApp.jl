@@ -423,7 +423,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                             smooth,     colorm,     reverseColorMap,
                                                                             test,       refType                          )
             if tepm == "true"
-                if dtb != "um" && dtb != "ume"
+                if dtb != "um" && dtb != "ume" && dtb != "mtl"
                     t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
                                                                         kds_mod, zrsat_mod, bulkte_L, bulkte_R)
 
@@ -453,7 +453,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                         test,       refType                             )
 
             if tepm == "true"
-                if dtb != "um" && dtb != "ume"
+                if dtb != "um" && dtb != "ume" && dtb != "mtl"
                     t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
                                                                         kds_mod, zrsat_mod, bulkte_L, bulkte_R)
 

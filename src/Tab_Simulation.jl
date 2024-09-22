@@ -264,7 +264,7 @@ function Tab_Simulation(db_inf)
                                                     id="pmin-id",
                                                     type="number", 
                                                     min=0.001, 
-                                                    max=100.01, 
+                                                    max=500.01, 
                                                     value=0.01   ),
                                             ]),
                                             dbc_col([ 
@@ -272,7 +272,7 @@ function Tab_Simulation(db_inf)
                                                     id="pmax-id",
                                                     type="number", 
                                                     min=0.001, 
-                                                    max=100.01, 
+                                                    max=500.01, 
                                                     value=20.01   ),
                                             ]), 
                                             ]),

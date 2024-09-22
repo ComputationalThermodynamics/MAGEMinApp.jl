@@ -28,6 +28,9 @@ push!(dba,Dict(         :database    => "Ultramafic extended (Evans & Frost., 20
                         :acronym     => "ume",
                         ), cols=:union)
 
+push!(dba,Dict(         :database    => "Mantle (Holland et al., 2013)",
+                        :acronym     => "mtl",
+                        ), cols=:union)
 
 
 db = DataFrame(         bulk        = String[],
@@ -338,7 +341,41 @@ push!(db,Dict(          :bulk       => "predefined",
                         :frac2      => [20.044,  0.6256, 29.24, 3.149, 0.1324, 46.755, 0.3,2.0,0.15],
                         ), cols=:union)
 
-                    
+    
+#MANTLE DATABASE
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "KLB-1",
+                        :comments   => "Holland et al., 2013",
+                        :db         => "mtl",
+                        :test       => 0,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","Na2O"],
+                        :frac       => [38.494,1.776,2.824,50.566,5.886,0.250],
+                        :frac2      => [38.494,1.776,2.824,50.566,5.886,0.250],
+                        ), cols=:union)  
+
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "Pyrolite",
+                        :comments   => "Holland et al., 2013",
+                        :db         => "mtl",
+                        :test       => 1,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","Na2O"],
+                        :frac       => [38.89,2.2,3.1,50.0,5.8,0.01],
+                        :frac2      => [38.89,2.2,3.1,50.0,5.8,0.01],
+                        ), cols=:union)  
+
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "Harzburgite",
+                        :comments   => "Holland et al., 2013",
+                        :db         => "mtl",
+                        :test       => 2,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","Na2O"],
+                        :frac       => [36.39,0.7,0.9,56.6,5.4,0.01],
+                        :frac2      => [38.89,2.2,3.1,50.0,5.8,0.01],
+                        ), cols=:union)  
+
 dbte = DataFrame(       composition = String[],
                         title       = String[],
                         comments    = String[],
