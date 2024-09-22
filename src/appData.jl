@@ -373,7 +373,7 @@ push!(db,Dict(          :bulk       => "predefined",
                         :sysUnit    => "mol",
                         :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","Na2O"],
                         :frac       => [36.39,0.7,0.9,56.6,5.4,0.01],
-                        :frac2      => [38.89,2.2,3.1,50.0,5.8,0.01],
+                        :frac2      => [36.39,0.7,0.9,56.6,5.4,0.01],
                         ), cols=:union)  
 
 dbte = DataFrame(       composition = String[],
