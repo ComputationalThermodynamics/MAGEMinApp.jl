@@ -427,6 +427,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                     watsat,     cpx,        limOpx,     limOpxVal,  PTpath,
                                     bulk_L,     bulk_R,     oxi,
                                     bufferType, bufferN1,   bufferN2,
+                                    minColor,   maxColor,
                                     smooth,     colorm,     reverseColorMap,
                                     test,       refType                                  )
 
@@ -592,7 +593,6 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                                         x               =  1.005,
                                                         y               =  0.5         ),)
 
- 
         hover_lbl = heatmap(    x               = X,
                                 y               = Y,
                                 z               = X,
@@ -633,6 +633,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                 cpx,        limOpx,     limOpxVal,  PTpath,
                                 bulk_L,     bulk_R,     oxi,
                                 bufferType, bufferN1,   bufferN2,
+                                minColor,   maxColor,
                                 smooth,     colorm,     reverseColorMap,
                                 test,       refType                                 )
 
@@ -752,6 +753,7 @@ end
 function update_colormap_phaseDiagram(      xtitle,     ytitle,     
                                             Xrange,     Yrange,     fieldname,
                                             dtb,        diagType,
+                                            minColor,   maxColor,
                                             smooth,     colorm,     reverseColorMap,
                                             test                                  )
     global PT_infos, layout
@@ -759,6 +761,8 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
     data_plot[1] = heatmap( x               =  X,
                             y               =  Y,
                             z               =  gridded,
+                            zmin            =  minColor,
+                            zmax            =  maxColor,
                             zsmooth         =  smooth,
                             connectgaps     = true,
                             type            = "heatmap",

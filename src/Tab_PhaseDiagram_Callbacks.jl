@@ -295,6 +295,9 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("smooth-colormap",       "value"),
         Output("tabs",                  "active_tab"),      # currently active tab
 
+        Output("min-color-id",           "value"),
+        Output("max-color-id",           "value"),
+
         Input("show-grid",                  "value"), 
         Input("show-full-grid",             "value"), 
         Input("show-lbl-id",                "value"),
@@ -306,6 +309,9 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         Input("compute-button",         "n_clicks"),
         Input("refine-pb-button",       "n_clicks"),
+  
+        Input("min-color-id",           "value"),
+        Input("max-color-id",           "value"),
 
         Input("colormaps_cross",        "value"),
         Input("smooth-colormap",        "value"),
@@ -373,6 +379,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         prevent_initial_call = true,
 
     ) do    grid,       full_grid,  lbl,        addIso,     removeIso,  removeAllIso,    isoShow,    isoHide,    n_clicks_mesh, n_clicks_refine, 
+            minColor,   maxColor,
             colorMap,   smooth,     rangeColor, reverse,    fieldname,  updateTitle,     customTitle,
             diagType,   dtb,        watsat,     cpx,        limOpx,     limOpxVal,  phase_selection, PTpath,
             tmin,       tmax,       pmin,       pmax,
@@ -421,6 +428,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                             watsat,     cpx,        limOpx,     limOpxVal,  PTpath,
                                                                             bulk_L,     bulk_R,     oxi,
                                                                             bufferType, bufferN1,   bufferN2,
+                                                                            minColor,   maxColor,
                                                                             smooth,     colorm,     reverseColorMap,
                                                                             test,       refType                          )
             if tepm == "true"
@@ -440,6 +448,9 @@ function Tab_PhaseDiagram_Callbacks(app)
             data_grid       = show_hide_mesh_grid()
             active_tab      = "tab-phase-diagram" 
 
+            minColor        = round(minimum(skipmissing(gridded)),digits=2); 
+            maxColor        = round(maximum(skipmissing(gridded)),digits=2);  
+    
         elseif bid == "refine-pb-button"
 
             data_plot, layout, npoints, meant  =  refine_phaseDiagram(  xtitle,     ytitle,     lbl, 
@@ -450,6 +461,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                         cpx,        limOpx,     limOpxVal,  PTpath,
                                                                         bulk_L,     bulk_R,     oxi,
                                                                         bufferType, bufferN1,   bufferN2,
+                                                                        minColor,   maxColor,
                                                                         smooth,     colorm,     reverseColorMap,
                                                                         test,       refType                             )
 
@@ -467,12 +479,16 @@ function Tab_PhaseDiagram_Callbacks(app)
             infos           = get_computation_info(npoints, meant)
             data_reaction   = show_hide_reaction_lines(sub,refLvl,Xrange,Yrange)
             data_grid       = show_hide_mesh_grid()
-                                                      
-        elseif bid == "colormaps_cross" || bid == "smooth-colormap" || bid == "range-slider-color" || bid == "reverse-colormap"
+
+            minColor        = round(minimum(skipmissing(gridded)),digits=2); 
+            maxColor        = round(maximum(skipmissing(gridded)),digits=2);  
+                                         
+        elseif bid == "min-color-id" || bid == "max-color-id" || bid == "colormaps_cross" || bid == "smooth-colormap" || bid == "range-slider-color" || bid == "reverse-colormap"
 
             data_plot, layout =  update_colormap_phaseDiagram(  xtitle,     ytitle,     
                                                                 Xrange,     Yrange,     fieldname,
                                                                 dtb,        diagType,
+                                                                minColor,   maxColor,
                                                                 smooth,     colorm,     reverseColorMap,
                                                                 test                                                    )
 
@@ -485,6 +501,9 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     smooth,     colorm,     reverseColorMap,
                                                                     test,       refType                                 )
 
+            minColor        = round(minimum(skipmissing(gridded)),digits=2); 
+            maxColor        = round(maximum(skipmissing(gridded)),digits=2);  
+                                                                                                 
         elseif bid == "show-grid"
 
             if grid == "true"
@@ -600,8 +619,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     scale    =  2.0,       ).fields)
 
 
-
-        return grid, full_grid, fig, config, infos, isopleths, smooth, active_tab
+        return grid, full_grid, fig, config, infos, isopleths, smooth, active_tab, minColor,   maxColor
     end
 
 

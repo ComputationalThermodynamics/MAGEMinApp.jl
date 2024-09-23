@@ -628,19 +628,21 @@ function Tab_PhaseDiagram()
                                             dbc_row([
                                             dbc_col([ 
                                                     dbc_input(
-                                                        id="min-color-id",
-                                                        type="number", 
-                                                        min=0.0, 
-                                                        max=2000.0, 
-                                                        value=800.0   ),
+                                                        id      = "min-color-id",
+                                                        type    = "number", 
+                                                        min     = -1e50, 
+                                                        max     = 1e50, 
+                                                        value   = 800.0,
+                                                        debounce = true   ),
                                                 ]),
                                                 dbc_col([ 
                                                     dbc_input(
                                                         id      = "max-color-id",
                                                         type    = "number", 
-                                                        min     = 0.0, 
-                                                        max     = 2000.0,
-                                                        value   = 1400.0   ),
+                                                        min     = -1e50, 
+                                                        max     = 1e50, 
+                                                        value   = 1400.0,
+                                                        debounce = true   ),
                                                 ]),
                                             ]),
                                         ]),
