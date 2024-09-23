@@ -480,8 +480,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             data_reaction   = show_hide_reaction_lines(sub,refLvl,Xrange,Yrange)
             data_grid       = show_hide_mesh_grid()
 
-            minColor        = round(minimum(skipmissing(gridded)),digits=2); 
-            maxColor        = round(maximum(skipmissing(gridded)),digits=2);  
+            # minColor        = round(minimum(skipmissing(gridded)),digits=2); 
+            # maxColor        = round(maximum(skipmissing(gridded)),digits=2);  
                                          
         elseif bid == "min-color-id" || bid == "max-color-id" || bid == "colormaps_cross" || bid == "smooth-colormap" || bid == "range-slider-color" || bid == "reverse-colormap"
 
