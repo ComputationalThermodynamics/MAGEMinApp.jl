@@ -955,15 +955,15 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
     isoLabelSize    = Int64(isoLabelSize)
 
     if (phase == "ss" && em == "none") || (phase == "pp")
-        if ot == "mode"
+        # if ot == "mode"
         mod     = "ph_frac"
         em      = ""
         name    = ss*"_mode"
-        elseif ot == "MgNum"
-            mod     = "ss_MgHum"
-            em      = ""
-            name    = ss*"_Mg#"
-        end
+        # elseif ot == "MgNum"
+        #     mod     = "ss_MgHum"
+        #     em      = ""
+        #     name    = ss*"_Mg#"
+        # end
     elseif (phase == "ss" && em != "none")
         mod     = "em_frac"
         name    = ss*"_"*em*"_mode"

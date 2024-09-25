@@ -298,7 +298,7 @@ function Tab_PhaseDiagram()
                                     html_div([
                                         dbc_row([
                                             dbc_col([
-                                                html_h1("Other", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                                html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
                                             ]),
                                             dbc_col([
                                                 dcc_dropdown(   id      = "other-dropdown",

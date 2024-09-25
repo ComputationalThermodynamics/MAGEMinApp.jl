@@ -147,6 +147,7 @@ function Tab_Simulation_Callbacks(app)
         Output("em-1-id","style"),
         Output("ss-1-id","style"),
         Output("of-1-id","style"),
+        Output("other-1-id","style"),
         Output("phase-selection","options"),
         Output("phase-selection","value"),
         Input("database-dropdown","value"),
@@ -162,6 +163,7 @@ function Tab_Simulation_Callbacks(app)
         if phase == "of"
             style_ph    = Dict("display" => "none")
             style_em    = Dict("display" => "none")
+            style_ot    = Dict("display" => "none")
             style_of    = Dict("display" => "block")
             opts_ph     = []
             val         = nothing
@@ -171,6 +173,7 @@ function Tab_Simulation_Callbacks(app)
                                     "value" => db_in.data_ss[i].ss_name )
                                         for i=1:n_ss ]
             style_em    = Dict("display" => "block")
+            style_ot    = Dict("display" => "block")
             style_ph    = Dict("display" => "block")
             style_of    = Dict("display" => "none")
 
@@ -182,6 +185,7 @@ function Tab_Simulation_Callbacks(app)
                                         for i=1:n_pp ]
 
             style_em    = Dict("display" => "none")
+            style_ot    = Dict("display" => "none")
             style_ph    = Dict("display" => "block")
             style_of    = Dict("display" => "none")
             val         = db_in.data_pp[1]
@@ -192,7 +196,7 @@ function Tab_Simulation_Callbacks(app)
                                                 for i in db_in.ss_name ]
         phase_selection_value   = db_in.ss_name
 
-        return opts_ph, val, style_em, style_ph, style_of, phase_selection_options, phase_selection_value
+        return opts_ph, val, style_em, style_ph, style_of, style_ot, phase_selection_options, phase_selection_value
     end
 
 
@@ -234,24 +238,24 @@ function Tab_Simulation_Callbacks(app)
     end
 
 
-    # update the dictionary of the solution phases and end-members for isopleth
-    callback!(
-        app,
-        Output("other-1-id","style"),
-        Input("em-dropdown","value"),
+    # # update the dictionary of the solution phases and end-members for isopleth
+    # callback!(
+    #     app,
+    #     Output("other-1-id","style"),
+    #     Input("em-dropdown","value"),
 
-        prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
-    ) do em
-        bid  = pushed_button( callback_context() ) 
+    #     prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
+    # ) do em
+    #     bid  = pushed_button( callback_context() ) 
 
-        if em == "none"
-            style_ot    = Dict("display" => "block") 
-        else
-            style_ot    = Dict("display" => "none") 
-        end
+    #     if em == "none"
+    #         style_ot    = Dict("display" => "block") 
+    #     else
+    #         style_ot    = Dict("display" => "none") 
+    #     end
         
-        return style_ot
-    end
+    #     return style_ot
+    # end
 
 
 
