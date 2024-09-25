@@ -234,24 +234,24 @@ function Tab_Simulation_Callbacks(app)
     end
 
 
-    # # update the dictionary of the solution phases and end-members for isopleth
-    # callback!(
-    #     app,
-    #     Output("other-1-id","style"),
-    #     Input("em-dropdown","value"),
+    # update the dictionary of the solution phases and end-members for isopleth
+    callback!(
+        app,
+        Output("other-1-id","style"),
+        Input("em-dropdown","value"),
 
-    #     prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
-    # ) do em
-    #     bid  = pushed_button( callback_context() ) 
+        prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
+    ) do em
+        bid  = pushed_button( callback_context() ) 
 
-    #     if em == "none"
-    #         style_ot    = Dict("display" => "block") 
-    #     else
-    #         style_ot    = Dict("display" => "none") 
-    #     end
+        if em == "none"
+            style_ot    = Dict("display" => "block") 
+        else
+            style_ot    = Dict("display" => "none") 
+        end
         
-    #     return style_ot
-    # end
+        return style_ot
+    end
 
 
 

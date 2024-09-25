@@ -298,6 +298,25 @@ function Tab_PhaseDiagram()
                                     html_div([
                                         dbc_row([
                                             dbc_col([
+                                                html_h1("Other", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                            ]),
+                                            dbc_col([
+                                                dcc_dropdown(   id      = "other-dropdown",
+                                                options = [
+                                                    (label = "Mode [mol]",      value = "mode"),
+                                                    (label = "Mg#",             value = "MgNum"),
+                                                    ],
+                                                value       = "mode",
+                                                clearable   = false,
+                                                multi       = false),
+                                            ]),
+                                        ]),
+                                    ], style = Dict("display" => "none"), id      = "other-1-id"),
+
+
+                                    html_div([
+                                        dbc_row([
+                                            dbc_col([
                                                 html_h1("Endmember", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
                                             ]),
                                             dbc_col([
@@ -309,24 +328,6 @@ function Tab_PhaseDiagram()
                                             ]),
                                         ]),
                                     ], style = Dict("display" => "none"), id      = "em-1-id"),
-
-                                    html_div([
-                                        dbc_row([
-                                            dbc_col([
-                                                html_h1("Other", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
-                                            ]),
-                                            dbc_col([
-                                                dcc_dropdown(   id      = "other-dropdown",
-                                                options = [
-                                                    (label = "Mg#",             value = "MgNum"),
-                                                    ],
-                                                value       = "MgNum",
-                                                clearable   = false,
-                                                multi       = false),
-                                            ]),
-                                        ]),
-                                    ], style = Dict("display" => "none"), id      = "other-1-id"),
-
 
                                     html_div([
                                         dbc_row([
