@@ -954,24 +954,24 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
 
     isoLabelSize    = Int64(isoLabelSize)
 
-    if (phase == "ss" && em == "none") || (phase == "pp")
-        # if ot == "mode"
+    if (phase == "ss" && ot == "mode") || (phase == "pp")
         mod     = "ph_frac"
         em      = ""
         name    = ss*"_mode"
-        # elseif ot == "MgNum"
-        #     mod     = "ss_MgHum"
-        #     em      = ""
-        #     name    = ss*"_Mg#"
-        # end
-    elseif (phase == "ss" && em != "none")
+    elseif (phase == "ss" && ot == "emMode")
         mod     = "em_frac"
         name    = ss*"_"*em*"_mode"
+    elseif (phase == "ss" && ot == "MgNum")
+        mod     = "ss_MgNum"
+        em      = ""
+        name    = ss*"_Mg#"
     elseif (phase == "of")
         em      = ""
         ss      = ""
         mod     = "of_mod"
         name    = of
+    else
+        println("Wrong combination, needs debugging...")
     end
 
     global data_isopleth, nIsopleths, data, Out_XY, data_plot, X, Y, addedRefinementLvl

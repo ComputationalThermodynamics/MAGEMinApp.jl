@@ -1303,19 +1303,19 @@ function get_isopleth_map(  mod         ::String,
                 field[i] = 0.0
             end
         end
-    # elseif mod == "ss_MgNum"
-    #     for i=1:np
-    #         id       = findall(Out_XY[i].ph .== ss)
-    #         if ~isempty(id)  
-    #             mg_id   = findfirst( Out_XY[i].oxides .== "MgO");
-    #             fe_id   = findfirst( Out_XY[i].oxides .== "FeO");
-    #             mg      =  Out_XY[i].SS_vec[id[1]].Comp_apfu[mg_id];
-    #             fe      =  Out_XY[i].SS_vec[id[1]].Comp_apfu[fe_id];
-    #             field[i] = mg / (mg + fe);
-    #         else
-    #             field[i] = 0.0
-    #         end
-    #     end 
+    elseif mod == "ss_MgNum"
+        for i=1:np
+            id       = findall(Out_XY[i].ph .== ss)
+            if ~isempty(id)  
+                mg_id   = findfirst( Out_XY[i].oxides .== "MgO");
+                fe_id   = findfirst( Out_XY[i].oxides .== "FeO");
+                mg      =  Out_XY[i].SS_vec[id[1]].Comp_apfu[mg_id];
+                fe      =  Out_XY[i].SS_vec[id[1]].Comp_apfu[fe_id];
+                field[i] = mg / (mg + fe);
+            else
+                field[i] = 0.0
+            end
+        end 
     elseif mod == "em_frac"
         for i=1:np
             id       = findall(Out_XY[i].ph .== ss)

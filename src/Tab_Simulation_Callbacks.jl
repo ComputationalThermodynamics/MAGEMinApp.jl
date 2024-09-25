@@ -152,9 +152,10 @@ function Tab_Simulation_Callbacks(app)
         Output("phase-selection","value"),
         Input("database-dropdown","value"),
         Input("phase-dropdown","value"),
+        Input("other-dropdown","value"),
 
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
-    ) do dtb, phase
+    ) do dtb, phase, other
 
         db_in       = retrieve_solution_phase_information(dtb)
         n_ss        = length(db_in.data_ss)
@@ -172,10 +173,14 @@ function Tab_Simulation_Callbacks(app)
             opts_ph     =  [Dict(   "label" => db_in.data_ss[i].ss_name,
                                     "value" => db_in.data_ss[i].ss_name )
                                         for i=1:n_ss ]
-            style_em    = Dict("display" => "block")
             style_ot    = Dict("display" => "block")
             style_ph    = Dict("display" => "block")
             style_of    = Dict("display" => "none")
+            if other == "emMode"
+                style_em    = Dict("display" => "block")
+            else
+                style_em    = Dict("display" => "none")
+            end
 
             val         = db_in.data_ss[1].ss_name
 

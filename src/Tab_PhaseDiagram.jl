@@ -304,6 +304,7 @@ function Tab_PhaseDiagram()
                                                 dcc_dropdown(   id      = "other-dropdown",
                                                 options = [
                                                     (label = "Mode [mol]",      value = "mode"),
+                                                    (label = "Endmember mode",  value = "emMode"),
                                                     (label = "Mg#",             value = "MgNum"),
                                                     ],
                                                 value       = "mode",
@@ -312,7 +313,6 @@ function Tab_PhaseDiagram()
                                             ]),
                                         ]),
                                     ], style = Dict("display" => "none"), id      = "other-1-id"),
-
 
                                     html_div([
                                         dbc_row([
