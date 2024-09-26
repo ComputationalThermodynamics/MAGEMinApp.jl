@@ -144,6 +144,7 @@ function Tab_Simulation_Callbacks(app)
         app,
         Output("ss-dropdown","options"),
         Output("ss-dropdown","value"),
+        Output("calc-1-id","style"),
         Output("em-1-id","style"),
         Output("ss-1-id","style"),
         Output("of-1-id","style"),
@@ -164,6 +165,7 @@ function Tab_Simulation_Callbacks(app)
         if phase == "of"
             style_ph    = Dict("display" => "none")
             style_em    = Dict("display" => "none")
+            style_calc  = Dict("display" => "none")
             style_ot    = Dict("display" => "none")
             style_of    = Dict("display" => "block")
             opts_ph     = []
@@ -176,10 +178,17 @@ function Tab_Simulation_Callbacks(app)
             style_ot    = Dict("display" => "block")
             style_ph    = Dict("display" => "block")
             style_of    = Dict("display" => "none")
+
             if other == "emMode"
                 style_em    = Dict("display" => "block")
             else
                 style_em    = Dict("display" => "none")
+            end
+
+            if other == "calc"
+                style_calc  = Dict("display" => "block")
+            else
+                style_calc  = Dict("display" => "none")
             end
 
             val         = db_in.data_ss[1].ss_name
@@ -191,8 +200,10 @@ function Tab_Simulation_Callbacks(app)
 
             style_em    = Dict("display" => "none")
             style_ot    = Dict("display" => "none")
+            style_calc  = Dict("display" => "none")
             style_ph    = Dict("display" => "block")
             style_of    = Dict("display" => "none")
+            
             val         = db_in.data_pp[1]
         end
 
@@ -201,7 +212,7 @@ function Tab_Simulation_Callbacks(app)
                                                 for i in db_in.ss_name ]
         phase_selection_value   = db_in.ss_name
 
-        return opts_ph, val, style_em, style_ph, style_of, style_ot, phase_selection_options, phase_selection_value
+        return opts_ph, val, style_calc, style_em, style_ph, style_of, style_ot, phase_selection_options, phase_selection_value
     end
 
 

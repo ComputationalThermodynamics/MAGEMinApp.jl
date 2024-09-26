@@ -82,9 +82,11 @@ function Tab_PhaseDiagram()
                         ]),
                     ], width=9),
                     dbc_col([  
+                        dbc_tabs([
+                            dbc_tab(label="Informations", children=[
                         dbc_row([
 
-                        dbc_button("Phase diagram information",id="infos-phase-diagram"),
+                        # dbc_button("Phase diagram information",id="infos-phase-diagram"),
                         dbc_collapse(
                             dbc_card(dbc_cardbody([
                                     # html_div("‎ "),
@@ -254,8 +256,11 @@ function Tab_PhaseDiagram()
                                 id="collapse-infos-phase-diagram",
                                 is_open=true,
                         ),
-                        html_div("‎ "),
-                        dbc_button("Display isopleths",id="button-isopleths"),
+                        # html_div("‎ "),
+                        ]),
+                            ]),
+                        dbc_tab(label="Isopleths", children=[
+                        # dbc_button("Display isopleths",id="button-isopleths"),
                         dbc_collapse(
                             dbc_card(dbc_cardbody([
                                 html_h1("Selection", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
@@ -306,6 +311,7 @@ function Tab_PhaseDiagram()
                                                     (label = "Mode [mol]",      value = "mode"),
                                                     (label = "Endmember mode",  value = "emMode"),
                                                     (label = "Mg#",             value = "MgNum"),
+                                                    (label = "Calculator",      value = "calc"),
                                                     ],
                                                 value       = "mode",
                                                 clearable   = false,
@@ -313,6 +319,20 @@ function Tab_PhaseDiagram()
                                             ]),
                                         ]),
                                     ], style = Dict("display" => "none"), id      = "other-1-id"),
+
+                                    html_div([
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("Calculator", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ]),
+                                            dbc_col([
+                                                dbc_input(
+                                                    id      = "input-calc-id",
+                                                    type    = "text", 
+                                                    value   = "Mg / (Mg + Fe)"   ),
+                                            ]), 
+                                        ]),
+                                    ], style = Dict("display" => "none"), id      = "calc-1-id"),
 
                                     html_div([
                                         dbc_row([
@@ -495,10 +515,12 @@ function Tab_PhaseDiagram()
 
                                 ])),
                                 id="collapse-isopleths",
-                                is_open=false,
+                                is_open=true,
                         ),
-                        html_div("‎ "),
-                        dbc_button("Display options",id="button-display-options"),
+                        # html_div("‎ "),
+                        ]#=, className="custom-tab-label"=#),
+                        dbc_tab(label="Display options", children=[
+                        # dbc_button("Display options",id="button-display-options"),
                         dbc_collapse(
                             dbc_card(dbc_cardbody([
 
@@ -685,8 +707,10 @@ function Tab_PhaseDiagram()
                         ),
 
 
+                        ]),
+                    
+                    ]),
 
-                    ])
                     ], width=3),
 
                 ], justify="left"),
