@@ -264,6 +264,7 @@ function Tab_PhaseDiagram()
                         dbc_collapse(
                             dbc_card(dbc_cardbody([
                                 html_h1("Selection", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                html_hr(),
                                 dbc_row([
                                     dbc_col([
                                         html_h1("Isopleth type", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
@@ -351,6 +352,7 @@ function Tab_PhaseDiagram()
 
                                     html_div([
                                         dbc_row([
+                                            
                                             dbc_col([
                                                 html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
                                             ]),
@@ -392,6 +394,7 @@ function Tab_PhaseDiagram()
 
                                     html_div("‎ "),
                                     html_h1("Range", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                    html_hr(),
                                     dbc_row([
                                         dbc_col([
                                             html_h1("Min", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
@@ -433,6 +436,7 @@ function Tab_PhaseDiagram()
                                     ]),
                                     html_div("‎ "),
                                     html_h1("Plotting options", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                    html_hr(),
                                     dbc_row([
                                         dbc_col([
                                             html_h1("Color", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
@@ -463,6 +467,7 @@ function Tab_PhaseDiagram()
 
                                     html_div("‎ "),
                                     html_h1("Isopleth list", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                    html_hr(),
                                     dbc_row([
 
                                        dbc_col([
@@ -523,6 +528,54 @@ function Tab_PhaseDiagram()
                         # dbc_button("Display options",id="button-display-options"),
                         dbc_collapse(
                             dbc_card(dbc_cardbody([
+                            # html_div("‎ "),
+                            html_h1("Select field to display", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                            html_hr(),
+                            dbc_row([
+                                dbc_col([ 
+                                    html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                ], width=5),
+                                dbc_col([
+                                    dcc_dropdown(   id      = "fields-dropdown",
+                                                    options = [
+                                                        (label = "Hash",                    value = "Hash"),
+                                                        (label = "Variance",                value = "Variance"),
+                                                        (label = "Number of stable phases", value = "#Phases"),
+                                                        (label = "G system",                value = "G_system"),
+                                                        (label = "Entropy",                 value = "entropy"),
+                                                        (label = "Enthalpy",                value = "enthalpy"),
+                                                        (label = "Specific cp",             value = "s_cp"),
+                                                        (label = "log10(fO2)",              value = "fO2"),
+                                                        (label = "log10(dQFM)",             value = "dQFM"),
+                                                        (label = "H2O activity",            value = "aH2O"),
+                                                        (label = "FeO activity",            value = "aFeO"),
+                                                        (label = "MgO activity",            value = "aMgO"),
+                                                        (label = "Al2O3 activity",          value = "aAl2O3"),
+                                                        (label = "SiO2 activity",           value = "aSiO2"),
+                                                        (label = "TiO2 activity",           value = "aTiO2"),
+                                                        (label = "ρ_system",                value = "rho"),
+                                                        (label = "ρ_solid",                 value = "rho_S"),
+                                                        (label = "ρ_melt",                  value = "rho_M"),
+                                                        (label = "Δρ",                      value = "Delta_rho"),
+                                                        (label = "Solid fraction",          value = "frac_S"),
+                                                        (label = "Melt fraction",           value = "frac_M"),                                                            
+                                                        (label = "Vp",                      value = "Vp"),
+                                                        (label = "Vs",                      value = "Vs"),                                                            
+                                                        (label = "Vp_S",                    value = "Vp_S"),
+                                                        (label = "Vs_S",                    value = "Vs_S"),
+                                                        (label = "Bulk residual (norm)",    value = "bulk_res_norm"),
+                                                        (label = "Computation time (ms)",   value = "time_ms"),
+                                                        (label = "Status",                  value = "status"),
+
+                                                    ],
+                                                    value="Variance" ,
+                                                    clearable   = false,
+                                                    multi       = false),
+                                ]), 
+                            ]),
+                            html_div("‎ "),
+                            html_h1("Diagram options", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                            html_hr(),
 
                                 dbc_row([
                                     dbc_col([ 
@@ -530,6 +583,20 @@ function Tab_PhaseDiagram()
                                     ], width=5),
                                     dbc_col([
                                         dcc_dropdown(   id          = "show-grid",
+                                                        options     =  ["true","false"],
+                                                        value       = "true" ,
+                                                        clearable   =  false,
+                                                        multi       =  false),
+                                    ]), 
+                                ]),
+
+
+                                dbc_row([
+                                    dbc_col([ 
+                                        html_h1("Show stable phases", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                    ], width=5),
+                                    dbc_col([
+                                        dcc_dropdown(   id          = "show-lbl-id",
                                                         options     =  ["true","false"],
                                                         value       = "true" ,
                                                         clearable   =  false,
@@ -549,64 +616,9 @@ function Tab_PhaseDiagram()
                                                         multi       =  false),
                                     ]), 
                                 ]),
-
-                                dbc_row([
-                                    dbc_col([ 
-                                        html_h1("Show stable phases", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                    ], width=5),
-                                    dbc_col([
-                                        dcc_dropdown(   id          = "show-lbl-id",
-                                                        options     =  ["true","false"],
-                                                        value       = "true" ,
-                                                        clearable   =  false,
-                                                        multi       =  false),
-                                    ]), 
-                                ]),
-
-
-                                dbc_row([
-                                    dbc_col([ 
-                                        html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                    ], width=5),
-                                    dbc_col([
-                                        dcc_dropdown(   id      = "fields-dropdown",
-                                                        options = [
-                                                            (label = "Hash",                    value = "Hash"),
-                                                            (label = "Variance",                value = "Variance"),
-                                                            (label = "Number of stable phases", value = "#Phases"),
-                                                            (label = "G system",                value = "G_system"),
-                                                            (label = "Entropy",                 value = "entropy"),
-                                                            (label = "Enthalpy",                value = "enthalpy"),
-                                                            (label = "Specific cp",             value = "s_cp"),
-                                                            (label = "log10(fO2)",              value = "fO2"),
-                                                            (label = "log10(dQFM)",             value = "dQFM"),
-                                                            (label = "H2O activity",            value = "aH2O"),
-                                                            (label = "FeO activity",            value = "aFeO"),
-                                                            (label = "MgO activity",            value = "aMgO"),
-                                                            (label = "Al2O3 activity",          value = "aAl2O3"),
-                                                            (label = "SiO2 activity",           value = "aSiO2"),
-                                                            (label = "TiO2 activity",           value = "aTiO2"),
-                                                            (label = "ρ_system",                value = "rho"),
-                                                            (label = "ρ_solid",                 value = "rho_S"),
-                                                            (label = "ρ_melt",                  value = "rho_M"),
-                                                            (label = "Δρ",                      value = "Delta_rho"),
-                                                            (label = "Solid fraction",          value = "frac_S"),
-                                                            (label = "Melt fraction",           value = "frac_M"),                                                            
-                                                            (label = "Vp",                      value = "Vp"),
-                                                            (label = "Vs",                      value = "Vs"),                                                            
-                                                            (label = "Vp_S",                    value = "Vp_S"),
-                                                            (label = "Vs_S",                    value = "Vs_S"),
-                                                            (label = "Bulk residual (norm)",    value = "bulk_res_norm"),
-                                                            (label = "Computation time (ms)",   value = "time_ms"),
-                                                            (label = "Status",                  value = "status"),
-
-                                                        ],
-                                                        value="Variance" ,
-                                                        clearable   = false,
-                                                        multi       = false),
-                                    ]), 
-                                ]),
-
+                                html_div("‎ "),
+                                html_h1("Color options", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                html_hr(),
                                 dbc_row([
                                         dbc_col([ 
                                             html_h1("Colormap", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
@@ -617,18 +629,6 @@ function Tab_PhaseDiagram()
                                                             value       = "Blues",
                                                             clearable   = false,
                                                             placeholder = "Colormap")
-                                        ]), 
-                                    ]),
-
-                                    dbc_row([
-                                        dbc_col([ 
-                                            html_h1("Smooth colormap", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                        ], width=5),
-                                        dbc_col([
-                                            dcc_dropdown(   id          = "smooth-colormap",
-                                                            options     = ["fast","best",false],
-                                                            value       = "fast",
-                                                            clearable   = false)
                                         ]), 
                                     ]),
 
@@ -696,6 +696,18 @@ function Tab_PhaseDiagram()
                                             dcc_dropdown(   id          = "reverse-colormap",
                                                             options     = ["true","false"],
                                                             value       = "false",
+                                                            clearable   = false)
+                                        ]), 
+                                    ]),
+
+                                    dbc_row([
+                                        dbc_col([ 
+                                            html_h1("Smooth colormap", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                        ], width=5),
+                                        dbc_col([
+                                            dcc_dropdown(   id          = "smooth-colormap",
+                                                            options     = ["fast","best",false],
+                                                            value       = "fast",
                                                             clearable   = false)
                                         ]), 
                                     ]),
