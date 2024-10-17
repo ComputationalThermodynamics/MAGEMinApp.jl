@@ -78,6 +78,9 @@ function Tab_PhaseDiagram()
                         # html_hr(),  
                         html_div("‎ "), 
                         dbc_row([
+                            diagram_legend()
+                        ]),
+                        dbc_row([
                             diagram_plot()
                         ]),
                     ], width=9),

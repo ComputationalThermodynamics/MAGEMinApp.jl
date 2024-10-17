@@ -22,6 +22,7 @@ mutable struct isopleth_data
     status  :: Vector{Int64}
     active  :: Vector{Int64}
     isoP    :: Vector{GenericTrace{Dict{Symbol, Any}}}
+    isoCap  :: Vector{GenericTrace{Dict{Symbol, Any}}}
 
     label   :: Vector{String}
     value   :: Vector{Int64}
@@ -924,6 +925,7 @@ function initialize_g_isopleth(; n_iso_max = 32)
     status    = zeros(Int64,n_iso_max)
     active    = []
     isoP      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
+    isoCap    = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
 
     for i=1:n_iso_max
         isoP[i] = contour()
@@ -933,7 +935,7 @@ function initialize_g_isopleth(; n_iso_max = 32)
     value     = Vector{Int64}(undef,n_iso_max)
 
     data_isopleth = isopleth_data(0, n_iso_max,
-                                status, active, isoP,
+                                status, active, isoP, isoCap,
                                 label, value)
 
     
@@ -994,7 +996,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
 
     data_isopleth.n_iso += 1
 
-    data_isopleth.isoP[data_isopleth.n_iso]= contour(   x                   = X,
+    data_isopleth.isoP[data_isopleth.n_iso]= contour(  x                   = X,
                                                         y                   = Y,
                                                         z                   = gridded,
                                                         contours_coloring   = "lines",
@@ -1011,7 +1013,15 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                                                                         labelfont   = attr( size    = isoLabelSize,
                                                                                                             color   = isoColorLine,  )
                                                         )
-                                                    )
+                                                    ),
+
+    data_isopleth.isoCap[data_isopleth.n_iso]   = scatter(  x           = [NaN],
+                                                            y           = [NaN],
+                                                            mode        = "lines",
+                                                            line        =  attr(color=isoColorLine),
+                                                            name        =  name,
+                                                            showlegend  =  true,)
+
     data_isopleth.status[data_isopleth.n_iso]   = 1
     data_isopleth.label[data_isopleth.n_iso]    = name
     data_isopleth.value[data_isopleth.n_iso]    = data_isopleth.n_iso
@@ -1031,6 +1041,7 @@ function remove_single_isopleth_phaseDiagram(isoplethsID)
     data_isopleth.n_iso                -= 1      
     data_isopleth.status[isoplethsID]   = 0;
     data_isopleth.isoP[isoplethsID]     = contour()
+    data_isopleth.isoCap[isoplethsID]   = scatter()
     data_isopleth.label[isoplethsID]    = ""
     data_isopleth.value[isoplethsID]    = 0
     data_isopleth.active                = findall(data_isopleth.status .== 1)
@@ -1050,6 +1061,7 @@ function remove_all_isopleth_phaseDiagram()
     data_isopleth.n_iso     = 0
     for i=1:data_isopleth.n_iso_max
         data_isopleth.isoP[i] = contour()
+        data_isopleth.isoCap[i] = scattter()
     end
     data_isopleth.status   .= 0
     data_isopleth.active   .= 0

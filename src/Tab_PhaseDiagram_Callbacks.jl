@@ -287,6 +287,8 @@ function Tab_PhaseDiagram_Callbacks(app)
         app,
         Output("show-grid",             "value"), 
         Output("show-full-grid",        "value"), 
+        Output("pd-legend",             "figure"),
+        Output("pd-legend",             "config"),
         Output("phase-diagram",         "figure"),
         Output("phase-diagram",         "config"),
         Output("computation-info-id",   "children"),        
@@ -480,10 +482,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             infos           = get_computation_info(npoints, meant)
             data_reaction   = show_hide_reaction_lines(sub,refLvl,Xrange,Yrange)
             data_grid       = show_hide_mesh_grid()
-
-            # minColor        = round(minimum(skipmissing(gridded)),digits=2); 
-            # maxColor        = round(maximum(skipmissing(gridded)),digits=2);  
-                                         
+                   
         elseif bid == "min-color-id" || bid == "max-color-id" || bid == "colormaps_cross" || bid == "smooth-colormap" || bid == "range-slider-color" || bid == "reverse-colormap"
 
             data_plot, layout =  update_colormap_phaseDiagram(  xtitle,     ytitle,     
@@ -619,8 +618,31 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     width    =  900,
                                                                     scale    =  2.0,       ).fields)
 
+        layoutCap = Layout(     height          =  30,        
+                                plot_bgcolor    = "white", 
+                                paper_bgcolor   = "white", 
+                                title           = "",
+                                xaxis           = attr(showticklabels=false),
+                                yaxis           = attr(showticklabels=false),
+                                legend=attr(
+                                    # x=0.5,  # Adjust these values to move the legend
+                                    # y=-0.1, # Adjust these values to move the legend
+                                    orientation ="h"  # This sets the legend orientation to horizontal
+                                ))
+        if field2plot[4] == 0
+            fig_cap = plot(layoutCap)
+        else
+            fig_cap = plot(data_isopleth.isoCap[data_isopleth.active],layoutCap)
+        end
+        config_cap  = PlotConfig(    toImageButtonOptions  = attr(      name     = "Download as svg",
+                                                                        format   = "svg",
+                                                                        filename =  (replace(customTitle, " " => "_"))*"label",
+                                                                        height   =  30,
+                                                                        width    =  900,
+                                                                        scale    =  2.0,       ).fields)
 
-        return grid, full_grid, fig, config, infos, isopleths, smooth, active_tab, minColor,   maxColor
+
+        return grid, full_grid, fig_cap, config_cap, fig, config, infos, isopleths, smooth, active_tab, minColor,   maxColor
     end
 
 
