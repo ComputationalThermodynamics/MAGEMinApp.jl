@@ -440,6 +440,38 @@ function Tab_PhaseDiagram()
                                     html_div("‎ "),
                                     html_h1("Plotting options", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                     html_hr(),
+                                    dbc_row([    
+                                        dbc_col([
+                                            html_h1("Line style", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                        ]),
+                                        dbc_col([ 
+                                            dcc_dropdown(   id      = "line-style-dropdown",
+                                            options = [
+                                                (label = "Solid",                   value = "solid"),
+                                                (label = "Dot",                     value = "dot"),
+                                                (label = "Dash",                    value = "dash"),
+                                                (label = "Longdash",                value = "longdash"),
+                                                (label = "Dashdot",                 value = "dashdot"),
+                                                (label = "Longdashdot",             value = "longdashdot"),
+                                            ],
+                                            value       = "solid",
+                                            clearable   = false,
+                                            multi       = false),
+                                        ]),
+                                    ]),
+                                    dbc_row([    
+                                        dbc_col([
+                                            html_h1("Line width", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                        ]),
+                                        dbc_col([ 
+                                            dbc_input(
+                                            id      = "iso-line-width-id",
+                                            type    = "number", 
+                                            min     = 0,  
+                                            max     = 10,  
+                                            value   = 1   ),
+                                        ]),
+                                    ]),
                                     dbc_row([
                                         dbc_col([
                                             html_h1("Color", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    

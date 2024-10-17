@@ -372,6 +372,8 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("of-dropdown",            "value"),
         State("other-dropdown",         "value"),
         State("input-calc-id",          "value"),
+        State("line-style-dropdown",    "value"),
+        State("iso-line-width-id",      "value"),
         State("colorpicker_isoL",       "value"),
         State("iso-text-size-id",       "value"),
         State("iso-min-id",             "value"),
@@ -394,7 +396,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             tepm,       kds_mod,    zrsat_mod,  bulkte1,    bulkte2,
             test,
             isopleths,  isoplethsID,phase,      ss,         em,         of,     ot, calc,
-            isoColorLine,           isoLabelSize,   
+            isoLineStyle, isoLineWidth, isoColorLine,           isoLabelSize,   
             minIso,     stepIso,    maxIso,     active_tab
 
 
@@ -522,7 +524,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     sub,        refLvl,
                                                                     dtb,        oxi,
                                                                     isopleths,  phase,      ss,     em,     of,     ot, calc,
-                                                                    isoColorLine,           isoLabelSize,   
+                                                                    isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,   
                                                                     minIso,     stepIso,    maxIso                      )
             data_isopleth_out = data_isopleth.isoP[data_isopleth.active]
             field2plot[4] = 1
@@ -625,9 +627,9 @@ function Tab_PhaseDiagram_Callbacks(app)
                                 xaxis           = attr(showticklabels=false),
                                 yaxis           = attr(showticklabels=false),
                                 legend=attr(
-                                    # x=0.5,  # Adjust these values to move the legend
-                                    # y=-0.1, # Adjust these values to move the legend
-                                    orientation ="h"  # This sets the legend orientation to horizontal
+                                    x           =  0.05,             
+                                    xanchor     = "left",
+                                    orientation = "h"
                                 ))
         if field2plot[4] == 0
             fig_cap = plot(layoutCap)
@@ -636,7 +638,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         end
         config_cap  = PlotConfig(    toImageButtonOptions  = attr(      name     = "Download as svg",
                                                                         format   = "svg",
-                                                                        filename =  (replace(customTitle, " " => "_"))*"label",
+                                                                        filename =  (replace(customTitle, " " => "_"))*"_label",
                                                                         height   =  30,
                                                                         width    =  900,
                                                                         scale    =  2.0,       ).fields)

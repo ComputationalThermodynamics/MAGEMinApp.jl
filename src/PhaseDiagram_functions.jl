@@ -952,7 +952,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                             sub,        refLvl,
                                             dtb,        oxi,
                                             isopleths,  phase,      ss,     em,     of,     ot,     calc,
-                                            isoColorLine,           isoLabelSize,       
+                                            isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,       
                                             minIso,     stepIso,    maxIso      )
 
     isoLabelSize    = Int64(isoLabelSize)
@@ -960,10 +960,10 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
     if (phase == "ss" && ot == "mode") || (phase == "pp")
         mod     = "ph_frac"
         em      = ""
-        name    = ss*"_mode"
+        name    = ss*"_[mode]"
     elseif (phase == "ss" && ot == "emMode")
         mod     = "em_frac"
-        name    = ss*"_"*em*"_mode"
+        name    = ss*"_"*em*"_[mode]"
     elseif (phase == "ss" && ot == "MgNum")
         mod     = "ss_MgNum"
         em      = ""
@@ -971,7 +971,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
     elseif (phase == "ss" && ot == "calc")
         mod     = "ss_calc"
         em      = ""
-        name    = ss*"_calc"
+        name    = ss*"_["*calc*"]"
     elseif (phase == "of")
         em      = ""
         ss      = ""
@@ -1006,7 +1006,8 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                                         contours_start      = minIso,
                                                         contours_end        = maxIso,
                                                         contours_size       = stepIso,
-                                                        line_width          = 1,
+                                                        line_width          = isoLineWidth,
+                                                        line_dash           = isoLineStyle,
                                                         showscale           = false,
                                                         hoverinfo           = "skip",
                                                         contours            =  attr(    coloring    = "lines",
@@ -1019,7 +1020,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
     data_isopleth.isoCap[data_isopleth.n_iso]   = scatter(  x           = [nothing],
                                                             y           = [nothing],
                                                             mode        = "lines",
-                                                            line        =  attr(color=isoColorLine),
+                                                            line        =  attr(color=isoColorLine,dash=isoLineStyle,width=isoLineWidth),
                                                             name        =  name,
                                                             showlegend  =  true);
 
@@ -1062,7 +1063,7 @@ function remove_all_isopleth_phaseDiagram()
     data_isopleth.n_iso     = 0
     for i=1:data_isopleth.n_iso_max
         data_isopleth.isoP[i] = contour()
-        data_isopleth.isoCap[i] = scattter()
+        data_isopleth.isoCap[i] = scatter()
     end
     data_isopleth.status   .= 0
     data_isopleth.active   .= 0

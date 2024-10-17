@@ -154,9 +154,11 @@ function Tab_Simulation_Callbacks(app)
         Input("database-dropdown","value"),
         Input("phase-dropdown","value"),
         Input("other-dropdown","value"),
+        State("ss-dropdown","value"),
 
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
-    ) do dtb, phase, other
+    ) do dtb, phase, other, ph
+        bid         = pushed_button( callback_context() ) 
 
         db_in       = retrieve_solution_phase_information(dtb)
         n_ss        = length(db_in.data_ss)
@@ -170,8 +172,8 @@ function Tab_Simulation_Callbacks(app)
             style_of    = Dict("display" => "block")
             opts_ph     = []
             val         = nothing
-
         elseif phase == "ss"
+            
             opts_ph     =  [Dict(   "label" => db_in.data_ss[i].ss_name,
                                     "value" => db_in.data_ss[i].ss_name )
                                         for i=1:n_ss ]
@@ -191,7 +193,11 @@ function Tab_Simulation_Callbacks(app)
                 style_calc  = Dict("display" => "none")
             end
 
-            val         = db_in.data_ss[1].ss_name
+            if bid != "other-dropdown"
+                val         = db_in.data_ss[1].ss_name
+            else
+                val         = ph
+            end
 
         else
             opts_ph     =  [Dict(   "label" => db_in.data_pp[i],
@@ -211,6 +217,7 @@ function Tab_Simulation_Callbacks(app)
                                             "value"     => i )
                                                 for i in db_in.ss_name ]
         phase_selection_value   = db_in.ss_name
+
 
         return opts_ph, val, style_calc, style_em, style_ph, style_of, style_ot, phase_selection_options, phase_selection_value
     end
