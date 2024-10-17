@@ -1016,8 +1016,8 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                                         )
                                                     );
 
-    data_isopleth.isoCap[data_isopleth.n_iso]   = scatter(  x           = [NaN],
-                                                            y           = [NaN],
+    data_isopleth.isoCap[data_isopleth.n_iso]   = scatter(  x           = [nothing],
+                                                            y           = [nothing],
                                                             mode        = "lines",
                                                             line        =  attr(color=isoColorLine),
                                                             name        =  name,
