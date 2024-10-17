@@ -1317,6 +1317,29 @@ function get_isopleth_map(  mod         ::String,
                 field[i] = 0.0
             end
         end 
+    elseif mod == "ss_calc"
+        el          = Out_XY[1].elements
+        n_el        = length(el)
+        global i, j, id
+        for i=1:np
+            id       = findall(Out_XY[i].ph .== ss)
+            if ~isempty(id)  
+                
+                cmd2eval    = calc
+                id          = id[1]
+
+                for j = 1:n_el
+                    if occursin(el[j], calc)
+                        cmd2eval = replace(cmd2eval, el[j] => "Out_XY[$i].SS_vec[$id].Comp_apfu[$j]")
+                    end
+                end
+                command  = Meta.parse(cmd2eval)
+                field[i] = eval(command)
+
+            else
+                field[i] = 0.0
+            end
+        end  
     elseif mod == "em_frac"
         for i=1:np
             id       = findall(Out_XY[i].ph .== ss)

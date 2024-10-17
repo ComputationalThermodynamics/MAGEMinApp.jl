@@ -391,7 +391,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             bufferN1,   bufferN2,
             tepm,       kds_mod,    zrsat_mod,  bulkte1,    bulkte2,
             test,
-            isopleths,  isoplethsID,phase,      ss,         em,         of,     ot,  calc,
+            isopleths,  isoplethsID,phase,      ss,         em,         of,     ot, calc,
             isoColorLine,           isoLabelSize,   
             minIso,     stepIso,    maxIso,     active_tab
 
@@ -522,7 +522,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             data_isopleth, isopleths = add_isopleth_phaseDiagram(   Xrange,     Yrange,
                                                                     sub,        refLvl,
                                                                     dtb,        oxi,
-                                                                    isopleths,  phase,      ss,     em,     of,     ot,     calc,
+                                                                    isopleths,  phase,      ss,     em,     of,     ot, calc,
                                                                     isoColorLine,           isoLabelSize,   
                                                                     minIso,     stepIso,    maxIso                      )
             data_isopleth_out = data_isopleth.isoP[data_isopleth.active]

@@ -324,7 +324,7 @@ function Tab_PhaseDiagram()
                                     html_div([
                                         dbc_row([
                                             dbc_col([ 
-                                                html_h1("Calculator", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                html_h1("Calculator (apfu)", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                             ]),
                                             dbc_col([
                                                 dbc_input(
