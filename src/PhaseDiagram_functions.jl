@@ -929,6 +929,7 @@ function initialize_g_isopleth(; n_iso_max = 32)
 
     for i=1:n_iso_max
         isoP[i] = contour()
+        isoCap[i] = scatter()
     end
 
     label     = Vector{String}(undef,n_iso_max)
@@ -1013,14 +1014,14 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                                                                         labelfont   = attr( size    = isoLabelSize,
                                                                                                             color   = isoColorLine,  )
                                                         )
-                                                    ),
+                                                    );
 
     data_isopleth.isoCap[data_isopleth.n_iso]   = scatter(  x           = [NaN],
                                                             y           = [NaN],
                                                             mode        = "lines",
                                                             line        =  attr(color=isoColorLine),
                                                             name        =  name,
-                                                            showlegend  =  true,)
+                                                            showlegend  =  true);
 
     data_isopleth.status[data_isopleth.n_iso]   = 1
     data_isopleth.label[data_isopleth.n_iso]    = name
