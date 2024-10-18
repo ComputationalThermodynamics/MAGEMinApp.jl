@@ -92,7 +92,6 @@ function Tab_PhaseDiagram()
                         # dbc_button("Phase diagram information",id="infos-phase-diagram"),
                         dbc_collapse(
                             dbc_card(dbc_cardbody([
-                                    # html_div("‎ "),
                                     dbc_row([
                                         dbc_card([
                                             dcc_markdown(   id          = "computation-info-id", 
@@ -334,6 +333,17 @@ function Tab_PhaseDiagram()
                                                     id      = "input-calc-id",
                                                     type    = "text", 
                                                     value   = "Mg / (Mg + Fe)"   ),
+                                            ]), 
+                                        ]),
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("Custom name", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ]),
+                                            dbc_col([
+                                                dbc_input(
+                                                    id      = "input-cust-id",
+                                                    type    = "text", 
+                                                    value   = "none"   ),
                                             ]), 
                                         ]),
                                     ], style = Dict("display" => "none"), id      = "calc-1-id"),

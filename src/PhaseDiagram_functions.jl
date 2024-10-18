@@ -951,7 +951,7 @@ end
 function add_isopleth_phaseDiagram(         Xrange,     Yrange, 
                                             sub,        refLvl,
                                             dtb,        oxi,
-                                            isopleths,  phase,      ss,     em,     of,     ot,     calc,
+                                            isopleths,  phase,      ss,     em,     of,     ot,     calc, cust,
                                             isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,       
                                             minIso,     stepIso,    maxIso      )
 
@@ -971,7 +971,12 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
     elseif (phase == "ss" && ot == "calc")
         mod     = "ss_calc"
         em      = ""
-        name    = ss*"_["*calc*"]"
+        if cust != "none"
+            name    = ss*"_["*cust*"]"
+        else
+            name    = ss*"_["*calc*"]"
+        end
+        # name    = ss*"_["*calc*"]"
     elseif (phase == "of")
         em      = ""
         ss      = ""
@@ -997,12 +1002,12 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
 
     data_isopleth.n_iso += 1
 
-    data_isopleth.isoP[data_isopleth.n_iso]= contour(  x                   = X,
+    data_isopleth.isoP[data_isopleth.n_iso]= contour(   x                   = X,
                                                         y                   = Y,
                                                         z                   = gridded,
                                                         contours_coloring   = "lines",
                                                         colorscale          = [[0, isoColorLine], [1, isoColorLine]],
-                                                        
+                                                        # connectgaps         = false,
                                                         contours_start      = minIso,
                                                         contours_end        = maxIso,
                                                         contours_size       = stepIso,

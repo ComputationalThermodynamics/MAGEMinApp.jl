@@ -87,6 +87,8 @@ function Tab_TraceElement_Callbacks(app)
         Output("phase-diagram-te",          "figure"    ),
         Output("phase-diagram-te",          "config"    ),
         Output("field-type-dropdown-te",    "value"     ),
+        Output("min-color-id-te",           "value"     ),
+        Output("max-color-id-te",           "value"     ),
 
         Input("load-button-te",             "n_clicks"  ),
         Input("compute-display-te",         "n_clicks"  ),
@@ -100,40 +102,43 @@ function Tab_TraceElement_Callbacks(app)
         Input("smooth-colormap-te",         "value"     ),
         Input("range-slider-color-te",      "value"     ),
         Input("reverse-colormap-te",        "value"     ),
+  
+        Input("min-color-id-te",            "value"     ),
+        Input("max-color-id-te",            "value"     ),
+
         Input("update-title-button",        "n_clicks"  ),
-    
         State("title-id",                   "value"     ),
         State("tepm-dropdown",              "value"     ),
         State("input-te-id",                "value"     ),
         State("field-type-dropdown-te",     "value"     ),
         
-        State("database-dropdown",      "value"),           # mp, mb, ig ,igd, um, alk
-        State("diagram-dropdown",       "value"),           # pt, px, tx
-        State("tmin-id",                "value"),           # tmin
-        State("tmax-id",                "value"),           # tmax
-        State("pmin-id",                "value"),           # pmin
-        State("pmax-id",                "value"),           # pmax
+        State("database-dropdown",      "value"         ),           # mp, mb, ig ,igd, um, alk
+        State("diagram-dropdown",       "value"         ),           # pt, px, tx
+        State("tmin-id",                "value"         ),           # tmin
+        State("tmax-id",                "value"         ),           # tmax
+        State("pmin-id",                "value"         ),           # pmin
+        State("pmax-id",                "value"         ),           # pmax
 
-        State("table-bulk-rock",        "data"),            # bulk-rock 1
-        State("table-2-bulk-rock",      "data"),            # bulk-rock 2
+        State("table-bulk-rock",        "data"          ),           # bulk-rock 1
+        State("table-2-bulk-rock",      "data"          ),           # bulk-rock 2
 
-        State("gsub-id",                "value"),           # n subdivision
-        State("refinement-dropdown",    "value"),           # ph,em
-        State("refinement-levels",      "value"),           # level
+        State("gsub-id",                "value"         ),           # n subdivision
+        State("refinement-dropdown",    "value"         ),           # ph,em
+        State("refinement-levels",      "value"         ),           # level
 
-        State("fixed-temperature-val-id","value"),          # fix T
-        State("fixed-pressure-val-id",  "value"),           # fix P
-        State("solver-dropdown",        "value"),           # pge,lp
-        State("buffer-dropdown",        "value"),           # none,qfm,mw,qif,cco,hm,nno
-        State("buffer-1-mul-id",        "value"),           # buffer n 1
-        State("buffer-2-mul-id",        "value"),           # buffer n 2
-        State("pt-x-table",             "data"),
+        State("fixed-temperature-val-id","value"        ),           # fix T
+        State("fixed-pressure-val-id",  "value"         ),           # fix P
+        State("solver-dropdown",        "value"         ),           # pge,lp
+        State("buffer-dropdown",        "value"         ),           # none,qfm,mw,qif,cco,hm,nno
+        State("buffer-1-mul-id",        "value"         ),           # buffer n 1
+        State("buffer-2-mul-id",        "value"         ),           # buffer n 2
+        State("pt-x-table",             "data"          ),
 
         prevent_initial_call = true,
 
         ) do    n,          n2,         fieldname,  
                 grid,       full_grid,  lbl, 
-                colorMap,   smooth,     rangeColor, reverse,
+                colorMap,   smooth,     rangeColor, reverse,    minColor, maxColor,
                 updateTitle,customTitle,tepm,       varBuilder, type,
                 dtb,        diagType,   tmin,       tmax,       pmin,       pmax,
                 bulk1,      bulk2,
@@ -172,6 +177,8 @@ function Tab_TraceElement_Callbacks(app)
                                                                                                     Xrange,
                                                                                                     Yrange)
 
+                minColor     = round(minimum(skipmissing(gridded_te)),digits=2); 
+                maxColor     = round(maximum(skipmissing(gridded_te)),digits=2);  
 
                 PT_infos_te  = get_phase_diagram_information(   npoints_te,
                                                                 dtb,
@@ -235,18 +242,20 @@ function Tab_TraceElement_Callbacks(app)
                                                 ),
                             )
                                 
-                heat_map = heatmap( x               = X_te,
-                                    y               = Y_te,
-                                    z               = gridded_te,
-                                    zsmooth         = smooth,
-                                    connectgaps     = true,
+                heat_map = heatmap( x               =  X_te,
+                                    y               =  Y_te,
+                                    z               =  gridded_te,
+                                    zmin            =  minColor,
+                                    zmax            =  maxColor,
+                                    zsmooth         =  smooth,
+                                    connectgaps     =  true,
                                     type            = "heatmap",
-                                    colorscale      = colorm,
-                                    reversescale    = reverseColorMap,
-                                    colorbar_title  = fieldname,
+                                    colorscale      =  colorm,
+                                    reversescale    =  reverseColorMap,
+                                    colorbar_title  =  fieldname,
                                     hoverinfo       = "skip",
-                                    showlegend      = false,
-                                    colorbar        = attr(     lenmode         = "fraction",
+                                    showlegend      =  false,
+                                    colorbar        =  attr(    lenmode         = "fraction",
                                                                 len             =  0.75,
                                                                 thicknessmode   = "fraction",
                                                                 tickness        =  0.5,
@@ -271,11 +280,12 @@ function Tab_TraceElement_Callbacks(app)
 
                 data_plot_te       = vcat(data_plot_te,hover_lbl)
 
-            elseif bid == "colormaps_cross-te" || bid == "smooth-colormap-te" || bid == "range-slider-color-te" || bid == "reverse-colormap-te"
+            elseif bid == "min-color-id-te" || bid == "max-color-id-te" || bid == "colormaps_cross-te" || bid == "smooth-colormap-te" || bid == "range-slider-color-te" || bid == "reverse-colormap-te"
 
                 data_plot_te, layout_te =  update_colormap_phaseDiagram_te(     xtitle,     ytitle,     type,               varBuilder,   
                                                                                 Xrange,     Yrange,     fieldname,
                                                                                 dtb,        diagType,
+                                                                                minColor,   maxColor,
                                                                                 smooth,     colorm,     reverseColorMap                                                   )
             elseif bid == "compute-display-te"
 
@@ -284,6 +294,10 @@ function Tab_TraceElement_Callbacks(app)
                                                                                     dtb,        oxi,
                                                                                     sub,        refLvl,
                                                                                     smooth,     colorm,     reverseColorMap,       refType                                 )
+                                                                                    
+                minColor     = round(minimum(skipmissing(gridded_te)),digits=2); 
+                maxColor     = round(maximum(skipmissing(gridded_te)),digits=2);  
+
             elseif bid == "fields-dropdown-zr"
 
                 data_plot_te, layout_te =  update_diplayed_field_phaseDiagram_te(   xtitle,     ytitle,     "zr",                  varBuilder,
@@ -291,6 +305,8 @@ function Tab_TraceElement_Callbacks(app)
                                                                                     dtb,        oxi,
                                                                                     sub,        refLvl,
                                                                                     smooth,     colorm,     reverseColorMap,       refType                                 )
+                minColor     = round(minimum(skipmissing(gridded_te)),digits=2); 
+                maxColor     = round(maximum(skipmissing(gridded_te)),digits=2);  
 
             elseif bid == "show-grid-te"
 
@@ -356,7 +372,7 @@ function Tab_TraceElement_Callbacks(app)
                                                                     scale    =  2.0,       ).fields)
 
         
-        return grid, full_grid, fig_te, config, fieldType
+        return grid, full_grid, fig_te, config, fieldType, minColor, maxColor
             
     end
 

@@ -372,6 +372,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("of-dropdown",            "value"),
         State("other-dropdown",         "value"),
         State("input-calc-id",          "value"),
+        State("input-cust-id",          "value"),
         State("line-style-dropdown",    "value"),
         State("iso-line-width-id",      "value"),
         State("colorpicker_isoL",       "value"),
@@ -395,7 +396,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             bufferN1,   bufferN2,
             tepm,       kds_mod,    zrsat_mod,  bulkte1,    bulkte2,
             test,
-            isopleths,  isoplethsID,phase,      ss,         em,         of,     ot, calc,
+            isopleths,  isoplethsID,phase,      ss,         em,         of,     ot, calc, cust,
             isoLineStyle, isoLineWidth, isoColorLine,           isoLabelSize,   
             minIso,     stepIso,    maxIso,     active_tab
 
@@ -523,7 +524,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             data_isopleth, isopleths = add_isopleth_phaseDiagram(   Xrange,     Yrange,
                                                                     sub,        refLvl,
                                                                     dtb,        oxi,
-                                                                    isopleths,  phase,      ss,     em,     of,     ot, calc,
+                                                                    isopleths,  phase,      ss,     em,     of,     ot, calc, cust,
                                                                     isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,   
                                                                     minIso,     stepIso,    maxIso                      )
             data_isopleth_out = data_isopleth.isoP[data_isopleth.active]
@@ -560,18 +561,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         elseif bid == "button-hide-all-isopleth"
 
             iso_show          = 0
-
-        elseif bid == "show-lbl-id"
-
-            if lbl == "true"
-                for i=1:n_lbl+1
-                    layout[:annotations][i][:visible] = true
-                end
-            else
-                for i=1:n_lbl+1
-                    layout[:annotations][i][:visible] = false
-                end
-            end
+            
         elseif bid == "update-title-button"
             if @isdefined(MAGEMin_data)
                 layout[:title] = attr(
@@ -585,6 +575,15 @@ function Tab_PhaseDiagram_Callbacks(app)
             fig = plot()
         end
 
+        if lbl == "true"
+            for i=1:n_lbl+1
+                layout[:annotations][i][:visible] = true
+            end
+        else
+            for i=1:n_lbl+1
+                layout[:annotations][i][:visible] = false
+            end
+        end
 
         # check state of unchanged variables ["data_plot","data_reaction","data_grid"]
         if grid == "true"
