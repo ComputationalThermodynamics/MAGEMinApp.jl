@@ -323,19 +323,33 @@ function Tab_TraceElement()
                                                         placeholder = "Colormap")
                                     ]), 
                                 ]),
-
                                 dbc_row([
                                     dbc_col([ 
-                                        html_h1("Smooth colormap", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                        html_h1("Value range", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
                                     ], width=5),
-                                    dbc_col([
-                                        dcc_dropdown(   id          = "smooth-colormap-te",
-                                                        options     = ["fast","best",false],
-                                                        value       = "fast",
-                                                        clearable   = false)
-                                    ]), 
+                                    dbc_col([ 
+                                        dbc_row([
+                                        dbc_col([ 
+                                                dbc_input(
+                                                    id      = "min-color-id-te",
+                                                    type    = "number", 
+                                                    min     = -1e50, 
+                                                    max     = 1e50, 
+                                                    value   = 800.0,
+                                                    debounce = true   ),
+                                            ]),
+                                            dbc_col([ 
+                                                dbc_input(
+                                                    id      = "max-color-id-te",
+                                                    type    = "number", 
+                                                    min     = -1e50, 
+                                                    max     = 1e50, 
+                                                    value   = 1400.0,
+                                                    debounce = true   ),
+                                            ]),
+                                        ]),
+                                    ]),
                                 ]),
-
 
                                 html_div("‎ "),
                                 dbc_row([
@@ -353,7 +367,6 @@ function Tab_TraceElement()
                                         ),
                                     ]), 
                                 ]),
-
                                 dbc_row([
                                     dbc_col([ 
                                         html_h1("Reverse colormap", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
@@ -365,6 +378,18 @@ function Tab_TraceElement()
                                                         clearable   = false)
                                     ]), 
                                 ]),
+                                dbc_row([
+                                    dbc_col([ 
+                                        html_h1("Smooth colormap", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                    ], width=5),
+                                    dbc_col([
+                                        dcc_dropdown(   id          = "smooth-colormap-te",
+                                                        options     = ["fast","best",false],
+                                                        value       = "fast",
+                                                        clearable   = false)
+                                    ]), 
+                                ]),
+
 
                             ])
                         ),

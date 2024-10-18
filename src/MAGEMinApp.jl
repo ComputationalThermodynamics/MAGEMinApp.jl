@@ -46,7 +46,7 @@ Starts the MAGEMin App.
 function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
     message     = fetch_message()
     message2    = fetch_message2()
-    GUI_version = "0.4.3"   
+    GUI_version = "0.4.5"   
     cur_dir     = pwd()                 # directory from where you started the GUI
     pkg_dir     = pkgdir(MAGEMinApp)   # package dir
     
@@ -102,7 +102,23 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                                                             ),
                                                                     dbc_tab(    tab_id      = "tab-phase-diagram",
                                                                                 label       = "Diagram",
-                                                                                children    = [Tab_PhaseDiagram()]
+                                                                                children    = [
+                                                                                    Tab_PhaseDiagram()
+                                                                                            #     children    = [dbc_tabs([
+                                                                                            #             dbc_tab(    tab_id      = "tab-pd-info",
+                                                                                            #                         label       = "Information",
+                                                                                            #                         children    = [Tab_PD_info(db_inf)],
+                                                                                            #                     ),
+                                                                                            #             dbc_tab(    tab_id      = "tab-pd-isopleth",
+                                                                                            #                         label       = "Isopleths",
+                                                                                            #                         children    = [Tab_PD_isopleth()]
+                                                                                            #                     ),
+                                                                                            #             dbc_tab(    tab_id      = "tab-pd-display",
+                                                                                            #                         label       = "Display option",
+                                                                                            #                         children    = [Tab_PD_display()],
+                                                                                            #                     ),
+                                                                                            #     ], id = "tabs_PD"), ]
+                                                                                            ]
                                                                             ),
                                                                     dbc_tab(    tab_id      = "tab-te",
                                                                                 label       = "Trace-elements",

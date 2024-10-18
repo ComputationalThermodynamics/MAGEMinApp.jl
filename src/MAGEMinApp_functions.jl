@@ -1278,6 +1278,8 @@ function get_isopleth_map(  mod         ::String,
                             ss          ::String, 
                             em          ::String,
                             of          ::String,
+                            ot          ::String,
+                            calc        ::String,
                             oxi         ::Vector{String},
                             Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
                             sub         ::Int64,
@@ -1302,6 +1304,42 @@ function get_isopleth_map(  mod         ::String,
                 field[i] = 0.0
             end
         end
+    elseif mod == "ss_MgNum"
+        for i=1:np
+            id       = findall(Out_XY[i].ph .== ss)
+            if ~isempty(id)  
+                mg_id   = findfirst( Out_XY[i].oxides .== "MgO");
+                fe_id   = findfirst( Out_XY[i].oxides .== "FeO");
+                mg      =  Out_XY[i].SS_vec[id[1]].Comp_apfu[mg_id];
+                fe      =  Out_XY[i].SS_vec[id[1]].Comp_apfu[fe_id];
+                field[i] = mg / (mg + fe);
+            else
+                field[i] = 0.0
+            end
+        end 
+    elseif mod == "ss_calc"
+        el          = Out_XY[1].elements
+        n_el        = length(el)
+        global i, j, id
+        for i=1:np
+            id       = findall(Out_XY[i].ph .== ss)
+            if ~isempty(id)  
+                
+                cmd2eval    = calc
+                id          = id[1]
+
+                for j = 1:n_el
+                    if occursin(el[j], calc)
+                        cmd2eval = replace(cmd2eval, el[j] => "Out_XY[$i].SS_vec[$id].Comp_apfu[$j]")
+                    end
+                end
+                command  = Meta.parse(cmd2eval)
+                field[i] = eval(command)
+
+            else
+                field[i] = 0.0
+            end
+        end  
     elseif mod == "em_frac"
         for i=1:np
             id       = findall(Out_XY[i].ph .== ss)
@@ -1366,12 +1404,8 @@ function get_oxide_list(dbin::String)
 
     if dbin == "ig"
 	    MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"; "H2O"];
-    elseif dbin == "igd"
-        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"; "H2O"];      
-    elseif dbin == "ige"
-        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"; "H2O"];      
-    elseif dbin == "alk"
-        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"; "H2O"];    
+    elseif dbin == "igad"
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"];      
     elseif dbin == "mb"
         MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "H2O"];     
     elseif dbin == "um"
@@ -1380,6 +1414,8 @@ function get_oxide_list(dbin::String)
         MAGEMin_ox      = ["SiO2"; "Al2O3"; "MgO" ;"FeO"; "O"; "H2O"; "S"; "CaO"; "Na2O"];        
     elseif dbin == "mp"
         MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "MnO"; "H2O"];
+    elseif dbin == "mtl"
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO";"Na2O"]; 
     else
         print("Database not implemented...\n")
     end

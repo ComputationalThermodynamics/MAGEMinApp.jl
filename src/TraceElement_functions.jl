@@ -172,6 +172,7 @@ end
 function update_colormap_phaseDiagram_te(       xtitle,     ytitle,     type,       varBuilder,
                                                 Xrange,     Yrange,     fieldname, 
                                                 dtb,        diagType,
+                                                minColor,   maxColor,
                                                 smooth,     colorm,     reverseColorMap)
     global PT_infos_te, layout_te
 
@@ -182,6 +183,8 @@ function update_colormap_phaseDiagram_te(       xtitle,     ytitle,     type,   
     data_plot_te[1] = heatmap(  x               =  X_te,
                                 y               =  Y_te,
                                 z               =  gridded_te,
+                                zmin            =  minColor,
+                                zmax            =  maxColor,
                                 zsmooth         =  smooth,
                                 connectgaps     =  true,
                                 type            = "heatmap",

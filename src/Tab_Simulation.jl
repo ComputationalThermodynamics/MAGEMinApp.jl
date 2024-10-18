@@ -83,7 +83,7 @@ function Tab_Simulation(db_inf)
                                     html_div([
                                         dbc_row([
                                             dbc_col([ 
-                                                html_h1("H2O-saturated at solidus", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                                html_h1("H₂O-saturated at solidus", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
                                             ]),
                                             dbc_col([ 
                                                 dcc_dropdown(   id      = "watsat-dropdown",
@@ -264,7 +264,7 @@ function Tab_Simulation(db_inf)
                                                     id="pmin-id",
                                                     type="number", 
                                                     min=0.001, 
-                                                    max=100.01, 
+                                                    max=1000.01, 
                                                     value=0.01   ),
                                             ]),
                                             dbc_col([ 
@@ -272,7 +272,7 @@ function Tab_Simulation(db_inf)
                                                     id="pmax-id",
                                                     type="number", 
                                                     min=0.001, 
-                                                    max=100.01, 
+                                                    max=1000.01, 
                                                     value=20.01   ),
                                             ]), 
                                             ]),
@@ -332,7 +332,7 @@ function Tab_Simulation(db_inf)
                                                 id      = "fixed-pressure-val-id",
                                                 type    = "number", 
                                                 min     = 0.001, 
-                                                max     = 100.01, 
+                                                max     = 1000.01, 
                                                 value   = 10.01   ),
                                         ]),
                                     ]),

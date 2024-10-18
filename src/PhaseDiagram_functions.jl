@@ -22,6 +22,7 @@ mutable struct isopleth_data
     status  :: Vector{Int64}
     active  :: Vector{Int64}
     isoP    :: Vector{GenericTrace{Dict{Symbol, Any}}}
+    isoCap  :: Vector{GenericTrace{Dict{Symbol, Any}}}
 
     label   :: Vector{String}
     value   :: Vector{Int64}
@@ -102,7 +103,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     db_in     = retrieve_solution_phase_information(dtb)
 
 
-    PD_infos[1]  = "Phase Diagram computed using MAGEMin v"*Out_XY[1].MAGEMin_ver*" (GUI v0.4.3) <br>"
+    PD_infos[1]  = "Phase Diagram computed using MAGEMin v"*Out_XY[1].MAGEMin_ver*" (GUI v0.4.5) <br>"
     PD_infos[1] *= "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾<br>"
     PD_infos[1] *= "Number of points <br>"
     
@@ -427,6 +428,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                     watsat,     cpx,        limOpx,     limOpxVal,  PTpath,
                                     bulk_L,     bulk_R,     oxi,
                                     bufferType, bufferN1,   bufferN2,
+                                    minColor,   maxColor,
                                     smooth,     colorm,     reverseColorMap,
                                     test,       refType                                  )
 
@@ -592,7 +594,6 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                                         x               =  1.005,
                                                         y               =  0.5         ),)
 
- 
         hover_lbl = heatmap(    x               = X,
                                 y               = Y,
                                 z               = X,
@@ -633,6 +634,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                 cpx,        limOpx,     limOpxVal,  PTpath,
                                 bulk_L,     bulk_R,     oxi,
                                 bufferType, bufferN1,   bufferN2,
+                                minColor,   maxColor,
                                 smooth,     colorm,     reverseColorMap,
                                 test,       refType                                 )
 
@@ -752,6 +754,7 @@ end
 function update_colormap_phaseDiagram(      xtitle,     ytitle,     
                                             Xrange,     Yrange,     fieldname,
                                             dtb,        diagType,
+                                            minColor,   maxColor,
                                             smooth,     colorm,     reverseColorMap,
                                             test                                  )
     global PT_infos, layout
@@ -759,6 +762,8 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
     data_plot[1] = heatmap( x               =  X,
                             y               =  Y,
                             z               =  gridded,
+                            zmin            =  minColor,
+                            zmax            =  maxColor,
                             zsmooth         =  smooth,
                             connectgaps     = true,
                             type            = "heatmap",
@@ -920,16 +925,18 @@ function initialize_g_isopleth(; n_iso_max = 32)
     status    = zeros(Int64,n_iso_max)
     active    = []
     isoP      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
+    isoCap    = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
 
     for i=1:n_iso_max
         isoP[i] = contour()
+        isoCap[i] = scatter()
     end
 
     label     = Vector{String}(undef,n_iso_max)
     value     = Vector{Int64}(undef,n_iso_max)
 
     data_isopleth = isopleth_data(0, n_iso_max,
-                                status, active, isoP,
+                                status, active, isoP, isoCap,
                                 label, value)
 
     
@@ -944,29 +951,44 @@ end
 function add_isopleth_phaseDiagram(         Xrange,     Yrange, 
                                             sub,        refLvl,
                                             dtb,        oxi,
-                                            isopleths,  phase,      ss,     em,     of,
-                                            isoColorLine,           isoLabelSize,       
+                                            isopleths,  phase,      ss,     em,     of,     ot,     calc, cust,
+                                            isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,       
                                             minIso,     stepIso,    maxIso      )
 
     isoLabelSize    = Int64(isoLabelSize)
 
-    if (phase == "ss" && em == "none") || (phase == "pp")
+    if (phase == "ss" && ot == "mode") || (phase == "pp")
         mod     = "ph_frac"
         em      = ""
-        name    = ss*"_mode"
-    elseif (phase == "ss" && em != "none")
+        name    = ss*"_[mode]"
+    elseif (phase == "ss" && ot == "emMode")
         mod     = "em_frac"
-        name    = ss*"_"*em*"_mode"
+        name    = ss*"_"*em*"_[mode]"
+    elseif (phase == "ss" && ot == "MgNum")
+        mod     = "ss_MgNum"
+        em      = ""
+        name    = ss*"_Mg#"
+    elseif (phase == "ss" && ot == "calc")
+        mod     = "ss_calc"
+        em      = ""
+        if cust != "none"
+            name    = ss*"_["*cust*"]"
+        else
+            name    = ss*"_["*calc*"]"
+        end
+        # name    = ss*"_["*calc*"]"
     elseif (phase == "of")
         em      = ""
         ss      = ""
         mod     = "of_mod"
         name    = of
+    else
+        println("Wrong combination, needs debugging...")
     end
 
     global data_isopleth, nIsopleths, data, Out_XY, data_plot, X, Y, addedRefinementLvl
 
-    gridded, X, Y = get_isopleth_map(   mod, ss, em, of,
+    gridded, X, Y = get_isopleth_map(   mod, ss, em, of, ot, calc,
                                         oxi,
                                         Out_XY,
                                         sub,
@@ -985,11 +1007,12 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                                         z                   = gridded,
                                                         contours_coloring   = "lines",
                                                         colorscale          = [[0, isoColorLine], [1, isoColorLine]],
-                                                        
+                                                        # connectgaps         = false,
                                                         contours_start      = minIso,
                                                         contours_end        = maxIso,
                                                         contours_size       = stepIso,
-                                                        line_width          = 1,
+                                                        line_width          = isoLineWidth,
+                                                        line_dash           = isoLineStyle,
                                                         showscale           = false,
                                                         hoverinfo           = "skip",
                                                         contours            =  attr(    coloring    = "lines",
@@ -997,7 +1020,15 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                                                                         labelfont   = attr( size    = isoLabelSize,
                                                                                                             color   = isoColorLine,  )
                                                         )
-                                                    )
+                                                    );
+
+    data_isopleth.isoCap[data_isopleth.n_iso]   = scatter(  x           = [nothing],
+                                                            y           = [nothing],
+                                                            mode        = "lines",
+                                                            line        =  attr(color=isoColorLine,dash=isoLineStyle,width=isoLineWidth),
+                                                            name        =  name,
+                                                            showlegend  =  true);
+
     data_isopleth.status[data_isopleth.n_iso]   = 1
     data_isopleth.label[data_isopleth.n_iso]    = name
     data_isopleth.value[data_isopleth.n_iso]    = data_isopleth.n_iso
@@ -1017,6 +1048,7 @@ function remove_single_isopleth_phaseDiagram(isoplethsID)
     data_isopleth.n_iso                -= 1      
     data_isopleth.status[isoplethsID]   = 0;
     data_isopleth.isoP[isoplethsID]     = contour()
+    data_isopleth.isoCap[isoplethsID]   = scatter()
     data_isopleth.label[isoplethsID]    = ""
     data_isopleth.value[isoplethsID]    = 0
     data_isopleth.active                = findall(data_isopleth.status .== 1)
@@ -1036,6 +1068,7 @@ function remove_all_isopleth_phaseDiagram()
     data_isopleth.n_iso     = 0
     for i=1:data_isopleth.n_iso_max
         data_isopleth.isoP[i] = contour()
+        data_isopleth.isoCap[i] = scatter()
     end
     data_isopleth.status   .= 0
     data_isopleth.active   .= 0

@@ -270,9 +270,11 @@ function refine_MAGEMin(data,
             end
         elseif diagType == "pt"
 
-            id_h2o      = findall(oxi .== "H2O")[1]
-            id_dry      = findall(oxi .!= "H2O")
-            
+            if "H2O" in oxi
+                id_h2o      = findall(oxi .== "H2O")[1]
+                id_dry      = findall(oxi .!= "H2O")
+            end
+
             Tvec = zeros(Float64,n_new_points);
             Pvec = zeros(Float64,n_new_points);
             Xvec = Vector{Vector{Float64}}(undef,n_new_points);

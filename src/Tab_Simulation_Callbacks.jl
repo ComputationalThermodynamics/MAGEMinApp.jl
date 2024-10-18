@@ -144,16 +144,21 @@ function Tab_Simulation_Callbacks(app)
         app,
         Output("ss-dropdown","options"),
         Output("ss-dropdown","value"),
+        Output("calc-1-id","style"),
         Output("em-1-id","style"),
         Output("ss-1-id","style"),
         Output("of-1-id","style"),
+        Output("other-1-id","style"),
         Output("phase-selection","options"),
         Output("phase-selection","value"),
         Input("database-dropdown","value"),
         Input("phase-dropdown","value"),
+        Input("other-dropdown","value"),
+        State("ss-dropdown","value"),
 
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
-    ) do dtb, phase
+    ) do dtb, phase, other, ph
+        bid         = pushed_button( callback_context() ) 
 
         db_in       = retrieve_solution_phase_information(dtb)
         n_ss        = length(db_in.data_ss)
@@ -162,19 +167,37 @@ function Tab_Simulation_Callbacks(app)
         if phase == "of"
             style_ph    = Dict("display" => "none")
             style_em    = Dict("display" => "none")
+            style_calc  = Dict("display" => "none")
+            style_ot    = Dict("display" => "none")
             style_of    = Dict("display" => "block")
             opts_ph     = []
             val         = nothing
-
         elseif phase == "ss"
+            
             opts_ph     =  [Dict(   "label" => db_in.data_ss[i].ss_name,
                                     "value" => db_in.data_ss[i].ss_name )
                                         for i=1:n_ss ]
-            style_em    = Dict("display" => "block")
+            style_ot    = Dict("display" => "block")
             style_ph    = Dict("display" => "block")
             style_of    = Dict("display" => "none")
 
-            val         = db_in.data_ss[1].ss_name
+            if other == "emMode"
+                style_em    = Dict("display" => "block")
+            else
+                style_em    = Dict("display" => "none")
+            end
+
+            if other == "calc"
+                style_calc  = Dict("display" => "block")
+            else
+                style_calc  = Dict("display" => "none")
+            end
+
+            if bid != "other-dropdown"
+                val         = db_in.data_ss[1].ss_name
+            else
+                val         = ph
+            end
 
         else
             opts_ph     =  [Dict(   "label" => db_in.data_pp[i],
@@ -182,9 +205,11 @@ function Tab_Simulation_Callbacks(app)
                                         for i=1:n_pp ]
 
             style_em    = Dict("display" => "none")
+            style_ot    = Dict("display" => "none")
+            style_calc  = Dict("display" => "none")
             style_ph    = Dict("display" => "block")
             style_of    = Dict("display" => "none")
-
+            
             val         = db_in.data_pp[1]
         end
 
@@ -193,8 +218,10 @@ function Tab_Simulation_Callbacks(app)
                                                 for i in db_in.ss_name ]
         phase_selection_value   = db_in.ss_name
 
-        return opts_ph, val, style_em, style_ph, style_of, phase_selection_options, phase_selection_value
+
+        return opts_ph, val, style_calc, style_em, style_ph, style_of, style_ot, phase_selection_options, phase_selection_value
     end
+
 
 
     # update the dictionary of the solution phases and end-members for isopleth
@@ -205,9 +232,11 @@ function Tab_Simulation_Callbacks(app)
         Input("database-dropdown","value"),
         Input("ss-dropdown","value"),
         State("phase-dropdown","value"),
+
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
     ) do dtb, id, ph
-        # bid  = pushed_button( callback_context() ) 
+        bid  = pushed_button( callback_context() ) 
+
         if ph == "ss"
             db_in          = retrieve_solution_phase_information(dtb)
 
@@ -223,12 +252,35 @@ function Tab_Simulation_Callbacks(app)
             opts_em     =  [Dict(   "label" => db_in.data_ss[ssid].ss_em[i],
                                     "value" => db_in.data_ss[ssid].ss_em[i] )
                                         for i=1:n_em ]
-                
+
             return opts_em, val
         else
             return "", ""
         end
+
     end
+
+
+    # # update the dictionary of the solution phases and end-members for isopleth
+    # callback!(
+    #     app,
+    #     Output("other-1-id","style"),
+    #     Input("em-dropdown","value"),
+
+    #     prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
+    # ) do em
+    #     bid  = pushed_button( callback_context() ) 
+
+    #     if em == "none"
+    #         style_ot    = Dict("display" => "block") 
+    #     else
+    #         style_ot    = Dict("display" => "none") 
+    #     end
+        
+    #     return style_ot
+    # end
+
+
 
     # callback to display trace element predictive model options
     callback!(

@@ -631,9 +631,6 @@ function Tab_PTXpaths(db_inf)
                                             ]), 
                                         ], style = Dict("display" => "none"), id      = "show-residual-id"), #none, block
 
-
-
-
                                         html_div("‎ "),
                                         dbc_row([
                                             dbc_button("Compute path",id="compute-path-button", color="light", className="me-2", n_clicks=0,
@@ -697,7 +694,6 @@ function Tab_PTXpaths(db_inf)
                                             ),
                                         ]),
 
-
                                         html_div("‎ "),
                                         dbc_row([
                                             dbc_col([
@@ -736,10 +732,6 @@ function Tab_PTXpaths(db_inf)
                                                 duration=4000,
                                             ),
                                         ]),
-    
-
-
-
                                     ])),
                                     id="collapse-path-opt",
                                     is_open=true,
@@ -776,58 +768,71 @@ function Tab_PTXpaths(db_inf)
                             ])
 
                         ], width=4),
-
                     ]),
-                    html_div("‎ "),
-                    dbc_row([                                                                                     
-                        dbc_col([
-                            dbc_row([
-                                dbc_card(dbc_cardbody([
-                                    PTX_plot()
-                                ])),
-                            ]),
-                            html_div("‎ "),
-                            dbc_row([
-                                dbc_card(dbc_cardbody([
+                    # html_div("‎ "),
+                    dbc_tabs([
+                        dbc_tab(label="PTX path", children=[
+                            dbc_row([                                                                                     
+                                dbc_col([
+
                                     dbc_row([
-                                        dbc_col([ 
-                                            PTX_frac_plot()
-                                        ], width=10)
+                                        dbc_card(dbc_cardbody([
+                                            PTX_plot()
+                                        ])),
+                                    ]),
+                            ], width=12),
+                            ]),
+                        ]),
+                        dbc_tab(label="Composition", children=[
+                            dbc_row([                                                                                     
+                                dbc_col([
+                                    html_div("‎ "),
+                                    dbc_row([
+                                        dbc_card(dbc_cardbody([
+                                            dbc_row([
+                                                dbc_col([ 
+                                                    PTX_frac_plot()
+                                                ], width=10)
 
-                                        dbc_col([ 
-                                            html_div("‎ "),
-                                            html_div("‎ "),
-                                            html_div("‎ "),
-                                            dbc_card(dbc_cardbody([
+                                                dbc_col([ 
+                                                    html_div("‎ "),
+                                                    html_div("‎ "),
+                                                    html_div("‎ "),
+                                                    dbc_card(dbc_cardbody([
 
-                                                # mineral list
-                                                dcc_checklist(
-                                                    id      = "phase-selector-id",
-                                                    options = [],
-                                                    value   = [],
-                                                )
+                                                        # mineral list
+                                                        dcc_checklist(
+                                                            id      = "phase-selector-id",
+                                                            options = [],
+                                                            value   = [],
+                                                        )
 
-                                            ])),
+                                                    ])),
 
-                                        ], width=2)
-                                    ])
-                                ])),
+                                                ], width=2)
+                                            ])
+                                        ])),
 
-                            ]),      
-                        
-                        ], width=12),
-                    ]),
-
-                    html_div("‎ "),
-                    dbc_row([                                                                                     
-                        dbc_col([
-                            dbc_row([
-                                dbc_card(dbc_cardbody([
-                                    TAS_plot()
-                                ])),
+                                    ]),      
+                                
+                                ], width=12),
+                            ]),
+                        ]),
+                        dbc_tab(label="TAS diagram", children=[
+                            html_div("‎ "),
+                            dbc_row([                                                                                     
+                                dbc_col([
+                                    dbc_row([
+                                        dbc_card(dbc_cardbody([
+                                            TAS_plot()
+                                        ])),
+                                    ]),
+                                ]),
                             ]),
                         ]),
                     ]),
+
+
 
 
                 ], width=9),

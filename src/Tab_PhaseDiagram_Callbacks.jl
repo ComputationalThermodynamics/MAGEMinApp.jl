@@ -287,6 +287,8 @@ function Tab_PhaseDiagram_Callbacks(app)
         app,
         Output("show-grid",             "value"), 
         Output("show-full-grid",        "value"), 
+        Output("pd-legend",             "figure"),
+        Output("pd-legend",             "config"),
         Output("phase-diagram",         "figure"),
         Output("phase-diagram",         "config"),
         Output("computation-info-id",   "children"),        
@@ -294,6 +296,9 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("isopleth-dropdown",     "options"),
         Output("smooth-colormap",       "value"),
         Output("tabs",                  "active_tab"),      # currently active tab
+
+        Output("min-color-id",           "value"),
+        Output("max-color-id",           "value"),
 
         Input("show-grid",                  "value"), 
         Input("show-full-grid",             "value"), 
@@ -306,6 +311,9 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         Input("compute-button",         "n_clicks"),
         Input("refine-pb-button",       "n_clicks"),
+  
+        Input("min-color-id",           "value"),
+        Input("max-color-id",           "value"),
 
         Input("colormaps_cross",        "value"),
         Input("smooth-colormap",        "value"),
@@ -362,6 +370,11 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("ss-dropdown",            "value"),
         State("em-dropdown",            "value"),
         State("of-dropdown",            "value"),
+        State("other-dropdown",         "value"),
+        State("input-calc-id",          "value"),
+        State("input-cust-id",          "value"),
+        State("line-style-dropdown",    "value"),
+        State("iso-line-width-id",      "value"),
         State("colorpicker_isoL",       "value"),
         State("iso-text-size-id",       "value"),
         State("iso-min-id",             "value"),
@@ -372,6 +385,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         prevent_initial_call = true,
 
     ) do    grid,       full_grid,  lbl,        addIso,     removeIso,  removeAllIso,    isoShow,    isoHide,    n_clicks_mesh, n_clicks_refine, 
+            minColor,   maxColor,
             colorMap,   smooth,     rangeColor, reverse,    fieldname,  updateTitle,     customTitle,
             diagType,   dtb,        watsat,     cpx,        limOpx,     limOpxVal,  phase_selection, PTpath,
             tmin,       tmax,       pmin,       pmax,
@@ -382,8 +396,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             bufferN1,   bufferN2,
             tepm,       kds_mod,    zrsat_mod,  bulkte1,    bulkte2,
             test,
-            isopleths,  isoplethsID,phase,      ss,         em,         of,  
-            isoColorLine,           isoLabelSize,   
+            isopleths,  isoplethsID,phase,      ss,         em,         of,     ot, calc, cust,
+            isoLineStyle, isoLineWidth, isoColorLine,           isoLabelSize,   
             minIso,     stepIso,    maxIso,     active_tab
 
 
@@ -420,10 +434,11 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                             watsat,     cpx,        limOpx,     limOpxVal,  PTpath,
                                                                             bulk_L,     bulk_R,     oxi,
                                                                             bufferType, bufferN1,   bufferN2,
+                                                                            minColor,   maxColor,
                                                                             smooth,     colorm,     reverseColorMap,
                                                                             test,       refType                          )
             if tepm == "true"
-                if dtb != "um" && dtb != "ume"
+                if dtb != "um" && dtb != "ume" && dtb != "mtl"
                     t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
                                                                         kds_mod, zrsat_mod, bulkte_L, bulkte_R)
 
@@ -439,6 +454,9 @@ function Tab_PhaseDiagram_Callbacks(app)
             data_grid       = show_hide_mesh_grid()
             active_tab      = "tab-phase-diagram" 
 
+            minColor        = round(minimum(skipmissing(gridded)),digits=2); 
+            maxColor        = round(maximum(skipmissing(gridded)),digits=2);  
+    
         elseif bid == "refine-pb-button"
 
             data_plot, layout, npoints, meant  =  refine_phaseDiagram(  xtitle,     ytitle,     lbl, 
@@ -449,11 +467,12 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                         cpx,        limOpx,     limOpxVal,  PTpath,
                                                                         bulk_L,     bulk_R,     oxi,
                                                                         bufferType, bufferN1,   bufferN2,
+                                                                        minColor,   maxColor,
                                                                         smooth,     colorm,     reverseColorMap,
                                                                         test,       refType                             )
 
             if tepm == "true"
-                if dtb != "um" && dtb != "ume"
+                if dtb != "um" && dtb != "ume" && dtb != "mtl"
                     t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
                                                                         kds_mod, zrsat_mod, bulkte_L, bulkte_R)
 
@@ -466,12 +485,13 @@ function Tab_PhaseDiagram_Callbacks(app)
             infos           = get_computation_info(npoints, meant)
             data_reaction   = show_hide_reaction_lines(sub,refLvl,Xrange,Yrange)
             data_grid       = show_hide_mesh_grid()
-                                                      
-        elseif bid == "colormaps_cross" || bid == "smooth-colormap" || bid == "range-slider-color" || bid == "reverse-colormap"
+                   
+        elseif bid == "min-color-id" || bid == "max-color-id" || bid == "colormaps_cross" || bid == "smooth-colormap" || bid == "range-slider-color" || bid == "reverse-colormap"
 
             data_plot, layout =  update_colormap_phaseDiagram(  xtitle,     ytitle,     
                                                                 Xrange,     Yrange,     fieldname,
                                                                 dtb,        diagType,
+                                                                minColor,   maxColor,
                                                                 smooth,     colorm,     reverseColorMap,
                                                                 test                                                    )
 
@@ -484,6 +504,9 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     smooth,     colorm,     reverseColorMap,
                                                                     test,       refType                                 )
 
+            minColor        = round(minimum(skipmissing(gridded)),digits=2); 
+            maxColor        = round(maximum(skipmissing(gridded)),digits=2);  
+                                                                                                 
         elseif bid == "show-grid"
 
             if grid == "true"
@@ -501,8 +524,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             data_isopleth, isopleths = add_isopleth_phaseDiagram(   Xrange,     Yrange,
                                                                     sub,        refLvl,
                                                                     dtb,        oxi,
-                                                                    isopleths,  phase,      ss,     em,     of,
-                                                                    isoColorLine,           isoLabelSize,   
+                                                                    isopleths,  phase,      ss,     em,     of,     ot, calc, cust,
+                                                                    isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,   
                                                                     minIso,     stepIso,    maxIso                      )
             data_isopleth_out = data_isopleth.isoP[data_isopleth.active]
             field2plot[4] = 1
@@ -538,18 +561,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         elseif bid == "button-hide-all-isopleth"
 
             iso_show          = 0
-
-        elseif bid == "show-lbl-id"
-
-            if lbl == "true"
-                for i=1:n_lbl+1
-                    layout[:annotations][i][:visible] = true
-                end
-            else
-                for i=1:n_lbl+1
-                    layout[:annotations][i][:visible] = false
-                end
-            end
+            
         elseif bid == "update-title-button"
             if @isdefined(MAGEMin_data)
                 layout[:title] = attr(
@@ -563,6 +575,15 @@ function Tab_PhaseDiagram_Callbacks(app)
             fig = plot()
         end
 
+        if lbl == "true"
+            for i=1:n_lbl+1
+                layout[:annotations][i][:visible] = true
+            end
+        else
+            for i=1:n_lbl+1
+                layout[:annotations][i][:visible] = false
+            end
+        end
 
         # check state of unchanged variables ["data_plot","data_reaction","data_grid"]
         if grid == "true"
@@ -598,9 +619,31 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     width    =  900,
                                                                     scale    =  2.0,       ).fields)
 
+        layoutCap = Layout(     height          =  30,        
+                                plot_bgcolor    = "white", 
+                                paper_bgcolor   = "white", 
+                                title           = "",
+                                xaxis           = attr(showticklabels=false),
+                                yaxis           = attr(showticklabels=false),
+                                legend=attr(
+                                    x           =  0.05,             
+                                    xanchor     = "left",
+                                    orientation = "h"
+                                ))
+        if field2plot[4] == 0
+            fig_cap = plot(layoutCap)
+        else
+            fig_cap = plot(data_isopleth.isoCap[data_isopleth.active],layoutCap)
+        end
+        config_cap  = PlotConfig(    toImageButtonOptions  = attr(      name     = "Download as svg",
+                                                                        format   = "svg",
+                                                                        filename =  (replace(customTitle, " " => "_"))*"_label",
+                                                                        height   =  30,
+                                                                        width    =  900,
+                                                                        scale    =  2.0,       ).fields)
 
 
-        return grid, full_grid, fig, config, infos, isopleths, smooth, active_tab
+        return grid, full_grid, fig_cap, config_cap, fig, config, infos, isopleths, smooth, active_tab, minColor,   maxColor
     end
 
 
