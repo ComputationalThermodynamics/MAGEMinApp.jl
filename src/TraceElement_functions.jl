@@ -212,7 +212,7 @@ end
                                                     test                                  )
     Updates the field displayed
 """
-function  update_diplayed_field_phaseDiagram_te(    xtitle,     ytitle,     type,                  varBuilder,
+function  update_diplayed_field_phaseDiagram_te(    xtitle,     ytitle,     type,                  varBuilder, norm,
                                                     Xrange,     Yrange,     fieldname,
                                                     dtb,        oxi,
                                                     sub,        refLvl,
@@ -223,6 +223,7 @@ function  update_diplayed_field_phaseDiagram_te(    xtitle,     ytitle,     type
     gridded_te, X_te, Y_te, npoints, meant = get_gridded_map_no_lbl(    fieldname,
                                                                         type,
                                                                         varBuilder,
+                                                                        norm,
                                                                         oxi,
                                                                         Out_XY,
                                                                         Out_TE_XY,

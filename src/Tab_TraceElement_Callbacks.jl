@@ -110,6 +110,7 @@ function Tab_TraceElement_Callbacks(app)
         State("title-id",                   "value"     ),
         State("tepm-dropdown",              "value"     ),
         State("input-te-id",                "value"     ),
+        State("field-norm-te-id",           "value"     ),
         State("field-type-dropdown-te",     "value"     ),
         
         State("database-dropdown",      "value"         ),           # mp, mb, ig ,igd, um, alk
@@ -139,7 +140,7 @@ function Tab_TraceElement_Callbacks(app)
         ) do    n,          n2,         fieldname,  
                 grid,       full_grid,  lbl, 
                 colorMap,   smooth,     rangeColor, reverse,    minColor, maxColor,
-                updateTitle,customTitle,tepm,       varBuilder, type,
+                updateTitle,customTitle,tepm,       varBuilder, norm, type,
                 dtb,        diagType,   tmin,       tmax,       pmin,       pmax,
                 bulk1,      bulk2,
                 sub,        refType,    refLvl,
@@ -289,7 +290,7 @@ function Tab_TraceElement_Callbacks(app)
                                                                                 smooth,     colorm,     reverseColorMap                                                   )
             elseif bid == "compute-display-te"
 
-                data_plot_te, layout_te =  update_diplayed_field_phaseDiagram_te(   xtitle,     ytitle,     "te",                  varBuilder,
+                data_plot_te, layout_te =  update_diplayed_field_phaseDiagram_te(   xtitle,     ytitle,     "te",                  varBuilder, norm,
                                                                                     Xrange,     Yrange,     fieldname,
                                                                                     dtb,        oxi,
                                                                                     sub,        refLvl,
@@ -300,7 +301,7 @@ function Tab_TraceElement_Callbacks(app)
 
             elseif bid == "fields-dropdown-zr"
 
-                data_plot_te, layout_te =  update_diplayed_field_phaseDiagram_te(   xtitle,     ytitle,     "zr",                  varBuilder,
+                data_plot_te, layout_te =  update_diplayed_field_phaseDiagram_te(   xtitle,     ytitle,     "zr",                  varBuilder, norm,
                                                                                     Xrange,     Yrange,     fieldname,
                                                                                     dtb,        oxi,
                                                                                     sub,        refLvl,
@@ -432,8 +433,6 @@ function Tab_TraceElement_Callbacks(app)
         end
     end
 
-
-
     #save references to bibtex
     callback!(
         app,
@@ -472,26 +471,6 @@ function Tab_TraceElement_Callbacks(app)
         else
             return  "", "failed"
         end
-    end
-
-
-
-    callback!(app,
-        Output("collapse-opt-te", "is_open"),
-        [Input("button-display-options-te", "n_clicks")],
-        [State("collapse-opt-te", "is_open")], ) do  n, is_open
-        
-        if isnothing(n); n=0 end
-
-        if n>0
-            if is_open==1
-                is_open = 0
-            elseif is_open==0
-                is_open = 1
-            end
-        end
-        return is_open 
-            
     end
 
     callback!(app,

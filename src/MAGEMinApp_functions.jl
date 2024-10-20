@@ -1083,69 +1083,67 @@ end
     parse use input
 """
 function get_parsed_command(    point       :: Int64;
-                                varBuilder  :: String = "M_Dy / M_Yb")
+                                varBuilder  :: String = "M_Dy / M_Yb",
+                                norm        :: String = "none" )
+
+    # te_chondrite    = ["Rb", "Ba", "Th", "U", "Nb", "Ta", "La", "Ce", "Pb", "Pr", "Sr", "Nd", "Zr", "Hf", "Sm", "Eu", "Gd", "Tb", "Dy", "Y", "Ho", "Er", "Tm", "Yb", "Lu", "V", "Sc"]
+    ppm_chondrite   = [2.3, 2.41,0.029,0.0074,0.24,0.0136,0.237,0.613,2.47,0.0928,7.25,0.457,3.82,0.103,0.148,0.0563,0.199,0.0361,0.246,1.57,0.0546,0.160,0.0247,0.161,0.0246,56,5.92]
 
     if ~isnothing(Out_TE_XY[point].Cliq)
-        terms       = split(varBuilder)
-        terms_out   = copy(terms)
-        idx         = 1
 
-        for i in terms
-            term2   = split(i,"_")
-            nsubs   = length(term2)
-            if nsubs == 2
-                if (term2[1] == "S")
-                    part1 = "Out_TE_XY["*string(point)*"].Csol"
-                    id_el = findfirst(Out_TE_XY[point].elements  .== term2[2])
-                    if isnothing(id_el)
-                        part1, part2 = "break", "break"
-                        print("wrong element name!\n")
+        # varBuilder         = "[M_Dy]/([g_Dy]*[S_Yb])"
+        pattern     = r"\[([^\]]+)\]"
+        matches     = eachmatch(pattern, varBuilder)
+        terms       = [match.captures[1] for match in matches]
+        n_terms     = length(terms)
+    
+
+        ref         = "Out_TE_XY["*string(point)*"]"
+        varBuilder_out     = varBuilder
+        
+        if ~isempty(terms)
+            for i = 1:n_terms
+                st = String.(split(terms[i], "_"))
+                if length(st) == 2
+                    id_el = findfirst(Out_TE_XY[point].elements  .== st[2])
+        
+                    if norm == "bulk"
+                        nrm = string(Out_TE_XY[point].C0[id_el])
+                    elseif norm == "chondrite"
+                        nrm = string(ppm_chondrite[id_el])
                     else
-                        part2 = "["*string(id_el)*"]"
+                        nrm = string(1.0)
                     end
-                elseif (term2[1] == "M")
-                    part1 = "Out_TE_XY["*string(point)*"].Cliq"
-                    id_el = findfirst(Out_TE_XY[point].elements  .== term2[2])
-                    if isnothing(id_el)
-                        part1, part2 = "break", "break"
-                        print("wrong element name!\n")
+
+                    if st[1] == "S"
+                        part1 = ref*".Csol"
+                        part2 = "["*string(id_el)*"]"
+                    elseif st[1] == "M"
+                        part1 = ref*".Cliq"
+                        part2 = "["*string(id_el)*"]"
                     else
-                        part2 = "["*string(id_el)*"]"
+                        id_ph = findfirst(Out_TE_XY[point].ph_TE .== st[1])
+                        part1 = ref*".Cmin"
+                        part2 = "["*string(id_ph)*","*string(id_el)*"]"
                     end
+        
+                    left = "(("
+                    right = ")/"*nrm*")"
+
+                    varBuilder_out = replace(varBuilder_out, "["*terms[i]*"]" => left*part1*part2*right)
+        
                 else
-                    id = findfirst(Out_TE_XY[point].ph_TE .== term2[1])
-                    if isnothing(id)
-                        part1, part2 = "break", "break"
-                    else
-                        part1 = "Out_TE_XY["*string(point)*"].Cmin"
-                        id_el = findfirst(Out_TE_XY[point].elements  .== term2[2])
-                        if isnothing(id_el)
-                            part1, part2 = "break", "break"
-                            print("wrong element name!\n")
-                        else
-                            part2 = "["*string(id)*","*string(id_el)*"]"
-                        end
-                    end
+                    println("warning: underscore to split (M,S ph) and (element), has to be added")
                 end
         
-                if part1 == "break" || part2 == "break"
-                    terms_out[idx] = "NaN"
-                else
-                    terms_out[idx] = part1*part2
-                end
-            elseif nsubs > 2
-                print("something is fishy, check that spaces are correctly placed\n")
-                break;
             end
-            idx += 1
         end
-
-        cat     = join(string.(terms_out))
+      
     else
-        cat = "NaN"
+        varBuilder_out = "NaN"
     end
 
-    command = Meta.parse(cat)
+    command = Meta.parse(varBuilder_out)
 
     return command
 end
@@ -1156,6 +1154,7 @@ end
 function get_gridded_map_no_lbl(    fieldname   ::String,
                                     type        ::String,
                                     varBuilder  ::String,
+                                    norm       ::String,    
                                     oxi         ::Vector{String},
                                     Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
                                     Out_TE_XY   ::Union{Nothing,Vector{MAGEMin_C.out_tepm}},
@@ -1192,7 +1191,7 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
     elseif type == "te"
         global i
         for i=1:np
-            cmd = get_parsed_command( i;  varBuilder) 
+            cmd = get_parsed_command( i;  varBuilder, norm) 
             field[i] = eval(cmd)
         end
         field[isnan.(field)] .= 0.0
