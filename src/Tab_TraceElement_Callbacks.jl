@@ -150,8 +150,8 @@ function Tab_TraceElement_Callbacks(app)
         bulk_L, bulk_R, oxi             = get_bulkrock_prop(bulk1, bulk2) 
         colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)              # get colormap information
         bid                             = pushed_button( callback_context() )                           # get the ID of the last pushed button
-        fieldNames                      = ["data_plot_te","data_reaction","data_grid"]
-        field2plot                      = zeros(Int64,3)
+        fieldNames                      = ["data_plot_te","data_reaction","data_grid","data_isopleth_out_te"]
+        field2plot                      = zeros(Int64,4)
         fieldType                       = type
 
         field2plot[1]    = 1
@@ -161,6 +161,9 @@ function Tab_TraceElement_Callbacks(app)
                 global gridded_te, gridded_info_te, X_te, Y_te, npoints_te, meant_te
                 global layout_te, n_lbl, addedRefinementLvl
                 global data_plot_te,  data_reaction_te, data_grid_te, PT_infos_te 
+
+                global data_isopleth_te, data_isopleth_out_te
+                data_isopleth_te = initialize_g_isopleth(; n_iso_max = 32)
 
                 gridded_te, gridded_info_te, X_te, Y_te, npoints_te, meant_te = get_gridded_map(    fieldname,
                                                                                                     "zr",
@@ -353,7 +356,7 @@ function Tab_TraceElement_Callbacks(app)
             fig = plot()
         else
             data_all = eval(Symbol(fieldNames[1]))
-            np       = length(field2plot)
+            np       = length(field2plot)-1 #here
 
             for i=2:np
                 if field2plot[i] == 1

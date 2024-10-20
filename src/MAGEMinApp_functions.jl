@@ -1106,32 +1106,48 @@ function get_parsed_command(    point       :: Int64;
                 st = String.(split(terms[i], "_"))
                 if length(st) == 2
                     id_el = findfirst(Out_TE_XY[point].elements  .== st[2])
-        
-                    if norm == "bulk"
-                        nrm = string(Out_TE_XY[point].C0[id_el])
-                    elseif norm == "chondrite"
-                        nrm = string(ppm_chondrite[id_el])
+                    if isnothing(id_el)
+                        part1, part2 = "break", "break"
+                        print("wrong element name!\n")
                     else
-                        nrm = string(1.0)
+
+                        if norm == "bulk"
+                            nrm = string(Out_TE_XY[point].C0[id_el])
+                        elseif norm == "chondrite"
+                            nrm = string(ppm_chondrite[id_el])
+                        else
+                            nrm = string(1.0)
+                        end
+    
+                        if st[1] == "S"
+                            part1 = ref*".Csol"
+                            part2 = "["*string(id_el)*"]"
+                        elseif st[1] == "M"
+                            part1 = ref*".Cliq"
+                            part2 = "["*string(id_el)*"]"
+                        else
+                            id_ph = findfirst(Out_TE_XY[point].ph_TE .== st[1])
+                            if isnothing(id_ph)
+                                part1, part2 = "break", "break"
+                                # print("wrong phase name!\n")
+                            else
+                                part1 = ref*".Cmin"
+                                part2 = "["*string(id_ph)*","*string(id_el)*"]"
+                            end
+                        end
+
                     end
 
-                    if st[1] == "S"
-                        part1 = ref*".Csol"
-                        part2 = "["*string(id_el)*"]"
-                    elseif st[1] == "M"
-                        part1 = ref*".Cliq"
-                        part2 = "["*string(id_el)*"]"
-                    else
-                        id_ph = findfirst(Out_TE_XY[point].ph_TE .== st[1])
-                        part1 = ref*".Cmin"
-                        part2 = "["*string(id_ph)*","*string(id_el)*"]"
-                    end
         
                     left = "(("
                     right = ")/"*nrm*")"
 
-                    varBuilder_out = replace(varBuilder_out, "["*terms[i]*"]" => left*part1*part2*right)
-        
+                    if part1 == "break" || part2 == "break"
+                        varBuilder_out = "NaN"
+                    else
+                        varBuilder_out = replace(varBuilder_out, "["*terms[i]*"]" => left*part1*part2*right)
+                    end
+
                 else
                     println("warning: underscore to split (M,S ph) and (element), has to be added")
                 end
