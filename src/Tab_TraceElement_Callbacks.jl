@@ -136,7 +136,9 @@ function Tab_TraceElement_Callbacks(app)
         Input("colormaps_cross-te",         "value"     ),
         Input("smooth-colormap-te",         "value"     ),
         Input("range-slider-color-te",      "value"     ),
+        Input("set-min-white-te",           "value"     ),
         Input("reverse-colormap-te",        "value"     ),
+
   
         Input("min-color-id-te",            "value"     ),
         Input("max-color-id-te",            "value"     ),
@@ -193,7 +195,7 @@ function Tab_TraceElement_Callbacks(app)
 
                 addIso,     removeIso,  removeAllIso,           isoShow,    isoHide,
 
-                colorMap,   smooth,     rangeColor, reverse,    minColor, maxColor,
+                colorMap,   smooth,     rangeColor, set_white, reverse,    minColor, maxColor,
                 updateTitle,customTitle,tepm,       varBuilder, norm, type, norm_te,
                 dtb,        diagType,   tmin,       tmax,       pmin,       pmax,
                 bulk1,      bulk2,
@@ -342,20 +344,20 @@ function Tab_TraceElement_Callbacks(app)
 
                 data_plot_te       = vcat(data_plot_te,hover_lbl)
 
-            elseif bid == "min-color-id-te" || bid == "max-color-id-te" || bid == "colormaps_cross-te" || bid == "smooth-colormap-te" || bid == "range-slider-color-te" || bid == "reverse-colormap-te"
+            elseif bid == "set-min-white-te" || bid == "min-color-id-te" || bid == "max-color-id-te" || bid == "colormaps_cross-te" || bid == "smooth-colormap-te" || bid == "range-slider-color-te" || bid == "reverse-colormap-te"
 
                 data_plot_te, layout_te =  update_colormap_phaseDiagram_te(     xtitle,     ytitle,     type,               varBuilder,   
                                                                                 Xrange,     Yrange,     fieldname,
                                                                                 dtb,        diagType,
                                                                                 minColor,   maxColor,
-                                                                                smooth,     colorm,     reverseColorMap                                                   )
+                                                                                smooth,     colorm,     reverseColorMap, set_white                                                   )
             elseif bid == "compute-display-te"
 
                 data_plot_te, layout_te =  update_diplayed_field_phaseDiagram_te(   xtitle,     ytitle,     "te",                  varBuilder, norm,
                                                                                     Xrange,     Yrange,     fieldname,
                                                                                     dtb,        oxi,
                                                                                     sub,        refLvl,
-                                                                                    smooth,     colorm,     reverseColorMap,       refType                                 )
+                                                                                    smooth,     colorm,     reverseColorMap, set_white,       refType                                 )
                                                                                     
                 minColor     = round(minimum(skipmissing(gridded_te)),digits=2); 
                 maxColor     = round(maximum(skipmissing(gridded_te)),digits=2);  
@@ -366,7 +368,7 @@ function Tab_TraceElement_Callbacks(app)
                                                                                     Xrange,     Yrange,     fieldname,
                                                                                     dtb,        oxi,
                                                                                     sub,        refLvl,
-                                                                                    smooth,     colorm,     reverseColorMap,       refType                                 )
+                                                                                    smooth,     colorm,     reverseColorMap, set_white,       refType                                 )
                 minColor     = round(minimum(skipmissing(gridded_te)),digits=2); 
                 maxColor     = round(maximum(skipmissing(gridded_te)),digits=2);  
 

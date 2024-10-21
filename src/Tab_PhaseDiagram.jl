@@ -424,7 +424,17 @@ function Tab_PhaseDiagram()
                                                     ),
                                                 ]), 
                                             ]),
-        
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("Set min to white", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ], width=5),
+                                            dbc_col([
+                                                dcc_dropdown(   id          = "set-min-white",
+                                                                options     = ["true","false"],
+                                                                value       = "false",
+                                                                clearable   = false)
+                                            ]), 
+                                        ]),
                                             dbc_row([
                                                 dbc_col([ 
                                                     html_h1("Reverse colormap", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),

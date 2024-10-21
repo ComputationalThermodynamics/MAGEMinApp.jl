@@ -429,7 +429,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                     bulk_L,     bulk_R,     oxi,
                                     bufferType, bufferN1,   bufferN2,
                                     minColor,   maxColor,
-                                    smooth,     colorm,     reverseColorMap,
+                                    smooth,     colorm,     reverseColorMap, set_white,
                                     test,       refType                                  )
 
         # empty!(AppData.PseudosectionData);              #this empty the data from previous pseudosection computation
@@ -575,7 +575,9 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                             fixedrange    = true,
                                     ),
                 )
-                
+        if set_white == "true"
+            colorm = set_min_to_white(colorm; reverseColorMap)
+        end
         heat_map = heatmap( x               = X,
                             y               = Y,
                             z               = gridded,
@@ -635,7 +637,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                 bulk_L,     bulk_R,     oxi,
                                 bufferType, bufferN1,   bufferN2,
                                 minColor,   maxColor,
-                                smooth,     colorm,     reverseColorMap,
+                                smooth,     colorm,     reverseColorMap, set_white,
                                 test,       refType                                 )
 
     global forest, data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, X, Y, addedRefinementLvl, layout, n_lbl, pChip_wat, pChip_T
@@ -710,7 +712,9 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
         xanchor = "center",
         yanchor = "top"
     )
-    
+    if set_white == "true"
+        colorm = set_min_to_white(colorm; reverseColorMap)
+    end
     data_plot[1] = heatmap( x               = X,
                             y               = Y,
                             z               = gridded,
@@ -755,10 +759,12 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
                                             Xrange,     Yrange,     fieldname,
                                             dtb,        diagType,
                                             minColor,   maxColor,
-                                            smooth,     colorm,     reverseColorMap,
+                                            smooth,     colorm,     reverseColorMap, set_white,
                                             test                                  )
     global PT_infos, layout
-
+    if set_white == "true"
+        colorm = set_min_to_white(colorm; reverseColorMap)
+    end
     data_plot[1] = heatmap( x               =  X,
                             y               =  Y,
                             z               =  gridded,
@@ -870,7 +876,7 @@ function  update_diplayed_field_phaseDiagram(   xtitle,     ytitle,
                                                 Xrange,     Yrange,     fieldname,
                                                 dtb,        oxi,
                                                 sub,        refLvl,
-                                                smooth,     colorm,     reverseColorMap,
+                                                smooth,     colorm,     reverseColorMap, set_white,
                                                 test,       refType                                  )
 
     global data, Out_XY, data_plot, gridded, gridded_info, X, Y, addedRefinementLvl, PT_infos, layout
@@ -893,7 +899,9 @@ function  update_diplayed_field_phaseDiagram(   xtitle,     ytitle,
                                                                 Xrange,
                                                                 Yrange )
 
-
+    if set_white == "true"
+        colorm = set_min_to_white(colorm; reverseColorMap)
+    end
     data_plot[1] = heatmap( x               = X,
                             y               = Y,
                             z               = gridded,

@@ -173,13 +173,15 @@ function update_colormap_phaseDiagram_te(       xtitle,     ytitle,     type,   
                                                 Xrange,     Yrange,     fieldname, 
                                                 dtb,        diagType,
                                                 minColor,   maxColor,
-                                                smooth,     colorm,     reverseColorMap)
+                                                smooth,     colorm,     reverseColorMap, set_white)
     global PT_infos_te, layout_te
 
     if type == "te"
         fieldname = varBuilder
     end
-
+    if set_white == "true"
+        colorm = set_min_to_white(colorm; reverseColorMap)
+    end
     data_plot_te[1] = heatmap(  x               =  X_te,
                                 y               =  Y_te,
                                 z               =  gridded_te,
@@ -216,7 +218,7 @@ function  update_diplayed_field_phaseDiagram_te(    xtitle,     ytitle,     type
                                                     Xrange,     Yrange,     fieldname,
                                                     dtb,        oxi,
                                                     sub,        refLvl,
-                                                    smooth,     colorm,     reverseColorMap,       refType )
+                                                    smooth,     colorm,     reverseColorMap, set_white,       refType )
 
     global data, Out_XY, Out_TE_XY, data_plot_te, gridded_te, gridded_info_te, X_te, Y_te, addedRefinementLvl, PT_infos_te, layout_te
 
@@ -241,7 +243,11 @@ function  update_diplayed_field_phaseDiagram_te(    xtitle,     ytitle,     type
     if type == "te"
         fieldname = varBuilder
     end
-    
+
+    if set_white == "true"
+        colorm = set_min_to_white(colorm; reverseColorMap)
+    end
+
     data_plot_te[1] = heatmap(  x               = X_te,
                                 y               = Y_te,
                                 z               = gridded_te,

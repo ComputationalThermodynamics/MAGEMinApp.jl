@@ -1,4 +1,19 @@
+function set_min_to_white(colormap; reverseColorMap = false)
 
+    color       = colormap
+    nc          = length(color)
+    cust_color  = Vector{String}(undef, nc)
+    cust_color = [ [(i-1)/(nc-1),"rgba($(color[i].r),$(color[i].g),$(color[i].b),1.0)"] for i = 1:nc]
+
+    if reverseColorMap == false
+        cust_color[1][2] = "rgba(1.0,1.0,1.0,0.0)"
+    else
+        cust_color[end][2] = "rgba(1.0,1.0,1.0,0.0)"
+    end
+    colormap = cust_color
+
+    return colormap
+end
 
 
 function get_jet_colormap(n)
@@ -1422,7 +1437,7 @@ function get_isopleth_map_te(   mod         ::String,
 
     np          = length(data.x)
     len_ox      = length(oxi)
-    field       = Vector{Union{Float64,Missing}}(missing,np);
+    field       = Vector{Union{Float64,Nothing}}(nothing,np);
 
     if mod == "calc"
         global i

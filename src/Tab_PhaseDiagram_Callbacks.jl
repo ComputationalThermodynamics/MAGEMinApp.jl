@@ -318,6 +318,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("colormaps_cross",        "value"),
         Input("smooth-colormap",        "value"),
         Input("range-slider-color",     "value"),
+        Input("set-min-white",          "value"),
         Input("reverse-colormap",       "value"),
         Input("fields-dropdown",        "value"),
         Input("update-title-button",    "n_clicks"),
@@ -386,7 +387,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
     ) do    grid,       full_grid,  lbl,        addIso,     removeIso,  removeAllIso,    isoShow,    isoHide,    n_clicks_mesh, n_clicks_refine, 
             minColor,   maxColor,
-            colorMap,   smooth,     rangeColor, reverse,    fieldname,  updateTitle,     customTitle,
+            colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  updateTitle,     customTitle,
             diagType,   dtb,        watsat,     cpx,        limOpx,     limOpxVal,  phase_selection, PTpath,
             tmin,       tmax,       pmin,       pmax,
             fixT,       fixP,
@@ -435,7 +436,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                             bulk_L,     bulk_R,     oxi,
                                                                             bufferType, bufferN1,   bufferN2,
                                                                             minColor,   maxColor,
-                                                                            smooth,     colorm,     reverseColorMap,
+                                                                            smooth,     colorm,     reverseColorMap, set_white,
                                                                             test,       refType                          )
             if tepm == "true"
                 if dtb != "um" && dtb != "ume" && dtb != "mtl"
@@ -468,7 +469,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                         bulk_L,     bulk_R,     oxi,
                                                                         bufferType, bufferN1,   bufferN2,
                                                                         minColor,   maxColor,
-                                                                        smooth,     colorm,     reverseColorMap,
+                                                                        smooth,     colorm,     reverseColorMap, set_white,
                                                                         test,       refType                             )
 
             if tepm == "true"
@@ -492,7 +493,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                 Xrange,     Yrange,     fieldname,
                                                                 dtb,        diagType,
                                                                 minColor,   maxColor,
-                                                                smooth,     colorm,     reverseColorMap,
+                                                                smooth,     colorm,     reverseColorMap, set_white,
                                                                 test                                                    )
 
         elseif bid == "fields-dropdown"
@@ -501,7 +502,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     Xrange,     Yrange,     fieldname,
                                                                     dtb,        oxi,
                                                                     sub,        refLvl,
-                                                                    smooth,     colorm,     reverseColorMap,
+                                                                    smooth,     colorm,     reverseColorMap, set_white,
                                                                     test,       refType                                 )
 
             minColor        = round(minimum(skipmissing(gridded)),digits=2); 
