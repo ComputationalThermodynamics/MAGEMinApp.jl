@@ -14,6 +14,20 @@ function diagram_legend()
                 figure      = fig,
             )
 end
+function diagram_legend_te()
+
+    fig = plot(Layout(      height          =  30,        
+                            plot_bgcolor    = "white", 
+                            paper_bgcolor   = "white", 
+                            title           = "",
+                            xaxis           = attr(showticklabels=false),
+                            yaxis           = attr(showticklabels=false),    ))
+
+    dcc_graph(
+                id          = "pd-legend-te",
+                figure      = fig,
+            )
+end
 function diagram_plot()
 
     fig = plot()

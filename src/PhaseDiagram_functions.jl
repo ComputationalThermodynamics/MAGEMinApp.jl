@@ -947,6 +947,34 @@ end
 
 """
 
+    Initiatize global variable storing isopleths information
+"""
+function initialize_g_isopleth_te(; n_iso_max = 32)
+    global data_isopleth_te
+
+    status    = zeros(Int64,n_iso_max)
+    active    = []
+    isoP      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
+    isoCap    = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
+
+    for i=1:n_iso_max
+        isoP[i] = contour()
+        isoCap[i] = scatter()
+    end
+
+    label     = Vector{String}(undef,n_iso_max)
+    value     = Vector{Int64}(undef,n_iso_max)
+
+    data_isopleth_te = isopleth_data(   0, n_iso_max,
+                                        status, active, isoP, isoCap,
+                                        label, value)
+
+    
+    return data_isopleth_te
+end
+
+"""
+
     add_isopleth_phaseDiagram
 """
 function add_isopleth_phaseDiagram(         Xrange,     Yrange, 

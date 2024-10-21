@@ -1136,16 +1136,14 @@ function get_parsed_command(    point       :: Int64;
                             end
                         end
 
-                    end
-
-        
-                    left = "(("
-                    right = ")/"*nrm*")"
-
-                    if part1 == "break" || part2 == "break"
-                        varBuilder_out = "NaN"
-                    else
-                        varBuilder_out = replace(varBuilder_out, "["*terms[i]*"]" => left*part1*part2*right)
+                        left = "(("
+                        right = ")/"*nrm*")"
+    
+                        if part1 == "break" || part2 == "break"
+                            varBuilder_out = "NaN"
+                        else
+                            varBuilder_out = replace(varBuilder_out, "["*terms[i]*"]" => left*part1*part2*right)
+                        end
                     end
 
                 else
@@ -1401,6 +1399,58 @@ function get_isopleth_map(  mod         ::String,
     return gridded, X, Y
 end
 
+
+
+"""
+    Function interpolate AMR grid to regular grid
+"""
+function get_isopleth_map_te(   mod         ::String, 
+                                field       ::String, 
+                                calc        ::String,
+                                norm_te     ::String,
+                                oxi         ::Vector{String},
+                                Out_TE_XY   ::Vector{MAGEMin_C.out_tepm},
+                                sub         ::Int64,
+                                refLvl      ::Int64,
+                                xc          ::Vector{Float64},
+                                yc          ::Vector{Float64},
+                                xf          ::Vector{SVector{4, Float64}},
+                                yf          ::Vector{SVector{4, Float64}},
+                                Xrange      ::Tuple{Float64, Float64},
+                                Yrange      ::Tuple{Float64, Float64} )
+
+    np          = length(data.x)
+    len_ox      = length(oxi)
+    field       = Vector{Union{Float64,Missing}}(missing,np);
+
+    if mod == "calc"
+        global i
+        for i=1:np
+            cmd = get_parsed_command( i;  varBuilder=calc, norm=norm_te) 
+            field[i] = eval(cmd)
+        end
+        field[isnan.(field)] .= 0.0
+    end
+
+    n            = 2^(sub + refLvl)
+    x            = range(minimum(xc), stop = maximum(xc), length = n)
+    y            = range(minimum(yc), stop = maximum(yc), length = n)
+
+    X            = repeat(x , n)[:]
+    Y            = repeat(y', n)[:]
+    gridded_TE   = Matrix{Union{Float64,Missing}}(missing,n,n);
+
+    Xr = (Xrange[2]-Xrange[1])/n
+    Yr = (Yrange[2]-Yrange[1])/n
+
+    for k=1:np
+        ii              = Int64(round((xc[k]-Xrange[1] + Xr/2)/(Xr)))
+        jj              = Int64(round((yc[k]-Yrange[1] + Yr/2)/(Yr))) 
+        gridded_TE[ii,jj]  = field[k] 
+    end
+
+    return gridded_TE, X, Y
+end
 
 
 """

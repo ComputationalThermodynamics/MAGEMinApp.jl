@@ -59,6 +59,9 @@ function Tab_TraceElement()
                     ]),
                     html_div("‎ "),
                     dbc_row([
+                        diagram_legend_te()
+                    ]),
+                    dbc_row([
                         diagram_plot_te()
                     ]),
                 ], width=9),
@@ -438,7 +441,19 @@ function Tab_TraceElement()
                                                     dbc_input(
                                                         id      = "input-calc-id-te",
                                                         type    = "text", 
-                                                        value   = "[M_dy] / [M_Yb]"   ),
+                                                        value   = "[M_Dy] / [M_Yb]"   ),
+                                                ]), 
+                                            ]),
+                                            dbc_row([
+                                                dbc_col([ 
+                                                    html_h1("normalization", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                ]),
+                                                dbc_col([
+                                                    dcc_dropdown(   id          = "normalization-iso-te",
+                                                                    options     =  ["bulk","chondrite","none"],
+                                                                    value       = "none" ,
+                                                                    clearable   =  false,
+                                                                    multi       =  false),
                                                 ]), 
                                             ]),
                                             dbc_row([
