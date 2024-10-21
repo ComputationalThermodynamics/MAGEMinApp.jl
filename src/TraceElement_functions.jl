@@ -273,7 +273,7 @@ end
 function add_isopleth_phaseDiagram_te(      Xrange,     Yrange, 
                                             sub,        refLvl,
                                             dtb,        oxi,
-                                            isopleths_te,  field,  calc, cust, norm_tes,
+                                            isopleths_te,  field,  field_zr, calc, cust, norm_tes,
                                             isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,       
                                             minIso,     stepIso,    maxIso      )
 
@@ -286,13 +286,16 @@ function add_isopleth_phaseDiagram_te(      Xrange,     Yrange,
         else
             name    = calc
         end
+    elseif (field == "zrc")
+        mod     = "zrc"
+        name    = field_zr
     else
         println("Wrong combination, needs debugging...")
     end
 
     global data_isopleth_te, nIsopleths_te, data, Out_TE_XY, data_plot_te, X, Y, addedRefinementLvl
 
-    gridded_te, X, Y = get_isopleth_map_te(     mod, field, calc, norm_tes,
+    gridded_te, X, Y = get_isopleth_map_te(     mod, field, field_zr, calc, norm_tes,
                                                 oxi,
                                                 Out_TE_XY,
                                                 sub,

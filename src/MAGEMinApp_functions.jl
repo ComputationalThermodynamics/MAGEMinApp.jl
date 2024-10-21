@@ -1406,6 +1406,7 @@ end
 """
 function get_isopleth_map_te(   mod         ::String, 
                                 field       ::String, 
+                                field_zr    ::String,
                                 calc        ::String,
                                 norm_te     ::String,
                                 oxi         ::Vector{String},
@@ -1430,6 +1431,12 @@ function get_isopleth_map_te(   mod         ::String,
             field[i] = eval(cmd)
         end
         field[isnan.(field)] .= 0.0
+    elseif mod == "zrc"
+        for i=1:np
+            field[i] = get_property(Out_TE_XY[i], field_zr);
+        end
+        field[isnothing.(field)] .= 0.0
+
     end
 
     n            = 2^(sub + refLvl)

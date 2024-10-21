@@ -86,7 +86,8 @@ function Tab_TraceElement_Callbacks(app)
     # update the dictionary of the solution phases and end-members for isopleths
     callback!(
         app,
-        Output("calc-1-id-te",          "style"   ),
+        Output("calc-1-id-te",              "style"   ),
+        Output("fields-dropdown-zr-id-te",  "style"   ),
         Input("field-type-te-dropdown", "value"   ),
 
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
@@ -95,11 +96,13 @@ function Tab_TraceElement_Callbacks(app)
 
         if field == "te"
             style_te    = Dict("display" => "block")
+            style_zr    = Dict("display" => "none")
         else
             style_te    = Dict("display" => "none")
+            style_zr    = Dict("display" => "block")
         end
 
-        return style_te
+        return style_te, style_zr
     end
 
 
@@ -171,6 +174,7 @@ function Tab_TraceElement_Callbacks(app)
         State("isopleth-dropdown-te",   "options"       ),
         State("isopleth-dropdown-te",   "value"         ),
         State("field-type-te-dropdown", "value"         ),
+        State("fields-dropdown-zr-te",   "value"        ),
         State("input-calc-id-te",       "value"         ),
         State("input-cust-id-te",       "value"         ),
 
@@ -195,7 +199,7 @@ function Tab_TraceElement_Callbacks(app)
                 bulk1,      bulk2,
                 sub,        refType,    refLvl,
                 fixT,       fixP,       solver,     bufferType, bufferN1,   bufferN2,   PTpath,
-                isopleths_te,  isoplethsID_te,  field, calc, cust,
+                isopleths_te,  isoplethsID_te,  field, field_zr, calc, cust,
 
                 isoLineStyle, isoLineWidth, isoColorLine, isoLabelSize,   
                 minIso,     stepIso,    maxIso
@@ -382,7 +386,7 @@ function Tab_TraceElement_Callbacks(app)
                 data_isopleth_te, isopleths_te = add_isopleth_phaseDiagram_te(  Xrange,         Yrange,
                                                                                 sub,            refLvl,
                                                                                 dtb,            oxi,
-                                                                                isopleths_te,   field,  calc, cust, norm_te,
+                                                                                isopleths_te,   field, field_zr, calc, cust, norm_te,
                                                                                 isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,   
                                                                                 minIso,     stepIso,    maxIso                      )
                 data_isopleth_out_te = data_isopleth_te.isoP[data_isopleth_te.active]

@@ -431,7 +431,25 @@ function Tab_TraceElement()
                                                     multi       = false),
                                                 ]),
                                             ]),
-                                    
+
+                                        html_div([
+                                            dbc_row([
+                                                dbc_col([ 
+                                                    html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                ], width=5),
+                                                dbc_col([
+                                                    dcc_dropdown(   id      = "fields-dropdown-zr-te",
+                                                                    options = [
+                                                                        (label = "Sat_zr_liq",              value = "Sat_zr_liq"    ),
+                                                                        (label = "Cliq_Zr",                 value = "Cliq_Zr"       ),
+                                                                        (label = "zrc_wt",                  value = "zrc_wt"        ),
+                                                                    ],
+                                                                    value="Sat_zr_liq" ,
+                                                                    clearable   = false,
+                                                                    multi       = false),
+                                                ]), 
+                                            ]),
+                                        ], style = Dict("display" => "none"), id      = "fields-dropdown-zr-id-te"),
                                         html_div([
                                             dbc_row([
                                                 dbc_col([ 
