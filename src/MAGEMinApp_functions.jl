@@ -1,4 +1,19 @@
+function set_min_to_white(colormap; reverseColorMap = false)
 
+    color       = colormap
+    nc          = length(color)
+    cust_color  = Vector{String}(undef, nc)
+    cust_color = [ [(i-1)/(nc-1),"rgba($(color[i].r),$(color[i].g),$(color[i].b),1.0)"] for i = 1:nc]
+
+    if reverseColorMap == false
+        cust_color[1][2] = "rgba(1.0,1.0,1.0,0.0)"
+    else
+        cust_color[end][2] = "rgba(1.0,1.0,1.0,0.0)"
+    end
+    colormap = cust_color
+
+    return colormap
+end
 
 
 function get_jet_colormap(n)
@@ -1083,69 +1098,81 @@ end
     parse use input
 """
 function get_parsed_command(    point       :: Int64;
-                                varBuilder  :: String = "M_Dy / M_Yb")
+                                varBuilder  :: String = "M_Dy / M_Yb",
+                                norm        :: String = "none" )
+
+    # te_chondrite    = ["Rb", "Ba", "Th", "U", "Nb", "Ta", "La", "Ce", "Pb", "Pr", "Sr", "Nd", "Zr", "Hf", "Sm", "Eu", "Gd", "Tb", "Dy", "Y", "Ho", "Er", "Tm", "Yb", "Lu", "V", "Sc"]
+    ppm_chondrite   = [2.3, 2.41,0.029,0.0074,0.24,0.0136,0.237,0.613,2.47,0.0928,7.25,0.457,3.82,0.103,0.148,0.0563,0.199,0.0361,0.246,1.57,0.0546,0.160,0.0247,0.161,0.0246,56,5.92]
 
     if ~isnothing(Out_TE_XY[point].Cliq)
-        terms       = split(varBuilder)
-        terms_out   = copy(terms)
-        idx         = 1
 
-        for i in terms
-            term2   = split(i,"_")
-            nsubs   = length(term2)
-            if nsubs == 2
-                if (term2[1] == "S")
-                    part1 = "Out_TE_XY["*string(point)*"].Csol"
-                    id_el = findfirst(Out_TE_XY[point].elements  .== term2[2])
+        # varBuilder         = "[M_Dy]/([g_Dy]*[S_Yb])"
+        pattern     = r"\[([^\]]+)\]"
+        matches     = eachmatch(pattern, varBuilder)
+        terms       = [match.captures[1] for match in matches]
+        n_terms     = length(terms)
+    
+
+        ref         = "Out_TE_XY["*string(point)*"]"
+        varBuilder_out     = varBuilder
+        
+        if ~isempty(terms)
+            for i = 1:n_terms
+                st = String.(split(terms[i], "_"))
+                if length(st) == 2
+                    id_el = findfirst(Out_TE_XY[point].elements  .== st[2])
                     if isnothing(id_el)
                         part1, part2 = "break", "break"
                         print("wrong element name!\n")
                     else
-                        part2 = "["*string(id_el)*"]"
-                    end
-                elseif (term2[1] == "M")
-                    part1 = "Out_TE_XY["*string(point)*"].Cliq"
-                    id_el = findfirst(Out_TE_XY[point].elements  .== term2[2])
-                    if isnothing(id_el)
-                        part1, part2 = "break", "break"
-                        print("wrong element name!\n")
-                    else
-                        part2 = "["*string(id_el)*"]"
-                    end
-                else
-                    id = findfirst(Out_TE_XY[point].ph_TE .== term2[1])
-                    if isnothing(id)
-                        part1, part2 = "break", "break"
-                    else
-                        part1 = "Out_TE_XY["*string(point)*"].Cmin"
-                        id_el = findfirst(Out_TE_XY[point].elements  .== term2[2])
-                        if isnothing(id_el)
-                            part1, part2 = "break", "break"
-                            print("wrong element name!\n")
+
+                        if norm == "bulk"
+                            nrm = string(Out_TE_XY[point].C0[id_el])
+                        elseif norm == "chondrite"
+                            nrm = string(ppm_chondrite[id_el])
                         else
-                            part2 = "["*string(id)*","*string(id_el)*"]"
+                            nrm = string(1.0)
+                        end
+    
+                        if st[1] == "S"
+                            part1 = ref*".Csol"
+                            part2 = "["*string(id_el)*"]"
+                        elseif st[1] == "M"
+                            part1 = ref*".Cliq"
+                            part2 = "["*string(id_el)*"]"
+                        else
+                            id_ph = findfirst(Out_TE_XY[point].ph_TE .== st[1])
+                            if isnothing(id_ph)
+                                part1, part2 = "break", "break"
+                                # print("wrong phase name!\n")
+                            else
+                                part1 = ref*".Cmin"
+                                part2 = "["*string(id_ph)*","*string(id_el)*"]"
+                            end
+                        end
+
+                        left = "(("
+                        right = ")/"*nrm*")"
+    
+                        if part1 == "break" || part2 == "break"
+                            varBuilder_out = "NaN"
+                        else
+                            varBuilder_out = replace(varBuilder_out, "["*terms[i]*"]" => left*part1*part2*right)
                         end
                     end
+
+                else
+                    println("warning: underscore to split (M,S ph) and (element), has to be added")
                 end
         
-                if part1 == "break" || part2 == "break"
-                    terms_out[idx] = "NaN"
-                else
-                    terms_out[idx] = part1*part2
-                end
-            elseif nsubs > 2
-                print("something is fishy, check that spaces are correctly placed\n")
-                break;
             end
-            idx += 1
         end
-
-        cat     = join(string.(terms_out))
+      
     else
-        cat = "NaN"
+        varBuilder_out = "NaN"
     end
 
-    command = Meta.parse(cat)
+    command = Meta.parse(varBuilder_out)
 
     return command
 end
@@ -1156,6 +1183,7 @@ end
 function get_gridded_map_no_lbl(    fieldname   ::String,
                                     type        ::String,
                                     varBuilder  ::String,
+                                    norm       ::String,    
                                     oxi         ::Vector{String},
                                     Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
                                     Out_TE_XY   ::Union{Nothing,Vector{MAGEMin_C.out_tepm}},
@@ -1192,7 +1220,7 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
     elseif type == "te"
         global i
         for i=1:np
-            cmd = get_parsed_command( i;  varBuilder) 
+            cmd = get_parsed_command( i;  varBuilder, norm) 
             field[i] = eval(cmd)
         end
         field[isnan.(field)] .= 0.0
@@ -1386,6 +1414,65 @@ function get_isopleth_map(  mod         ::String,
     return gridded, X, Y
 end
 
+
+
+"""
+    Function interpolate AMR grid to regular grid
+"""
+function get_isopleth_map_te(   mod         ::String, 
+                                field       ::String, 
+                                field_zr    ::String,
+                                calc        ::String,
+                                norm_te     ::String,
+                                oxi         ::Vector{String},
+                                Out_TE_XY   ::Vector{MAGEMin_C.out_tepm},
+                                sub         ::Int64,
+                                refLvl      ::Int64,
+                                xc          ::Vector{Float64},
+                                yc          ::Vector{Float64},
+                                xf          ::Vector{SVector{4, Float64}},
+                                yf          ::Vector{SVector{4, Float64}},
+                                Xrange      ::Tuple{Float64, Float64},
+                                Yrange      ::Tuple{Float64, Float64} )
+
+    np          = length(data.x)
+    len_ox      = length(oxi)
+    field       = Vector{Union{Float64,Nothing}}(nothing,np);
+
+    if mod == "calc"
+        global i
+        for i=1:np
+            cmd = get_parsed_command( i;  varBuilder=calc, norm=norm_te) 
+            field[i] = eval(cmd)
+        end
+        field[isnan.(field)] .= 0.0
+    elseif mod == "zrc"
+        for i=1:np
+            field[i] = get_property(Out_TE_XY[i], field_zr);
+        end
+        field[isnothing.(field)] .= 0.0
+
+    end
+
+    n            = 2^(sub + refLvl)
+    x            = range(minimum(xc), stop = maximum(xc), length = n)
+    y            = range(minimum(yc), stop = maximum(yc), length = n)
+
+    X            = repeat(x , n)[:]
+    Y            = repeat(y', n)[:]
+    gridded_TE   = Matrix{Union{Float64,Missing}}(missing,n,n);
+
+    Xr = (Xrange[2]-Xrange[1])/n
+    Yr = (Yrange[2]-Yrange[1])/n
+
+    for k=1:np
+        ii              = Int64(round((xc[k]-Xrange[1] + Xr/2)/(Xr)))
+        jj              = Int64(round((yc[k]-Yrange[1] + Yr/2)/(Yr))) 
+        gridded_TE[ii,jj]  = field[k] 
+    end
+
+    return gridded_TE, X, Y
+end
 
 
 """

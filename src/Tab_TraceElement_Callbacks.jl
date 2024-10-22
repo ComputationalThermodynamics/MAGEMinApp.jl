@@ -81,14 +81,43 @@ function Tab_TraceElement_Callbacks(app)
     end
 
 
+
+
+    # update the dictionary of the solution phases and end-members for isopleths
+    callback!(
+        app,
+        Output("calc-1-id-te",              "style"   ),
+        Output("fields-dropdown-zr-id-te",  "style"   ),
+        Input("field-type-te-dropdown", "value"   ),
+
+        prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
+    ) do field
+        bid         = pushed_button( callback_context() ) 
+
+        if field == "te"
+            style_te    = Dict("display" => "block")
+            style_zr    = Dict("display" => "none")
+        else
+            style_te    = Dict("display" => "none")
+            style_zr    = Dict("display" => "block")
+        end
+
+        return style_te, style_zr
+    end
+
+
+
     callback!(app,
         Output("show-grid-te",              "value"     ), 
         Output("show-full-grid-te",         "value"     ), 
+        Output("pd-legend-te",              "figure"    ),
+        Output("pd-legend-te",              "config"    ),
         Output("phase-diagram-te",          "figure"    ),
         Output("phase-diagram-te",          "config"    ),
         Output("field-type-dropdown-te",    "value"     ),
         Output("min-color-id-te",           "value"     ),
         Output("max-color-id-te",           "value"     ),
+        Output("isopleth-dropdown-te",      "options"   ),
 
         Input("load-button-te",             "n_clicks"  ),
         Input("compute-display-te",         "n_clicks"  ),
@@ -98,10 +127,18 @@ function Tab_TraceElement_Callbacks(app)
         Input("show-full-grid-te",          "value"     ), 
         Input("show-lbl-id-te",             "value"     ),
 
+        Input("button-add-isopleth-te",        "n_clicks"),
+        Input("button-remove-isopleth-te",     "n_clicks"),
+        Input("button-remove-all-isopleth-te", "n_clicks"),
+        Input("button-show-all-isopleth-te",   "n_clicks"),
+        Input("button-hide-all-isopleth-te",   "n_clicks"),
+
         Input("colormaps_cross-te",         "value"     ),
         Input("smooth-colormap-te",         "value"     ),
         Input("range-slider-color-te",      "value"     ),
+        Input("set-min-white-te",           "value"     ),
         Input("reverse-colormap-te",        "value"     ),
+
   
         Input("min-color-id-te",            "value"     ),
         Input("max-color-id-te",            "value"     ),
@@ -110,7 +147,9 @@ function Tab_TraceElement_Callbacks(app)
         State("title-id",                   "value"     ),
         State("tepm-dropdown",              "value"     ),
         State("input-te-id",                "value"     ),
+        State("field-norm-te-id",           "value"     ),
         State("field-type-dropdown-te",     "value"     ),
+        State("normalization-iso-te",       "value"     ),
         
         State("database-dropdown",      "value"         ),           # mp, mb, ig ,igd, um, alk
         State("diagram-dropdown",       "value"         ),           # pt, px, tx
@@ -134,23 +173,45 @@ function Tab_TraceElement_Callbacks(app)
         State("buffer-2-mul-id",        "value"         ),           # buffer n 2
         State("pt-x-table",             "data"          ),
 
+        State("isopleth-dropdown-te",   "options"       ),
+        State("isopleth-dropdown-te",   "value"         ),
+        State("field-type-te-dropdown", "value"         ),
+        State("fields-dropdown-zr-te",   "value"        ),
+        State("input-calc-id-te",       "value"         ),
+        State("input-cust-id-te",       "value"         ),
+
+        State("line-style-dropdown-te",    "value"),
+        State("iso-line-width-id-te",      "value"),
+        State("colorpicker_isoL-te",       "value"),
+        State("iso-text-size-id-te",       "value"),
+        State("iso-min-id-te",             "value"),
+        State("iso-step-id-te",            "value"),
+        State("iso-max-id-te",             "value"),
+
         prevent_initial_call = true,
 
         ) do    n,          n2,         fieldname,  
                 grid,       full_grid,  lbl, 
-                colorMap,   smooth,     rangeColor, reverse,    minColor, maxColor,
-                updateTitle,customTitle,tepm,       varBuilder, type,
+
+                addIso,     removeIso,  removeAllIso,           isoShow,    isoHide,
+
+                colorMap,   smooth,     rangeColor, set_white, reverse,    minColor, maxColor,
+                updateTitle,customTitle,tepm,       varBuilder, norm, type, norm_te,
                 dtb,        diagType,   tmin,       tmax,       pmin,       pmax,
                 bulk1,      bulk2,
                 sub,        refType,    refLvl,
-                fixT,       fixP,       solver,     bufferType, bufferN1,   bufferN2,   PTpath
+                fixT,       fixP,       solver,     bufferType, bufferN1,   bufferN2,   PTpath,
+                isopleths_te,  isoplethsID_te,  field, field_zr, calc, cust,
+
+                isoLineStyle, isoLineWidth, isoColorLine, isoLabelSize,   
+                minIso,     stepIso,    maxIso
 
         xtitle, ytitle, Xrange, Yrange  = diagram_type(diagType, tmin, tmax, pmin, pmax) 
         bulk_L, bulk_R, oxi             = get_bulkrock_prop(bulk1, bulk2) 
         colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)              # get colormap information
         bid                             = pushed_button( callback_context() )                           # get the ID of the last pushed button
-        fieldNames                      = ["data_plot_te","data_reaction","data_grid"]
-        field2plot                      = zeros(Int64,3)
+        fieldNames                      = ["data_plot_te","data_reaction","data_grid","data_isopleth_out_te"]
+        field2plot                      = zeros(Int64,4)
         fieldType                       = type
 
         field2plot[1]    = 1
@@ -159,7 +220,10 @@ function Tab_TraceElement_Callbacks(app)
                 fieldType = "zr"
                 global gridded_te, gridded_info_te, X_te, Y_te, npoints_te, meant_te
                 global layout_te, n_lbl, addedRefinementLvl
-                global data_plot_te,  data_reaction_te, data_grid_te, PT_infos_te 
+                global data_plot_te,  data_reaction_te, data_grid_te, PT_infos_te, data_isopleth_te, data_isopleth_out_te
+
+                global iso_show_te             = 1;
+                data_isopleth_te = initialize_g_isopleth_te(; n_iso_max = 32)
 
                 gridded_te, gridded_info_te, X_te, Y_te, npoints_te, meant_te = get_gridded_map(    fieldname,
                                                                                                     "zr",
@@ -280,31 +344,31 @@ function Tab_TraceElement_Callbacks(app)
 
                 data_plot_te       = vcat(data_plot_te,hover_lbl)
 
-            elseif bid == "min-color-id-te" || bid == "max-color-id-te" || bid == "colormaps_cross-te" || bid == "smooth-colormap-te" || bid == "range-slider-color-te" || bid == "reverse-colormap-te"
+            elseif bid == "set-min-white-te" || bid == "min-color-id-te" || bid == "max-color-id-te" || bid == "colormaps_cross-te" || bid == "smooth-colormap-te" || bid == "range-slider-color-te" || bid == "reverse-colormap-te"
 
                 data_plot_te, layout_te =  update_colormap_phaseDiagram_te(     xtitle,     ytitle,     type,               varBuilder,   
                                                                                 Xrange,     Yrange,     fieldname,
                                                                                 dtb,        diagType,
                                                                                 minColor,   maxColor,
-                                                                                smooth,     colorm,     reverseColorMap                                                   )
+                                                                                smooth,     colorm,     reverseColorMap, set_white                                                   )
             elseif bid == "compute-display-te"
 
-                data_plot_te, layout_te =  update_diplayed_field_phaseDiagram_te(   xtitle,     ytitle,     "te",                  varBuilder,
+                data_plot_te, layout_te =  update_diplayed_field_phaseDiagram_te(   xtitle,     ytitle,     "te",                  varBuilder, norm,
                                                                                     Xrange,     Yrange,     fieldname,
                                                                                     dtb,        oxi,
                                                                                     sub,        refLvl,
-                                                                                    smooth,     colorm,     reverseColorMap,       refType                                 )
+                                                                                    smooth,     colorm,     reverseColorMap, set_white,       refType                                 )
                                                                                     
                 minColor     = round(minimum(skipmissing(gridded_te)),digits=2); 
                 maxColor     = round(maximum(skipmissing(gridded_te)),digits=2);  
 
             elseif bid == "fields-dropdown-zr"
 
-                data_plot_te, layout_te =  update_diplayed_field_phaseDiagram_te(   xtitle,     ytitle,     "zr",                  varBuilder,
+                data_plot_te, layout_te =  update_diplayed_field_phaseDiagram_te(   xtitle,     ytitle,     "zr",                  varBuilder, norm,
                                                                                     Xrange,     Yrange,     fieldname,
                                                                                     dtb,        oxi,
                                                                                     sub,        refLvl,
-                                                                                    smooth,     colorm,     reverseColorMap,       refType                                 )
+                                                                                    smooth,     colorm,     reverseColorMap, set_white,       refType                                 )
                 minColor     = round(minimum(skipmissing(gridded_te)),digits=2); 
                 maxColor     = round(maximum(skipmissing(gridded_te)),digits=2);  
 
@@ -319,6 +383,47 @@ function Tab_TraceElement_Callbacks(app)
                 if full_grid == "true"
                     field2plot[3] = 1
                 end
+            elseif bid == "button-add-isopleth-te"
+
+                data_isopleth_te, isopleths_te = add_isopleth_phaseDiagram_te(  Xrange,         Yrange,
+                                                                                sub,            refLvl,
+                                                                                dtb,            oxi,
+                                                                                isopleths_te,   field, field_zr, calc, cust, norm_te,
+                                                                                isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,   
+                                                                                minIso,     stepIso,    maxIso                      )
+                data_isopleth_out_te = data_isopleth_te.isoP[data_isopleth_te.active]
+                field2plot[4] = 1
+                iso_show_te      = 1
+                elseif bid == "button-remove-isopleth-te"
+    
+                if (isoplethsID_te) in data_isopleth_te.active
+                    if data_isopleth_te.n_iso > 1
+                        data_isopleth_te, isopleths_te = remove_single_isopleth_phaseDiagram_te(isoplethsID_te)
+                        data_isopleth_out_te = data_isopleth_te.isoP[data_isopleth_te.active]
+                        field2plot[4] = 1
+                    else
+                        data_isopleth_te, isopleths_te, data_plot_te = remove_all_isopleth_phaseDiagram_te()
+                    end
+    
+                else
+                    print("cannot remove isopleth, did you select one?")
+                    data_isopleth_out_te = data_isopleth_te.isoP[data_isopleth_te.active]
+                    field2plot[4] = 1
+                end
+    
+            elseif bid == "button-remove-all-isopleth-te"
+    
+                data_isopleth_te, isopleths_te, data_plot_te = remove_all_isopleth_phaseDiagram_te()
+    
+            elseif bid == "button-show-all-isopleth-te"
+    
+                iso_show_te          = 1
+                data_isopleth_out_te = data_isopleth_te.isoP[data_isopleth_te.active]
+                field2plot[4] = 1
+    
+            elseif bid == "button-hide-all-isopleth-te"
+    
+                iso_show_te          = 0
             elseif bid == "show-lbl-id-te"
 
                 if lbl == "true"
@@ -339,12 +444,15 @@ function Tab_TraceElement_Callbacks(app)
             print("Compute a phase diagram with activated trace-element in the Setup tab first!\n")
         end
 
-        # check state of unchanged variables ["data_plot","data_reaction","data_grid","data_isopleth_out"]
+        # check state of unchanged variables ["data_plot","data_reaction","data_grid","data_isopleth_out_te"]
         if grid == "true"
             field2plot[2] = 1
         end
         if full_grid == "true"
             field2plot[3] = 1
+        end
+        if data_isopleth_te.n_iso > 0 && iso_show_te == 1
+            field2plot[4] = 1
         end
 
         # Fetch the fields to display
@@ -371,8 +479,32 @@ function Tab_TraceElement_Callbacks(app)
                                                                     width    =  900,
                                                                     scale    =  2.0,       ).fields)
 
-        
-        return grid, full_grid, fig_te, config, fieldType, minColor, maxColor
+        layoutCap = Layout(     height          =  30,        
+                                plot_bgcolor    = "white", 
+                                paper_bgcolor   = "white", 
+                                title           = "",
+                                xaxis           = attr(showticklabels=false),
+                                yaxis           = attr(showticklabels=false),
+                                legend=attr(
+                                    x           =  0.05,             
+                                    xanchor     = "left",
+                                    orientation = "h"
+                                ))
+                                
+        if field2plot[4] == 0
+            fig_cap = plot(layoutCap)
+        else
+            fig_cap = plot(data_isopleth_te.isoCap[data_isopleth_te.active],layoutCap)
+        end
+        config_cap  = PlotConfig(    toImageButtonOptions  = attr(      name     = "Download as svg",
+                                                                        format   = "svg",
+                                                                        filename =  (replace(customTitle, " " => "_"))*"_TE_label",
+                                                                        height   =  30,
+                                                                        width    =  900,
+                                                                        scale    =  2.0,       ).fields)
+
+
+        return grid, full_grid, fig_cap, config_cap, fig_te, config, fieldType, minColor, maxColor, isopleths_te
             
     end
 
@@ -432,8 +564,6 @@ function Tab_TraceElement_Callbacks(app)
         end
     end
 
-
-
     #save references to bibtex
     callback!(
         app,
@@ -472,26 +602,6 @@ function Tab_TraceElement_Callbacks(app)
         else
             return  "", "failed"
         end
-    end
-
-
-
-    callback!(app,
-        Output("collapse-opt-te", "is_open"),
-        [Input("button-display-options-te", "n_clicks")],
-        [State("collapse-opt-te", "is_open")], ) do  n, is_open
-        
-        if isnothing(n); n=0 end
-
-        if n>0
-            if is_open==1
-                is_open = 0
-            elseif is_open==0
-                is_open = 1
-            end
-        end
-        return is_open 
-            
     end
 
     callback!(app,

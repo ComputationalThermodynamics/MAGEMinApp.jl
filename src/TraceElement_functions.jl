@@ -173,13 +173,15 @@ function update_colormap_phaseDiagram_te(       xtitle,     ytitle,     type,   
                                                 Xrange,     Yrange,     fieldname, 
                                                 dtb,        diagType,
                                                 minColor,   maxColor,
-                                                smooth,     colorm,     reverseColorMap)
+                                                smooth,     colorm,     reverseColorMap, set_white)
     global PT_infos_te, layout_te
 
     if type == "te"
         fieldname = varBuilder
     end
-
+    if set_white == "true"
+        colorm = set_min_to_white(colorm; reverseColorMap)
+    end
     data_plot_te[1] = heatmap(  x               =  X_te,
                                 y               =  Y_te,
                                 z               =  gridded_te,
@@ -212,17 +214,18 @@ end
                                                     test                                  )
     Updates the field displayed
 """
-function  update_diplayed_field_phaseDiagram_te(    xtitle,     ytitle,     type,                  varBuilder,
+function  update_diplayed_field_phaseDiagram_te(    xtitle,     ytitle,     type,                  varBuilder, norm,
                                                     Xrange,     Yrange,     fieldname,
                                                     dtb,        oxi,
                                                     sub,        refLvl,
-                                                    smooth,     colorm,     reverseColorMap,       refType )
+                                                    smooth,     colorm,     reverseColorMap, set_white,       refType )
 
     global data, Out_XY, Out_TE_XY, data_plot_te, gridded_te, gridded_info_te, X_te, Y_te, addedRefinementLvl, PT_infos_te, layout_te
 
     gridded_te, X_te, Y_te, npoints, meant = get_gridded_map_no_lbl(    fieldname,
                                                                         type,
                                                                         varBuilder,
+                                                                        norm,
                                                                         oxi,
                                                                         Out_XY,
                                                                         Out_TE_XY,
@@ -240,7 +243,11 @@ function  update_diplayed_field_phaseDiagram_te(    xtitle,     ytitle,     type
     if type == "te"
         fieldname = varBuilder
     end
-    
+
+    if set_white == "true"
+        colorm = set_min_to_white(colorm; reverseColorMap)
+    end
+
     data_plot_te[1] = heatmap(  x               = X_te,
                                 y               = Y_te,
                                 z               = gridded_te,
@@ -261,4 +268,126 @@ function  update_diplayed_field_phaseDiagram_te(    xtitle,     ytitle,     type
                                                             y               =  0.5         ),)
 
     return data_plot_te, layout_te
+end
+
+
+
+"""
+
+    add_isopleth_phaseDiagram
+"""
+function add_isopleth_phaseDiagram_te(      Xrange,     Yrange, 
+                                            sub,        refLvl,
+                                            dtb,        oxi,
+                                            isopleths_te,  field,  field_zr, calc, cust, norm_tes,
+                                            isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,       
+                                            minIso,     stepIso,    maxIso      )
+
+    isoLabelSize    = Int64(isoLabelSize)
+
+    if (field == "te")
+        mod     = "calc"
+        if cust != "none"
+            name    = cust
+        else
+            name    = calc
+        end
+    elseif (field == "zrc")
+        mod     = "zrc"
+        name    = field_zr
+    else
+        println("Wrong combination, needs debugging...")
+    end
+
+    global data_isopleth_te, nIsopleths_te, data, Out_TE_XY, data_plot_te, X, Y, addedRefinementLvl
+
+    gridded_te, X, Y = get_isopleth_map_te(     mod, field, field_zr, calc, norm_tes,
+                                                oxi,
+                                                Out_TE_XY,
+                                                sub,
+                                                refLvl + addedRefinementLvl,
+                                                data.xc,
+                                                data.yc,
+                                                data.x,
+                                                data.y,
+                                                Xrange,
+                                                Yrange )
+
+    data_isopleth_te.n_iso += 1
+
+    data_isopleth_te.isoP[data_isopleth_te.n_iso]= contour( x                   = X,
+                                                            y                   = Y,
+                                                            z                   = gridded_te,
+                                                            contours_coloring   = "lines",
+                                                            colorscale          = [[0, isoColorLine], [1, isoColorLine]],
+                                                            # connectgaps         = false,
+                                                            contours_start      = minIso,
+                                                            contours_end        = maxIso,
+                                                            contours_size       = stepIso,
+                                                            line_width          = isoLineWidth,
+                                                            line_dash           = isoLineStyle,
+                                                            showscale           = false,
+                                                            hoverinfo           = "skip",
+                                                            contours            =  attr(    coloring    = "lines",
+                                                                                            showlabels  = true,
+                                                                                            labelfont   = attr( size    = isoLabelSize,
+                                                                                                                color   = isoColorLine,  )
+                                                            )
+                                                        );
+
+    data_isopleth_te.isoCap[data_isopleth_te.n_iso]   = scatter(    x           = [nothing],
+                                                                    y           = [nothing],
+                                                                    mode        = "lines",
+                                                                    line        =  attr(color=isoColorLine,dash=isoLineStyle,width=isoLineWidth),
+                                                                    name        =  name,
+                                                                    showlegend  =  true);
+
+    data_isopleth_te.status[data_isopleth_te.n_iso]     = 1
+    data_isopleth_te.label[data_isopleth_te.n_iso]      = name
+    data_isopleth_te.value[data_isopleth_te.n_iso]      = data_isopleth_te.n_iso
+    data_isopleth_te.active                             = findall(data_isopleth_te.status .== 1)
+    n_act                                               = length(data_isopleth_te.active)
+
+    isopleths_te = [Dict("label" => data_isopleth_te.label[data_isopleth_te.active[i]], "value" => data_isopleth_te.value[data_isopleth_te.active[i]])
+                        for i=1:n_act]
+
+    return data_isopleth_te, isopleths_te
+
+end
+
+function remove_single_isopleth_phaseDiagram_te(isoplethsID)
+    global data_isopleth_te
+
+    data_isopleth_te.n_iso                -= 1      
+    data_isopleth_te.status[isoplethsID]   = 0;
+    data_isopleth_te.isoP[isoplethsID]     = contour()
+    data_isopleth_te.isoCap[isoplethsID]   = scatter()
+    data_isopleth_te.label[isoplethsID]    = ""
+    data_isopleth_te.value[isoplethsID]    = 0
+    data_isopleth_te.active                = findall(data_isopleth_te.status .== 1)
+    n_act                                  = length(data_isopleth_te.active)
+    isopleths_te = [Dict("label" => data_isopleth_te.label[data_isopleth_te.active[i]], "value" => data_isopleth_te.value[data_isopleth_te.active[i]])
+                    for i=1:n_act]
+
+    return data_isopleth_te, isopleths_te
+end
+
+
+function remove_all_isopleth_phaseDiagram_te()
+    global data_isopleth_te, data_plot_te
+
+    data_isopleth_te.label    .= ""
+    data_isopleth_te.value    .= 0
+    data_isopleth_te.n_iso     = 0
+    for i=1:data_isopleth_te.n_iso_max
+        data_isopleth_te.isoP[i] = contour()
+        data_isopleth_te.isoCap[i] = scatter()
+    end
+    data_isopleth_te.status   .= 0
+    data_isopleth_te.active   .= 0
+
+    # clear isopleth dropdown menu
+    isopleths_te = []              
+
+    return data_isopleth_te, isopleths_te, data_plot_te
 end
