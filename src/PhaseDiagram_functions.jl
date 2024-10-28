@@ -103,7 +103,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     db_in     = retrieve_solution_phase_information(dtb)
 
 
-    PD_infos[1]  = "Phase Diagram computed using MAGEMin v"*Out_XY[1].MAGEMin_ver*" (GUI v0.4.6) <br>"
+    PD_infos[1]  = "Phase Diagram computed using MAGEMin v"*Out_XY[1].MAGEMin_ver*" (GUI v0.4.7) <br>"
     PD_infos[1] *= "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾<br>"
     PD_infos[1] *= "Number of points <br>"
     
@@ -432,20 +432,13 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                     smooth,     colorm,     reverseColorMap, set_white,
                                     test,       refType                                  )
 
-        # empty!(AppData.PseudosectionData);              #this empty the data from previous pseudosection computation
-
         #________________________________________________________________________________________#
         # Create coarse mesh
-        cmesh           = t8_cmesh_quad_2d(MPI.COMM_WORLD, Xrange, Yrange)
-
-        # Refine coarse mesh (in a regular manner)
-        level           = sub
-        forest          = t8_forest_new_uniform(cmesh, t8_scheme_new_default_cxx(), level, 0, MPI.COMM_WORLD)
-        data            = get_element_data(forest)
+        data = init_AMR(Xrange,Yrange,sub)
 
         #________________________________________________________________________________________#
         # initialize database
-        global forest, data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, X, Y, layout, n_lbl
+        global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, X, Y, layout, n_lbl
         global addedRefinementLvl  = 0;
         global MAGEMin_data;
 
@@ -473,7 +466,6 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
 
         #________________________________________________________________________________________#                      
         # initial optimization on regular grid
-
         Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(  data, MAGEMin_data, diagType, PTpath,
                                                         phase_selection, fixT, fixP,
                                                         oxi, bulk_L, bulk_R,
@@ -486,21 +478,16 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
         # Refine the mesh along phase boundaries
 
         for irefine = 1:refLvl
-            refine_elements                          = refine_phase_boundaries(forest, Hash_XY);
-            forest_new, data_new, ind_map            = adapt_forest(forest, refine_elements, data);     # Adapt the mesh; also returns the new coordinates and a mapping from old->new
- 
-            t = @elapsed Out_XY, Hash_XY, n_phase_XY, = refine_MAGEMin(             data_new, MAGEMin_data, diagType, PTpath,
+            data    = select_cells_to_split_and_keep(data)
+            data    = perform_AMR(data)
+            t = @elapsed Out_XY, Hash_XY, n_phase_XY, = refine_MAGEMin(             data, MAGEMin_data, diagType, PTpath,
                                                                                     phase_selection, fixT, fixP,
                                                                                     oxi, bulk_L, bulk_R,
                                                                                     bufferType, bufferN1, bufferN2,
                                                                                     scp, refType,
-                                                                                    pChip_wat, pChip_T, 
-                                                                                    ind_map         = ind_map,
-                                                                                    Out_XY_old      = Out_XY  ) # recompute points that have not been computed before
+                                                                                    pChip_wat, pChip_T ) # recompute points that have not been computed before
                                                                      
-            println("Computed $(length(ind_map.<0)) new points in $t seconds")
-            data    = data_new
-            forest  = forest_new
+            println("Computed $(length(data.npoints)) new points in $t seconds")
             
         end
 
@@ -520,10 +507,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                                                         sub,
                                                                         refLvl,
                                                                         refType,
-                                                                        data.xc,
-                                                                        data.yc,
-                                                                        data.x,
-                                                                        data.y,
+                                                                        data,
                                                                         Xrange,
                                                                         Yrange)
 
@@ -536,8 +520,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                                         sub,
                                                         refLvl,
                                                         refType,
-                                                        data.xc,
-                                                        data.yc,
+                                                        data,
                                                         PT_infos )
         ticks   = 4
         frame   = get_plot_frame(Xrange,Yrange, ticks)                                  
@@ -578,6 +561,12 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
         if set_white == "true"
             colorm = set_min_to_white(colorm; reverseColorMap)
         end
+
+        # println(X,"\n")
+        # println(Y,"\n")
+        # println(gridded,"\n")
+        # println(gridded_info,"\n")
+
         heat_map = heatmap( x               = X,
                             y               = Y,
                             z               = gridded,
@@ -640,7 +629,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                 smooth,     colorm,     reverseColorMap, set_white,
                                 test,       refType                                 )
 
-    global forest, data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, X, Y, addedRefinementLvl, layout, n_lbl, pChip_wat, pChip_T
+    global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, X, Y, addedRefinementLvl, layout, n_lbl, pChip_wat, pChip_T
 
     mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb,        solver,
                                                     cpx,        limOpx,     limOpxVal ) 
@@ -653,21 +642,16 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                             buffer      = bufferType,
                                             solver      = sol    );
 
-    refine_elements                          = refine_phase_boundaries(forest, Hash_XY);
-    forest_new, data_new, ind_map            = adapt_forest(forest, refine_elements, data);     # Adapt the mesh; also returns the new coordinates and a mapping from old->new
-
-    t = @elapsed Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin( data_new, MAGEMin_data, diagType, PTpath,
+    data    = select_cells_to_split_and_keep(data)
+    data    = perform_AMR(data)
+    t = @elapsed Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin( data,       MAGEMin_data, diagType, PTpath,
                                                                             phase_selection, fixT, fixP,
                                                                             oxi, bulk_L, bulk_R,
                                                                             bufferType, bufferN1, bufferN2, 
                                                                             scp, refType,
-                                                                            pChip_wat,  pChip_T,
-                                                                            ind_map         = ind_map,
-                                                                            Out_XY_old      = Out_XY) # recompute points that have not been computed before
+                                                                            pChip_wat,  pChip_T) # recompute points that have not been computed before
 
-    println("Computed $(length(ind_map.<0)) new points in $(round(t, digits=3)) seconds")
-    data                = data_new
-    forest              = forest_new
+    println("Computed $(length(data.npoints)) new points in $(round(t, digits=3)) seconds")
     addedRefinementLvl += 1;
 
     for i = 1:Threads.nthreads()
@@ -685,10 +669,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                                                     sub,
                                                                     refLvl + addedRefinementLvl,
                                                                     refType,
-                                                                    data.xc,
-                                                                    data.yc,
-                                                                    data.x,
-                                                                    data.y,
+                                                                    data,
                                                                     Xrange,
                                                                     Yrange )
     
@@ -701,8 +682,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                                     sub,
                                                     refLvl,
                                                     refType,
-                                                    data.xc,
-                                                    data.yc,
+                                                    data,
                                                     PT_infos )
                                            
     layout[:annotations] = annotations 
@@ -796,30 +776,30 @@ end
                                     test                                  )
     Shows/hides the grid
 """
-function  show_hide_reaction_lines(  sub, 
+function  show_hide_reaction_lines(     sub, 
                                         refLvl, 
                                         Xrange, 
                                         Yrange  )
 
     global data, Hash_XY, addedRefinementLvl
 
-    boundaries  = get_boundaries(   Hash_XY,
-                                    sub,
-                                    refLvl+addedRefinementLvl,
-                                    Xrange,
-                                    Yrange,
-                                    data.xc,
-                                    data.yc,
-                                    data.x,
-                                    data.y          ) 
+    np      = length(data.ncells_c)
+    bnd_x   = zeros(Float64,np)
+    bnd_y   = zeros(Float64,np)
+
+    # for i=1:np
+    #     bnd_x[i] = data.ncells_center[i][1]
+    #     bnd_y[i] = data.ncells_center[i][2]
+    # end
+
+    for i=1:np
+        bnd_x[i] = data.points[data.ncells_c[i]][1]
+        bnd_y[i] = data.points[data.ncells_c[i]][2]
+    end
     
-    bnd            = findall(boundaries .> 0)
-
-
-    grid_plot = GenericTrace{Dict{Symbol, Any}}
-
-    grid_plot =  scatter(   x           = data.xc[boundaries[bnd]],
-                            y           = data.yc[boundaries[bnd]],
+    # grid_plot = GenericTrace{Dict{Symbol, Any}}
+    grid_plot =  scatter(   x           = bnd_x,
+                            y           = bnd_y,
                             mode        = "markers",
                             # line_color  = "#FFFFFF",
                             # color       = "#333333",
@@ -829,7 +809,6 @@ function  show_hide_reaction_lines(  sub,
 
     return grid_plot
 end
-
 
 
 
@@ -843,12 +822,12 @@ end
 """
 function  show_hide_mesh_grid()
 
-    np             = length(data.x)
+    np             = length(data.cells)
     grid_plot      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, np);
     for i = 1:np
 
-        grid_plot[i] = scatter(     x           = data.x[i],
-                                    y           = data.y[i],
+        grid_plot[i] = scatter(     x           = [data.points[data.cells[i][j]][1] for j=1:4],
+                                    y           = [data.points[data.cells[i][j]][2] for j=1:4],
                                     mode        = "lines",
                                     # line_color  = "#FFFFFF",
                                     line_color  = "#333333",
@@ -892,10 +871,7 @@ function  update_diplayed_field_phaseDiagram(   xtitle,     ytitle,
                                                                 sub,
                                                                 refLvl + addedRefinementLvl,
                                                                 refType,
-                                                                data.xc,
-                                                                data.yc,
-                                                                data.x,
-                                                                data.y,
+                                                                data,
                                                                 Xrange,
                                                                 Yrange )
 

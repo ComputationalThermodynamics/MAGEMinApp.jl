@@ -234,10 +234,7 @@ function Tab_TraceElement_Callbacks(app)
                                                                                                     sub,
                                                                                                     refLvl + addedRefinementLvl,
                                                                                                     refType,
-                                                                                                    data.xc,
-                                                                                                    data.yc,
-                                                                                                    data.x,
-                                                                                                    data.y,
+                                                                                                    data,
                                                                                                     Xrange,
                                                                                                     Yrange)
 

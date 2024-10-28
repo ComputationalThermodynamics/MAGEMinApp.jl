@@ -419,11 +419,12 @@ function Tab_PhaseDiagram_Callbacks(app)
             smooth                      = "best"
       
             # declare set of global variables needed to generate, refine and display phase diagrams
-            global fig, forest, data, Hash_XY, Out_XY, Out_TE_XY, all_TE_ph, n_phase_XY, gridded, gridded_info, X, Y, meant, npoints
+            global fig, data, Hash_XY, Out_TE_XY, all_TE_ph, n_phase_XY, gridded, gridded_info, X, Y, meant, npoints
             global addedRefinementLvl   = 0;
             global n_lbl                = 0;
             global iso_show             = 1;
             global data_plot, data_reaction, data_grid, layout, data_isopleth, data_isopleth_out, PT_infos, infos;
+            global Out_XY =  Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,0)
 
             data_isopleth = initialize_g_isopleth(; n_iso_max = 32)
 
@@ -609,7 +610,10 @@ function Tab_PhaseDiagram_Callbacks(app)
                     data_all = vcat( data_all, eval(Symbol(fieldNames[i])) )
                 end
             end
-
+            # println("data_all")
+            # println(data_all)
+            # println("data_plot")
+            # println(data_plot)
             fig = plot_diagram(data_all,layout)
         end
 
