@@ -613,10 +613,9 @@ function get_diagram_labels(    fieldname   ::String,
     for i in unique(Hash_XY)
         field_tmp   = findall(Hash_XY .== i)
     
-        t2 = [data.points[k][1] for k in field_tmp]
-        p2 = [data.points[k][2] for k in field_tmp]
-        # t2          = data.points[field_tmp][1]
-        # p2          = data.points[field_tmp][2]
+        t2          = [data.points[k][1] for k in field_tmp]
+        p2          = [data.points[k][2] for k in field_tmp]
+
         phase       = ph[field_tmp]
         phased      = phd[field_tmp]
     
@@ -1000,18 +999,48 @@ function get_gridded_map(   fieldname   ::String,
         jj              = compute_index(data.points[k][2], data.Yrange[1], dy)
         gridded[ii,jj]  = field[k] 
 
-        # for i=xf[k][1]+Xr/2 : Xr : xf[k][3]
-        #     for j=yf[k][1]+Yr/2 : Yr : yf[k][3]
-        #         iii                  = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
-        #         jjj                  = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
-
-        #         tmp                 = replace(string(Out_XY[k].ph), "\""=>"", "]"=>"", "["=>"", ","=>"")
-        #         gridded_info[iii,jjj] = "#"*string(k)*"# "*tmp
-        #     end
-        # end
+        tmp                 = replace(string(Out_XY[k].ph), "\""=>"", "]"=>"", "["=>"", ","=>"")
+        gridded_info[ii,jj] = "#"*string(k)*"# "*tmp
 
     end
 
+    for i=1:length(data.cells)
+        cell   = data.cells[i]
+        tmp    = "#"*string(cell[1])*"# "*replace(string(Out_XY[cell[1]].ph), "\""=>"", "]"=>"", "["=>"", ","=>"")
+
+        ii_min = compute_index(data.points[cell[2]][1], Xrange[1], dx)
+        ii_max = compute_index(data.points[cell[3]][1], Xrange[1], dx)
+        jj_ix  = compute_index(data.points[cell[2]][2], Yrange[1], dy)
+        for ii = ii_min+1:ii_max-1
+            gridded_info[ii, jj_ix] = tmp
+        end
+
+        jj_min = compute_index(data.points[cell[1]][2], Yrange[1], dy)
+        jj_max = compute_index(data.points[cell[2]][2], Yrange[1], dy)
+        ii_ix = compute_index(data.points[cell[1]][1], Xrange[1], dx)
+        for jj in jj_min+1:jj_max-1
+            gridded_info[ii_ix, jj] = tmp
+        end
+
+        jj_min = compute_index(data.points[cell[4]][2], Yrange[1], dy)
+        jj_max = compute_index(data.points[cell[3]][2], Yrange[1], dy)
+        ii_ix = compute_index(data.points[cell[4]][1], Xrange[1], dx)
+        for jj in jj_min+1:jj_max-1
+            gridded_info[ii_ix, jj] = tmp
+        end
+
+        ii_min = compute_index(data.points[data.cells[i][1]][1], Xrange[1], dx)
+        ii_max = compute_index(data.points[data.cells[i][4]][1], Xrange[1], dx)
+        jj_ix = compute_index(data.points[data.cells[i][1]][2], Yrange[1], dy)
+
+        for ii in ii_min+1:ii_max-1
+            gridded_info[ii, jj_ix] = tmp
+            for jj in jj_min+1:jj_max-1
+                gridded_info[ii, jj] = tmp
+            end
+        end
+
+    end
 
     println("\rInterpolate data on grid $(round(time()-t0, digits=3)) seconds"); 
     return gridded, gridded_info, X, Y, npoints, meant

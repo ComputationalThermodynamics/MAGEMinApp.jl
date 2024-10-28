@@ -610,10 +610,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                     data_all = vcat( data_all, eval(Symbol(fieldNames[i])) )
                 end
             end
-            # println("data_all")
-            # println(data_all)
-            # println("data_plot")
-            # println(data_plot)
+
             fig = plot_diagram(data_all,layout)
         end
 

@@ -562,11 +562,6 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
             colorm = set_min_to_white(colorm; reverseColorMap)
         end
 
-        # println(X,"\n")
-        # println(Y,"\n")
-        # println(gridded,"\n")
-        # println(gridded_info,"\n")
-
         heat_map = heatmap( x               = X,
                             y               = Y,
                             z               = gridded,
@@ -783,26 +778,21 @@ function  show_hide_reaction_lines(     sub,
 
     global data, Hash_XY, addedRefinementLvl
 
-    np      = length(data.ncells_c)
-    bnd_x   = zeros(Float64,np)
-    bnd_y   = zeros(Float64,np)
+    ncells_c    = retrieve_ncells_c(data)
 
-    # for i=1:np
-    #     bnd_x[i] = data.ncells_center[i][1]
-    #     bnd_y[i] = data.ncells_center[i][2]
-    # end
-
+    np          = length(ncells_c)
+    bnd_x       = zeros(Float64,np)
+    bnd_y       = zeros(Float64,np)
+ 
     for i=1:np
-        bnd_x[i] = data.points[data.ncells_c[i]][1]
-        bnd_y[i] = data.points[data.ncells_c[i]][2]
+        bnd_x[i] = ncells_c[i][1]
+        bnd_y[i] = ncells_c[i][2]
     end
     
     # grid_plot = GenericTrace{Dict{Symbol, Any}}
     grid_plot =  scatter(   x           = bnd_x,
                             y           = bnd_y,
                             mode        = "markers",
-                            # line_color  = "#FFFFFF",
-                            # color       = "#333333",
                             marker      = attr(color = "#333333", size = 1.5),
                             hoverinfo   = "skip",
                             showlegend  = false     );

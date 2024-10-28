@@ -1,9 +1,9 @@
-export init_AMR, select_cells_to_split_and_keep, perform_AMR
+export init_AMR, select_cells_to_split_and_keep, perform_AMR, retrieve_ncells_c
 
 mutable struct AMR_data
     cells           :: Vector{Vector{Int64}}
     ncells          :: Vector{Vector{Int64}}
-    ncells_c        :: Vector{Int64}
+    # ncells_c        :: Vector{Int64}
     points          :: Vector{Vector{Float64}}
     npoints         :: Vector{Vector{Float64}}
     hash_map        :: Dict{Vector{Float64}, Int}
@@ -25,7 +25,7 @@ function init_AMR(Xrange,Yrange,igs)
 
     points          = Vector{Vector{Float64}}(undef, 0)
     cells           = Vector{Vector{Int64}}(undef, 0)
-    ncells_c        = Vector{Int64}(undef, 0)
+    # ncells_c        = Vector{Int64}(undef, 0)
     npoints         = Vector{Vector{Float64}}(undef, 0)
     ncells          = Vector{Vector{Int64}}(undef, 0)
     hash_map        = Dict{Vector{Float64}, Int}()
@@ -47,7 +47,7 @@ function init_AMR(Xrange,Yrange,igs)
 
     data = AMR_data(    cells,
                         ncells,
-                        ncells_c,
+                        # ncells_c,
                         points,
                         npoints,
                         hash_map,
@@ -85,7 +85,7 @@ end
 function perform_AMR(data)
     npoints         = Vector{Vector{Float64}}(undef, 0)
     ncells          = Vector{Vector{Int64}}(undef, 0)
-    ncells_c        = Vector{Int64}(undef, 0)
+    # ncells_c        = Vector{Int64}(undef, 0)
 
     tp              = length(data.points)
     ns              = length(data.split_cell_list)
@@ -150,7 +150,7 @@ function perform_AMR(data)
         push!(ncells, [w, data.cells[data.split_cell_list[i]][2], n, c])
         push!(ncells, [c, n, data.cells[data.split_cell_list[i]][3], e])
         push!(ncells, [s, c, e, data.cells[data.split_cell_list[i]][4]])
-        push!(ncells_c, c)
+        # push!(ncells_c, c)
     end
 
     data.points = vcat(data.points, npoints)
@@ -176,7 +176,34 @@ function perform_AMR(data)
 
     data.ncells     = ncells
     data.npoints    = npoints
-    data.ncells_c   = ncells_c
+    # data.ncells_c   = ncells_c
 
     return data
+end
+
+
+function retrieve_ncells_c(data)
+    ncells_c        = Vector{Vector{Float64}}(undef, 0)
+    split_cell_list = []
+    keep_cell_list  = []
+
+    for i=1:length(data.cells)
+        tmp = zeros(UInt64,4)
+        for j=1:4
+            tmp[j] = Hash_XY[data.cells[i][j]]
+        end
+        if all_identical(tmp)
+            push!(keep_cell_list, i)
+        else
+            push!(split_cell_list, i)
+        end
+    end
+
+    ns              = length(split_cell_list)
+    for i=1:ns
+        tmp     = data.points[data.cells[split_cell_list[i]][1]]/2.0 + data.points[data.cells[split_cell_list[i]][3]]/2.0
+        push!(ncells_c, tmp)
+    end
+
+    return ncells_c
 end
