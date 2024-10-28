@@ -233,10 +233,7 @@ function  update_diplayed_field_phaseDiagram_te(    xtitle,     ytitle,     type
                                                                         sub,
                                                                         refLvl + addedRefinementLvl,
                                                                         refType,
-                                                                        data.xc,
-                                                                        data.yc,
-                                                                        data.x,
-                                                                        data.y,
+                                                                        data,
                                                                         Xrange,
                                                                         Yrange )
 
@@ -269,7 +266,6 @@ function  update_diplayed_field_phaseDiagram_te(    xtitle,     ytitle,     type
 
     return data_plot_te, layout_te
 end
-
 
 
 """
@@ -306,10 +302,7 @@ function add_isopleth_phaseDiagram_te(      Xrange,     Yrange,
                                                 Out_TE_XY,
                                                 sub,
                                                 refLvl + addedRefinementLvl,
-                                                data.xc,
-                                                data.yc,
-                                                data.x,
-                                                data.y,
+                                                data,
                                                 Xrange,
                                                 Yrange )
 

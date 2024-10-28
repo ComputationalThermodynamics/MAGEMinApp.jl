@@ -120,8 +120,8 @@ function save_rho_for_LaMEM(    dtb         ::String,
     end
 
     n            = 2^(sub + refLvl + addedRefinementLvl)
-    x            = range(minimum(data.xc), stop = maximum(data.xc), length = n)
-    y            = range(minimum(data.yc), stop = maximum(data.yc), length = n)
+    x            = range(data.Xrange[1], stop = data.Xrange[2], length = n)
+    y            = range(data.Yrange[1], stop = data.Yrange[2], length = n)
 
     T            = vcat(x)
     P            = vcat(y)
@@ -249,8 +249,8 @@ function save_rho_for_GeoModel(     dtb         ::String,
     end
 
     n            = 2^(sub + refLvl + addedRefinementLvl)
-    x            = range(minimum(data.xc), stop = maximum(data.xc), length = n)
-    y            = range(minimum(data.yc), stop = maximum(data.yc), length = n)
+    x            = range(data.Xrange[1], stop = data.Xrange[2], length = n)
+    y            = range(data.Yrange[1], stop = data.Yrange[2], length = n)
 
     T            = vcat(x)
     P            = vcat(y)
@@ -565,17 +565,16 @@ function get_diagram_labels(    fieldname   ::String,
                                 sub         ::Int64,
                                 refLvl      ::Int64,
                                 refType     ::String,
-                                xc          ::Vector{Float64},
-                                yc          ::Vector{Float64},
+                                data        ::MAGEMinApp.AMR_data,
                                 PT_infos    ::Vector{String} )
 
     global n_lbl
     print("Get phase diagram labels ..."); t0 = time();
 
-    np          = length(data.x)
+    np          = length(data.points)
     ph          = Vector{String}(undef,np)
     phd         = Vector{String}(undef,np)
-    fac         = (maximum(xc)-minimum(xc))*(maximum(yc)-minimum(yc))
+    fac         = (data.Xrange[2]-data.Xrange[1])*(data.Yrange[2]-data.Yrange[1])
     
     if refType == "ph"
         for i = 1:np
@@ -614,8 +613,9 @@ function get_diagram_labels(    fieldname   ::String,
     for i in unique(Hash_XY)
         field_tmp   = findall(Hash_XY .== i)
     
-        t2          = xc[field_tmp]
-        p2          = yc[field_tmp]
+        t2          = [data.points[k][1] for k in field_tmp]
+        p2          = [data.points[k][2] for k in field_tmp]
+
         phase       = ph[field_tmp]
         phased      = phd[field_tmp]
     
@@ -649,9 +649,7 @@ function get_diagram_labels(    fieldname   ::String,
                                 mode        = "lines",
                                 hoverinfo   = "text",
                                 showlegend  = false,
-                                text        = ph_list[i],
-                                );
-    
+                                text        = ph_list[i]        );
     
         np          = size(tmp,1) 
         if np > 4
@@ -662,8 +660,8 @@ function get_diagram_labels(    fieldname   ::String,
             ctr[1]  =  mean(tmp[2:end,1])
             ctr[2]  =  mean(tmp[2:end,2])
         end
-        labelCoor[i,1]   = (ctr[1]-minimum(xc))/(maximum(xc)-minimum(xc))
-        labelCoor[i,2]   = (ctr[2]-minimum(yc))/(maximum(yc)-minimum(yc))
+        labelCoor[i,1]   = (ctr[1]-data.Xrange[1])/(data.Xrange[2]-data.Xrange[1])
+        labelCoor[i,2]   = (ctr[2]-data.Yrange[1])/(data.Yrange[2]-data.Yrange[1])
     
         if i > 1
             for j=1:i-1
@@ -910,81 +908,6 @@ function get_plot_frame(Xrange, Yrange, ticks)
 end
 
 
-
-"""
-    Function interpolate AMR grid to regular grid
-"""
-function get_boundaries(    Hash_XY     ::Vector{UInt64},
-                            sub         ::Int64,
-                            refLvl      ::Int64,
-                            Xrange      ::Tuple{Float64, Float64},
-                            Yrange      ::Tuple{Float64, Float64},
-                            xc          ::Vector{Float64},
-                            yc          ::Vector{Float64},
-                            xf          ::Vector{SVector{4, Float64}},
-                            yf          ::Vector{SVector{4, Float64}}, )
-
-    np           = length(xf)
-    n            = 2^(sub + refLvl)
-    x            = range(minimum(xc), stop = maximum(xc), length = n)
-    y            = range(minimum(yc), stop = maximum(yc), length = n)
-
-    X            = repeat(x , n)[:]
-    Y            = repeat(y', n)[:]
-    hash_field   = Matrix{UInt64}(undef,n,n);
-    hash_id      = Matrix{Int64}( undef,n,n); 
-
-    Xr = (Xrange[2]-Xrange[1])/n
-    Yr = (Yrange[2]-Yrange[1])/n
-
-    for k=1:np
-        for i=xf[k][1]+Xr/2 : Xr : xf[k][3]
-            for j=yf[k][1]+Yr/2 : Yr : yf[k][3]
-                iii                  = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
-                jjj                  = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
-                hash_field[iii,jjj]   = Hash_XY[k] 
-                hash_id[iii,jjj]      = k
-            end
-        end
-    end
-
-    # print("hash_id: $hash_id \n\n")
-
-    uhash   = unique(Hash_XY)
-    nf      = length(uhash)
-    phase   = zeros(Int64,n,n)
-
-    for j=1:n
-        for i=1:nf
-            phase[j,findall(hash_field[j,:] .== uhash[i])] .= i
-        end
-    end
-
-    boundaries = zeros(Int64,n*n)
-    for i=1:n
-        for j=1:n
-            gx = 0; gy = 0;
-            if i != n && j != n 
-                gx = (phase[i,j+1] - phase[i,j])/2.0; 
-                gy = (phase[i+1,j] - phase[i,j])/2.0;
-            else
-                if i == n && j < n
-                    gx = (phase[i,j+1] - phase[i,j])/2.0;
-                elseif j == n && i < n
-                    gy = (phase[i+1,j] - phase[i,j])/2.0;
-                end
-            end
-            if abs(gx) + abs(gy) > 0
-                k = j + n*(i-1)
-                boundaries[k] = hash_id[i,j]
-            end     
-        end
-    end
-
-    return boundaries
-end
-
-
 """
     Function interpolate AMR grid to regular grid
 """
@@ -997,15 +920,12 @@ function get_gridded_map(   fieldname   ::String,
                             sub         ::Int64,
                             refLvl      ::Int64,
                             refType     ::String,
-                            xc          ::Vector{Float64},
-                            yc          ::Vector{Float64},
-                            xf          ::Vector{SVector{4, Float64}},
-                            yf          ::Vector{SVector{4, Float64}},
+                            data        ::MAGEMinApp.AMR_data,
                             Xrange      ::Tuple{Float64, Float64},
                             Yrange      ::Tuple{Float64, Float64} )
 
     print("Interpolate data on grid ..."); t0 = time()
-    np          = length(data.x)
+    np          = length(data.points)
     len_ox      = length(oxi)
     field       = Vector{Union{Float64,Missing,Nothing}}(undef,np);
  
@@ -1059,36 +979,70 @@ function get_gridded_map(   fieldname   ::String,
             end
         end
     end
-    n            = 2^(sub + refLvl)
-    x            = range(minimum(xc), stop = maximum(xc), length = n)
-    y            = range(minimum(yc), stop = maximum(yc), length = n)
+
+    n   = 2^(sub + refLvl)+1
+    dx  = (data.Xrange[2]-data.Xrange[1])/(n-1)
+    dy  = (data.Yrange[2]-data.Yrange[1])/(n-1)
+
+    x   = range(data.Xrange[1], stop = data.Xrange[2], length = n)
+    y   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
 
     X            = repeat(x , n)[:]
     Y            = repeat(y', n)[:]
+    
     gridded      = Matrix{Union{Float64,Missing}}(undef,n,n);
-    gridded_info = Matrix{Union{String,Missing}}(undef,n,n); 
+    gridded_info = Matrix{Union{String,Missing}}(fill(missing,n,n)); 
 
-    Xr = (Xrange[2]-Xrange[1])/n
-    Yr = (Yrange[2]-Yrange[1])/n
 
     for k=1:np
-        ii              = Int64(round((xc[k]-Xrange[1] + Xr/2)/(Xr)))
-        jj              = Int64(round((yc[k]-Yrange[1] + Yr/2)/(Yr))) 
+        ii              = compute_index(data.points[k][1], data.Xrange[1], dx)
+        jj              = compute_index(data.points[k][2], data.Yrange[1], dy)
         gridded[ii,jj]  = field[k] 
 
-        for i=xf[k][1]+Xr/2 : Xr : xf[k][3]
-            for j=yf[k][1]+Yr/2 : Yr : yf[k][3]
-                iii                  = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
-                jjj                  = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
+        tmp                 = replace(string(Out_XY[k].ph), "\""=>"", "]"=>"", "["=>"", ","=>"")
+        gridded_info[ii,jj] = "#"*string(k)*"# "*tmp
 
-                tmp                 = replace(string(Out_XY[k].ph), "\""=>"", "]"=>"", "["=>"", ","=>"")
-                gridded_info[iii,jjj] = "#"*string(k)*"# "*tmp
+    end
+
+    for i=1:length(data.cells)
+        cell   = data.cells[i]
+        tmp    = "#"*string(cell[1])*"# "*replace(string(Out_XY[cell[1]].ph), "\""=>"", "]"=>"", "["=>"", ","=>"")
+
+        ii_min = compute_index(data.points[cell[2]][1], Xrange[1], dx)
+        ii_max = compute_index(data.points[cell[3]][1], Xrange[1], dx)
+        jj_ix  = compute_index(data.points[cell[2]][2], Yrange[1], dy)
+        for ii = ii_min+1:ii_max-1
+            gridded_info[ii, jj_ix] = tmp
+        end
+
+        jj_min = compute_index(data.points[cell[1]][2], Yrange[1], dy)
+        jj_max = compute_index(data.points[cell[2]][2], Yrange[1], dy)
+        ii_ix = compute_index(data.points[cell[1]][1], Xrange[1], dx)
+        for jj in jj_min+1:jj_max-1
+            gridded_info[ii_ix, jj] = tmp
+        end
+
+        jj_min = compute_index(data.points[cell[4]][2], Yrange[1], dy)
+        jj_max = compute_index(data.points[cell[3]][2], Yrange[1], dy)
+        ii_ix = compute_index(data.points[cell[4]][1], Xrange[1], dx)
+        for jj in jj_min+1:jj_max-1
+            gridded_info[ii_ix, jj] = tmp
+        end
+
+        ii_min = compute_index(data.points[data.cells[i][1]][1], Xrange[1], dx)
+        ii_max = compute_index(data.points[data.cells[i][4]][1], Xrange[1], dx)
+        jj_ix = compute_index(data.points[data.cells[i][1]][2], Yrange[1], dy)
+
+        for ii in ii_min+1:ii_max-1
+            gridded_info[ii, jj_ix] = tmp
+            for jj in jj_min+1:jj_max-1
+                gridded_info[ii, jj] = tmp
             end
         end
 
     end
-    println("\rInterpolate data on grid $(round(time()-t0, digits=3)) seconds"); 
 
+    println("\rInterpolate data on grid $(round(time()-t0, digits=3)) seconds"); 
     return gridded, gridded_info, X, Y, npoints, meant
 end
 
@@ -1183,7 +1137,7 @@ end
 function get_gridded_map_no_lbl(    fieldname   ::String,
                                     type        ::String,
                                     varBuilder  ::String,
-                                    norm       ::String,    
+                                    norm        ::String,    
                                     oxi         ::Vector{String},
                                     Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
                                     Out_TE_XY   ::Union{Nothing,Vector{MAGEMin_C.out_tepm}},
@@ -1191,15 +1145,12 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
                                     sub         ::Int64,
                                     refLvl      ::Int64,
                                     refType     ::String,
-                                    xc          ::Vector{Float64},
-                                    yc          ::Vector{Float64},
-                                    xf          ::Vector{SVector{4, Float64}},
-                                    yf          ::Vector{SVector{4, Float64}},
+                                    data        ::MAGEMinApp.AMR_data,
                                     Xrange      ::Tuple{Float64, Float64},
                                     Yrange      ::Tuple{Float64, Float64} )
 
     print("Interpolate data on grid ..."); t0 = time()
-    np          = length(data.x)
+    np          = length(data.points)
     len_ox      = length(oxi)
     field       = Vector{Union{Float64,Missing,Nothing}}(undef,np);
  
@@ -1260,39 +1211,27 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
         end
     end
 
-    n            = 2^(sub + refLvl)
-    x            = range(minimum(xc), stop = maximum(xc), length = n)
-    y            = range(minimum(yc), stop = maximum(yc), length = n)
+    n   = 2^(sub + refLvl)+1
+    dx  = (data.Xrange[2]-data.Xrange[1])/(n-1)
+    dy  = (data.Yrange[2]-data.Yrange[1])/(n-1)
+
+    x   = range(data.Xrange[1], stop = data.Xrange[2], length = n)
+    y   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
 
     X            = repeat(x , n)[:]
     Y            = repeat(y', n)[:]
+    
     gridded      = Matrix{Union{Float64,Missing}}(undef,n,n);
 
-    Xr = (Xrange[2]-Xrange[1])/n
-    Yr = (Yrange[2]-Yrange[1])/n
+
 
     for k=1:np
-        ii              = Int64(round((xc[k]-Xrange[1] + Xr/2)/(Xr)))
-        jj              = Int64(round((yc[k]-Yrange[1] + Yr/2)/(Yr))) 
+        ii              = compute_index(data.points[k][1], data.Xrange[1], dx)
+        jj              = compute_index(data.points[k][2], data.Yrange[1], dy)
         gridded[ii,jj]  = field[k] 
     end
 
-    # for k=1:np
- 
-    #     for i=xf[k][1]+Xr/2 : Xr : xf[k][3]
-    #         for j=yf[k][1]+Yr/2 : Yr : yf[k][3]
-    #             iii                  = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
-    #             jjj                  = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
 
-    #             # tmp                 = replace(string(Out_XY[k].ph), "\""=>"", "]"=>"", "["=>"", ","=>"")
-    #             gridded[iii,jjj] = field[k] 
-    #         end
-    #     end
-
-    # end
-
-    # @save "gridded.jld2" gridded
-    
 
     println("\rInterpolate data on grid $(round(time()-t0, digits=3)) seconds"); 
     return gridded, X, Y, npoints, meant
@@ -1312,14 +1251,11 @@ function get_isopleth_map(  mod         ::String,
                             Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
                             sub         ::Int64,
                             refLvl      ::Int64,
-                            xc          ::Vector{Float64},
-                            yc          ::Vector{Float64},
-                            xf          ::Vector{SVector{4, Float64}},
-                            yf          ::Vector{SVector{4, Float64}},
+                            data        ::MAGEMinApp.AMR_data,
                             Xrange      ::Tuple{Float64, Float64},
                             Yrange      ::Tuple{Float64, Float64} )
 
-    np          = length(data.x)
+    np          = length(data.points)
     len_ox      = length(oxi)
     field       = Vector{Union{Float64,Missing}}(missing,np);
 
@@ -1394,20 +1330,22 @@ function get_isopleth_map(  mod         ::String,
         end 
     end
 
-    n            = 2^(sub + refLvl)
-    x            = range(minimum(xc), stop = maximum(xc), length = n)
-    y            = range(minimum(yc), stop = maximum(yc), length = n)
+    n   = 2^(sub + refLvl)+1
+    dx  = (data.Xrange[2]-data.Xrange[1])/(n-1)
+    dy  = (data.Yrange[2]-data.Yrange[1])/(n-1)
+
+    x   = range(data.Xrange[1], stop = data.Xrange[2], length = n)
+    y   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
 
     X            = repeat(x , n)[:]
     Y            = repeat(y', n)[:]
-    gridded      = Matrix{Union{Float64,Missing}}(missing,n,n);
+    
+    gridded      = Matrix{Union{Float64,Missing}}(undef,n,n);
 
-    Xr = (Xrange[2]-Xrange[1])/n
-    Yr = (Yrange[2]-Yrange[1])/n
 
     for k=1:np
-        ii              = Int64(round((xc[k]-Xrange[1] + Xr/2)/(Xr)))
-        jj              = Int64(round((yc[k]-Yrange[1] + Yr/2)/(Yr))) 
+        ii              = compute_index(data.points[k][1], data.Xrange[1], dx)
+        jj              = compute_index(data.points[k][2], data.Yrange[1], dy)
         gridded[ii,jj]  = field[k] 
     end
 
@@ -1428,14 +1366,11 @@ function get_isopleth_map_te(   mod         ::String,
                                 Out_TE_XY   ::Vector{MAGEMin_C.out_tepm},
                                 sub         ::Int64,
                                 refLvl      ::Int64,
-                                xc          ::Vector{Float64},
-                                yc          ::Vector{Float64},
-                                xf          ::Vector{SVector{4, Float64}},
-                                yf          ::Vector{SVector{4, Float64}},
+                                data        ::MAGEMinApp.AMR_data,
                                 Xrange      ::Tuple{Float64, Float64},
                                 Yrange      ::Tuple{Float64, Float64} )
 
-    np          = length(data.x)
+    np          = length(data.points)
     len_ox      = length(oxi)
     field       = Vector{Union{Float64,Nothing}}(nothing,np);
 
@@ -1454,20 +1389,21 @@ function get_isopleth_map_te(   mod         ::String,
 
     end
 
-    n            = 2^(sub + refLvl)
-    x            = range(minimum(xc), stop = maximum(xc), length = n)
-    y            = range(minimum(yc), stop = maximum(yc), length = n)
+    n   = 2^(sub + refLvl)+1
+    dx  = (data.Xrange[2]-data.Xrange[1])/(n-1)
+    dy  = (data.Yrange[2]-data.Yrange[1])/(n-1)
+
+    x   = range(data.Xrange[1], stop = data.Xrange[2], length = n)
+    y   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
 
     X            = repeat(x , n)[:]
     Y            = repeat(y', n)[:]
+    
     gridded_TE   = Matrix{Union{Float64,Missing}}(missing,n,n);
 
-    Xr = (Xrange[2]-Xrange[1])/n
-    Yr = (Yrange[2]-Yrange[1])/n
-
     for k=1:np
-        ii              = Int64(round((xc[k]-Xrange[1] + Xr/2)/(Xr)))
-        jj              = Int64(round((yc[k]-Yrange[1] + Yr/2)/(Yr))) 
+        ii              = compute_index(data.points[k][1], data.Xrange[1], dx)
+        jj              = compute_index(data.points[k][2], data.Yrange[1], dy)
         gridded_TE[ii,jj]  = field[k] 
     end
 

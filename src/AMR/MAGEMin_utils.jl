@@ -127,34 +127,6 @@ function get_wat_sat_function(     Yrange,     bulk_ini,   oxi,    phase_selecti
 end
 
 
-
-"""
-    create_forest( tmin::Float64,
-                            tmax::Float64,
-                            pmin::Float64,
-                            pmax::Float64,
-                            sub::Int64)
-"""
-function create_forest( tmin::Float64,
-                        tmax::Float64,
-                        pmin::Float64,
-                        pmax::Float64,
-                        sub::Int64)
-
-    # Create coarse mesh
-    Prange          = (pmin,pmax)
-    Trange          = (tmin,tmax)        # in Paraview it looks a bit weird with actual values
-    cmesh           = t8_cmesh_quad_2d(COMM, Trange, Prange)
-
-    # Refine coarse mesh (in a regular manner)
-    level           = sub
-    forest          = t8_forest_new_uniform(cmesh, t8_scheme_new_default_cxx(), level, 0, COMM)
-    forest_data     = get_element_data(forest)
-
-    return forest_data
-end
-
-
 """
     MAGEMin_data2table( out:: Union{Vector{MAGEMin_C.gmin_struct{Float64, Int64}}, MAGEMin_C.gmin_struct{Float64, Int64}})
 
@@ -209,6 +181,24 @@ function MAGEMin_data2table( out:: Union{Vector{MAGEMin_C.gmin_struct{Float64, I
 end
 
 
+function get_dominant_en(   ph,
+                            n_SS,
+                            SS_vec)
+    n_ph  = length(ph)
+    ph_em = Vector{String}(undef,n_ph)
+    for i=1:n_SS
+        f = SS_vec[i].emFrac
+        id = findall(f .== maximum(f))[1]
+        em = SS_vec[i].emNames[id]
+        ph_em[i] = ph[i]*":"*em
+    end
+    for i=n_SS+1:n_ph
+        ph_em[i] = ph[i]
+    end
+
+    return ph_em
+end
+
 function refine_MAGEMin(data, 
                         MAGEMin_data    :: MAGEMin_Data, 
                         diagType        :: String,
@@ -225,24 +215,23 @@ function refine_MAGEMin(data,
                         scp             :: Int64,
                         refType         :: String,
                         pChip_wat       , 
-                        pChip_T         ;        
-                        ind_map          = nothing, 
-                        Out_XY_old       = nothing)
-
-    if isnothing(ind_map)
-        ind_map = - ones(length(data.xc));
+                        pChip_T         )
+    global Out_XY;
+    
+    if isempty(data.split_cell_list)
+        Out_XY_new      = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,length(data.points))
+        n_new_points    = length(data.points)
+        npoints         = data.points
+    else
+        Out_XY_new      = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,length(data.npoints))
+        n_new_points    = length(data.npoints)
+        npoints         = data.npoints
     end
 
     for i in 1:Threads.nthreads()
         MAGEMin_data.gv[i].buffer = pointer(bufferType)
     end
 
-    # Step 1: determine all points that have not been computed yet
-    ind_new         = findall( ind_map .< 0)
-    n_new_points    = length(ind_new)
-
-    Out_XY      = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,length(data.x))
-    Out_XY_new  = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,n_new_points)
     if n_new_points > 0
        
         if diagType == "tx"
@@ -250,22 +239,22 @@ function refine_MAGEMin(data,
             Pvec = zeros(Float64,n_new_points);
             Xvec = Vector{Vector{Float64}}(undef,n_new_points);
             Bvec = zeros(Float64,n_new_points);
-            for (i, new_ind) = enumerate(ind_new)
+            for i = 1:n_new_points
                 Pvec[i] = fixP;
-                Tvec[i] = data.yc[new_ind];
-                Xvec[i] = bulk_L*(1.0 - data.xc[new_ind]) + bulk_R*data.xc[new_ind];
-                Bvec[i] = bufferN1*(1.0 - data.xc[new_ind]) + bufferN2*data.xc[new_ind];
+                Tvec[i] = npoints[i][2];
+                Xvec[i] = bulk_L*(1.0 - npoints[i][1]) + bulk_R*npoints[i][1];
+                Bvec[i] = bufferN1*(1.0 - npoints[i][1]) + bufferN2*npoints[i][1];
             end
         elseif diagType == "px"
             Tvec = zeros(Float64,n_new_points);
             Pvec = zeros(Float64,n_new_points);
             Xvec = Vector{Vector{Float64}}(undef,n_new_points);
             Bvec = zeros(Float64,n_new_points);
-            for (i, new_ind) = enumerate(ind_new)
+            for i = 1:n_new_points
                 Tvec[i] = fixT;
-                Pvec[i] = data.yc[new_ind];
-                Xvec[i] = bulk_L*(1.0 - data.xc[new_ind]) + bulk_R*data.xc[new_ind];
-                Bvec[i] = bufferN1*(1.0 - data.xc[new_ind]) + bufferN2*data.xc[new_ind];
+                Pvec[i] = npoints[i][2];
+                Xvec[i] = bulk_L*(1.0 - npoints[i][1]) + bulk_R*npoints[i][1];
+                Bvec[i] = bufferN1*(1.0 - npoints[i][1]) + bufferN2*npoints[i][1];
 
             end
         elseif diagType == "pt"
@@ -279,10 +268,9 @@ function refine_MAGEMin(data,
             Pvec = zeros(Float64,n_new_points);
             Xvec = Vector{Vector{Float64}}(undef,n_new_points);
             Bvec = zeros(Float64,n_new_points);
-            for (i, new_ind) = enumerate(ind_new)
-
-                Tvec[i] = data.xc[new_ind];
-                Pvec[i] = data.yc[new_ind];
+            for i = 1:n_new_points
+                Tvec[i] = npoints[i][1];
+                Pvec[i] = npoints[i][2];
                 Bvec[i] = bufferN1;
 
                 # here we check if the water need to be saturated at sub-solidus
@@ -322,96 +310,47 @@ function refine_MAGEMin(data,
             Pvec = zeros(Float64,n_new_points);
             Xvec = Vector{Vector{Float64}}(undef,n_new_points);
             Bvec = zeros(Float64,n_new_points);
-            for (i, new_ind) = enumerate(ind_new)
-                Tvec[i] = pChipInterp_T(data.yc[new_ind]); 
-                Pvec[i] = pChipInterp_P(data.yc[new_ind]);
-                Xvec[i] = bulk_L*(1.0 - data.xc[new_ind]) + bulk_R*data.xc[new_ind];
-                Bvec[i] = bufferN1*(1.0 - data.xc[new_ind]) + bufferN2*data.xc[new_ind];
+            for i = 1:n_new_points
+                Tvec[i] = pChipInterp_T(npoints[i][2]); 
+                Pvec[i] = pChipInterp_P(npoints[i][2]);
+                Xvec[i] = bulk_L*(  1.0 - npoints[i][1]) + bulk_R*npoints[i][1];
+                Bvec[i] = bufferN1*(1.0 - npoints[i][1]) + bufferN2*npoints[i][1];
             end
         end
 
         Out_XY_new  =   multi_point_minimization(Pvec, Tvec, MAGEMin_data, X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol", scp=scp, rm_list=phase_selection); 
+    else
+        println("There is no new point to compute...")
     end
-
-    # Step 2: Collect new and old results
-    new_point = 0;
-    for (i, map) = enumerate(ind_map)
-        if map>0
-            Out_XY[i] = Out_XY_old[map]
-        else
-            new_point += 1
-            Out_XY[i] = Out_XY_new[new_point]
-        end
-    end
-    Out_XY_new = []
+    Out_XY      = vcat(Out_XY, Out_XY_new)
 
     # Compute hash for all points
-    Hash_XY     = Vector{UInt64}(undef,length(data.x))
-    n_phase_XY  = Vector{UInt64}(undef,length(data.x))
+    n_points    = length(Out_XY)
+    Hash_XY     = Vector{UInt64}(undef,n_points)
+    n_phase_XY  = Vector{UInt64}(undef,n_points)
 
-    miny        = minimum(data.yc)
-    maxx        = maximum(data.xc)
-    maxy        = maximum(data.yc)
-    minx        = minimum(data.xc)
     if refType == "ph"
-
-        for i=1:length(data.x)
+        for i=1:n_points
             Hash_XY[i]      = hash(sort(Out_XY[i].ph))
             n_phase_XY[i]   = length(Out_XY[i].ph)
-
-            if data.xc[i] == maxx && data.yc[i] == miny
-                Hash_XY[i]      = hash("doo")
-            end
-            if data.xc[i] == minx && data.yc[i] == maxy
-                Hash_XY[i]      = hash("foo")
-            end
-
         end
     elseif refType == "em"
-
-        for i=1:length(data.x)
-
+        for i=1:n_points
             ph_em = get_dominant_en(    Out_XY[i].ph,
                                         Out_XY[i].n_SS,
                                         Out_XY[i].SS_vec)
 
             Hash_XY[i]      = hash(sort(ph_em))
             n_phase_XY[i]   = length(ph_em)
-
-            if data.xc[i] == maxx && data.yc[i] == miny
-                Hash_XY[i]      = hash("doo")
-            end
-            if data.xc[i] == minx && data.yc[i] == maxy
-                Hash_XY[i]      = hash("foo")
-            end
         end
     end
 
     if diagType == "tx" || diagType == "px" || diagType == "ptx"
-        for i=1:length(data.x)
-            Out_XY[i].X .= data.xc[i]
+        for i=1:n_points
+            Out_XY[i].X .= data.points[i][1]
         end
     end
 
     return Out_XY, Hash_XY, n_phase_XY  
 end
 
-
-
-function get_dominant_en(   ph,
-                            n_SS,
-                            SS_vec)
-    n_ph  = length(ph)
-    ph_em = Vector{String}(undef,n_ph)
-    for i=1:n_SS
-        f = SS_vec[i].emFrac
-        id = findall(f .== maximum(f))[1]
-        em = SS_vec[i].emNames[id]
-        ph_em[i] = ph[i]*":"*em
-    end
-    for i=n_SS+1:n_ph
-        ph_em[i] = ph[i]
-    end
-
-    return ph_em
-end

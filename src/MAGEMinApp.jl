@@ -19,7 +19,8 @@ pkg_dir = Base.pkgdir(MAGEMinApp)
 export App
 # include helper functions
 include(joinpath(pkg_dir,"src","fetch.jl"))
-include(joinpath(pkg_dir,"src","initialize_MAGEMin_AMR.jl"))
+include(joinpath(pkg_dir,"src","AMR/MAGEMin_utils.jl"))
+include(joinpath(pkg_dir,"src","AMR/AMR_utils.jl"))
 include(joinpath(pkg_dir,"src","PhaseDiagram_functions.jl"))
 include(joinpath(pkg_dir,"src","TraceElement_functions.jl"))
 include(joinpath(pkg_dir,"src","Tab_Simulation.jl"))
@@ -46,18 +47,14 @@ Starts the MAGEMin App.
 function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
     message     = fetch_message()
     message2    = fetch_message2()
-    GUI_version = "0.4.6"   
+    GUI_version = "0.4.7"   
     cur_dir     = pwd()                 # directory from where you started the GUI
     pkg_dir     = pkgdir(MAGEMinApp)   # package dir
     
     include(joinpath(pkg_dir,"src","appData.jl"))
-    # include(joinpath(pkg_dir,"src","MAGEMinApp_functions.jl"))
-
+  
     db_inf      = retrieve_solution_phase_information("ig");
     cd(pkg_dir)
-
-    # Initialize MPI and T8Code
-    COMM        = Initialize_AMR()
 
     app         = dash(external_stylesheets = [dbc_themes.BOOTSTRAP], prevent_initial_callbacks=false)
     app.title   = "MAGEMin app"

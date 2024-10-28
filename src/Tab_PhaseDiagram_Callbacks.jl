@@ -276,13 +276,13 @@ function Tab_PhaseDiagram_Callbacks(app)
         end
 
 
-
-        
         return fig, text
     end
 
 
-    # Callback function to create compute the phase diagram using T8code for Adaptive Mesh Refinement
+    """
+        Callback function to update the phase diagram based on the user input
+    """
     callback!(
         app,
         Output("show-grid",             "value"), 
@@ -419,11 +419,12 @@ function Tab_PhaseDiagram_Callbacks(app)
             smooth                      = "best"
       
             # declare set of global variables needed to generate, refine and display phase diagrams
-            global fig, forest, data, Hash_XY, Out_XY, Out_TE_XY, all_TE_ph, n_phase_XY, gridded, gridded_info, X, Y, meant, npoints
+            global fig, data, Hash_XY, Out_TE_XY, all_TE_ph, n_phase_XY, gridded, gridded_info, X, Y, meant, npoints
             global addedRefinementLvl   = 0;
             global n_lbl                = 0;
             global iso_show             = 1;
             global data_plot, data_reaction, data_grid, layout, data_isopleth, data_isopleth_out, PT_infos, infos;
+            global Out_XY =  Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,0)
 
             data_isopleth = initialize_g_isopleth(; n_iso_max = 32)
 
@@ -487,7 +488,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             data_reaction   = show_hide_reaction_lines(sub,refLvl,Xrange,Yrange)
             data_grid       = show_hide_mesh_grid()
                    
-        elseif bid == "min-color-id" || bid == "max-color-id" || bid == "colormaps_cross" || bid == "smooth-colormap" || bid == "range-slider-color" || bid == "reverse-colormap"
+        elseif bid == "set-min-white" || bid == "min-color-id" || bid == "max-color-id" || bid == "colormaps_cross" || bid == "smooth-colormap" || bid == "range-slider-color" || bid == "reverse-colormap"
 
             data_plot, layout =  update_colormap_phaseDiagram(  xtitle,     ytitle,     
                                                                 Xrange,     Yrange,     fieldname,
@@ -648,6 +649,10 @@ function Tab_PhaseDiagram_Callbacks(app)
     end
 
 
+    """
+        Callback function to toggle the visibility of the collapse element
+        and the collapse element containing the phase diagram information
+    """
     callback!(app,
         Output("collapse", "is_open"),
         [Input("button-display-options", "n_clicks")],
@@ -666,6 +671,10 @@ function Tab_PhaseDiagram_Callbacks(app)
             
     end
 
+
+    """
+        Callback function to toggle the visibility of the collapse element
+    """
     callback!(app,
         Output("collapse-infos-phase-diagram", "is_open"),
         [Input("infos-phase-diagram", "n_clicks")],
@@ -683,6 +692,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         return is_open    
     end
 
-    return app
 
+
+    return app
 end
