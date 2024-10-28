@@ -2,22 +2,16 @@
 using MAGEMin_C
 using MAGEMinApp
 using PlotlyJS
+using ProgressMeter
 
 pkg_dir = Base.pkgdir(MAGEMinApp)
 
-include(joinpath(pkg_dir,"src","initialize_MAGEMin_AMR.jl"))
+include(joinpath(pkg_dir,"src","AMR/AMR_utils.jl"))
+include(joinpath(pkg_dir,"src","AMR/MAGEMin_utils.jl"))
 include(joinpath(pkg_dir,"src","PhaseDiagram_functions.jl"))
 
-# Initialite AMR
-COMM            = Initialize_AMR()
-
-# Create coarse mesh
-cmesh           = t8_cmesh_quad_2d(MPI.COMM_WORLD, [600.0,1400.0], [2.0,20.0])
-
-# Refine coarse mesh (in a regular manner)
 level           = 2
-forest          = t8_forest_new_uniform(cmesh, t8_scheme_new_default_cxx(), level, 0, MPI.COMM_WORLD)
-data            = get_element_data(forest)
+data = init_AMR([600.0,1400.0], [2.0,20.0],level)
 
 MAGEMin_data    = Initialize_MAGEMin(   "ig";
                                         verbose     = false    );
@@ -27,11 +21,13 @@ bulk            = [0.38451319035870185, 0.017740308257833806, 0.0282086883559249
 oxides          = ["SiO2", "Al2O3", "CaO", "MgO", "FeO", "K2O", "Na2O", "TiO2", "O", "Cr2O3", "H2O"]
 
 println("  Test P-T diagram computation")
+global Out_XY =  Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,0)
 Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(  data, 
                                                 MAGEMin_data,
                                                 "pt",
                                                 0.0,
                                                 nothing,
+                                                0.0,
                                                 0.0,
                                                 oxides,
                                                 bulk,
@@ -46,41 +42,41 @@ Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(  data,
 
 res = "";
 res *= "results = [";
-for i=1:15
+for i=1:24
 	res *=" $(Out_XY[i].G_system);";
 end
-res *=" $(Out_XY[16].G_system)";
+res *=" $(Out_XY[25].G_system)";
 res *="]";
 
 print("$res\n")
+data    = select_cells_to_split_and_keep(data)
+data    = perform_AMR(data)
 
-refine_elements                          = refine_phase_boundaries(forest, Hash_XY);
-forest_new, data_new, ind_map            = adapt_forest(forest, refine_elements, data);     # Adapt the mesh; also returns the new coordinates and a mapping from old->new
-t = @elapsed Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(  data_new,
-                                                            MAGEMin_data,
-                                                            "pt",
-                                                            0.0,
-                                                            nothing,
-                                                            0.0,
-                                                            oxides,
-                                                            bulk,
-                                                            bulk,
-                                                            "NONE",
-                                                            0.0,
-                                                            0.0,
-                                                            0,
-                                                            "ph",
-                                                            nothing,
-                                                            nothing; 
-                                                            ind_map         = ind_map,
-                                                            Out_XY_old      = Out_XY  ) # recompute points that have not been computed before
+Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(   data,
+                                                MAGEMin_data,
+                                                "pt",
+                                                0.0,
+                                                nothing,
+                                                0.0,
+                                                0.0,
+                                                oxides,
+                                                bulk,
+                                                bulk,
+                                                "NONE",
+                                                0.0,
+                                                0.0,
+                                                0,
+                                                "ph",
+                                                nothing,
+                                                nothing ) # recompute points that have not been computed before
+
 
 res = "";
 res *= "results = [";
-for i=1:63
+for i=1:80
 	res *=" $(Out_XY[i].G_system);";
 end
-res *=" $(Out_XY[64].G_system)";
+res *=" $(Out_XY[81].G_system)";
 res *="]";
 
 print("$res\n")
