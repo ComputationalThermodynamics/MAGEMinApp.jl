@@ -1,7 +1,6 @@
 function Tab_Simulation_Callbacks(app)
 
 
-
     # update the dictionary of the solution phases and end-members for isopleths
     callback!(
         app,

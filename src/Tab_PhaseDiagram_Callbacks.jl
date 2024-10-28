@@ -488,7 +488,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             data_reaction   = show_hide_reaction_lines(sub,refLvl,Xrange,Yrange)
             data_grid       = show_hide_mesh_grid()
                    
-        elseif bid == "min-color-id" || bid == "max-color-id" || bid == "colormaps_cross" || bid == "smooth-colormap" || bid == "range-slider-color" || bid == "reverse-colormap"
+        elseif bid == "set-min-white" || bid == "min-color-id" || bid == "max-color-id" || bid == "colormaps_cross" || bid == "smooth-colormap" || bid == "range-slider-color" || bid == "reverse-colormap"
 
             data_plot, layout =  update_colormap_phaseDiagram(  xtitle,     ytitle,     
                                                                 Xrange,     Yrange,     fieldname,
