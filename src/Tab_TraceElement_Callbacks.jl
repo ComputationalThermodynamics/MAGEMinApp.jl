@@ -263,8 +263,7 @@ function Tab_TraceElement_Callbacks(app)
                                                                     sub,
                                                                     refLvl,
                                                                     refType,
-                                                                    data.xc,
-                                                                    data.yc,
+                                                                    data,
                                                                     PT_infos_te )
                 ticks       = 4
                 frame       = get_plot_frame(Xrange,Yrange, ticks)                                  

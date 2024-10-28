@@ -1,9 +1,11 @@
 export init_AMR, select_cells_to_split_and_keep, perform_AMR, retrieve_ncells_c
 
+"""
+    AMR_data
+"""
 mutable struct AMR_data
     cells           :: Vector{Vector{Int64}}
     ncells          :: Vector{Vector{Int64}}
-    # ncells_c        :: Vector{Int64}
     points          :: Vector{Vector{Float64}}
     npoints         :: Vector{Vector{Float64}}
     hash_map        :: Dict{Vector{Float64}, Int}
@@ -14,10 +16,16 @@ mutable struct AMR_data
     Yrange          :: Vector{Float64}
 end
 
+"""
+    compute_index(value, min_value, delta)
+"""
 function compute_index(value, min_value, delta)
     return Int64(round((value - min_value + delta) / delta))
 end
 
+"""
+    compute_hash_map(data)
+"""
 function init_AMR(Xrange,Yrange,igs)
 
     nc_per_dim      = 2^igs              #number of cells per dimension
@@ -25,7 +33,6 @@ function init_AMR(Xrange,Yrange,igs)
 
     points          = Vector{Vector{Float64}}(undef, 0)
     cells           = Vector{Vector{Int64}}(undef, 0)
-    # ncells_c        = Vector{Int64}(undef, 0)
     npoints         = Vector{Vector{Float64}}(undef, 0)
     ncells          = Vector{Vector{Int64}}(undef, 0)
     hash_map        = Dict{Vector{Float64}, Int}()
@@ -47,7 +54,6 @@ function init_AMR(Xrange,Yrange,igs)
 
     data = AMR_data(    cells,
                         ncells,
-                        # ncells_c,
                         points,
                         npoints,
                         hash_map,
@@ -58,19 +64,48 @@ function init_AMR(Xrange,Yrange,igs)
     return data
 end
 
+""" 
+    all_identical(arr::Vector{UInt64})
+"""
 function all_identical(arr::Vector{UInt64})
     return all(x -> x == arr[1], arr)
 end
 
-function select_cells_to_split_and_keep(data)
-    data.split_cell_list = []
-    data.keep_cell_list  = []
 
-    for i=1:length(data.cells)
-        tmp = zeros(UInt64,4)
+""" 
+    select_cells_to_split_and_keep(data)
+"""
+function select_cells_to_split_and_keep(data)
+    kp                      = length(data.keep_cell_list)
+    data.split_cell_list    = []
+    data.keep_cell_list     = []
+    tot                     = length(data.cells)
+
+    for i=1:kp
+        tmp0 = Vector{UInt64}(undef, 0)
+        for j=1:4
+            tmp0 = push!(tmp0,Hash_XY[data.cells[i][j]])
+        end
+        nb = length(data.bnd_cells[i])
+        if nb > 1
+            for j=2:nb
+                tmp0 = push!(tmp0,Hash_XY[data.bnd_cells[i][j]])
+            end
+        end
+        if all_identical(tmp0)
+            push!(data.keep_cell_list, i)
+        else
+            push!(data.split_cell_list, i)
+        end
+
+    end
+
+    tmp = Vector{UInt64}(undef, 4)
+    for i=kp+1:tot
         for j=1:4
             tmp[j] = Hash_XY[data.cells[i][j]]
         end
+
         if all_identical(tmp)
             push!(data.keep_cell_list, i)
         else
@@ -81,11 +116,12 @@ function select_cells_to_split_and_keep(data)
     return data
 end
 
-
+"""
+    perform_AMR(data)
+"""
 function perform_AMR(data)
     npoints         = Vector{Vector{Float64}}(undef, 0)
     ncells          = Vector{Vector{Int64}}(undef, 0)
-    # ncells_c        = Vector{Int64}(undef, 0)
 
     tp              = length(data.points)
     ns              = length(data.split_cell_list)
@@ -150,10 +186,9 @@ function perform_AMR(data)
         push!(ncells, [w, data.cells[data.split_cell_list[i]][2], n, c])
         push!(ncells, [c, n, data.cells[data.split_cell_list[i]][3], e])
         push!(ncells, [s, c, e, data.cells[data.split_cell_list[i]][4]])
-        # push!(ncells_c, c)
     end
 
-    data.points = vcat(data.points, npoints)
+    data.points     = vcat(data.points, npoints)
 
     data.bnd_cells  = Vector{Tuple}(undef, 0)
     nk              = length(data.keep_cell_list) 
@@ -176,12 +211,13 @@ function perform_AMR(data)
 
     data.ncells     = ncells
     data.npoints    = npoints
-    # data.ncells_c   = ncells_c
 
     return data
 end
 
-
+"""
+    retrieve_ncells_c(data)
+"""
 function retrieve_ncells_c(data)
     ncells_c        = Vector{Vector{Float64}}(undef, 0)
     split_cell_list = []

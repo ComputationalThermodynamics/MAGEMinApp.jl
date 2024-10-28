@@ -218,11 +218,6 @@ function refine_MAGEMin(data,
                         pChip_T         )
     global Out_XY;
     
-    # println("points")
-    # println(data.points)
-    # println("npoints")
-    # println(data.npoints)
-
     if isempty(data.split_cell_list)
         Out_XY_new      = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,length(data.points))
         n_new_points    = length(data.points)
@@ -318,7 +313,7 @@ function refine_MAGEMin(data,
             for i = 1:n_new_points
                 Tvec[i] = pChipInterp_T(npoints[i][2]); 
                 Pvec[i] = pChipInterp_P(npoints[i][2]);
-                Xvec[i] = bulk_L*(1.0 - npoints[i][1]) + bulk_R*npoints[i][1];
+                Xvec[i] = bulk_L*(  1.0 - npoints[i][1]) + bulk_R*npoints[i][1];
                 Bvec[i] = bufferN1*(1.0 - npoints[i][1]) + bufferN2*npoints[i][1];
             end
         end
@@ -352,7 +347,7 @@ function refine_MAGEMin(data,
 
     if diagType == "tx" || diagType == "px" || diagType == "ptx"
         for i=1:n_points
-            Out_XY[i].X .= npoints[i][1]
+            Out_XY[i].X .= data.points[i][1]
         end
     end
 

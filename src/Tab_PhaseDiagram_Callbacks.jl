@@ -276,13 +276,13 @@ function Tab_PhaseDiagram_Callbacks(app)
         end
 
 
-
-        
         return fig, text
     end
 
 
-    # Callback function to create compute the phase diagram using T8code for Adaptive Mesh Refinement
+    """
+        Callback function to update the phase diagram based on the user input
+    """
     callback!(
         app,
         Output("show-grid",             "value"), 
@@ -649,6 +649,10 @@ function Tab_PhaseDiagram_Callbacks(app)
     end
 
 
+    """
+        Callback function to toggle the visibility of the collapse element
+        and the collapse element containing the phase diagram information
+    """
     callback!(app,
         Output("collapse", "is_open"),
         [Input("button-display-options", "n_clicks")],
@@ -667,6 +671,10 @@ function Tab_PhaseDiagram_Callbacks(app)
             
     end
 
+
+    """
+        Callback function to toggle the visibility of the collapse element
+    """
     callback!(app,
         Output("collapse-infos-phase-diagram", "is_open"),
         [Input("infos-phase-diagram", "n_clicks")],
@@ -684,6 +692,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         return is_open    
     end
 
-    return app
 
+
+    return app
 end

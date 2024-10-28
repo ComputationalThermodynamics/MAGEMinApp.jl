@@ -996,10 +996,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                         Out_XY,
                                         sub,
                                         refLvl + addedRefinementLvl,
-                                        data.xc,
-                                        data.yc,
-                                        data.x,
-                                        data.y,
+                                        data,
                                         Xrange,
                                         Yrange )
 
