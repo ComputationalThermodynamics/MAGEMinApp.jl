@@ -17,16 +17,31 @@
 
 As for `MAGEMin`, you can choose among several thermodynamic dataset: Metapelite (White et al., 2014), Metabasite (Green et al., 2016), Igneous (Holland et al., 2018) or Ultramafic (Evans & Frost, 2021).
 
-
 ### Installation
 
 To install MAGEMinApp:
 ```julia
-julia>]
+julia>]         # opens package manager in Julia
 pkg> add MAGEMinApp
 ```
+> [!IMPORTANT] 
+> Make sure you have the last version installed!
 
-### Running
+### Update to newer version
+
+If you have a previous version of MAGEMinApp installed, the easiest way to update MAGEMinApp is the following:
+
+```julia
+julia>]
+pkg> rm MAGEMinApp      # First remove MAGEMinApp
+pkg> rm MAGEMin_C       # In case you also use MAGEMin_C this needs to be removed first before updating it, as MAGEMinApp is locked on the last version of MAGEMin_C
+pkg> update             # update the repository
+pkg> add MAGEMinApp     # reinstall MAGEMin
+pkg> up MAGEMinApp      # sometimes needed to update to the last version
+(pkg> add MAGEMin_C)    # If you want to have MAGEMin_C too
+```
+
+### Running MAGEMinApp
 
 And start it with:
 ```julia
