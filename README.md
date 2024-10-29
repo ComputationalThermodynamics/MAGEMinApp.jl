@@ -27,7 +27,7 @@ pkg> add MAGEMinApp
 > [!IMPORTANT] 
 > Make sure you have the last version installed!
 
-### Update to newer version
+### Update to newest version
 
 If you have a previous version of MAGEMinApp installed, the easiest way to update MAGEMinApp is the following:
 
