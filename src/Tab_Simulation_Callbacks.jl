@@ -69,8 +69,9 @@ function Tab_Simulation_Callbacks(app)
         global data_plot, data_reaction, data_grid, layout, data_isopleth, data_isopleth_out, PT_infos, infos;
         global Out_XY
 
-        file            = String(filename)*"_options.jld2"
         global file_pd  = String(filename)*"_phase_diagram.jld2"
+        file_pd_data    = String(filename)*"_phase_diagram_data.jld2"
+        file            = String(filename)*"_options.jld2"
 
         @save file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ptx_table pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver verbose scp test test2 buffer1 buffer2 te_test te_test2 watsat
         println("saving phase diagram options")
@@ -82,12 +83,12 @@ function Tab_Simulation_Callbacks(app)
             if isdefined(MAGEMinApp, Symbol(i))
                 save_cmd *= " $i"
                 push!(field_list, i)
-            end
+            end 
         end
         if !isempty(field_list)
             eval(Meta.parse(save_cmd))
+            @save file_pd_data field_list
             println("saving phase diagram data")
-
         end
 
         status = "success"
@@ -143,8 +144,27 @@ function Tab_Simulation_Callbacks(app)
         prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
     ) do click, filename
 
-        global db, dbte
+        global fig, data, Hash_XY, Out_TE_XY, all_TE_ph, n_phase_XY, gridded, gridded_info, X, Y, meant, npoints
+        global addedRefinementLvl
+        global n_lbl
+        global iso_show
+        global data_plot, data_reaction, data_grid, layout, data_isopleth, data_isopleth_out, PT_infos, infos;
+        global Out_XY
 
+        file_pd_data    = String(filename)*"_phase_diagram_data.jld2"
+        file_pd         = String(filename)*"_phase_diagram.jld2"
+        load_cmd        = "@load file_pd"
+        try
+            @load file_pd_data field_list
+
+            for i in field_list
+                load_cmd *= " $i"
+            end
+            eval(Meta.parse(load_cmd))
+        catch
+        end
+
+        global db, dbte
         file = String(filename)*"_options.jld2"
         try 
             # using JSON3, JLD2
@@ -157,13 +177,7 @@ function Tab_Simulation_Callbacks(app)
             return success, failed, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing
     
         end
-
-        file_pd = String(filename)*"_phase_diagram.jld2"
-        try
-            @load file_pd 
-            println(Out_XY[1])
-        catch
-        end
+        
 
     end
 
@@ -405,7 +419,7 @@ function Tab_Simulation_Callbacks(app)
             return dataout
 
         elseif bid ==  "load-state-diagram-button"
-            file = String(filename)*".jld2"
+            file = String(filename)*"_options.jld2"
 
             @load file ptx_table
 
@@ -546,7 +560,7 @@ function Tab_Simulation_Callbacks(app)
         bid  = pushed_button( callback_context() )  
 
         if bid ==  "load-state-diagram-button"
-            file = String(filename)*".jld2"
+            file = String(filename)*"_options.jld2"
 
             @load file test
 
@@ -604,7 +618,7 @@ function Tab_Simulation_Callbacks(app)
          bid  = pushed_button( callback_context() )     
 
          if bid == "load-state-diagram-button"
-            file = String(filename)*".jld2"
+            file = String(filename)*"_options.jld2"
 
             @load file test2
             val = test2
@@ -657,7 +671,7 @@ function Tab_Simulation_Callbacks(app)
 
         # catching up some special cases
         if bid ==  "load-state-diagram-button"
-            file = String(filename)*".jld2"
+            file = String(filename)*"_options.jld2"
 
             @load file te_test
             t = te_test
@@ -699,7 +713,7 @@ function Tab_Simulation_Callbacks(app)
 
         # catching up some special cases
         if bid ==  "load-state-diagram-button"
-            file = String(filename)*".jld2"
+            file = String(filename)*"_options.jld2"
 
             @load file te_test2
             t = te_test2
