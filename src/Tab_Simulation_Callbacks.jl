@@ -69,7 +69,7 @@ function Tab_Simulation_Callbacks(app)
         global data_plot, data_reaction, data_grid, layout, data_isopleth, data_isopleth_out, PT_infos, infos;
         global Out_XY
 
-        file            = String(filename)*".jld2"
+        file            = String(filename)*"_options.jld2"
         global file_pd  = String(filename)*"_phase_diagram.jld2"
 
         @save file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ptx_table pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver verbose scp test test2 buffer1 buffer2 te_test te_test2 watsat
@@ -145,7 +145,7 @@ function Tab_Simulation_Callbacks(app)
 
         global db, dbte
 
-        file = String(filename)*".jld2"
+        file = String(filename)*"_options.jld2"
         try 
             # using JSON3, JLD2
             @load file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver verbose scp buffer1 buffer2 watsat
@@ -156,6 +156,13 @@ function Tab_Simulation_Callbacks(app)
             success, failed = "", "failed"
             return success, failed, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing
     
+        end
+
+        file_pd = String(filename)*"_phase_diagram.jld2"
+        try
+            @load file_pd 
+            println(Out_XY[1])
+        catch
         end
 
     end
