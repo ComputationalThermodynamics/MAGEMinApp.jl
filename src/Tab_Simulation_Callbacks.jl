@@ -62,12 +62,36 @@ function Tab_Simulation_Callbacks(app)
 
         global db, dbte
 
-        file = String(filename)*".jld2"
+        global fig, data, Hash_XY, Out_TE_XY, all_TE_ph, n_phase_XY, gridded, gridded_info, X, Y, meant, npoints
+        global addedRefinementLvl
+        global n_lbl
+        global iso_show
+        global data_plot, data_reaction, data_grid, layout, data_isopleth, data_isopleth_out, PT_infos, infos;
+        global Out_XY
+
+        file            = String(filename)*".jld2"
+        global file_pd  = String(filename)*"_phase_diagram.jld2"
 
         @save file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ptx_table pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver verbose scp test test2 buffer1 buffer2 te_test te_test2 watsat
+        println("saving phase diagram options")
+        
+        gv_names    = ["fig", "data", "Hash_XY", "Out_TE_XY", "all_TE_ph", "n_phase_XY", "gridded", "gridded_info", "X", "Y", "meant", "npoints", "addedRefinementLvl", "n_lbl", "iso_show", "data_plot", "data_reaction", "data_grid", "layout", "data_isopleth", "data_isopleth_out", "PT_infos", "infos", "Out_XY"]
+        save_cmd    = "@save file_pd"
+        field_list  = []
+        for i in gv_names
+            if isdefined(MAGEMinApp, Symbol(i))
+                save_cmd *= " $i"
+                push!(field_list, i)
+            end
+        end
+        if !isempty(field_list)
+            eval(Meta.parse(save_cmd))
+            println("saving phase diagram data")
+
+        end
 
         status = "success"
-        print("saving phase diagram state in: $(pwd()) ...")
+        println("saved in: $(pwd()) ...")
 
         return status
     end
@@ -258,27 +282,6 @@ function Tab_Simulation_Callbacks(app)
         end
 
     end
-
-
-    # # update the dictionary of the solution phases and end-members for isopleth
-    # callback!(
-    #     app,
-    #     Output("other-1-id","style"),
-    #     Input("em-dropdown","value"),
-
-    #     prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
-    # ) do em
-    #     bid  = pushed_button( callback_context() ) 
-
-    #     if em == "none"
-    #         style_ot    = Dict("display" => "block") 
-    #     else
-    #         style_ot    = Dict("display" => "none") 
-    #     end
-        
-    #     return style_ot
-    # end
-
 
 
     # callback to display trace element predictive model options
