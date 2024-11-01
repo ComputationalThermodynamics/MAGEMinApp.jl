@@ -44,7 +44,7 @@ function Tab_Simulation_Callbacks(app)
         State(  "test-te-dropdown",                 "value"       ),
         State(  "test-2-te-dropdown",               "value"       ),
 
-        State("watsat-dropdown",                    "value"       ),
+        State(  "watsat-dropdown",                  "value"       ),
         
         prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
     ) do click, filename,
@@ -62,21 +62,18 @@ function Tab_Simulation_Callbacks(app)
 
         global db, dbte
 
-        global fig, data, Hash_XY, Out_TE_XY, all_TE_ph, n_phase_XY, gridded, gridded_info, X, Y, meant, npoints
-        global addedRefinementLvl
-        global n_lbl
-        global iso_show
-        global data_plot, data_reaction, data_grid, layout, data_isopleth, data_isopleth_out, PT_infos, infos;
-        global Out_XY
+        global infos, layout, data, data_plot, data_reaction, iso_show, n_lbl, data_isopleth, data_isopleth_out, Out_XY, Hash_XY, Out_TE_XY, all_TE_ph, n_phase_XY, addedRefinementLvl, pChip_wat, pChip_T;
 
-        global file_pd  = String(filename)*"_phase_diagram.jld2"
-        file_pd_data    = String(filename)*"_phase_diagram_data.jld2"
-        file            = String(filename)*"_options.jld2"
+        global file_pd  = "saved_states/"*String(filename)*"_phase_diagram.jld2"
+        file_pd_data    = "saved_states/"*String(filename)*"_phase_diagram_data.jld2"
+        file            = "saved_states/"*String(filename)*"_options.jld2"
 
+        println("Saving phase diagram options..."); t0 = time()
         @save file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ptx_table pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver verbose scp test test2 buffer1 buffer2 te_test te_test2 watsat
-        println("saving phase diagram options")
-        
-        gv_names    = ["fig", "data", "Hash_XY", "Out_TE_XY", "all_TE_ph", "n_phase_XY", "gridded", "gridded_info", "X", "Y", "meant", "npoints", "addedRefinementLvl", "n_lbl", "iso_show", "data_plot", "data_reaction", "data_grid", "layout", "data_isopleth", "data_isopleth_out", "PT_infos", "infos", "Out_XY"]
+        println("Saved phase diagram options in $(round(time()-t0, digits=3)) seconds"); 
+
+        gv_names    = ["infos","layout","data", "data_plot", "data_reaction","iso_show", "n_lbl","data_isopleth", "data_isopleth_out","Out_XY", "Hash_XY", "Out_TE_XY", "all_TE_ph", "n_phase_XY", "addedRefinementLvl", "pChip_wat", "pChip_T"]
+  
         save_cmd    = "@save file_pd"
         field_list  = []
         for i in gv_names
@@ -85,14 +82,16 @@ function Tab_Simulation_Callbacks(app)
                 push!(field_list, i)
             end 
         end
+
         if !isempty(field_list)
-            eval(Meta.parse(save_cmd))
+            println("Saving phase diagram data (can take a while 1-5 Go)..."); t0 = time()
             @save file_pd_data field_list
-            println("saving phase diagram data")
+            eval(Meta.parse(save_cmd))
+            println("Saved phase diagram data in $(round(time()-t0, digits=3)) seconds"); 
         end
 
         status = "success"
-        println("saved in: $(pwd()) ...")
+        println("saved in: $(pwd())/")
 
         return status
     end
@@ -144,30 +143,26 @@ function Tab_Simulation_Callbacks(app)
         prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
     ) do click, filename
 
-        global fig, data, Hash_XY, Out_TE_XY, all_TE_ph, n_phase_XY, gridded, gridded_info, X, Y, meant, npoints
-        global addedRefinementLvl
-        global n_lbl
-        global iso_show
-        global data_plot, data_reaction, data_grid, layout, data_isopleth, data_isopleth_out, PT_infos, infos;
-        global Out_XY
+        # load the phase diagram if saved
+        global infos, layout, data, data_plot, data_reaction, iso_show, n_lbl, data_isopleth, data_isopleth_out, Out_XY, Hash_XY, Out_TE_XY, all_TE_ph, n_phase_XY, addedRefinementLvl, pChip_wat, pChip_T;
 
-        file_pd_data    = String(filename)*"_phase_diagram_data.jld2"
-        file_pd         = String(filename)*"_phase_diagram.jld2"
-        load_cmd        = "@load file_pd"
+        file_pd_data    = "saved_states/"*String(filename)*"_phase_diagram_data.jld2"
+        global file_pdr = "saved_states/"*String(filename)*"_phase_diagram.jld2"
+        load_cmd        = "@load file_pdr" 
         try
             @load file_pd_data field_list
-
             for i in field_list
                 load_cmd *= " $i"
             end
             eval(Meta.parse(load_cmd))
         catch
+            println("failed to load the phase diagram data")
         end
 
+        # load option of the phase diagram tab
         global db, dbte
-        file = String(filename)*"_options.jld2"
+        file = "saved_states/"*String(filename)*"_options.jld2"
         try 
-            # using JSON3, JLD2
             @load file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver verbose scp buffer1 buffer2 watsat
 
             success, failed = "success", ""
@@ -419,7 +414,7 @@ function Tab_Simulation_Callbacks(app)
             return dataout
 
         elseif bid ==  "load-state-diagram-button"
-            file = String(filename)*"_options.jld2"
+            file = "saved_states/"*String(filename)*"_options.jld2"
 
             @load file ptx_table
 
@@ -560,7 +555,7 @@ function Tab_Simulation_Callbacks(app)
         bid  = pushed_button( callback_context() )  
 
         if bid ==  "load-state-diagram-button"
-            file = String(filename)*"_options.jld2"
+            file = "saved_states/"*String(filename)*"_options.jld2"
 
             @load file test
 
@@ -618,7 +613,7 @@ function Tab_Simulation_Callbacks(app)
          bid  = pushed_button( callback_context() )     
 
          if bid == "load-state-diagram-button"
-            file = String(filename)*"_options.jld2"
+            file = "saved_states/"*String(filename)*"_options.jld2"
 
             @load file test2
             val = test2
@@ -671,7 +666,7 @@ function Tab_Simulation_Callbacks(app)
 
         # catching up some special cases
         if bid ==  "load-state-diagram-button"
-            file = String(filename)*"_options.jld2"
+            file = "saved_states/"*String(filename)*"_options.jld2"
 
             @load file te_test
             t = te_test
@@ -713,7 +708,7 @@ function Tab_Simulation_Callbacks(app)
 
         # catching up some special cases
         if bid ==  "load-state-diagram-button"
-            file = String(filename)*"_options.jld2"
+            file = "saved_states/"*String(filename)*"_options.jld2"
 
             @load file te_test2
             t = te_test2
