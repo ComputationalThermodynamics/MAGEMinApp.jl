@@ -96,8 +96,6 @@ function Tab_Simulation_Callbacks(app)
         return status
     end
 
-
-
     # update the dictionary of the solution phases and end-members for isopleths
     callback!(
         app,
@@ -143,7 +141,7 @@ function Tab_Simulation_Callbacks(app)
         prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
     ) do click, filename, state_id
 
-        state_id *= -1.0
+        state_id *=  -1.0
 
         # load the phase diagram if saved
         global infos, layout, data, data_plot, data_reaction, iso_show, n_lbl, data_isopleth, data_isopleth_out, Out_XY, Hash_XY, Out_TE_XY, all_TE_ph, n_phase_XY, addedRefinementLvl, pChip_wat, pChip_T;
