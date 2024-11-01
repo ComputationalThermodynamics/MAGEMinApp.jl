@@ -590,7 +590,6 @@ function Tab_Simulation(db_inf)
                                                                                                     for i=1:length(db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1]) ],
                                                                         style_cell  = (textAlign="center", fontSize="140%",),
                                                                         style_header= (fontWeight="bold",),
-                                                                        # editable    = true
                                                                     ),
 
                                                                     # Buffer multiplier
@@ -627,7 +626,6 @@ function Tab_Simulation(db_inf)
                                                                                                 for i=1:length(db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1]) ],
                                                                     style_cell  = (textAlign="center", fontSize="140%",),
                                                                     style_header= (fontWeight="bold",),
-                                                                    # editable    = true
                                                                 ),
 
 
@@ -687,8 +685,7 @@ function Tab_Simulation(db_inf)
                             dbc_collapse(
                                 dbc_card(dbc_cardbody([
 
-                                        dbc_col([ 
-                                            #title                                                           
+                                        dbc_col([                                                          
                                             dbc_row([
                                                 dbc_col([ 
                                                     html_h1("Title", style = Dict("textAlign" => "center","font-size" => "120%")),
@@ -715,7 +712,34 @@ function Tab_Simulation(db_inf)
                                                     ),
                                                 ]),
                                             ]),
+                                            dbc_row([
+                                                dbc_alert(
+                                                    "Successfully saved references",
+                                                    id      ="export-citation-save",
+                                                    is_open =false,
+                                                    duration=4000,
+                                                ),
+                                                dbc_alert(
+                                                    "Provide a valid filename (without extension)",
+                                                    color="danger",
+                                                    id      ="export-citation-failed",
+                                                    is_open =false,
+                                                    duration=4000,
+                                                ),
+                                            ]),
                                             html_div("‎ "),
+                                            dbc_row([
+                                                dbc_button(
+                                                    "Compute phase diagram", id="compute-button", color="light", className="me-2", n_clicks=0,
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"1px grey solid")
+                                                ),
+                                            ]),
+
+                                            html_div("‎ "),
+                                            html_h1("Save/Load Diagram", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            html_hr(),
                                             dbc_row([
                                                 dbc_col([ 
                                                     dbc_input(
@@ -756,16 +780,7 @@ function Tab_Simulation(db_inf)
                                                 is_open = false,
                                                 duration= 4000,
                                             ),
-
-                                            html_div("‎ "),
-                                            dbc_row([
-                                                dbc_button(
-                                                    "Compute phase diagram", id="compute-button", color="light", className="me-2", n_clicks=0,
-                                                    style       = Dict( "textAlign"     => "center",
-                                                                        "font-size"     => "100%",
-                                                                        "border"        =>"1px grey solid")
-                                                ),
-                                            ]),
+        
 
                                             html_div("‎ "),
                                             dcc_textarea(
@@ -870,7 +885,6 @@ function Tab_Simulation(db_inf)
                                                                                                     for i=1:length(dbte[(dbte.test .== 0), :].elements[1]) ],
                                                                         style_cell  = (textAlign="center", fontSize="140%",),
                                                                         style_header= (fontWeight="bold",),
-                                                                        # editable    = true
                                                                     ),
 
                                                                 ], style = Dict("display" => "block"), id      = "table-1-te-id"), #none, block
@@ -889,7 +903,6 @@ function Tab_Simulation(db_inf)
                                                                                                 for i=1:length(dbte[(dbte.test .== 0), :].elements[1]) ],
                                                                     style_cell  = (textAlign="center", fontSize="140%",),
                                                                     style_header= (fontWeight="bold",),
-                                                                    # editable    = true
                                                                 ),
 
                                                             ], style = Dict("display" => "none"), id      = "table-2-te-id"), #none, block

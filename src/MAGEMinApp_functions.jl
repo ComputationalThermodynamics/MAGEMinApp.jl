@@ -119,33 +119,67 @@ function save_rho_for_LaMEM(    dtb         ::String,
         end
     end
 
-    n            = 2^(sub + refLvl + addedRefinementLvl)
-    x            = range(data.Xrange[1], stop = data.Xrange[2], length = n)
-    y            = range(data.Yrange[1], stop = data.Yrange[2], length = n)
+    n   = 2^(sub + refLvl)+1
+    dx  = (data.Xrange[2]-data.Xrange[1])/(n-1)
+    dy  = (data.Yrange[2]-data.Yrange[1])/(n-1)
+
+    x   = range(data.Xrange[1], stop = data.Xrange[2], length = n)
+    y   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
 
     T            = vcat(x)
     P            = vcat(y)
     gridded      = Array{Union{Float64,Missing}}(undef,n,n,ncol);
 
-    Xr           = (Xrange[2]-Xrange[1])/n
-    Yr           = (Yrange[2]-Yrange[1])/n
+    dx  = (data.Xrange[2]-data.Xrange[1])/(n-1)
+    dy  = (data.Yrange[2]-data.Yrange[1])/(n-1)
 
     for l=1:ncol
         for k=1:np
-            for i=data.x[k][1]+Xr/2 : Xr : data.x[k][3]
-                for j=data.y[k][1]+Yr/2 : Yr : data.y[k][3]
-                    ii                  = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
-                    jj                  = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
-                    gridded[ii,jj,l]    = field[k,l]
+            ii              = compute_index(data.points[k][1], data.Xrange[1], dx)
+            jj              = compute_index(data.points[k][2], data.Yrange[1], dy)
+            gridded[ii,jj,l]  = field[k,l] 
+        end
+
+        for i=1:length(data.cells)
+            cell    = data.cells[i]
+            tmp     = field[cell[1],l] 
+
+            ii_min = compute_index(data.points[cell[2]][1], Xrange[1], dx)
+            ii_max = compute_index(data.points[cell[3]][1], Xrange[1], dx)
+            jj_ix  = compute_index(data.points[cell[2]][2], Yrange[1], dy)
+            for ii = ii_min+1:ii_max-1
+                gridded[ii, jj_ix,l] = tmp
+            end
+
+            jj_min = compute_index(data.points[cell[1]][2], Yrange[1], dy)
+            jj_max = compute_index(data.points[cell[2]][2], Yrange[1], dy)
+            ii_ix = compute_index(data.points[cell[1]][1], Xrange[1], dx)
+            for jj in jj_min+1:jj_max-1
+                gridded[ii_ix, jj,l] = tmp
+            end
+
+            jj_min = compute_index(data.points[cell[4]][2], Yrange[1], dy)
+            jj_max = compute_index(data.points[cell[3]][2], Yrange[1], dy)
+            ii_ix = compute_index(data.points[cell[4]][1], Xrange[1], dx)
+            for jj in jj_min+1:jj_max-1
+                gridded[ii_ix, jj,l] = tmp
+            end
+
+            ii_min = compute_index(data.points[data.cells[i][1]][1], Xrange[1], dx)
+            ii_max = compute_index(data.points[data.cells[i][4]][1], Xrange[1], dx)
+            jj_ix = compute_index(data.points[data.cells[i][1]][2], Yrange[1], dy)
+
+            for ii in ii_min+1:ii_max-1
+                gridded[ii, jj_ix,l] = tmp
+                for jj in jj_min+1:jj_max-1
+                    gridded[ii, jj,l] = tmp
                 end
             end
+
         end
     end
 
     # filter some potential iffy values
-    rho_S_min                        = minimum(gridded[:,:,2])
-    rho_M_min                        = minimum(gridded[:,:,1])
-
     gridded[gridded[:,:,2] .== 0.0,2] .= 3000.0
     gridded[isnan.(gridded[:,:,2]),2] .= 3000.0
     gridded[gridded[:,:,1] .== 0.0,1] .= 2000.0
@@ -248,26 +282,63 @@ function save_rho_for_GeoModel(     dtb         ::String,
         end
     end
 
-    n            = 2^(sub + refLvl + addedRefinementLvl)
-    x            = range(data.Xrange[1], stop = data.Xrange[2], length = n)
-    y            = range(data.Yrange[1], stop = data.Yrange[2], length = n)
+    n   = 2^(sub + refLvl)+1
+    dx  = (data.Xrange[2]-data.Xrange[1])/(n-1)
+    dy  = (data.Yrange[2]-data.Yrange[1])/(n-1)
+
+    x   = range(data.Xrange[1], stop = data.Xrange[2], length = n)
+    y   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
 
     T            = vcat(x)
     P            = vcat(y)
     gridded      = Array{Union{Float64,Missing}}(undef,n,n,ncol);
 
-    Xr           = (Xrange[2]-Xrange[1])/n
-    Yr           = (Yrange[2]-Yrange[1])/n
+    dx  = (data.Xrange[2]-data.Xrange[1])/(n-1)
+    dy  = (data.Yrange[2]-data.Yrange[1])/(n-1)
 
     for l=1:ncol
         for k=1:np
-            for i=data.x[k][1]+Xr/2 : Xr : data.x[k][3]
-                for j=data.y[k][1]+Yr/2 : Yr : data.y[k][3]
-                    ii                  = Int64(round((i-Xrange[1] + Xr/2)/(Xr)))
-                    jj                  = Int64(round((j-Yrange[1] + Yr/2)/(Yr)))
-                    gridded[ii,jj,l]    = field[k,l]
+            ii              = compute_index(data.points[k][1], data.Xrange[1], dx)
+            jj              = compute_index(data.points[k][2], data.Yrange[1], dy)
+            gridded[ii,jj,l]  = field[k,l] 
+        end
+
+        for i=1:length(data.cells)
+            cell    = data.cells[i]
+            tmp     = field[cell[1],l] 
+
+            ii_min = compute_index(data.points[cell[2]][1], Xrange[1], dx)
+            ii_max = compute_index(data.points[cell[3]][1], Xrange[1], dx)
+            jj_ix  = compute_index(data.points[cell[2]][2], Yrange[1], dy)
+            for ii = ii_min+1:ii_max-1
+                gridded[ii, jj_ix,l] = tmp
+            end
+
+            jj_min = compute_index(data.points[cell[1]][2], Yrange[1], dy)
+            jj_max = compute_index(data.points[cell[2]][2], Yrange[1], dy)
+            ii_ix = compute_index(data.points[cell[1]][1], Xrange[1], dx)
+            for jj in jj_min+1:jj_max-1
+                gridded[ii_ix, jj,l] = tmp
+            end
+
+            jj_min = compute_index(data.points[cell[4]][2], Yrange[1], dy)
+            jj_max = compute_index(data.points[cell[3]][2], Yrange[1], dy)
+            ii_ix = compute_index(data.points[cell[4]][1], Xrange[1], dx)
+            for jj in jj_min+1:jj_max-1
+                gridded[ii_ix, jj,l] = tmp
+            end
+
+            ii_min = compute_index(data.points[data.cells[i][1]][1], Xrange[1], dx)
+            ii_max = compute_index(data.points[data.cells[i][4]][1], Xrange[1], dx)
+            jj_ix = compute_index(data.points[data.cells[i][1]][2], Yrange[1], dy)
+
+            for ii in ii_min+1:ii_max-1
+                gridded[ii, jj_ix,l] = tmp
+                for jj in jj_min+1:jj_max-1
+                    gridded[ii, jj,l] = tmp
                 end
             end
+
         end
     end
 

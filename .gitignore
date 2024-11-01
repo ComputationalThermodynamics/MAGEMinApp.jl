@@ -3,3 +3,4 @@
 .vscode
 Manifest.toml
 *libMAGEMin.dylib
+saved_states/*

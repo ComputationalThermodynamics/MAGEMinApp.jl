@@ -327,7 +327,7 @@ function refine_MAGEMin(data,
     # Compute hash for all points
     n_points    = length(Out_XY)
     Hash_XY     = Vector{UInt64}(undef,n_points)
-    n_phase_XY  = Vector{UInt64}(undef,n_points)
+    n_phase_XY  = Vector{Int64}(undef,n_points)
 
     if refType == "ph"
         for i=1:n_points
