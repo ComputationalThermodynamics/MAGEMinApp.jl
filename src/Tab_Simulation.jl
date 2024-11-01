@@ -590,7 +590,6 @@ function Tab_Simulation(db_inf)
                                                                                                     for i=1:length(db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1]) ],
                                                                         style_cell  = (textAlign="center", fontSize="140%",),
                                                                         style_header= (fontWeight="bold",),
-                                                                        # editable    = true
                                                                     ),
 
                                                                     # Buffer multiplier
@@ -627,7 +626,6 @@ function Tab_Simulation(db_inf)
                                                                                                 for i=1:length(db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1]) ],
                                                                     style_cell  = (textAlign="center", fontSize="140%",),
                                                                     style_header= (fontWeight="bold",),
-                                                                    # editable    = true
                                                                 ),
 
 
@@ -687,8 +685,7 @@ function Tab_Simulation(db_inf)
                             dbc_collapse(
                                 dbc_card(dbc_cardbody([
 
-                                        dbc_col([ 
-                                            #title                                                           
+                                        dbc_col([                                                          
                                             dbc_row([
                                                 dbc_col([ 
                                                     html_h1("Title", style = Dict("textAlign" => "center","font-size" => "120%")),
@@ -888,7 +885,6 @@ function Tab_Simulation(db_inf)
                                                                                                     for i=1:length(dbte[(dbte.test .== 0), :].elements[1]) ],
                                                                         style_cell  = (textAlign="center", fontSize="140%",),
                                                                         style_header= (fontWeight="bold",),
-                                                                        # editable    = true
                                                                     ),
 
                                                                 ], style = Dict("display" => "block"), id      = "table-1-te-id"), #none, block
@@ -907,7 +903,6 @@ function Tab_Simulation(db_inf)
                                                                                                 for i=1:length(dbte[(dbte.test .== 0), :].elements[1]) ],
                                                                     style_cell  = (textAlign="center", fontSize="140%",),
                                                                     style_header= (fontWeight="bold",),
-                                                                    # editable    = true
                                                                 ),
 
                                                             ], style = Dict("display" => "none"), id      = "table-2-te-id"), #none, block
