@@ -25,10 +25,7 @@ function Tab_PTXpaths(db_inf)
                                                         clearable   = false,
                                                         multi       = false),
                                     ]),
-                                    # dbc_tooltip([
-                                    #     html_div("Here you can select the thermodynamic database you want"),
-                                    #     html_div("Note that the chemical system can be different from database to another"),
-                                    #             ],target="database-dropdown-ptx"),
+
                                     ]),
 
                                     dbc_row([  
@@ -115,8 +112,6 @@ function Tab_PTXpaths(db_inf)
 
                                         ]),
                                     ], style = Dict("display" => "block"), id      = "switch-opx-id-ptx"), #none, block
-
-
 
                                     # buffer
                                     dbc_row([
@@ -225,7 +220,7 @@ function Tab_PTXpaths(db_inf)
                                                     is_open = false,
                                                     duration= 4000,
                                                 ),
-                                                # html_div(id="output-data-uploadn"),
+
                                                 dbc_tooltip([
                                                     html_div("An example of file providing bulk-rock compositions is given in the 'examples' folder"),
                                                     html_div("The structure of the file should comply with the following structure:"),

@@ -117,7 +117,6 @@ function Tab_PhaseDiagram_Callbacks(app)
     #save all table to file
     callback!(
         app,
-        # Output("download-all-table-text", "data"),
         Output("data-all-table-save", "is_open"),
         Output("data-all-save-table-failed", "is_open"),
         Input("save-all-table-button", "n_clicks"),
@@ -260,7 +259,6 @@ function Tab_PhaseDiagram_Callbacks(app)
             ids     = (Out_XY[1].bulk .!= 0.0)
             act_ox  = Out_XY[1].oxides[ids]
     
-
             sys_chem = []
             id_sys   = []
             for i=1:length(all_ox)
@@ -418,7 +416,6 @@ function Tab_PhaseDiagram_Callbacks(app)
         if bid == "compute-button"
 
             smooth                      = "best"
-      
             # declare set of global variables needed to generate, refine and display phase diagrams
             global fig, data, Hash_XY, Out_TE_XY, all_TE_ph, n_phase_XY, gridded, gridded_info, X, Y, meant, npoints
             global addedRefinementLvl   = 0;
