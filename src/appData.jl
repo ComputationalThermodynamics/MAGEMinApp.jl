@@ -378,8 +378,8 @@ dbte = DataFrame(       composition = String[],
                         comments    = String[],
                         test        = Int64[],
                         elements    = Array{String, 1}[],
-                        μg_g         = Array{Float64, 1}[],
-                        μg_g2        = Array{Float64, 1}[],
+                        μg_g        = Array{Float64, 1}[],
+                        μg_g2       = Array{Float64, 1}[],
                 )   
 
 push!(dbte,Dict(    :composition=> "predefined",

@@ -184,7 +184,7 @@ function save_rho_for_LaMEM(    dtb         ::String,
     gridded[isnan.(gridded[:,:,2]),2] .= 3000.0
     gridded[gridded[:,:,1] .== 0.0,1] .= 2000.0
     gridded[isnan.(gridded[:,:,1]),1] .= 2000.0
-    gridded[gridded[:,:,3] .> 1.0,3] .= 1.0
+    gridded[gridded[:,:,3] .> 1.0,3]  .= 1.0
 
     # convert values
     T      .= T .+ 273.15            # --> to K
