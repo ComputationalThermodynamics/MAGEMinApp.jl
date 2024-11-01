@@ -115,7 +115,6 @@ function Tab_Simulation_Callbacks(app)
         Output(  "kds-dropdown",                     "value"       ),
         Output(  "zrsat-dropdown",                   "value"       ),
 
-        # Output(  "pt-x-table",                       "data"        ),
         Output(  "pmin-id",                          "value"       ),
         Output(  "pmax-id",                          "value"       ),
         Output(  "tmin-id",                          "value"       ),

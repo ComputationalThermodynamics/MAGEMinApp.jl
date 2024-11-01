@@ -20,9 +20,6 @@ function Tab_PhaseDiagram()
                                 ]),
                             ], width=3),
 
-                            # dbc_col([  
-                            # ], width=1),
-
                             dbc_col([    
                                 dcc_textarea(
                                     id          ="system-chemistry-id",

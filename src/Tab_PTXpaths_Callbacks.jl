@@ -95,7 +95,6 @@ function Tab_PTXpaths_Callbacks(app)
         app,
         Output("path-plot", "figure"),
         Input("ptx-table", "data"),
-        # prevent_initial_call = true,
         ) do data
 
         dataout = copy(data)
@@ -759,7 +758,6 @@ function Tab_PTXpaths_Callbacks(app)
                         Dict("name" => "T [°C]",    "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric"),
                         Dict("name" => "Add [mol%]", "id"   => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric")]
 
-            # dataout = copy(data)
             if n_clicks > 0 && bid == "add-row-button"
                 add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0, Symbol("col-3") => 0.0)
                 push!(dataout,add)
@@ -768,7 +766,6 @@ function Tab_PTXpaths_Callbacks(app)
             colout = [  Dict("name" => "P [kbar]",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
                         Dict("name" => "T [°C]",    "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")]
 
-            # dataout = copy(data)
             if n_clicks > 0 && bid == "add-row-button"
                 add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0, Symbol("col-3") => 0.0)
                 push!(dataout,add)
