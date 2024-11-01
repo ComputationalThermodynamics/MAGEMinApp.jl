@@ -77,6 +77,16 @@ function Tab_PhaseDiagram()
                         ]),    
                         # html_hr(),  
                         html_div("‎ "), 
+
+                        html_div([
+                            dbc_input(
+                                id      = "load-state-id",
+                                type    = "number", 
+                                min     = -1e50, 
+                                max     =  1e50, 
+                                value   =  1.0  ),
+                        ], style = Dict("display" => "none"), id      = "load-state-display-id"),
+
                         dbc_row([
                             diagram_legend()
                         ]),
@@ -84,7 +94,8 @@ function Tab_PhaseDiagram()
                             diagram_plot()
                         ]),
                     ], width=9),
-                    dbc_col([  
+                    dbc_col([
+                        
                         dbc_tabs([
                             dbc_tab(label="Informations", children=[
                         dbc_row([
@@ -214,7 +225,8 @@ function Tab_PhaseDiagram()
                                             duration=4000,
                                         ),
                                     ]),
-                                    html_div("‎ "),
+                                    # html_div("‎ "),
+
                                     dbc_row([
                                         dbc_col([
                                             html_h1("Export references", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 0)),    
@@ -236,23 +248,6 @@ function Tab_PhaseDiagram()
                                                 html_div("Output path and progress are displayed in the Julia terminal")],target="export-citation-button"),
                                         ]),
                                     ]),
-
-                                    dbc_row([
-                                        dbc_alert(
-                                            "Successfully saved references",
-                                            id      ="export-citation-save",
-                                            is_open =false,
-                                            duration=4000,
-                                        ),
-                                        dbc_alert(
-                                            "Provide a valid filename (without extension)",
-                                            color="danger",
-                                            id      ="export-citation-failed",
-                                            is_open =false,
-                                            duration=4000,
-                                        ),
-                                    ]),
-
                         
                                 ])),
                                 id="collapse-infos-phase-diagram",

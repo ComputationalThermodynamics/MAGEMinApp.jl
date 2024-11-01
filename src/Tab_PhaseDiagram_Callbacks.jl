@@ -322,6 +322,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("reverse-colormap",       "value"),
         Input("fields-dropdown",        "value"),
         Input("update-title-button",    "n_clicks"),
+        Input("load-state-id",          "value"),
         State("title-id",               "value"),
 
         State("diagram-dropdown",       "value"),           # pt, px, tx
@@ -387,7 +388,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
     ) do    grid,       full_grid,  lbl,        addIso,     removeIso,  removeAllIso,    isoShow,    isoHide,    n_clicks_mesh, n_clicks_refine, 
             minColor,   maxColor,
-            colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  updateTitle,     customTitle,
+            colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  updateTitle,     loadstateid, customTitle,
             diagType,   dtb,        watsat,     cpx,        limOpx,     limOpxVal,  phase_selection, PTpath,
             tmin,       tmax,       pmin,       pmax,
             fixT,       fixP,
@@ -487,7 +488,19 @@ function Tab_PhaseDiagram_Callbacks(app)
             infos           = get_computation_info(npoints, meant)
             data_reaction   = show_hide_reaction_lines(sub,refLvl,Xrange,Yrange)
             data_grid       = show_hide_mesh_grid()
-                   
+
+        elseif bid == "load-state-id"
+            data_plot,layout =  update_diplayed_field_phaseDiagram( xtitle,     ytitle,     
+            Xrange,     Yrange,     fieldname,
+            dtb,        oxi,
+            sub,        refLvl,
+            smooth,     colorm,     reverseColorMap, set_white,
+            test,       refType                                 )
+
+            minColor        = round(minimum(skipmissing(gridded)),digits=2); 
+            maxColor        = round(maximum(skipmissing(gridded)),digits=2);        
+
+            active_tab      = "tab-phase-diagram"     
         elseif bid == "set-min-white" || bid == "min-color-id" || bid == "max-color-id" || bid == "colormaps_cross" || bid == "smooth-colormap" || bid == "range-slider-color" || bid == "reverse-colormap"
 
             data_plot, layout =  update_colormap_phaseDiagram(  xtitle,     ytitle,     
