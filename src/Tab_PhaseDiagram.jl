@@ -29,10 +29,19 @@ function Tab_PhaseDiagram()
                                     draggable   = false,
                                     style       = Dict("height" => "26px","resize"=> "none","textAlign" => "center","font-size" => "100%", "width"=> "100%",),
                                 ),
-                            ], width=7),
+                            ], width=6),
 
-                            # dbc_col([  
-                            #     ], width=1),
+                            dbc_col([  
+                                dcc_clipboard(
+                                    target_id="system-chemistry-id",
+                                    title="copy",
+                                    style=Dict(
+                                        "display" => "inline-block",
+                                        "fontSize"=> 20,
+                                        "verticalAlign"=> "top",
+                                    ),
+                                ),
+                                ], width=1),
     
                             dbc_col([
                                 dbc_button(
@@ -245,6 +254,37 @@ function Tab_PhaseDiagram()
                                                 html_div("Output path and progress are displayed in the Julia terminal")],target="export-citation-button"),
                                         ]),
                                     ]),
+
+
+                                    html_hr(),
+
+                                    dbc_row([   
+                                        dbc_button("Display point snippet for MAGEMin_C",id="button-export-magemin_c",color="light"),
+                                        dbc_collapse(
+                                            dbc_card(dbc_cardbody([
+                                                dcc_textarea(
+                                                    id          = "magemin_c-snippet",
+                                                    value       = "",
+                                                    readOnly    = true,
+                                                    disabled    = true,
+                                                    draggable   = false,
+                                                    style       = Dict("textAlign" => "left","font-size" => "100%", "width"=> "100%", "resize"=> "auto","height" => "160px")
+                                                ),
+                                                dcc_clipboard(
+                                                    target_id="magemin_c-snippet",
+                                                    title="copy",
+                                                    style=Dict(
+                                                        "display" => "inline-block",
+                                                        "fontSize"=> 20,
+                                                        "verticalAlign"=> "top",
+                                                    ),
+                                                ),
+                                            ])),
+                                            id="collapse-export-magemin_c",
+                                            is_open=false,
+                                        ),
+                                    ]),
+            
                         
                                 ])),
                                 id="collapse-infos-phase-diagram",

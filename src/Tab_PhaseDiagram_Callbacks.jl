@@ -199,16 +199,26 @@ function Tab_PhaseDiagram_Callbacks(app)
         end
     end
 
-    # clickData callback
+    # clickData callback when clicking on diagram point 
     callback!(
         app,
         Output("pie-diagram",           "figure"),
         Output("system-chemistry-id",   "value"),
+        Output("magemin_c-snippet",     "value"),
         Input("phase-diagram",          "clickData"),
         Input("select-pie-unit",        "value"),
+        State("database-dropdown",      "value"), 
         State("diagram-dropdown",       "value"),          # pt,px,tx
+
+        State(  "buffer-dropdown",                  "value"       ),
+        State(  "buffer-1-mul-id",                  "value"       ),
+        State(  "buffer-2-mul-id",                  "value"       ),  
+        State("phase-selection",        "value"),
+
         prevent_initial_call = true,
-    ) do click_info, pie_unit, diagType
+    ) do click_info, pie_unit, dtb, diagType, buffer, buffer_n1, buffer_n2, phase_selection
+
+        phase_selection                 = remove_phases(string_vec_dif(phase_selection,dtb),dtb)
 
         global point_id
 
@@ -271,10 +281,29 @@ function Tab_PhaseDiagram_Callbacks(app)
             bk       = join(round.(Out_XY[point_id].bulk[id_sys] .*100.0; digits = 3),"; ")
     
             text = sys_chem*" (mol%)"*" - ["*bk*"]"
+
+            # code snippet to performation point calculation in MAGEMin_C
+            if buffer != "none"
+                buf      = ", buffer=\"qfm\""
+            else
+                buf = ""
+            end
+            if !isnothing(phase_selection)
+                rm_list = ", rm_list=$phase_selection"
+            else
+                rm_list = ""
+            end
+            snip     = "using MAGEMin_C\n"
+            snip    *= "data    = Initialize_MAGEMin(\"$dtb\", verbose=false$buf);\n"
+            snip    *= "P, T    = $( round(Out_XY[point_id].P_kbar; digits = 8)), $(round(Out_XY[point_id].T_C; digits = 8));\n"
+            snip    *= "Xoxides = [\"$(join(Out_XY[point_id].oxides,"\"; \""))\"];\n"
+            snip    *= "X       = [$(join( round.(Out_XY[point_id].bulk; digits = 5),", "))];\n"
+            snip    *= "sys_in  = \"mol\";\n"
+            snip    *= "out     = single_point_minimization(P, T, data, X=X, Xoxides=Xoxides, sys_in=sys_in$rm_list)\n"
         end
 
 
-        return fig, text
+        return fig, text, snip
     end
 
 
