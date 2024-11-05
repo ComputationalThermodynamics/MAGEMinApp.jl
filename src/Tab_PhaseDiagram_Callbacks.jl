@@ -202,21 +202,23 @@ function Tab_PhaseDiagram_Callbacks(app)
     # clickData callback when clicking on diagram point 
     callback!(
         app,
-        Output("pie-diagram",           "figure"),
-        Output("system-chemistry-id",   "value"),
-        Output("magemin_c-snippet",     "value"),
-        Input("phase-diagram",          "clickData"),
-        Input("select-pie-unit",        "value"),
-        State("database-dropdown",      "value"), 
-        State("diagram-dropdown",       "value"),          # pt,px,tx
+        Output("pie-diagram",           "figure"    ),
+        Output("system-chemistry-id",   "value"     ),
+        Output("magemin_c-snippet",     "value"     ),
+        Input("phase-diagram",          "clickData" ),
+        Input("select-pie-unit",        "value"     ),
+        State("database-dropdown",      "value"     ), 
+        State("diagram-dropdown",       "value"     ),          # pt,px,tx
 
-        State(  "buffer-dropdown",                  "value"       ),
-        State(  "buffer-1-mul-id",                  "value"       ),
-        State(  "buffer-2-mul-id",                  "value"       ),  
-        State("phase-selection",        "value"),
+        State("buffer-dropdown",        "value"     ),
+        State("buffer-1-mul-id",        "value"     ),
+        State("buffer-2-mul-id",        "value"     ),  
+        State("phase-selection",        "value"     ),
+        State("solver-dropdown",        "value"     ),            # bulk-rock 1
+        
 
         prevent_initial_call = true,
-    ) do click_info, pie_unit, dtb, diagType, buffer, buffer_n1, buffer_n2, phase_selection
+    ) do click_info, pie_unit, dtb, diagType, buffer, buffer_n1, buffer_n2, phase_selection, solver
 
         phase_selection                 = remove_phases(string_vec_dif(phase_selection,dtb),dtb)
 
@@ -293,8 +295,15 @@ function Tab_PhaseDiagram_Callbacks(app)
             else
                 rm_list = ""
             end
+            if solver == "pge"
+                slv = ", solver=1"
+            elseif solver == "lp"
+                slv = ", solver=0"
+            elseif solver == "hyb"
+                slv = ", solver=2"
+            end
             snip     = "using MAGEMin_C\n"
-            snip    *= "data    = Initialize_MAGEMin(\"$dtb\", verbose=false$buf);\n"
+            snip    *= "data    = Initialize_MAGEMin(\"$dtb\", verbose=false$buf$slv);\n"
             snip    *= "P, T    = $( round(Out_XY[point_id].P_kbar; digits = 8)), $(round(Out_XY[point_id].T_C; digits = 8));\n"
             snip    *= "Xoxides = [\"$(join(Out_XY[point_id].oxides,"\"; \""))\"];\n"
             snip    *= "X       = [$(join( round.(Out_XY[point_id].bulk; digits = 5),", "))];\n"
