@@ -287,8 +287,10 @@ function Tab_PhaseDiagram_Callbacks(app)
             # code snippet to performation point calculation in MAGEMin_C
             if buffer != "none"
                 buf      = ", buffer=\"qfm\""
+                bufn     = ", B="*string(Out_XY[point_id].buffer_n)
             else
-                buf = ""
+                buf     = ""
+                bufn    = ""
             end
             if !isnothing(phase_selection)
                 rm_list = ", rm_list=$phase_selection"
@@ -308,7 +310,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             snip    *= "Xoxides = [\"$(join(Out_XY[point_id].oxides,"\"; \""))\"];\n"
             snip    *= "X       = [$(join( round.(Out_XY[point_id].bulk; digits = 5),", "))];\n"
             snip    *= "sys_in  = \"mol\";\n"
-            snip    *= "out     = single_point_minimization(P, T, data, X=X, Xoxides=Xoxides, sys_in=sys_in$rm_list)\n"
+            snip    *= "out     = single_point_minimization(P, T, data, X=X, Xoxides=Xoxides$(bufn), sys_in=sys_in$rm_list)\n"
         end
 
 
