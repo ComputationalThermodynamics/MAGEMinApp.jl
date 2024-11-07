@@ -349,7 +349,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         Input("compute-button",         "n_clicks"),
         Input("refine-pb-button",       "n_clicks"),
-  
+        Input("uni-refine-pb-button",   "n_clicks"),
         Input("min-color-id",           "value"),
         Input("max-color-id",           "value"),
 
@@ -424,7 +424,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         prevent_initial_call = true,
 
-    ) do    grid,       full_grid,  lbl,        addIso,     removeIso,  removeAllIso,    isoShow,    isoHide,    n_clicks_mesh, n_clicks_refine, 
+    ) do    grid,       full_grid,  lbl,        addIso,     removeIso,  removeAllIso,    isoShow,    isoHide,    n_clicks_mesh, n_clicks_refine, uni_n_clicks_refine, 
             minColor,   maxColor,
             colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  updateTitle,     loadstateid, customTitle,
             diagType,   dtb,        watsat,     cpx,        limOpx,     limOpxVal,  phase_selection, PTpath,
@@ -497,7 +497,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             minColor        = round(minimum(skipmissing(gridded)),digits=2); 
             maxColor        = round(maximum(skipmissing(gridded)),digits=2);  
     
-        elseif bid == "refine-pb-button"
+        elseif bid == "refine-pb-button" || bid == "uni-refine-pb-button"
 
             data_plot, layout, npoints, meant  =  refine_phaseDiagram(  xtitle,     ytitle,     lbl, 
                                                                         Xrange,     Yrange,     fieldname,  customTitle,
@@ -509,7 +509,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                         bufferType, bufferN1,   bufferN2,
                                                                         minColor,   maxColor,
                                                                         smooth,     colorm,     reverseColorMap, set_white,
-                                                                        test,       refType                             )
+                                                                        test,       refType,    bid                             )
 
             if tepm == "true"
                 if dtb != "um" && dtb != "ume" && dtb != "mtl"

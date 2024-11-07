@@ -45,10 +45,17 @@ function Tab_PhaseDiagram()
     
                             dbc_col([
                                 dbc_button(
+                                    "Refine uniformly", id="uni-refine-pb-button", color="light", className="me-2", n_clicks=0,
+                                    style       = Dict( "textAlign"     => "center",
+                                                        "font-size"     => "100%",
+                                                        "border"        => "1px grey solid",
+                                                        "width"         => "100%" )), 
+                                dbc_button(
                                     "Refine phase boundaries", id="refine-pb-button", color="light", className="me-2", n_clicks=0,
                                     style       = Dict( "textAlign"     => "center",
                                                         "font-size"     => "100%",
-                                                        "border"        =>"1px grey solid")), 
+                                                        "border"        => "1px grey solid",
+                                                        "width"         => "100%" )), 
                             ], width=2), 
                             ]), 
                         dbc_row([
