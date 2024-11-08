@@ -75,44 +75,54 @@ end
 """ 
     select_cells_to_split_and_keep(data)
 """
-function select_cells_to_split_and_keep(data)
+function select_cells_to_split_and_keep(data; bid = "")
     kp                      = length(data.keep_cell_list)
     data.split_cell_list    = []
     data.keep_cell_list     = []
     tot                     = length(data.cells)
 
-    for i=1:kp
-        tmp0 = Vector{UInt64}(undef, 0)
-        for j=1:4
-            tmp0 = push!(tmp0,Hash_XY[data.cells[i][j]])
+    if bid == "uni-refine-pb-button"
+        for i=1:kp
+            push!(data.split_cell_list, i)
         end
-        nb = length(data.bnd_cells[i])
-        if nb > 1
-            for j=2:nb
-                tmp0 = push!(tmp0,Hash_XY[data.bnd_cells[i][j]])
+
+        tmp = Vector{UInt64}(undef, 4)
+        for i=kp+1:tot
+            push!(data.split_cell_list, i)
+        end
+    else
+        for i=1:kp
+            tmp0 = Vector{UInt64}(undef, 0)
+            for j=1:4
+                tmp0 = push!(tmp0,Hash_XY[data.cells[i][j]])
+            end
+            nb = length(data.bnd_cells[i])
+            if nb > 1
+                for j=2:nb
+                    tmp0 = push!(tmp0,Hash_XY[data.bnd_cells[i][j]])
+                end
+            end
+            if all_identical(tmp0)
+                push!(data.keep_cell_list, i)
+            else
+                push!(data.split_cell_list, i)
+            end
+
+        end
+
+        tmp = Vector{UInt64}(undef, 4)
+        for i=kp+1:tot
+            for j=1:4
+                tmp[j] = Hash_XY[data.cells[i][j]]
+            end
+
+            if all_identical(tmp)
+                push!(data.keep_cell_list, i)
+            else
+                push!(data.split_cell_list, i)
             end
         end
-        if all_identical(tmp0)
-            push!(data.keep_cell_list, i)
-        else
-            push!(data.split_cell_list, i)
-        end
-
     end
-
-    tmp = Vector{UInt64}(undef, 4)
-    for i=kp+1:tot
-        for j=1:4
-            tmp[j] = Hash_XY[data.cells[i][j]]
-        end
-
-        if all_identical(tmp)
-            push!(data.keep_cell_list, i)
-        else
-            push!(data.split_cell_list, i)
-        end
-    end
-
     return data
 end
 

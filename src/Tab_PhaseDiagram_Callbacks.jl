@@ -199,16 +199,28 @@ function Tab_PhaseDiagram_Callbacks(app)
         end
     end
 
-    # clickData callback
+    # clickData callback when clicking on diagram point 
     callback!(
         app,
-        Output("pie-diagram",           "figure"),
-        Output("system-chemistry-id",   "value"),
-        Input("phase-diagram",          "clickData"),
-        Input("select-pie-unit",        "value"),
-        State("diagram-dropdown",       "value"),          # pt,px,tx
+        Output("pie-diagram",           "figure"    ),
+        Output("system-chemistry-id",   "value"     ),
+        Output("magemin_c-snippet",     "value"     ),
+        Input("phase-diagram",          "clickData" ),
+        Input("select-pie-unit",        "value"     ),
+        State("database-dropdown",      "value"     ), 
+        State("diagram-dropdown",       "value"     ),          # pt,px,tx
+
+        State("buffer-dropdown",        "value"     ),
+        State("buffer-1-mul-id",        "value"     ),
+        State("buffer-2-mul-id",        "value"     ),  
+        State("phase-selection",        "value"     ),
+        State("solver-dropdown",        "value"     ),            # bulk-rock 1
+        
+
         prevent_initial_call = true,
-    ) do click_info, pie_unit, diagType
+    ) do click_info, pie_unit, dtb, diagType, buffer, buffer_n1, buffer_n2, phase_selection, solver
+
+        phase_selection                 = remove_phases(string_vec_dif(phase_selection,dtb),dtb)
 
         global point_id
 
@@ -271,10 +283,38 @@ function Tab_PhaseDiagram_Callbacks(app)
             bk       = join(round.(Out_XY[point_id].bulk[id_sys] .*100.0; digits = 3),"; ")
     
             text = sys_chem*" (mol%)"*" - ["*bk*"]"
+
+            # code snippet to performation point calculation in MAGEMin_C
+            if buffer != "none"
+                buf      = ", buffer=\"qfm\""
+                bufn     = ", B="*string(Out_XY[point_id].buffer_n)
+            else
+                buf     = ""
+                bufn    = ""
+            end
+            if !isnothing(phase_selection)
+                rm_list = ", rm_list=$phase_selection"
+            else
+                rm_list = ""
+            end
+            if solver == "pge"
+                slv = ", solver=1"
+            elseif solver == "lp"
+                slv = ", solver=0"
+            elseif solver == "hyb"
+                slv = ", solver=2"
+            end
+            snip     = "using MAGEMin_C\n"
+            snip    *= "data    = Initialize_MAGEMin(\"$dtb\", verbose=false$buf$slv);\n"
+            snip    *= "P, T    = $( round(Out_XY[point_id].P_kbar; digits = 8)), $(round(Out_XY[point_id].T_C; digits = 8));\n"
+            snip    *= "Xoxides = [\"$(join(Out_XY[point_id].oxides,"\"; \""))\"];\n"
+            snip    *= "X       = [$(join( round.(Out_XY[point_id].bulk; digits = 5),", "))];\n"
+            snip    *= "sys_in  = \"mol\";\n"
+            snip    *= "out     = single_point_minimization(P, T, data, X=X, Xoxides=Xoxides$(bufn), sys_in=sys_in$rm_list)\n"
         end
 
 
-        return fig, text
+        return fig, text, snip
     end
 
 
@@ -309,7 +349,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         Input("compute-button",         "n_clicks"),
         Input("refine-pb-button",       "n_clicks"),
-  
+        Input("uni-refine-pb-button",   "n_clicks"),
         Input("min-color-id",           "value"),
         Input("max-color-id",           "value"),
 
@@ -384,7 +424,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         prevent_initial_call = true,
 
-    ) do    grid,       full_grid,  lbl,        addIso,     removeIso,  removeAllIso,    isoShow,    isoHide,    n_clicks_mesh, n_clicks_refine, 
+    ) do    grid,       full_grid,  lbl,        addIso,     removeIso,  removeAllIso,    isoShow,    isoHide,    n_clicks_mesh, n_clicks_refine, uni_n_clicks_refine, 
             minColor,   maxColor,
             colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  updateTitle,     loadstateid, customTitle,
             diagType,   dtb,        watsat,     cpx,        limOpx,     limOpxVal,  phase_selection, PTpath,
@@ -457,7 +497,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             minColor        = round(minimum(skipmissing(gridded)),digits=2); 
             maxColor        = round(maximum(skipmissing(gridded)),digits=2);  
     
-        elseif bid == "refine-pb-button"
+        elseif bid == "refine-pb-button" || bid == "uni-refine-pb-button"
 
             data_plot, layout, npoints, meant  =  refine_phaseDiagram(  xtitle,     ytitle,     lbl, 
                                                                         Xrange,     Yrange,     fieldname,  customTitle,
@@ -469,7 +509,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                         bufferType, bufferN1,   bufferN2,
                                                                         minColor,   maxColor,
                                                                         smooth,     colorm,     reverseColorMap, set_white,
-                                                                        test,       refType                             )
+                                                                        test,       refType,    bid                             )
 
             if tepm == "true"
                 if dtb != "um" && dtb != "ume" && dtb != "mtl"

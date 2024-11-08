@@ -18,5 +18,5 @@ title; comments; db; sysUnit; oxide; frac; frac2
 # BULK-ROCK COMPOSITION
 Test 2;Moo et al., 2000;ig;mol;[SiO2, Al2O3, CaO, MgO, FeO, K2O, Na2O, TiO2, O, Cr2O3, H2O];[48.97, 11.76, 13.87, 4.21, 8.97, 1.66, 10.66, 1.36, 1.66, 0.01, 5.0];
 Test 3;Coin & Kwak, 1984;mb;wt;[SiO2, Al2O3, CaO, MgO, Fe2O3, K2O,Na2O, TiO2, FeO, H2O];[55.12, 12.76, 4.32, 5.21, 2.45, 1.66, 10.66, 1.36, 1.66, 2.0];
-Simon;Shorn Simon, 2023;mb;mol;[SiO2, Al2O3, CaO, MgO, FeO, K2O, Na2O, TiO2, O, H2O];[61.8,8.57,9.26,5.05,7.27,0.21,3.43,1.25,0.73,2.85];
+Simon;Schorn Simon, 2023;mb;mol;[SiO2, Al2O3, CaO, MgO, FeO, K2O, Na2O, TiO2, O, H2O];[61.8,8.57,9.26,5.05,7.27,0.21,3.43,1.25,0.73,2.85];
 

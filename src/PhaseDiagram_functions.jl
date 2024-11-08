@@ -103,7 +103,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     db_in     = retrieve_solution_phase_information(dtb)
 
 
-    PD_infos[1]  = "Phase Diagram computed using MAGEMin v"*Out_XY[1].MAGEMin_ver*" (GUI v0.4.9) <br>"
+    PD_infos[1]  = "Phase Diagram computed using MAGEMin v"*Out_XY[1].MAGEMin_ver*" (GUI v0.5.0) <br>"
     PD_infos[1] *= "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾<br>"
     PD_infos[1] *= "Number of points <br>"
     
@@ -622,7 +622,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                 bufferType, bufferN1,   bufferN2,
                                 minColor,   maxColor,
                                 smooth,     colorm,     reverseColorMap, set_white,
-                                test,       refType                                 )
+                                test,       refType, bid                                 )
 
     global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, X, Y, addedRefinementLvl, layout, n_lbl, pChip_wat, pChip_T
 
@@ -637,7 +637,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                             buffer      = bufferType,
                                             solver      = sol    );
 
-    data    = select_cells_to_split_and_keep(data)
+    data    = select_cells_to_split_and_keep(data; bid = bid)
     data    = perform_AMR(data)
     t = @elapsed Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin( data,       MAGEMin_data, diagType, PTpath,
                                                                             phase_selection, fixT, fixP,
