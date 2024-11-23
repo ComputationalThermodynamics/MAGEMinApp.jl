@@ -199,6 +199,51 @@ function Tab_PhaseDiagram_Callbacks(app)
         end
     end
 
+    callback!(
+        app,
+        Output("disp-test-id",              "style"     ),
+        Output("table-phase-composition",   "data"      ),
+        Input("pie-diagram",                "clickData" ),
+        Input("phase-diagram",              "clickData" ),
+
+        prevent_initial_call = true,
+    ) do click_info, click_info2
+        bid    = pushed_button( callback_context() ) 
+
+        if bid == "pie-diagram"
+            global point_id
+            ph  = click_info[:points][1][:label]
+
+            p = Out_XY[point_id].ph
+            p_id = findfirst(p .== ph)
+            n_SS = Out_XY[point_id].n_SS
+
+            if p_id > n_SS 
+                p_id -= n_SS
+                comp = Out_XY[point_id].PP_vec[p_id].Comp
+                comp_wt = Out_XY[point_id].PP_vec[p_id].Comp_wt
+            else
+                comp = Out_XY[point_id].SS_vec[p_id].Comp
+                comp_wt = Out_XY[point_id].SS_vec[p_id].Comp_wt
+            end
+            oxi = Out_XY[point_id].oxides
+
+            data        =   [Dict(  "oxide"         => oxi[i],
+                                    "mol%"  => round(comp[i]*100.0,digits=2),
+                                     "wt%"  => round(comp_wt[i]*100.0,digits=2),)
+                                        for i=1:length(oxi) ]
+
+            style  = Dict("display" => "block")
+
+        elseif bid == "phase-diagram"
+            style  = Dict("display" => "none")
+            data   = []
+        end
+
+        return style, data
+    end
+
+
     # clickData callback when clicking on diagram point 
     callback!(
         app,
@@ -312,7 +357,6 @@ function Tab_PhaseDiagram_Callbacks(app)
             snip    *= "sys_in  = \"mol\";\n"
             snip    *= "out     = single_point_minimization(P, T, data, X=X, Xoxides=Xoxides$(bufn), sys_in=sys_in$rm_list)\n"
         end
-
 
         return fig, text, snip
     end

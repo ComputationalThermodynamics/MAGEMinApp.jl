@@ -144,7 +144,28 @@ function Tab_PhaseDiagram()
                                         ]#=, width=6=#),
                                     ]),
 
+                                    dbc_row([
+                                        dbc_col([ 
+                                            html_div([
 
+                                            dash_datatable(
+                                                id="table-phase-composition",
+                                                columns=(  [    Dict("id" =>  "oxide",  "name"  =>  "oxide",    "editable" => false),
+                                                                Dict("id" =>  "mol%",   "name"  =>  "mol%",     "editable" => false),
+                                                                Dict("id" =>  "wt%",    "name"  =>  "wt%",      "editable" => false)
+                                                                ]
+                                                ),
+                                                data        =   [],
+                                                style_cell  = (textAlign="center", fontSize="140%",),
+                                                style_header= (fontWeight="bold"),
+                                            ),
+
+
+
+                                            ], style = Dict("display" => "none"), id      = "disp-test-id"),
+                                        ], width=12),
+                                    ]),
+                                    
                                     # SAVE POINTS INFORMATION
                                     html_hr(),
                                     dbc_row([

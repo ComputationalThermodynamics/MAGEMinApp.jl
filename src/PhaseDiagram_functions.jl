@@ -480,7 +480,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
         for irefine = 1:refLvl
             data    = select_cells_to_split_and_keep(data)
             data    = perform_AMR(data)
-            t = @elapsed Out_XY, Hash_XY, n_phase_XY, = refine_MAGEMin(             data, MAGEMin_data, diagType, PTpath,
+            t = @elapsed Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(              data, MAGEMin_data, diagType, PTpath,
                                                                                     phase_selection, fixT, fixP,
                                                                                     oxi, bulk_L, bulk_R,
                                                                                     bufferType, bufferN1, bufferN2,
