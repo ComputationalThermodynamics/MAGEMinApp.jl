@@ -189,6 +189,7 @@ function Tab_Simulation_Callbacks(app)
         Output("ss-1-id","style"),
         Output("of-1-id","style"),
         Output("other-1-id","style"),
+        Output("sys-unit-isopleth-id","style"),
         Output("phase-selection","options"),
         Output("phase-selection","value"),
         Input("database-dropdown","value"),
@@ -210,6 +211,7 @@ function Tab_Simulation_Callbacks(app)
             style_calc  = Dict("display" => "none")
             style_ot    = Dict("display" => "none")
             style_of    = Dict("display" => "block")
+            style_sys   = Dict("display" => "none")
             opts_ph     = []
             val         = nothing
         elseif phase == "ss"
@@ -220,7 +222,8 @@ function Tab_Simulation_Callbacks(app)
             style_ot    = Dict("display" => "block")
             style_ph    = Dict("display" => "block")
             style_of    = Dict("display" => "none")
-
+            style_sys   = Dict("display" => "block")
+            
             if other == "emMode"
                 style_em    = Dict("display" => "block")
             else
@@ -229,8 +232,13 @@ function Tab_Simulation_Callbacks(app)
 
             if other == "calc"
                 style_calc  = Dict("display" => "block")
+                style_sys   = Dict("display" => "none")
             else
                 style_calc  = Dict("display" => "none")
+            end
+
+            if other == "MgNum"
+                style_sys   = Dict("display" => "none")
             end
 
             if bid != "other-dropdown"
@@ -249,6 +257,7 @@ function Tab_Simulation_Callbacks(app)
             style_calc  = Dict("display" => "none")
             style_ph    = Dict("display" => "block")
             style_of    = Dict("display" => "none")
+            style_sys   = Dict("display" => "block")
             
             val         = db_in.data_pp[1]
         end
@@ -259,7 +268,7 @@ function Tab_Simulation_Callbacks(app)
         phase_selection_value   = db_in.ss_name
 
 
-        return opts_ph, val, style_calc, style_em, style_ph, style_of, style_ot, phase_selection_options, phase_selection_value
+        return opts_ph, val, style_calc, style_em, style_ph, style_of, style_ot, style_sys,phase_selection_options, phase_selection_value
     end
 
 

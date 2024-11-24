@@ -199,10 +199,55 @@ function Tab_PhaseDiagram_Callbacks(app)
         end
     end
 
+
+    callback!(
+        app,
+        Output("test-show-id", "style"),
+        Input("phase-diagram", "selectedData"),
+        prevent_initial_call = true,
+    ) do selectedData
+
+        global data;
+
+        if !isnothing(selectedData) 
+            if "range" in keys(selectedData)
+                np      = length(data.points)
+                points  = [(data.points[k][1],data.points[k][2]) for k in 1:np]
+
+                x_range = selectedData["range"]["x"]
+                y_range = selectedData["range"]["y"]
+
+                points_in_idx = findall(point -> is_inside_range(point, x_range, y_range), points)
+
+                # println(string(points_in_idx))
+            elseif "lassoPoints" in keys(selectedData)
+                np      = length(data.points)
+                points  = [(data.points[k][1],data.points[k][2]) for k in 1:np]
+
+                x_array = selectedData["lassoPoints"]["x"]
+                y_array = selectedData["lassoPoints"]["y"]
+                
+                polygon = [(x_array[i], y_array[i]) for i in 1:length(x_array)]
+                push!(polygon, polygon[1])  # Close the polygon by appending the first point to the end
+
+                points_in_idx = findall(point -> is_inside_polygon(point, polygon) == 1, points)
+
+                # println(string(points_in_idx))
+            end
+        end
+
+        return Dict("display" => "none")
+    end
+
+
+    """
+        Callback function to display mineral composition when clicking on the pie diagram
+    """
     callback!(
         app,
         Output("disp-test-id",              "style"     ),
         Output("table-phase-composition",   "data"      ),
+        Output("ph-comp-title",             "children"  ),
         Input("pie-diagram",                "clickData" ),
         Input("phase-diagram",              "clickData" ),
 
@@ -212,35 +257,40 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         if bid == "pie-diagram"
             global point_id
-            ph  = click_info[:points][1][:label]
+            ph      = click_info[:points][1][:label]
 
-            p = Out_XY[point_id].ph
-            p_id = findfirst(p .== ph)
-            n_SS = Out_XY[point_id].n_SS
+            p       = Out_XY[point_id].ph
+            p_id    = findfirst(p .== ph)
+            n_SS    = Out_XY[point_id].n_SS
 
             if p_id > n_SS 
-                p_id -= n_SS
-                comp = Out_XY[point_id].PP_vec[p_id].Comp
-                comp_wt = Out_XY[point_id].PP_vec[p_id].Comp_wt
+                p_id       -= n_SS
+                comp        = Out_XY[point_id].PP_vec[p_id].Comp
+                comp_wt     = Out_XY[point_id].PP_vec[p_id].Comp_wt
+                comp_apfu   = Out_XY[point_id].PP_vec[p_id].Comp_apfu
             else
-                comp = Out_XY[point_id].SS_vec[p_id].Comp
-                comp_wt = Out_XY[point_id].SS_vec[p_id].Comp_wt
+                comp        = Out_XY[point_id].SS_vec[p_id].Comp
+                comp_wt     = Out_XY[point_id].SS_vec[p_id].Comp_wt
+                comp_apfu   = Out_XY[point_id].SS_vec[p_id].Comp_apfu
             end
             oxi = Out_XY[point_id].oxides
 
-            data        =   [Dict(  "oxide"         => oxi[i],
-                                    "mol%"  => round(comp[i]*100.0,digits=2),
-                                     "wt%"  => round(comp_wt[i]*100.0,digits=2),)
-                                        for i=1:length(oxi) ]
+            data        =   [Dict(  "oxide"     => oxi[i],
+                                    "mol%"      => round(comp[i]*100.0,digits=2),
+                                     "wt%"      => round(comp_wt[i]*100.0,digits=2),
+                                     "apfu"     => round(comp_apfu[i],digits=2))
+                                                for i=1:length(oxi) ]
 
             style  = Dict("display" => "block")
+            title =  "$(ph) composition"
 
         elseif bid == "phase-diagram"
             style  = Dict("display" => "none")
             data   = []
+            title =  ""
         end
 
-        return style, data
+        return style, data, title
     end
 
 
@@ -455,6 +505,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("em-dropdown",            "value"),
         State("of-dropdown",            "value"),
         State("other-dropdown",         "value"),
+        State("sys-unit-isopleth-dropdown",  "value"),
         State("input-calc-id",          "value"),
         State("input-cust-id",          "value"),
         State("line-style-dropdown",    "value"),
@@ -480,7 +531,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             bufferN1,   bufferN2,
             tepm,       kds_mod,    zrsat_mod,  bulkte1,    bulkte2,
             test,
-            isopleths,  isoplethsID,phase,      ss,         em,         of,     ot, calc, cust,
+            isopleths,  isoplethsID,phase,      ss,         em,         of,     ot, sys, calc, cust,
             isoLineStyle, isoLineWidth, isoColorLine,           isoLabelSize,   
             minIso,     stepIso,    maxIso,     active_tab
 
@@ -620,7 +671,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             data_isopleth, isopleths = add_isopleth_phaseDiagram(   Xrange,     Yrange,
                                                                     sub,        refLvl,
                                                                     dtb,        oxi,
-                                                                    isopleths,  phase,      ss,     em,     of,     ot, calc, cust,
+                                                                    isopleths,  phase,      ss,     em,     of,     ot, sys, calc, cust,
                                                                     isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,   
                                                                     minIso,     stepIso,    maxIso                      )
             data_isopleth_out = data_isopleth.isoP[data_isopleth.active]

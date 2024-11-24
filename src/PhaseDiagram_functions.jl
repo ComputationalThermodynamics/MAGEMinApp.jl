@@ -34,7 +34,20 @@ function get_system_comp_acronyme(bulk,oxides)
     return acronym
 end
 
+""" 
+    inside range function
+"""
+function is_inside_range(point, x_range, y_range)
+    x, y = point
+    return x_range[1] <= x <= x_range[2] && y_range[1] <= y <= y_range[2]
+end
 
+"""
+    inside polygon function
+"""
+function is_inside_polygon(point, polygon)
+    return PolygonOps.inpolygon(point, polygon)
+end
 
 """
     function to format the markdown text area to display general informations of the computation
@@ -954,19 +967,32 @@ end
 function add_isopleth_phaseDiagram(         Xrange,     Yrange, 
                                             sub,        refLvl,
                                             dtb,        oxi,
-                                            isopleths,  phase,      ss,     em,     of,     ot,     calc, cust,
+                                            isopleths,  phase,      ss,     em,     of,     ot,  sys,    calc, cust,
                                             isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,       
                                             minIso,     stepIso,    maxIso      )
 
     isoLabelSize    = Int64(isoLabelSize)
 
     if (phase == "ss" && ot == "mode") || (phase == "pp")
-        mod     = "ph_frac"
+        if sys == "mol"
+            mod     = "ph_frac"
+            name    = ss*"_frac_[mol]"
+        else 
+            mod     = "ph_frac_wt"
+            name    = ss*"_frac_[wt]"
+        end
         em      = ""
-        name    = ss*"_[mode]"
+
     elseif (phase == "ss" && ot == "emMode")
-        mod     = "em_frac"
-        name    = ss*"_"*em*"_[mode]"
+
+        if sys == "mol"
+            mod     = "em_frac"
+            name    = ss*"_"*em*"_frac_[mol]"
+        else 
+            mod     = "ph_frac_wt"
+            name    = ss*"_"*em*"_frac_[wt]"
+        end
+
     elseif (phase == "ss" && ot == "MgNum")
         mod     = "ss_MgNum"
         em      = ""
