@@ -602,60 +602,92 @@ function Tab_TraceElement()
                                                 value   = 10   ),
                                             ]),
                                         ]),
+
+                                        html_div("‎ "),
+                                        dbc_row([
+                                            dbc_button("Add",id="button-add-isopleth-te", color="light",
+                                            style       = Dict( "textAlign"     => "center",
+                                                                "font-size"     => "100%",
+                                                                "border"        =>"1px lightgray solid")),
+                                        ]),  
                                     
                                         html_div("‎ "),
                                         html_h1("Isopleth list", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                         html_hr(),
-                                        dbc_row([
-                                    
-                                            dbc_col([
-                                                dbc_row([
-                                                    dbc_button("Add",id="button-add-isopleth-te", color="light",
-                                                    style       = Dict( "textAlign"     => "center",
-                                                                        "font-size"     => "100%",
-                                                                        "border"        =>"1px lightgray solid")),
-                                                ]),  
-                                                dbc_row([
-                                                    dbc_button("Remove",id="button-remove-isopleth-te", color="light",
-                                                    style       = Dict( "textAlign"     => "center",
-                                                                        "font-size"     => "100%",
-                                                                        "border"        =>"1px lightgray solid")), 
-                                                ]), 
-                                                dbc_row([
-                                                    dbc_button("Remove all",id="button-remove-all-isopleth-te", color="light",
-                                                    style       = Dict( "textAlign"     => "center",
-                                                                        "font-size"     => "100%",
-                                                                        "border"        =>"1px lightgray solid")),
-                                                ]), 
-                                                html_div("‎ "),
-                                                dbc_row([
-                                                    dbc_button("Hide all",id="button-hide-all-isopleth-te", color="light",
-                                                    style       = Dict( "textAlign"     => "center",
-                                                                        "font-size"     => "100%",
-                                                                        "border"        =>"1px lightgray solid")),  
-                                                ]),
-                                                dbc_row([
-                                                    dbc_button("Show all",id="button-show-all-isopleth-te", color="light",
-                                                    style       = Dict( "textAlign"     => "center",
-                                                                        "font-size"     => "100%",
-                                                                        "border"        =>"1px lightgray solid")), 
-                                                ]),
-                                            ]),
-                                            dbc_col([
-                                                dbc_row([
-                                                    html_div([
-                                                        dcc_dropdown(   id      = "isopleth-dropdown-te",
-                                                        options = [],
-                                                        value       = nothing,
-                                                        clearable   = false,
-                                                        multi       = false),
-                                                    ],  style = Dict("display" => "block"), id      = "isopleth-1-id-te"),
-                                                ]),
-                                    
-                                            ]),
-                                    
-                                        ]),
 
+                                        dbc_row([
+
+                                        dbc_col([
+                                             html_h1("Displayed", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                             dbc_row([
+                                                 html_div([
+                                                     dcc_dropdown(   id      = "isopleth-dropdown-te",
+                                                     options = [],
+                                                     value       = nothing,
+                                                     clearable   = false,
+                                                     multi       = false),
+                                                 ],  style       = Dict("display" => "block"), id      = "isopleth-1-id-te"),
+                                             ]),
+ 
+                                             html_div("‎ "),
+                                             dbc_row([
+                                             dbc_button("Hide",id="button-hide-isopleth-te", color="light",
+                                                 style       = Dict( "textAlign"     => "center",
+                                                                     "font-size"     => "100%",
+                                                                     "border"        =>"1px lightgray solid")),
+                                             ]), 
+                                             dbc_row([
+                                                 dbc_button("Hide all",id="button-hide-all-isopleth-te", color="light",
+                                                 style       = Dict( "textAlign"     => "center",
+                                                                     "font-size"     => "100%",
+                                                                     "border"        =>"1px lightgray solid")),  
+                                             ]),
+                                             html_div("‎ "),
+                                             dbc_row([
+                                                 dbc_button("Remove",id="button-remove-isopleth-te", color="light",
+                                                 style       = Dict( "textAlign"     => "center",
+                                                                     "font-size"     => "100%",
+                                                                     "border"        =>"1px lightgray solid")), 
+                                             ]), 
+                                             dbc_row([
+                                                 dbc_button("Remove all",id="button-remove-all-isopleth-te", color="light",
+                                                 style       = Dict( "textAlign"     => "center",
+                                                                     "font-size"     => "100%",
+                                                                     "border"        =>"1px lightgray solid")),
+                                             ]), 
+  
+ 
+                                         ], width=6),
+ 
+                                         dbc_col([
+                                             html_h1("Hidden", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                             dbc_row([
+                                                 html_div([
+                                                     dcc_dropdown(   id      = "hidden-isopleth-dropdown-te",
+                                                     options = [],
+                                                     value       = nothing,
+                                                     clearable   = false,
+                                                     multi       = false),
+                                                 ],  style       = Dict("display" => "block"), id      = "hidden-isopleth-1-id-te"),
+                                             ]),
+ 
+                                             html_div("‎ "),
+                                             dbc_row([
+                                                 dbc_button("Show",id="button-show-isopleth-te", color="light",
+                                                     style       = Dict( "textAlign"     => "center",
+                                                                         "font-size"     => "100%",
+                                                                         "border"        =>"1px lightgray solid")),
+                                             ]),
+                                             dbc_row([
+                                                 dbc_button("Show all",id="button-show-all-isopleth-te", color="light",
+                                                 style       = Dict( "textAlign"     => "center",
+                                                                     "font-size"     => "100%",
+                                                                     "border"        =>"1px lightgray solid")), 
+                                             ]),
+ 
+                                         ], width=6),
+ 
+                                     ]),
 
                                     ])),id="collapse-isopleths-te",is_open=true),
                             ]),

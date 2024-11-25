@@ -118,7 +118,7 @@ function Tab_TraceElement_Callbacks(app)
         Output("min-color-id-te",           "value"     ),
         Output("max-color-id-te",           "value"     ),
         Output("isopleth-dropdown-te",      "options"   ),
-
+        Output("hidden-isopleth-dropdown-te",     "options"),
         Input("load-button-te",             "n_clicks"  ),
         Input("compute-display-te",         "n_clicks"  ),
         Input("fields-dropdown-zr",         "value"     ),
@@ -130,6 +130,8 @@ function Tab_TraceElement_Callbacks(app)
         Input("button-add-isopleth-te",        "n_clicks"),
         Input("button-remove-isopleth-te",     "n_clicks"),
         Input("button-remove-all-isopleth-te", "n_clicks"),
+        Input("button-hide-isopleth-te",       "n_clicks"),
+        Input("button-show-isopleth-te",       "n_clicks"),
         Input("button-show-all-isopleth-te",   "n_clicks"),
         Input("button-hide-all-isopleth-te",   "n_clicks"),
 
@@ -175,6 +177,8 @@ function Tab_TraceElement_Callbacks(app)
 
         State("isopleth-dropdown-te",   "options"       ),
         State("isopleth-dropdown-te",   "value"         ),
+        State("hidden-isopleth-dropdown-te",      "options"),
+        State("hidden-isopleth-dropdown-te",      "value"),
         State("field-type-te-dropdown", "value"         ),
         State("fields-dropdown-zr-te",   "value"        ),
         State("input-calc-id-te",       "value"         ),
@@ -193,7 +197,7 @@ function Tab_TraceElement_Callbacks(app)
         ) do    n,          n2,         fieldname,  
                 grid,       full_grid,  lbl, 
 
-                addIso,     removeIso,  removeAllIso,           isoShow,    isoHide,
+                addIso,     removeIso,  removeAllIso,           isoShow,    isoHide, isoShowAll,    isoHideAll,
 
                 colorMap,   smooth,     rangeColor, set_white, reverse,    minColor, maxColor,
                 updateTitle,customTitle,tepm,       varBuilder, norm, type, norm_te,
@@ -201,7 +205,7 @@ function Tab_TraceElement_Callbacks(app)
                 bulk1,      bulk2,
                 sub,        refType,    refLvl,
                 fixT,       fixP,       solver,     bufferType, bufferN1,   bufferN2,   PTpath,
-                isopleths_te,  isoplethsID_te,  field, field_zr, calc, cust,
+                isopleths_te,  isoplethsID_te, isoplethsHid_te,  isoplethsHidID_te, field, field_zr, calc, cust,
 
                 isoLineStyle, isoLineWidth, isoColorLine, isoLabelSize,   
                 minIso,     stepIso,    maxIso
@@ -389,9 +393,32 @@ function Tab_TraceElement_Callbacks(app)
                                                                                 minIso,     stepIso,    maxIso                      )
                 data_isopleth_out_te = data_isopleth_te.isoP[data_isopleth_te.active]
                 field2plot[4] = 1
-                iso_show_te      = 1
-                elseif bid == "button-remove-isopleth-te"
+                iso_show_te   = 1
+
+            elseif bid == "button-hide-isopleth-te"
+
+                if (isoplethsID_te) in data_isopleth_te.active
+                    data_isopleth_te, isopleths_te, isoplethsHid_te = hide_single_isopleth_phaseDiagram_te(isoplethsID_te)
+                    data_isopleth_out_te = data_isopleth_te.isoP[data_isopleth_te.active]
+                    field2plot[4] = 1
+                else
+                    println("Cannot hide isopleth, did you select one?")
+                    data_isopleth_out_te = data_isopleth_te.isoP[data_isopleth_te.active]
+                    field2plot[4] = 1
+                end
+            elseif bid == "button-show-isopleth-te"
     
+                if (isoplethsHidID_te) in data_isopleth_te.hidden
+                    data_isopleth_te, isopleths_te, isoplethsHid_te = show_single_isopleth_phaseDiagram_te(isoplethsHidID_te)
+                    data_isopleth_out_te = data_isopleth_te.isoP[data_isopleth_te.active]
+                    field2plot[4] = 1
+                else
+                    println("Cannot show isopleth, did you select one?")
+                    data_isopleth_out_te = data_isopleth_te.isoP[data_isopleth_te.active]
+                    field2plot[4] = 1
+                end
+            elseif bid == "button-remove-isopleth-te"
+
                 if (isoplethsID_te) in data_isopleth_te.active
                     if data_isopleth_te.n_iso > 1
                         data_isopleth_te, isopleths_te = remove_single_isopleth_phaseDiagram_te(isoplethsID_te)
@@ -400,7 +427,7 @@ function Tab_TraceElement_Callbacks(app)
                     else
                         data_isopleth_te, isopleths_te, data_plot_te = remove_all_isopleth_phaseDiagram_te()
                     end
-    
+
                 else
                     print("cannot remove isopleth, did you select one?")
                     data_isopleth_out_te = data_isopleth_te.isoP[data_isopleth_te.active]
@@ -409,7 +436,7 @@ function Tab_TraceElement_Callbacks(app)
     
             elseif bid == "button-remove-all-isopleth-te"
     
-                data_isopleth_te, isopleths_te, data_plot_te = remove_all_isopleth_phaseDiagram_te()
+                data_isopleth_te, isopleths_te, isoplethsHid_te, data_plot_te = remove_all_isopleth_phaseDiagram_te()
     
             elseif bid == "button-show-all-isopleth-te"
     
@@ -420,6 +447,7 @@ function Tab_TraceElement_Callbacks(app)
             elseif bid == "button-hide-all-isopleth-te"
     
                 iso_show_te          = 0
+                
             elseif bid == "show-lbl-id-te"
 
                 if lbl == "true"
@@ -500,7 +528,7 @@ function Tab_TraceElement_Callbacks(app)
                                                                         scale    =  2.0,       ).fields)
 
 
-        return grid, full_grid, fig_cap, config_cap, fig_te, config, fieldType, minColor, maxColor, isopleths_te
+        return grid, full_grid, fig_cap, config_cap, fig_te, config, fieldType, minColor, maxColor, isopleths_te, isoplethsHid_te
             
     end
 

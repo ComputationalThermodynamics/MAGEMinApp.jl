@@ -348,6 +348,48 @@ function add_isopleth_phaseDiagram_te(      Xrange,     Yrange,
 
 end
 
+function hide_single_isopleth_phaseDiagram_te(isoplethsID)
+    global data_isopleth_te
+
+    # data_isopleth_te.n_iso                -= 1      
+    data_isopleth_te.status[isoplethsID]   = 2;
+
+    # deals with the activte dropdown menu
+    data_isopleth_te.active                = findall(data_isopleth_te.status .== 1)
+    n_act                               = length(data_isopleth_te.active)
+    isopleths_te = [Dict("label" => data_isopleth_te.label[data_isopleth_te.active[i]], "value" => data_isopleth_te.value[data_isopleth_te.active[i]])
+                    for i=1:n_act]
+
+    # deals with the hidden dropdown menu
+    data_isopleth_te.hidden                = findall(data_isopleth_te.status .== 2)
+    n_act                               = length(data_isopleth_te.hidden)
+    isoplethsHid_te = [Dict("label" => data_isopleth_te.label[data_isopleth_te.hidden[i]], "value" => data_isopleth_te.value[data_isopleth_te.hidden[i]])
+                    for i=1:n_act]              
+
+    return data_isopleth_te, isopleths_te, isoplethsHid_te
+end
+
+function show_single_isopleth_phaseDiagram_te(isoplethsHid_te)
+    global data_isopleth_te
+
+    # data_isopleth_te.n_iso                -= 1      
+    data_isopleth_te.status[isoplethsHid_te]   = 1;
+
+    # deals with the activte dropdown menu
+    data_isopleth_te.active                = findall(data_isopleth_te.status .== 1)
+    n_act                               = length(data_isopleth_te.active)
+    isopleths_te = [Dict("label" => data_isopleth_te.label[data_isopleth_te.active[i]], "value" => data_isopleth_te.value[data_isopleth_te.active[i]])
+                    for i=1:n_act]
+
+    # deals with the hidden dropdown menu
+    data_isopleth_te.hidden                = findall(data_isopleth_te.status .== 2)
+    n_act                               = length(data_isopleth_te.hidden)
+    isoplethsHid_te = [Dict("label" => data_isopleth_te.label[data_isopleth_te.hidden[i]], "value" => data_isopleth_te.value[data_isopleth_te.hidden[i]])
+                    for i=1:n_act]              
+
+    return data_isopleth_te, isopleths_te, isoplethsHid_te
+end
+
 function remove_single_isopleth_phaseDiagram_te(isoplethsID)
     global data_isopleth_te
 
@@ -378,9 +420,10 @@ function remove_all_isopleth_phaseDiagram_te()
     end
     data_isopleth_te.status   .= 0
     data_isopleth_te.active   .= 0
+    data_isopleth_te.hidden   .= 0
 
     # clear isopleth dropdown menu
     isopleths_te = []              
-
-    return data_isopleth_te, isopleths_te, data_plot_te
+    isoplethsHid_te = []   
+    return data_isopleth_te, isopleths_te, isoplethsHid_te, data_plot_te
 end

@@ -25,6 +25,7 @@ include(joinpath(pkg_dir,"src","PhaseDiagram_functions.jl"))
 include(joinpath(pkg_dir,"src","TraceElement_functions.jl"))
 include(joinpath(pkg_dir,"src","Tab_Simulation.jl"))
 include(joinpath(pkg_dir,"src","Tab_PhaseDiagram.jl"))
+include(joinpath(pkg_dir,"src","Tab_Classification.jl"))
 include(joinpath(pkg_dir,"src","Tab_TraceElement.jl"))
 include(joinpath(pkg_dir,"src","Tab_PTXpaths.jl"))
 include(joinpath(pkg_dir,"src","data_plot.jl"))
@@ -117,10 +118,15 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                                                                             #     ], id = "tabs_PD"), ]
                                                                                             ]
                                                                             ),
+                                                                    # dbc_tab(    tab_id      = "tab-classification",
+                                                                    #             label       = "Classification",
+                                                                    #             children    = [Tab_Classification()],
+                                                                    #     ),
                                                                     dbc_tab(    tab_id      = "tab-te",
                                                                                 label       = "Trace-elements",
                                                                                 children    = [Tab_TraceElement()],
                                                                             ),
+
                                                             ], id = "tabs"), ]
                                             ),
 

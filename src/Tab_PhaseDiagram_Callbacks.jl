@@ -207,7 +207,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         prevent_initial_call = true,
     ) do selectedData
 
-        global data;
+        global data, points_in_idx;
 
         if !isnothing(selectedData) 
             if "range" in keys(selectedData)
@@ -219,7 +219,6 @@ function Tab_PhaseDiagram_Callbacks(app)
 
                 points_in_idx = findall(point -> is_inside_range(point, x_range, y_range), points)
 
-                # println(string(points_in_idx))
             elseif "lassoPoints" in keys(selectedData)
                 np      = length(data.points)
                 points  = [(data.points[k][1],data.points[k][2]) for k in 1:np]
@@ -231,8 +230,6 @@ function Tab_PhaseDiagram_Callbacks(app)
                 push!(polygon, polygon[1])  # Close the polygon by appending the first point to the end
 
                 points_in_idx = findall(point -> is_inside_polygon(point, polygon) == 1, points)
-
-                # println(string(points_in_idx))
             end
         end
 
