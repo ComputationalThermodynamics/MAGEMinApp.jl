@@ -199,6 +199,98 @@ function Tab_PhaseDiagram_Callbacks(app)
         end
     end
 
+
+    callback!(
+        app,
+        Output("test-show-id", "style"),
+        Input("phase-diagram", "selectedData"),
+        prevent_initial_call = true,
+    ) do selectedData
+
+        global data, points_in_idx;
+
+        if !isnothing(selectedData) 
+            if "range" in keys(selectedData)
+                np      = length(data.points)
+                points  = [(data.points[k][1],data.points[k][2]) for k in 1:np]
+
+                x_range = selectedData["range"]["x"]
+                y_range = selectedData["range"]["y"]
+
+                points_in_idx = findall(point -> is_inside_range(point, x_range, y_range), points)
+
+            elseif "lassoPoints" in keys(selectedData)
+                np      = length(data.points)
+                points  = [(data.points[k][1],data.points[k][2]) for k in 1:np]
+
+                x_array = selectedData["lassoPoints"]["x"]
+                y_array = selectedData["lassoPoints"]["y"]
+                
+                polygon = [(x_array[i], y_array[i]) for i in 1:length(x_array)]
+                push!(polygon, polygon[1])  # Close the polygon by appending the first point to the end
+
+                points_in_idx = findall(point -> is_inside_polygon(point, polygon) == 1, points)
+            end
+        end
+
+        return Dict("display" => "none")
+    end
+
+
+    """
+        Callback function to display mineral composition when clicking on the pie diagram
+    """
+    callback!(
+        app,
+        Output("disp-test-id",              "style"     ),
+        Output("table-phase-composition",   "data"      ),
+        Output("ph-comp-title",             "children"  ),
+        Input("pie-diagram",                "clickData" ),
+        Input("phase-diagram",              "clickData" ),
+
+        prevent_initial_call = true,
+    ) do click_info, click_info2
+        bid    = pushed_button( callback_context() ) 
+
+        if bid == "pie-diagram"
+            global point_id
+            ph      = click_info[:points][1][:label]
+
+            p       = Out_XY[point_id].ph
+            p_id    = findfirst(p .== ph)
+            n_SS    = Out_XY[point_id].n_SS
+
+            if p_id > n_SS 
+                p_id       -= n_SS
+                comp        = Out_XY[point_id].PP_vec[p_id].Comp
+                comp_wt     = Out_XY[point_id].PP_vec[p_id].Comp_wt
+                comp_apfu   = Out_XY[point_id].PP_vec[p_id].Comp_apfu
+            else
+                comp        = Out_XY[point_id].SS_vec[p_id].Comp
+                comp_wt     = Out_XY[point_id].SS_vec[p_id].Comp_wt
+                comp_apfu   = Out_XY[point_id].SS_vec[p_id].Comp_apfu
+            end
+            oxi = Out_XY[point_id].oxides
+
+            data        =   [Dict(  "oxide"     => oxi[i],
+                                    "mol%"      => round(comp[i]*100.0,digits=2),
+                                     "wt%"      => round(comp_wt[i]*100.0,digits=2),
+                                     "apfu"     => round(comp_apfu[i],digits=2))
+                                                for i=1:length(oxi) ]
+
+            style  = Dict("display" => "block")
+            title =  "$(ph) composition"
+
+        elseif bid == "phase-diagram"
+            style  = Dict("display" => "none")
+            data   = []
+            title =  ""
+        end
+
+        return style, data, title
+    end
+
+
     # clickData callback when clicking on diagram point 
     callback!(
         app,
@@ -313,7 +405,6 @@ function Tab_PhaseDiagram_Callbacks(app)
             snip    *= "out     = single_point_minimization(P, T, data, X=X, Xoxides=Xoxides$(bufn), sys_in=sys_in$rm_list)\n"
         end
 
-
         return fig, text, snip
     end
 
@@ -332,6 +423,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("computation-info-id",   "children"),        
 
         Output("isopleth-dropdown",     "options"),
+        Output("hidden-isopleth-dropdown",     "options"),
         Output("smooth-colormap",       "value"),
         Output("tabs",                  "active_tab"),      # currently active tab
 
@@ -344,6 +436,8 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("button-add-isopleth",        "n_clicks"),
         Input("button-remove-isopleth",     "n_clicks"),
         Input("button-remove-all-isopleth", "n_clicks"),
+        Input("button-hide-isopleth",       "n_clicks"),
+        Input("button-show-isopleth",       "n_clicks"),
         Input("button-show-all-isopleth",   "n_clicks"),
         Input("button-hide-all-isopleth",   "n_clicks"),
 
@@ -406,11 +500,14 @@ function Tab_PhaseDiagram_Callbacks(app)
         # block related to isopleth plotting
         State("isopleth-dropdown",      "options"),
         State("isopleth-dropdown",      "value"),
+        State("hidden-isopleth-dropdown",      "options"),
+        State("hidden-isopleth-dropdown",      "value"),
         State("phase-dropdown",         "value"),
         State("ss-dropdown",            "value"),
         State("em-dropdown",            "value"),
         State("of-dropdown",            "value"),
         State("other-dropdown",         "value"),
+        State("sys-unit-isopleth-dropdown",  "value"),
         State("input-calc-id",          "value"),
         State("input-cust-id",          "value"),
         State("line-style-dropdown",    "value"),
@@ -424,7 +521,8 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         prevent_initial_call = true,
 
-    ) do    grid,       full_grid,  lbl,        addIso,     removeIso,  removeAllIso,    isoShow,    isoHide,    n_clicks_mesh, n_clicks_refine, uni_n_clicks_refine, 
+    ) do    grid,       full_grid,  lbl,        addIso,     removeIso,  removeAllIso,    isoShow,   isoHide, isoShowAll,    isoHideAll,    
+            n_clicks_mesh, n_clicks_refine, uni_n_clicks_refine, 
             minColor,   maxColor,
             colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  updateTitle,     loadstateid, customTitle,
             diagType,   dtb,        watsat,     cpx,        limOpx,     limOpxVal,  phase_selection, PTpath,
@@ -436,7 +534,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             bufferN1,   bufferN2,
             tepm,       kds_mod,    zrsat_mod,  bulkte1,    bulkte2,
             test,
-            isopleths,  isoplethsID,phase,      ss,         em,         of,     ot, calc, cust,
+            isopleths,  isoplethsID,isoplethsHid,  isoplethsHidID,  phase,      ss,         em,         of,     ot, sys, calc, cust,
             isoLineStyle, isoLineWidth, isoColorLine,           isoLabelSize,   
             minIso,     stepIso,    maxIso,     active_tab
 
@@ -576,13 +674,35 @@ function Tab_PhaseDiagram_Callbacks(app)
             data_isopleth, isopleths = add_isopleth_phaseDiagram(   Xrange,     Yrange,
                                                                     sub,        refLvl,
                                                                     dtb,        oxi,
-                                                                    isopleths,  phase,      ss,     em,     of,     ot, calc, cust,
+                                                                    isopleths,  phase,      ss,     em,     of,     ot, sys, calc, cust,
                                                                     isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,   
                                                                     minIso,     stepIso,    maxIso                      )
             data_isopleth_out = data_isopleth.isoP[data_isopleth.active]
             field2plot[4] = 1
             iso_show      = 1
 
+        elseif bid == "button-hide-isopleth"
+
+            if (isoplethsID) in data_isopleth.active
+                data_isopleth, isopleths, isoplethsHid = hide_single_isopleth_phaseDiagram(isoplethsID)
+                data_isopleth_out = data_isopleth.isoP[data_isopleth.active]
+                field2plot[4] = 1
+            else
+                println("Cannot hide isopleth, did you select one?")
+                data_isopleth_out = data_isopleth.isoP[data_isopleth.active]
+                field2plot[4] = 1
+            end
+        elseif bid == "button-show-isopleth"
+
+            if (isoplethsHidID) in data_isopleth.hidden
+                data_isopleth, isopleths, isoplethsHid = show_single_isopleth_phaseDiagram(isoplethsHidID)
+                data_isopleth_out = data_isopleth.isoP[data_isopleth.active]
+                field2plot[4] = 1
+            else
+                println("Cannot show isopleth, did you select one?")
+                data_isopleth_out = data_isopleth.isoP[data_isopleth.active]
+                field2plot[4] = 1
+            end
         elseif bid == "button-remove-isopleth"
 
             if (isoplethsID) in data_isopleth.active
@@ -595,14 +715,14 @@ function Tab_PhaseDiagram_Callbacks(app)
                 end
 
             else
-                print("cannot remove isopleth, did you select one?")
+                println("Cannot remove isopleth, did you select one?")
                 data_isopleth_out = data_isopleth.isoP[data_isopleth.active]
                 field2plot[4] = 1
             end
 
         elseif bid == "button-remove-all-isopleth"
 
-            data_isopleth, isopleths, data_plot = remove_all_isopleth_phaseDiagram()
+            data_isopleth, isopleths, isoplethsHid, data_plot = remove_all_isopleth_phaseDiagram()
 
         elseif bid == "button-show-all-isopleth"
 
@@ -695,7 +815,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                         scale    =  2.0,       ).fields)
 
 
-        return grid, full_grid, fig_cap, config_cap, fig, config, infos, isopleths, smooth, active_tab, minColor,   maxColor
+        return grid, full_grid, fig_cap, config_cap, fig, config, infos, isopleths, isoplethsHid, smooth, active_tab, minColor,   maxColor
     end
 
 

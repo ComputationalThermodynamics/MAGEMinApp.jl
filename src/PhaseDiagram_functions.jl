@@ -21,6 +21,7 @@ mutable struct isopleth_data
 
     status  :: Vector{Int64}
     active  :: Vector{Int64}
+    hidden  :: Vector{Int64}
     isoP    :: Vector{GenericTrace{Dict{Symbol, Any}}}
     isoCap  :: Vector{GenericTrace{Dict{Symbol, Any}}}
 
@@ -34,7 +35,20 @@ function get_system_comp_acronyme(bulk,oxides)
     return acronym
 end
 
+""" 
+    inside range function
+"""
+function is_inside_range(point, x_range, y_range)
+    x, y = point
+    return x_range[1] <= x <= x_range[2] && y_range[1] <= y <= y_range[2]
+end
 
+"""
+    inside polygon function
+"""
+function is_inside_polygon(point, polygon)
+    return PolygonOps.inpolygon(point, polygon)
+end
 
 """
     function to format the markdown text area to display general informations of the computation
@@ -103,7 +117,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     db_in     = retrieve_solution_phase_information(dtb)
 
 
-    PD_infos[1]  = "Phase Diagram computed using MAGEMin v"*Out_XY[1].MAGEMin_ver*" (GUI v0.5.0) <br>"
+    PD_infos[1]  = "Phase Diagram computed using MAGEMin v"*Out_XY[1].MAGEMin_ver*" (GUI v0.5.1) <br>"
     PD_infos[1] *= "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾<br>"
     PD_infos[1] *= "Number of points <br>"
     
@@ -480,7 +494,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
         for irefine = 1:refLvl
             data    = select_cells_to_split_and_keep(data)
             data    = perform_AMR(data)
-            t = @elapsed Out_XY, Hash_XY, n_phase_XY, = refine_MAGEMin(             data, MAGEMin_data, diagType, PTpath,
+            t = @elapsed Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(              data, MAGEMin_data, diagType, PTpath,
                                                                                     phase_selection, fixT, fixP,
                                                                                     oxi, bulk_L, bulk_R,
                                                                                     bufferType, bufferN1, bufferN2,
@@ -899,6 +913,7 @@ function initialize_g_isopleth(; n_iso_max = 32)
 
     status    = zeros(Int64,n_iso_max)
     active    = []
+    hidden    = []
     isoP      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
     isoCap    = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
 
@@ -911,7 +926,7 @@ function initialize_g_isopleth(; n_iso_max = 32)
     value     = Vector{Int64}(undef,n_iso_max)
 
     data_isopleth = isopleth_data(0, n_iso_max,
-                                status, active, isoP, isoCap,
+                                status, active, hidden, isoP, isoCap,
                                 label, value)
 
     
@@ -928,6 +943,7 @@ function initialize_g_isopleth_te(; n_iso_max = 32)
 
     status    = zeros(Int64,n_iso_max)
     active    = []
+    hidden    = []
     isoP      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
     isoCap    = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
 
@@ -940,7 +956,7 @@ function initialize_g_isopleth_te(; n_iso_max = 32)
     value     = Vector{Int64}(undef,n_iso_max)
 
     data_isopleth_te = isopleth_data(   0, n_iso_max,
-                                        status, active, isoP, isoCap,
+                                        status, active, hidden, isoP, isoCap,
                                         label, value)
 
     
@@ -954,19 +970,32 @@ end
 function add_isopleth_phaseDiagram(         Xrange,     Yrange, 
                                             sub,        refLvl,
                                             dtb,        oxi,
-                                            isopleths,  phase,      ss,     em,     of,     ot,     calc, cust,
+                                            isopleths,  phase,      ss,     em,     of,     ot,  sys,    calc, cust,
                                             isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,       
                                             minIso,     stepIso,    maxIso      )
 
     isoLabelSize    = Int64(isoLabelSize)
 
     if (phase == "ss" && ot == "mode") || (phase == "pp")
-        mod     = "ph_frac"
+        if sys == "mol"
+            mod     = "ph_frac"
+            name    = ss*"_frac_[mol]"
+        else 
+            mod     = "ph_frac_wt"
+            name    = ss*"_frac_[wt]"
+        end
         em      = ""
-        name    = ss*"_[mode]"
+
     elseif (phase == "ss" && ot == "emMode")
-        mod     = "em_frac"
-        name    = ss*"_"*em*"_[mode]"
+
+        if sys == "mol"
+            mod     = "em_frac"
+            name    = ss*"_"*em*"_frac_[mol]"
+        else 
+            mod     = "ph_frac_wt"
+            name    = ss*"_"*em*"_frac_[wt]"
+        end
+
     elseif (phase == "ss" && ot == "MgNum")
         mod     = "ss_MgNum"
         em      = ""
@@ -1042,6 +1071,49 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
 
 end
 
+function hide_single_isopleth_phaseDiagram(isoplethsID)
+    global data_isopleth
+
+    # data_isopleth.n_iso                -= 1      
+    data_isopleth.status[isoplethsID]   = 2;
+
+    # deals with the activte dropdown menu
+    data_isopleth.active                = findall(data_isopleth.status .== 1)
+    n_act                               = length(data_isopleth.active)
+    isopleths = [Dict("label" => data_isopleth.label[data_isopleth.active[i]], "value" => data_isopleth.value[data_isopleth.active[i]])
+                    for i=1:n_act]
+
+    # deals with the hidden dropdown menu
+    data_isopleth.hidden                = findall(data_isopleth.status .== 2)
+    n_act                               = length(data_isopleth.hidden)
+    isoplethsHid = [Dict("label" => data_isopleth.label[data_isopleth.hidden[i]], "value" => data_isopleth.value[data_isopleth.hidden[i]])
+                    for i=1:n_act]              
+
+    return data_isopleth, isopleths, isoplethsHid
+end
+
+function show_single_isopleth_phaseDiagram(isoplethsHidID)
+    global data_isopleth
+
+    # data_isopleth.n_iso                -= 1      
+    data_isopleth.status[isoplethsHidID]   = 1;
+
+    # deals with the activte dropdown menu
+    data_isopleth.active                = findall(data_isopleth.status .== 1)
+    n_act                               = length(data_isopleth.active)
+    isopleths = [Dict("label" => data_isopleth.label[data_isopleth.active[i]], "value" => data_isopleth.value[data_isopleth.active[i]])
+                    for i=1:n_act]
+
+    # deals with the hidden dropdown menu
+    data_isopleth.hidden                = findall(data_isopleth.status .== 2)
+    n_act                               = length(data_isopleth.hidden)
+    isoplethsHid = [Dict("label" => data_isopleth.label[data_isopleth.hidden[i]], "value" => data_isopleth.value[data_isopleth.hidden[i]])
+                    for i=1:n_act]              
+
+    return data_isopleth, isopleths, isoplethsHid
+end
+
+
 function remove_single_isopleth_phaseDiagram(isoplethsID)
     global data_isopleth
 
@@ -1052,7 +1124,7 @@ function remove_single_isopleth_phaseDiagram(isoplethsID)
     data_isopleth.label[isoplethsID]    = ""
     data_isopleth.value[isoplethsID]    = 0
     data_isopleth.active                = findall(data_isopleth.status .== 1)
-    n_act                          = length(data_isopleth.active)
+    n_act                               = length(data_isopleth.active)
     isopleths = [Dict("label" => data_isopleth.label[data_isopleth.active[i]], "value" => data_isopleth.value[data_isopleth.active[i]])
                     for i=1:n_act]
 
@@ -1072,9 +1144,11 @@ function remove_all_isopleth_phaseDiagram()
     end
     data_isopleth.status   .= 0
     data_isopleth.active   .= 0
+    data_isopleth.hidden   .= 0
 
     # clear isopleth dropdown menu
-    isopleths = []              
+    isopleths = []        
+    isoplethsHid = []       
 
-    return data_isopleth, isopleths, data_plot
+    return data_isopleth, isopleths, isoplethsHid, data_plot
 end

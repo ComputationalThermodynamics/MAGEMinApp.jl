@@ -32,6 +32,9 @@ push!(dba,Dict(         :database    => "Mantle (Holland et al., 2013)",
                         :acronym     => "mtl",
                         ), cols=:union)
 
+# push!(dba,Dict(         :database    => "Stixrude & Lithgow-Bertelloni (2011)",
+#                         :acronym     => "sb11",
+#                         ), cols=:union)
 
 db = DataFrame(         bulk        = String[],
                         title       = String[],
@@ -223,7 +226,7 @@ push!(db,Dict(          :bulk       => "predefined",
                         :frac2      => [50.0810,  8.6901,  11.6698, 12.1438, 7.7832,  0.2150,  2.4978,  1.0059,  0.4670,  0.0100, 5.4364],
                         ), cols=:union)
 
-# IGNEOUS ALKALINE DRY DATABASE
+# # IGNEOUS ALKALINE DRY DATABASE
 # push!(db,Dict(          :bulk       => "predefined",
 #                         :title      => "Ne-Syenite",
 #                         :comments   => "Weller et al., 2024",
@@ -372,6 +375,53 @@ push!(db,Dict(          :bulk       => "predefined",
                         :frac       => [36.39,0.7,0.9,56.6,5.4,0.01],
                         :frac2      => [36.39,0.7,0.9,56.6,5.4,0.01],
                         ), cols=:union)  
+                        
+# #MANTLE DATABASE STIXRUDE
+# push!(db,Dict(          :bulk       => "predefined",
+#                         :title      => "KLB-1",
+#                         :comments   => "Stixrude & Lithgow-Bertelloni (2011)",
+#                         :db         => "sb11",
+#                         :test       => 0,
+#                         :sysUnit    => "mol",
+#                         :oxide      => ["SiO2","CaO","Al2O3","FeO","MgO","Na2O"],
+#                         :frac       => [38.41,3.18,1.8,5.85,50.49, 0.250],
+#                         :frac2      => [38.41,3.18,1.8,5.85,50.49, 0.250],
+#                         ), cols=:union)  
+
+# push!(db,Dict(          :bulk       => "predefined",
+#                         :title      => "Pyrolite",
+#                         :comments   => "Stixrude & Lithgow-Bertelloni (2011)",
+#                         :db         => "sb11",
+#                         :test       => 1,
+#                         :sysUnit    => "mol",
+#                         :oxide      => ["SiO2","Al2O3","CaO","FeO","MgO","Na2O"],
+#                         :frac       => [38.89,2.2,3.1,5.8,50.0,0.01],
+#                         :frac2      => [38.89,2.2,3.1,5.8,50.0,0.01],
+#                         ), cols=:union)  
+
+# push!(db,Dict(          :bulk       => "predefined",
+#                         :title      => "Harzburgite",
+#                         :comments   => "Stixrude & Lithgow-Bertelloni (2011)",
+#                         :db         => "sb11",
+#                         :test       => 2,
+#                         :sysUnit    => "mol",
+#                         :oxide      => ["SiO2","Al2O3","CaO","FeO","MgO","Na2O"],
+#                         :frac       => [36.39,0.7,0.9,5.4,56.6,0.01],
+#                         :frac2      => [36.39,0.7,0.9,5.4,56.6,0.01],
+#                         ), cols=:union)  
+
+# push!(db,Dict(          :bulk       => "predefined",
+#                         :title      => "Bulk DMM",
+#                         :comments   => "Workman & Hart, 2005",
+#                         :db         => "sb11",
+#                         :test       => 3,
+#                         :sysUnit    => "mol",
+#                         :oxide      => ["SiO2","Al2O3","CaO","FeO","MgO","Na2O"],
+#                         :frac       => [38.82533751228409, 2.0365437262790334, 2.949115292540495, 5.939734393438787, 50.13984011481426, 0.10942896064333986],
+#                         :frac2      => [38.82533751228409, 2.0365437262790334, 2.949115292540495, 5.939734393438787, 50.13984011481426, 0.10942896064333986],
+#                         # :frac       => [44.71,3.98,3.17,8.18,38.73,0.13],
+#                         # :frac2      => [44.71,3.98,3.17,8.18,38.73,0.13],
+#                         ), cols=:union)  
 
 dbte = DataFrame(       composition = String[],
                         title       = String[],

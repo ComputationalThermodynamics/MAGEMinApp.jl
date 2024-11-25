@@ -144,7 +144,46 @@ function Tab_PhaseDiagram()
                                         ]#=, width=6=#),
                                     ]),
 
+                                    html_div([
+                                    ], style = Dict("display" => "none"), id      = "test-show-id"),
 
+                                    html_div("‎ "), 
+                                    html_div([
+                                        dbc_row([
+                                            dbc_col([ 
+                                                
+                                                html_h3(id="ph-comp-title", "Mineral composition", style = Dict("textAlign" => "center","font-size" => "140%", "marginTop" => 8)),  # Title with an id
+                                            ], width=11),
+                                            dbc_col([ 
+                                                    dcc_clipboard(
+                                                        target_id   = "table-phase-composition",
+                                                        title       = "copy",
+                                                        style       =  Dict(
+                                                            "display"       => "inline-block",
+                                                            "fontSize"      => 20,
+                                                            "verticalAlign" => "top",
+                                                    ),
+                                                ),
+                                            ], width=1),
+                                        ]),
+                                        dbc_row([
+                                            dash_datatable(
+                                                id="table-phase-composition",
+                                                columns=(  [    Dict("id" =>  "oxide",  "name"  =>  "oxide",    "editable" => false),
+                                                                Dict("id" =>  "mol%",   "name"  =>  "mol%",     "editable" => false),
+                                                                Dict("id" =>  "wt%",    "name"  =>  "wt%",      "editable" => false),
+                                                                Dict("id" =>  "apfu",   "name"  =>  "apfu",     "editable" => false)
+                                                                ]
+                                                ),
+                                                data            = [],
+                                                # row_selectable  = "single",
+                                                style_cell      = Dict("fontSize" => "140%", "textAlign" => "center", "padding" => "0px"),
+                                                style_header    = (fontWeight="bold"),
+                                                
+                                            ),
+                                        ]),
+                                    ], style = Dict("display" => "none"), id      = "disp-test-id"),
+                                    
                                     # SAVE POINTS INFORMATION
                                     html_hr(),
                                     dbc_row([
@@ -556,7 +595,7 @@ function Tab_PhaseDiagram()
                                             dbc_col([
                                                 dcc_dropdown(   id      = "other-dropdown",
                                                 options = [
-                                                    (label = "Mode [mol]",      value = "mode"),
+                                                    (label = "Mode",      value = "mode"),
                                                     (label = "Endmember mode",  value = "emMode"),
                                                     (label = "Mg#",             value = "MgNum"),
                                                     (label = "Calculator",      value = "calc"),
@@ -567,6 +606,25 @@ function Tab_PhaseDiagram()
                                             ]),
                                         ]),
                                     ], style = Dict("display" => "none"), id      = "other-1-id"),
+
+                                    html_div([
+                                        dbc_row([
+
+                                            dbc_col([
+                                                html_h1("Unit", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                            ]),
+                                            dbc_col([
+                                                dcc_dropdown(   id      = "sys-unit-isopleth-dropdown",
+                                                options = [ (label = "mol",    value = "mol"),
+                                                            (label = "wt",     value = "wt")
+                                                            ],
+                                                value       = "mol",
+                                                clearable   = false,
+                                                multi       = false),
+                                            ]),
+
+                                        ]),
+                                    ], style = Dict("display" => "none"), id      = "sys-unit-isopleth-id"),
 
                                     html_div([
                                         dbc_row([
@@ -754,6 +812,13 @@ function Tab_PhaseDiagram()
                                             value   = 10   ),
                                         ]),
                                     ]),
+                                    html_div("‎ "),
+                                    dbc_row([
+                                        dbc_button("Add",id="button-add-isopleth", color="light",
+                                        style       = Dict( "textAlign"     => "center",
+                                                            "font-size"     => "100%",
+                                                            "border"        =>"1px lightgray solid")),
+                                    ]),  
 
                                     html_div("‎ "),
                                     html_h1("Isopleth list", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
@@ -761,12 +826,31 @@ function Tab_PhaseDiagram()
                                     dbc_row([
 
                                        dbc_col([
+                                            html_h1("Displayed", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                             dbc_row([
-                                                dbc_button("Add",id="button-add-isopleth", color="light",
+                                                html_div([
+                                                    dcc_dropdown(   id      = "isopleth-dropdown",
+                                                    options = [],
+                                                    value       = nothing,
+                                                    clearable   = false,
+                                                    multi       = false),
+                                                ],  style       = Dict("display" => "block"), id      = "isopleth-1-id"),
+                                            ]),
+
+                                            html_div("‎ "),
+                                            dbc_row([
+                                            dbc_button("Hide",id="button-hide-isopleth", color="light",
                                                 style       = Dict( "textAlign"     => "center",
                                                                     "font-size"     => "100%",
                                                                     "border"        =>"1px lightgray solid")),
-                                            ]),  
+                                            ]), 
+                                            dbc_row([
+                                                dbc_button("Hide all",id="button-hide-all-isopleth", color="light",
+                                                style       = Dict( "textAlign"     => "center",
+                                                                    "font-size"     => "100%",
+                                                                    "border"        =>"1px lightgray solid")),  
+                                            ]),
+                                            html_div("‎ "),
                                             dbc_row([
                                                 dbc_button("Remove",id="button-remove-isopleth", color="light",
                                                 style       = Dict( "textAlign"     => "center",
@@ -779,12 +863,28 @@ function Tab_PhaseDiagram()
                                                                     "font-size"     => "100%",
                                                                     "border"        =>"1px lightgray solid")),
                                             ]), 
+ 
+
+                                        ], width=6),
+
+                                        dbc_col([
+                                            html_h1("Hidden", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            dbc_row([
+                                                html_div([
+                                                    dcc_dropdown(   id      = "hidden-isopleth-dropdown",
+                                                    options = [],
+                                                    value       = nothing,
+                                                    clearable   = false,
+                                                    multi       = false),
+                                                ],  style       = Dict("display" => "block"), id      = "hidden-isopleth-1-id"),
+                                            ]),
+
                                             html_div("‎ "),
                                             dbc_row([
-                                                dbc_button("Hide all",id="button-hide-all-isopleth", color="light",
-                                                style       = Dict( "textAlign"     => "center",
-                                                                    "font-size"     => "100%",
-                                                                    "border"        =>"1px lightgray solid")),  
+                                                dbc_button("Show",id="button-show-isopleth", color="light",
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"1px lightgray solid")),
                                             ]),
                                             dbc_row([
                                                 dbc_button("Show all",id="button-show-all-isopleth", color="light",
@@ -792,19 +892,8 @@ function Tab_PhaseDiagram()
                                                                     "font-size"     => "100%",
                                                                     "border"        =>"1px lightgray solid")), 
                                             ]),
-                                       ]),
-                                       dbc_col([
-                                            dbc_row([
-                                                html_div([
-                                                    dcc_dropdown(   id      = "isopleth-dropdown",
-                                                    options = [],
-                                                    value       = nothing,
-                                                    clearable   = false,
-                                                    multi       = false),
-                                                ],  style = Dict("display" => "block"), id      = "isopleth-1-id"),
-                                            ]),
 
-                                        ]),
+                                        ], width=6),
 
                                     ]),
 

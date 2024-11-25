@@ -89,8 +89,6 @@ function get_TAS_diagram(phases)
                                                     line        = attr( width = 0.75,
                                                                         color = "black" )    ))
 
-    # print("liq_tas: $liq_tas\n")
-
     annotations = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,nf)
 
     for i=1:nf
