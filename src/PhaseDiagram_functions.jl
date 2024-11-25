@@ -21,6 +21,7 @@ mutable struct isopleth_data
 
     status  :: Vector{Int64}
     active  :: Vector{Int64}
+    hidden  :: Vector{Int64}
     isoP    :: Vector{GenericTrace{Dict{Symbol, Any}}}
     isoCap  :: Vector{GenericTrace{Dict{Symbol, Any}}}
 
@@ -912,6 +913,7 @@ function initialize_g_isopleth(; n_iso_max = 32)
 
     status    = zeros(Int64,n_iso_max)
     active    = []
+    hidden    = []
     isoP      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
     isoCap    = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
 
@@ -924,7 +926,7 @@ function initialize_g_isopleth(; n_iso_max = 32)
     value     = Vector{Int64}(undef,n_iso_max)
 
     data_isopleth = isopleth_data(0, n_iso_max,
-                                status, active, isoP, isoCap,
+                                status, active, hidden, isoP, isoCap,
                                 label, value)
 
     
@@ -941,6 +943,7 @@ function initialize_g_isopleth_te(; n_iso_max = 32)
 
     status    = zeros(Int64,n_iso_max)
     active    = []
+    hidden    = []
     isoP      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
     isoCap    = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
 
@@ -953,7 +956,7 @@ function initialize_g_isopleth_te(; n_iso_max = 32)
     value     = Vector{Int64}(undef,n_iso_max)
 
     data_isopleth_te = isopleth_data(   0, n_iso_max,
-                                        status, active, isoP, isoCap,
+                                        status, active, hidden, isoP, isoCap,
                                         label, value)
 
     
@@ -1068,6 +1071,49 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
 
 end
 
+function hide_single_isopleth_phaseDiagram(isoplethsID)
+    global data_isopleth
+
+    # data_isopleth.n_iso                -= 1      
+    data_isopleth.status[isoplethsID]   = 2;
+
+    # deals with the activte dropdown menu
+    data_isopleth.active                = findall(data_isopleth.status .== 1)
+    n_act                               = length(data_isopleth.active)
+    isopleths = [Dict("label" => data_isopleth.label[data_isopleth.active[i]], "value" => data_isopleth.value[data_isopleth.active[i]])
+                    for i=1:n_act]
+
+    # deals with the hidden dropdown menu
+    data_isopleth.hidden                = findall(data_isopleth.status .== 2)
+    n_act                               = length(data_isopleth.hidden)
+    isoplethsHid = [Dict("label" => data_isopleth.label[data_isopleth.hidden[i]], "value" => data_isopleth.value[data_isopleth.hidden[i]])
+                    for i=1:n_act]              
+
+    return data_isopleth, isopleths, isoplethsHid
+end
+
+function show_single_isopleth_phaseDiagram(isoplethsHidID)
+    global data_isopleth
+
+    # data_isopleth.n_iso                -= 1      
+    data_isopleth.status[isoplethsHidID]   = 1;
+
+    # deals with the activte dropdown menu
+    data_isopleth.active                = findall(data_isopleth.status .== 1)
+    n_act                               = length(data_isopleth.active)
+    isopleths = [Dict("label" => data_isopleth.label[data_isopleth.active[i]], "value" => data_isopleth.value[data_isopleth.active[i]])
+                    for i=1:n_act]
+
+    # deals with the hidden dropdown menu
+    data_isopleth.hidden                = findall(data_isopleth.status .== 2)
+    n_act                               = length(data_isopleth.hidden)
+    isoplethsHid = [Dict("label" => data_isopleth.label[data_isopleth.hidden[i]], "value" => data_isopleth.value[data_isopleth.hidden[i]])
+                    for i=1:n_act]              
+
+    return data_isopleth, isopleths, isoplethsHid
+end
+
+
 function remove_single_isopleth_phaseDiagram(isoplethsID)
     global data_isopleth
 
@@ -1078,7 +1124,7 @@ function remove_single_isopleth_phaseDiagram(isoplethsID)
     data_isopleth.label[isoplethsID]    = ""
     data_isopleth.value[isoplethsID]    = 0
     data_isopleth.active                = findall(data_isopleth.status .== 1)
-    n_act                          = length(data_isopleth.active)
+    n_act                               = length(data_isopleth.active)
     isopleths = [Dict("label" => data_isopleth.label[data_isopleth.active[i]], "value" => data_isopleth.value[data_isopleth.active[i]])
                     for i=1:n_act]
 
@@ -1098,9 +1144,11 @@ function remove_all_isopleth_phaseDiagram()
     end
     data_isopleth.status   .= 0
     data_isopleth.active   .= 0
+    data_isopleth.hidden   .= 0
 
     # clear isopleth dropdown menu
-    isopleths = []              
+    isopleths = []        
+    isoplethsHid = []       
 
-    return data_isopleth, isopleths, data_plot
+    return data_isopleth, isopleths, isoplethsHid, data_plot
 end
