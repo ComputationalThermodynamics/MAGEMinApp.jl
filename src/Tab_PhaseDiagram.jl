@@ -116,6 +116,41 @@ function Tab_PhaseDiagram()
                         # dbc_button("Phase diagram information",id="infos-phase-diagram"),
                         dbc_collapse(
                             dbc_card(dbc_cardbody([
+
+                                    dbc_row([
+                                        html_div([
+                                            dbc_button("Compute TAS with melt",id="compute-TAS-button", color="light",  n_clicks=0,
+                                            style       = Dict( "textAlign"     => "center",
+                                                                "font-size"     => "100%",
+                                                                "border"        =>"1px grey solid")), 
+                                            dbc_button("Classification canvas",id="classification-canvas-button", color="light",  n_clicks=0,
+                                            style       = Dict( "textAlign"     => "center",
+                                                                "font-size"     => "100%",
+                                                                "border"        =>"1px grey solid")), 
+                                            dbc_offcanvas(
+                                            [
+                                                dbc_row([                                                                                     
+                                                    # dbc_col([
+                                                    #     dbc_row([
+
+                                                                TAS_plot_pd()
+
+                                                        # ]),
+                                                    # ]),
+                                                ]),
+                                            ],
+               
+                                                id      = "classification-canvas",
+                                                title   = "Classfication canvas",
+                                                is_open = false,
+                                                placement = "start",
+                                                style   = Dict( "width"             => "660px",
+                                                                "background-color"  => "rgba(255, 255, 255, 0.7)"),
+                                            ),
+                                        ]),
+
+                                    ]),
+                                    html_div("‎ "), 
                                     dbc_row([
                                         dbc_card([
                                             dcc_markdown(   id          = "computation-info-id", 

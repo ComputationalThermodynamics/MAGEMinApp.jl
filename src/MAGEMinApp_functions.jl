@@ -23,6 +23,9 @@ function get_jet_colormap(n)
     np    = length(jet256)
 
     step  = Int64(floor(np/n))
+    if step == 0
+        step = 1
+    end
 
     return jet256[1:step:end]
 

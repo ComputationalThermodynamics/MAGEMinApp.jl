@@ -1,5 +1,57 @@
 function Tab_PhaseDiagram_Callbacks(app)
 
+
+    """
+        Callback to compute and display TAS diagram
+    """
+    callback!(
+        app,
+        Output("TAS-plot-pd",            "figure"),
+        Output("TAS-plot-pd",            "config"),
+        
+        Input("compute-TAS-button",      "n_clicks"),
+
+        State("database-dropdown",       "value"),
+        State("test-dropdown",           "value"),
+        State("select-pie-unit",         "value"),
+
+        prevent_initial_call = true,
+
+        ) do    n_click,
+                dtb,    test,   sysunit
+
+        global points_in_idx, Out_XY;
+
+        bid         = pushed_button( callback_context() )    # get which button has been pushed
+        title       = db[(db.db .== dtb), :].title[test+1]
+
+        if @isdefined(points_in_idx) && @isdefined(Out_XY)
+            tas, layout = get_TAS_phase_diagram()
+            figTAS      =   plot( tas, layout)
+        else
+            figTAS      =  plot(Layout( height= 740 ))
+        end
+
+        configTAS   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
+                                        format   = "svg",
+                                        filename = "TAS_phase_diagram_"*replace(title, " " => "_"),
+                                        width       = 760,
+                                        height      = 480,
+                                        scale    =  2.0,       ).fields)
+
+        return figTAS, configTAS
+    end
+
+    callback!(
+        app,
+        Output("classification-canvas", "is_open"),
+        Input("classification-canvas-button", "n_clicks"),
+        State("classification-canvas", "is_open"),
+    ) do n1, is_open
+        return n1 > 0 ? is_open == 0 : is_open
+    end;
+
+
     #save all to file
     callback!(
         app,
