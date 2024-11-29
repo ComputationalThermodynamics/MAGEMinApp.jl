@@ -799,6 +799,32 @@ function Tab_Simulation(db_inf)
                                     is_open=true,
                             ),
                         ]),
+                        html_div("‎ "),
+                        dbc_row([   
+                            dbc_button("Contributors",id="button-contributors",color="primary"),
+                            dbc_collapse(
+                                dbc_card(dbc_cardbody([
+                                    dbc_row([ 
+                                        dbc_col([                                                          
+                                            # dbc_row([
+                                                dcc_markdown(       id          = "debug-info-id", 
+                                                                    children    = AppData.contribs[1],
+                                                                    style       = Dict("white-space" => "pre"))
+                                            # ]),
+                                        ], width=6),
+                                        dbc_col([                                                          
+                                            # dbc_row([
+                                                dcc_markdown(       id          = "app-info-id", 
+                                                                    children    = AppData.contribs[2],
+                                                                    style       = Dict("white-space" => "pre"))
+                                            # ]),
+                                        ], width=6),
+                                    ]),
+                                ])),
+                                id="collapse-contributors",
+                                is_open=false,
+                            ),
+                        ]),
                         html_div("‎ "),  
                         html_div([
                             dbc_row([dbc_button("Trace-element composition",id="button-te"),

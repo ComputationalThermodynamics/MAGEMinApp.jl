@@ -1,5 +1,38 @@
 global AppData
 
+debug    = "**Debugging and Additions**\n\n"
+debug   *= "Jun Ren\n"
+debug   *= "Hugo Dominguez\n"
+debug   *= "Lorenzo Candioti\n"
+debug   *= "Jean-Francois Moyen\n"
+debug   *= "Owen Weller\n"
+debug   *= "Tim J.B. Holland\n"
+debug   *= "Boris Kaus\n"
+debug   *= "Hendrik Ranocha\n"
+debug   *= "Alexandre Peillod\n"
+debug   *= "Tobias Keller\n"
+
+app      = "**Interface Suggestions**\n\n"
+app     *= "Jean-Francois Moyen\n"
+app     *= "Jacob Forshaw\n"
+app     *= "Boris Kaus\n"
+app     *= "Pierre Lanari\n"
+app     *= "Owen Weller\n"
+app     *= "Ian Cawood\n"
+app     *= "Renee Tamblyn\n"
+app     *= "Cerine bouadani\n"
+app     *= "Dinarte Lucas\n"
+app     *= "Yishen Zhang\n"
+app     *= "Buchanan Kerswell\n"
+app     *= "Joan Reche Estrada\n"
+app     *= "Brendan Dyck\n"
+app     *= "Olivier Namur\n"
+app     *= "Martin Miranda Muruzabal\n"
+
+
+contribs = [debug,app]
+
+
 # LIST AVAILABLE DATABASE
 dba = DataFrame(        database     = String[],
                         acronym      = String[],
@@ -549,7 +582,8 @@ push!(dbte,Dict(    :composition=> "predefined",
 
 KDs_dtb     = get_OL_KDs_database();
 
-AppData = ( db                  = db,
+AppData = ( contribs            = contribs,
+            db                  = db,
             dba                 = dba,
             dbte                = dbte,
             KDs_dtb             = KDs_dtb)
