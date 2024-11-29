@@ -75,6 +75,149 @@ function prt(   in    ::Union{Float64,Vector{Float64}};
     return out
 end
 
+"""
+    Retrieve TAS diagram
+"""
+function get_TAS_phase_diagram()
+
+    global points_in_idx, Out_XY;
+
+    tas      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, 16);
+
+    F        = [35. 0; 41 0; 41 7; 45 9.4; 48.4 11.5; 52.5 14; 48 16; 35 16;35 0]
+    Pc       = [41. 0; 45 0; 45 3; 41 3;41 0]
+    U1       = [41. 3; 45 3; 45 5; 49.4 7.3; 45 9.4; 41 7;41 3]
+    U2       = [49.4 7.3; 53 9.3; 48.4 11.5; 45 9.4;49.4 7.3]
+    U3       = [53. 9.3; 57.6 11.7; 52.5 14; 48.4 11.5;53 9.3]
+    Ph       = [52.5 14; 57.6 11.7; 65 16; 48 16;52.5 14]
+    B        = [45. 0; 52 0; 52 5; 45 5;45 0]
+    S1       = [45. 5; 52 5; 49.4 7.3;45 5]
+    S2       = [52. 5; 57 5.9; 53 9.3; 49.4 7.3;52 5]
+    S3       = [57. 5.9; 63 7; 57.6 11.7; 53 9.3;57 5.9]
+    T        = [63. 7; 69 8; 69 16; 65 16; 57.6 11.7;63 7]
+    O1       = [52. 0; 57 0; 57 5.9; 52 5;52 0]
+    O2       = [57. 0; 63 0; 63 7; 57 5.9;57 0]
+    O3       = [63. 0; 77 0; 69 8; 63 7;63 0]
+    R        = [77. 0; 85 0; 85 16; 69 16; 69 8;77 0]
+
+    fields   = (F,Pc,U1,U2,U3,Ph,B,S1,S2,S3,T,O1,O2,O3,R)
+    nf       = length(fields)
+    xc       = zeros(nf)
+    yc       = zeros(nf)
+
+    for i=1:nf
+        xc[i] = sum(fields[i][1:end-1,1])/(size(fields[i],1)-1.0)
+        yc[i] = sum(fields[i][1:end-1,2])/(size(fields[i],1)-1.0)
+    end
+    
+    # annotations shifts
+    xc[1]   -=4.0;
+    yc[1]   +=3.0;
+    yc[3]   +=1.0;
+    xc[6]   +=2.0;
+    yc[8]   -=0.25;
+    yc[9]   +=0.25;
+
+
+    name = ["foidite" "picrobasalt" "basanite" "phonotephrite" "tephriphonolite" "phonolite" "basalt" "trachybasalt" "basaltic<br>trachyandesite" "trachyandesite" "trachyte" "basaltic<br>andesite" "andesite" "dacite" "rhyolite"];
+       
+    for i = 1:nf
+        tas[i] = scatter(   x           = fields[i][:,1], 
+                            y           = fields[i][:,2], 
+                            hoverinfo   = "skip",
+                            mode        = "lines",
+                            showscale   = false,
+                            showlegend  = false,
+                            line        = attr( color   = "black", 
+                                                width   = 0.75)                )
+    end
+
+
+    n_ox    = length(Out_XY[1].oxides)
+    oxides  = Out_XY[1].oxides
+    n_tot   = length(points_in_idx)
+
+    liq_tas         = Matrix{Union{Float64,Missing}}(undef, n_ox, (n_tot+1))    .= missing
+    liq_wt          = Vector{Union{Float64,Missing}}(undef, (n_tot+1))          .= missing
+    liq_P           = Vector{Union{Float64,Missing}}(undef, (n_tot+1))          .= missing
+    colormap        = get_jet_colormap(n_tot+1)
+ 
+    for j=1:n_tot
+        id      = findall(Out_XY[points_in_idx[j]].ph .== "liq")
+        if ~isempty(id)
+            liq_tas[:,j] = Out_XY[points_in_idx[j]].SS_vec[id[1]].Comp_wt .*100.0
+            liq_wt[j]    = Out_XY[points_in_idx[j]].ph_frac_wt[id[1]]
+            liq_P[j]     = Out_XY[points_in_idx[j]].P_kbar
+        end
+    end
+
+    dry  = findall(oxides .!= "H2O") 
+    id_Y = findall(oxides .== "K2O" .|| oxides .== "Na2O")
+    id_X = findall(oxides .== "SiO2") 
+
+    if ~isempty(dry)
+        liq_tas ./=sum(liq_tas[dry,:],dims=1)
+        liq_tas .*= 100.0
+    end
+
+    tas[end] = scatter(     x           = liq_tas[id_X,:], 
+                            y           = sum(liq_tas[id_Y,:],dims=1), 
+                            hoverinfo   = "skip",
+                            mode        = "markers",
+                            opacity     = 0.6,
+                            showscale   = false,
+                            showlegend  = false,
+                            marker      = attr(     size        = liq_wt .*20.0 .+ 2.0,
+                                                    color       = liq_P,
+                                                    colorscale  = colormap,
+                                                    line        = attr( width = 0.75,
+                                                                        color = "black" )    ))
+
+    annotations = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,nf)
+
+    for i=1:nf
+        annotations[i] =   attr(    xref        = "x",
+                                    yref        = "y",
+                                    x           = xc[i],
+                                    y           = yc[i],
+                                    text        = name[i],
+                                    showarrow   = false,
+                                    visible     = true,
+                                    font        = attr( size = 10, color = "#212121"),
+                                )  
+    end
+
+    layout  = Layout(
+
+        title= attr(
+            text    = "TAS Diagram (Anhydrous)",
+            x       = 0.5,
+            xanchor = "center",
+            yanchor = "top"
+        ),
+        margin      = attr(autoexpand = false, l=16, r=16, b=16, t=16),
+        hoverlabel = attr(
+            bgcolor     = "#566573",
+            bordercolor = "#f8f9f9",
+        ),
+        plot_bgcolor = "#FFF",
+        paper_bgcolor = "#FFF",
+        xaxis_title = "SiO2 [wt%]",
+        yaxis_title = "K2O + Na2O [wt%]",
+        xaxis_range = [35.0, 85.0], 
+        # yaxis_range = [0.0,15.0],
+        annotations = annotations,
+        width       = 640,
+        height      = 400,
+        xaxis       = attr(     fixedrange    = true,
+                            ),
+        yaxis       = attr(     fixedrange    = true,
+                            ),
+    )
+
+   
+    return tas, layout
+end
 
 function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2, PTpath, watsat)
 
@@ -117,7 +260,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     db_in     = retrieve_solution_phase_information(dtb)
 
 
-    PD_infos[1]  = "Phase Diagram computed using MAGEMin v"*Out_XY[1].MAGEMin_ver*" (GUI v0.5.1) <br>"
+    PD_infos[1]  = "Phase Diagram computed using MAGEMin v"*Out_XY[1].MAGEMin_ver*" (GUI v0.5.2) <br>"
     PD_infos[1] *= "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾<br>"
     PD_infos[1] *= "Number of points <br>"
     
@@ -970,7 +1113,7 @@ end
 function add_isopleth_phaseDiagram(         Xrange,     Yrange, 
                                             sub,        refLvl,
                                             dtb,        oxi,
-                                            isopleths,  phase,      ss,     em,     of,     ot,  sys,    calc, cust,
+                                            isopleths,  phase,      ss,     em,   ox,  of,     ot,  sys,    calc, cust,
                                             isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,       
                                             minIso,     stepIso,    maxIso      )
 
@@ -995,7 +1138,15 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
             mod     = "ph_frac_wt"
             name    = ss*"_"*em*"_frac_[wt]"
         end
+    elseif (phase == "ss" && ot == "oxComp")
 
+        if sys == "mol"
+            mod     = "ox_comp"
+            name    = ss*"_"*ox*"_frac_[mol]"
+        else 
+            mod     = "ox_comp_wt"
+            name    = ss*"_"*ox*"_frac_[wt]"
+        end
     elseif (phase == "ss" && ot == "MgNum")
         mod     = "ss_MgNum"
         em      = ""
@@ -1020,7 +1171,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
 
     global data_isopleth, nIsopleths, data, Out_XY, data_plot, X, Y, addedRefinementLvl
 
-    gridded, X, Y = get_isopleth_map(   mod, ss, em, of, ot, calc,
+    gridded, X, Y = get_isopleth_map(   mod, ss, em, ox, of, ot, calc,
                                         oxi,
                                         Out_XY,
                                         sub,

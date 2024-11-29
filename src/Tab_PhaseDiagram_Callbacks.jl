@@ -1,5 +1,57 @@
 function Tab_PhaseDiagram_Callbacks(app)
 
+
+    """
+        Callback to compute and display TAS diagram
+    """
+    callback!(
+        app,
+        Output("TAS-plot-pd",            "figure"),
+        Output("TAS-plot-pd",            "config"),
+        
+        Input("compute-TAS-button",      "n_clicks"),
+
+        State("database-dropdown",       "value"),
+        State("test-dropdown",           "value"),
+        State("select-pie-unit",         "value"),
+
+        prevent_initial_call = true,
+
+        ) do    n_click,
+                dtb,    test,   sysunit
+
+        global points_in_idx, Out_XY;
+
+        bid         = pushed_button( callback_context() )    # get which button has been pushed
+        title       = db[(db.db .== dtb), :].title[test+1]
+
+        if @isdefined(points_in_idx) && @isdefined(Out_XY)
+            tas, layout = get_TAS_phase_diagram()
+            figTAS      =   plot( tas, layout)
+        else
+            figTAS      =  plot(Layout( height= 740 ))
+        end
+
+        configTAS   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
+                                        format   = "svg",
+                                        filename = "TAS_phase_diagram_"*replace(title, " " => "_"),
+                                        width       = 760,
+                                        height      = 480,
+                                        scale    =  2.0,       ).fields)
+
+        return figTAS, configTAS
+    end
+
+    callback!(
+        app,
+        Output("classification-canvas", "is_open"),
+        Input("classification-canvas-button", "n_clicks"),
+        State("classification-canvas", "is_open"),
+    ) do n1, is_open
+        return n1 > 0 ? is_open == 0 : is_open
+    end;
+
+
     #save all to file
     callback!(
         app,
@@ -161,7 +213,25 @@ function Tab_PhaseDiagram_Callbacks(app)
             id_db           = findfirst(bib[bib.keys[i]].fields["info"] .== dtb for i=1:n_ref)
             id_magemin      = findfirst(bib[bib.keys[i]].fields["info"] .== magemin for i=1:n_ref)
             
-            selection       = [bib.keys[id_db], bib.keys[id_magemin]]
+            selection       = String[]
+
+            push!(selection, String(bib.keys[id_db]))
+            push!(selection, String(bib.keys[id_magemin]))
+            
+            if dtb == "ume"
+                id_green = findfirst(bib[bib.keys[i]].fields["info"] .== "mb" for i=1:n_ref)
+                push!(selection, String(bib.keys[id_green]))
+            elseif dtb == "mpe"
+                id_green = findfirst(bib[bib.keys[i]].fields["info"] .== "mb" for i=1:n_ref)
+                push!(selection, String(bib.keys[id_green]))
+                id_flc = findfirst(bib[bib.keys[i]].fields["info"] .== "flc" for i=1:n_ref)
+                push!(selection, String(bib.keys[id_flc]))
+                id_occm = findfirst(bib[bib.keys[i]].fields["info"] .== "occm" for i=1:n_ref)
+                push!(selection, String(bib.keys[id_occm]))
+                id_um= findfirst(bib[bib.keys[i]].fields["info"] .== "um" for i=1:n_ref)
+                push!(selection, String(bib.keys[id_um]))
+            end
+
             selected_bib    = Bibliography.select(bib, selection)
             
             export_bibtex(fileout, selected_bib)
@@ -505,6 +575,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("phase-dropdown",         "value"),
         State("ss-dropdown",            "value"),
         State("em-dropdown",            "value"),
+        State("ox-dropdown",            "value"),
         State("of-dropdown",            "value"),
         State("other-dropdown",         "value"),
         State("sys-unit-isopleth-dropdown",  "value"),
@@ -534,7 +605,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             bufferN1,   bufferN2,
             tepm,       kds_mod,    zrsat_mod,  bulkte1,    bulkte2,
             test,
-            isopleths,  isoplethsID,isoplethsHid,  isoplethsHidID,  phase,      ss,         em,         of,     ot, sys, calc, cust,
+            isopleths,  isoplethsID,isoplethsHid,  isoplethsHidID,  phase,      ss,         em,     ox,    of,     ot, sys, calc, cust,
             isoLineStyle, isoLineWidth, isoColorLine,           isoLabelSize,   
             minIso,     stepIso,    maxIso,     active_tab
 
@@ -674,7 +745,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             data_isopleth, isopleths = add_isopleth_phaseDiagram(   Xrange,     Yrange,
                                                                     sub,        refLvl,
                                                                     dtb,        oxi,
-                                                                    isopleths,  phase,      ss,     em,     of,     ot, sys, calc, cust,
+                                                                    isopleths,  phase,      ss,     em,  ox,   of,     ot, sys, calc, cust,
                                                                     isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,   
                                                                     minIso,     stepIso,    maxIso                      )
             data_isopleth_out = data_isopleth.isoP[data_isopleth.active]

@@ -99,6 +99,17 @@ function TAS_plot()
             )
 end
 
+function TAS_plot_pd()
+
+    fig =  plot(    Layout(     width       = 640,
+                                height      = 400 ))
+
+    dcc_graph(
+                id          = "TAS-plot-pd",
+                figure      = fig,
+            )
+end
+
 
 function isoS_frac_plot()
 

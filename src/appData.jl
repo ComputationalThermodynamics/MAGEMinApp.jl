@@ -1,5 +1,38 @@
 global AppData
 
+debug    = "**Debugging and Additions**\n\n"
+debug   *= "Jun Ren\n"
+debug   *= "Hugo Dominguez\n"
+debug   *= "Lorenzo Candioti\n"
+debug   *= "Jean-Francois Moyen\n"
+debug   *= "Owen Weller\n"
+debug   *= "Tim J.B. Holland\n"
+debug   *= "Boris Kaus\n"
+debug   *= "Hendrik Ranocha\n"
+debug   *= "Alexandre Peillod\n"
+debug   *= "Tobias Keller\n"
+
+app      = "**Interface Suggestions**\n\n"
+app     *= "Jean-Francois Moyen\n"
+app     *= "Jacob Forshaw\n"
+app     *= "Boris Kaus\n"
+app     *= "Pierre Lanari\n"
+app     *= "Owen Weller\n"
+app     *= "Ian Cawood\n"
+app     *= "Renee Tamblyn\n"
+app     *= "Cerine bouadani\n"
+app     *= "Dinarte Lucas\n"
+app     *= "Yishen Zhang\n"
+app     *= "Buchanan Kerswell\n"
+app     *= "Joan Reche Estrada\n"
+app     *= "Brendan Dyck\n"
+app     *= "Olivier Namur\n"
+app     *= "Martin Miranda Muruzabal\n"
+
+
+contribs = [debug,app]
+
+
 # LIST AVAILABLE DATABASE
 dba = DataFrame(        database     = String[],
                         acronym      = String[],
@@ -26,6 +59,10 @@ push!(dba,Dict(         :database    => "Ultramafic (Evans & Frost., 2021)",
 
 push!(dba,Dict(         :database    => "Ultramafic extended (Evans & Frost., 2021) + pl, hb and aug from Green et al., 2016",
                         :acronym     => "ume",
+                        ), cols=:union)
+
+push!(dba,Dict(         :database    => "Metapelite extended (White et al., 2014, Green et al., 2016, Evans & Frost., 2021)",
+                        :acronym     => "mpe",
                         ), cols=:union)
 
 push!(dba,Dict(         :database    => "Mantle (Holland et al., 2013)",
@@ -226,7 +263,7 @@ push!(db,Dict(          :bulk       => "predefined",
                         :frac2      => [50.0810,  8.6901,  11.6698, 12.1438, 7.7832,  0.2150,  2.4978,  1.0059,  0.4670,  0.0100, 5.4364],
                         ), cols=:union)
 
-# # IGNEOUS ALKALINE DRY DATABASE
+# IGNEOUS ALKALINE DRY DATABASE
 # push!(db,Dict(          :bulk       => "predefined",
 #                         :title      => "Ne-Syenite",
 #                         :comments   => "Weller et al., 2024",
@@ -341,7 +378,89 @@ push!(db,Dict(          :bulk       => "predefined",
                         :frac2      => [20.044,  0.6256, 29.24, 3.149, 0.1324, 46.755, 0.3,2.0,0.15],
                         ), cols=:union)
 
-    
+ 
+# METAPELITE EXTENDED DATABASE, accounting for CO2 and S
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "FPWorldMedian pelite - water oversaturated",
+                        :comments   => "Forshaw, J. B., & Pattison, D. R. (2023)",
+                        :db         => "mpe",
+                        :test       => 0,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","MnO","H2O","CO2","S"],
+                        :frac       => [70.999,12.805,0.771,3.978,6.342,2.7895,1.481,0.758,0.72933,0.075,30.0,10.0,1.0],
+                        :frac2      => [70.999,12.805,0.771,3.978,6.342,2.7895,1.481,0.758,0.72933,0.075,30.0,10.0,1.0],
+                        ), cols=:union)
+
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "FPWorldMedian pelite - water undersaturated",
+                        :comments   => "Forshaw, J. B., & Pattison, D. R. (2023)",
+                        :db         => "mpe",
+                        :test       => 1,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","MnO","H2O","CO2","S"],
+                        :frac       => [70.999,12.805,0.771,3.978,6.342,2.7895,1.481,0.758,0.72933,0.075,5.0,10.0,1.0],
+                        :frac2      => [70.999,12.805,0.771,3.978,6.342,2.7895,1.481,0.758,0.72933,0.075,5.0,10.0,1.0],
+                        ), cols=:union)
+
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "Pelite - water oversaturated",
+                        :comments   => "White et al., 2014, Fig 8",
+                        :db         => "mpe",
+                        :test       => 2,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","MnO","H2O","CO2","S"],
+                        :frac       => [64.578,13.651,1.586,5.529,8.025,2.943,2.000,0.907,0.65,0.175,40.0,10.0,1.0],
+                        :frac2      => [64.578,13.651,1.586,5.529,8.025,2.943,2.000,0.907,0.65,0.175,40.0,10.0,1.0],
+                        ), cols=:union)
+
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "Pelite - water undersaturated",
+                        :comments   => "White et al., 2014, Fig 8",
+                        :db         => "mpe",
+                        :test       => 3,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","MnO","H2O","CO2","S"],
+                        :frac       => [64.578,13.651,1.586,5.529,8.025,2.943,2.000,0.907,0.65,0.175,6.244,10.0,1.0],
+                        :frac2      => [64.578,13.651,1.586,5.529,8.025,2.943,2.000,0.907,0.65,0.175,6.244,10.0,1.0],
+                        ), cols=:union)
+
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "Garnet-migmatite - AV0832a",
+                        :comments   => "Riel et al., 2013",
+                        :db         => "mpe",
+                        :test       => 4,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","MnO","H2O","CO2","S"],
+                        :frac       => [73.9880,8.6143,2.0146,2.7401, 3.8451, 1.7686, 2.4820, 0.6393, 0.11, 0.0630,  10.0,10.0,1.0],
+                        :frac2      => [73.9880,8.6143,2.0146,2.7401, 3.8451, 1.7686, 2.4820, 0.6393, 0.11, 0.0630,  10.0,10.0,1.0],
+                        ), cols=:union)
+
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "IO27",
+                        :comments   => "Peillod et al., 2024",
+                        :db         => "mpe",
+                        :test       => 5,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","MnO","H2O","CO2","S"],
+                        :frac       => [65.514, 9.500, 2.012, 7.38, 8.896, 1.48, 4.108, 0.99, 0.0, 0.098, 30.0, 0.0, 0.0],
+                        :frac2      => [65.514, 9.500, 2.012, 7.38, 8.896, 1.48, 4.108, 0.99, 0.0, 0.098, 30.0, 0.0, 0.0],
+                        ), cols=:union)
+
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "Fig8",
+                        :comments   => "Evans et al., 2010",
+                        :db         => "mpe",
+                        :test       => 6,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","MnO","H2O","CO2","S"],
+                        :frac       => [ 52.63, 14.63, 8.55, 4.34, 15.14, 1.69, 2.96, 0.0, -0.05, 0.0, 30.0, 30.0, 0.1], 
+                        :frac2      => [ 52.63, 14.63, 8.55, 4.34, 15.14, 1.69, 2.96, 0.0, -0.05, 0.0, 30.0, 30.0, 0.1], 
+                        ), cols=:union)
+
+
+
+
+
 #MANTLE DATABASE
 push!(db,Dict(          :bulk       => "predefined",
                         :title      => "KLB-1",
@@ -376,7 +495,7 @@ push!(db,Dict(          :bulk       => "predefined",
                         :frac2      => [36.39,0.7,0.9,56.6,5.4,0.01],
                         ), cols=:union)  
                         
-# #MANTLE DATABASE STIXRUDE
+#MANTLE DATABASE STIXRUDE
 # push!(db,Dict(          :bulk       => "predefined",
 #                         :title      => "KLB-1",
 #                         :comments   => "Stixrude & Lithgow-Bertelloni (2011)",
@@ -463,7 +582,8 @@ push!(dbte,Dict(    :composition=> "predefined",
 
 KDs_dtb     = get_OL_KDs_database();
 
-AppData = ( db                  = db,
+AppData = ( contribs            = contribs,
+            db                  = db,
             dba                 = dba,
             dbte                = dbte,
             KDs_dtb             = KDs_dtb)

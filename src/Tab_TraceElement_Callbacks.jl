@@ -613,11 +613,16 @@ function Tab_TraceElement_Callbacks(app)
 
             n_ref           = length(bib.keys)
 
+            selection       = String[]
+
             id_zrc          = findfirst(bib[bib.keys[i]].fields["info"] .== zrc for i=1:n_ref)
             id_kds          = findfirst(bib[bib.keys[i]].fields["info"] .== kds for i=1:n_ref)
             id_magemin      = findfirst(bib[bib.keys[i]].fields["info"] .== magemin for i=1:n_ref)
             
-            selection       = [bib.keys[id_kds], bib.keys[id_zrc],bib.keys[id_magemin]]
+            push!(selection, String(bib.keys[id_kds]))
+            push!(selection, String(bib.keys[id_zrc]))
+            push!(selection, String(bib.keys[id_magemin]))
+
             selected_bib    = Bibliography.select(bib, selection)
             
             export_bibtex(fileout, selected_bib)
