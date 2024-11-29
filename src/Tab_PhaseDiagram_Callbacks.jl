@@ -213,7 +213,25 @@ function Tab_PhaseDiagram_Callbacks(app)
             id_db           = findfirst(bib[bib.keys[i]].fields["info"] .== dtb for i=1:n_ref)
             id_magemin      = findfirst(bib[bib.keys[i]].fields["info"] .== magemin for i=1:n_ref)
             
-            selection       = [bib.keys[id_db], bib.keys[id_magemin]]
+            selection       = String[]
+
+            push!(selection, String(bib.keys[id_db]))
+            push!(selection, String(bib.keys[id_magemin]))
+            
+            if dtb == "ume"
+                id_green = findfirst(bib[bib.keys[i]].fields["info"] .== "mb" for i=1:n_ref)
+                push!(selection, String(bib.keys[id_green]))
+            elseif dtb == "mpe"
+                id_green = findfirst(bib[bib.keys[i]].fields["info"] .== "mb" for i=1:n_ref)
+                push!(selection, String(bib.keys[id_green]))
+                id_flc = findfirst(bib[bib.keys[i]].fields["info"] .== "flc" for i=1:n_ref)
+                push!(selection, String(bib.keys[id_flc]))
+                id_occm = findfirst(bib[bib.keys[i]].fields["info"] .== "occm" for i=1:n_ref)
+                push!(selection, String(bib.keys[id_occm]))
+                id_um= findfirst(bib[bib.keys[i]].fields["info"] .== "um" for i=1:n_ref)
+                push!(selection, String(bib.keys[id_um]))
+            end
+
             selected_bib    = Bibliography.select(bib, selection)
             
             export_bibtex(fileout, selected_bib)
@@ -557,6 +575,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("phase-dropdown",         "value"),
         State("ss-dropdown",            "value"),
         State("em-dropdown",            "value"),
+        State("ox-dropdown",            "value"),
         State("of-dropdown",            "value"),
         State("other-dropdown",         "value"),
         State("sys-unit-isopleth-dropdown",  "value"),
@@ -586,7 +605,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             bufferN1,   bufferN2,
             tepm,       kds_mod,    zrsat_mod,  bulkte1,    bulkte2,
             test,
-            isopleths,  isoplethsID,isoplethsHid,  isoplethsHidID,  phase,      ss,         em,         of,     ot, sys, calc, cust,
+            isopleths,  isoplethsID,isoplethsHid,  isoplethsHidID,  phase,      ss,         em,     ox,    of,     ot, sys, calc, cust,
             isoLineStyle, isoLineWidth, isoColorLine,           isoLabelSize,   
             minIso,     stepIso,    maxIso,     active_tab
 
@@ -726,7 +745,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             data_isopleth, isopleths = add_isopleth_phaseDiagram(   Xrange,     Yrange,
                                                                     sub,        refLvl,
                                                                     dtb,        oxi,
-                                                                    isopleths,  phase,      ss,     em,     of,     ot, sys, calc, cust,
+                                                                    isopleths,  phase,      ss,     em,  ox,   of,     ot, sys, calc, cust,
                                                                     isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,   
                                                                     minIso,     stepIso,    maxIso                      )
             data_isopleth_out = data_isopleth.isoP[data_isopleth.active]

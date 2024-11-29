@@ -1113,7 +1113,7 @@ end
 function add_isopleth_phaseDiagram(         Xrange,     Yrange, 
                                             sub,        refLvl,
                                             dtb,        oxi,
-                                            isopleths,  phase,      ss,     em,     of,     ot,  sys,    calc, cust,
+                                            isopleths,  phase,      ss,     em,   ox,  of,     ot,  sys,    calc, cust,
                                             isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,       
                                             minIso,     stepIso,    maxIso      )
 
@@ -1138,7 +1138,15 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
             mod     = "ph_frac_wt"
             name    = ss*"_"*em*"_frac_[wt]"
         end
+    elseif (phase == "ss" && ot == "oxComp")
 
+        if sys == "mol"
+            mod     = "ox_comp"
+            name    = ss*"_"*ox*"_frac_[mol]"
+        else 
+            mod     = "ox_comp_wt"
+            name    = ss*"_"*ox*"_frac_[wt]"
+        end
     elseif (phase == "ss" && ot == "MgNum")
         mod     = "ss_MgNum"
         em      = ""
@@ -1163,7 +1171,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
 
     global data_isopleth, nIsopleths, data, Out_XY, data_plot, X, Y, addedRefinementLvl
 
-    gridded, X, Y = get_isopleth_map(   mod, ss, em, of, ot, calc,
+    gridded, X, Y = get_isopleth_map(   mod, ss, em, ox, of, ot, calc,
                                         oxi,
                                         Out_XY,
                                         sub,

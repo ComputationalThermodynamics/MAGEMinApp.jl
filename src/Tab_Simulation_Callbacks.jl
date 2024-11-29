@@ -186,6 +186,7 @@ function Tab_Simulation_Callbacks(app)
         Output("ss-dropdown","value"),
         Output("calc-1-id","style"),
         Output("em-1-id","style"),
+        Output("ox-1-id","style"),
         Output("ss-1-id","style"),
         Output("of-1-id","style"),
         Output("other-1-id","style"),
@@ -208,6 +209,7 @@ function Tab_Simulation_Callbacks(app)
         if phase == "of"
             style_ph    = Dict("display" => "none")
             style_em    = Dict("display" => "none")
+            style_ox    = Dict("display" => "none")
             style_calc  = Dict("display" => "none")
             style_ot    = Dict("display" => "none")
             style_of    = Dict("display" => "block")
@@ -229,6 +231,13 @@ function Tab_Simulation_Callbacks(app)
             else
                 style_em    = Dict("display" => "none")
             end
+
+            if other == "oxComp"
+                style_ox    = Dict("display" => "block")
+            else
+                style_ox    = Dict("display" => "none")
+            end
+
 
             if other == "calc"
                 style_calc  = Dict("display" => "block")
@@ -253,6 +262,7 @@ function Tab_Simulation_Callbacks(app)
                                         for i=1:n_pp ]
 
             style_em    = Dict("display" => "none")
+            style_ox    = Dict("display" => "none")
             style_ot    = Dict("display" => "none")
             style_calc  = Dict("display" => "none")
             style_ph    = Dict("display" => "block")
@@ -268,7 +278,7 @@ function Tab_Simulation_Callbacks(app)
         phase_selection_value   = db_in.ss_name
 
 
-        return opts_ph, val, style_calc, style_em, style_ph, style_of, style_ot, style_sys,phase_selection_options, phase_selection_value
+        return opts_ph, val, style_calc, style_em, style_ox, style_ph, style_of, style_ot, style_sys,phase_selection_options, phase_selection_value
     end
 
 
@@ -278,6 +288,8 @@ function Tab_Simulation_Callbacks(app)
         app,
         Output("em-dropdown","options"),
         Output("em-dropdown","value"),
+        Output("ox-dropdown","options"),
+        Output("ox-dropdown","value"),
         Input("database-dropdown","value"),
         Input("ss-dropdown","value"),
         State("phase-dropdown","value"),
@@ -302,9 +314,14 @@ function Tab_Simulation_Callbacks(app)
                                     "value" => db_in.data_ss[ssid].ss_em[i] )
                                         for i=1:n_em ]
 
-            return opts_em, val
+
+            opts_ox        =   [Dict(  "label"   => db[(db.db .== dtb), :].oxide[1][i],
+                                        "value"  => db[(db.db .== dtb), :].oxide[1][i])
+                                            for i=1:length(db[(db.db .== dtb), :].oxide[1]) ]
+
+            return opts_em, val, opts_ox, "SiO2"
         else
-            return "", ""
+            return "", "", "", ""
         end
 
     end
@@ -511,9 +528,9 @@ function Tab_Simulation_Callbacks(app)
         if !(contents isa Nothing)
             status = parse_bulk_te(contents, filename, kdsDB)
             if status == 1
-                return "success", ""
+                return "success", nothing
             else
-                return "", "failed"
+                return nothing, "failed"
             end
         end
     end

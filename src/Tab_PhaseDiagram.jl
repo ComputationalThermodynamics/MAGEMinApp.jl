@@ -597,6 +597,7 @@ function Tab_PhaseDiagram()
                                                         dcc_dropdown(   id      = "other-dropdown",
                                                         options = [
                                                             (label = "Mode",      value = "mode"),
+                                                            (label = "Oxide composition",  value = "oxComp"),
                                                             (label = "Endmember mode",  value = "emMode"),
                                                             (label = "Mg#",             value = "MgNum"),
                                                             (label = "Calculator",      value = "calc"),
@@ -666,6 +667,21 @@ function Tab_PhaseDiagram()
                                                     ]),
                                                 ]),
                                             ], style = Dict("display" => "none"), id      = "em-1-id"),
+
+                                            html_div([
+                                                dbc_row([
+                                                    dbc_col([
+                                                        html_h1("Oxide", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                                    ]),
+                                                    dbc_col([
+                                                        dcc_dropdown(   id      = "ox-dropdown",
+                                                        options = ["none"],
+                                                        value       = 0,
+                                                        clearable   = false,
+                                                        multi       = false),
+                                                    ]),
+                                                ]),
+                                            ], style = Dict("display" => "none"), id      = "ox-1-id"),
 
                                             html_div([
                                                 dbc_row([

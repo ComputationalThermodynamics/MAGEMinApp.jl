@@ -26,7 +26,25 @@ function Tab_isoSpaths_Callbacks(app)
             id_db           = findfirst(bib[bib.keys[i]].fields["info"] .== dtb for i=1:n_ref)
             id_magemin      = findfirst(bib[bib.keys[i]].fields["info"] .== magemin for i=1:n_ref)
             
-            selection       = [bib.keys[id_db], bib.keys[id_magemin]]
+            selection       = String[]
+
+            push!(selection, String(bib.keys[id_db]))
+            push!(selection, String(bib.keys[id_magemin]))
+            
+            if dtb == "ume"
+                id_green = findfirst(bib[bib.keys[i]].fields["info"] .== "mb" for i=1:n_ref)
+                push!(selection, String(bib.keys[id_green]))
+            elseif dtb == "mpe"
+                id_green = findfirst(bib[bib.keys[i]].fields["info"] .== "mb" for i=1:n_ref)
+                push!(selection, String(bib.keys[id_green]))
+                id_flc = findfirst(bib[bib.keys[i]].fields["info"] .== "flc" for i=1:n_ref)
+                push!(selection, String(bib.keys[id_flc]))
+                id_occm = findfirst(bib[bib.keys[i]].fields["info"] .== "occm" for i=1:n_ref)
+                push!(selection, String(bib.keys[id_occm]))
+                id_um= findfirst(bib[bib.keys[i]].fields["info"] .== "um" for i=1:n_ref)
+                push!(selection, String(bib.keys[id_um]))
+            end
+            
             selected_bib    = Bibliography.select(bib, selection)
             
             export_bibtex(fileout, selected_bib)

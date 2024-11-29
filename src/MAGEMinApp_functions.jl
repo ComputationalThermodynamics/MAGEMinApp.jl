@@ -1318,6 +1318,7 @@ end
 function get_isopleth_map(  mod         ::String, 
                             ss          ::String, 
                             em          ::String,
+                            ox          ::String,
                             of          ::String,
                             ot          ::String,
                             calc        ::String,
@@ -1403,6 +1404,26 @@ function get_isopleth_map(  mod         ::String,
             if ~isempty(id)  
                 idem     = findall(Out_XY[i].SS_vec[id[1]].emNames .== em)
                 field[i] = Out_XY[i].SS_vec[id[1]].emFrac_wt[idem[1]]
+            else
+                field[i] = 0.0
+            end
+        end 
+    elseif mod == "ox_comp"
+        for i=1:np
+            id       = findall(Out_XY[i].ph .== ss)
+            ox_id    = findfirst(Out_XY[i].oxides .== ox)
+            if ~isempty(id)  
+                field[i] = Out_XY[i].SS_vec[id[1]].Comp[ox_id]
+            else
+                field[i] = 0.0
+            end
+        end 
+    elseif mod == "ox_comp_wt"
+        for i=1:np
+            id       = findall(Out_XY[i].ph .== ss)
+            ox_id    = findfirst(Out_XY[i].oxides .== ox)
+            if ~isempty(id)  
+                field[i] = Out_XY[i].SS_vec[id[1]].Comp_wt[ox_id]
             else
                 field[i] = 0.0
             end
@@ -1643,6 +1664,24 @@ function parse_bulk_rock(contents, filename)
 
   end
 
+
+function adjust_chemical_system_tmp(    KDs_dtb,
+                                        bulk_TE     :: Vector{Float64},
+                                        elem_TE     :: Vector{String})
+
+    n_el        = length(KDs_dtb.element_name)
+    C0_TE       = zeros(Float64,n_el)
+
+    for i=1:n_el
+        id = findfirst(KDs_dtb.element_name[i] .== elem_TE)
+        if !isnothing(id)
+            C0_TE[i] = bulk_TE[id]
+        end
+    end
+
+    return C0_TE
+end
+
 """
   function to parse bulk-te composition file
 """
@@ -1658,44 +1697,42 @@ function te_bulk_file_to_db(datain, kdsDB)
         print("Kd's database $kdsDB not implemented\n")
     end
 
+    id_title 		= findfirst(datain[1,:] .== "title")
+    id_comments		= findfirst(datain[1,:] .== "comments")
+    id_elements		= findfirst(datain[1,:] .== "elements")
+    id_frac         = findfirst(datain[1,:] .== "frac")
+    id_frac2        = findfirst(datain[1,:] .== "frac2")
+
     for i=2:size(datain, 1)
-        composition = "custom";
+        composition = "custom"
+        test 		= length(dbte.test)
+        title   	= string(datain[i,id_title])
 
-        idx 		= findall(datain[1,:] .== "title")[1];
-        title   	= string(datain[i,idx]);
+        comments    = string(datain[i,id_comments])
+        elements    = rsplit(datain[i,id_elements],",")
+        elements 	= strip.(convert.(String,elements))
+        elements 	= replace.(elements,r"\]"=>"",r"\["=>"")
 
-        idx 		= findall(datain[1,:] .== "comments")[1];
-        comments    = string(datain[i,idx]);
+        frac   	    = rsplit(datain[i,id_frac],",")
+        frac 		= strip.(convert.(String,frac))
+        frac 		= replace.(frac,r"\]"=>"",r"\["=>"")
+        frac 		= parse.(Float64,frac)
 
-        test 		= length(dbte.test);
-
-        idx 		= findall(datain[1,:] .== "elements")[1];
-        elements    = rsplit(datain[i,idx],",");
-        elements 	= strip.(convert.(String,elements));
-        elements 	= replace.(elements,r"\]"=>"",r"\["=>"");
-
-        idx 		= findall(datain[1,:] .== "frac")[1];
-        frac   	    = rsplit(datain[i,idx],",");
-        frac 		= strip.(convert.(String,frac));
-        frac 		= replace.(frac,r"\]"=>"",r"\["=>"");
-        frac 		= parse.(Float64,frac);
-
-        bulkte      = adjust_chemical_system( KDs_dtb, frac, elements);
+        bulkte      = adjust_chemical_system_tmp( KDs_dtb, frac, elements)
         bulkte     .= round.(bulkte; digits = 4)
 
-        idx 		= findall(datain[1,:] .== "frac2")[1];
-        if ~isempty(datain[i,idx])
-            frac2  		= rsplit(datain[i,idx],",");
+        if ~isempty(datain[i,id_frac2])
+            frac2  		= rsplit(datain[i,id_frac2],",");
             frac2 		= strip.(convert.(String,frac2));
             frac2 		= replace.(frac2,r"\]"=>"",r"\["=>"");
             frac2		= parse.(Float64,frac2);
-            bulkte2     = adjust_chemical_system( KDs_dtb, frac2, elements);
+            bulkte2     = adjust_chemical_system_tmp( KDs_dtb, frac2, elements);
             bulkte2    .= round.(bulkte2; digits = 4)
         else
             bulkte2     = deepcopy(bulkte)
         end
 
-        elements    = KDs_dtb.element_name
+        elements        = KDs_dtb.element_name
 
         push!(dbte,Dict(    :composition    => composition,
                             :title          => title,
