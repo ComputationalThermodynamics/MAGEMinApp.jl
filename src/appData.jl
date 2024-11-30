@@ -9,7 +9,7 @@ debug   *= "Owen Weller\n"
 debug   *= "Tim J.B. Holland\n"
 debug   *= "Boris Kaus\n"
 debug   *= "Hendrik Ranocha\n"
-app     *= "Pierre Lanari\n"
+debug   *= "Pierre Lanari\n"
 debug   *= "Alexandre Peillod\n"
 debug   *= "Tobias Keller\n"
 
