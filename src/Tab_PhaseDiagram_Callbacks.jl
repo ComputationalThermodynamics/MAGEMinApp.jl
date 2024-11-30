@@ -782,7 +782,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                     data_isopleth_out = data_isopleth.isoP[data_isopleth.active]
                     field2plot[4] = 1
                 else
-                    data_isopleth, isopleths, data_plot = remove_all_isopleth_phaseDiagram()
+                    data_isopleth, isopleths, isoplethsHid, data_plot = remove_all_isopleth_phaseDiagram()
                 end
 
             else
