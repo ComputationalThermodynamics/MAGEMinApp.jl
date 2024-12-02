@@ -929,14 +929,14 @@ function Tab_PhaseDiagram()
                                             html_hr(),
                                             dbc_row([
                                                 dbc_col([ 
-                                                    dbc_button("Compute TAS",id="compute-TAS-button", color="light",  n_clicks=0,
+                                                    dbc_button("Compute TAS & AFM",id="compute-TAS-button", color="light",  n_clicks=0,
                                                     style       = Dict( "textAlign"     => "center",
                                                                         "font-size"     => "100%",
                                                                         "border"        =>"1px grey solid",
                                                                         "width"         => "100%" )), 
                                                 ], width=6),
                                                 dbc_col([ 
-                                                    dbc_button("Display TAS",id="classification-canvas-button", color="light",  n_clicks=0,
+                                                    dbc_button("Display",id="classification-canvas-button", color="light",  n_clicks=0,
                                                     style       = Dict( "textAlign"     => "center",
                                                                         "font-size"     => "100%",
                                                                         "border"        =>"1px grey solid",
@@ -948,6 +948,9 @@ function Tab_PhaseDiagram()
                                                 [
                                                     dbc_row([                                                                                     
                                                         TAS_plot_pd()
+                                                    ]),
+                                                    dbc_row([                                                                                     
+                                                        AFM_plot_pd()
                                                     ]),
                                                 ],
                 
