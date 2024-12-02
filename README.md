@@ -1,3 +1,4 @@
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://github.com/ComputationalThermodynamics/Resources)
 [![Build Status](https://github.com/ComputationalThermodynamics/MAGEMinApp.jl/workflows/CI/badge.svg)](https://github.com/ComputationalThermodynamics/MAGEMinApp.jl/actions)
 
 # MAGEMinApp.jl
