@@ -75,6 +75,92 @@ function prt(   in    ::Union{Float64,Vector{Float64}};
     return out
 end
 
+
+"""
+    Retrieve AFM diagram
+"""
+function get_AFM_phase_diagram()
+
+    global points_in_idx, Out_XY;
+
+    n_ox    = length(Out_XY[1].oxides)
+    oxides  = Out_XY[1].oxides
+    n_tot   = length(points_in_idx)
+
+    liq_afm        = Matrix{Union{Float64,Missing}}(undef, n_ox, (n_tot+1))    .= missing
+    liq_wt          = Vector{Union{Float64,Missing}}(undef, (n_tot+1))          .= missing
+    liq_P           = Vector{Union{Float64,Missing}}(undef, (n_tot+1))          .= missing
+    colormap        = get_jet_colormap(n_tot+1)
+ 
+    for j=1:n_tot
+        id      = findall(Out_XY[points_in_idx[j]].ph .== "liq")
+        if ~isempty(id)
+            liq_afm[:,j] = Out_XY[points_in_idx[j]].SS_vec[id[1]].Comp_wt .*100.0
+            liq_wt[j]    = Out_XY[points_in_idx[j]].ph_frac_wt[id[1]]
+            liq_P[j]     = Out_XY[points_in_idx[j]].P_kbar
+        end
+    end
+
+    afm_  = findall(oxides .== "Al2O3" .|| oxides .== "FeO" .|| oxides .== "MgO") 
+
+    id_A = findall(oxides .== "Al2O3") 
+    id_F = findall(oxides .== "FeO")
+    id_M = findall(oxides .== "MgO")
+
+    if ~isempty(afm_)
+        liq_afm ./= sum(liq_afm[afm_,:],dims=1)
+        liq_afm .*= 100.0
+    end
+
+    A   = liq_afm[id_A,:]
+    F   = liq_afm[id_F,:]
+    M   = liq_afm[id_M,:]
+
+    # Create the ternary plot
+    afm = scatterternary(
+        b       = A,
+        a       = F,
+        c       = M,
+        mode    = "markers",
+        hoverinfo   = "skip",
+        opacity     = 0.6,
+        marker  = attr(     size        = liq_wt .*20.0 .+ 2.0,
+                            color       = liq_P,
+                            colorscale  = colormap,
+                            line        = attr( width = 0.75,
+                                                color = "black" )    ),
+        name    = "Sample Points"
+    )
+    
+    layout_afm = Layout(
+        title= attr(
+            text    = "AFM Diagram [wt%]",
+            x       = 0.2,
+            xanchor = "center",
+            yanchor = "top"
+        ),
+        ternary=attr(
+            sum     = 100,
+            baxis   = attr(title="A [Al2O3]", gridcolor     = "darkgray",
+                                                showline    =  true,
+                                                linecolor   = "darkgray"),
+            aaxis   = attr(title="F [FeOt]" ,   gridcolor   = "darkgray",
+                                                showline    =  true,
+                                                linecolor   = "darkgray"),
+            caxis   = attr(title="M [MgO]"  ,   gridcolor   = "darkgray",
+                                                showline    =  true,
+                                                linecolor   = "darkgray"),
+            bgcolor = "#FFF",
+            width       = 640,
+            height      = 400,
+        ),
+        paper_bgcolor = "#FFF",
+    )
+
+    return afm, layout_afm
+end
+
+
 """
     Retrieve TAS diagram
 """
@@ -190,7 +276,7 @@ function get_TAS_phase_diagram()
     layout  = Layout(
 
         title= attr(
-            text    = "TAS Diagram (Anhydrous)",
+            text    = "TAS Diagram [Anhydrous, wt%]",
             x       = 0.5,
             xanchor = "center",
             yanchor = "top"
@@ -260,7 +346,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     db_in     = retrieve_solution_phase_information(dtb)
 
 
-    PD_infos[1]  = "Phase Diagram computed using MAGEMin v"*Out_XY[1].MAGEMin_ver*" (GUI v0.5.4) <br>"
+    PD_infos[1]  = "Phase Diagram computed using MAGEMin v"*Out_XY[1].MAGEMin_ver*" (GUI v0.5.5) <br>"
     PD_infos[1] *= "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾<br>"
     PD_infos[1] *= "Number of points <br>"
     

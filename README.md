@@ -1,3 +1,4 @@
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://github.com/ComputationalThermodynamics/Resources)
 [![Build Status](https://github.com/ComputationalThermodynamics/MAGEMinApp.jl/workflows/CI/badge.svg)](https://github.com/ComputationalThermodynamics/MAGEMinApp.jl/actions)
 
 # MAGEMinApp.jl
@@ -16,6 +17,17 @@
 7. Export single point and whole grid information as table (ascii format)
 
 As for `MAGEMin`, you can choose among several thermodynamic dataset: Metapelite (White et al., 2014), Metabasite (Green et al., 2016), Igneous (Holland et al., 2018) or Ultramafic (Evans & Frost, 2021).
+
+### Available thernodynamic database
+
+- `mp`; `MnNCKFMASHTO` -> metapelite, White et al., 2014
+- `mb`; `MnNCKFMASHTO` -> metabasite, Green et al., 2016
+- `ig`; `NCKFMASHTO` ->  igneous, Holland et al., 2018
+- `um`; `FMASHOS` -> ultramafic, Frost & Evans, 2021
+- `ume`; `FMASHOS` ->  ultramafic extended, Frost & Evans, 2021 + Green et al., 2016
+- `mtl`; `NCFMAS` -> mantle to upper lowermost mantle, Holland et al., 2013
+- `mpe`; `CO2MnNCKFMASHTS` -> metapelite extended , White et al., 2014 + Green et al., 2016 + Frost & Evans, 2021 + Franzolin et al., 2011.
+
 
 ### Installation
 
@@ -62,7 +74,7 @@ MAGEMinApp is designed is such a way that bulk-rock composition must be entered 
 `Test 2;Moo et al., 2000;ig;mol;[SiO2, Al2O3, CaO, MgO, FeO, K2O, Na2O, TiO2, O, Cr2O3, H2O];[48.97, 11.76, 13.87, 4.21, 8.97, 1.66, 10.66, 1.36, 1.66, 0.0, 5.0];`\
 
 > [!IMPORTANT] 
-> `db` must be either `mp` (metapelite, White et al., 2014), `mb` (metabasite, Green et al., 2016), `ig` (igneous, Holland et al., 2018) or `um` (ultramafic, Frost & Evans, 2021).
+> `db` must be either `mp` (metapelite, White et al., 2014), `mb` (metabasite, Green et al., 2016), `ig` (igneous, Holland et al., 2018), `um` (ultramafic, Frost & Evans, 2021), `ume` (ultramafic extended, Frost & Evans, 2021 + Green et al., 2016), `mtl` (mantle to upper lowermost mantle, Holland et al., 2013) or `mpe` (metapelite extended, White et al., 2014 + Green et al., 2016, Frost & Evans, 2021).
 > 
 > `sysUnit` must be `mol` or `wt`. Note that if `wt` is provided, the composition is converted and subsequently displayed in `mol` in `MAGEMinApp`.
 > 

@@ -110,6 +110,16 @@ function TAS_plot_pd()
             )
 end
 
+function AFM_plot_pd()
+
+    fig =  plot(    Layout(     width       = 640,
+                                height      = 400 ))
+
+    dcc_graph(
+                id          = "AFM-plot-pd",
+                figure      = fig,
+            )
+end
 
 function isoS_frac_plot()
 

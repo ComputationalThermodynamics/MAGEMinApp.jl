@@ -8,6 +8,8 @@ function Tab_PhaseDiagram_Callbacks(app)
         app,
         Output("TAS-plot-pd",            "figure"),
         Output("TAS-plot-pd",            "config"),
+        Output("AFM-plot-pd",            "figure"),
+        Output("AFM-plot-pd",            "config"),
         
         Input("compute-TAS-button",      "n_clicks"),
 
@@ -26,20 +28,31 @@ function Tab_PhaseDiagram_Callbacks(app)
         title       = db[(db.db .== dtb), :].title[test+1]
 
         if @isdefined(points_in_idx) && @isdefined(Out_XY)
-            tas, layout = get_TAS_phase_diagram()
-            figTAS      =   plot( tas, layout)
+            tas, layout     = get_TAS_phase_diagram()
+            figTAS          = plot( tas, layout)
+            
+            afm, layout_afm = get_AFM_phase_diagram()
+            figAFM          = plot( afm, layout_afm)
         else
-            figTAS      =  plot(Layout( height= 740 ))
+            figTAS          = plot(Layout( height= 740 ))
+            figAFM          = plot(Layout( height= 740 ))
         end
 
         configTAS   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
                                         format   = "svg",
-                                        filename = "TAS_phase_diagram_"*replace(title, " " => "_"),
+                                        filename = "TAS_diagram_"*replace(title, " " => "_"),
                                         width       = 760,
                                         height      = 480,
                                         scale    =  2.0,       ).fields)
 
-        return figTAS, configTAS
+        configAFM   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
+                                        format   = "svg",
+                                        filename = "AFM_diagram_"*replace(title, " " => "_"),
+                                        width       = 760,
+                                        height      = 480,
+                                        scale    =  2.0,       ).fields)
+
+        return figTAS, configTAS, figAFM, configAFM
     end
 
     callback!(
