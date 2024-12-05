@@ -53,6 +53,12 @@ pkg> up MAGEMinApp      # sometimes needed to update to the last version
 (pkg> add MAGEMin_C)    # If you want to have MAGEMin_C too
 ```
 
+If you cannot update to the last MAGEMinApp version, try to set the Julia registry to "eager" using the following command, then redo the update process.
+
+```julia
+julia> ENV["JULIA_PKG_SERVER_REGISTRY_PREFERENCE"] = "eager"
+```
+
 ### Running MAGEMinApp
 
 And start it with:
