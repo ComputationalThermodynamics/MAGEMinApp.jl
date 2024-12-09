@@ -26,7 +26,7 @@ As for `MAGEMin`, you can choose among several thermodynamic dataset: Metapelite
 - `um`; `FMASHOS` -> ultramafic, Frost & Evans, 2021
 - `ume`; `FMASHOS` ->  ultramafic extended, Frost & Evans, 2021 + Green et al., 2016
 - `mtl`; `NCFMAS` -> mantle to upper lowermost mantle, Holland et al., 2013
-- `mpe`; `CO2MnNCKFMASHTS` -> metapelite extended , White et al., 2014 + Green et al., 2016 + Frost & Evans, 2021 + Franzolin et al., 2011.
+- `mpe`; `CO2MnNCKFMASHTS` -> metapelite extended , White et al., 2014 + Green et al., 2016 (hb, dio, aug) + Frost & Evans, 2021 (po, fl) + Franzolin et al., 2011 (occm).
 
 
 ### Installation
@@ -63,8 +63,8 @@ julia> ENV["JULIA_PKG_SERVER_REGISTRY_PREFERENCE"] = "eager"
 
 And start it with:
 ```julia
-julia>using MAGEMinApp
-julia>App()
+julia> using MAGEMinApp
+julia> App()
 [ Info: Listening on: 127.0.0.1:8050, thread id: 2
 ```
 Next you can open [127.0.0.1:8050](127.0.0.1:8050) in your favorite browser, which will launch the App.
