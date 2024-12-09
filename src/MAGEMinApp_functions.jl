@@ -730,8 +730,8 @@ function get_diagram_labels(    fieldname   ::String,
                                 showlegend  = false,
                                 text        = ph_list[i]        );
     
-        ctr     = coor[i]
 
+        ctr     = coor[i]
         if area[i] < 0.004      # place an arrow
             ax = -15
             ay = -15
@@ -824,7 +824,7 @@ function get_diagram_labels(    fieldname   ::String,
                                         visible     = true,
                                         font        = attr( size = 10),
                                         )   
-
+    n_lbl = n_trace
     println("\rGet phase diagram labels $(round(time()-t0, digits=3)) seconds"); 
 
     return traces, annotations 
