@@ -642,7 +642,7 @@ function get_diagram_labels(    fieldname   ::String,
                                 data        ::MAGEMinApp.AMR_data,
                                 PT_infos    ::Vector{String} )
 
-    global n_lbl
+    global n_lbl, gridded_fields
     print("Get phase diagram labels ..."); t0 = time();
 
     np          = length(data.points)
@@ -678,45 +678,50 @@ function get_diagram_labels(    fieldname   ::String,
         end
     end
 
-    n_hull      = length(unique(Hash_XY))
-    hull_list   = Vector{Any}(undef,    n_hull)
+    hull        = unique(Hash_XY)
+    n_hull      = length(hull)
+    area        = Vector{Any}(undef,    n_hull)
     ph_list     = Vector{String}(undef, n_hull)
     phd_list    = Vector{String}(undef, n_hull)
     id          = 0
+    coor        = []
 
-    for i in unique(Hash_XY)
-        field_tmp   = findall(Hash_XY .== i)
-    
-        t2          = [data.points[k][1] for k in field_tmp]
-        p2          = [data.points[k][2] for k in field_tmp]
+    int_vector  = [findfirst(x -> x == h, hull) for h in Hash_XY] 
+    for i = 1:length(int_vector)
 
-        phase       = ph[field_tmp]
-        phased      = phd[field_tmp]
-    
-        np          = length(t2)
-        if np > 2
+        field_tmp   = findall(int_vector .== i)
+        np          = length(field_tmp)
+        if np > 4
             id             += 1
-            points          = [[ t2[i]+rand()/100, p2[i]+rand()/100] for i=1:np]
-            hull_list[id]   = concave_hull(points,length(points))
-            ph_list[id]     = phase[1]
-            phd_list[id]    = phased[1]
+            ph_list[id]     = ph[field_tmp][1]
+            phd_list[id]    = phd[field_tmp][1]
+
+            mask, bnds      = reduce_matrix(ifelse.(gridded_fields .!= i, 0, 1))
+            mask            = BitArray(expand_with_zeros(mask))
+
+            dx              = (data.Xrange[2]-data.Xrange[1])/(size(gridded_fields,1)-1)
+            dy              = (data.Yrange[2]-data.Yrange[1])/(size(gridded_fields,2)-1)
+            minX            = data.Xrange[1] + dx*(bnds[1]) - dx*2
+            maxX            = data.Xrange[1] + dx*(bnds[2]) + dx*2
+            minY            = data.Yrange[1] + dy*(bnds[3]) - dy*2
+            maxY            = data.Yrange[1] + dy*(bnds[4]) + dy*2
+
+            area[id]        = Float64(sum(mask))*dx*dy/fac
+            centers         = select_point(mask, range(minY, maxY, size(mask,2)+1) , range(minX, maxX, size(mask,1)+1) )
+            
+            push!(coor,centers)
         end
     end
 
     n_trace     = id;
     traces      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef,n_trace+1);
     annotations = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,n_trace+3)
-    labelCoor   = Matrix{Float64}(undef,n_trace,2)
-    
+
     txt_list = ""
     cnt = 1;
     for i=1:n_trace
-        
-        tmp     = mapreduce(permutedims,vcat,hull_list[i].vertices)
-        tmp     = vcat(tmp,tmp[1,:]')
-    
-        traces[i+1] = scatter(; x           =  tmp[:,1],
-                                y           =  tmp[:,2],
+        traces[i+1] = scatter(; x           =  nothing,
+                                y           =  nothing,
                                 fill        = "toself",
                                 fillcolor   = "transparent",
                                 line_width  =  0.0,
@@ -725,25 +730,9 @@ function get_diagram_labels(    fieldname   ::String,
                                 showlegend  = false,
                                 text        = ph_list[i]        );
     
-        np          = size(tmp,1) 
-        if np > 4
-            tmp2    = [tmp[i,:] for i in 1:size(tmp,1)]
-            ctr     = PolygonOps.centroid(tmp2)
-        else
-            ctr     = zeros(2)
-            ctr[1]  =  mean(tmp[2:end,1])
-            ctr[2]  =  mean(tmp[2:end,2])
-        end
-        labelCoor[i,1]   = (ctr[1]-data.Xrange[1])/(data.Xrange[2]-data.Xrange[1])
-        labelCoor[i,2]   = (ctr[2]-data.Yrange[1])/(data.Yrange[2]-data.Yrange[1])
-    
-        if i > 1
-            for j=1:i-1
-                dist = sqrt((labelCoor[i,1] - labelCoor[j,1])^2+(labelCoor[i,2] - labelCoor[j,2])^2)
-            end
-        end
-    
-        if area(hull_list[i])/fac < 0.004
+        ctr     = coor[i]
+
+        if area[i] < 0.004      # place an arrow
             ax = -15
             ay = -15
 
@@ -761,7 +750,7 @@ function get_diagram_labels(    fieldname   ::String,
                                     )  
             txt_list *= string(cnt)*") "*ph_list[i]*"<br>"
             cnt +=1
-        elseif area(hull_list[i])/fac > 0.03 
+        elseif area[i] > 0.03 # place full label
             annotations[i] =   attr(    xref        = "x",
                                         yref        = "y",
                                         align       = "left",
@@ -773,7 +762,7 @@ function get_diagram_labels(    fieldname   ::String,
                                         visible     = true,
                                         font        = attr( size = 10, color = "#212121"),  
                                     )                     
-        else
+        else    # place number
             annotations[i] =   attr(    xref        = "x",
                                         yref        = "y",
                                         align       = "left",
@@ -835,7 +824,7 @@ function get_diagram_labels(    fieldname   ::String,
                                         visible     = true,
                                         font        = attr( size = 10),
                                         )   
-    n_lbl = n_trace
+
     println("\rGet phase diagram labels $(round(time()-t0, digits=3)) seconds"); 
 
     return traces, annotations 
@@ -1067,7 +1056,6 @@ function get_gridded_map(   fieldname   ::String,
     gridded      = Matrix{Union{Float64,Missing}}(undef,n,n);
     gridded_info = Matrix{Union{String,Missing}}(fill(missing,n,n)); 
 
-
     for k=1:np
         ii              = compute_index(data.points[k][1], data.Xrange[1], dx)
         jj              = compute_index(data.points[k][2], data.Yrange[1], dy)
@@ -1105,7 +1093,7 @@ function get_gridded_map(   fieldname   ::String,
 
         ii_min = compute_index(data.points[data.cells[i][1]][1], Xrange[1], dx)
         ii_max = compute_index(data.points[data.cells[i][4]][1], Xrange[1], dx)
-        jj_ix = compute_index(data.points[data.cells[i][1]][2], Yrange[1], dy)
+        jj_ix  = compute_index(data.points[data.cells[i][1]][2], Yrange[1], dy)
 
         for ii in ii_min+1:ii_max-1
             gridded_info[ii, jj_ix] = tmp
@@ -1117,7 +1105,58 @@ function get_gridded_map(   fieldname   ::String,
     end
 
     println("\rInterpolate data on grid $(round(time()-t0, digits=3)) seconds"); 
-    return gridded, gridded_info, X, Y, npoints, meant
+
+
+    # test Anton functions
+    f           = unique(Hash_XY)
+    int_vector  = [findfirst(x -> x == h, f) for h in Hash_XY] 
+    gridded_fields = Matrix{Int64}(undef,n,n);
+
+    for k=1:np
+        ii              = compute_index(data.points[k][1], data.Xrange[1], dx)
+        jj              = compute_index(data.points[k][2], data.Yrange[1], dy)
+        gridded_fields[ii,jj]  = int_vector[k] 
+    end
+
+    for i=1:length(data.cells)
+        cell   = data.cells[i]
+        tmp    = int_vector[cell[1]]
+
+        ii_min = compute_index(data.points[cell[2]][1], Xrange[1], dx)
+        ii_max = compute_index(data.points[cell[3]][1], Xrange[1], dx)
+        jj_ix  = compute_index(data.points[cell[2]][2], Yrange[1], dy)
+        for ii = ii_min+1:ii_max-1
+            gridded_fields[ii, jj_ix] = tmp
+        end
+
+        jj_min = compute_index(data.points[cell[1]][2], Yrange[1], dy)
+        jj_max = compute_index(data.points[cell[2]][2], Yrange[1], dy)
+        ii_ix = compute_index(data.points[cell[1]][1], Xrange[1], dx)
+        for jj in jj_min+1:jj_max-1
+            gridded_fields[ii_ix, jj] = tmp
+        end
+
+        jj_min = compute_index(data.points[cell[4]][2], Yrange[1], dy)
+        jj_max = compute_index(data.points[cell[3]][2], Yrange[1], dy)
+        ii_ix = compute_index(data.points[cell[4]][1], Xrange[1], dx)
+        for jj in jj_min+1:jj_max-1
+            gridded_fields[ii_ix, jj] = tmp
+        end
+
+        ii_min = compute_index(data.points[data.cells[i][1]][1], Xrange[1], dx)
+        ii_max = compute_index(data.points[data.cells[i][4]][1], Xrange[1], dx)
+        jj_ix  = compute_index(data.points[data.cells[i][1]][2], Yrange[1], dy)
+
+        for ii in ii_min+1:ii_max-1
+            gridded_fields[ii, jj_ix] = tmp
+            for jj in jj_min+1:jj_max-1
+                gridded_fields[ii, jj] = tmp
+            end
+        end
+
+    end
+
+    return gridded, gridded_info, gridded_fields, X, Y, npoints, meant
 end
 
 

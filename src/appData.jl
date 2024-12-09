@@ -2,6 +2,7 @@ global AppData
 
 debug    = "**Debugging and Additions**\n\n"
 debug   *= "Alexandre Peillod\n"
+debug   *= "Anton Popov\n"
 debug   *= "Boris Kaus\n"
 debug   *= "Hugo Dominguez\n"
 debug   *= "Hendrik Ranocha\n"

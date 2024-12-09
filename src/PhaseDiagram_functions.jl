@@ -346,7 +346,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     db_in     = retrieve_solution_phase_information(dtb)
 
 
-    PD_infos[1]  = "Phase Diagram computed using MAGEMin v"*Out_XY[1].MAGEMin_ver*" (GUI v0.5.6) <br>"
+    PD_infos[1]  = "Phase Diagram computed using MAGEMin v"*Out_XY[1].MAGEMin_ver*" (GUI v0.5.7) <br>"
     PD_infos[1] *= "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾<br>"
     PD_infos[1] *= "Number of points <br>"
     
@@ -681,7 +681,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
 
         #________________________________________________________________________________________#
         # initialize database
-        global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, X, Y, layout, n_lbl
+        global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, gridded_fields, X, Y, layout, n_lbl
         global addedRefinementLvl  = 0;
         global MAGEMin_data;
 
@@ -741,18 +741,18 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
         #________________________________________________________________________________________#                   
         # Scatter plotly of the grid
 
-        gridded, gridded_info, X, Y, npoints, meant = get_gridded_map(  fieldname,
-                                                                        "major",
-                                                                        oxi,
-                                                                        Out_XY,
-                                                                        nothing,
-                                                                        Hash_XY,
-                                                                        sub,
-                                                                        refLvl,
-                                                                        refType,
-                                                                        data,
-                                                                        Xrange,
-                                                                        Yrange)
+        gridded, gridded_info, gridded_fields, X, Y, npoints, meant = get_gridded_map(  fieldname,
+                                                                                        "major",
+                                                                                        oxi,
+                                                                                        Out_XY,
+                                                                                        nothing,
+                                                                                        Hash_XY,
+                                                                                        sub,
+                                                                                        refLvl,
+                                                                                        refType,
+                                                                                        data,
+                                                                                        Xrange,
+                                                                                        Yrange)
 
         PT_infos                           = get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat)
 
@@ -867,7 +867,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                 smooth,     colorm,     reverseColorMap, set_white,
                                 test,       refType, bid                                 )
 
-    global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, X, Y, addedRefinementLvl, layout, n_lbl, pChip_wat, pChip_T
+    global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, gridded_fields, X, Y, addedRefinementLvl, layout, n_lbl, pChip_wat, pChip_T
 
     mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb,        solver,
                                                     cpx,        limOpx,     limOpxVal ) 
@@ -898,18 +898,18 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
 
     #________________________________________________________________________________________#                   
     # Scatter plotly of the grid
-    gridded, gridded_info, X, Y, npoints, meant = get_gridded_map(  fieldname,
-                                                                    "major",
-                                                                    oxi,
-                                                                    Out_XY,
-                                                                    nothing,
-                                                                    Hash_XY,
-                                                                    sub,
-                                                                    refLvl + addedRefinementLvl,
-                                                                    refType,
-                                                                    data,
-                                                                    Xrange,
-                                                                    Yrange )
+    gridded, gridded_info, gridded_fields, X, Y, npoints, meant = get_gridded_map(  fieldname,
+                                                                                    "major",
+                                                                                    oxi,
+                                                                                    Out_XY,
+                                                                                    nothing,
+                                                                                    Hash_XY,
+                                                                                    sub,
+                                                                                    refLvl + addedRefinementLvl,
+                                                                                    refType,
+                                                                                    data,
+                                                                                    Xrange,
+                                                                                    Yrange )
     
     PT_infos                           = get_phase_diagram_information(npoints,dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat)
                                                               
