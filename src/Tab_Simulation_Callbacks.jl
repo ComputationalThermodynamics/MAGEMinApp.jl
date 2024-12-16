@@ -1,5 +1,18 @@
 function Tab_Simulation_Callbacks(app)
 
+    # update the dictionary of the solution phases and end-members for isopleths
+    callback!(
+        app,
+        Output( "grid-subdivision",     "value"     ),
+        Input(  "gsub-id",              "value"     ),
+
+    prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
+    ) do n_ref
+
+        n_ref_info = "$(2^n_ref) × $(2^n_ref) grid"
+
+        return n_ref_info
+    end
 
     # update the dictionary of the solution phases and end-members for isopleths
     callback!(
@@ -817,6 +830,27 @@ function Tab_Simulation_Callbacks(app)
         return is_open 
             
     end
+
+
+    # open/close Curve interpretation box
+    callback!(app,
+        Output("collapse-contact", "is_open"),
+        [Input("button-contact", "n_clicks")],
+        [State("collapse-contact", "is_open")], ) do  n, is_open
+        
+        if isnothing(n); n=0 end
+
+        if n>0
+            if is_open==1
+                is_open = 0
+            elseif is_open==0
+                is_open = 1
+            end
+        end
+        return is_open 
+            
+    end
+
     # open/close Curve interpretation box
     callback!(app,
         Output("collapse-export-magemin_c", "is_open"),

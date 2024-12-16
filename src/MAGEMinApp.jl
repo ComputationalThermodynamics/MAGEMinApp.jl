@@ -92,6 +92,15 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                             ]),
                         ], width="auto" ),
                         dbc_col([
+                            dcc_loading(
+                                id          =   "loading-id",
+                                type        =   "circle",
+                                children    =   [html_div(id="output-loading-id")],
+                                # style       =   Dict("margin-left" => "auto"),
+                                className   =   "custom-loading",
+                            ),
+                        ]),
+                        dbc_col([
                             dbc_cardimg(    id      = "magemin-img",
                                             src     = "assets/static/images/MAGEMin_light.jpg",
                                             style   = Dict("height" => 70, "width" => 190)),

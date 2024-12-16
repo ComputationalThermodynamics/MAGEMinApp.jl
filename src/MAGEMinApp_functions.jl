@@ -632,24 +632,83 @@ end
 """
     Function to retrieve the field labels
 """
-function get_diagram_labels(    fieldname   ::String,
-                                oxi         ::Vector{String},
-                                Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
+function get_diagram_labels(    Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
                                 Hash_XY     ::Vector{UInt64},
-                                sub         ::Int64,
-                                refLvl      ::Int64,
                                 refType     ::String,
                                 data        ::MAGEMinApp.AMR_data,
                                 PT_infos    ::Vector{String} )
 
-    global n_lbl, gridded_fields
+    global n_lbl, gridded_fields, phase_infos
     print("Get phase diagram labels ..."); t0 = time();
 
     np          = length(data.points)
     ph          = Vector{String}(undef,np)
     phd         = Vector{String}(undef,np)
     fac         = (data.Xrange[2]-data.Xrange[1])*(data.Yrange[2]-data.Yrange[1])
-    
+
+    # here we also get information about the phases that are stable accross the diagram and their potential solvus
+    act_ss      = []
+    act_pp      = []
+    n_solvus    = []
+    for i = 1:np
+        n_ph = length(Out_XY[i].ph)
+        n_SS = Out_XY[i].n_SS
+        for k in Out_XY[i].ph[1:n_SS]
+            if k in act_ss
+                n   = length(findall(Out_XY[i].ph[1:n_SS] .== k))
+                if n > 1
+                    id  = findfirst(act_ss .== k)
+                    if n > n_solvus[id]
+                        n_solvus[id] = n
+                    end
+                end
+            else
+                push!(act_ss, k) 
+                n   = length(findall(Out_XY[i].ph[1:n_SS] .== k))
+                push!(n_solvus,  n)
+            end
+        end
+        if n_ph > n_SS
+            for k in Out_XY[i].ph[1+n_SS:n_ph]
+                if k in act_pp
+                else
+                    push!(act_pp, k)
+                end
+            end
+        end
+
+    end
+
+    n_ph_solvus  = length(findall(n_solvus .> 1))
+
+    if n_ph_solvus > 0
+        solvus_data    = []
+        id_solvus       = findall(n_solvus .> 1)
+
+        for k = 1:n_ph_solvus
+            ph_sol = act_ss[id_solvus[k]]
+            em_id_solvus = []
+            for i = 1:np
+                n_SS = Out_XY[i].n_SS
+                if ph_sol in Out_XY[i].ph
+                    ids = findall(Out_XY[i].ph[1:n_SS] .== ph_sol)
+                    tup = find_dominant_em_ids( Out_XY[i].SS_vec[ids] )
+                else
+                    tup = (0)
+                end
+                push!(em_id_solvus, tup)
+            end
+            push!(solvus_data, em_id_solvus)
+        end
+
+    end
+
+    phase_infos = ( act_pp       = act_pp,
+                    act_ss       = act_ss,
+                    n_solvus     = n_solvus,
+                    solvus_data = solvus_data,)
+
+
     if refType == "ph"
         for i = 1:np
             phd[i]      = ""
@@ -664,7 +723,7 @@ function get_diagram_labels(    fieldname   ::String,
 
     elseif refType == "em"
         for i = 1:np
-            ph_em = get_dominant_en(    Out_XY[i].ph,
+            ph_em = get_dominant_em(    Out_XY[i].ph,
                                         Out_XY[i].n_SS,
                                         Out_XY[i].SS_vec)
             phd[i]      = ""

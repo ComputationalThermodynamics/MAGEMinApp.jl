@@ -512,6 +512,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         Output("min-color-id",           "value"),
         Output("max-color-id",           "value"),
+        Output("output-loading-id",      "children"),
 
         Input("show-grid",                  "value"), 
         Input("show-full-grid",             "value"), 
@@ -635,11 +636,12 @@ function Tab_PhaseDiagram_Callbacks(app)
         field2plot                      = zeros(Int64,4)
 
         field2plot[1]    = 1
+        loading          = ""  
         if bid == "compute-button"
-
+            loading                     = ""  
             smooth                      = "best"
             # declare set of global variables needed to generate, refine and display phase diagrams
-            global fig, data, Hash_XY, Out_TE_XY, all_TE_ph, n_phase_XY, gridded, gridded_info, X, Y, meant, npoints
+            global fig, data, Hash_XY, Out_TE_XY, all_TE_ph, n_phase_XY, gridded, gridded_info, gridded_fields, phase_infos, X, Y, meant, npoints
             global addedRefinementLvl   = 0;
             global n_lbl                = 0;
             global iso_show             = 1;
@@ -899,7 +901,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                         scale    =  2.0,       ).fields)
 
 
-        return grid, full_grid, fig_cap, config_cap, fig, config, infos, isopleths, isoplethsHid, smooth, active_tab, minColor,   maxColor
+        return grid, full_grid, fig_cap, config_cap, fig, config, infos, isopleths, isoplethsHid, smooth, active_tab, minColor,   maxColor, loading
     end
 
 

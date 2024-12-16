@@ -361,18 +361,27 @@ function Tab_Simulation(db_inf)
                                     dbc_row([
                                         dbc_col([ 
                                             html_h1("Initial grid subdivision", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
-                                        ]),
+                                        ], width=6),
                                         dbc_col([ 
                                                 dbc_input(
                                                 id      = "gsub-id",
                                                 type    = "number", 
-                                                min     = 2,  
+                                                min     = 2, 
+                                                max     = 9, 
                                                 value   = 3   ),
-                                        ]),
-                                        dbc_tooltip([
-                                            html_div("Initial resolution of the uniform grid defined as 2^n × 2^n"),
-                                            html_div("e.g., n = 3 yields a 8 × 8 grid, i.e., 64 points"),
-                                                    ],target="gsub-id"),
+                                        ], width=3),
+                                        dbc_col([ 
+                                            dcc_textarea(
+                                                id          ="grid-subdivision",
+                                                value       = "8 × 8 grid",
+                                                readOnly    = true,
+                                                disabled    = true,
+                                                draggable   = false,
+                                                style       = Dict("height" => "26px","resize"=> "none","textAlign" => "center","font-size" => "100%", "width"=> "100%",),
+                                                # style       = Dict("textAlign" => "center","font-size" => "100%", "width"=> "100%", "resize"=> "none")
+                                            ),
+                                        ], width=3),
+
                                     ]),
                                     #refinement type
                                     dbc_row([
@@ -729,12 +738,15 @@ function Tab_Simulation(db_inf)
                                             ]),
                                             html_div("‎ "),
                                             dbc_row([
-                                                dbc_button(
-                                                    "Compute phase diagram", id="compute-button", color="light", className="me-2", n_clicks=0,
-                                                    style       = Dict( "textAlign"     => "center",
-                                                                        "font-size"     => "100%",
-                                                                        "border"        =>"1px grey solid")
-                                                ),
+                                                # html_div([
+                                                    dbc_button(
+                                                        "Compute phase diagram", id="compute-button", color="light", className="me-2", n_clicks=0,
+                                                        style       = Dict( "textAlign"     => "center",
+                                                                            "font-size"     => "100%",
+                                                                            "border"        =>"1px grey solid")
+                                                    ),
+
+                                                # ], className="overlay-container"),
                                             ]),
 
                                             html_div("‎ "),
@@ -799,30 +811,51 @@ function Tab_Simulation(db_inf)
                                     is_open=true,
                             ),
                         ]),
-                        html_div("‎ "),
+                        # html_div("‎ "),
+                        dbc_row([   
+                            dbc_button("Help and contact",id="button-contact",color="primary"),
+                            dbc_collapse(
+                                dbc_card(dbc_cardbody([
+                                    dbc_row([ 
+            
+                                        dbc_col([   
+                                            dcc_markdown(       id          = "contact-info-id", 
+                                                                children    = AppData.contribs[3],
+                                                                style       = Dict("white-space" => "pre"))
+                                            ], width=4),
+                                            dbc_col([  
+                                                dcc_markdown(       id          = "description-info-id", 
+                                                                    children    = AppData.contribs[4],
+                                                                    style       = Dict("white-space" => "pre"))
+                                            ], width=8),
+                                    ]), 
+                                   
+                                ])),
+                                id="collapse-contact",
+                                is_open=true,
+                            ),
+                        ]),
+                        # html_div("‎ "),
                         dbc_row([   
                             dbc_button("Contributors",id="button-contributors",color="primary"),
                             dbc_collapse(
                                 dbc_card(dbc_cardbody([
+
                                     dbc_row([ 
                                         dbc_col([                                                          
-                                            # dbc_row([
-                                                dcc_markdown(       id          = "debug-info-id", 
-                                                                    children    = AppData.contribs[1],
-                                                                    style       = Dict("white-space" => "pre"))
-                                            # ]),
+                                            dcc_markdown(       id          = "debug-info-id", 
+                                                                children    = AppData.contribs[1],
+                                                                style       = Dict("white-space" => "pre"))
                                         ], width=6),
                                         dbc_col([                                                          
-                                            # dbc_row([
-                                                dcc_markdown(       id          = "app-info-id", 
-                                                                    children    = AppData.contribs[2],
-                                                                    style       = Dict("white-space" => "pre"))
-                                            # ]),
+                                            dcc_markdown(       id          = "app-info-id", 
+                                                                children    = AppData.contribs[2],
+                                                                style       = Dict("white-space" => "pre"))
                                         ], width=6),
                                     ]),
                                 ])),
                                 id="collapse-contributors",
-                                is_open=false,
+                                is_open=true,
                             ),
                         ]),
                         html_div("‎ "),  

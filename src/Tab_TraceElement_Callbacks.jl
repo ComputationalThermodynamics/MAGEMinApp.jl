@@ -260,12 +260,8 @@ function Tab_TraceElement_Callbacks(app)
                                                                 PTpath,
                                                                 "false")
 
-                data_plot_te, annotations = get_diagram_labels(     fieldname,
-                                                                    oxi,
-                                                                    Out_XY,
+                data_plot_te, annotations = get_diagram_labels(     Out_XY,
                                                                     Hash_XY,
-                                                                    sub,
-                                                                    refLvl,
                                                                     refType,
                                                                     data,
                                                                     PT_infos_te )

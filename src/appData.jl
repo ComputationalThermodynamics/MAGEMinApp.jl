@@ -1,6 +1,9 @@
 global AppData
 
-debug    = "**Debugging and Additions**\n\n"
+debug   = "**MAGEMinApp Main developer**\n"
+debug   *= "Nicolas Riel\n\n"
+
+debug   *= "**Debugging and Additions**\n"
 debug   *= "Alexandre Peillod\n"
 debug   *= "Anton Popov\n"
 debug   *= "Boris Kaus\n"
@@ -14,15 +17,16 @@ debug   *= "Owen Weller\n"
 debug   *= "Pierre Lanari\n"
 debug   *= "Simon Scholz\n"
 debug   *= "Tim J.B. Holland\n"
-debug   *= "Tobias Keller\n"
+debug   *= "Tobias Keller"
 
-
-app      = "**Interface Suggestions**\n\n"
+app      = "**Interface Suggestions**\n"
 app     *= "Boris Kaus\n"
 app     *= "Brendan Dyck\n"
 app     *= "Buchanan Kerswell\n"
 app     *= "Cerine Bouadani\n"
 app     *= "Dinarte Lucas\n"
+app     *= "Evangelos Moulas\n"
+app     *= "Guillaume Duclaux\n"
 app     *= "Ian Cawood\n"
 app     *= "Jacob Forshaw\n"
 app     *= "Jean-François Moyen\n"
@@ -33,11 +37,20 @@ app     *= "Owen Weller\n"
 app     *= "Pierre Lanari\n"
 app     *= "Renee Tamblyn\n"
 app     *= "Simon Scholz\n"
-app     *= "Yishen Zhang\n"
+app     *= "Yishen Zhang"
+
+contact  = "**Link**\n"
+contact *= "[Tutorials](https://github.com/ComputationalThermodynamics/Resources)\n"
+contact *= "[Post issue](https://github.com/ComputationalThermodynamics/MAGEMinApp.jl/issues)\n"
+contact *= "[Open discussion](https://github.com/ComputationalThermodynamics/MAGEMin/discussions)"
+
+descri  = "**Comments**\n"
+descri *= "Set of example on how to use MAGEMinApp\n"
+descri *= "Something is not working properly?\n"
+descri *= "Need additional options?"
 
 
-
-contribs = [debug,app]
+contribs = [debug,app,contact,descri]
 
 
 # LIST AVAILABLE DATABASE

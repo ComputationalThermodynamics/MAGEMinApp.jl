@@ -681,7 +681,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
 
         #________________________________________________________________________________________#
         # initialize database
-        global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, gridded_fields, X, Y, layout, n_lbl
+        global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, gridded_fields, phase_infos, X, Y, layout, n_lbl
         global addedRefinementLvl  = 0;
         global MAGEMin_data;
 
@@ -756,12 +756,8 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
 
         PT_infos                           = get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat)
 
-        data_plot, annotations = get_diagram_labels(    fieldname,
-                                                        oxi,
-                                                        Out_XY,
+        data_plot, annotations = get_diagram_labels(    Out_XY,
                                                         Hash_XY,
-                                                        sub,
-                                                        refLvl,
                                                         refType,
                                                         data,
                                                         PT_infos )
@@ -867,7 +863,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                 smooth,     colorm,     reverseColorMap, set_white,
                                 test,       refType, bid                                 )
 
-    global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, gridded_fields, X, Y, addedRefinementLvl, layout, n_lbl, pChip_wat, pChip_T
+    global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, gridded_fields, phase_infos, X, Y, addedRefinementLvl, layout, n_lbl, pChip_wat, pChip_T
 
     mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb,        solver,
                                                     cpx,        limOpx,     limOpxVal ) 
@@ -913,12 +909,8 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
     
     PT_infos                           = get_phase_diagram_information(npoints,dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat)
                                                               
-    data_plot, annotations = get_diagram_labels(    fieldname,
-                                                    oxi,
-                                                    Out_XY,
+    data_plot, annotations = get_diagram_labels(    Out_XY,
                                                     Hash_XY,
-                                                    sub,
-                                                    refLvl,
                                                     refType,
                                                     data,
                                                     PT_infos )

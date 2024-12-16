@@ -181,7 +181,19 @@ function MAGEMin_data2table( out:: Union{Vector{MAGEMin_C.gmin_struct{Float64, I
 end
 
 
-function get_dominant_en(   ph,
+# find_dominant_em_ids
+function find_dominant_em_ids(  SS_vec )
+    n_ph    = length(SS_vec)
+    ids     = ()
+    for i=1:n_ph
+        f    = SS_vec[i].emFrac
+        ids  = (ids..., findfirst(f .== maximum(f)))
+    end
+    
+    return ids
+end
+
+function get_dominant_em(   ph,
                             n_SS,
                             SS_vec)
     n_ph  = length(ph)
@@ -336,7 +348,7 @@ function refine_MAGEMin(data,
         end
     elseif refType == "em"
         for i=1:n_points
-            ph_em = get_dominant_en(    Out_XY[i].ph,
+            ph_em = get_dominant_em(    Out_XY[i].ph,
                                         Out_XY[i].n_SS,
                                         Out_XY[i].SS_vec)
 
