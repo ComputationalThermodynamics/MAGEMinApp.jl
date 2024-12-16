@@ -39,7 +39,7 @@ app     *= "Renee Tamblyn\n"
 app     *= "Simon Scholz\n"
 app     *= "Yishen Zhang"
 
-contact  = "**Link**\n"
+contact  = "**Links**\n"
 contact *= "[Tutorials](https://github.com/ComputationalThermodynamics/Resources)\n"
 contact *= "[Post issue](https://github.com/ComputationalThermodynamics/MAGEMinApp.jl/issues)\n"
 contact *= "[Open discussion](https://github.com/ComputationalThermodynamics/MAGEMin/discussions)"
