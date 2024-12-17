@@ -1,6 +1,6 @@
 global AppData
 
-debug   = "**MAGEMinApp main developer**\n"
+debug   = "**Main developer**\n"
 debug   *= "Nicolas Riel\n\n"
 
 debug   *= "**Debugging and Additions**\n"

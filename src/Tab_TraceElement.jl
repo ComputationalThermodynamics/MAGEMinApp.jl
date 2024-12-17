@@ -76,6 +76,7 @@ function Tab_TraceElement()
                                         "Load/Reload trace-elements", id="load-button-te", color="light", className="me-2", n_clicks=0,
                                         style       = Dict( "textAlign"     => "center",
                                                             "font-size"     => "100%",
+                                                            "background-color" => "#d3f2ce",
                                                             "border"        =>"1px grey solid")), 
                                 ]),
 

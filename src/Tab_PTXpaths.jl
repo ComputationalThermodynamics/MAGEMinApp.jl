@@ -631,6 +631,7 @@ function Tab_PTXpaths(db_inf)
                                             dbc_button("Compute path",id="compute-path-button", color="light", className="me-2", n_clicks=0,
                                             style       = Dict( "textAlign"     => "center",
                                                                 "font-size"     => "100%",
+                                                                "background-color" => "#d3f2ce",
                                                                 "border"        =>"1px grey solid")), 
                                         ]),
                                         html_div("‎ "),

@@ -679,10 +679,10 @@ function get_diagram_labels(    Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float
 
     end
 
-    n_ph_solvus  = length(findall(n_solvus .> 1))
-
+    n_ph_solvus     = length(findall(n_solvus .> 1))
+    solvus_data     = []
     if n_ph_solvus > 0
-        solvus_data    = []
+        
         id_solvus       = findall(n_solvus .> 1)
 
         for k = 1:n_ph_solvus
