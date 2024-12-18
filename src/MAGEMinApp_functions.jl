@@ -649,23 +649,13 @@ function get_diagram_labels(    Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float
     # here we also get information about the phases that are stable accross the diagram and their potential solvus
     act_ss      = []
     act_pp      = []
-    n_solvus    = []
     for i = 1:np
         n_ph = length(Out_XY[i].ph)
         n_SS = Out_XY[i].n_SS
         for k in Out_XY[i].ph[1:n_SS]
             if k in act_ss
-                n   = length(findall(Out_XY[i].ph[1:n_SS] .== k))
-                if n > 1
-                    id  = findfirst(act_ss .== k)
-                    if n > n_solvus[id]
-                        n_solvus[id] = n
-                    end
-                end
-            else
+            else 
                 push!(act_ss, k) 
-                n   = length(findall(Out_XY[i].ph[1:n_SS] .== k))
-                push!(n_solvus,  n)
             end
         end
         if n_ph > n_SS
@@ -679,35 +669,10 @@ function get_diagram_labels(    Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float
 
     end
 
-    n_ph_solvus     = length(findall(n_solvus .> 1))
-    solvus_data     = []
-    if n_ph_solvus > 0
-        
-        id_solvus       = findall(n_solvus .> 1)
-
-        for k = 1:n_ph_solvus
-            ph_sol = act_ss[id_solvus[k]]
-            em_id_solvus = []
-            for i = 1:np
-                n_SS = Out_XY[i].n_SS
-                if ph_sol in Out_XY[i].ph
-                    ids = findall(Out_XY[i].ph[1:n_SS] .== ph_sol)
-                    tup = find_dominant_em_ids( Out_XY[i].SS_vec[ids] )
-                else
-                    tup = (0)
-                end
-                push!(em_id_solvus, tup)
-            end
-            push!(solvus_data, em_id_solvus)
-        end
-
-    end
-
     phase_infos = ( act_pp       = act_pp,
-                    act_ss       = act_ss,
-                    n_solvus     = n_solvus,
-                    solvus_data = solvus_data,)
+                    act_ss       = act_ss )
 
+    # println("phase_infos: $phase_infos")
 
     if refType == "ph"
         for i = 1:np
@@ -1435,7 +1400,7 @@ function get_isopleth_map(  mod         ::String,
     if mod == "ph_frac" 
         for i=1:np
             id       = findall(Out_XY[i].ph .== ss)
-            if ~isempty(id)  
+            if ~isempty(id) 
                 field[i] = Out_XY[i].ph_frac[id[1] ]
             else
                 field[i] = 0.0

@@ -513,6 +513,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("min-color-id",           "value"),
         Output("max-color-id",           "value"),
         Output("output-loading-id",      "children"),
+        Output("trigger-update-ss-list", "value"),
 
         Input("show-grid",                  "value"), 
         Input("show-full-grid",             "value"), 
@@ -637,6 +638,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         field2plot[1]    = 1
         loading          = ""  
+        update_ss_list   = ""
         if bid == "compute-button"
             loading                     = ""  
             smooth                      = "best"
@@ -680,7 +682,8 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             minColor        = round(minimum(skipmissing(gridded)),digits=2); 
             maxColor        = round(maximum(skipmissing(gridded)),digits=2);  
-    
+            update_ss_list  = 1
+
         elseif bid == "refine-pb-button" || bid == "uni-refine-pb-button"
 
             data_plot, layout, npoints, meant  =  refine_phaseDiagram(  xtitle,     ytitle,     lbl, 
@@ -709,6 +712,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             infos           = get_computation_info(npoints, meant)
             data_reaction   = show_hide_reaction_lines(sub,refLvl,Xrange,Yrange)
             data_grid       = show_hide_mesh_grid()
+            update_ss_list  = 1
 
         elseif bid == "load-state-id"
             data_plot,layout =  update_diplayed_field_phaseDiagram( xtitle,     ytitle,     
@@ -900,8 +904,11 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                         width    =  900,
                                                                         scale    =  2.0,       ).fields)
 
-
-        return grid, full_grid, fig_cap, config_cap, fig, config, infos, isopleths, isoplethsHid, smooth, active_tab, minColor,   maxColor, loading
+        if isempty(update_ss_list)
+            return grid, full_grid, fig_cap, config_cap, fig, config, infos, isopleths, isoplethsHid, smooth, active_tab, minColor,   maxColor, loading, no_update()
+        else
+            return grid, full_grid, fig_cap, config_cap, fig, config, infos, isopleths, isoplethsHid, smooth, active_tab, minColor,   maxColor, loading, update_ss_list
+        end
     end
 
 

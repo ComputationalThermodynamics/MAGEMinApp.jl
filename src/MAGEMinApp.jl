@@ -13,8 +13,6 @@ using PCHIPInterpolation
 using Bibliography
 
 using Images, PolygonInbounds, Random, LazyGrids, Graphs
-
-
 using MAGEMin_C
 
 pkg_dir = Base.pkgdir(MAGEMinApp)

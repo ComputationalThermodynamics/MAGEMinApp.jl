@@ -555,6 +555,15 @@ function Tab_PhaseDiagram()
                                         html_h1("Selection", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                         html_hr(),
                                         dbc_row([
+                                            # this parts serves as a relay to trigger an update of the phase list for the isopleth
+                                            html_div([
+                                                dbc_input(
+                                                    id      = "trigger-update-ss-list",
+                                                    type    = "number", 
+                                                    value   = -1,
+                                                    debounce = true   ),
+                                            ], style = Dict("display" => "none"), id      = "trigger-update-ss-list-display"),
+
                                             dbc_col([
                                                 html_h1("Isopleth type", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
                                             ]),
