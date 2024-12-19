@@ -119,6 +119,10 @@ function Tab_TraceElement_Callbacks(app)
         Output("max-color-id-te",           "value"     ),
         Output("isopleth-dropdown-te",      "options"   ),
         Output("hidden-isopleth-dropdown-te",     "options"),
+        Output("stable-assemblage-id-te",   "children"),   
+        Output("show-text-list-id-te",         "style"),
+        Output("output-loading-id-te",         "children"),
+
         Input("load-button-te",             "n_clicks"  ),
         Input("compute-display-te",         "n_clicks"  ),
         Input("fields-dropdown-zr",         "value"     ),
@@ -191,6 +195,7 @@ function Tab_TraceElement_Callbacks(app)
         State("iso-min-id-te",             "value"),
         State("iso-step-id-te",            "value"),
         State("iso-max-id-te",             "value"),
+        State("stable-assemblage-id-te",   "children"), 
 
         prevent_initial_call = true,
 
@@ -208,7 +213,7 @@ function Tab_TraceElement_Callbacks(app)
                 isopleths_te,  isoplethsID_te, isoplethsHid_te,  isoplethsHidID_te, field, field_zr, calc, cust,
 
                 isoLineStyle, isoLineWidth, isoColorLine, isoLabelSize,   
-                minIso,     stepIso,    maxIso
+                minIso,     stepIso,    maxIso, txt_list
 
         xtitle, ytitle, Xrange, Yrange  = diagram_type(diagType, tmin, tmax, pmin, pmax) 
         bulk_L, bulk_R, oxi             = get_bulkrock_prop(bulk1, bulk2) 
@@ -217,7 +222,7 @@ function Tab_TraceElement_Callbacks(app)
         fieldNames                      = ["data_plot_te","data_reaction","data_grid","data_isopleth_out_te"]
         field2plot                      = zeros(Int64,4)
         fieldType                       = type
-
+        loading                         = ""
         field2plot[1]    = 1
         if @isdefined(Out_TE_XY) && length(Out_XY) == length(Out_TE_XY)
             if bid == "load-button-te"
@@ -443,18 +448,7 @@ function Tab_TraceElement_Callbacks(app)
             elseif bid == "button-hide-all-isopleth-te"
     
                 iso_show_te          = 0
-                
-            elseif bid == "show-lbl-id-te"
-
-                if lbl == "true"
-                    for i=1:n_lbl+1
-                        layout_te[:annotations][i][:visible] = true
-                    end
-                else
-                    for i=1:n_lbl+1
-                        layout_te[:annotations][i][:visible] = false
-                    end
-                end         
+     
             else
                 fig_te = plot()
                 print("Compute a phase diagram with activated trace-element in the Setup tab first!\n")
@@ -463,6 +457,18 @@ function Tab_TraceElement_Callbacks(app)
             fig_te = plot()
             print("Compute a phase diagram with activated trace-element in the Setup tab first!\n")
         end
+
+        if lbl == "true"
+            for i=1:n_lbl+1
+                layout_te[:annotations][i][:visible] = true
+            end
+            show_text_list  = Dict("display" => "block")  
+        else
+            for i=1:n_lbl+1
+                layout_te[:annotations][i][:visible] = false
+            end
+            show_text_list  = Dict("display" => "none")  
+        end  
 
         # check state of unchanged variables ["data_plot","data_reaction","data_grid","data_isopleth_out_te"]
         if grid == "true"
@@ -524,7 +530,7 @@ function Tab_TraceElement_Callbacks(app)
                                                                         scale    =  2.0,       ).fields)
 
 
-        return grid, full_grid, fig_cap, config_cap, fig_te, config, fieldType, minColor, maxColor, isopleths_te, isoplethsHid_te
+        return grid, full_grid, fig_cap, config_cap, fig_te, config, fieldType, minColor, maxColor, isopleths_te, isoplethsHid_te, txt_list, show_text_list, loading
             
     end
 

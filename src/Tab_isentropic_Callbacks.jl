@@ -137,6 +137,7 @@ function Tab_isoSpaths_Callbacks(app)
         Output("display-entropy-textarea",  "value"),
         Output("path-isoS-plot",            "figure"),
         Output("path-isoS-plot",            "config"),   
+        Output("output-loading-id-isentropic",         "children"),
 
         Input("compute-path-button-isoS",   "n_clicks"),
         Input("sys-unit-isoS",              "value"),
@@ -178,7 +179,7 @@ function Tab_isoSpaths_Callbacks(app)
         entropy         = ""
         title           = db[(db.db .== dtb), :].title[test+1]
         figIsoS         = plot(    Layout( height= 320 ))
-
+        loading         = "" 
         if bid == "compute-path-button-isoS"
 
             global Out_ISOS, ph_names, layout_isoS, layout_path, data_plot, df_path_plot
@@ -228,7 +229,7 @@ function Tab_isoSpaths_Callbacks(app)
                                     width    =  640,
                                     scale    =  2.0,       ).fields)
 
-        return figIsoS, configIsoS, phase_list, string( round(entropy,digits=5) ), figIsoSPath, configPathIsoS
+        return figIsoS, configIsoS, phase_list, string( round(entropy,digits=5) ), figIsoSPath, configPathIsoS, loading
     end
 
 

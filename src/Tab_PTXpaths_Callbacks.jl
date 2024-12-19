@@ -352,7 +352,8 @@ function Tab_PTXpaths_Callbacks(app)
         Output("ptx-plot",              "figure"),
         Output("ptx-plot",              "config"),
         Output("phase-selector-id",     "options"),
-        
+        Output("output-loading-id-ptx",         "children"),
+
         Input("compute-path-button",    "n_clicks"),
         Input("sys-unit-ptx",           "value"),
 
@@ -392,8 +393,9 @@ function Tab_PTXpaths_Callbacks(app)
 
         bid                     = pushed_button( callback_context() )    # get which button has been pushed
         phase_selection         = remove_phases(string_vec_dif(phase_selection,dtb),dtb)
-        title = db[(db.db .== dtb), :].title[test+1]
-
+        title                   = db[(db.db .== dtb), :].title[test+1]
+        loading                 = ""
+        
         if bid == "compute-path-button"
 
             global Out_PTX, ph_names_ptx, layout_ptx, data_plot_ptx, fracEvol
@@ -433,7 +435,7 @@ function Tab_PTXpaths_Callbacks(app)
                                     width    =  960,
                                     scale    =  2.0,       ).fields)
 
-        return figPTX, configPTX, phase_list
+        return figPTX, configPTX, phase_list, loading
     end
 
 

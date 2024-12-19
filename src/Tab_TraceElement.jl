@@ -57,13 +57,45 @@ function Tab_TraceElement()
                                     is_open=true,
                             ),
                     ]),
-                    html_div("‎ "),
-                    dbc_row([
-                        diagram_legend_te()
+                    dbc_row([   
+                        dbc_col([
+                            html_div("‎ "),
+                            dbc_row([
+                                diagram_legend_te()
+                            ]),
+                            dbc_row([
+                                diagram_plot_te()
+                            ]),
+                        ], width=9),
+                        dbc_col([
+                            html_div([
+                                dbc_row([
+                                    html_div("‎ "),
+                                    html_div("‎ "), 
+                                    dcc_clipboard(
+                                        target_id   = "stable-assemblage-id-te",
+                                        title       = "copy",
+                                        style       =  Dict(    "display"       => "inline-block",
+                                                                "fontSize"      =>  20,
+                                                                "verticalAlign" => "top"    ),
+                                    ),
+                                ]),
+                                dbc_row([
+                                    dbc_card([
+                                        dcc_markdown(   id          = "stable-assemblage-id-te", 
+                                                        children    = "",
+                                                        style       = Dict(     "white-space" => "pre", 
+                                                                                "max-height" => "640px",
+                                                                                "overflow-y" => "auto"      ))
+                                    ])
+                                ]),
+                            ], style = Dict("display" => "block"), id      = "show-text-list-id-te"), #none, block
+
+                        ], width=3),
                     ]),
-                    dbc_row([
-                        diagram_plot_te()
-                    ]),
+
+
+
                 ], width=9),
                 dbc_col([  
                     dbc_row([
