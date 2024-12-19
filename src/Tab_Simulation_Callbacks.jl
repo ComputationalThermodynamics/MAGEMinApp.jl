@@ -343,10 +343,10 @@ function Tab_Simulation_Callbacks(app)
         if ph == "ss"
             db_in          = retrieve_solution_phase_information(dtb)
 
-            if id == 0
-                id = db_in.ss_name[1]
-            else
+            if id in db_in.ss_name
                 id = get_ss_from_mineral(dtb, id, aug)
+            else
+                id = db_in.ss_name[1]
             end
 
             ssid        = findall(db_in.ss_name .== id)[1]
@@ -358,9 +358,9 @@ function Tab_Simulation_Callbacks(app)
                                         for i=1:n_em ]
 
 
-            opts_ox        =   [Dict(  "label"   => db[(db.db .== dtb), :].oxide[1][i],
-                                        "value"  => db[(db.db .== dtb), :].oxide[1][i])
-                                            for i=1:length(db[(db.db .== dtb), :].oxide[1]) ]
+            opts_ox     =   [Dict(  "label"     => db[(db.db .== dtb), :].oxide[1][i],
+                                    "value"     => db[(db.db .== dtb), :].oxide[1][i])
+                                        for i=1:length(db[(db.db .== dtb), :].oxide[1]) ]
 
             return opts_em, val, opts_ox, "SiO2"
         else

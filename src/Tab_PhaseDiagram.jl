@@ -90,24 +90,54 @@ function Tab_PhaseDiagram()
                                 duration=4000,
                             ),
                         ]),    
-                        # html_hr(),  
-                        html_div("‎ "), 
+                        
+                        dbc_row([   
+                            dbc_col([
+                                html_div("‎ "), 
 
-                        html_div([
-                            dbc_input(
-                                id      = "load-state-id",
-                                type    = "number", 
-                                min     = -1e50, 
-                                max     =  1e50, 
-                                value   =  1.0  ),
-                        ], style = Dict("display" => "none"), id      = "load-state-display-id"),
+                                html_div([
+                                    dbc_input(
+                                        id      = "load-state-id",
+                                        type    = "number", 
+                                        min     = -1e50, 
+                                        max     =  1e50, 
+                                        value   =  1.0  ),
+                                ], style = Dict("display" => "none"), id      = "load-state-display-id"),
 
-                        dbc_row([
-                            diagram_legend()
+                                dbc_row([
+                                    diagram_legend()
+                                ]),
+                                dbc_row([
+                                    diagram_plot()
+                                ]),
+                            ], width=9),
+                            dbc_col([
+                                html_div([
+                                    dbc_row([
+                                        html_div("‎ "),
+                                        html_div("‎ "), 
+                                        dcc_clipboard(
+                                            target_id   = "stable-assemblage-id",
+                                            title       = "copy",
+                                            style       =  Dict(    "display"       => "inline-block",
+                                                                    "fontSize"      =>  20,
+                                                                    "verticalAlign" => "top"    ),
+                                        ),
+                                    ]),
+                                    dbc_row([
+                                        dbc_card([
+                                            dcc_markdown(   id          = "stable-assemblage-id", 
+                                                            children    = "",
+                                                            style       = Dict(     "white-space" => "pre", 
+                                                                                    "max-height" => "640px",
+                                                                                    "overflow-y" => "auto"      ))
+                                        ])
+                                    ]),
+                                ], style = Dict("display" => "block"), id      = "show-text-list-id"), #none, block
+
+                            ], width=3),
                         ]),
-                        dbc_row([
-                            diagram_plot()
-                        ]),
+
                     ], width=9),
                     dbc_col([
                         
@@ -208,7 +238,7 @@ function Tab_PhaseDiagram()
                                                     dcc_download(id="download-table-text"),  
                                                 ]),
                                                 dbc_col([    
-                                                    dbc_button("text", id="save-eq-button", color="light",  n_clicks=0,
+                                                    dbc_button("Text", id="save-eq-button", color="light",  n_clicks=0,
                                                     style       = Dict( "textAlign"     => "center",
                                                                         "font-size"     => "100%",
                                                                         "border"        =>"1px grey solid")), 

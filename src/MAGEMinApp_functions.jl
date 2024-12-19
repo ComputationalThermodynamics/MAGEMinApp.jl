@@ -421,7 +421,7 @@ end
 """
     save equilibrium function
 """
-function save_equilibrium_to_file(  out::MAGEMin_C.gmin_struct{Float64, Int64}  )
+function save_equilibrium_to_file(  out::MAGEMin_C.gmin_struct{Float64, Int64}, dtb, mbCpx )
 
     file = ""
     file *= @sprintf("============================================================\n")
@@ -546,31 +546,37 @@ function save_equilibrium_to_file(  out::MAGEMin_C.gmin_struct{Float64, Int64}  
     end
     file *= @sprintf("\n\n") 
 
-
     #for THERMOCALC
+    if mbCpx == true; aug = 1;
+    else  aug = 0; end
+       
     file *= @sprintf("Initial guess for THERMOCALC:\n") 
     file *= @sprintf("%% ----------------------------------------------------------\n") 
     file *= @sprintf("%% at P =  %12.8f, T = %12.8f, for: ",out.P_kbar,out.T_C)
     for i=1:out.n_SS
-        file *= @sprintf("%s ",out.ph[i])  
+        ph = get_ss_from_mineral(dtb, out.ph[i], aug)
+        file *= @sprintf("%s ",ph)  
     end
     file *= @sprintf("\n") 
     file *= @sprintf("%% ----------------------------------------------------------\n") 
     file *= @sprintf("ptguess  %12.8f %12.8f\n",out.P_kbar,out.T_C) 
     file *= @sprintf("%% ----------------------------------------------------------\n")     
     n = 1;
+
+    
     for i=1:out.n_SS
         for j=1:length(out.SS_vec[i].emFrac)-1
-            if length(out.ph[i]) == 1
-                file *= @sprintf(	"xyzguess %5s(%1s) %10f\n", out.SS_vec[i].compVariablesNames[j],out.ph[i], out.SS_vec[i].compVariables[j])
-            elseif length(out.ph[i]) == 2
-                file *= @sprintf(	"xyzguess %5s(%2s) %10f\n", out.SS_vec[i].compVariablesNames[j],out.ph[i], out.SS_vec[i].compVariables[j])
-            elseif length(out.ph[i]) == 3
-                file *= @sprintf(	"xyzguess %5s(%3s) %10f\n", out.SS_vec[i].compVariablesNames[j],out.ph[i], out.SS_vec[i].compVariables[j])
-            elseif length(out.ph[i]) == 4
-                file *= @sprintf(	"xyzguess %5s(%4s) %10f\n", out.SS_vec[i].compVariablesNames[j],out.ph[i], out.SS_vec[i].compVariables[j])
-            elseif length(out.ph[i]) == 5
-                file *= @sprintf(	"xyzguess %5s(%5s) %10f\n", out.SS_vec[i].compVariablesNames[j],out.ph[i], out.SS_vec[i].compVariables[j])
+            ph = get_ss_from_mineral(dtb, out.ph[i], aug)
+            if length(ph) == 1
+                file *= @sprintf(	"xyzguess %5s(%1s) %10f\n", out.SS_vec[i].compVariablesNames[j],ph ,out.SS_vec[i].compVariables[j])
+            elseif length(ph) == 2
+                file *= @sprintf(	"xyzguess %5s(%2s) %10f\n", out.SS_vec[i].compVariablesNames[j],ph ,out.SS_vec[i].compVariables[j])
+            elseif length(ph) == 3
+                file *= @sprintf(	"xyzguess %5s(%3s) %10f\n", out.SS_vec[i].compVariablesNames[j],ph ,out.SS_vec[i].compVariables[j])
+            elseif length(ph) == 4
+                file *= @sprintf(	"xyzguess %5s(%4s) %10f\n", out.SS_vec[i].compVariablesNames[j],ph ,out.SS_vec[i].compVariables[j])
+            elseif length(ph) == 5
+                file *= @sprintf(	"xyzguess %5s(%5s) %10f\n", out.SS_vec[i].compVariablesNames[j],ph ,out.SS_vec[i].compVariables[j])
             end
         end
         if n < out.n_SS
@@ -739,7 +745,7 @@ function get_diagram_labels(    Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float
 
     n_trace     = id;
     traces      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef,n_trace+1);
-    annotations = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,n_trace+3)
+    annotations = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,n_trace+2)
 
     txt_list = ""
     cnt = 1;
@@ -772,7 +778,7 @@ function get_diagram_labels(    Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float
                                         visible     = true,
                                         font        = attr( size = 9, color = "#212121"),
                                     )  
-            txt_list *= string(cnt)*") "*ph_list[i]*"<br>"
+            txt_list *= string(cnt)*") "*ph_list[i]*"\n"
             cnt +=1
         elseif area[i] > 0.03 # place full label
             annotations[i] =   attr(    xref        = "x",
@@ -799,29 +805,29 @@ function get_diagram_labels(    Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float
                                         font        = attr( size = 10, color = "#212121"),
                                     )  
     
-            txt_list *= string(cnt)*") "*ph_list[i]*"<br>" 
+            txt_list *= string(cnt)*") "*ph_list[i]*"\n" 
             cnt +=1  
         end 
     end
     
+    # annotations[n_trace+1] =   attr(    xref        = "paper",
+    #                                     yref        = "paper",
+    #                                     align       = "left",
+    #                                     valign      = "top",
+    #                                     height      = 960,
+    #                                     x           = 0.0,
+    #                                     y           = 0.0,
+    #                                     xshift      = 640,
+    #                                     yshift      = -360,
+    #                                     text        = txt_list,
+    #                                     showarrow   = false,
+    #                                     clicktoshow = false,
+    #                                     visible     = true,
+    #                                     font        = attr( size = 10),
+    # )  
+
+
     annotations[n_trace+1] =   attr(    xref        = "paper",
-                                        yref        = "paper",
-                                        align       = "left",
-                                        valign      = "top",
-                                        height      = 960,
-                                        x           = 0.0,
-                                        y           = 0.0,
-                                        xshift      = 640,
-                                        yshift      = -360,
-                                        text        = txt_list,
-                                        showarrow   = false,
-                                        clicktoshow = false,
-                                        visible     = true,
-                                        font        = attr( size = 10),
-    )  
-
-
-    annotations[n_trace+2] =   attr(    xref        = "paper",
                                         yref        = "paper",
                                         align       = "left",
                                         valign      = "top",
@@ -835,7 +841,7 @@ function get_diagram_labels(    Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float
                                         font        = attr( size = 10),
                                         )   
 
-    annotations[n_trace+3] =   attr(    xref        = "paper",
+    annotations[n_trace+2] =   attr(    xref        = "paper",
                                         yref        = "paper",
                                         align       = "left",
                                         valign      = "top",
@@ -851,7 +857,7 @@ function get_diagram_labels(    Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float
     n_lbl = n_trace
     println("\rGet phase diagram labels $(round(time()-t0, digits=3)) seconds"); 
 
-    return traces, annotations 
+    return traces, annotations, txt_list 
 end
 
 """

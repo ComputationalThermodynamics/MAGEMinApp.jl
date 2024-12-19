@@ -754,20 +754,20 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                                                                         Xrange,
                                                                                         Yrange)
 
-        PT_infos                           = get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat)
+        PT_infos = get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat)
 
-        data_plot, annotations = get_diagram_labels(    Out_XY,
-                                                        Hash_XY,
-                                                        refType,
-                                                        data,
-                                                        PT_infos )
+        data_plot, annotations, txt_list = get_diagram_labels(   Out_XY,
+                                                                Hash_XY,
+                                                                refType,
+                                                                data,
+                                                                PT_infos )
         ticks   = 4
         frame   = get_plot_frame(Xrange,Yrange, ticks)                                  
         layout  = Layout(
                     images=frame,
                     title= attr(
                         text    = customTitle,
-                        x       = 0.4,
+                        x       = 0.5,
                         xanchor = "center",
                         yanchor = "top"
                     ),
@@ -780,10 +780,10 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                     xaxis_title = xtitle,
                     yaxis_title = ytitle,
                     annotations = annotations,
-                    width       = 900,
+                    width       = 720,
                     height      = 900,
                     autosize    = false,
-                    margin      = attr(autoexpand = false, l=50, r=280, b=260, t=50, pad=4),
+                    margin      = attr(autoexpand = false, l=0, r=0, b=260, t=50, pad=1),
                     xaxis_range = Xrange, 
                     yaxis_range = Yrange,
                     xaxis       = attr(     tickmode    = "linear",
@@ -832,7 +832,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
 
         data_plot[1]    = heat_map
 
-        return vcat(data_plot,hover_lbl), layout, npoints, meant
+        return vcat(data_plot,hover_lbl), layout, npoints, meant, txt_list 
 end
 
 
@@ -909,11 +909,11 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
     
     PT_infos                           = get_phase_diagram_information(npoints,dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat)
                                                               
-    data_plot, annotations = get_diagram_labels(    Out_XY,
-                                                    Hash_XY,
-                                                    refType,
-                                                    data,
-                                                    PT_infos )
+    data_plot, annotations,txt_list = get_diagram_labels(   Out_XY,
+                                                            Hash_XY,
+                                                            refType,
+                                                            data,
+                                                            PT_infos )
                                            
     layout[:annotations] = annotations 
     layout[:title] = attr(
@@ -952,7 +952,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                             showlegend      = false,
                             text            = gridded_info )
 
-    return vcat(data_plot,hover_lbl), layout, npoints, meant
+    return vcat(data_plot,hover_lbl), layout, npoints, meant, txt_list 
 
 end
 

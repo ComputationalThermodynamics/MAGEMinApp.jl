@@ -222,14 +222,14 @@ function Tab_TraceElement_Callbacks(app)
         if @isdefined(Out_TE_XY) && length(Out_XY) == length(Out_TE_XY)
             if bid == "load-button-te"
                 fieldType = "zr"
-                global gridded_te, gridded_info_te, X_te, Y_te, npoints_te, meant_te
+                global gridded_te, gridded_info_te, gridded_fields_te, X_te, Y_te, npoints_te, meant_te
                 global layout_te, n_lbl, addedRefinementLvl
                 global data_plot_te,  data_reaction_te, data_grid_te, PT_infos_te, data_isopleth_te, data_isopleth_out_te
 
                 global iso_show_te             = 1;
                 data_isopleth_te = initialize_g_isopleth_te(; n_iso_max = 32)
 
-                gridded_te, gridded_info_te, X_te, Y_te, npoints_te, meant_te = get_gridded_map(    fieldname,
+                gridded_te, gridded_info_te, gridded_fields_te, X_te, Y_te, npoints_te, meant_te = get_gridded_map(    fieldname,
                                                                                                     "zr",
                                                                                                     oxi,
                                                                                                     Out_XY,
@@ -240,7 +240,7 @@ function Tab_TraceElement_Callbacks(app)
                                                                                                     refType,
                                                                                                     data,
                                                                                                     Xrange,
-                                                                                                    Yrange)
+                                                                                                    Yrange )
 
                 minColor     = round(minimum(skipmissing(gridded_te)),digits=2); 
                 maxColor     = round(maximum(skipmissing(gridded_te)),digits=2);  
@@ -260,18 +260,18 @@ function Tab_TraceElement_Callbacks(app)
                                                                 PTpath,
                                                                 "false")
 
-                data_plot_te, annotations = get_diagram_labels(     Out_XY,
-                                                                    Hash_XY,
-                                                                    refType,
-                                                                    data,
-                                                                    PT_infos_te )
+                data_plot_te, annotations, txt_list = get_diagram_labels(   Out_XY,
+                                                                            Hash_XY,
+                                                                            refType,
+                                                                            data,
+                                                                            PT_infos_te )
                 ticks       = 4
                 frame       = get_plot_frame(Xrange,Yrange, ticks)                                  
                 layout_te   = Layout(
                                 images=frame,
                                 title= attr(
                                     text    = customTitle,
-                                    x       = 0.4,
+                                    x       = 0.5,
                                     xanchor = "center",
                                     yanchor = "top"
                                 ),
@@ -284,10 +284,10 @@ function Tab_TraceElement_Callbacks(app)
                                 xaxis_title = xtitle,
                                 yaxis_title = ytitle,
                                 annotations = annotations,
-                                width       = 900,
+                                width       = 720,
                                 height      = 900,
                                 autosize    = false,
-                                margin      = attr(autoexpand = false, l=50, r=280, b=260, t=50, pad=4),
+                                margin      = attr(autoexpand = false, l=0, r=0, b=260, t=50, pad=1),
                                 xaxis_range = Xrange, 
                                 yaxis_range = Yrange,
                                 xaxis       = attr(     tickmode    = "linear",
@@ -496,7 +496,7 @@ function Tab_TraceElement_Callbacks(app)
                                                                     format   = "svg",
                                                                     filename =  replace(customTitle, " " => "_"),
                                                                     height   =  900,
-                                                                    width    =  900,
+                                                                    width    =  720,
                                                                     scale    =  2.0,       ).fields)
 
         layoutCap = Layout(     height          =  30,        

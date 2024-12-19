@@ -812,54 +812,7 @@ function Tab_Simulation(db_inf)
                                     is_open=true,
                             ),
                         ]),
-                        # html_div("‎ "),
-                        dbc_row([   
-                            dbc_button("Help and contact",id="button-contact",color="primary"),
-                            dbc_collapse(
-                                dbc_card(dbc_cardbody([
-                                    dbc_row([ 
-            
-                                        dbc_col([   
-                                            dcc_markdown(       id          = "contact-info-id", 
-                                                                children    = AppData.contribs[3],
-                                                                style       = Dict("white-space" => "pre"))
-                                            ], width=4),
-                                            dbc_col([  
-                                                dcc_markdown(       id          = "description-info-id", 
-                                                                    children    = AppData.contribs[4],
-                                                                    style       = Dict("white-space" => "pre"))
-                                            ], width=8),
-                                    ]), 
-                                   
-                                ])),
-                                id="collapse-contact",
-                                is_open=true,
-                            ),
-                        ]),
-                        # html_div("‎ "),
-                        dbc_row([   
-                            dbc_button("Contributors",id="button-contributors",color="primary"),
-                            dbc_collapse(
-                                dbc_card(dbc_cardbody([
 
-                                    dbc_row([ 
-                                        dbc_col([                                                          
-                                            dcc_markdown(       id          = "debug-info-id", 
-                                                                children    = AppData.contribs[1],
-                                                                style       = Dict("white-space" => "pre"))
-                                        ], width=6),
-                                        dbc_col([                                                          
-                                            dcc_markdown(       id          = "app-info-id", 
-                                                                children    = AppData.contribs[2],
-                                                                style       = Dict("white-space" => "pre"))
-                                        ], width=6),
-                                    ]),
-                                ])),
-                                id="collapse-contributors",
-                                is_open=true,
-                            ),
-                        ]),
-                        html_div("‎ "),  
                         html_div([
                             dbc_row([dbc_button("Trace-element composition",id="button-te"),
                             dbc_collapse(
@@ -980,6 +933,52 @@ function Tab_Simulation(db_inf)
 
                                 ]),
                             ], style = Dict("display" => "none"), id      = "te-panel-id"), #none, block
+                        dbc_row([   
+                            dbc_button("Help and contact",id="button-contact",color="primary"),
+                            dbc_collapse(
+                                dbc_card(dbc_cardbody([
+                                    dbc_row([ 
+            
+                                        dbc_col([   
+                                            dcc_markdown(       id          = "contact-info-id", 
+                                                                children    = AppData.contribs[3],
+                                                                style       = Dict("white-space" => "pre"))
+                                            ], width=4),
+                                            dbc_col([  
+                                                dcc_markdown(       id          = "description-info-id", 
+                                                                    children    = AppData.contribs[4],
+                                                                    style       = Dict("white-space" => "pre"))
+                                            ], width=8),
+                                    ]), 
+                                   
+                                ])),
+                                id="collapse-contact",
+                                is_open=true,
+                            ),
+                        ]),
+                        # html_div("‎ "),
+                        dbc_row([   
+                            dbc_button("Contributors",id="button-contributors",color="primary"),
+                            dbc_collapse(
+                                dbc_card(dbc_cardbody([
+
+                                    dbc_row([ 
+                                        dbc_col([                                                          
+                                            dcc_markdown(       id          = "debug-info-id", 
+                                                                children    = AppData.contribs[1],
+                                                                style       = Dict("white-space" => "pre"))
+                                        ], width=6),
+                                        dbc_col([                                                          
+                                            dcc_markdown(       id          = "app-info-id", 
+                                                                children    = AppData.contribs[2],
+                                                                style       = Dict("white-space" => "pre"))
+                                        ], width=6),
+                                    ]),
+                                ])),
+                                id="collapse-contributors",
+                                is_open=true,
+                            ),
+                        ]),
 
                         ], width=3),
                     ]),
