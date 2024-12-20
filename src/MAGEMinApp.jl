@@ -89,6 +89,13 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                 html_div(message2, style = Dict("textAlign" => "center","font-size" => "120%")),    
                             ]),
                         ], width="auto" ),
+                        
+                        dbc_col([
+                            dbc_cardimg(    id      = "magemin-img",
+                                            src     = "assets/static/images/MAGEMin_light.jpg",
+                                            style   = Dict("height" => 70, "width" => 190)),
+                                ], width="auto" ),
+
                         dbc_col([
                             dcc_loading(
                                 id          =   "loading-id",
@@ -114,12 +121,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                 children    =   [html_div(id="output-loading-id-ptx")],
                                 className   =   "custom-loading",
                             ),
-                        ]),
-                        dbc_col([
-                            dbc_cardimg(    id      = "magemin-img",
-                                            src     = "assets/static/images/MAGEMin_light.jpg",
-                                            style   = Dict("height" => 70, "width" => 190)),
-                                ], width="auto" )
+                        ], width="auto" ),
 
                     ], justify="between"),
                     

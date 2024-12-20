@@ -574,7 +574,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         State("table-bulk-rock",        "data"),            # bulk-rock 1
         State("table-2-bulk-rock",      "data"),            # bulk-rock 2
-
+        State("select-bulk-unit",       "value"),
         State("buffer-1-mul-id",        "value"),           # buffer n 1
         State("buffer-2-mul-id",        "value"),           # buffer n 2
 
@@ -620,7 +620,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             fixT,       fixP,
             sub,        refType,    refLvl,
             bufferType, solver,     verbose,    scp,
-            bulk1,      bulk2,      
+            bulk1,      bulk2,      sys_unit,   
             bufferN1,   bufferN2,
             tepm,       kds_mod,    zrsat_mod,  bulkte1,    bulkte2,
             test,
@@ -636,7 +636,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         bid                             = pushed_button( callback_context() )                           # get the ID of the last pushed button
         bulkte_L, bulkte_R, elem        = get_terock_prop(bulkte1, bulkte2)
         colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)              # get colormap information
-        bulk_L, bulk_R, oxi             = get_bulkrock_prop(bulk1, bulk2)                               # get bulk rock composition information
+        bulk_L, bulk_R, oxi             = get_bulkrock_prop(bulk1, bulk2; sys_unit=sys_unit)                               # get bulk rock composition information
         fieldNames                      = ["data_plot","data_reaction","data_grid","data_isopleth_out"]
         field2plot                      = zeros(Int64,4)
 

@@ -423,36 +423,36 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         PD_infos[2] *= bufferType *"<br>"
     end            
     if diagType == "pt"
-        PD_infos[2] *= join(bulk_L, " ") *"<br>"
+        PD_infos[2] *= join(round.(bulk_L,digits=6), " ") *"<br>"
         if bufferType != "none"
             PD_infos[2] *= string(bufferN1) *"<br>"
         end       
     elseif diagType == "px"
-        PD_infos[2] *= join(bulk_L, " ") *"<br>"
+        PD_infos[2] *= join(round.(bulk_L,digits=6), " ") *"<br>"
         if bufferType != "none"
             PD_infos[2] *= string(bufferN1) *"<br>"
         end
-        PD_infos[2] *= join(bulk_R, " ") *"<br>"
+        PD_infos[2] *= join(round.(bulk_R,digits=6), " ") *"<br>"
         if bufferType != "none"
             PD_infos[2] *= string(bufferN2) *"<br>"
         end        
         PD_infos[2] *= join(fixT, " ") *"<br>"
     elseif diagType == "tx"
-        PD_infos[2] *= join(bulk_L, " ") *"<br>"
+        PD_infos[2] *= join(round.(bulk_L,digits=6), " ") *"<br>"
         if bufferType != "none"
             PD_infos[2] *= string(bufferN1) *"<br>"
         end        
-        PD_infos[2] *= join(bulk_R, " ") *"<br>"
+        PD_infos[2] *= join(round.(bulk_R,digits=6), " ") *"<br>"
         if bufferType != "none"
             PD_infos[2] *= string(bufferN2) *"<br>"
         end        
         PD_infos[2] *= join(fixP, " ") *"<br>"
     elseif diagType == "ptx"
-        PD_infos[2] *= join(bulk_L, " ") *"<br>"
+        PD_infos[2] *= join(round.(bulk_L,digits=6), " ") *"<br>"
         if bufferType != "none"
             PD_infos[2] *= string(bufferN1) *"<br>"
         end        
-        PD_infos[2] *= join(bulk_R, " ") *"<br>"
+        PD_infos[2] *= join(round.(bulk_R,digits=6), " ") *"<br>"
         if bufferType != "none"
             PD_infos[2] *= string(bufferN2) *"<br>"
         end        
@@ -553,7 +553,7 @@ end
 
     retrieve bulk rock composition and components from dash table
 """
-function get_bulkrock_prop(bulk1, bulk2)
+function get_bulkrock_prop(bulk1, bulk2; sys_unit = 1)
  
     n_ox    = length(bulk1);
     bulk_L  = zeros(n_ox); 
@@ -561,17 +561,25 @@ function get_bulkrock_prop(bulk1, bulk2)
     oxi     = Vector{String}(undef, n_ox)
     # in case the bulk rock is entered manually, the inputed values can be a string, this ensures convertion to float64
     for i=1:n_ox
-        tmp = bulk1[i][:mol_fraction]
+        tmp = bulk1[i][:fraction]
         if typeof(tmp) == String
             tmp = parse(Float64,tmp)
         end
-        tmp2 = bulk2[i][:mol_fraction]
+        tmp2 = bulk2[i][:fraction]
         if typeof(tmp2) == String
             tmp2 = parse(Float64,tmp2)
         end
         bulk_L[i]   = tmp;
         bulk_R[i]   = tmp2;
         oxi[i]      = bulk1[i][:oxide];
+    end
+
+    bulk_L  = bulk_L ./ sum(bulk_L)
+    bulk_R  = bulk_R ./ sum(bulk_R)
+
+    if sys_unit == 2 #then we are using wt% as input
+        bulk_L  = wt2mol(bulk_L,oxi)
+        bulk_R  = wt2mol(bulk_R,oxi)
     end
 
     return bulk_L, bulk_R, oxi

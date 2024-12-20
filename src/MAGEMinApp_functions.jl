@@ -203,7 +203,7 @@ function save_rho_for_LaMEM(    dtb         ::String,
     bulk    = zeros(n_ox); 
     oxi     = Vector{String}(undef, n_ox)
     for i=1:n_ox
-        tmp = bulk1[i][:mol_fraction]
+        tmp = bulk1[i][:fraction]
         if typeof(tmp) == String
             tmp = parse(Float64,tmp)
         end
@@ -366,7 +366,7 @@ function save_rho_for_GeoModel(     dtb         ::String,
     bulk    = zeros(n_ox); 
     oxi     = Vector{String}(undef, n_ox)
     for i=1:n_ox
-        tmp = bulk1[i][:mol_fraction]
+        tmp = bulk1[i][:fraction]
         if typeof(tmp) == String
             tmp = parse(Float64,tmp)
         end
@@ -1685,7 +1685,10 @@ function bulk_file_to_db(datain)
             bulkrock2   = deepcopy(bulkrock)
         end
 
-        oxide                   = get_oxide_list(String(dbin))
+        oxide           = get_oxide_list(String(dbin))
+
+        bulkrock_wt     = round.(mol2wt(bulkrock, oxide),digits=6)
+        bulkrock2_wt    = round.(mol2wt(bulkrock2, oxide),digits=6)
 
         push!(db,Dict(  :bulk       => bulk,
                         :title      => title,
@@ -1696,6 +1699,8 @@ function bulk_file_to_db(datain)
                         :oxide      => oxide,
                         :frac       => bulkrock,
                         :frac2      => bulkrock2,
+                        :frac_wt    => bulkrock_wt,
+                        :frac2_wt   => bulkrock2_wt,
                     ), cols=:union)
     end
 

@@ -142,6 +142,7 @@ function Tab_isoSpaths_Callbacks(app)
         Input("compute-path-button-isoS",   "n_clicks"),
         Input("sys-unit-isoS",              "value"),
 
+        State("select-bulk-unit-isoS",      "value"),
         State("phase-selection-isoS",       "value"),
         State("phase-selector-isoS-id",     "options"),
 
@@ -167,7 +168,8 @@ function Tab_isoSpaths_Callbacks(app)
     
         prevent_initial_call = true,
 
-        ) do    compute,    upsys,      phase_selection,    phase_list,
+        ) do    compute,    upsys,      
+                sys_unit,   phase_selection,    phase_list,
                 Pini,       Tini,       Pfinal, tolerance,  nsteps,    
                 dtb,        bufferType, solver,
                 verbose,    bulk,       bufferN,
@@ -185,7 +187,7 @@ function Tab_isoSpaths_Callbacks(app)
             global Out_ISOS, ph_names, layout_isoS, layout_path, data_plot, df_path_plot
 
             bufferN                 = Float64(bufferN)               # convert buffer_n to float
-            bulk_ini, bulk_ini, oxi = get_bulkrock_prop(bulk, bulk)  
+            bulk_ini, bulk_ini, oxi = get_bulkrock_prop(bulk, bulk; sys_unit=sys_unit)  
 
             compute_new_IsentropicPath(     nsteps,     bulk_ini,   oxi,    phase_selection,
                                             Pini,       Tini,       Pfinal, tolerance,
@@ -428,11 +430,16 @@ function Tab_isoSpaths_Callbacks(app)
         Output("database-caption-isoS","value"),
         Output("phase-selection-isoS","options"),
         Output("phase-selection-isoS","value"),
+
+        Input("table-bulk-rock-isoS","data"),
+        Input("select-bulk-unit-isoS","value"),
+
         Input("test-dropdown-isoS","value"),
         Input("database-dropdown-isoS","value"),
         Input("output-data-uploadn-isoS", "is_open"),        # this listens for changes and updated the list
         prevent_initial_call=true,
-    ) do test, dtb, update
+    ) do tb_data, sys_unit, 
+        test, dtb, update
 
         # catching up some special cases
         if test > length(db[(db.db .== dtb), :].test) - 1 
@@ -441,10 +448,15 @@ function Tab_isoSpaths_Callbacks(app)
             t = test
         end
 
-        data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
-                                "mol_fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac[1][i])
-                                    for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
-
+        if sys_unit == 1
+            data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
+                                    "fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac[1][i])
+                                        for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
+        elseif sys_unit == 2
+            data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
+                                    "fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac_wt[1][i])
+                                        for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
+        end
 
         opts        =  [Dict(   "label" => db[(db.db .== dtb), :].title[i],
                                 "value" => db[(db.db .== dtb), :].test[i]  )

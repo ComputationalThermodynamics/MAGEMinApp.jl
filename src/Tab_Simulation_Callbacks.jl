@@ -578,7 +578,6 @@ function Tab_Simulation_Callbacks(app)
         end
     end
 
-
     callback!(
         app,
         Output("output-data-uploadn", "is_open"),
@@ -600,27 +599,28 @@ function Tab_Simulation_Callbacks(app)
 
     callback!(
         app,
-        Output("table-bulk-rock","data"),
-        Output("test-dropdown","options"),
-        Output("test-dropdown","value"),
-        Output("database-caption","value"),
+        Output( "table-bulk-rock","data"),
+        Output( "test-dropdown","options"),
+        Output( "test-dropdown","value"),
+        Output( "database-caption","value"),
         
-        Input("test-dropdown","value"),
-        Input("database-dropdown","value"),
-        Input("output-data-uploadn", "is_open"),  
+        Input( "test-dropdown","value"),
+        Input( "database-dropdown","value"),
+        Input( "output-data-uploadn", "is_open"),  
         
         Input( "load-state-diagram-button","n_clicks"  ),
-        State(  "save-state-filename-id",   "value"    ),
+        Input( "table-bulk-rock","data"),
+        Input( "select-bulk-unit","value"),
 
-        State("table-bulk-rock","data"),
-        State("test-dropdown","options"),
-        State("database-caption","value"),
+        State( "save-state-filename-id",   "value"    ),
+        State( "test-dropdown","options"),
+        State( "database-caption","value"),
 
         prevent_initial_call=true,
 
     ) do    test, dtb, update,
-            n_clicks_load, filename,
-            tb_data, test_opts, db_cap
+            n_clicks_load, tb_data, sys_unit, 
+            filename, test_opts, db_cap
 
         bid  = pushed_button( callback_context() )  
 
@@ -630,7 +630,6 @@ function Tab_Simulation_Callbacks(app)
             @load file test
 
             val = test
-            # return tb_data, test_opts, test, db_cap
         else
             # catching up some special cases
             if test > length(db[(db.db .== dtb), :].test) - 1 
@@ -640,21 +639,26 @@ function Tab_Simulation_Callbacks(app)
             end
         end
 
+        if sys_unit == 1
             data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== val), :].oxide[1][i],
-                                    "mol_fraction"  => db[(db.db .== dtb) .& (db.test .== val), :].frac[1][i])
+                                    "fraction"           => db[(db.db .== dtb) .& (db.test .== val), :].frac[1][i])
                                         for i=1:length(db[(db.db .== dtb) .& (db.test .== val), :].oxide[1]) ]
+        elseif sys_unit == 2
+            data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== val), :].oxide[1][i],
+                                    "fraction"            => db[(db.db .== dtb) .& (db.test .== val), :].frac_wt[1][i])
+                                        for i=1:length(db[(db.db .== dtb) .& (db.test .== val), :].oxide[1]) ]
+        end
 
 
-            opts        =  [Dict(   "label" => db[(db.db .== dtb), :].title[i],
-                                    "value" => db[(db.db .== dtb), :].test[i]  )
-                                        for i=1:length(db[(db.db .== dtb), :].test)]
 
-            cap         = dba[(dba.acronym .== dtb) , :].database[1]  
+        opts        =  [Dict(   "label" => db[(db.db .== dtb), :].title[i],
+                                "value" => db[(db.db .== dtb), :].test[i]  )
+                                    for i=1:length(db[(db.db .== dtb), :].test)]
 
-            return data, opts, val, cap    
-        # end
+        cap         = dba[(dba.acronym .== dtb) , :].database[1]  
 
-               
+        return data, opts, val, cap    
+    
     end
 
 
@@ -668,17 +672,19 @@ function Tab_Simulation_Callbacks(app)
         Input("test-2-dropdown","value"),
         Input("database-dropdown","value"),
 
-        Input(  "load-state-diagram-button","n_clicks"  ),
-        State(  "save-state-filename-id",   "value"     ),
+        Input( "load-state-diagram-button","n_clicks"  ),
+        Input( "table-2-bulk-rock","data"),
+        Input( "select-bulk-unit","value"),
 
-        State("table-2-bulk-rock","data"),
-        State("test-2-dropdown","options"),
+        State( "save-state-filename-id",   "value"     ),
+        State( "test-2-dropdown","options"),
 
         prevent_initial_call=true,
 
     ) do    test, dtb, 
-            n_clicks_load, filename,
-            tb2_data, test2_opts
+            n_clicks_load, tb2_data, sys_unit,
+            filename,
+            test2_opts
 
          bid  = pushed_button( callback_context() )     
 
@@ -700,13 +706,28 @@ function Tab_Simulation_Callbacks(app)
         end
 
             if (~isempty(db[(db.db .== dtb) .& (db.test .== val), :].frac2[1]))
-                data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== val), :].oxide[1][i],
-                                        "mol_fraction"  => db[(db.db .== dtb) .& (db.test .== val), :].frac2[1][i])
-                                            for i=1:length(db[(db.db .== dtb) .& (db.test .== val), :].oxide[1]) ]
+
+                if sys_unit == 1
+                    data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== val), :].oxide[1][i],
+                                            "fraction"  => db[(db.db .== dtb) .& (db.test .== val), :].frac2[1][i])
+                                                for i=1:length(db[(db.db .== dtb) .& (db.test .== val), :].oxide[1]) ]
+                elseif sys_unit == 2
+                    data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== val), :].oxide[1][i],
+                                            "fraction"  => db[(db.db .== dtb) .& (db.test .== val), :].frac2_wt[1][i])
+                                                for i=1:length(db[(db.db .== dtb) .& (db.test .== val), :].oxide[1]) ]
+                end
+
             else
-                data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== val), :].oxide[1][i],
-                                        "mol_fraction"  => db[(db.db .== dtb) .& (db.test .== val), :].frac[1][i])
-                                            for i=1:length(db[(db.db .== dtb) .& (db.test .== val), :].oxide[1]) ]
+                if sys_unit == 1
+                    data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== val), :].oxide[1][i],
+                                            "fraction"  => db[(db.db .== dtb) .& (db.test .== val), :].frac[1][i])
+                                                for i=1:length(db[(db.db .== dtb) .& (db.test .== val), :].oxide[1]) ]
+                elseif sys_unit == 2
+                    data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== val), :].oxide[1][i],
+                                            "fraction"  => db[(db.db .== dtb) .& (db.test .== val), :].frac_wt[1][i])
+                                                for i=1:length(db[(db.db .== dtb) .& (db.test .== val), :].oxide[1]) ]
+                end
+
             end
 
             opts        =  [Dict(   "label" => db[(db.db .== dtb), :].title[i],

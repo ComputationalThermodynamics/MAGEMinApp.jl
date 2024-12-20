@@ -16,11 +16,12 @@ function Tab_IsentropicPaths(db_inf)
                                     ]),
                                     dbc_col([ 
                                         dcc_dropdown(   id      = "database-dropdown-isoS",
-                                                        options = [
-                                                            Dict(   "label" => dba.database[i],
-                                                                    "value" => dba.acronym[i]  )
-                                                                        for i=1:size(dba,1)
-                                                        ],
+                                                        # options = [
+                                                        #     Dict(   "label" => dba.database[i],
+                                                        #             "value" => dba.acronym[i]  )
+                                                        #                 for i=1:size(dba,1)
+                                                        # ],
+                                                        options     = dtb_dict,
                                                         value="ig" ,
                                                         clearable   = false,
                                                         multi       = false),
@@ -192,42 +193,61 @@ function Tab_IsentropicPaths(db_inf)
                                     dbc_row([
                                             dbc_col([
 
-                                                dcc_upload(
-                                                    id="upload-bulk-isoS",
-                                                    children=html_div([
-                                                        "Drag and drop or select bulk-rock file",
-                                                    ]),
-                                                    style=Dict(
-                                                        "width" => "100%",
-                                                        "height" => "60px",
-                                                        "lineHeight" => "60px",
-                                                        "borderWidth" => "1px",
-                                                        "borderStyle" => "dashed",
-                                                        "borderRadius" => "5px",
-                                                        "textAlign" => "center"
-                                                    ),
-                                                    # Allow multiple files to be uploaded
-                                                    multiple=false
-                                                ),
-                                                dbc_alert(
-                                                    "Bulk-rock(s) composition(s) successfully loaded",
-                                                    id      = "output-data-uploadn-isoS",
-                                                    is_open = false,
-                                                    duration= 4000,
-                                                ),
-                                                dbc_alert(
-                                                    "Bulk-rock(s) composition(s) failed to load, check input file format",
-                                                    color="danger",
-                                                    id      ="output-data-uploadn-failed-isoS",
-                                                    is_open = false,
-                                                    duration= 4000,
-                                                ),
-                                                # html_div(id="output-data-uploadn"),
-                                                dbc_tooltip([
-                                                    html_div("An example of file providing bulk-rock compositions is given in the 'examples' folder"),
-                                                    html_div("The structure of the file should comply with the following structure:"),
-                                                    html_div("title::String; comments::String; db::String; sysUnit::String; oxide::Vector{String}; frac::Vector{Float64}")
-                                                            ],target="upload-bulk-isoS"),
+                                                dbc_row([
+                                                    dbc_col([ 
+                                                        dcc_dropdown(   id      = "select-bulk-unit-isoS",
+                                                        options = [
+                                                            (label = "mol%",                value = 1),
+                                                            (label = "wt%",                 value = 2),
+                                                        ],
+                                                        value       = 1,
+                                                        style       = Dict("border" => "none"),
+                                                        clearable   = false,
+                                                        multi       = false),
+                                                    ], width=3),
+
+
+                                                    dbc_col([ 
+                                                        dcc_upload(
+                                                            id="upload-bulk-isoS",
+                                                            children=html_div([
+                                                                "Drag and drop or select bulk-rock file",
+                                                            ]),
+                                                            style=Dict(
+                                                                "width" => "100%",
+                                                                "height" => "60px",
+                                                                "lineHeight" => "60px",
+                                                                "borderWidth" => "1px",
+                                                                "borderStyle" => "dashed",
+                                                                "borderRadius" => "5px",
+                                                                "textAlign" => "center"
+                                                            ),
+                                                            # Allow multiple files to be uploaded
+                                                            multiple=false
+                                                        ),
+                                                        dbc_alert(
+                                                            "Bulk-rock(s) composition(s) successfully loaded",
+                                                            id      = "output-data-uploadn-isoS",
+                                                            is_open = false,
+                                                            duration= 4000,
+                                                        ),
+                                                        dbc_alert(
+                                                            "Bulk-rock(s) composition(s) failed to load, check input file format",
+                                                            color="danger",
+                                                            id      ="output-data-uploadn-failed-isoS",
+                                                            is_open = false,
+                                                            duration= 4000,
+                                                        ),
+                                                        # html_div(id="output-data-uploadn"),
+                                                        dbc_tooltip([
+                                                            html_div("An example of file providing bulk-rock compositions is given in the 'examples' folder"),
+                                                            html_div("The structure of the file should comply with the following structure:"),
+                                                            html_div("title::String; comments::String; db::String; sysUnit::String; oxide::Vector{String}; frac::Vector{Float64}")
+                                                                    ],target="upload-bulk-isoS"),
+
+                                                    ], width=9),
+
+                                                ]),
 
                                                 html_div("‎ "),
                                                 dbc_row([
@@ -253,10 +273,10 @@ function Tab_IsentropicPaths(db_inf)
                                                                 dash_datatable(
                                                                     id="table-bulk-rock-isoS",
                                                                     columns=(  [    Dict("id" =>  "oxide",          "name" =>  "oxide",         "editable" => false),
-                                                                                    Dict("id" =>  "mol_fraction",   "name" =>  "mol_fraction",  "editable" => true)]
+                                                                                    Dict("id" =>  "fraction",   "name" =>  "fraction",  "editable" => true)]
                                                                     ),
                                                                     data        =   [Dict(  "oxide"         => db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1][i],
-                                                                                            "mol_fraction"  => db[(db.db .== "ig") .& (db.test .== 0), :].frac[1][i])
+                                                                                            "fraction"  => db[(db.db .== "ig") .& (db.test .== 0), :].frac[1][i])
                                                                                                 for i=1:length(db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1]) ],
                                                                     style_cell  = (textAlign="center", fontSize="140%",),
                                                                     style_header= (fontWeight="bold",),

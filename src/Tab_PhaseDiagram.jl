@@ -212,7 +212,7 @@ function Tab_PhaseDiagram()
                                                         # row_selectable  = "single",
                                                         style_cell      = Dict("fontSize" => "140%", "textAlign" => "center", "padding" => "0px"),
                                                         style_header    = (fontWeight="bold"),
-                                                        
+                                                        editable    = true,
                                                     ),
                                                 ]),
                                             ], style = Dict("display" => "none"), id      = "disp-test-id"),

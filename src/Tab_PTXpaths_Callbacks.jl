@@ -357,6 +357,7 @@ function Tab_PTXpaths_Callbacks(app)
         Input("compute-path-button",    "n_clicks"),
         Input("sys-unit-ptx",           "value"),
 
+        State("select-bulk-unit-ptx",    "value"),
         State("phase-selection-PTX",    "value"),
         State("phase-selector-id",      "options"),
         State("n-steps-id-ptx",         "value"),
@@ -380,11 +381,11 @@ function Tab_PTXpaths_Callbacks(app)
 
         State("connectivity-id",        "value"),
         State("residual-id",            "value"),
-        
     
         prevent_initial_call = true,
 
-        ) do    compute,    upsys,      phase_selection,    phase_list, nsteps,     PTdata,     mode,   assim,
+        ) do    compute,    upsys,      
+                sys_unit,   phase_selection,    phase_list, nsteps,     PTdata,     mode,   assim,
                 dtb,        bufferType, solver,
                 verbose,    bulk,       bulk2,      bufferN,
                 cpx,        limOpx,     limOpxVal,  test,   sysunit,
@@ -401,7 +402,7 @@ function Tab_PTXpaths_Callbacks(app)
             global Out_PTX, ph_names_ptx, layout_ptx, data_plot_ptx, fracEvol
 
             bufferN                 = Float64(bufferN)               # convert buffer_n to float
-            bulk_ini, bulk_assim, oxi = get_bulkrock_prop(bulk, bulk2)  
+            bulk_ini, bulk_assim, oxi = get_bulkrock_prop(bulk, bulk2; sys_unit=sys_unit)  
 
             compute_new_PTXpath(    nsteps,     PTdata,     mode,       bulk_ini,  bulk_assim,  oxi,    phase_selection,    assim,
                                     dtb,        bufferType, solver,
@@ -529,11 +530,18 @@ function Tab_PTXpaths_Callbacks(app)
         Output("database-caption-ptx","value"),
         Output("phase-selection-PTX","options"),
         Output("phase-selection-PTX","value"),
+
+        Input("table-bulk-rock-ptx","data"),
+        Input("select-bulk-unit-ptx","value"),
+
         Input("test-dropdown-ptx","value"),
         Input("database-dropdown-ptx","value"),
         Input("output-data-uploadn-ptx", "is_open"),        # this listens for changes and updated the list
+
+
         prevent_initial_call=true,
-    ) do test, dtb, update
+    ) do tb_data, sys_unit, 
+        test, dtb, update
 
         # catching up some special cases
         if test > length(db[(db.db .== dtb), :].test) - 1 
@@ -542,9 +550,15 @@ function Tab_PTXpaths_Callbacks(app)
             t = test
         end
 
-        data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
-                                "mol_fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac[1][i])
-                                    for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
+        if sys_unit == 1
+            data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
+                                    "fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac[1][i])
+                                        for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
+        elseif sys_unit == 2
+            data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
+                                    "fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac_wt[1][i])
+                                        for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
+        end
 
 
         opts        =  [Dict(   "label" => db[(db.db .== dtb), :].title[i],
@@ -573,11 +587,16 @@ function Tab_PTXpaths_Callbacks(app)
         Output("table-2-bulk-rock-ptx","data"),
         Output("test-2-dropdown-ptx","options"),
         Output("test-2-dropdown-ptx","value"),
+
+        Input("table-2-bulk-rock-ptx","data"),
+        Input("select-bulk-unit-ptx","value"),
+
         Input("test-2-dropdown-ptx","value"),
         Input("database-dropdown-ptx","value"),
         Input("output-data-uploadn-ptx", "is_open"),        # this listens for changes and updated the list
         prevent_initial_call=true,
-    ) do test, dtb, update
+    ) do tb_data, sys_unit, 
+    test, dtb, update
 
         # catching up some special cases
         if test > length(db[(db.db .== dtb), :].test) - 1 
@@ -587,13 +606,25 @@ function Tab_PTXpaths_Callbacks(app)
         end
 
         if (~isempty(db[(db.db .== dtb) .& (db.test .== t), :].frac2[1]))
-            data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
-                                    "mol_fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac2[1][i])
-                                        for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
+            if sys_unit == 1
+                data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
+                                        "fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac2[1][i])
+                                            for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
+            elseif sys_unit == 2
+                data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
+                                        "fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac2_wt[1][i])
+                                            for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
+            end
         else
-            data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
-                                    "mol_fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac[1][i])
-                                        for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
+            if sys_unit == 1    
+                data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
+                                        "fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac[1][i])
+                                            for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
+            elseif sys_unit == 2
+                data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
+                                        "fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac_wt[1][i])
+                                            for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
+            end
         end
 
         opts        =  [Dict(   "label" => db[(db.db .== dtb), :].title[i],
