@@ -609,9 +609,9 @@ function Tab_Simulation_Callbacks(app)
         Input( "output-data-uploadn", "is_open"),  
         
         Input( "load-state-diagram-button","n_clicks"  ),
-        Input( "table-bulk-rock","data"),
         Input( "select-bulk-unit","value"),
 
+        State( "table-bulk-rock","data"),
         State( "save-state-filename-id",   "value"    ),
         State( "test-dropdown","options"),
         State( "database-caption","value"),
@@ -619,8 +619,8 @@ function Tab_Simulation_Callbacks(app)
         prevent_initial_call=true,
 
     ) do    test, dtb, update,
-            n_clicks_load, tb_data, sys_unit, 
-            filename, test_opts, db_cap
+            n_clicks_load, sys_unit, 
+            tb_data, filename, test_opts, db_cap
 
         bid  = pushed_button( callback_context() )  
 
@@ -673,8 +673,8 @@ function Tab_Simulation_Callbacks(app)
         Input("database-dropdown","value"),
 
         Input( "load-state-diagram-button","n_clicks"  ),
-        Input( "table-2-bulk-rock","data"),
         Input( "select-bulk-unit","value"),
+        State( "table-2-bulk-rock","data"),
 
         State( "save-state-filename-id",   "value"     ),
         State( "test-2-dropdown","options"),
@@ -682,8 +682,8 @@ function Tab_Simulation_Callbacks(app)
         prevent_initial_call=true,
 
     ) do    test, dtb, 
-            n_clicks_load, tb2_data, sys_unit,
-            filename,
+            n_clicks_load, sys_unit,
+            tb2_data, filename,
             test2_opts
 
          bid  = pushed_button( callback_context() )     

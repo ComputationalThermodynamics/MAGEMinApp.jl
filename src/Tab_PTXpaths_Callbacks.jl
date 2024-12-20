@@ -531,17 +531,17 @@ function Tab_PTXpaths_Callbacks(app)
         Output("phase-selection-PTX","options"),
         Output("phase-selection-PTX","value"),
 
-        Input("table-bulk-rock-ptx","data"),
         Input("select-bulk-unit-ptx","value"),
 
         Input("test-dropdown-ptx","value"),
         Input("database-dropdown-ptx","value"),
         Input("output-data-uploadn-ptx", "is_open"),        # this listens for changes and updated the list
 
+        State("table-bulk-rock-ptx","data"),
 
         prevent_initial_call=true,
-    ) do tb_data, sys_unit, 
-        test, dtb, update
+    ) do sys_unit, 
+        test, dtb, update, tb_data
 
         # catching up some special cases
         if test > length(db[(db.db .== dtb), :].test) - 1 
@@ -588,15 +588,18 @@ function Tab_PTXpaths_Callbacks(app)
         Output("test-2-dropdown-ptx","options"),
         Output("test-2-dropdown-ptx","value"),
 
-        Input("table-2-bulk-rock-ptx","data"),
         Input("select-bulk-unit-ptx","value"),
 
         Input("test-2-dropdown-ptx","value"),
         Input("database-dropdown-ptx","value"),
         Input("output-data-uploadn-ptx", "is_open"),        # this listens for changes and updated the list
+
+        State("table-2-bulk-rock-ptx","data"),
+
         prevent_initial_call=true,
-    ) do tb_data, sys_unit, 
-    test, dtb, update
+    ) do sys_unit, 
+        test, dtb, update, 
+        tb_data
 
         # catching up some special cases
         if test > length(db[(db.db .== dtb), :].test) - 1 
