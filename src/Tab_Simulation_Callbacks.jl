@@ -1,5 +1,18 @@
 function Tab_Simulation_Callbacks(app)
 
+    # update the dictionary of the solution phases and end-members for isopleths
+    callback!(
+        app,
+        Output( "grid-subdivision",     "value"     ),
+        Input(  "gsub-id",              "value"     ),
+
+    prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
+    ) do n_ref
+
+        n_ref_info = "$(2^n_ref) × $(2^n_ref) grid"
+
+        return n_ref_info
+    end
 
     # update the dictionary of the solution phases and end-members for isopleths
     callback!(
@@ -179,6 +192,30 @@ function Tab_Simulation_Callbacks(app)
     end
 
 
+    # update the dictionary of phase_selection_options
+    callback!(
+        app,
+        Output("phase-selection","options"),
+        Output("phase-selection","value"),
+        Input("database-dropdown","value"),
+
+        prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
+    ) do dtb
+    
+        db_in       = retrieve_solution_phase_information(dtb)
+
+        # this is the phase selection part for the database when compute a diagram
+        phase_selection_options = [Dict(    "label"     => " "*i,
+                                            "value"     => i )
+                                                for i in db_in.ss_name ]
+        phase_selection_value   = db_in.ss_name
+
+
+        return phase_selection_options, phase_selection_value
+    end
+
+
+
     # update the dictionary of the solution phases and end-members for isopleths
     callback!(
         app,
@@ -191,20 +228,20 @@ function Tab_Simulation_Callbacks(app)
         Output("of-1-id","style"),
         Output("other-1-id","style"),
         Output("sys-unit-isopleth-id","style"),
-        Output("phase-selection","options"),
-        Output("phase-selection","value"),
-        Input("database-dropdown","value"),
+        Input("trigger-update-ss-list","value"),
         Input("phase-dropdown","value"),
         Input("other-dropdown","value"),
         State("ss-dropdown","value"),
 
-        prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
-    ) do dtb, phase, other, ph
+        prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
+    ) do pd_update, phase, other, ph
+    
         bid         = pushed_button( callback_context() ) 
 
-        db_in       = retrieve_solution_phase_information(dtb)
-        n_ss        = length(db_in.data_ss)
-        n_pp        = length(db_in.data_pp)
+        pp          = phase_infos.act_pp
+        ss          = phase_infos.act_ss
+        n_pp        = length(pp)
+        n_ss        = length(ss)
 
         if phase == "of"
             style_ph    = Dict("display" => "none")
@@ -218,8 +255,8 @@ function Tab_Simulation_Callbacks(app)
             val         = nothing
         elseif phase == "ss"
             
-            opts_ph     =  [Dict(   "label" => db_in.data_ss[i].ss_name,
-                                    "value" => db_in.data_ss[i].ss_name )
+            opts_ph     =  [Dict(   "label" => ss[i],
+                                    "value" => ss[i] )
                                         for i=1:n_ss ]
             style_ot    = Dict("display" => "block")
             style_ph    = Dict("display" => "block")
@@ -238,7 +275,6 @@ function Tab_Simulation_Callbacks(app)
                 style_ox    = Dict("display" => "none")
             end
 
-
             if other == "calc"
                 style_calc  = Dict("display" => "block")
                 style_sys   = Dict("display" => "none")
@@ -251,14 +287,15 @@ function Tab_Simulation_Callbacks(app)
             end
 
             if bid != "other-dropdown"
-                val         = db_in.data_ss[1].ss_name
+                val         = ss[1]
             else
                 val         = ph
             end
 
         else
-            opts_ph     =  [Dict(   "label" => db_in.data_pp[i],
-                                    "value" => db_in.data_pp[i]  )
+
+            opts_ph     =  [Dict(   "label" => pp[i],
+                                    "value" => pp[i]  )
                                         for i=1:n_pp ]
 
             style_em    = Dict("display" => "none")
@@ -268,17 +305,16 @@ function Tab_Simulation_Callbacks(app)
             style_ph    = Dict("display" => "block")
             style_of    = Dict("display" => "none")
             style_sys   = Dict("display" => "block")
-            
-            val         = db_in.data_pp[1]
+
+            if n_pp > 0
+                val         = pp[1]
+            else 
+                val = ""
+            end
+
         end
 
-        phase_selection_options = [Dict(    "label"     => " "*i,
-                                            "value"     => i )
-                                                for i in db_in.ss_name ]
-        phase_selection_value   = db_in.ss_name
-
-
-        return opts_ph, val, style_calc, style_em, style_ox, style_ph, style_of, style_ot, style_sys,phase_selection_options, phase_selection_value
+        return opts_ph, val, style_calc, style_em, style_ox, style_ph, style_of, style_ot, style_sys
     end
 
 
@@ -293,20 +329,27 @@ function Tab_Simulation_Callbacks(app)
         Input("database-dropdown","value"),
         Input("ss-dropdown","value"),
         State("phase-dropdown","value"),
+        State("mb-cpx-switch","value"),
 
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
-    ) do dtb, id, ph
+    ) do dtb, id, ph, mbCpx
         bid  = pushed_button( callback_context() ) 
+        if mbCpx == true
+            aug = 1
+        else
+            aug = 0
+        end
 
         if ph == "ss"
             db_in          = retrieve_solution_phase_information(dtb)
 
-            if id == 0
+            if id in db_in.ss_name
+                id = get_ss_from_mineral(dtb, id, aug)
+            else
                 id = db_in.ss_name[1]
             end
 
-            ssid = findall(db_in.ss_name .== id)[1]
-
+            ssid        = findall(db_in.ss_name .== id)[1]
             n_em        = length(db_in.data_ss[ssid].ss_em)
 
             val         = "none"
@@ -315,9 +358,9 @@ function Tab_Simulation_Callbacks(app)
                                         for i=1:n_em ]
 
 
-            opts_ox        =   [Dict(  "label"   => db[(db.db .== dtb), :].oxide[1][i],
-                                        "value"  => db[(db.db .== dtb), :].oxide[1][i])
-                                            for i=1:length(db[(db.db .== dtb), :].oxide[1]) ]
+            opts_ox     =   [Dict(  "label"     => db[(db.db .== dtb), :].oxide[1][i],
+                                    "value"     => db[(db.db .== dtb), :].oxide[1][i])
+                                        for i=1:length(db[(db.db .== dtb), :].oxide[1]) ]
 
             return opts_em, val, opts_ox, "SiO2"
         else
@@ -535,7 +578,6 @@ function Tab_Simulation_Callbacks(app)
         end
     end
 
-
     callback!(
         app,
         Output("output-data-uploadn", "is_open"),
@@ -557,27 +599,28 @@ function Tab_Simulation_Callbacks(app)
 
     callback!(
         app,
-        Output("table-bulk-rock","data"),
-        Output("test-dropdown","options"),
-        Output("test-dropdown","value"),
-        Output("database-caption","value"),
+        Output( "table-bulk-rock","data"),
+        Output( "test-dropdown","options"),
+        Output( "test-dropdown","value"),
+        Output( "database-caption","value"),
         
-        Input("test-dropdown","value"),
-        Input("database-dropdown","value"),
-        Input("output-data-uploadn", "is_open"),  
+        Input( "test-dropdown","value"),
+        Input( "database-dropdown","value"),
+        Input( "output-data-uploadn", "is_open"),  
         
         Input( "load-state-diagram-button","n_clicks"  ),
-        State(  "save-state-filename-id",   "value"    ),
+        Input( "table-bulk-rock","data"),
+        Input( "select-bulk-unit","value"),
 
-        State("table-bulk-rock","data"),
-        State("test-dropdown","options"),
-        State("database-caption","value"),
+        State( "save-state-filename-id",   "value"    ),
+        State( "test-dropdown","options"),
+        State( "database-caption","value"),
 
         prevent_initial_call=true,
 
     ) do    test, dtb, update,
-            n_clicks_load, filename,
-            tb_data, test_opts, db_cap
+            n_clicks_load, tb_data, sys_unit, 
+            filename, test_opts, db_cap
 
         bid  = pushed_button( callback_context() )  
 
@@ -587,7 +630,6 @@ function Tab_Simulation_Callbacks(app)
             @load file test
 
             val = test
-            # return tb_data, test_opts, test, db_cap
         else
             # catching up some special cases
             if test > length(db[(db.db .== dtb), :].test) - 1 
@@ -597,21 +639,26 @@ function Tab_Simulation_Callbacks(app)
             end
         end
 
+        if sys_unit == 1
             data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== val), :].oxide[1][i],
-                                    "mol_fraction"  => db[(db.db .== dtb) .& (db.test .== val), :].frac[1][i])
+                                    "fraction"           => db[(db.db .== dtb) .& (db.test .== val), :].frac[1][i])
                                         for i=1:length(db[(db.db .== dtb) .& (db.test .== val), :].oxide[1]) ]
+        elseif sys_unit == 2
+            data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== val), :].oxide[1][i],
+                                    "fraction"            => db[(db.db .== dtb) .& (db.test .== val), :].frac_wt[1][i])
+                                        for i=1:length(db[(db.db .== dtb) .& (db.test .== val), :].oxide[1]) ]
+        end
 
 
-            opts        =  [Dict(   "label" => db[(db.db .== dtb), :].title[i],
-                                    "value" => db[(db.db .== dtb), :].test[i]  )
-                                        for i=1:length(db[(db.db .== dtb), :].test)]
 
-            cap         = dba[(dba.acronym .== dtb) , :].database[1]  
+        opts        =  [Dict(   "label" => db[(db.db .== dtb), :].title[i],
+                                "value" => db[(db.db .== dtb), :].test[i]  )
+                                    for i=1:length(db[(db.db .== dtb), :].test)]
 
-            return data, opts, val, cap    
-        # end
+        cap         = dba[(dba.acronym .== dtb) , :].database[1]  
 
-               
+        return data, opts, val, cap    
+    
     end
 
 
@@ -625,17 +672,19 @@ function Tab_Simulation_Callbacks(app)
         Input("test-2-dropdown","value"),
         Input("database-dropdown","value"),
 
-        Input(  "load-state-diagram-button","n_clicks"  ),
-        State(  "save-state-filename-id",   "value"     ),
+        Input( "load-state-diagram-button","n_clicks"  ),
+        Input( "table-2-bulk-rock","data"),
+        Input( "select-bulk-unit","value"),
 
-        State("table-2-bulk-rock","data"),
-        State("test-2-dropdown","options"),
+        State( "save-state-filename-id",   "value"     ),
+        State( "test-2-dropdown","options"),
 
         prevent_initial_call=true,
 
     ) do    test, dtb, 
-            n_clicks_load, filename,
-            tb2_data, test2_opts
+            n_clicks_load, tb2_data, sys_unit,
+            filename,
+            test2_opts
 
          bid  = pushed_button( callback_context() )     
 
@@ -657,13 +706,28 @@ function Tab_Simulation_Callbacks(app)
         end
 
             if (~isempty(db[(db.db .== dtb) .& (db.test .== val), :].frac2[1]))
-                data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== val), :].oxide[1][i],
-                                        "mol_fraction"  => db[(db.db .== dtb) .& (db.test .== val), :].frac2[1][i])
-                                            for i=1:length(db[(db.db .== dtb) .& (db.test .== val), :].oxide[1]) ]
+
+                if sys_unit == 1
+                    data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== val), :].oxide[1][i],
+                                            "fraction"  => db[(db.db .== dtb) .& (db.test .== val), :].frac2[1][i])
+                                                for i=1:length(db[(db.db .== dtb) .& (db.test .== val), :].oxide[1]) ]
+                elseif sys_unit == 2
+                    data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== val), :].oxide[1][i],
+                                            "fraction"  => db[(db.db .== dtb) .& (db.test .== val), :].frac2_wt[1][i])
+                                                for i=1:length(db[(db.db .== dtb) .& (db.test .== val), :].oxide[1]) ]
+                end
+
             else
-                data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== val), :].oxide[1][i],
-                                        "mol_fraction"  => db[(db.db .== dtb) .& (db.test .== val), :].frac[1][i])
-                                            for i=1:length(db[(db.db .== dtb) .& (db.test .== val), :].oxide[1]) ]
+                if sys_unit == 1
+                    data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== val), :].oxide[1][i],
+                                            "fraction"  => db[(db.db .== dtb) .& (db.test .== val), :].frac[1][i])
+                                                for i=1:length(db[(db.db .== dtb) .& (db.test .== val), :].oxide[1]) ]
+                elseif sys_unit == 2
+                    data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== val), :].oxide[1][i],
+                                            "fraction"  => db[(db.db .== dtb) .& (db.test .== val), :].frac_wt[1][i])
+                                                for i=1:length(db[(db.db .== dtb) .& (db.test .== val), :].oxide[1]) ]
+                end
+
             end
 
             opts        =  [Dict(   "label" => db[(db.db .== dtb), :].title[i],
@@ -817,6 +881,27 @@ function Tab_Simulation_Callbacks(app)
         return is_open 
             
     end
+
+
+    # open/close Curve interpretation box
+    callback!(app,
+        Output("collapse-contact", "is_open"),
+        [Input("button-contact", "n_clicks")],
+        [State("collapse-contact", "is_open")], ) do  n, is_open
+        
+        if isnothing(n); n=0 end
+
+        if n>0
+            if is_open==1
+                is_open = 0
+            elseif is_open==0
+                is_open = 1
+            end
+        end
+        return is_open 
+            
+    end
+
     # open/close Curve interpretation box
     callback!(app,
         Output("collapse-export-magemin_c", "is_open"),

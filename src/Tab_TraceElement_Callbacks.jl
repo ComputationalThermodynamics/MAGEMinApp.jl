@@ -119,6 +119,10 @@ function Tab_TraceElement_Callbacks(app)
         Output("max-color-id-te",           "value"     ),
         Output("isopleth-dropdown-te",      "options"   ),
         Output("hidden-isopleth-dropdown-te",     "options"),
+        Output("stable-assemblage-id-te",   "children"),   
+        Output("show-text-list-id-te",         "style"),
+        Output("output-loading-id-te",         "children"),
+
         Input("load-button-te",             "n_clicks"  ),
         Input("compute-display-te",         "n_clicks"  ),
         Input("fields-dropdown-zr",         "value"     ),
@@ -191,6 +195,7 @@ function Tab_TraceElement_Callbacks(app)
         State("iso-min-id-te",             "value"),
         State("iso-step-id-te",            "value"),
         State("iso-max-id-te",             "value"),
+        State("stable-assemblage-id-te",   "children"), 
 
         prevent_initial_call = true,
 
@@ -208,7 +213,7 @@ function Tab_TraceElement_Callbacks(app)
                 isopleths_te,  isoplethsID_te, isoplethsHid_te,  isoplethsHidID_te, field, field_zr, calc, cust,
 
                 isoLineStyle, isoLineWidth, isoColorLine, isoLabelSize,   
-                minIso,     stepIso,    maxIso
+                minIso,     stepIso,    maxIso, txt_list
 
         xtitle, ytitle, Xrange, Yrange  = diagram_type(diagType, tmin, tmax, pmin, pmax) 
         bulk_L, bulk_R, oxi             = get_bulkrock_prop(bulk1, bulk2) 
@@ -217,19 +222,19 @@ function Tab_TraceElement_Callbacks(app)
         fieldNames                      = ["data_plot_te","data_reaction","data_grid","data_isopleth_out_te"]
         field2plot                      = zeros(Int64,4)
         fieldType                       = type
-
+        loading                         = ""
         field2plot[1]    = 1
         if @isdefined(Out_TE_XY) && length(Out_XY) == length(Out_TE_XY)
             if bid == "load-button-te"
                 fieldType = "zr"
-                global gridded_te, gridded_info_te, X_te, Y_te, npoints_te, meant_te
+                global gridded_te, gridded_info_te, gridded_fields_te, X_te, Y_te, npoints_te, meant_te
                 global layout_te, n_lbl, addedRefinementLvl
                 global data_plot_te,  data_reaction_te, data_grid_te, PT_infos_te, data_isopleth_te, data_isopleth_out_te
 
                 global iso_show_te             = 1;
                 data_isopleth_te = initialize_g_isopleth_te(; n_iso_max = 32)
 
-                gridded_te, gridded_info_te, X_te, Y_te, npoints_te, meant_te = get_gridded_map(    fieldname,
+                gridded_te, gridded_info_te, gridded_fields_te, X_te, Y_te, npoints_te, meant_te = get_gridded_map(    fieldname,
                                                                                                     "zr",
                                                                                                     oxi,
                                                                                                     Out_XY,
@@ -240,7 +245,7 @@ function Tab_TraceElement_Callbacks(app)
                                                                                                     refType,
                                                                                                     data,
                                                                                                     Xrange,
-                                                                                                    Yrange)
+                                                                                                    Yrange )
 
                 minColor     = round(minimum(skipmissing(gridded_te)),digits=2); 
                 maxColor     = round(maximum(skipmissing(gridded_te)),digits=2);  
@@ -260,22 +265,18 @@ function Tab_TraceElement_Callbacks(app)
                                                                 PTpath,
                                                                 "false")
 
-                data_plot_te, annotations = get_diagram_labels(     fieldname,
-                                                                    oxi,
-                                                                    Out_XY,
-                                                                    Hash_XY,
-                                                                    sub,
-                                                                    refLvl,
-                                                                    refType,
-                                                                    data,
-                                                                    PT_infos_te )
+                data_plot_te, annotations, txt_list = get_diagram_labels(   Out_XY,
+                                                                            Hash_XY,
+                                                                            refType,
+                                                                            data,
+                                                                            PT_infos_te )
                 ticks       = 4
                 frame       = get_plot_frame(Xrange,Yrange, ticks)                                  
                 layout_te   = Layout(
                                 images=frame,
                                 title= attr(
                                     text    = customTitle,
-                                    x       = 0.4,
+                                    x       = 0.5,
                                     xanchor = "center",
                                     yanchor = "top"
                                 ),
@@ -288,10 +289,10 @@ function Tab_TraceElement_Callbacks(app)
                                 xaxis_title = xtitle,
                                 yaxis_title = ytitle,
                                 annotations = annotations,
-                                width       = 900,
+                                width       = 720,
                                 height      = 900,
                                 autosize    = false,
-                                margin      = attr(autoexpand = false, l=50, r=280, b=260, t=50, pad=4),
+                                margin      = attr(autoexpand = false, l=0, r=0, b=260, t=50, pad=1),
                                 xaxis_range = Xrange, 
                                 yaxis_range = Yrange,
                                 xaxis       = attr(     tickmode    = "linear",
@@ -447,18 +448,7 @@ function Tab_TraceElement_Callbacks(app)
             elseif bid == "button-hide-all-isopleth-te"
     
                 iso_show_te          = 0
-                
-            elseif bid == "show-lbl-id-te"
-
-                if lbl == "true"
-                    for i=1:n_lbl+1
-                        layout_te[:annotations][i][:visible] = true
-                    end
-                else
-                    for i=1:n_lbl+1
-                        layout_te[:annotations][i][:visible] = false
-                    end
-                end         
+     
             else
                 fig_te = plot()
                 print("Compute a phase diagram with activated trace-element in the Setup tab first!\n")
@@ -467,6 +457,18 @@ function Tab_TraceElement_Callbacks(app)
             fig_te = plot()
             print("Compute a phase diagram with activated trace-element in the Setup tab first!\n")
         end
+
+        if lbl == "true"
+            for i=1:n_lbl+1
+                layout_te[:annotations][i][:visible] = true
+            end
+            show_text_list  = Dict("display" => "block")  
+        else
+            for i=1:n_lbl+1
+                layout_te[:annotations][i][:visible] = false
+            end
+            show_text_list  = Dict("display" => "none")  
+        end  
 
         # check state of unchanged variables ["data_plot","data_reaction","data_grid","data_isopleth_out_te"]
         if grid == "true"
@@ -500,7 +502,7 @@ function Tab_TraceElement_Callbacks(app)
                                                                     format   = "svg",
                                                                     filename =  replace(customTitle, " " => "_"),
                                                                     height   =  900,
-                                                                    width    =  900,
+                                                                    width    =  720,
                                                                     scale    =  2.0,       ).fields)
 
         layoutCap = Layout(     height          =  30,        
@@ -528,7 +530,7 @@ function Tab_TraceElement_Callbacks(app)
                                                                         scale    =  2.0,       ).fields)
 
 
-        return grid, full_grid, fig_cap, config_cap, fig_te, config, fieldType, minColor, maxColor, isopleths_te, isoplethsHid_te
+        return grid, full_grid, fig_cap, config_cap, fig_te, config, fieldType, minColor, maxColor, isopleths_te, isoplethsHid_te, txt_list, show_text_list, loading
             
     end
 

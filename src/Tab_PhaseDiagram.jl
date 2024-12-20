@@ -49,12 +49,14 @@ function Tab_PhaseDiagram()
                                     style       = Dict( "textAlign"     => "center",
                                                         "font-size"     => "100%",
                                                         "border"        => "1px grey solid",
+                                                        "background-color" => "#d3f2ce",
                                                         "width"         => "100%" )), 
                                 dbc_button(
                                     "Refine phase boundaries", id="refine-pb-button", color="light", className="me-2", n_clicks=0,
                                     style       = Dict( "textAlign"     => "center",
                                                         "font-size"     => "100%",
                                                         "border"        => "1px grey solid",
+                                                        "background-color" => "#d3f2ce",
                                                         "width"         => "100%" )), 
                             ], width=2), 
                             ]), 
@@ -88,24 +90,54 @@ function Tab_PhaseDiagram()
                                 duration=4000,
                             ),
                         ]),    
-                        # html_hr(),  
-                        html_div("‎ "), 
+                        
+                        dbc_row([   
+                            dbc_col([
+                                html_div("‎ "), 
 
-                        html_div([
-                            dbc_input(
-                                id      = "load-state-id",
-                                type    = "number", 
-                                min     = -1e50, 
-                                max     =  1e50, 
-                                value   =  1.0  ),
-                        ], style = Dict("display" => "none"), id      = "load-state-display-id"),
+                                html_div([
+                                    dbc_input(
+                                        id      = "load-state-id",
+                                        type    = "number", 
+                                        min     = -1e50, 
+                                        max     =  1e50, 
+                                        value   =  1.0  ),
+                                ], style = Dict("display" => "none"), id      = "load-state-display-id"),
 
-                        dbc_row([
-                            diagram_legend()
+                                dbc_row([
+                                    diagram_legend()
+                                ]),
+                                dbc_row([
+                                    diagram_plot()
+                                ]),
+                            ], width=9),
+                            dbc_col([
+                                html_div([
+                                    dbc_row([
+                                        html_div("‎ "),
+                                        html_div("‎ "), 
+                                        dcc_clipboard(
+                                            target_id   = "stable-assemblage-id",
+                                            title       = "copy",
+                                            style       =  Dict(    "display"       => "inline-block",
+                                                                    "fontSize"      =>  20,
+                                                                    "verticalAlign" => "top"    ),
+                                        ),
+                                    ]),
+                                    dbc_row([
+                                        dbc_card([
+                                            dcc_markdown(   id          = "stable-assemblage-id", 
+                                                            children    = "",
+                                                            style       = Dict(     "white-space" => "pre", 
+                                                                                    "max-height" => "640px",
+                                                                                    "overflow-y" => "auto"      ))
+                                        ])
+                                    ]),
+                                ], style = Dict("display" => "block"), id      = "show-text-list-id"), #none, block
+
+                            ], width=3),
                         ]),
-                        dbc_row([
-                            diagram_plot()
-                        ]),
+
                     ], width=9),
                     dbc_col([
                         
@@ -180,7 +212,7 @@ function Tab_PhaseDiagram()
                                                         # row_selectable  = "single",
                                                         style_cell      = Dict("fontSize" => "140%", "textAlign" => "center", "padding" => "0px"),
                                                         style_header    = (fontWeight="bold"),
-                                                        
+                                                        editable    = true,
                                                     ),
                                                 ]),
                                             ], style = Dict("display" => "none"), id      = "disp-test-id"),
@@ -206,7 +238,7 @@ function Tab_PhaseDiagram()
                                                     dcc_download(id="download-table-text"),  
                                                 ]),
                                                 dbc_col([    
-                                                    dbc_button("text", id="save-eq-button", color="light",  n_clicks=0,
+                                                    dbc_button("Text", id="save-eq-button", color="light",  n_clicks=0,
                                                     style       = Dict( "textAlign"     => "center",
                                                                         "font-size"     => "100%",
                                                                         "border"        =>"1px grey solid")), 
@@ -553,6 +585,15 @@ function Tab_PhaseDiagram()
                                         html_h1("Selection", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                         html_hr(),
                                         dbc_row([
+                                            # this parts serves as a relay to trigger an update of the phase list for the isopleth
+                                            html_div([
+                                                dbc_input(
+                                                    id      = "trigger-update-ss-list",
+                                                    type    = "number", 
+                                                    value   = -1,
+                                                    debounce = true   ),
+                                            ], style = Dict("display" => "none"), id      = "trigger-update-ss-list-display"),
+
                                             dbc_col([
                                                 html_h1("Isopleth type", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
                                             ]),

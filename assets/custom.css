@@ -2,6 +2,12 @@
 .custom-tab-bar {
     color: red; /* Change this to your desired color */
 }
+.custom-loading .dash-spinner {
+    margin-top: 70px;
+    width: 50px;  /* Set the desired width */
+    height: 50px; /* Set the desired height */
+}
+
 /* .dropdown-menu {
     max-height: 300px;
     overflow-y: auto;

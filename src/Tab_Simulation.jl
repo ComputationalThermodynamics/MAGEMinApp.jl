@@ -17,12 +17,13 @@ function Tab_Simulation(db_inf)
                                         ]),
                                         dbc_col([ 
                                             dcc_dropdown(   id      = "database-dropdown",
-                                                            options = [
-                                                                Dict(   "label" => dba.database[i],
-                                                                        "value" => dba.acronym[i]  )
-                                                                            for i=1:size(dba,1)
-                                                            ],
-                                                            value="ig" ,
+                                                            # options = [
+                                                            #     Dict(   "label" => dba.database[i],
+                                                            #             "value" => dba.acronym[i]  )
+                                                            #                 for i=1:size(dba,1)
+                                                            # ],
+                                                            options     = dtb_dict,
+                                                            value       ="ig",
                                                             clearable   = false,
                                                             multi       = false),
                                         ]),
@@ -361,18 +362,27 @@ function Tab_Simulation(db_inf)
                                     dbc_row([
                                         dbc_col([ 
                                             html_h1("Initial grid subdivision", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
-                                        ]),
+                                        ], width=6),
                                         dbc_col([ 
                                                 dbc_input(
                                                 id      = "gsub-id",
                                                 type    = "number", 
-                                                min     = 2,  
+                                                min     = 2, 
+                                                max     = 9, 
                                                 value   = 3   ),
-                                        ]),
-                                        dbc_tooltip([
-                                            html_div("Initial resolution of the uniform grid defined as 2^n × 2^n"),
-                                            html_div("e.g., n = 3 yields a 8 × 8 grid, i.e., 64 points"),
-                                                    ],target="gsub-id"),
+                                        ], width=3),
+                                        dbc_col([ 
+                                            dcc_textarea(
+                                                id          ="grid-subdivision",
+                                                value       = "8 × 8 grid",
+                                                readOnly    = true,
+                                                disabled    = true,
+                                                draggable   = false,
+                                                style       = Dict("height" => "26px","resize"=> "none","textAlign" => "center","font-size" => "100%", "width"=> "100%",),
+                                                # style       = Dict("textAlign" => "center","font-size" => "100%", "width"=> "100%", "resize"=> "none")
+                                            ),
+                                        ], width=3),
+
                                     ]),
                                     #refinement type
                                     dbc_row([
@@ -503,42 +513,64 @@ function Tab_Simulation(db_inf)
                                         dbc_row([
                                                 dbc_col([
 
-                                                    dcc_upload(
-                                                        id="upload-bulk",
-                                                        children=html_div([
-                                                            "Drag and drop or select bulk-rock file",
-                                                        ]),
-                                                        style=Dict(
-                                                            "width"         => "100%",
-                                                            "height"        => "60px",
-                                                            "lineHeight"    => "60px",
-                                                            "borderWidth"   => "1px",
-                                                            "borderStyle"   => "dashed",
-                                                            "borderRadius"  => "5px",
-                                                            "textAlign"     => "center"
-                                                        ),
-                                                        # Allow multiple files to be uploaded
-                                                        multiple=false
-                                                    ),
-                                                    dbc_alert(
-                                                        "Bulk-rock(s) composition(s) successfully loaded",
-                                                        id      = "output-data-uploadn",
-                                                        is_open = false,
-                                                        duration= 4000,
-                                                    ),
-                                                    dbc_alert(
-                                                        "Bulk-rock(s) composition(s) failed to load, check input file format",
-                                                        color="danger",
-                                                        id      ="output-data-uploadn-failed",
-                                                        is_open = false,
-                                                        duration= 4000,
-                                                    ),
-                                                    # html_div(id="output-data-uploadn"),
-                                                    dbc_tooltip([
-                                                        html_div("An example of file providing bulk-rock compositions is given in the 'examples' folder"),
-                                                        html_div("The structure of the file should comply with the following structure:"),
-                                                        html_div("title::String; comments::String; db::String; sysUnit::String; oxide::Vector{String}; frac::Vector{Float64}")
-                                                                ],target="upload-bulk"),
+                                                    dbc_row([
+                                                        dbc_col([ 
+                                                            dcc_dropdown(   id      = "select-bulk-unit",
+                                                            options = [
+                                                                (label = "mol%",                value = 1),
+                                                                (label = "wt%",                 value = 2),
+                                                            ],
+                                                            value       = 1,
+                                                            style       = Dict("border" => "none"),
+                                                            clearable   = false,
+                                                            multi       = false),
+                                                        ], width=2),
+
+
+                                                        dbc_col([ 
+
+                                                            dcc_upload(
+                                                                id="upload-bulk",
+                                                                children=html_div([
+                                                                    "Drag and drop or select bulk-rock file",
+                                                                ]),
+                                                                style=Dict(
+                                                                    "width"         => "100%",
+                                                                    "height"        => "60px",
+                                                                    "lineHeight"    => "60px",
+                                                                    "borderWidth"   => "1px",
+                                                                    "borderStyle"   => "dashed",
+                                                                    "borderRadius"  => "5px",
+                                                                    "textAlign"     => "center"
+                                                                ),
+                                                                # Allow multiple files to be uploaded
+                                                                multiple=false
+                                                            ),
+                                                            dbc_alert(
+                                                                "Bulk-rock(s) composition(s) successfully loaded",
+                                                                id      = "output-data-uploadn",
+                                                                is_open = false,
+                                                                duration= 4000,
+                                                            ),
+                                                            dbc_alert(
+                                                                "Bulk-rock(s) composition(s) failed to load, check input file format",
+                                                                color="danger",
+                                                                id      ="output-data-uploadn-failed",
+                                                                is_open = false,
+                                                                duration= 4000,
+                                                            ),
+                                                            # html_div(id="output-data-uploadn"),
+                                                            dbc_tooltip([
+                                                                html_div("An example of file providing bulk-rock compositions is given in the 'examples' folder"),
+                                                                html_div("The structure of the file should comply with the following structure:"),
+                                                                html_div("title::String; comments::String; db::String; sysUnit::String; oxide::Vector{String}; frac::Vector{Float64}")
+                                                                        ],target="upload-bulk"),
+
+                                                        ], width=10),
+
+
+                                                    ]),
+
 
                                                     html_div("‎ "),
                                                     dbc_row([
@@ -583,13 +615,20 @@ function Tab_Simulation(db_inf)
                                                                     dash_datatable(
                                                                         id="table-bulk-rock",
                                                                         columns=(  [    Dict("id" =>  "oxide",          "name" =>  "oxide",         "editable" => false),
-                                                                                        Dict("id" =>  "mol_fraction",   "name" =>  "mol_fraction",  "editable" => true)]
+                                                                                        Dict("id" =>  "fraction",   "name" =>  "fraction",  "editable" => true)]
                                                                         ),
                                                                         data        =   [Dict(  "oxide"         => db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1][i],
-                                                                                                "mol_fraction"  => db[(db.db .== "ig") .& (db.test .== 0), :].frac[1][i])
+                                                                                                "fraction"           => db[(db.db .== "ig") .& (db.test .== 0), :].frac[1][i])
                                                                                                     for i=1:length(db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1]) ],
                                                                         style_cell  = (textAlign="center", fontSize="140%",),
                                                                         style_header= (fontWeight="bold",),
+                                                                        editable    = true,
+                                                                    ),
+                                                                    dbc_alert(
+                                                                        "Successfully tested",
+                                                                        id      ="test-id-test",
+                                                                        is_open =false,
+                                                                        duration=4000,
                                                                     ),
 
                                                                     # Buffer multiplier
@@ -619,13 +658,14 @@ function Tab_Simulation(db_inf)
                                                                 dash_datatable(
                                                                     id="table-2-bulk-rock",
                                                                     columns=(  [    Dict("id" =>  "oxide",          "name" =>  "oxide",         "editable" => false),
-                                                                                    Dict("id" =>  "mol_fraction",   "name" =>  "mol_fraction",  "editable" => true)]
+                                                                                    Dict("id" =>  "fraction",   "name" =>  "fraction",  "editable" => true)]
                                                                     ),
                                                                     data        =   [Dict(  "oxide"         => db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1][i],
-                                                                                            "mol_fraction"  => db[(db.db .== "ig") .& (db.test .== 0), :].frac2[1][i])
+                                                                                            "fraction"  => db[(db.db .== "ig") .& (db.test .== 0), :].frac2[1][i])
                                                                                                 for i=1:length(db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1]) ],
                                                                     style_cell  = (textAlign="center", fontSize="140%",),
                                                                     style_header= (fontWeight="bold",),
+                                                                    editable    = true,
                                                                 ),
 
 
@@ -673,7 +713,131 @@ function Tab_Simulation(db_inf)
 
                             ]),
 
-                        ], width=4),
+                            html_div([
+                                dbc_row([dbc_button("Trace-element composition",id="button-te"),
+                                dbc_collapse(
+                                    dbc_card(dbc_cardbody([
+    
+                                            dbc_row([
+                                                    dbc_col([
+    
+                                                        dcc_upload(
+                                                            id="upload-te",
+                                                            children=html_div([
+                                                                "Drag and drop or select trace-element file",
+                                                            ]),
+                                                            style=Dict(
+                                                                "width"         => "100%",
+                                                                "height"        => "60px",
+                                                                "lineHeight"    => "60px",
+                                                                "borderWidth"   => "1px",
+                                                                "borderStyle"   => "dashed",
+                                                                "borderRadius"  => "5px",
+                                                                "textAlign"     => "center"
+                                                            ),
+                                                            # Allow multiple files to be uploaded
+                                                            multiple=false
+                                                        ),
+                                                        dbc_alert(
+                                                            "Trace-element composition(s) successfully loaded",
+                                                            id      = "output-te-uploadn",
+                                                            is_open = false,
+                                                            duration= 4000,
+                                                        ),
+                                                        dbc_alert(
+                                                            "Trace-element composition(s) failed to load, check input file format",
+                                                            color="danger",
+                                                            id      ="output-te-uploadn-failed",
+                                                            is_open = false,
+                                                            duration= 4000,
+                                                        ),
+    
+                                                        html_div("‎ "),
+                                                        dbc_row([
+                                                            
+                                                                dbc_col([
+                                                                    html_div([
+                                                                        dcc_dropdown(   id      = "test-te-dropdown",
+                                                                        options = [
+                                                                            Dict(   "label" => dbte.title[i],
+                                                                                    "value" => dbte.test[i]  )
+                                                                                        for i=1:length(dbte.test)
+                                                                        ],
+                                                                        value       = 0,
+                                                                        clearable   = false,
+                                                                        multi       = false),
+                                                                    ], style = Dict("display" => "block"), id      = "test-1-te-id"),
+                                                                ]),
+                                                            
+                                                                dbc_col([
+                                                                    html_div([
+                                                                        dcc_dropdown(   id      = "test-2-te-dropdown",
+                                                                        options = [
+                                                                            Dict(   "label" => dbte.title[i],
+                                                                                    "value" => dbte.test[i]  )
+                                                                                        for i=1:length(dbte.test)
+                                                                        ],
+                                                                        value       = 0,
+                                                                        clearable   = false,
+                                                                        multi       = false),
+                                                                    ], style = Dict("display" => "none"), id      = "test-2-te-id"),
+                                                                ]),
+                                                        ]),
+                                                        html_div("‎ "),
+                                                        dbc_row([
+                                                            
+                                                                dbc_col([
+                                                                    html_div([
+                                                                        dash_datatable(
+                                                                            id="table-te-rock",
+                                                                            columns=(  [    Dict("id" =>  "elements",   "name" =>  "elements",   "editable" => false),
+                                                                                            Dict("id" =>  "μg_g",        "name" =>  "μg/g",        "editable" => true)]
+                                                                            ),
+                                                                            data        =   [Dict(  "elements"      => dbte[(dbte.test .== 0), :].elements[1][i],
+                                                                                                    "μg_g"           => dbte[(dbte.test .== 0), :].μg_g[1][i])
+                                                                                                        for i=1:length(dbte[(dbte.test .== 0), :].elements[1]) ],
+                                                                            style_cell  = (textAlign="center", fontSize="140%",),
+                                                                            style_header= (fontWeight="bold",),
+                                                                            editable    = true,
+                                                                        ),
+    
+                                                                    ], style = Dict("display" => "block"), id      = "table-1-te-id"), #none, block
+                                                                ]),
+                                                            
+                                                            
+                                                            dbc_col([
+                                                                html_div([
+                                                                    dash_datatable(
+                                                                        id="table-te-2-rock",
+                                                                        columns=(  [    Dict("id" =>  "elements",   "name" =>  "elements",   "editable" => false),
+                                                                                        Dict("id" =>  "μg_g",        "name" =>  "μg/g",        "editable" => true)]
+                                                                        ),
+                                                                        data        =   [Dict(  "elements"      => dbte[(dbte.test .== 0), :].elements[1][i],
+                                                                                                "μg_g"           => dbte[(dbte.test .== 0), :].μg_g2[1][i])
+                                                                                                    for i=1:length(dbte[(dbte.test .== 0), :].elements[1]) ],
+                                                                        style_cell  = (textAlign="center", fontSize="140%",),
+                                                                        style_header= (fontWeight="bold",),
+                                                                        editable    = true,
+                                                                    ),
+    
+                                                                ], style = Dict("display" => "none"), id      = "table-2-te-id"), #none, block
+                                                            ]),
+                                                        ]),
+    
+                                                    ]),
+    
+                                                    ], justify="center"),
+                                                    ])
+                                                ),
+                                                id="collapse-te",
+                                                is_open=true,
+                                            ),
+    
+                                    ]),
+                                ], style = Dict("display" => "none"), id      = "te-panel-id"), #none, block
+
+                        
+                            ], width=4),
 
                         dbc_col([ 
                         ]),
@@ -729,12 +893,16 @@ function Tab_Simulation(db_inf)
                                             ]),
                                             html_div("‎ "),
                                             dbc_row([
-                                                dbc_button(
-                                                    "Compute phase diagram", id="compute-button", color="light", className="me-2", n_clicks=0,
-                                                    style       = Dict( "textAlign"     => "center",
-                                                                        "font-size"     => "100%",
-                                                                        "border"        =>"1px grey solid")
-                                                ),
+                                                # html_div([
+                                                    dbc_button(
+                                                        "Compute phase diagram", id="compute-button", color="light", className="me-2", n_clicks=0,
+                                                        style       = Dict( "textAlign"     => "center",
+                                                                            "font-size"     => "100%",
+                                                                            "background-color" => "#d3f2ce",
+                                                                            "border"        =>"1px grey solid")
+                                                    ),
+
+                                                # ], className="overlay-container"),
                                             ]),
 
                                             html_div("‎ "),
@@ -799,153 +967,54 @@ function Tab_Simulation(db_inf)
                                     is_open=true,
                             ),
                         ]),
-                        html_div("‎ "),
+
+
+                        dbc_row([   
+                            dbc_button("Help and contact",id="button-contact",color="primary"),
+                            dbc_collapse(
+                                dbc_card(dbc_cardbody([
+                                    dbc_row([ 
+            
+                                        dbc_col([   
+                                            dcc_markdown(       id          = "contact-info-id", 
+                                                                children    = AppData.contribs[3],
+                                                                style       = Dict("white-space" => "pre"))
+                                            ], width=4),
+                                            dbc_col([  
+                                                dcc_markdown(       id          = "description-info-id", 
+                                                                    children    = AppData.contribs[4],
+                                                                    style       = Dict("white-space" => "pre"))
+                                            ], width=8),
+                                    ]), 
+                                   
+                                ])),
+                                id="collapse-contact",
+                                is_open=true,
+                            ),
+                        ]),
+                        # html_div("‎ "),
                         dbc_row([   
                             dbc_button("Contributors",id="button-contributors",color="primary"),
                             dbc_collapse(
                                 dbc_card(dbc_cardbody([
+
                                     dbc_row([ 
                                         dbc_col([                                                          
-                                            # dbc_row([
-                                                dcc_markdown(       id          = "debug-info-id", 
-                                                                    children    = AppData.contribs[1],
-                                                                    style       = Dict("white-space" => "pre"))
-                                            # ]),
+                                            dcc_markdown(       id          = "debug-info-id", 
+                                                                children    = AppData.contribs[1],
+                                                                style       = Dict("white-space" => "pre"))
                                         ], width=6),
                                         dbc_col([                                                          
-                                            # dbc_row([
-                                                dcc_markdown(       id          = "app-info-id", 
-                                                                    children    = AppData.contribs[2],
-                                                                    style       = Dict("white-space" => "pre"))
-                                            # ]),
+                                            dcc_markdown(       id          = "app-info-id", 
+                                                                children    = AppData.contribs[2],
+                                                                style       = Dict("white-space" => "pre"))
                                         ], width=6),
                                     ]),
                                 ])),
                                 id="collapse-contributors",
-                                is_open=false,
+                                is_open=true,
                             ),
                         ]),
-                        html_div("‎ "),  
-                        html_div([
-                            dbc_row([dbc_button("Trace-element composition",id="button-te"),
-                            dbc_collapse(
-                                dbc_card(dbc_cardbody([
-
-                                        dbc_row([
-                                                dbc_col([
-
-                                                    dcc_upload(
-                                                        id="upload-te",
-                                                        children=html_div([
-                                                            "Drag and drop or select trace-element file",
-                                                        ]),
-                                                        style=Dict(
-                                                            "width"         => "100%",
-                                                            "height"        => "60px",
-                                                            "lineHeight"    => "60px",
-                                                            "borderWidth"   => "1px",
-                                                            "borderStyle"   => "dashed",
-                                                            "borderRadius"  => "5px",
-                                                            "textAlign"     => "center"
-                                                        ),
-                                                        # Allow multiple files to be uploaded
-                                                        multiple=false
-                                                    ),
-                                                    dbc_alert(
-                                                        "Trace-element composition(s) successfully loaded",
-                                                        id      = "output-te-uploadn",
-                                                        is_open = false,
-                                                        duration= 4000,
-                                                    ),
-                                                    dbc_alert(
-                                                        "Trace-element composition(s) failed to load, check input file format",
-                                                        color="danger",
-                                                        id      ="output-te-uploadn-failed",
-                                                        is_open = false,
-                                                        duration= 4000,
-                                                    ),
-
-                                                    html_div("‎ "),
-                                                    dbc_row([
-                                                        
-                                                            dbc_col([
-                                                                html_div([
-                                                                    dcc_dropdown(   id      = "test-te-dropdown",
-                                                                    options = [
-                                                                        Dict(   "label" => dbte.title[i],
-                                                                                "value" => dbte.test[i]  )
-                                                                                    for i=1:length(dbte.test)
-                                                                    ],
-                                                                    value       = 0,
-                                                                    clearable   = false,
-                                                                    multi       = false),
-                                                                ], style = Dict("display" => "block"), id      = "test-1-te-id"),
-                                                            ]),
-                                                        
-                                                            dbc_col([
-                                                                html_div([
-                                                                    dcc_dropdown(   id      = "test-2-te-dropdown",
-                                                                    options = [
-                                                                        Dict(   "label" => dbte.title[i],
-                                                                                "value" => dbte.test[i]  )
-                                                                                    for i=1:length(dbte.test)
-                                                                    ],
-                                                                    value       = 0,
-                                                                    clearable   = false,
-                                                                    multi       = false),
-                                                                ], style = Dict("display" => "none"), id      = "test-2-te-id"),
-                                                            ]),
-                                                    ]),
-                                                    html_div("‎ "),
-                                                    dbc_row([
-                                                        
-                                                            dbc_col([
-                                                                html_div([
-                                                                    dash_datatable(
-                                                                        id="table-te-rock",
-                                                                        columns=(  [    Dict("id" =>  "elements",   "name" =>  "elements",   "editable" => false),
-                                                                                        Dict("id" =>  "μg_g",        "name" =>  "μg/g",        "editable" => true)]
-                                                                        ),
-                                                                        data        =   [Dict(  "elements"      => dbte[(dbte.test .== 0), :].elements[1][i],
-                                                                                                "μg_g"           => dbte[(dbte.test .== 0), :].μg_g[1][i])
-                                                                                                    for i=1:length(dbte[(dbte.test .== 0), :].elements[1]) ],
-                                                                        style_cell  = (textAlign="center", fontSize="140%",),
-                                                                        style_header= (fontWeight="bold",),
-                                                                    ),
-
-                                                                ], style = Dict("display" => "block"), id      = "table-1-te-id"), #none, block
-                                                            ]),
-                                                        
-                                                        
-                                                        dbc_col([
-                                                            html_div([
-                                                                dash_datatable(
-                                                                    id="table-te-2-rock",
-                                                                    columns=(  [    Dict("id" =>  "elements",   "name" =>  "elements",   "editable" => false),
-                                                                                    Dict("id" =>  "μg_g",        "name" =>  "μg/g",        "editable" => true)]
-                                                                    ),
-                                                                    data        =   [Dict(  "elements"      => dbte[(dbte.test .== 0), :].elements[1][i],
-                                                                                            "μg_g"           => dbte[(dbte.test .== 0), :].μg_g2[1][i])
-                                                                                                for i=1:length(dbte[(dbte.test .== 0), :].elements[1]) ],
-                                                                    style_cell  = (textAlign="center", fontSize="140%",),
-                                                                    style_header= (fontWeight="bold",),
-                                                                ),
-
-                                                            ], style = Dict("display" => "none"), id      = "table-2-te-id"), #none, block
-                                                        ]),
-                                                    ]),
-
-                                                ]),
-
-                                                ], justify="center"),
-                                                ])
-                                            ),
-                                            id="collapse-te",
-                                            is_open=true,
-                                        ),
-
-                                ]),
-                            ], style = Dict("display" => "none"), id      = "te-panel-id"), #none, block
 
                         ], width=3),
                     ]),

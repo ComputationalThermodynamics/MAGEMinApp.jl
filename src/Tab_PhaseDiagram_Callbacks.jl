@@ -265,15 +265,16 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("save-eq-button", "n_clicks"),
         State("Filename-eq-id", "value"),
         State("database-dropdown","value"),
+        State("mb-cpx-switch","value"),
         prevent_initial_call=true,
-    ) do n_clicks, fname, dtb
+    ) do n_clicks, fname, dtb, mbCpx
 
         if fname != "filename"
             P       = "_Pkbar_"*string(Out_XY[point_id].P_kbar)
             T       = "_TC_"*string(Out_XY[point_id].T_C)
             datab   = "_"*dtb
             fileout = fname*datab*P*T*".txt"
-            file    = save_equilibrium_to_file(Out_XY[point_id])            #point_id is defined as global variable in clickData callback
+            file    = save_equilibrium_to_file(Out_XY[point_id], dtb, mbCpx)            #point_id is defined as global variable in clickData callback
             output  = Dict("content" => file,"filename" => fileout)
             
             return output, "success", ""
@@ -497,21 +498,25 @@ function Tab_PhaseDiagram_Callbacks(app)
     """
     callback!(
         app,
-        Output("show-grid",             "value"), 
-        Output("show-full-grid",        "value"), 
-        Output("pd-legend",             "figure"),
-        Output("pd-legend",             "config"),
-        Output("phase-diagram",         "figure"),
-        Output("phase-diagram",         "config"),
-        Output("computation-info-id",   "children"),        
+        Output("show-grid",                 "value"), 
+        Output("show-full-grid",            "value"), 
+        Output("pd-legend",                 "figure"),
+        Output("pd-legend",                 "config"),
+        Output("phase-diagram",             "figure"),
+        Output("phase-diagram",             "config"),
+        Output("computation-info-id",       "children"),
+        Output("stable-assemblage-id",      "children"),     
 
-        Output("isopleth-dropdown",     "options"),
-        Output("hidden-isopleth-dropdown",     "options"),
-        Output("smooth-colormap",       "value"),
-        Output("tabs",                  "active_tab"),      # currently active tab
+        Output("isopleth-dropdown",         "options"),
+        Output("hidden-isopleth-dropdown",  "options"),
+        Output("smooth-colormap",           "value"),
+        Output("tabs",                      "active_tab"),      # currently active tab
 
-        Output("min-color-id",           "value"),
-        Output("max-color-id",           "value"),
+        Output("min-color-id",              "value"),
+        Output("max-color-id",              "value"),
+        Output("output-loading-id",         "children"),
+        Output("trigger-update-ss-list",    "value"),
+        Output("show-text-list-id",         "style"),
 
         Input("show-grid",                  "value"), 
         Input("show-full-grid",             "value"), 
@@ -539,6 +544,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("update-title-button",    "n_clicks"),
         Input("load-state-id",          "value"),
         State("title-id",               "value"),
+        State("stable-assemblage-id",   "children"),   
 
         State("diagram-dropdown",       "value"),           # pt, px, tx
         State("database-dropdown",      "value"),           # mp, mb, ig ,igd, um, alk
@@ -568,7 +574,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         State("table-bulk-rock",        "data"),            # bulk-rock 1
         State("table-2-bulk-rock",      "data"),            # bulk-rock 2
-
+        State("select-bulk-unit",       "value"),
         State("buffer-1-mul-id",        "value"),           # buffer n 1
         State("buffer-2-mul-id",        "value"),           # buffer n 2
 
@@ -608,13 +614,13 @@ function Tab_PhaseDiagram_Callbacks(app)
     ) do    grid,       full_grid,  lbl,        addIso,     removeIso,  removeAllIso,    isoShow,   isoHide, isoShowAll,    isoHideAll,    
             n_clicks_mesh, n_clicks_refine, uni_n_clicks_refine, 
             minColor,   maxColor,
-            colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  updateTitle,     loadstateid, customTitle,
+            colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  updateTitle,     loadstateid, customTitle, txt_list,
             diagType,   dtb,        watsat,     cpx,        limOpx,     limOpxVal,  phase_selection, PTpath,
             tmin,       tmax,       pmin,       pmax,
             fixT,       fixP,
             sub,        refType,    refLvl,
             bufferType, solver,     verbose,    scp,
-            bulk1,      bulk2,      
+            bulk1,      bulk2,      sys_unit,   
             bufferN1,   bufferN2,
             tepm,       kds_mod,    zrsat_mod,  bulkte1,    bulkte2,
             test,
@@ -630,16 +636,19 @@ function Tab_PhaseDiagram_Callbacks(app)
         bid                             = pushed_button( callback_context() )                           # get the ID of the last pushed button
         bulkte_L, bulkte_R, elem        = get_terock_prop(bulkte1, bulkte2)
         colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)              # get colormap information
-        bulk_L, bulk_R, oxi             = get_bulkrock_prop(bulk1, bulk2)                               # get bulk rock composition information
+        bulk_L, bulk_R, oxi             = get_bulkrock_prop(bulk1, bulk2; sys_unit=sys_unit)                               # get bulk rock composition information
         fieldNames                      = ["data_plot","data_reaction","data_grid","data_isopleth_out"]
         field2plot                      = zeros(Int64,4)
 
         field2plot[1]    = 1
-        if bid == "compute-button"
+        loading          = ""  
+        update_ss_list   = ""
 
+        if bid == "compute-button"
+            loading                     = ""  
             smooth                      = "best"
             # declare set of global variables needed to generate, refine and display phase diagrams
-            global fig, data, Hash_XY, Out_TE_XY, all_TE_ph, n_phase_XY, gridded, gridded_info, X, Y, meant, npoints
+            global fig, data, Hash_XY, Out_TE_XY, all_TE_ph, n_phase_XY, gridded, gridded_info, gridded_fields, phase_infos, X, Y, meant, npoints
             global addedRefinementLvl   = 0;
             global n_lbl                = 0;
             global iso_show             = 1;
@@ -648,17 +657,17 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             data_isopleth = initialize_g_isopleth(; n_iso_max = 32)
 
-            data_plot, layout, npoints, meant  =  compute_new_phaseDiagram( xtitle,     ytitle,     lbl,
-                                                                            Xrange,     Yrange,     fieldname,  customTitle,
-                                                                            dtb,        diagType,   verbose,    scp,        solver,     phase_selection,
-                                                                            fixT,       fixP,
-                                                                            sub,        refLvl,
-                                                                            watsat,     cpx,        limOpx,     limOpxVal,  PTpath,
-                                                                            bulk_L,     bulk_R,     oxi,
-                                                                            bufferType, bufferN1,   bufferN2,
-                                                                            minColor,   maxColor,
-                                                                            smooth,     colorm,     reverseColorMap, set_white,
-                                                                            test,       refType                          )
+            data_plot, layout, npoints, meant, txt_list  =  compute_new_phaseDiagram(   xtitle,     ytitle,     lbl,
+                                                                                        Xrange,     Yrange,     fieldname,  customTitle,
+                                                                                        dtb,        diagType,   verbose,    scp,        solver,     phase_selection,
+                                                                                        fixT,       fixP,
+                                                                                        sub,        refLvl,
+                                                                                        watsat,     cpx,        limOpx,     limOpxVal,  PTpath,
+                                                                                        bulk_L,     bulk_R,     oxi,
+                                                                                        bufferType, bufferN1,   bufferN2,
+                                                                                        minColor,   maxColor,
+                                                                                        smooth,     colorm,     reverseColorMap, set_white,
+                                                                                        test,       refType                          )
             if tepm == "true"
                 if dtb != "um" && dtb != "ume" && dtb != "mtl"
                     t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
@@ -678,20 +687,21 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             minColor        = round(minimum(skipmissing(gridded)),digits=2); 
             maxColor        = round(maximum(skipmissing(gridded)),digits=2);  
-    
+            update_ss_list  = 1
+
         elseif bid == "refine-pb-button" || bid == "uni-refine-pb-button"
 
-            data_plot, layout, npoints, meant  =  refine_phaseDiagram(  xtitle,     ytitle,     lbl, 
-                                                                        Xrange,     Yrange,     fieldname,  customTitle,
-                                                                        dtb,        diagType,   watsat, verbose,    scp,    solver, phase_selection,
-                                                                        fixT,       fixP,
-                                                                        sub,        refLvl,
-                                                                        cpx,        limOpx,     limOpxVal,  PTpath,
-                                                                        bulk_L,     bulk_R,     oxi,
-                                                                        bufferType, bufferN1,   bufferN2,
-                                                                        minColor,   maxColor,
-                                                                        smooth,     colorm,     reverseColorMap, set_white,
-                                                                        test,       refType,    bid                             )
+            data_plot, layout, npoints, meant, txt_list   =  refine_phaseDiagram(   xtitle,     ytitle,     lbl, 
+                                                                                    Xrange,     Yrange,     fieldname,  customTitle,
+                                                                                    dtb,        diagType,   watsat, verbose,    scp,    solver, phase_selection,
+                                                                                    fixT,       fixP,
+                                                                                    sub,        refLvl,
+                                                                                    cpx,        limOpx,     limOpxVal,  PTpath,
+                                                                                    bulk_L,     bulk_R,     oxi,
+                                                                                    bufferType, bufferN1,   bufferN2,
+                                                                                    minColor,   maxColor,
+                                                                                    smooth,     colorm,     reverseColorMap, set_white,
+                                                                                    test,       refType,    bid                             )
 
             if tepm == "true"
                 if dtb != "um" && dtb != "ume" && dtb != "mtl"
@@ -707,6 +717,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             infos           = get_computation_info(npoints, meant)
             data_reaction   = show_hide_reaction_lines(sub,refLvl,Xrange,Yrange)
             data_grid       = show_hide_mesh_grid()
+            update_ss_list  = 1
 
         elseif bid == "load-state-id"
             data_plot,layout =  update_diplayed_field_phaseDiagram( xtitle,     ytitle,     
@@ -835,10 +846,13 @@ function Tab_PhaseDiagram_Callbacks(app)
             for i=1:n_lbl+1
                 layout[:annotations][i][:visible] = true
             end
+            show_text_list  = Dict("display" => "block")  
+
         else
             for i=1:n_lbl+1
                 layout[:annotations][i][:visible] = false
             end
+            show_text_list  = Dict("display" => "none")  
         end
 
         # check state of unchanged variables ["data_plot","data_reaction","data_grid"]
@@ -872,7 +886,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     format   = "svg",
                                                                     filename =  replace(customTitle, " " => "_"),
                                                                     height   =  900,
-                                                                    width    =  900,
+                                                                    width    =  720,
                                                                     scale    =  2.0,       ).fields)
 
         layoutCap = Layout(     height          =  30,        
@@ -898,8 +912,11 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                         width    =  900,
                                                                         scale    =  2.0,       ).fields)
 
-
-        return grid, full_grid, fig_cap, config_cap, fig, config, infos, isopleths, isoplethsHid, smooth, active_tab, minColor,   maxColor
+        if isempty(update_ss_list)
+            return grid, full_grid, fig_cap, config_cap, fig, config, infos, txt_list, isopleths, isoplethsHid, smooth, active_tab, minColor,   maxColor, loading, no_update(), show_text_list
+        else
+            return grid, full_grid, fig_cap, config_cap, fig, config, infos, txt_list, isopleths, isoplethsHid, smooth, active_tab, minColor,   maxColor, loading, update_ss_list, show_text_list
+        end
     end
 
 

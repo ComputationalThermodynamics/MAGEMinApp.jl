@@ -1,11 +1,15 @@
 global AppData
 
-debug    = "**Debugging and Additions**\n\n"
+debug   = "**Main developer**\n"
+debug   *= "Nicolas Riel\n\n"
+
+debug   *= "**Debugging and Additions**\n"
 debug   *= "Alexandre Peillod\n"
+debug   *= "Anton Popov\n"
 debug   *= "Boris Kaus\n"
 debug   *= "Hugo Dominguez\n"
 debug   *= "Hendrik Ranocha\n"
-debug   *= "Jean-Francois Moyen\n"
+debug   *= "Jean-François Moyen\n"
 debug   *= "Joshua Laughton\n"
 debug   *= "Jun Ren\n"
 debug   *= "Lorenzo Candioti\n"
@@ -13,30 +17,55 @@ debug   *= "Owen Weller\n"
 debug   *= "Pierre Lanari\n"
 debug   *= "Simon Scholz\n"
 debug   *= "Tim J.B. Holland\n"
-debug   *= "Tobias Keller\n"
+debug   *= "Tobias Keller"
 
-
-app      = "**Interface Suggestions**\n\n"
+app      = "**Interface Suggestions**\n"
 app     *= "Boris Kaus\n"
 app     *= "Brendan Dyck\n"
 app     *= "Buchanan Kerswell\n"
-app     *= "Cerine bouadani\n"
+app     *= "Cerine Bouadani\n"
 app     *= "Dinarte Lucas\n"
+app     *= "Evangelos Moulas\n"
+app     *= "Guillaume Duclaux\n"
 app     *= "Ian Cawood\n"
 app     *= "Jacob Forshaw\n"
-app     *= "Jean-Francois Moyen\n"
+app     *= "Jean-François Moyen\n"
 app     *= "Joan Reche Estrada\n"
 app     *= "Martin Miranda Muruzabal\n"
+app     *= "Nathwani Chetan Lalitkumar\n"
 app     *= "Olivier Namur\n"
 app     *= "Owen Weller\n"
 app     *= "Pierre Lanari\n"
 app     *= "Renee Tamblyn\n"
 app     *= "Simon Scholz\n"
-app     *= "Yishen Zhang\n"
+app     *= "Yishen Zhang"
+
+contact  = "**Links**\n"
+contact *= "[Tutorials](https://github.com/ComputationalThermodynamics/Resources)\n"
+contact *= "[Post issue](https://github.com/ComputationalThermodynamics/MAGEMinApp.jl/issues)\n"
+contact *= "[Open discussion](https://github.com/ComputationalThermodynamics/MAGEMin/discussions)"
+
+descri  = "**Comments**\n"
+descri *= "Set of example on how to use MAGEMinApp\n"
+descri *= "Something is not working properly?\n"
+descri *= "Need additional options?"
+
+
+contribs = [debug,app,contact,descri]
 
 
 
-contribs = [debug,app]
+dtb_dict = [
+    Dict("label" => "- PUBLISHED DATABASE -", "value" => "separator", "disabled" => true),  # Simulate a horizontal line
+    Dict("label" => "Metapelite (White et al., 2014)", "value" => "mp"),
+    Dict("label" => "Metabasite (Green et al., 2016)", "value" => "mb"),
+    Dict("label" => "Igneous (Holland et al., 2018)", "value" => "ig"),
+    Dict("label" => "Ultramafic (Evans & Frost., 2021)", "value" => "um"),
+    Dict("label" => "Mantle (Holland et al., 2013)", "value" => "mtl"),
+    Dict("label" => "- CUSTOM DATABASE -", "value" => "separator", "disabled" => true),  # Simulate a horizontal line
+    Dict("label" => "Ultramafic extended (Evans & Frost., 2021)", "value" => "ume"),
+    Dict("label" => "Metapelite extended (White et al., 2014, Green et al., 2016, Evans & Frost., 2021)", "value" => "mpe")
+]
 
 
 # LIST AVAILABLE DATABASE
@@ -63,6 +92,14 @@ push!(dba,Dict(         :database    => "Ultramafic (Evans & Frost., 2021)",
                         :acronym     => "um",
                         ), cols=:union)
 
+push!(dba,Dict(         :database    => "Mantle (Holland et al., 2013)",
+                        :acronym     => "mtl",
+                        ), cols=:union)
+
+# push!(dba,Dict(         :database    => "Stixrude & Lithgow-Bertelloni (2011)",
+#                         :acronym     => "sb11",
+#                         ), cols=:union)
+
 push!(dba,Dict(         :database    => "Ultramafic extended (Evans & Frost., 2021) + pl, hb and aug from Green et al., 2016",
                         :acronym     => "ume",
                         ), cols=:union)
@@ -71,13 +108,7 @@ push!(dba,Dict(         :database    => "Metapelite extended (White et al., 2014
                         :acronym     => "mpe",
                         ), cols=:union)
 
-push!(dba,Dict(         :database    => "Mantle (Holland et al., 2013)",
-                        :acronym     => "mtl",
-                        ), cols=:union)
 
-# push!(dba,Dict(         :database    => "Stixrude & Lithgow-Bertelloni (2011)",
-#                         :acronym     => "sb11",
-#                         ), cols=:union)
 
 db = DataFrame(         bulk        = String[],
                         title       = String[],
@@ -88,6 +119,8 @@ db = DataFrame(         bulk        = String[],
                         oxide       = Array{String, 1}[],
                         frac        = Array{Float64, 1}[],
                         frac2       = Array{Float64, 1}[],
+                        frac_wt        = Array{Float64, 1}[],
+                        frac2_wt       = Array{Float64, 1}[],
                        )         
     
 # METAPELITE DATABASE
@@ -268,6 +301,8 @@ push!(db,Dict(          :bulk       => "predefined",
                         :frac       => [50.0810,  8.6901,  11.6698, 12.1438, 7.7832,  0.2150,  2.4978,  1.0059,  0.4670,  0.0100, 5.4364],
                         :frac2      => [50.0810,  8.6901,  11.6698, 12.1438, 7.7832,  0.2150,  2.4978,  1.0059,  0.4670,  0.0100, 5.4364],
                         ), cols=:union)
+
+
 
 # IGNEOUS ALKALINE DRY DATABASE
 # push!(db,Dict(          :bulk       => "predefined",
@@ -588,8 +623,20 @@ push!(dbte,Dict(    :composition=> "predefined",
 
 KDs_dtb     = get_OL_KDs_database();
 
+
+db.frac_wt  .= mol2wt.(db.frac,db.oxide)
+db.frac2_wt .= mol2wt.(db.frac2,db.oxide)
+
+for (i,val) in enumerate(db.frac_wt)
+    db.frac_wt[i] = round.(val,digits= 6)
+end
+for (i,val) in enumerate(db.frac2_wt)
+    db.frac2_wt[i] = round.(val,digits= 6)
+end
+
 AppData = ( contribs            = contribs,
             db                  = db,
             dba                 = dba,
+            dtb_dict            = dtb_dict,
             dbte                = dbte,
             KDs_dtb             = KDs_dtb)

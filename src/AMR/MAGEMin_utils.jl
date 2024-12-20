@@ -56,7 +56,7 @@ function get_wat_sat_function(     Yrange,     bulk_ini,   oxi,    phase_selecti
         @showprogress 1 "Computing sub-solidus water-saturating curve..." for i = 1:length(Prange)
 
             pressure    = Prange[i]
-            out         = deepcopy( point_wise_minimization(pressure, Tliq, gv, z_b, DB, splx_data, sys_in;buffer_n=bufferN, rm_list=phase_selection) )
+            out         = deepcopy( point_wise_minimization(pressure, Tliq, gv, z_b, DB, splx_data, sys_in;buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
             n_max       = 32
             a           = Tmin
             b           = Tliq
@@ -67,7 +67,7 @@ function get_wat_sat_function(     Yrange,     bulk_ini,   oxi,    phase_selecti
 
             while n < n_max && conv == 0
                 c       = (a+b)/2.0
-                out     = deepcopy( point_wise_minimization(pressure, c, gv, z_b, DB, splx_data, sys_in;buffer_n=bufferN, rm_list=phase_selection) )
+                out     = deepcopy( point_wise_minimization(pressure, c, gv, z_b, DB, splx_data, sys_in;buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
 
                 if "liq" in out.ph
                     result = 1;
@@ -92,7 +92,7 @@ function get_wat_sat_function(     Yrange,     bulk_ini,   oxi,    phase_selecti
             end
 
             Tsol[i]     = (a+b)/2.0
-            out         = deepcopy( point_wise_minimization(pressure, Tsol[i] + 0.5 , gv, z_b, DB, splx_data, sys_in;buffer_n=bufferN, rm_list=phase_selection) )
+            out         = deepcopy( point_wise_minimization(pressure, Tsol[i] + 0.5 , gv, z_b, DB, splx_data, sys_in;buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
 
             id_dry      = findall(out.oxides .!= "H2O")
             id_h2o      = findall(out.oxides .== "H2O")[1]
@@ -181,7 +181,19 @@ function MAGEMin_data2table( out:: Union{Vector{MAGEMin_C.gmin_struct{Float64, I
 end
 
 
-function get_dominant_en(   ph,
+# find_dominant_em_ids
+function find_dominant_em_ids(  SS_vec )
+    n_ph    = length(SS_vec)
+    ids     = ()
+    for i=1:n_ph
+        f    = SS_vec[i].emFrac
+        ids  = (ids..., findfirst(f .== maximum(f)))
+    end
+    
+    return ids
+end
+
+function get_dominant_em(   ph,
                             n_SS,
                             SS_vec)
     n_ph  = length(ph)
@@ -318,7 +330,7 @@ function refine_MAGEMin(data,
             end
         end
 
-        Out_XY_new  =   multi_point_minimization(Pvec, Tvec, MAGEMin_data, X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol", scp=scp, rm_list=phase_selection); 
+        Out_XY_new  =   multi_point_minimization(Pvec, Tvec, MAGEMin_data, X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol", scp=scp, rm_list=phase_selection, name_solvus=true); 
     else
         println("There is no new point to compute...")
     end
@@ -336,7 +348,7 @@ function refine_MAGEMin(data,
         end
     elseif refType == "em"
         for i=1:n_points
-            ph_em = get_dominant_en(    Out_XY[i].ph,
+            ph_em = get_dominant_em(    Out_XY[i].ph,
                                         Out_XY[i].n_SS,
                                         Out_XY[i].SS_vec)
 

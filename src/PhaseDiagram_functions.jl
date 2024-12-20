@@ -346,7 +346,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     db_in     = retrieve_solution_phase_information(dtb)
 
 
-    PD_infos[1]  = "Phase Diagram computed using MAGEMin v"*Out_XY[1].MAGEMin_ver*" (GUI v0.5.6) <br>"
+    PD_infos[1]  = "Phase Diagram computed using MAGEMin v"*Out_XY[1].MAGEMin_ver*" (GUI v0.5.7) <br>"
     PD_infos[1] *= "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾<br>"
     PD_infos[1] *= "Number of points <br>"
     
@@ -423,36 +423,36 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         PD_infos[2] *= bufferType *"<br>"
     end            
     if diagType == "pt"
-        PD_infos[2] *= join(bulk_L, " ") *"<br>"
+        PD_infos[2] *= join(round.(bulk_L,digits=6), " ") *"<br>"
         if bufferType != "none"
             PD_infos[2] *= string(bufferN1) *"<br>"
         end       
     elseif diagType == "px"
-        PD_infos[2] *= join(bulk_L, " ") *"<br>"
+        PD_infos[2] *= join(round.(bulk_L,digits=6), " ") *"<br>"
         if bufferType != "none"
             PD_infos[2] *= string(bufferN1) *"<br>"
         end
-        PD_infos[2] *= join(bulk_R, " ") *"<br>"
+        PD_infos[2] *= join(round.(bulk_R,digits=6), " ") *"<br>"
         if bufferType != "none"
             PD_infos[2] *= string(bufferN2) *"<br>"
         end        
         PD_infos[2] *= join(fixT, " ") *"<br>"
     elseif diagType == "tx"
-        PD_infos[2] *= join(bulk_L, " ") *"<br>"
+        PD_infos[2] *= join(round.(bulk_L,digits=6), " ") *"<br>"
         if bufferType != "none"
             PD_infos[2] *= string(bufferN1) *"<br>"
         end        
-        PD_infos[2] *= join(bulk_R, " ") *"<br>"
+        PD_infos[2] *= join(round.(bulk_R,digits=6), " ") *"<br>"
         if bufferType != "none"
             PD_infos[2] *= string(bufferN2) *"<br>"
         end        
         PD_infos[2] *= join(fixP, " ") *"<br>"
     elseif diagType == "ptx"
-        PD_infos[2] *= join(bulk_L, " ") *"<br>"
+        PD_infos[2] *= join(round.(bulk_L,digits=6), " ") *"<br>"
         if bufferType != "none"
             PD_infos[2] *= string(bufferN1) *"<br>"
         end        
-        PD_infos[2] *= join(bulk_R, " ") *"<br>"
+        PD_infos[2] *= join(round.(bulk_R,digits=6), " ") *"<br>"
         if bufferType != "none"
             PD_infos[2] *= string(bufferN2) *"<br>"
         end        
@@ -553,7 +553,7 @@ end
 
     retrieve bulk rock composition and components from dash table
 """
-function get_bulkrock_prop(bulk1, bulk2)
+function get_bulkrock_prop(bulk1, bulk2; sys_unit = 1)
  
     n_ox    = length(bulk1);
     bulk_L  = zeros(n_ox); 
@@ -561,17 +561,25 @@ function get_bulkrock_prop(bulk1, bulk2)
     oxi     = Vector{String}(undef, n_ox)
     # in case the bulk rock is entered manually, the inputed values can be a string, this ensures convertion to float64
     for i=1:n_ox
-        tmp = bulk1[i][:mol_fraction]
+        tmp = bulk1[i][:fraction]
         if typeof(tmp) == String
             tmp = parse(Float64,tmp)
         end
-        tmp2 = bulk2[i][:mol_fraction]
+        tmp2 = bulk2[i][:fraction]
         if typeof(tmp2) == String
             tmp2 = parse(Float64,tmp2)
         end
         bulk_L[i]   = tmp;
         bulk_R[i]   = tmp2;
         oxi[i]      = bulk1[i][:oxide];
+    end
+
+    bulk_L  = bulk_L ./ sum(bulk_L)
+    bulk_R  = bulk_R ./ sum(bulk_R)
+
+    if sys_unit == 2 #then we are using wt% as input
+        bulk_L  = wt2mol(bulk_L,oxi)
+        bulk_R  = wt2mol(bulk_R,oxi)
     end
 
     return bulk_L, bulk_R, oxi
@@ -681,7 +689,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
 
         #________________________________________________________________________________________#
         # initialize database
-        global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, X, Y, layout, n_lbl
+        global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, gridded_fields, phase_infos, X, Y, layout, n_lbl
         global addedRefinementLvl  = 0;
         global MAGEMin_data;
 
@@ -741,37 +749,33 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
         #________________________________________________________________________________________#                   
         # Scatter plotly of the grid
 
-        gridded, gridded_info, X, Y, npoints, meant = get_gridded_map(  fieldname,
-                                                                        "major",
-                                                                        oxi,
-                                                                        Out_XY,
-                                                                        nothing,
-                                                                        Hash_XY,
-                                                                        sub,
-                                                                        refLvl,
-                                                                        refType,
-                                                                        data,
-                                                                        Xrange,
-                                                                        Yrange)
+        gridded, gridded_info, gridded_fields, X, Y, npoints, meant = get_gridded_map(  fieldname,
+                                                                                        "major",
+                                                                                        oxi,
+                                                                                        Out_XY,
+                                                                                        nothing,
+                                                                                        Hash_XY,
+                                                                                        sub,
+                                                                                        refLvl,
+                                                                                        refType,
+                                                                                        data,
+                                                                                        Xrange,
+                                                                                        Yrange)
 
-        PT_infos                           = get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat)
+        PT_infos = get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat)
 
-        data_plot, annotations = get_diagram_labels(    fieldname,
-                                                        oxi,
-                                                        Out_XY,
-                                                        Hash_XY,
-                                                        sub,
-                                                        refLvl,
-                                                        refType,
-                                                        data,
-                                                        PT_infos )
+        data_plot, annotations, txt_list = get_diagram_labels(   Out_XY,
+                                                                Hash_XY,
+                                                                refType,
+                                                                data,
+                                                                PT_infos )
         ticks   = 4
         frame   = get_plot_frame(Xrange,Yrange, ticks)                                  
         layout  = Layout(
                     images=frame,
                     title= attr(
                         text    = customTitle,
-                        x       = 0.4,
+                        x       = 0.5,
                         xanchor = "center",
                         yanchor = "top"
                     ),
@@ -784,10 +788,10 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                     xaxis_title = xtitle,
                     yaxis_title = ytitle,
                     annotations = annotations,
-                    width       = 900,
+                    width       = 720,
                     height      = 900,
                     autosize    = false,
-                    margin      = attr(autoexpand = false, l=50, r=280, b=260, t=50, pad=4),
+                    margin      = attr(autoexpand = false, l=0, r=0, b=260, t=50, pad=1),
                     xaxis_range = Xrange, 
                     yaxis_range = Yrange,
                     xaxis       = attr(     tickmode    = "linear",
@@ -836,7 +840,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
 
         data_plot[1]    = heat_map
 
-        return vcat(data_plot,hover_lbl), layout, npoints, meant
+        return vcat(data_plot,hover_lbl), layout, npoints, meant, txt_list 
 end
 
 
@@ -867,7 +871,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                 smooth,     colorm,     reverseColorMap, set_white,
                                 test,       refType, bid                                 )
 
-    global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, X, Y, addedRefinementLvl, layout, n_lbl, pChip_wat, pChip_T
+    global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, gridded_fields, phase_infos, X, Y, addedRefinementLvl, layout, n_lbl, pChip_wat, pChip_T
 
     mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb,        solver,
                                                     cpx,        limOpx,     limOpxVal ) 
@@ -898,30 +902,26 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
 
     #________________________________________________________________________________________#                   
     # Scatter plotly of the grid
-    gridded, gridded_info, X, Y, npoints, meant = get_gridded_map(  fieldname,
-                                                                    "major",
-                                                                    oxi,
-                                                                    Out_XY,
-                                                                    nothing,
-                                                                    Hash_XY,
-                                                                    sub,
-                                                                    refLvl + addedRefinementLvl,
-                                                                    refType,
-                                                                    data,
-                                                                    Xrange,
-                                                                    Yrange )
+    gridded, gridded_info, gridded_fields, X, Y, npoints, meant = get_gridded_map(  fieldname,
+                                                                                    "major",
+                                                                                    oxi,
+                                                                                    Out_XY,
+                                                                                    nothing,
+                                                                                    Hash_XY,
+                                                                                    sub,
+                                                                                    refLvl + addedRefinementLvl,
+                                                                                    refType,
+                                                                                    data,
+                                                                                    Xrange,
+                                                                                    Yrange )
     
     PT_infos                           = get_phase_diagram_information(npoints,dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat)
                                                               
-    data_plot, annotations = get_diagram_labels(    fieldname,
-                                                    oxi,
-                                                    Out_XY,
-                                                    Hash_XY,
-                                                    sub,
-                                                    refLvl,
-                                                    refType,
-                                                    data,
-                                                    PT_infos )
+    data_plot, annotations,txt_list = get_diagram_labels(   Out_XY,
+                                                            Hash_XY,
+                                                            refType,
+                                                            data,
+                                                            PT_infos )
                                            
     layout[:annotations] = annotations 
     layout[:title] = attr(
@@ -960,7 +960,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                             showlegend      = false,
                             text            = gridded_info )
 
-    return vcat(data_plot,hover_lbl), layout, npoints, meant
+    return vcat(data_plot,hover_lbl), layout, npoints, meant, txt_list 
 
 end
 
