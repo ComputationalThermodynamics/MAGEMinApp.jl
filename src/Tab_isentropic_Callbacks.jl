@@ -430,16 +430,17 @@ function Tab_isoSpaths_Callbacks(app)
         Output("database-caption-isoS","value"),
         Output("phase-selection-isoS","options"),
         Output("phase-selection-isoS","value"),
-
-        Input("table-bulk-rock-isoS","data"),
         Input("select-bulk-unit-isoS","value"),
 
         Input("test-dropdown-isoS","value"),
         Input("database-dropdown-isoS","value"),
         Input("output-data-uploadn-isoS", "is_open"),        # this listens for changes and updated the list
+
+        State("table-bulk-rock-isoS","data"),
         prevent_initial_call=true,
-    ) do tb_data, sys_unit, 
-        test, dtb, update
+    ) do sys_unit, 
+        test, dtb, update,
+        tb_data
 
         # catching up some special cases
         if test > length(db[(db.db .== dtb), :].test) - 1 
