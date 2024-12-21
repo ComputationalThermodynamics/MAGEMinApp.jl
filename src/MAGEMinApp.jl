@@ -12,7 +12,7 @@ using ProgressMeter
 using PCHIPInterpolation
 using Bibliography
 
-using Images, PolygonInbounds, Random, LazyGrids, Graphs
+using Images, PolygonInbounds, LazyGrids, Graphs
 using MAGEMin_C
 
 pkg_dir = Base.pkgdir(MAGEMinApp)
@@ -57,7 +57,7 @@ Starts the MAGEMin App.
 function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
     message     = fetch_message()
     message2    = fetch_message2()
-    GUI_version = "0.5.8"   
+    GUI_version = "0.5.9"   
     cur_dir     = pwd()                 # directory from where you started the GUI
     pkg_dir     = pkgdir(MAGEMinApp)   # package dir
     
