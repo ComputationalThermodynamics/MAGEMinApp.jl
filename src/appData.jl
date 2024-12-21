@@ -53,21 +53,18 @@ descri *= "Need additional options?"
 
 contribs = [debug,app,contact,descri]
 
-
-
 dtb_dict = [
     Dict("label" => "- PUBLISHED DATABASE -", "value" => "separator", "disabled" => true),  # Simulate a horizontal line
     Dict("label" => "Metapelite (White et al., 2014)", "value" => "mp"),
     Dict("label" => "Metabasite (Green et al., 2016)", "value" => "mb"),
-    Dict("label" => "Igneous (Holland et al., 2018)", "value" => "ig"),
-    # Dict("label" => "Igneous alkaline dry (Weller et al., 2024)", "value" => "igad"),
+    Dict("label" => "Igneous (Green et al., 2025, after H18)", "value" => "ig"),
+    Dict("label" => "Igneous alkaline dry (Weller et al., 2024)", "value" => "igad"),
     Dict("label" => "Ultramafic (Evans & Frost., 2021)", "value" => "um"),
     Dict("label" => "Mantle (Holland et al., 2013)", "value" => "mtl"),
     Dict("label" => "- CUSTOM DATABASE -", "value" => "separator", "disabled" => true),  # Simulate a horizontal line
     Dict("label" => "Ultramafic extended (Evans & Frost., 2021)", "value" => "ume"),
     Dict("label" => "Metapelite extended (White et al., 2014, Green et al., 2016, Evans & Frost., 2021)", "value" => "mpe")
 ]
-
 
 # LIST AVAILABLE DATABASE
 dba = DataFrame(        database     = String[],
@@ -81,13 +78,13 @@ push!(dba,Dict(         :database    => "Metabasite (Green et al., 2016)",
                         :acronym     => "mb",
                         ), cols=:union)
 
-push!(dba,Dict(         :database    => "Igneous (Holland et al., 2018)",
+push!(dba,Dict(         :database    => "Igneous (Green et al., 2025, after H18)",
                         :acronym     => "ig",
                         ), cols=:union)
 
-# push!(dba,Dict(         :database    => "Igneous alkaline dry (Weller et al., 2024)",
-#                         :acronym     => "igad",
-#                          ), cols=:union)
+push!(dba,Dict(         :database    => "Igneous alkaline dry (Weller et al., 2024)",
+                        :acronym     => "igad",
+                         ), cols=:union)
                                      
 push!(dba,Dict(         :database    => "Ultramafic (Evans & Frost., 2021)",
                         :acronym     => "um",
@@ -306,60 +303,60 @@ push!(db,Dict(          :bulk       => "predefined",
 
 
 # IGNEOUS ALKALINE DRY DATABASE
-# push!(db,Dict(          :bulk       => "predefined",
-#                         :title      => "Ne-Syenite",
-#                         :comments   => "Weller et al., 2024",
-#                         :db         => "igad",
-#                         :test       => 0,
-#                         :sysUnit    => "mol",
-#                         :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3"],
-#                         :frac       => round.([0.6201068479844584, 0.13326857697911607, 0.030014570179698878, 0.015055852355512383, 0.04924720738222438, 0.03924235065565808, 0.09111219038368139, 0.007576493443419135, 0.014278776104905291, 9.713453132588633e-5].*100.0,digits= 4),
-#                         :frac2      => round.([0.6201068479844584, 0.13326857697911607, 0.030014570179698878, 0.015055852355512383, 0.04924720738222438, 0.03924235065565808, 0.09111219038368139, 0.007576493443419135, 0.014278776104905291, 9.713453132588633e-5].*100.0,digits= 4),
-#                         ), cols=:union)
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "Ne-Syenite",
+                        :comments   => "Weller et al., 2024",
+                        :db         => "igad",
+                        :test       => 0,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3"],
+                        :frac       => round.([0.6201068479844584, 0.13326857697911607, 0.030014570179698878, 0.015055852355512383, 0.04924720738222438, 0.03924235065565808, 0.09111219038368139, 0.007576493443419135, 0.014278776104905291, 9.713453132588633e-5].*100.0,digits= 4),
+                        :frac2      => round.([0.6201068479844584, 0.13326857697911607, 0.030014570179698878, 0.015055852355512383, 0.04924720738222438, 0.03924235065565808, 0.09111219038368139, 0.007576493443419135, 0.014278776104905291, 9.713453132588633e-5].*100.0,digits= 4),
+                        ), cols=:union)
 
-# push!(db,Dict(          :bulk       => "predefined",
-#                         :title      => "Syenite",
-#                         :comments   => "Weller et al., 2024",
-#                         :db         => "igad",
-#                         :test       => 1,
-#                         :sysUnit    => "mol",
-#                         :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3"],
-#                         :frac       => round.([0.6882797917280675, 0.11425483839276943, 0.027114647804302974, 0.014736221632773355, 0.04224383534728362, 0.036545829649277925, 0.06297278711071815, 0.0050103153551429415, 0.008743491502112191, 9.824147755182237e-5].*100.0,digits= 4),
-#                         :frac2      => round.([0.6882797917280675, 0.11425483839276943, 0.027114647804302974, 0.014736221632773355, 0.04224383534728362, 0.036545829649277925, 0.06297278711071815, 0.0050103153551429415, 0.008743491502112191, 9.824147755182237e-5].*100.0,digits= 4),
-#                         ), cols=:union)   
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "Syenite",
+                        :comments   => "Weller et al., 2024",
+                        :db         => "igad",
+                        :test       => 1,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3"],
+                        :frac       => round.([0.6882797917280675, 0.11425483839276943, 0.027114647804302974, 0.014736221632773355, 0.04224383534728362, 0.036545829649277925, 0.06297278711071815, 0.0050103153551429415, 0.008743491502112191, 9.824147755182237e-5].*100.0,digits= 4),
+                        :frac2      => round.([0.6882797917280675, 0.11425483839276943, 0.027114647804302974, 0.014736221632773355, 0.04224383534728362, 0.036545829649277925, 0.06297278711071815, 0.0050103153551429415, 0.008743491502112191, 9.824147755182237e-5].*100.0,digits= 4),
+                        ), cols=:union)   
                         
-# push!(db,Dict(          :bulk       => "predefined",
-#                         :title      => "Ijolite",
-#                         :comments   => "Weller et al., 2024",
-#                         :db         => "igad",
-#                         :test       => 2,
-#                         :sysUnit    => "mol",
-#                         :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3"],
-#                         :frac       => round.([0.4748375836323088, 0.12372733443226996, 0.1247939493842723, 0.05051876272665569, 0.07728110152235045, 0.016096189275671486, 0.10336468534858918, 0.01318723940657423, 0.016096189275671486, 9.696499563657522e-5].*100.0,digits= 4),
-#                         :frac2      => round.([0.4748375836323088, 0.12372733443226996, 0.1247939493842723, 0.05051876272665569, 0.07728110152235045, 0.016096189275671486, 0.10336468534858918, 0.01318723940657423, 0.016096189275671486, 9.696499563657522e-5].*100.0,digits= 4),
-#                         ), cols=:union)                          
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "Ijolite",
+                        :comments   => "Weller et al., 2024",
+                        :db         => "igad",
+                        :test       => 2,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3"],
+                        :frac       => round.([0.4748375836323088, 0.12372733443226996, 0.1247939493842723, 0.05051876272665569, 0.07728110152235045, 0.016096189275671486, 0.10336468534858918, 0.01318723940657423, 0.016096189275671486, 9.696499563657522e-5].*100.0,digits= 4),
+                        :frac2      => round.([0.4748375836323088, 0.12372733443226996, 0.1247939493842723, 0.05051876272665569, 0.07728110152235045, 0.016096189275671486, 0.10336468534858918, 0.01318723940657423, 0.016096189275671486, 9.696499563657522e-5].*100.0,digits= 4),
+                        ), cols=:union)                          
 
-# push!(db,Dict(          :bulk       => "predefined",
-#                         :title      => "KLB1 Peridotite - Anhydrous",
-#                         :comments   => "Holland et al., 2018",
-#                         :db         => "igad",
-#                         :test       => 3,
-#                         :sysUnit    => "mol",
-#                         :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3"],
-#                         :frac       => [38.494,  1.776,  2.824, 50.566, 5.886,  0.01,  0.250,  0.10,  0.096,  0.109],
-#                         :frac2      => [38.494,  1.776,  2.824, 50.566, 5.886,  0.01,  0.250,  0.10,  0.096,  0.109],
-#                         ), cols=:union)
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "KLB1 Peridotite - Anhydrous",
+                        :comments   => "Holland et al., 2018",
+                        :db         => "igad",
+                        :test       => 3,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3"],
+                        :frac       => [38.494,  1.776,  2.824, 50.566, 5.886,  0.01,  0.250,  0.10,  0.096,  0.109],
+                        :frac2      => [38.494,  1.776,  2.824, 50.566, 5.886,  0.01,  0.250,  0.10,  0.096,  0.109],
+                        ), cols=:union)
 
-# push!(db,Dict(          :bulk       => "predefined",
-#                         :title      => "RE46 - Icelandic basalt",
-#                         :comments   => "Yang et al., 1996",
-#                         :db         => "igad",
-#                         :test       => 4,
-#                         :sysUnit    => "mol",
-#                         :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3"],
-#                         :frac       => [ 50.72,	9.16,15.21, 16.25,	7.06, 0.01, 1.47, 0.39, 0.35,  0.01],
-#                         :frac2      => [ 50.72,	9.16,15.21, 16.25,	7.06, 0.01, 1.47, 0.39, 0.35,  0.01],
-#                         ), cols=:union)
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "RE46 - Icelandic basalt",
+                        :comments   => "Yang et al., 1996",
+                        :db         => "igad",
+                        :test       => 4,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3"],
+                        :frac       => [ 50.72,	9.16,15.21, 16.25,	7.06, 0.01, 1.47, 0.39, 0.35,  0.01],
+                        :frac2      => [ 50.72,	9.16,15.21, 16.25,	7.06, 0.01, 1.47, 0.39, 0.35,  0.01],
+                        ), cols=:union)
 
 
 #ULTRAMAFIC DATABASE
