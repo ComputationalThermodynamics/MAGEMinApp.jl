@@ -60,6 +60,7 @@ dtb_dict = [
     Dict("label" => "Metapelite (White et al., 2014)", "value" => "mp"),
     Dict("label" => "Metabasite (Green et al., 2016)", "value" => "mb"),
     Dict("label" => "Igneous (Holland et al., 2018)", "value" => "ig"),
+    # Dict("label" => "Igneous alkaline dry (Weller et al., 2024)", "value" => "igad"),
     Dict("label" => "Ultramafic (Evans & Frost., 2021)", "value" => "um"),
     Dict("label" => "Mantle (Holland et al., 2013)", "value" => "mtl"),
     Dict("label" => "- CUSTOM DATABASE -", "value" => "separator", "disabled" => true),  # Simulate a horizontal line
