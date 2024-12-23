@@ -346,7 +346,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     db_in     = retrieve_solution_phase_information(dtb)
 
 
-    PD_infos[1]  = "Phase Diagram computed using MAGEMin v$(string(pkgversion(MAGEMin_C)))  (GUI $(GUI_version)  ) <br>"
+    PD_infos[1]  = "Phase Diagram computed using MAGEMin $(MAGEMin_version) (MAGEMin_C v$(string(pkgversion(MAGEMin_C))); GUI $(GUI_version)) <br>"
     PD_infos[1] *= "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾<br>"
     PD_infos[1] *= "Number of points <br>"
     

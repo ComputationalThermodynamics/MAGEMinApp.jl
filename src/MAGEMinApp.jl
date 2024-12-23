@@ -51,7 +51,15 @@ include(joinpath(pkg_dir,"src","Boundaries/purge.jl"))
 include(joinpath(pkg_dir,"src","Boundaries/utils.jl"))
 
 
-const GUI_version = "0.6.0"   
+const GUI_version = string(pkgversion(MAGEMinApp))
+
+# retrieve MAGEMin version number info
+data = Initialize_MAGEMin("ig", verbose=false);
+data = use_predefined_bulk_rock(data, 0);
+out  = point_wise_minimization(8.0,1000.0, data);
+
+const MAGEMin_version =out.MAGEMin_ver
+
 """
     App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
 
