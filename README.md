@@ -18,16 +18,22 @@
 
 As for `MAGEMin`, you can choose among several thermodynamic dataset: Metapelite (White et al., 2014), Metabasite (Green et al., 2016), Igneous (Holland et al., 2018) or Ultramafic (Evans & Frost, 2021).
 
-### Available thernodynamic database
+## Available thernodynamic database
 
-- `mp`; `MnNCKFMASHTO` -> metapelite, White et al., 2014
-- `mb`; `MnNCKFMASHTO` -> metabasite, Green et al., 2016
-- `ig`; `NCKFMASHTO` ->  igneous, Holland et al., 2018
-- `um`; `FMASHOS` -> ultramafic, Frost & Evans, 2021
-- `ume`; `FMASHOS` ->  ultramafic extended, Frost & Evans, 2021 + Green et al., 2016
-- `mtl`; `NCFMAS` -> mantle to upper lowermost mantle, Holland et al., 2013
-- `mpe`; `CO2MnNCKFMASHTS` -> metapelite extended , White et al., 2014 + Green et al., 2016 (hb, dio, aug) + Frost & Evans, 2021 (po, fl) + Franzolin et al., 2011 (occm).
+### Published
+- `mp`; `MnNCKFMASHTO` -> metapelite, White et al. (2014)
+- `mb`; `MnNCKFMASHTO` -> metabasite, Green et al. (2016)
+- `ig`; `NCKFMASHTOCr` ->  igneous, Green et al. (2025) corrected after Holland et al. (2018)
+- `igad`; `NCKFMASTOCr` ->  igneous alkaline dry, Weller et al. (2024)
+- `um`; `FMASHOS` -> ultramafic, Frost & Evans (2021)
+- `mtl`; `NCFMAS` -> mantle to upper lowermost mantle, Holland et al. (2013)
 
+### Custom
+- `ume`; `FMASHOS` ->  ultramafic extended, Frost & Evans (2021) + Green et al., (2016)
+- `mpe`; `CO2MnNCKFMASHTS` -> metapelite extended , White et al. (2014) + Green et al. (2016) (hb, dio, aug) + Frost & Evans (2021) (po, fl) + Franzolin et al. (2011) (occm).
+
+> [!CAUTION]
+> Custom/Hybrid database are provided in the hope it may be useful for advanced users. In most cases it is recommenced to use the official published database.
 
 ### Installation
 
