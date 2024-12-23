@@ -582,8 +582,6 @@ function Tab_PhaseDiagram()
 
                                 dbc_collapse(
                                     dbc_card(dbc_cardbody([
-                                        html_h1("Selection", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                        html_hr(),
                                         dbc_row([
                                             # this parts serves as a relay to trigger an update of the phase list for the isopleth
                                             html_div([
@@ -764,112 +762,123 @@ function Tab_PhaseDiagram()
                                                 ]),
                                             ], style = Dict("display" => "none"), id      = "of-1-id"),
 
-
-
-                                            html_div("‎ "),
-                                            html_h1("Range", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                             html_hr(),
                                             dbc_row([
                                                 dbc_col([
-                                                    html_h1("Min", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
-                                                ]),
-                                                dbc_col([ 
-                                                    dbc_input(
-                                                        id="iso-min-id",
-                                                        type="number", 
-                                                        min=-1e8, 
-                                                        max= 1e8, 
-                                                        value=0.0   ),
-                                                ]),
-                                            ]),
-                                            dbc_row([
+                                                    html_div("Range", className="vertical-text", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 24))
+                                                ],width=1),
                                                 dbc_col([
-                                                    html_h1("Step", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
-                                                ]), 
-                                                dbc_col([ 
-                                                    dbc_input(
-                                                        id="iso-step-id",
-                                                        type="number", 
-                                                        min=-1e8, 
-                                                        max= 1e8, 
-                                                        value=0.1   ),
-                                                ]),
+                                                    dbc_row([
+                                                        dbc_col([
+                                                            html_h1("Min", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                                        ]),
+                                                        dbc_col([ 
+                                                            dbc_input(
+                                                                id="iso-min-id",
+                                                                type="number", 
+                                                                min=-1e8, 
+                                                                max= 1e8, 
+                                                                value=0.0   ),
+                                                        ]),
+                                                    ]),
+                                                    dbc_row([
+                                                        dbc_col([
+                                                            html_h1("Step", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                                        ]), 
+                                                        dbc_col([ 
+                                                            dbc_input(
+                                                                id="iso-step-id",
+                                                                type="number", 
+                                                                min=-1e8, 
+                                                                max= 1e8, 
+                                                                value=0.1   ),
+                                                        ]),
+                                                    ]),
+                                                    dbc_row([  
+                                                        dbc_col([
+                                                            html_h1("Max", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                                        ]),
+                                                        dbc_col([ 
+                                                            dbc_input(
+                                                                id="iso-max-id",
+                                                                type="number", 
+                                                                min=-1e8, 
+                                                                max= 1e8, 
+                                                                value=1.0   ),
+                                                        ]),
+                                                    ]),
+                                                ],width=11),
                                             ]),
-                                            dbc_row([  
-                                                dbc_col([
-                                                    html_h1("Max", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
-                                                ]),
-                                                dbc_col([ 
-                                                    dbc_input(
-                                                        id="iso-max-id",
-                                                        type="number", 
-                                                        min=-1e8, 
-                                                        max= 1e8, 
-                                                        value=1.0   ),
-                                                ]),
-                                            ]),
-                                            html_div("‎ "),
-                                            html_h1("Plotting options", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+
                                             html_hr(),
                                             dbc_row([    
                                                 dbc_col([
-                                                    html_h1("Line style", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
-                                                ]),
-                                                dbc_col([ 
-                                                    dcc_dropdown(   id      = "line-style-dropdown",
-                                                    options = [
-                                                        (label = "Solid",                   value = "solid"),
-                                                        (label = "Dot",                     value = "dot"),
-                                                        (label = "Dash",                    value = "dash"),
-                                                        (label = "Longdash",                value = "longdash"),
-                                                        (label = "Dashdot",                 value = "dashdot"),
-                                                        (label = "Longdashdot",             value = "longdashdot"),
-                                                    ],
-                                                    value       = "solid",
-                                                    clearable   = false,
-                                                    multi       = false),
-                                                ]),
-                                            ]),
-                                            dbc_row([    
+                                                    html_div("Plotting options", className="vertical-text", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 24))
+                                                ],width=1),
                                                 dbc_col([
-                                                    html_h1("Line width", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
-                                                ]),
-                                                dbc_col([ 
-                                                    dbc_input(
-                                                    id      = "iso-line-width-id",
-                                                    type    = "number", 
-                                                    min     = 0,  
-                                                    max     = 10,  
-                                                    value   = 1   ),
-                                                ]),
-                                            ]),
-                                            dbc_row([
-                                                dbc_col([
-                                                    html_h1("Color", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
-                                                ]),
-                                                dbc_col([ 
-                                                    dbc_input(
-                                                        type    = "color",
-                                                        id      = "colorpicker_isoL",
-                                                        value   = "#000000",
-                                                        style   = Dict("width" => 75, "height" => 25),
-                                                    ),
-                                                ]),
+                                                    dbc_row([    
+                                                        dbc_col([
+                                                            html_h1("Line style", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                                        ]),
+                                                        dbc_col([ 
+                                                            dcc_dropdown(   id      = "line-style-dropdown",
+                                                            options = [
+                                                                (label = "Solid",                   value = "solid"),
+                                                                (label = "Dot",                     value = "dot"),
+                                                                (label = "Dash",                    value = "dash"),
+                                                                (label = "Longdash",                value = "longdash"),
+                                                                (label = "Dashdot",                 value = "dashdot"),
+                                                                (label = "Longdashdot",             value = "longdashdot"),
+                                                            ],
+                                                            value       = "solid",
+                                                            clearable   = false,
+                                                            multi       = false),
+                                                        ]),
+                                                    ]),
+                                                    dbc_row([    
+                                                        dbc_col([
+                                                            html_h1("Line width", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                                        ]),
+                                                        dbc_col([ 
+                                                            dbc_input(
+                                                            id      = "iso-line-width-id",
+                                                            type    = "number", 
+                                                            min     = 0,  
+                                                            max     = 10,  
+                                                            value   = 1   ),
+                                                        ]),
+                                                    ]),
+                                                    dbc_row([
+                                                        dbc_col([
+                                                            html_h1("Color", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                                        ]),
+                                                        dbc_col([ 
+                                                            dbc_input(
+                                                                type    = "color",
+                                                                id      = "colorpicker_isoL",
+                                                                value   = "#000000",
+                                                                style   = Dict("width" => 75, "height" => 25),
+                                                            ),
+                                                        ]),
 
+                                                    ]),
+                                                    dbc_row([    
+                                                        dbc_col([
+                                                            html_h1("Label size", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                                        ]),
+                                                        dbc_col([ 
+                                                            dbc_input(
+                                                            id      = "iso-text-size-id",
+                                                            type    = "number", 
+                                                            min     = 6,  
+                                                            max     = 20,  
+                                                            value   = 10   ),
+                                                        ]),
+                                                    ]),
+                                                ],width=11),
                                             ]),
-                                            dbc_row([    
-                                                dbc_col([
-                                                    html_h1("Label size", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
-                                                ]),
-                                                dbc_col([ 
-                                                    dbc_input(
-                                                    id      = "iso-text-size-id",
-                                                    type    = "number", 
-                                                    min     = 6,  
-                                                    max     = 20,  
-                                                    value   = 10   ),
-                                                ]),
-                                            ]),
+
+
                                             html_div("‎ "),
                                             dbc_row([
                                                 dbc_button("Add",id="button-add-isopleth", color="light",
@@ -878,8 +887,8 @@ function Tab_PhaseDiagram()
                                                                     "border"        =>"1px lightgray solid")),
                                             ]),  
 
-                                            html_div("‎ "),
-                                            html_h1("Isopleth list", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            # html_div("‎ "),
+                                            # html_h1("Isopleth list", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                             html_hr(),
                                             dbc_row([
 
