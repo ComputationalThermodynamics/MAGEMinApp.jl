@@ -185,7 +185,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                                 children    = [Tab_IsentropicPaths(db_inf)]
                                             ),
                                     dbc_tab(    tab_id      = "tab-general-info",
-                                                label       = "General informations",
+                                                label       = "General information",
                                                 children    = [Tab_General_informations(db_inf)]
                                             ),
 

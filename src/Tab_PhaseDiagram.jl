@@ -878,7 +878,6 @@ function Tab_PhaseDiagram()
                                                 ],width=11),
                                             ]),
 
-
                                             html_div("‎ "),
                                             dbc_row([
                                                 dbc_button("Add",id="button-add-isopleth", color="light",
@@ -887,8 +886,6 @@ function Tab_PhaseDiagram()
                                                                     "border"        =>"1px lightgray solid")),
                                             ]),  
 
-                                            # html_div("‎ "),
-                                            # html_h1("Isopleth list", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                             html_hr(),
                                             dbc_row([
 
