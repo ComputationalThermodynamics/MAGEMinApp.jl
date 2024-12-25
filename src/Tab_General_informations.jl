@@ -2,9 +2,10 @@ phase_deactivation = """
 **Phase deactivation**
 
 - When solution phases are not ticked for deactivation, the default solution phase combination is used. 
-- As soon as one solution phase is unticked (for deactivation), the remaining ticked phases are all active. 
-This implies that multiple solution phases for the same mineral can be active e.g., sp and mt or ilm and ilmm (for the metapelite database). 
-
+    - For metapelites: sp and ilm are active (mt and ilmm deactivated)
+    - For metabasites: ilm is active (ilmm deactivated)
+- As soon as one solution phase is unticked (deactivated), the remaining ticked phases are all active. 
+This implies that multiple solution phases for the same mineral can be active e.g., sp and mt or ilm and ilmm (for the metapelite database), and that the user needs to choose which one to activate.
 
 """
 
@@ -18,12 +19,12 @@ where \$\\mu_{oxide}\$ is the chemical potential of the oxide and \$G_{pp}^0\$ i
 
 #### Used pure phases are:
 
-- corundum for \$\\text{Al2O3}\$
-- periclase for \$\\text{MgO}\$
-- ferropericlase for \$\\text{FeO}\$
-- rutile for \$\\text{TiO2}\$
-- quartz/coesite for \$\\text{SiO2}\$
-- dioxygen for \$\\text{O2}\$
+- corundum for \${Al_2O_3}\$
+- periclase for \${MgO}\$
+- ferropericlase for \${FeO}\$
+- rutile for \${TiO_2}\$
+- quartz/coesite for \${SiO_2}\$
+- dioxygen for \${O_2}\$
 
 """
 
@@ -35,6 +36,18 @@ water_saturation = """
 - At Tsuprasolidus = Tsolidus + 0.1 K, a second interpolation is used to retrieve the amount of water saturating the melt. The latter interpolant is then used to prescribe the water content of the bulk, ensuring pressure-dependent water saturation at solidus (+ 0.1 K). 
 
 *Note that the provided water content needs to be large enough to ensure water saturation. This can be easily done by increasing the \$H_2O\$ content in the bulk table.*
+
+"""
+
+heatCapacity = """
+**Specific heat capacity**
+
+- Heat capacity is computed as a second order derivative of the Gibbs energy with respect to temperature.
+
+\$C_p = -T \\frac{\\partial ^2G}{\\partial T^2}\$
+
+- There is however two ways to retrieve the second order derivatives:
+
 
 """
 
@@ -57,7 +70,11 @@ function Tab_General_informations(db_inf)
                     html_div("‎ "),
                     dbc_card([
                         dcc_markdown(water_saturation;      mathjax=true, style = Dict("font-size" => "130%")),
-                    ])
+                    ]),
+                    html_div("‎ "),
+                    dbc_card([
+                        dcc_markdown(heatCapacity;          mathjax=true, style = Dict("font-size" => "130%")),
+                    ]),
                 ]),
 
             ],width=6),
