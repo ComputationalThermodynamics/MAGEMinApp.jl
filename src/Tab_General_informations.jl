@@ -42,13 +42,18 @@ water_saturation = """
 heatCapacity = """
 **Specific heat capacity**
 
-- Heat capacity is computed as a second order derivative of the Gibbs energy with respect to temperature.
+- Heat capacity is computed as a second order derivative of the Gibbs energy with respect to temperature using numerical differentiation.
 
 \$C_p = -T \\frac{\\partial ^2G}{\\partial T^2}\$
 
-- There is however two ways to retrieve the second order derivatives:
+- There is two ways to retrieve the second order derivative:
 
+    **1. Default option (Cp = G0, Solver = Hybrid)** Fixing the phase assemblage (phase proportions and compositions) and computing the Gibbs energy of the assemblage at T, T+eps and T-eps.
 
+    **2. Full differentiation option (Cp = G_system, Solver = Legacy)** Computing three stable phase equilibrium at T, T+eps and T-eps.
+    
+*While the first method is computationally more efficient, it does not account for the latent heat of reaction.
+When having correct heat budget is important it is therefore recommanded to employ the second approach.*
 """
 
 function Tab_General_informations(db_inf)
