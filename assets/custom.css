@@ -7,7 +7,14 @@
     width: 50px;  /* Set the desired width */
     height: 50px; /* Set the desired height */
 }
-
+.vertical-text {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /*height: 100vh;  Adjust as needed */
+}
 /* .dropdown-menu {
     max-height: 300px;
     overflow-y: auto;
