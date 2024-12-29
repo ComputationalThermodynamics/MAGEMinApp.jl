@@ -42,7 +42,8 @@ include(joinpath(pkg_dir,"src","Tab_isentropic_Callbacks.jl"))
 include(joinpath(pkg_dir,"src","IsentropicPaths_functions.jl"))
 include(joinpath(pkg_dir,"src","Tab_General_informations.jl"))
 include(joinpath(pkg_dir,"src","MAGEMinApp_functions.jl"))
-
+include(joinpath(pkg_dir,"src","Progress.jl"))
+include(joinpath(pkg_dir,"src","Progress_Callbacks.jl"))
 
 # Set of functions to extract field boundaries and field centers (by Antom Popov, JGU)
 include(joinpath(pkg_dir,"src","Boundaries/center.jl"))
@@ -60,12 +61,17 @@ out  = point_wise_minimization(8.0,1000.0, data);
 
 const MAGEMin_version =out.MAGEMin_ver
 
+
 """
     App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
 
 Starts the MAGEMin App.
 """
 function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
+    
+    # Keep track of simulation progress - note that this should be added to a single global variable
+    global CompProgress =   ComputationalProgress()
+
     message     = fetch_message()
     message2    = fetch_message2()
     cur_dir     = pwd()                 # directory from where you started the GUI
@@ -101,12 +107,6 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                         ], width="auto" ),
                         
                         dbc_col([
-                            dbc_cardimg(    id      = "magemin-img",
-                                            src     = "assets/static/images/MAGEMin_light.jpg",
-                                            style   = Dict("height" => 70, "width" => 190)),
-                                ], width="auto" ),
-
-                        dbc_col([
                             dcc_loading(
                                 id          =   "loading-id",
                                 type        =   "circle",
@@ -132,6 +132,27 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                 className   =   "custom-loading",
                             ),
                         ], width="auto" ),
+
+                        # display calculation progress  @ right side of page
+                        dbc_col([
+                            dcc_interval(
+                                id="interval-simulation_progress",
+                                interval=500,    # in milliseconds
+                                n_intervals=0
+                            ),
+                            dbc_row([
+                                dcc_markdown(   id="simulation_progress",
+                                                children="",
+                                                style = Dict("textAlign" => "center","font-size" => "120%")),
+                            ]),
+                        ], width="auto" ),
+                            
+                        dbc_col([
+                            dbc_cardimg(    id      = "magemin-img",
+                                            src     = "assets/static/images/MAGEMin_light.jpg",
+                                            style   = Dict("height" => 70, "width" => 190)),
+                                ], width="auto" ),
+
 
                     ], justify="between"),
                     
@@ -214,12 +235,14 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
         str = "id=$(session_id), MAGEMinApp GUI v=$(GUI_version)"
         return String("$(session_id)"), str
     end
+
     app = MAGEMinApp_Callbacks(app)
     app = Tab_Simulation_Callbacks(app)
     app = Tab_PhaseDiagram_Callbacks(app)
     app = Tab_TraceElement_Callbacks(app)
     app = Tab_PTXpaths_Callbacks(app)
     app = Tab_isoSpaths_Callbacks(app)
+    app = Progress_Callbacks(app)
 
     run_server(app, host, port, debug=debug)
 

@@ -330,7 +330,7 @@ function refine_MAGEMin(data,
             end
         end
 
-        Out_XY_new  =   multi_point_minimization(Pvec, Tvec, MAGEMin_data, X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol", scp=scp, rm_list=phase_selection, name_solvus=true); 
+        Out_XY_new  =   multi_point_minimization(Pvec, Tvec, MAGEMin_data, X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol", scp=scp, rm_list=phase_selection, name_solvus=true, callback_fn = update_progress); 
     else
         println("There is no new point to compute...")
     end

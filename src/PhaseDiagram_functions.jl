@@ -682,9 +682,11 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                     minColor,   maxColor,
                                     smooth,     colorm,     reverseColorMap, set_white,
                                     test,       refType                                  )
+        global CompProgress
 
         #________________________________________________________________________________________#
         # Create coarse mesh
+        CompProgress.stage = "Initialize AMR mesh"
         data = init_AMR(Xrange,Yrange,sub)
 
         #________________________________________________________________________________________#
@@ -693,6 +695,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
         global addedRefinementLvl  = 0;
         global MAGEMin_data;
 
+        CompProgress.stage = "Get initial parameters"
         mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb,        solver,
                                                         cpx,        limOpx,     limOpxVal ) 
 
@@ -706,7 +709,8 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
         else
             pChip_wat, pChip_T = nothing, nothing
         end
-                                                
+                    
+        CompProgress.stage = "Initialize MAGEMin"
         MAGEMin_data    =   Initialize_MAGEMin( dtb;
                                                 verbose     = false,
                                                 limitCaOpx  = limitCaOpx,
@@ -717,6 +721,12 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
 
         #________________________________________________________________________________________#                      
         # initial optimization on regular grid
+        CompProgress.stage = "Compute initial grid "
+        CompProgress.refinement_level = 0
+        CompProgress.total_levels = refLvl
+        CompProgress.tinit =  time()
+        CompProgress.total_points = length(data.npoints)
+
         Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(  data, MAGEMin_data, diagType, PTpath,
                                                         phase_selection, fixT, fixP,
                                                         oxi, bulk_L, bulk_R,
@@ -727,10 +737,15 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
         
         #________________________________________________________________________________________#     
         # Refine the mesh along phase boundaries
-
+        CompProgress.stage = "Refine grid level"
         for irefine = 1:refLvl
+            # update computational progress 
+            CompProgress.refinement_level = irefine
+            CompProgress.tinit =  time()
+            
             data    = select_cells_to_split_and_keep(data)
             data    = perform_AMR(data)
+            CompProgress.total_points = length(data.npoints)
             t = @elapsed Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(              data, MAGEMin_data, diagType, PTpath,
                                                                                     phase_selection, fixT, fixP,
                                                                                     oxi, bulk_L, bulk_R,
@@ -739,7 +754,6 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                                                                     pChip_wat, pChip_T ) # recompute points that have not been computed before
                                                                      
             println("Computed $(length(data.npoints)) new points in $t seconds")
-            
         end
 
         for i = 1:Threads.nthreads()

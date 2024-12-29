@@ -654,7 +654,11 @@ function Tab_PhaseDiagram_Callbacks(app)
             global iso_show             = 1;
             global data_plot, data_reaction, data_grid, layout, data_isopleth, data_isopleth_out, PT_infos, infos;
             global Out_XY =  Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,0)
+            global CompProgress
 
+            CompProgress.title = "Calculation Progress"
+        
+            CompProgress.stage = "Initial G isopleth"
             data_isopleth = initialize_g_isopleth(; n_iso_max = 32)
 
             data_plot, layout, npoints, meant, txt_list  =  compute_new_phaseDiagram(   xtitle,     ytitle,     lbl,
@@ -690,6 +694,12 @@ function Tab_PhaseDiagram_Callbacks(app)
             update_ss_list  = 1
 
         elseif bid == "refine-pb-button" || bid == "uni-refine-pb-button"
+                
+            CompProgress.title = "Calculation Progress"
+            CompProgress.stage = "Refine all phase boundaries"
+            CompProgress.total_levels = 0
+            CompProgress.refinement_level = 1
+            CompProgress.tinit = time()
 
             data_plot, layout, npoints, meant, txt_list   =  refine_phaseDiagram(   xtitle,     ytitle,     lbl, 
                                                                                     Xrange,     Yrange,     fieldname,  customTitle,
