@@ -21,6 +21,8 @@ export App
 
 # include functions
 include(joinpath(pkg_dir,"src","fetch.jl"))
+include(joinpath(pkg_dir,"src","Progress.jl"))
+include(joinpath(pkg_dir,"src","Progress_Callbacks.jl"))
 include(joinpath(pkg_dir,"src","AMR/MAGEMin_utils.jl"))
 include(joinpath(pkg_dir,"src","AMR/AMR_utils.jl"))
 include(joinpath(pkg_dir,"src","PhaseDiagram_functions.jl"))
@@ -42,8 +44,6 @@ include(joinpath(pkg_dir,"src","Tab_isentropic_Callbacks.jl"))
 include(joinpath(pkg_dir,"src","IsentropicPaths_functions.jl"))
 include(joinpath(pkg_dir,"src","Tab_General_informations.jl"))
 include(joinpath(pkg_dir,"src","MAGEMinApp_functions.jl"))
-include(joinpath(pkg_dir,"src","Progress.jl"))
-include(joinpath(pkg_dir,"src","Progress_Callbacks.jl"))
 
 # Set of functions to extract field boundaries and field centers (by Antom Popov, JGU)
 include(joinpath(pkg_dir,"src","Boundaries/center.jl"))
