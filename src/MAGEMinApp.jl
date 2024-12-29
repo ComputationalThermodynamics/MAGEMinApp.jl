@@ -51,15 +51,15 @@ include(joinpath(pkg_dir,"src","Boundaries/poly.jl"))
 include(joinpath(pkg_dir,"src","Boundaries/purge.jl"))
 include(joinpath(pkg_dir,"src","Boundaries/utils.jl"))
 
-
 const GUI_version = string(pkgversion(MAGEMinApp))
 
 # retrieve MAGEMin version number info
-data = Initialize_MAGEMin("ig", verbose=false);
+data = Initialize_MAGEMin("mp", verbose=false);
 data = use_predefined_bulk_rock(data, 0);
-out  = point_wise_minimization(8.0,1000.0, data);
+out  = point_wise_minimization(4.0,400.0, data);
+Finalize_MAGEMin(data);
 
-const MAGEMin_version =out.MAGEMin_ver
+const MAGEMin_version = out.MAGEMin_ver
 
 
 """
@@ -83,7 +83,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
     cd(pkg_dir)
 
     app         = dash(external_stylesheets = [dbc_themes.BOOTSTRAP], prevent_initial_callbacks=false)
-    app.title   = "MAGEMin app"
+    app.title   = "MAGEMinApp"
     app.layout  = html_div() do
  
         pkg_dir       = pkgdir(MAGEMinApp)
@@ -207,7 +207,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                                 children    = [Tab_IsentropicPaths(db_inf)]
                                             ),
                                     dbc_tab(    tab_id      = "tab-general-info",
-                                                label       = "General informations",
+                                                label       = "General information",
                                                 children    = [Tab_General_informations(db_inf)]
                                             ),
 
