@@ -232,7 +232,12 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
     ) do session_id
 
         session_id = UUIDs.uuid4()
-        str = "id=$(session_id), MAGEMinApp GUI v=$(GUI_version)"
+
+        # determine how many cores you use and how many are available
+        num_available_cores = Sys.CPU_THREADS
+        nthreads = Threads.nthreads();
+
+        str = "id=$(session_id);   MAGEMinApp GUI v=$(GUI_version);   using $nthreads/$num_available_cores threads"
         return String("$(session_id)"), str
     end
 
