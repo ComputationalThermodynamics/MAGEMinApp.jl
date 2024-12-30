@@ -1,4 +1,3 @@
-import MAGEMin_C: multi_point_minimization
 using MAGEMin_C.Threads, ProgressMeter
 
 
