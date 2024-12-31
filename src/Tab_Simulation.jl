@@ -1001,12 +1001,12 @@ function Tab_Simulation(db_inf)
                                     dbc_row([ 
                                         dbc_col([                                                          
                                             dcc_markdown(       id          = "debug-info-id", 
-                                                                children    = [1],
+                                                                children    = AppData.contribs[1],
                                                                 style       = Dict("white-space" => "pre"))
                                         ], width=6),
                                         dbc_col([                                                          
                                             dcc_markdown(       id          = "app-info-id", 
-                                                                children    = [2],
+                                                                children    = AppData.contribs[2],
                                                                 style       = Dict("white-space" => "pre"))
                                         ], width=6),
                                     ]),
