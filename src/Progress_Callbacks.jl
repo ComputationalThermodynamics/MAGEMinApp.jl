@@ -7,7 +7,7 @@ function Progress_Callbacks(app)
     callback!(
         app,
         Output( "simulation_progress",           "children"     ),
-        Input(  "interval-simulation_progress",  "n_intervals"     ),
+        Input(  "interval-simulation_progress",  "n_intervals"  ),
 
     prevent_initial_call = true,         # don't run at startup
     ) do n_progress
@@ -16,13 +16,11 @@ function Progress_Callbacks(app)
         lev     = CompProgress.refinement_level
         nlev    = CompProgress.total_levels
     
-        progress_info = "\n**$(CompProgress.title)**\n"
-        progress_info *= "\n $(CompProgress.stage)"
-            
+        # progress_info = "\n**$(CompProgress.title)**\n"
+        # progress_info *= "\n $(CompProgress.stage)"
+        p0, p1, p2, p3 = " ", "", "", ""    
         if lev>0 && nlev>0
-            progress_info *= " $(lev)/$(nlev) \n"
-        else
-            progress_info *= "\n"
+            p1 = " $(lev)/$(nlev)"
         end
         
         if CompProgress.total_points > 0
@@ -42,22 +40,23 @@ function Progress_Callbacks(app)
            # @show bar_str
             progress_info *= bar_str
             =#
-            perc    = round(CompProgress.current_point/CompProgress.total_points*100)
+            perc            = round(CompProgress.current_point/CompProgress.total_points*100)
             
-            progress_info *= "\n Point $(CompProgress.current_point)/$(CompProgress.total_points) | $perc% \n"
+            p2              = "Point $(CompProgress.current_point)/$(CompProgress.total_points) | $perc%"
             t_s             = round(CompProgress.tlast-CompProgress.tinit, digits=2)    
             t_left          = t_s/CompProgress.current_point*(CompProgress.total_points-CompProgress.current_point)
             r_str           = ProgressMeter.durationstring(t_s)    
             eta_str         = ProgressMeter.durationstring(t_left)
-            progress_info *= "\n Time: $r_str | ETA: $eta_str \n"
-
-
+            p3              = "Time: $r_str | ETA: $eta_str"
         end
 
-        # progress_info = """
-        # **$(CompProgress.title)**
-
-        # """
+        # note that two spaces are added at the end of each line to ensure that the line break is taken into account
+        progress_info = """
+        **$(CompProgress.title)**  
+        $(CompProgress.stage) $p1  
+        $p2  
+        $p3
+        """
 
 
         return progress_info

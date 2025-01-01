@@ -105,8 +105,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                 html_div(message2, style = Dict("textAlign" => "center","font-size" => "120%")),    
                             ]),
                         ], width="auto" ),
-                        
-                        # display calculation progress  @ right side of page
+
                         dbc_col([
                             dcc_interval(
                                 id          = "interval-simulation_progress",
@@ -115,12 +114,13 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                 disabled    = true
                             ),
                             dbc_row([
+                                html_div("‎ "),
                                 dcc_markdown(   id="simulation_progress",
                                                 children="",
                                                 style = Dict("textAlign" => "center","font-size" => "100%")),
                             ]),
                         ], width="auto" ),
-                            
+
                         dbc_col([
                             dbc_cardimg(    id      = "magemin-img",
                                             src     = "assets/static/images/MAGEMin_light.jpg",
@@ -155,65 +155,84 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                         ], width="auto" ),
         
                     ], justify="between"),
+
+
+                    # dbc_row([
+                    #     # display calculation progress bar at the top of the page
+                    #     dbc_col([
+                    #         dcc_interval(
+                    #             id          = "interval-simulation_progress",
+                    #             interval    =  500,    # in milliseconds
+                    #             n_intervals =  0,
+                    #             disabled    = true
+                    #         ),
+                    #         dbc_row([
+                    #             dcc_markdown(   id="simulation_progress",
+                    #                             children="",
+                    #                             style = Dict("textAlign" => "center","font-size" => "100%")),
+                    #         ]),
+                    #     ], width="auto" ),
+                                                    
+                    # ], justify="between"),
                     
                     
-                            dbc_tabs([
+                    dbc_tabs([
 
-                                    dbc_tab(    tab_id      = "phase-diagrams",
-                                                label       = "Phase diagrams",
-                                                children    = [dbc_tabs([
-                                                                    dbc_tab(    tab_id      = "tab-Simulation",
-                                                                                label       = "Setup",
-                                                                                children    = [Tab_Simulation(db_inf)],
-                                                                            ),
-                                                                    dbc_tab(    tab_id      = "tab-phase-diagram",
-                                                                                label       = "Diagram",
-                                                                                children    = [
-                                                                                    Tab_PhaseDiagram()
-                                                                                            #     children    = [dbc_tabs([
-                                                                                            #             dbc_tab(    tab_id      = "tab-pd-info",
-                                                                                            #                         label       = "Information",
-                                                                                            #                         children    = [Tab_PD_info(db_inf)],
-                                                                                            #                     ),
-                                                                                            #             dbc_tab(    tab_id      = "tab-pd-isopleth",
-                                                                                            #                         label       = "Isopleths",
-                                                                                            #                         children    = [Tab_PD_isopleth()]
-                                                                                            #                     ),
-                                                                                            #             dbc_tab(    tab_id      = "tab-pd-display",
-                                                                                            #                         label       = "Display option",
-                                                                                            #                         children    = [Tab_PD_display()],
-                                                                                            #                     ),
-                                                                                            #     ], id = "tabs_PD"), ]
-                                                                                            ]
-                                                                            ),
-                                                                    # dbc_tab(    tab_id      = "tab-classification",
-                                                                    #             label       = "Classification",
-                                                                    #             children    = [Tab_Classification()],
-                                                                    #     ),
-                                                                    dbc_tab(    tab_id      = "tab-te",
-                                                                                label       = "Trace-elements",
-                                                                                children    = [Tab_TraceElement()],
-                                                                            ),
+                            dbc_tab(    tab_id      = "phase-diagrams",
+                                        label       = "Phase diagrams",
+                                        children    = [dbc_tabs([
+                                                            dbc_tab(    tab_id      = "tab-Simulation",
+                                                                        label       = "Setup",
+                                                                        children    = [Tab_Simulation(db_inf)],
+                                                                    ),
+                                                            dbc_tab(    tab_id      = "tab-phase-diagram",
+                                                                        label       = "Diagram",
+                                                                        children    = [
+                                                                            Tab_PhaseDiagram()
+                                                                                    #     children    = [dbc_tabs([
+                                                                                    #             dbc_tab(    tab_id      = "tab-pd-info",
+                                                                                    #                         label       = "Information",
+                                                                                    #                         children    = [Tab_PD_info(db_inf)],
+                                                                                    #                     ),
+                                                                                    #             dbc_tab(    tab_id      = "tab-pd-isopleth",
+                                                                                    #                         label       = "Isopleths",
+                                                                                    #                         children    = [Tab_PD_isopleth()]
+                                                                                    #                     ),
+                                                                                    #             dbc_tab(    tab_id      = "tab-pd-display",
+                                                                                    #                         label       = "Display option",
+                                                                                    #                         children    = [Tab_PD_display()],
+                                                                                    #                     ),
+                                                                                    #     ], id = "tabs_PD"), ]
+                                                                                    ]
+                                                                    ),
+                                                            # dbc_tab(    tab_id      = "tab-classification",
+                                                            #             label       = "Classification",
+                                                            #             children    = [Tab_Classification()],
+                                                            #     ),
+                                                            dbc_tab(    tab_id      = "tab-te",
+                                                                        label       = "Trace-elements",
+                                                                        children    = [Tab_TraceElement()],
+                                                                    ),
 
-                                                            ], id = "tabs"), ]
-                                            ),
+                                                    ], id = "tabs"), ]
+                                    ),
 
-                                    dbc_tab(    tab_id      = "tab-PTX-path",
-                                                label       = "PTX path",
-                                                children    = [Tab_PTXpaths(db_inf)]
-                                            ),
-                                    dbc_tab(    tab_id      = "tab-isentropic-path",
-                                                label       = "Isentropic path",
-                                                children    = [Tab_IsentropicPaths(db_inf)]
-                                            ),
-                                    dbc_tab(    tab_id      = "tab-general-info",
-                                                label       = "General information",
-                                                children    = [Tab_General_informations(db_inf)]
-                                            ),
+                            dbc_tab(    tab_id      = "tab-PTX-path",
+                                        label       = "PTX path",
+                                        children    = [Tab_PTXpaths(db_inf)]
+                                    ),
+                            dbc_tab(    tab_id      = "tab-isentropic-path",
+                                        label       = "Isentropic path",
+                                        children    = [Tab_IsentropicPaths(db_inf)]
+                                    ),
+                            dbc_tab(    tab_id      = "tab-general-info",
+                                        label       = "General information",
+                                        children    = [Tab_General_informations(db_inf)]
+                                    ),
 
-                                ],
-                             active_tab="phase-diagrams",
-                            ),
+                        ],
+                        active_tab="phase-diagrams",
+                    ),
 
                     ], width=12),
 
