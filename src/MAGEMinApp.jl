@@ -109,7 +109,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                         dbc_col([
                             dcc_interval(
                                 id          = "interval-simulation_progress",
-                                interval    =  500,    # in milliseconds
+                                interval    =  1000,    # in milliseconds
                                 n_intervals =  0,
                                 disabled    = true
                             ),
