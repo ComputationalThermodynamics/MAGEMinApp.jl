@@ -6,17 +6,17 @@ function Progress_Callbacks(app)
     # Update the progress information (when a simulation is running)
     callback!(
         app,
-        Output( "simulation_progress",     "children"     ),
+        Output( "simulation_progress",           "children"     ),
         Input(  "interval-simulation_progress",  "n_intervals"     ),
 
-    prevent_initial_call = false,         # don't run at startup
+    prevent_initial_call = true,         # don't run at startup
     ) do n_progress
         global CompProgress
         
-        lev = CompProgress.refinement_level
-        nlev = CompProgress.total_levels
+        lev     = CompProgress.refinement_level
+        nlev    = CompProgress.total_levels
     
-        progress_info = "**$(CompProgress.title)**\n"
+        progress_info = "\n**$(CompProgress.title)**\n"
         progress_info *= "\n $(CompProgress.stage)"
             
         if lev>0 && nlev>0
@@ -45,16 +45,20 @@ function Progress_Callbacks(app)
             perc    = round(CompProgress.current_point/CompProgress.total_points*100)
             
             progress_info *= "\n Point $(CompProgress.current_point)/$(CompProgress.total_points) | $perc% \n"
-            t_s = round(CompProgress.tlast-CompProgress.tinit, digits=2)    
-            t_left = t_s/CompProgress.current_point*(CompProgress.total_points-CompProgress.current_point)
-            r_str   = ProgressMeter.durationstring(t_s)    
-            eta_str = ProgressMeter.durationstring(t_left)
+            t_s             = round(CompProgress.tlast-CompProgress.tinit, digits=2)    
+            t_left          = t_s/CompProgress.current_point*(CompProgress.total_points-CompProgress.current_point)
+            r_str           = ProgressMeter.durationstring(t_s)    
+            eta_str         = ProgressMeter.durationstring(t_left)
             progress_info *= "\n Time: $r_str | ETA: $eta_str \n"
 
 
         end
 
-        
+        # progress_info = """
+        # **$(CompProgress.title)**
+
+        # """
+
 
         return progress_info
     end

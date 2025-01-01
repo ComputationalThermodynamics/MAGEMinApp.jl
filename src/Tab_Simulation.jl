@@ -895,7 +895,7 @@ function Tab_Simulation(db_inf)
                                             dbc_row([
                                                 # html_div([
                                                     dbc_button(
-                                                        "Compute phase diagram", id="compute-button", color="light", className="me-2", n_clicks=0,
+                                                        "Compute phase diagram", id="compute-button-raw", color="light", className="me-2", n_clicks=0,
                                                         style       = Dict( "textAlign"     => "center",
                                                                             "font-size"     => "100%",
                                                                             "background-color" => "#d3f2ce",
@@ -1011,8 +1011,8 @@ function Tab_Simulation(db_inf)
                                         ], width=6),
                                     ]),
                                 ])),
-                                id="collapse-contributors",
-                                is_open=true,
+                                id      =   "collapse-contributors",
+                                is_open =    false,
                             ),
                         ]),
 

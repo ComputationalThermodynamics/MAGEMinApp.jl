@@ -106,6 +106,27 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                             ]),
                         ], width="auto" ),
                         
+                        # display calculation progress  @ right side of page
+                        dbc_col([
+                            dcc_interval(
+                                id          = "interval-simulation_progress",
+                                interval    =  500,    # in milliseconds
+                                n_intervals =  0,
+                                disabled    = true
+                            ),
+                            dbc_row([
+                                dcc_markdown(   id="simulation_progress",
+                                                children="",
+                                                style = Dict("textAlign" => "center","font-size" => "100%")),
+                            ]),
+                        ], width="auto" ),
+                            
+                        dbc_col([
+                            dbc_cardimg(    id      = "magemin-img",
+                                            src     = "assets/static/images/MAGEMin_light.jpg",
+                                            style   = Dict("height" => 70, "width" => 190)),
+                                ], width="auto" ),
+
                         dbc_col([
                             dcc_loading(
                                 id          =   "loading-id",
@@ -132,28 +153,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                 className   =   "custom-loading",
                             ),
                         ], width="auto" ),
-
-                        # display calculation progress  @ right side of page
-                        dbc_col([
-                            dcc_interval(
-                                id="interval-simulation_progress",
-                                interval=500,    # in milliseconds
-                                n_intervals=0
-                            ),
-                            dbc_row([
-                                dcc_markdown(   id="simulation_progress",
-                                                children="",
-                                                style = Dict("textAlign" => "center","font-size" => "120%")),
-                            ]),
-                        ], width="auto" ),
-                            
-                        dbc_col([
-                            dbc_cardimg(    id      = "magemin-img",
-                                            src     = "assets/static/images/MAGEMin_light.jpg",
-                                            style   = Dict("height" => 70, "width" => 190)),
-                                ], width="auto" ),
-
-
+        
                     ], justify="between"),
                     
                     
