@@ -11,7 +11,7 @@ function progress_bar_fig(; percent=0, an1="", an2="")
                                         valign      = "top",
                                         x           = 0.0,
                                         y           = 0.0,
-                                        yshift      = 7,
+                                        yshift      = 10,
                                         text        = an1,
                                         showarrow   = false,
                                         clicktoshow = false,
@@ -25,7 +25,7 @@ function progress_bar_fig(; percent=0, an1="", an2="")
                                         valign      = "top",
                                         x           = 0.0,
                                         y           = 0.0,
-                                        yshift      = -13,
+                                        yshift      = -15,
                                         text        = an2,
                                         showarrow   = false,
                                         clicktoshow = false,
@@ -34,7 +34,7 @@ function progress_bar_fig(; percent=0, an1="", an2="")
                                         )
 
     fig = plot(Layout(      
-                            height              = 32,   
+                            height              = 38,   
                             # width               = 256,
                             plot_bgcolor        = "white", 
                             paper_bgcolor       = "white", 
@@ -55,7 +55,7 @@ function progress_bar_fig(; percent=0, an1="", an2="")
                                 linecolor       =   "rgba(0,0,0,0)"
                             ),
                             # autosize    = false,
-                            margin      = attr(autoexpand = false, l=0, r=0, b=11, t=11, pad=0),
+                            margin      = attr(autoexpand = false, l=0, r=0, b=13, t=13, pad=0),
                             annotations = annotations,
                             shapes=[
                                 rect(
