@@ -25,7 +25,7 @@ function progress_bar_fig(; percent=0, an1="", an2="")
                                         valign      = "top",
                                         x           = 0.0,
                                         y           = 0.0,
-                                        yshift      = -17,
+                                        yshift      = -13,
                                         text        = an2,
                                         showarrow   = false,
                                         clicktoshow = false,
