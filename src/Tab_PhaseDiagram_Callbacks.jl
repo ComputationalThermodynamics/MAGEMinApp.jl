@@ -493,6 +493,60 @@ function Tab_PhaseDiagram_Callbacks(app)
     end
 
 
+    callback!(
+        app,
+        Output("interval-simulation_progress",  "disabled"),
+        Input("stop-trigger",                   "modified_timestamp"),
+        Input("start-trigger",                  "value"),
+
+        prevent_initial_call    = true,
+    ) do stop, start
+
+        bid  = pushed_button( callback_context() )
+        # println("bid: $bid")
+        if bid == "stop-trigger"
+            return true
+        elseif bid == "start-trigger"
+            return false
+        end
+        
+    end
+
+
+    """
+        Callback function to trigger phase diagram calculation using a relay function that activate dcc_interval listener for the progressbar
+    """
+    callback!(
+        app,
+        Output("compute-button",            "value"),
+        Output("uni-refine-pb-button",      "value"),
+        Output("refine-pb-button",          "value"),
+        Output("start-trigger",              "value"),
+
+        Input("compute-button-raw",         "n_clicks"),
+        Input("uni-refine-pb-button-raw",   "n_clicks"),
+        Input("refine-pb-button-raw",       "n_clicks"),
+ 
+        State("compute-button",             "value"),
+        State("uni-refine-pb-button",       "value"),
+        State("refine-pb-button",           "value"),
+
+        prevent_initial_call    = true,
+    ) do compute_raw, uni_refine_raw, refine_raw, compute, uni_refine, refine
+
+        bid  = pushed_button( callback_context() )
+
+        if bid == "compute-button-raw"
+            return compute*-1, no_update(), no_update(), 1
+        elseif bid == "uni-refine-pb-button-raw"
+            return no_update(), uni_refine*-1, no_update(), 1
+        elseif bid == "refine-pb-button-raw"
+            return no_update(), no_update(), refine*-1, 1
+        end
+
+    end
+
+
     """
         Callback function to update the phase diagram based on the user input
     """
@@ -517,7 +571,8 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("output-loading-id",         "children"),
         Output("trigger-update-ss-list",    "value"),
         Output("show-text-list-id",         "style"),
-
+        Output("stop-trigger",              "data"),
+        
         Input("show-grid",                  "value"), 
         Input("show-full-grid",             "value"), 
         Input("show-lbl-id",                "value"),
@@ -529,9 +584,12 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("button-show-all-isopleth",   "n_clicks"),
         Input("button-hide-all-isopleth",   "n_clicks"),
 
-        Input("compute-button",         "n_clicks"),
-        Input("refine-pb-button",       "n_clicks"),
-        Input("uni-refine-pb-button",   "n_clicks"),
+        # perform calculations
+        Input("compute-button",         "value"),
+        Input("refine-pb-button",       "value"),
+        Input("uni-refine-pb-button",   "value"),
+
+        # color section
         Input("min-color-id",           "value"),
         Input("max-color-id",           "value"),
 
@@ -626,7 +684,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             test,
             isopleths,  isoplethsID,isoplethsHid,  isoplethsHidID,  phase,      ss,         em,     ox,    of,     ot, sys, calc, cust,
             isoLineStyle, isoLineWidth, isoColorLine,           isoLabelSize,   
-            minIso,     stepIso,    maxIso,     active_tab
+            minIso,     stepIso,    maxIso,
+            active_tab
 
 
         phase_selection                 = remove_phases(string_vec_dif(phase_selection,dtb),dtb)
@@ -640,9 +699,11 @@ function Tab_PhaseDiagram_Callbacks(app)
         fieldNames                      = ["data_plot","data_reaction","data_grid","data_isopleth_out"]
         field2plot                      = zeros(Int64,4)
 
-        field2plot[1]    = 1
-        loading          = ""  
-        update_ss_list   = ""
+        field2plot[1]       =  1
+        loading             = ""  
+        update_ss_list      = ""
+        store_stop   = string(rand())
+
 
         if bid == "compute-button"
             loading                     = ""  
@@ -654,7 +715,11 @@ function Tab_PhaseDiagram_Callbacks(app)
             global iso_show             = 1;
             global data_plot, data_reaction, data_grid, layout, data_isopleth, data_isopleth_out, PT_infos, infos;
             global Out_XY =  Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,0)
+            global CompProgress
 
+            CompProgress.title = "Calculation Progress"
+        
+            CompProgress.stage = "Initial G isopleth"
             data_isopleth = initialize_g_isopleth(; n_iso_max = 32)
 
             data_plot, layout, npoints, meant, txt_list  =  compute_new_phaseDiagram(   xtitle,     ytitle,     lbl,
@@ -690,6 +755,12 @@ function Tab_PhaseDiagram_Callbacks(app)
             update_ss_list  = 1
 
         elseif bid == "refine-pb-button" || bid == "uni-refine-pb-button"
+                
+            CompProgress.title = "Calculation Progress"
+            CompProgress.stage = "refine all phase boundaries"
+            CompProgress.total_levels = 0
+            CompProgress.refinement_level = 1
+            CompProgress.tinit = time()
 
             data_plot, layout, npoints, meant, txt_list   =  refine_phaseDiagram(   xtitle,     ytitle,     lbl, 
                                                                                     Xrange,     Yrange,     fieldname,  customTitle,
@@ -913,9 +984,9 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                         scale    =  2.0,       ).fields)
 
         if isempty(update_ss_list)
-            return grid, full_grid, fig_cap, config_cap, fig, config, infos, txt_list, isopleths, isoplethsHid, smooth, active_tab, minColor,   maxColor, loading, no_update(), show_text_list
+            return grid, full_grid, fig_cap, config_cap, fig, config, infos, txt_list, isopleths, isoplethsHid, smooth, active_tab, minColor,   maxColor, loading, no_update(), show_text_list, store_stop
         else
-            return grid, full_grid, fig_cap, config_cap, fig, config, infos, txt_list, isopleths, isoplethsHid, smooth, active_tab, minColor,   maxColor, loading, update_ss_list, show_text_list
+            return grid, full_grid, fig_cap, config_cap, fig, config, infos, txt_list, isopleths, isoplethsHid, smooth, active_tab, minColor,   maxColor, loading, update_ss_list, show_text_list, store_stop
         end
     end
 

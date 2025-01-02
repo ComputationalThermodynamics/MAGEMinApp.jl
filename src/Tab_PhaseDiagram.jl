@@ -44,22 +44,49 @@ function Tab_PhaseDiagram()
                                 ], width=1),
     
                             dbc_col([
-                                dbc_button(
-                                    "Refine uniformly", id="uni-refine-pb-button", color="light", className="me-2", n_clicks=0,
-                                    style       = Dict( "textAlign"     => "center",
-                                                        "font-size"     => "100%",
-                                                        "border"        => "1px grey solid",
-                                                        "background-color" => "#d3f2ce",
-                                                        "width"         => "100%" )), 
-                                dbc_button(
-                                    "Refine phase boundaries", id="refine-pb-button", color="light", className="me-2", n_clicks=0,
-                                    style       = Dict( "textAlign"     => "center",
-                                                        "font-size"     => "100%",
-                                                        "border"        => "1px grey solid",
-                                                        "background-color" => "#d3f2ce",
-                                                        "width"         => "100%" )), 
+                                dbc_row([
+                                    # this parts serves as a relay to trigger an update of the phase diagram and loading the progress bar
+                                    html_div([
+                                        dbc_input(
+                                            id      = "compute-button",
+                                            type    = "number", 
+                                            value   = -1  ),
+                                        dbc_input(
+                                            id      = "uni-refine-pb-button",
+                                            type    = "number", 
+                                            value   = -1   ),
+                                        dbc_input(
+                                            id      = "refine-pb-button",
+                                            type    = "number", 
+                                            value   = -1   ),
+                                        dbc_input(
+                                            id      = "start-trigger",
+                                            type    = "number", 
+                                            value   = -1   ),
+                                        dcc_store(
+                                            id      = "stop-trigger"),
+
+                                    ], style = Dict("display" => "none"), id      = "show-hidden-relay-button-id"), #none, block
+                                ]),
+                                dbc_row([
+                                    dbc_button(
+                                        "Refine uniformly", id="uni-refine-pb-button-raw", color="light", className="me-2", n_clicks=0,
+                                        style       = Dict( "textAlign"     => "center",
+                                                            "font-size"     => "100%",
+                                                            "border"        => "1px grey solid",
+                                                            "background-color" => "#d3f2ce",
+                                                            "width"         => "100%" )), 
+                                    dbc_button(
+                                        "Refine phase boundaries", id="refine-pb-button-raw", color="light", className="me-2", n_clicks=0,
+                                        style       = Dict( "textAlign"     => "center",
+                                                            "font-size"     => "100%",
+                                                            "border"        => "1px grey solid",
+                                                            "background-color" => "#d3f2ce",
+                                                            "width"         => "100%" )), 
+                                ]),
                             ], width=2), 
-                            ]), 
+
+                        ]), 
                         dbc_row([
                             dcc_download(id="download-lamem-in"),  
                             dcc_download(id="download-geomodel-in"), 

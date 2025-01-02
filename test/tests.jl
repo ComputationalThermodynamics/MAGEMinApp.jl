@@ -7,8 +7,10 @@ using PlotlyJS
 pkg_dir = Base.pkgdir(MAGEMinApp)
 
 include(joinpath(pkg_dir,"src","AMR/AMR_utils.jl"))
+include(joinpath(pkg_dir,"src","Progress.jl"))
 include(joinpath(pkg_dir,"src","AMR/MAGEMin_utils.jl"))
 include(joinpath(pkg_dir,"src","PhaseDiagram_functions.jl"))
+global CompProgress = ComputationalProgress()
 
 level           = 2
 data            = init_AMR([600.0,1400.0], [2.0,20.0], level)
