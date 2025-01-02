@@ -1,4 +1,3 @@
-
 # This creates the cross-section plot
 
 function progress_bar_fig(; percent=0, an1="", an2="")
