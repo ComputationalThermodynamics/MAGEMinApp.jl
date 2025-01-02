@@ -107,21 +107,6 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                         ], width="auto" ),
 
                         dbc_col([
-                            dcc_interval(
-                                id          = "interval-simulation_progress",
-                                interval    =  1000,    # in milliseconds
-                                n_intervals =  0,
-                                disabled    = true
-                            ),
-                            dbc_row([
-                                html_div("‎ "),
-                                dcc_markdown(   id="simulation_progress",
-                                                children="",
-                                                style = Dict("textAlign" => "center","font-size" => "100%")),
-                            ]),
-                        ], width="auto" ),
-
-                        dbc_col([
                             dbc_cardimg(    id      = "magemin-img",
                                             src     = "assets/static/images/MAGEMin_light.jpg",
                                             style   = Dict("height" => 70, "width" => 190)),
@@ -157,25 +142,25 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                     ], justify="between"),
 
 
-                    # dbc_row([
-                    #     # display calculation progress bar at the top of the page
-                    #     dbc_col([
-                    #         dcc_interval(
-                    #             id          = "interval-simulation_progress",
-                    #             interval    =  500,    # in milliseconds
-                    #             n_intervals =  0,
-                    #             disabled    = true
-                    #         ),
-                    #         dbc_row([
-                    #             dcc_markdown(   id="simulation_progress",
-                    #                             children="",
-                    #                             style = Dict("textAlign" => "center","font-size" => "100%")),
-                    #         ]),
-                    #     ], width="auto" ),
-                                                    
-                    # ], justify="between"),
-                    
-                    
+                    dbc_row([
+                        dbc_col([
+                        ], width="auto" ),
+                        dbc_col([
+                        ], width="auto" ),
+                        dbc_col([
+                            dcc_interval(
+                                id          = "interval-simulation_progress",
+                                interval    =  1000,    # in milliseconds
+                                n_intervals =  0,
+                                disabled    =  true
+                            ),
+                            dbc_row([
+                                diagram_progress_bar()
+                            ]),
+                        ], width=4 ),
+
+                    ], justify="between"),
+
                     dbc_tabs([
 
                             dbc_tab(    tab_id      = "phase-diagrams",

@@ -737,7 +737,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
         
         #________________________________________________________________________________________#     
         # Refine the mesh along phase boundaries
-        CompProgress.stage = "Refine grid level"
+        CompProgress.stage = "refine grid level ->"
         for irefine = 1:refLvl
             # update computational progress 
             CompProgress.refinement_level = irefine
