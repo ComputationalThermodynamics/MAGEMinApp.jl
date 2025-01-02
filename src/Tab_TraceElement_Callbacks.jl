@@ -224,6 +224,7 @@ function Tab_TraceElement_Callbacks(app)
         fieldType                       = type
         loading                         = ""
         field2plot[1]    = 1
+
         if @isdefined(Out_TE_XY) && length(Out_XY) == length(Out_TE_XY)
             if bid == "load-button-te"
                 fieldType = "zr"
@@ -448,89 +449,169 @@ function Tab_TraceElement_Callbacks(app)
             elseif bid == "button-hide-all-isopleth-te"
     
                 iso_show_te          = 0
-     
+            elseif bid == "update-title-button"
+                    layout_te[:title] = attr(
+                        text    = customTitle,
+                        x       = 0.4,
+                        xanchor = "center",
+                        yanchor = "top"
+                    )
             else
                 fig_te = plot()
                 print("Compute a phase diagram with activated trace-element in the Setup tab first!\n")
             end
+
+
+            if lbl == "true"
+                for i=1:n_lbl+1
+                    layout_te[:annotations][i][:visible] = true
+                end
+                show_text_list  = Dict("display" => "block")  
+            else
+                for i=1:n_lbl+1
+                    layout_te[:annotations][i][:visible] = false
+                end
+                show_text_list  = Dict("display" => "none")  
+            end  
+    
+            # check state of unchanged variables ["data_plot","data_reaction","data_grid","data_isopleth_out_te"]
+            if grid == "true"
+                field2plot[2] = 1
+            end
+            if full_grid == "true"
+                field2plot[3] = 1
+            end
+            if data_isopleth_te.n_iso > 0 && iso_show_te == 1
+                field2plot[4] = 1
+            end
+    
+            # Fetch the fields to display
+            if sum(field2plot) == 0
+                fig = plot()
+            else
+                data_all = eval(Symbol(fieldNames[1]))
+                np       = length(field2plot)
+    
+                for i=2:np
+                    if field2plot[i] == 1
+                        data_all = vcat( data_all, eval(Symbol(fieldNames[i])) )
+                    end
+                end
+    
+                fig_te = plot_diagram(data_all,layout_te)
+            end
+    
+    
+            config   = PlotConfig(    toImageButtonOptions  = attr(     name     = "Download as svg",
+                                                                        format   = "svg",
+                                                                        filename =  replace(customTitle, " " => "_"),
+                                                                        height   =  900,
+                                                                        width    =  720,
+                                                                        scale    =  2.0,       ).fields)
+    
+            layoutCap = Layout(     height          =  30,        
+                                    plot_bgcolor    = "white", 
+                                    paper_bgcolor   = "white", 
+                                    title           = "",
+                                    xaxis           = attr(showticklabels=false),
+                                    yaxis           = attr(showticklabels=false),
+                                    legend=attr(
+                                        x           =  0.05,             
+                                        xanchor     = "left",
+                                        orientation = "h"
+                                    ))
+                                    
+            if field2plot[4] == 0
+                fig_cap = plot(layoutCap)
+            else
+                fig_cap = plot(data_isopleth_te.isoCap[data_isopleth_te.active],layoutCap)
+            end
+            config_cap  = PlotConfig(    toImageButtonOptions  = attr(      name     = "Download as svg",
+                                                                            format   = "svg",
+                                                                            filename =  (replace(customTitle, " " => "_"))*"_TE_label",
+                                                                            height   =  30,
+                                                                            width    =  900,
+                                                                            scale    =  2.0,       ).fields)
+    
+            return grid, full_grid, fig_cap, config_cap, fig_te, config, fieldType, minColor, maxColor, isopleths_te, isoplethsHid_te, txt_list, show_text_list, loading
         else
-            fig_te = plot()
+            return no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update()
             print("Compute a phase diagram with activated trace-element in the Setup tab first!\n")
         end
 
-        if lbl == "true"
-            for i=1:n_lbl+1
-                layout_te[:annotations][i][:visible] = true
-            end
-            show_text_list  = Dict("display" => "block")  
-        else
-            for i=1:n_lbl+1
-                layout_te[:annotations][i][:visible] = false
-            end
-            show_text_list  = Dict("display" => "none")  
-        end  
+        # if lbl == "true"
+        #     for i=1:n_lbl+1
+        #         layout_te[:annotations][i][:visible] = true
+        #     end
+        #     show_text_list  = Dict("display" => "block")  
+        # else
+        #     for i=1:n_lbl+1
+        #         layout_te[:annotations][i][:visible] = false
+        #     end
+        #     show_text_list  = Dict("display" => "none")  
+        # end  
 
-        # check state of unchanged variables ["data_plot","data_reaction","data_grid","data_isopleth_out_te"]
-        if grid == "true"
-            field2plot[2] = 1
-        end
-        if full_grid == "true"
-            field2plot[3] = 1
-        end
-        if data_isopleth_te.n_iso > 0 && iso_show_te == 1
-            field2plot[4] = 1
-        end
+        # # check state of unchanged variables ["data_plot","data_reaction","data_grid","data_isopleth_out_te"]
+        # if grid == "true"
+        #     field2plot[2] = 1
+        # end
+        # if full_grid == "true"
+        #     field2plot[3] = 1
+        # end
+        # if data_isopleth_te.n_iso > 0 && iso_show_te == 1
+        #     field2plot[4] = 1
+        # end
 
-        # Fetch the fields to display
-        if sum(field2plot) == 0
-            fig = plot()
-        else
-            data_all = eval(Symbol(fieldNames[1]))
-            np       = length(field2plot)
+        # # Fetch the fields to display
+        # if sum(field2plot) == 0
+        #     fig = plot()
+        # else
+        #     data_all = eval(Symbol(fieldNames[1]))
+        #     np       = length(field2plot)
 
-            for i=2:np
-                if field2plot[i] == 1
-                    data_all = vcat( data_all, eval(Symbol(fieldNames[i])) )
-                end
-            end
+        #     for i=2:np
+        #         if field2plot[i] == 1
+        #             data_all = vcat( data_all, eval(Symbol(fieldNames[i])) )
+        #         end
+        #     end
 
-            fig_te = plot_diagram(data_all,layout_te)
-        end
+        #     fig_te = plot_diagram(data_all,layout_te)
+        # end
 
 
-        config   = PlotConfig(    toImageButtonOptions  = attr(     name     = "Download as svg",
-                                                                    format   = "svg",
-                                                                    filename =  replace(customTitle, " " => "_"),
-                                                                    height   =  900,
-                                                                    width    =  720,
-                                                                    scale    =  2.0,       ).fields)
+        # config   = PlotConfig(    toImageButtonOptions  = attr(     name     = "Download as svg",
+        #                                                             format   = "svg",
+        #                                                             filename =  replace(customTitle, " " => "_"),
+        #                                                             height   =  900,
+        #                                                             width    =  720,
+        #                                                             scale    =  2.0,       ).fields)
 
-        layoutCap = Layout(     height          =  30,        
-                                plot_bgcolor    = "white", 
-                                paper_bgcolor   = "white", 
-                                title           = "",
-                                xaxis           = attr(showticklabels=false),
-                                yaxis           = attr(showticklabels=false),
-                                legend=attr(
-                                    x           =  0.05,             
-                                    xanchor     = "left",
-                                    orientation = "h"
-                                ))
+        # layoutCap = Layout(     height          =  30,        
+        #                         plot_bgcolor    = "white", 
+        #                         paper_bgcolor   = "white", 
+        #                         title           = "",
+        #                         xaxis           = attr(showticklabels=false),
+        #                         yaxis           = attr(showticklabels=false),
+        #                         legend=attr(
+        #                             x           =  0.05,             
+        #                             xanchor     = "left",
+        #                             orientation = "h"
+        #                         ))
                                 
-        if field2plot[4] == 0
-            fig_cap = plot(layoutCap)
-        else
-            fig_cap = plot(data_isopleth_te.isoCap[data_isopleth_te.active],layoutCap)
-        end
-        config_cap  = PlotConfig(    toImageButtonOptions  = attr(      name     = "Download as svg",
-                                                                        format   = "svg",
-                                                                        filename =  (replace(customTitle, " " => "_"))*"_TE_label",
-                                                                        height   =  30,
-                                                                        width    =  900,
-                                                                        scale    =  2.0,       ).fields)
+        # if field2plot[4] == 0
+        #     fig_cap = plot(layoutCap)
+        # else
+        #     fig_cap = plot(data_isopleth_te.isoCap[data_isopleth_te.active],layoutCap)
+        # end
+        # config_cap  = PlotConfig(    toImageButtonOptions  = attr(      name     = "Download as svg",
+        #                                                                 format   = "svg",
+        #                                                                 filename =  (replace(customTitle, " " => "_"))*"_TE_label",
+        #                                                                 height   =  30,
+        #                                                                 width    =  900,
+        #                                                                 scale    =  2.0,       ).fields)
 
 
-        return grid, full_grid, fig_cap, config_cap, fig_te, config, fieldType, minColor, maxColor, isopleths_te, isoplethsHid_te, txt_list, show_text_list, loading
+        # return grid, full_grid, fig_cap, config_cap, fig_te, config, fieldType, minColor, maxColor, isopleths_te, isoplethsHid_te, txt_list, show_text_list, loading
             
     end
 
