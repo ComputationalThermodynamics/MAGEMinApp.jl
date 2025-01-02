@@ -757,7 +757,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         elseif bid == "refine-pb-button" || bid == "uni-refine-pb-button"
                 
             CompProgress.title = "Calculation Progress"
-            CompProgress.stage = "Refine all phase boundaries"
+            CompProgress.stage = "refine all phase boundaries"
             CompProgress.total_levels = 0
             CompProgress.refinement_level = 1
             CompProgress.tinit = time()
