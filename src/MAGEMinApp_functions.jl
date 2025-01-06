@@ -634,30 +634,26 @@ function restrict_colorMapRange(    colorMap    ::String,
     return colorm
 end
 
+function get_phase_infos(       Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
+                                data        ::MAGEMinApp.AMR_data )
 
-"""
-    Function to retrieve the field labels
-"""
-function get_diagram_labels(    Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
-                                Hash_XY     ::Vector{UInt64},
-                                refType     ::String,
-                                data        ::MAGEMinApp.AMR_data,
-                                PT_infos    ::Vector{String} )
-
-    global n_lbl, gridded_fields, phase_infos
-    print("Get phase diagram labels ..."); t0 = time();
+    global phase_infos
 
     np          = length(data.points)
-    ph          = Vector{String}(undef,np)
-    phd         = Vector{String}(undef,np)
-    fac         = (data.Xrange[2]-data.Xrange[1])*(data.Yrange[2]-data.Yrange[1])
-
+    
     # here we also get information about the phases that are stable accross the diagram and their potential solvus
     act_ss      = []
     act_pp      = []
+    act_sol     = []
     for i = 1:np
         n_ph = length(Out_XY[i].ph)
         n_SS = Out_XY[i].n_SS
+        for k in Out_XY[i].sol_name[1:n_SS]
+            if k in act_sol
+            else 
+                push!(act_sol, k) 
+            end
+        end
         for k in Out_XY[i].ph[1:n_SS]
             if k in act_ss
             else 
@@ -676,9 +672,27 @@ function get_diagram_labels(    Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float
     end
 
     phase_infos = ( act_pp       = act_pp,
-                    act_ss       = act_ss )
+                    act_ss       = act_ss,
+                    act_sol      = act_sol)
+    return nothing
+end
 
-    # println("phase_infos: $phase_infos")
+"""
+    Function to retrieve the field labels
+"""
+function get_diagram_labels(    Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
+                                Hash_XY     ::Vector{UInt64},
+                                refType     ::String,
+                                data        ::MAGEMinApp.AMR_data,
+                                PT_infos    ::Vector{String} )
+
+    global n_lbl, gridded_fields, phase_infos
+    print("Get phase diagram labels ..."); t0 = time();
+
+    np          = length(data.points)
+    ph          = Vector{String}(undef,np)
+    phd         = Vector{String}(undef,np)
+    fac         = (data.Xrange[2]-data.Xrange[1])*(data.Yrange[2]-data.Yrange[1])
 
     if refType == "ph"
         for i = 1:np

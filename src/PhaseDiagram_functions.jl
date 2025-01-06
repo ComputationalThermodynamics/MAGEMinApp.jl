@@ -352,6 +352,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     
     PD_infos[1] *= "Date & time <br>"
     PD_infos[1] *= "Database <br>"
+    PD_infos[1] *= "Solution names <br>"
     PD_infos[1] *= "Diagram type <br>"
     if watsat == "true"
         PD_infos[1] *= "Water saturation<br>"
@@ -408,8 +409,8 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     PD_infos[2] *= string(npoints) * "<br>"
     
     PD_infos[2] *= datetoday * ", " * rightnow * "<br>"
-    PD_infos[2] *= db_in.db_info *"; "* Out_XY[1].dataset * "<br>" 
-
+    PD_infos[2] *= dba[(dba.acronym .== dtb) , :].database[1] *"; "* Out_XY[1].dataset * "<br>" 
+    PD_infos[2] *= join(phase_infos.act_sol, ", ") *"<br>"
     PD_infos[2] *= dgtype *"<br>"
 
     if watsat == "true"
@@ -776,9 +777,11 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                                                                         Xrange,
                                                                                         Yrange)
 
+        get_phase_infos(Out_XY,data)                                                                                
+
         PT_infos = get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat)
 
-        data_plot, annotations, txt_list = get_diagram_labels(   Out_XY,
+        data_plot, annotations, txt_list = get_diagram_labels(  Out_XY,
                                                                 Hash_XY,
                                                                 refType,
                                                                 data,
