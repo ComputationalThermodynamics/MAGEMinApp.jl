@@ -18,7 +18,7 @@
 
 As for `MAGEMin`, you can choose among several thermodynamic dataset: Metapelite (White et al., 2014), Metabasite (Green et al., 2016), Igneous (Holland et al., 2018) or Ultramafic (Evans & Frost, 2021).
 
-## Available thernodynamic database
+## Available thermodynamic database
 
 ### Published
 - `mp`; `MnNCKFMASHTO` -> metapelite, White et al. (2014)
