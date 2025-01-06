@@ -1,6 +1,6 @@
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://github.com/ComputationalThermodynamics/Resources)
 [![Build Status](https://github.com/ComputationalThermodynamics/MAGEMinApp.jl/workflows/CI/badge.svg)](https://github.com/ComputationalThermodynamics/MAGEMinApp.jl/actions)
-
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14590388.svg)](https://doi.org/10.5281/zenodo.14590388)
 # MAGEMinApp.jl
 
 <img src="https://raw.githubusercontent.com/ComputationalThermodynamics/repositories_pictures/main/MAGEMinApp/MAGEMin_app.png?raw=true" alt="drawing" width="820" alt="centered image"/>
