@@ -341,10 +341,11 @@ function Tab_Simulation_Callbacks(app)
         end
 
         if ph == "ss"
-            db_in          = retrieve_solution_phase_information(dtb)
+            db_in           = retrieve_solution_phase_information(dtb)
+            id              = get_ss_from_mineral(dtb, id, aug)
 
             if id in db_in.ss_name
-                id = get_ss_from_mineral(dtb, id, aug)
+                # id = get_ss_from_mineral(dtb, id, aug)
             else
                 id = db_in.ss_name[1]
             end
