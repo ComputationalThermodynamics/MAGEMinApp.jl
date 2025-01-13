@@ -1450,6 +1450,12 @@ function get_isopleth_map(  mod         ::String,
         end 
     elseif mod == "ss_calc"
         el          = Out_XY[1].elements
+        replacements = Dict("Si" => "si", "Ca" => "ca", "Al" => "al")
+        for (old, new) in replacements
+            el      = replace(el,   old => new)
+            calc    = replace(calc, old => new)
+        end
+
         n_el        = length(el)
         global i, j, id
         for i=1:np
