@@ -180,29 +180,67 @@ function Tab_Simulation(db_inf)
                                             dbc_col([ 
                                                 dcc_dropdown(   id      = "kds-dropdown",
                                                 options = [
-                                                    (label = "O. Laurent (2012)",   value = "OL"),
+                                                    (label = "O. Laurent (2012)",               value = "OL"),
+                                                    (label = "E. Oliviera Da Costa (202x)",     value = "EODC"),
                                                 ],
                                                 value       = "OL" ,
                                                 clearable   =  false,
                                                 multi       =  false),
                                             ]),
                                         ]),
-                                        dbc_row([
-                                            dbc_col([ 
-                                                html_h1("Zr saturation", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                        html_div([
+                                            dbc_row([
+                                                dbc_col([ 
+                                                    html_h1("Zr saturation", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                                ]),
+                                                dbc_col([ 
+                                                    dcc_dropdown(   id      = "zrsat-dropdown",
+                                                    options = [
+                                                        (label = "Watson & Harrison (1983)",    value = "WH"),
+                                                        (label = "Boehnke et al. (2013)",       value = "B"),
+                                                        (label = "Crisp and Berry (2022)",      value = "CB"),
+                                                    ],
+                                                    value       = "CB" ,
+                                                    clearable   =  false,
+                                                    multi       =  false),
+                                                ]),
                                             ]),
-                                            dbc_col([ 
-                                                dcc_dropdown(   id      = "zrsat-dropdown",
-                                                options = [
-                                                    (label = "Watson & Harrison (1983)",    value = "WH"),
-                                                    (label = "Boehnke et al. (2013)",       value = "B"),
-                                                    (label = "Crisp and Berry (2022)",      value = "CB"),
-                                                ],
-                                                value       = "CB" ,
-                                                clearable   =  false,
-                                                multi       =  false),
+                                        ], style = Dict("display" => "none"), id  = "zr-options-id"), #none, block
+                                        html_div([
+                                            dbc_row([
+                                                dbc_col([ 
+                                                    html_h1("Options", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                                ]),
+                                                dbc_col([ 
+                                                    dcc_dropdown(   id      = "eodc-options-dropdown",
+                                                    options = [
+                                                        (label = "Experimental (Li)",           value = "EXP"),
+                                                        (label = "Natural (Li, Cs, Be, Ta)",    value = "NAT")
+                                                    ],
+                                                    value       = "EXP" ,
+                                                    clearable   =  false,
+                                                    multi       =  false),
+                                                ]),
                                             ]),
-                                        ]),
+                                            html_div([
+                                                dbc_row([
+                                                    dbc_col([ 
+                                                        html_h1("min to max [0-1]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                                    ]),
+                                                    dbc_col([ 
+                                                        dbc_input(
+                                                            id      = "eodc-ratio-id",
+                                                            type    = "number", 
+                                                            min     = 0.0, 
+                                                            max     =  1.0, 
+                                                            value   =  0.5  ),
+                                                    ]),
+                                                ]),
+                                                
+                                            ], style = Dict("display" => "none"), id  = "eodc-ratio-display-id"), #none, block
+                                        ], style = Dict("display" => "none"), id  = "eodc-options-id"), #none, block
+
+
                                     ], style = Dict("display" => "none"), id      = "tepm-options-id"), #none, block
 
                                     #PT caption 

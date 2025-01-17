@@ -376,18 +376,46 @@ function Tab_Simulation_Callbacks(app)
         app,
         Output("tepm-options-id",   "style"),
         Output("te-panel-id",       "style"),
+        Output("zr-options-id",     "style"),
+        Output("eodc-options-id",   "style"),
+        Output("eodc-ratio-display-id",   "style"),
+        Output("display-show-norm-id",   "style"),
+        
         Input("tepm-dropdown",      "value"),
-    ) do value
+        Input("kds-dropdown",       "value"),
+        Input("eodc-options-dropdown",       "value"),
+    ) do tepm, kds, eodc_opt
 
-        if value == "false"
+        type_eodc   = Dict("display" => "none" )
+
+        if tepm == "false"
             opt     = Dict("display" => "none")
             panel   = Dict("display" => "none")
-        elseif value == "true"
-            opt     = Dict("display" => "block")    
-            panel   = Dict("display" => "block")
+            zr      = Dict("display" => "none")
+            opeodc  = Dict("display" => "none")
+            show_norm = Dict("display" => "none")
+
+        elseif tepm == "true" 
+            if kds == "OL"
+                opt     = Dict("display" => "block" )    
+                panel   = Dict("display" => "block" )
+                zr      = Dict("display" => "block" )
+                opeodc  = Dict("display" => "none"  )
+                show_norm = Dict("display" => "block")
+
+            elseif kds == "EODC"
+                opt     = Dict("display" => "block" )    
+                panel   = Dict("display" => "block" )
+                zr      = Dict("display" => "none"  )
+                opeodc  = Dict("display" => "block" )
+                show_norm = Dict("display" => "none")
+                if eodc_opt == "NAT"
+                    type_eodc   = Dict("display" => "block" )
+                end
+            end
         end
 
-        return opt, panel
+        return opt, panel, zr, opeodc, type_eodc, show_norm
     end
 
 

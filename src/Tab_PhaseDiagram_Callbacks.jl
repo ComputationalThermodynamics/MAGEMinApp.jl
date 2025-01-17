@@ -641,6 +641,8 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("zrsat-dropdown",         "value"),
         State("table-te-rock",          "data"),            # bulk-rock 1
         State("table-te-2-rock",        "data"),  
+        State("eodc-options-dropdown",  "value"),
+        State("eodc-ratio-id",          "value"),
 
         State("test-dropdown",          "value"),           # test number
 
@@ -680,7 +682,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             bufferType, solver,     verbose,    scp,
             bulk1,      bulk2,      sys_unit,   
             bufferN1,   bufferN2,
-            tepm,       kds_mod,    zrsat_mod,  bulkte1,    bulkte2,
+            tepm,       kds_mod,    zrsat_mod,  bulkte1,    bulkte2, eodc_type, eodc_ratio, 
             test,
             isopleths,  isoplethsID,isoplethsHid,  isoplethsHidID,  phase,      ss,         em,     ox,    of,     ot, sys, calc, cust,
             isoLineStyle, isoLineWidth, isoColorLine,           isoLabelSize,   
@@ -736,7 +738,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             if tepm == "true"
                 if dtb != "um" && dtb != "ume" && dtb != "mtl"
                     t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
-                                                                        kds_mod, zrsat_mod, bulkte_L, bulkte_R)
+                                                                        kds_mod, zrsat_mod, bulkte_L, bulkte_R, elem, eodc_type, Float64(eodc_ratio))
 
                     println("Computed trace element partitioning in $t s")
                 else
@@ -777,7 +779,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             if tepm == "true"
                 if dtb != "um" && dtb != "ume" && dtb != "mtl"
                     t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
-                                                                        kds_mod, zrsat_mod, bulkte_L, bulkte_R)
+                                                                        kds_mod, zrsat_mod, bulkte_L, bulkte_R, elem, eodc_type, Float64(eodc_ratio))
 
                     println("Computed trace element partitioning in $t s")
                 else

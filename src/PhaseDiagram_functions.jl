@@ -625,14 +625,33 @@ function tepm_function( diagType    :: String,
                         kds_mod     :: String,
                         zrsat_mod   :: String,
                         bulkte_L    :: Vector{Float64},
-                        bulkte_R    :: Vector{Float64} )
+                        bulkte_R    :: Vector{Float64},
+                        elem_TE     :: Vector{String},
+                        eodc_type   :: String,
+                        eodc_ratio  :: Float64)
 
     np          = length(Out_XY)
-
+    
     Out_TE_XY   = Vector{MAGEMin_C.out_tepm}(undef,np)
     TEvec       = Vector{Float64};
     all_TE_ph   = []
+    option      = 1
 
+    if kds_mod == "OL"
+        KDs_dtb     = AppData.KDs_OL;
+    elseif kds_mod == "EODC"
+        if eodc_type == "EXP"
+            KDs_dtb     = AppData.KDs_EODC_Exp;
+        else
+            KDs_dtb     = AppData.KDs_EODC_Nat;
+            option      = 3
+        end 
+    else
+        KDs_dtb     = AppData.KDs_OL;
+    end
+
+    bulkte_L          = adjust_chemical_system( KDs_dtb, bulkte_L, elem_TE );
+    bulkte_R          = adjust_chemical_system( KDs_dtb, bulkte_R, elem_TE );
     for i = 1:np
 
         if diagType != "pt"
@@ -641,7 +660,11 @@ function tepm_function( diagType    :: String,
             TEvec = bulkte_L
         end
 
-        Out_TE_XY[i]  = TE_prediction(TEvec,KDs_dtb, zrsat_mod,Out_XY[i],dtb);
+        Out_TE_XY[i]  = TE_prediction(  TEvec, KDs_dtb, Out_XY[i], dtb; 
+                                        ZrSat_model = zrsat_mod,
+                                        model       = kds_mod,
+                                        option      = option,
+                                        ratio       = eodc_ratio);
 
         if ~isnothing(Out_TE_XY[i].ph_TE)
             for j in Out_TE_XY[i].ph_TE

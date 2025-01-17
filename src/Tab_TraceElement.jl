@@ -24,30 +24,32 @@ function Tab_TraceElement()
                                                     ]),
                                                 ]),
                                                 html_div("‎ "),
-                                                dbc_row([
-                                                    dbc_col([ 
-                                                        html_h1("Show", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                                    ], width=6),
-                                                    dbc_col([
-                                                        dcc_dropdown(   id          = "show-spectrum-te",
-                                                                        options     =  ["ree","all"],
-                                                                        value       = "ree" ,
-                                                                        clearable   =  false,
-                                                                        multi       =  false),
-                                                    ], width=6), 
-                                                ]),
-                                                dbc_row([
-                                                    dbc_col([ 
-                                                        html_h1("Norm.", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                html_div([
+                                                    dbc_row([
+                                                        dbc_col([ 
+                                                            html_h1("Show", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                        ], width=6),
+                                                        dbc_col([
+                                                            dcc_dropdown(   id          = "show-spectrum-te",
+                                                                            options     =  ["ree","all"],
+                                                                            value       = "ree" ,
+                                                                            clearable   =  false,
+                                                                            multi       =  false),
+                                                        ], width=6), 
                                                     ]),
-                                                    dbc_col([
-                                                        dcc_dropdown(   id          = "normalization-te",
-                                                                        options     =  ["bulk","chondrite"],
-                                                                        value       = "bulk" ,
-                                                                        clearable   =  false,
-                                                                        multi       =  false),
-                                                    ], width=6), 
-                                                ]),
+                                                    dbc_row([
+                                                        dbc_col([ 
+                                                            html_h1("Norm.", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                        ]),
+                                                        dbc_col([
+                                                            dcc_dropdown(   id          = "normalization-te",
+                                                                            options     =  ["bulk","chondrite"],
+                                                                            value       = "bulk" ,
+                                                                            clearable   =  false,
+                                                                            multi       =  false),
+                                                        ], width=6), 
+                                                    ]),
+                                                ], style = Dict("display" => "block"), id  = "display-show-norm-id"), #none, block
 
 
                                             ], width=2),  
