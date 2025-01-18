@@ -352,7 +352,7 @@ function Tab_PTXpaths_Callbacks(app)
         Output("ptx-plot",              "figure"),
         Output("ptx-plot",              "config"),
         Output("phase-selector-id",     "options"),
-        Output("output-loading-id-ptx",         "children"),
+        Output("output-loading-id-ptx", "children"),
 
         Input("compute-path-button",    "n_clicks"),
         Input("sys-unit-ptx",           "value"),
@@ -364,7 +364,8 @@ function Tab_PTXpaths_Callbacks(app)
         State("ptx-table",              "data"),
         State("mode-dropdown-ptx",      "value"),
         State("assimilation-dropdown-ptx",      "value"),
-
+        State("variable-buffer-ptx-id", "value"),
+        
         State("database-dropdown-ptx",  "value"),
         State("buffer-dropdown-ptx",    "value"),
         State("solver-dropdown-ptx",    "value"),    
@@ -385,7 +386,7 @@ function Tab_PTXpaths_Callbacks(app)
         prevent_initial_call = true,
 
         ) do    compute,    upsys,      
-                sys_unit,   phase_selection,    phase_list, nsteps,     PTdata,     mode,   assim,
+                sys_unit,   phase_selection,    phase_list, nsteps,     PTdata,     mode,   assim,  var_buffer,
                 dtb,        bufferType, solver,
                 verbose,    bulk,       bulk2,      bufferN,
                 cpx,        limOpx,     limOpxVal,  test,   sysunit,
@@ -404,7 +405,7 @@ function Tab_PTXpaths_Callbacks(app)
             bufferN                 = Float64(bufferN)               # convert buffer_n to float
             bulk_ini, bulk_assim, oxi = get_bulkrock_prop(bulk, bulk2; sys_unit=sys_unit)  
 
-            compute_new_PTXpath(    nsteps,     PTdata,     mode,       bulk_ini,  bulk_assim,  oxi,    phase_selection,    assim,
+            compute_new_PTXpath(    nsteps,     PTdata,     mode,       bulk_ini,  bulk_assim,  oxi,    phase_selection,    assim, var_buffer,
                                     dtb,        bufferType, solver,
                                     verbose,    bufferN,
                                     cpx,        limOpx,     limOpxVal,
@@ -507,17 +508,24 @@ function Tab_PTXpaths_Callbacks(app)
     # callback function to display to right set of variables as function of the diagram type
     callback!(
         app,
-        Output("buffer-1-id-ptx", "style"),
+        Output("buffer-1-id-ptx",               "style"),
+        Output("variable-buffer-display-id",    "style"),
+        Output("variable-buffer-ptx-id",        "value"),
+
         Input("buffer-dropdown-ptx", "value"),
     ) do value
 
         if value != "none"
-            b1  = Dict("display" => "block")
+            b1              = Dict("display" => "block")
+            buffer_display  = Dict("display" => "block")
+            var_buff        = true
         else
-            b1  = Dict("display" => "none")
+            b1              = Dict("display" => "none")
+            buffer_display  = Dict("display" => "none")
+            var_buff        = false
         end
 
-        return b1
+        return b1, buffer_display, var_buff
     end
 
 
@@ -780,21 +788,25 @@ function Tab_PTXpaths_Callbacks(app)
     end
 
 
+
+
     callback!(app,
-        Output("ptx-table", "data"),
-        Output("ptx-table", "columns"),
-        Output("table-2-id-ptx", "style"),
-        Output("test-2-id-ptx", "style"),
+        Output("ptx-table",                 "data"      ),
+        Output("ptx-table",                 "columns"   ),
+        Output("table-2-id-ptx",            "style"     ),
+        Output("test-2-id-ptx",             "style"     ),
 
-        Input("assimilation-dropdown-ptx", "value"),
-        Input("add-row-button", "n_clicks"),
+        Input("assimilation-dropdown-ptx",  "value"     ),
+        Input("add-row-button",             "n_clicks"  ),
+        Input("variable-buffer-ptx-id",     "value"     ),
 
-        State("assimilation-dropdown-ptx", "value"),
-        State("ptx-table", "data"),
-        State("ptx-table", "columns"),
+        State("assimilation-dropdown-ptx",  "value"     ),
+        State("ptx-table",                  "data"      ),
+        State("ptx-table",                  "columns"   ),
+
         prevent_initial_call = true,
 
-        ) do value, n_clicks, assim, data, colout
+        ) do value, n_clicks, var_buffer, assim, data, colout
 
         bid                     = pushed_button( callback_context() )    # get which button has been pushed
 
@@ -808,21 +820,45 @@ function Tab_PTXpaths_Callbacks(app)
         end
 
         if assim == "true"
-            colout = [  Dict("name" => "P [kbar]",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
-                        Dict("name" => "T [°C]",    "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric"),
-                        Dict("name" => "Add [mol%]", "id"   => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric")]
+            if var_buffer == false
+                colout = [  Dict("name" => "P [kbar]",  "id"    => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                            Dict("name" => "T [°C]",    "id"    => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                            Dict("name" => "Add [mol%]", "id"   => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric")]
 
-            if n_clicks > 0 && bid == "add-row-button"
-                add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0, Symbol("col-3") => 0.0)
-                push!(dataout,add)
+                if n_clicks > 0 && bid == "add-row-button"
+                    add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0, Symbol("col-3") => 0.0)
+                    push!(dataout,add)
+                end
+            elseif var_buffer == true
+                colout = [  Dict("name" => "P [kbar]",  "id"        => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                            Dict("name" => "T [°C]",    "id"        => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                            Dict("name" => "Add [mol%]", "id"       => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                            Dict("name" => "Buffer",     "id"       => "col-4", "deletable" => false, "renamable" => false, "type" => "numeric")]
+
+                if n_clicks > 0 && bid == "add-row-button"
+                    add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0)
+                    push!(dataout,add)
+                end
             end
-        else
-            colout = [  Dict("name" => "P [kbar]",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
-                        Dict("name" => "T [°C]",    "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")]
 
-            if n_clicks > 0 && bid == "add-row-button"
-                add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0, Symbol("col-3") => 0.0)
-                push!(dataout,add)
+        else
+            if var_buffer == false
+                colout = [  Dict("name" => "P [kbar]",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                            Dict("name" => "T [°C]",    "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")]
+
+                if n_clicks > 0 && bid == "add-row-button"
+                    add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0)
+                    push!(dataout,add)
+                end
+            elseif var_buffer == true
+                colout = [  Dict("name" => "P [kbar]",  "id"        => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                            Dict("name" => "T [°C]",    "id"        => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                            Dict("name" => "Buffer",    "id"        => "col-4", "deletable" => false, "renamable" => false, "type" => "numeric")]
+
+                if n_clicks > 0 && bid == "add-row-button"
+                    add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0, Symbol("col-4") => 0.0)
+                    push!(dataout,add)
+                end
             end
         end
 

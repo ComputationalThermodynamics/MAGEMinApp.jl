@@ -283,12 +283,12 @@ function Tab_IsentropicPaths(db_inf)
                                                                     # editable    = true
                                                                 ),
 
-                                                                # Buffer multiplier
+                                                                # buffer offset
                                                                 html_div([
                                                                 html_div("‎ "),
                                                                 dbc_row([
                                                                     dbc_col([ 
-                                                                        html_h1("Buffer multiplier", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                                                        html_h1("buffer offset", style = Dict("textAlign" => "center","font-size" => "120%")),
                                                                     ]),
                                                                     dbc_col([ 
                                                                             dbc_input(
