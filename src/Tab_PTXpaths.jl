@@ -141,6 +141,26 @@ function Tab_PTXpaths(db_inf)
                                             multi       = false),
                                         ]),
                                     ]),
+
+                                    # buffer
+                                    html_div([
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("Variable buffer", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ]),
+                                            dbc_col([ 
+                                                dcc_dropdown(   id      = "variable-buffer-ptx-id",
+                                                options = [
+                                                    (label = "true",       value = true ),
+                                                    (label = "false",      value = false),
+                                                ],
+                                                value       = false ,
+                                                clearable   = false,
+                                                multi       = false),
+                                            ]),
+                                        ]),
+                                    ], style = Dict("display" => "none"), id  = "variable-buffer-display-id"), #none, block
+
                                     #solver
                                     dbc_row([
                                         dbc_col([ 
@@ -299,12 +319,12 @@ function Tab_PTXpaths(db_inf)
                                                                     editable    = true,
                                                                 ),
 
-                                                                # Buffer multiplier
+                                                                # buffer offset
                                                                 html_div([
                                                                 html_div("‎ "),
                                                                 dbc_row([
                                                                     dbc_col([ 
-                                                                        html_h1("Buffer multiplier", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                                                        html_h1("buffer offset", style = Dict("textAlign" => "center","font-size" => "120%")),
                                                                     ]),
                                                                     dbc_col([ 
                                                                             dbc_input(
@@ -336,12 +356,12 @@ function Tab_PTXpaths(db_inf)
                                                                 ),
 
 
-                                                                    # Buffer multiplier
+                                                                    # buffer offset
                                                                     html_div([
                                                                     html_div("‎ "),
                                                                     dbc_row([
                                                                         dbc_col([ 
-                                                                            html_h1("Buffer multiplier", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                                                            html_h1("buffer offset", style = Dict("textAlign" => "center","font-size" => "120%")),
                                                                         ]),
                                                                         dbc_col([ 
                                                                                 dbc_input(
@@ -504,8 +524,8 @@ function Tab_PTXpaths(db_inf)
                                             columns =[  Dict("name" => "P [kbar]",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
                                                         Dict("name" => "T [°C]",    "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")],
                                             data=[
-                                                Dict("col-1" => 5.0,    "col-2"   => 500.0 , Symbol("col-3") => 0.0),
-                                                Dict("col-1" => 10.0,   "col-2"   => 800.0 , Symbol("col-3") => 0.0),
+                                                Dict("col-1" => 5.0,    "col-2"   => 500.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0),
+                                                Dict("col-1" => 10.0,   "col-2"   => 800.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0),
                                             ],
                                             style_cell      = (textAlign="center", fontSize="140%",),
                                             style_header    = (fontWeight="bold",),
@@ -528,7 +548,7 @@ function Tab_PTXpaths(db_inf)
                                                                                 
                             ])
 
-                        ], width=3),
+                        ], width=4),
 
                         dbc_col([  
                         ]), #, width=1
@@ -553,7 +573,7 @@ function Tab_PTXpaths(db_inf)
                                                                                 
                             ])
 
-                        ], width=4),
+                        ], width=3),
 
                         dbc_col([  
                         ]), #, width=1

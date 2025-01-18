@@ -11,10 +11,11 @@ function Tab_TraceElement_Callbacks(app)
         Input("normalization-te",           "value"     ),
         Input("show-spectrum-te",           "n_clicks"  ),
         Input("show-spectrum-te",           "value"     ),
+        State("kds-dropdown",               "value"     ),
         
         prevent_initial_call = true,
 
-    ) do click_info, norn_click, norm, show_click, show_type
+    ) do click_info, norn_click, norm, show_click, show_type, kds_db
 
         global point_id_te
 
@@ -23,13 +24,13 @@ function Tab_TraceElement_Callbacks(app)
 
         customTitle = "Rare Earth Elements spectrum"
 
-        layout_ree = get_layout_ree(norm, show_type)
+        layout_ree = get_layout_ree(norm, show_type, kds_db)
            
         if tmp !== nothing
             point_id_te = tmp.match
             point_id_te = parse(Int64,replace.(point_id_te,r"#"=>""))
 
-            data_ree_plot = get_data_ree_plot(point_id_te, norm, show_type)
+            data_ree_plot = get_data_ree_plot(point_id_te, norm, show_type, kds_db)
             fig_ree = plot(data_ree_plot,layout_ree)
 
             config   = PlotConfig(    toImageButtonOptions  = attr(     name     = "Download as svg",

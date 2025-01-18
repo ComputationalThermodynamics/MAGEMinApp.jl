@@ -1741,10 +1741,10 @@ function parse_bulk_rock(contents, filename)
         return 0
     end
 
-  end
+end
 
 
-  function parse_bulk_te(contents, filename, kdsDB)
+function parse_bulk_te(contents, filename, kdsDB)
     try
         content_type, content_string = split(contents, ',');
         decoded = base64decode(content_string);
@@ -1758,24 +1758,6 @@ function parse_bulk_rock(contents, filename)
         return 0
     end
 
-  end
-
-
-function adjust_chemical_system_tmp(    KDs_dtb,
-                                        bulk_TE     :: Vector{Float64},
-                                        elem_TE     :: Vector{String})
-
-    n_el        = length(KDs_dtb.element_name)
-    C0_TE       = zeros(Float64,n_el)
-
-    for i=1:n_el
-        id = findfirst(KDs_dtb.element_name[i] .== elem_TE)
-        if !isnothing(id)
-            C0_TE[i] = bulk_TE[id]
-        end
-    end
-
-    return C0_TE
 end
 
 """
@@ -1814,7 +1796,7 @@ function te_bulk_file_to_db(datain, kdsDB)
         frac 		= replace.(frac,r"\]"=>"",r"\["=>"")
         frac 		= parse.(Float64,frac)
 
-        bulkte      = adjust_chemical_system_tmp( KDs_dtb, frac, elements)
+        bulkte      = adjust_chemical_system( KDs_dtb, frac, elements)
         bulkte     .= round.(bulkte; digits = 4)
 
         if ~isempty(datain[i,id_frac2])
@@ -1822,7 +1804,7 @@ function te_bulk_file_to_db(datain, kdsDB)
             frac2 		= strip.(convert.(String,frac2));
             frac2 		= replace.(frac2,r"\]"=>"",r"\["=>"");
             frac2		= parse.(Float64,frac2);
-            bulkte2     = adjust_chemical_system_tmp( KDs_dtb, frac2, elements);
+            bulkte2     = adjust_chemical_system( KDs_dtb, frac2, elements);
             bulkte2    .= round.(bulkte2; digits = 4)
         else
             bulkte2     = deepcopy(bulkte)

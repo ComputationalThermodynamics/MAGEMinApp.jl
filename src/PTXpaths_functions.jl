@@ -310,7 +310,7 @@ end
 
 
 
-function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   bulk_assim, oxi,    phase_selection,    assim,
+function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   bulk_assim, oxi,    phase_selection,    assim, var_buffer,
                                 dtb,        bufferType, solver,
                                 verbose,    bufferN,
                                 cpx,        limOpx,     limOpxVal,
@@ -340,11 +340,23 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             Pres    = zeros(Float64,np)
             Temp    = zeros(Float64,np)
             Add     = zeros(Float64,np)
+            Buff    = zeros(Float64,np)
 
             for i=1:np
                 Pres[i] = data[i][Symbol("col-1")]
                 Temp[i] = data[i][Symbol("col-2")]
             end
+            
+            if var_buffer == true
+                for i=1:np
+                    Buff[i] = data[i][Symbol("col-4")]
+                end
+            else
+                for i=1:np
+                    Buff[i] = bufferN
+                end
+            end
+
             if assim == "true"
                 for i=1:np
                     Add[i] = data[i][Symbol("col-3")]
@@ -379,7 +391,6 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
 
             gv      =  define_bulk_rock(gv, bulk, oxi, sys_in, dtb);
 
-
             fracEvol[1,1] = 1.0;          # starting material fraction is always one as we want to measure the relative change here
             fracEvol[1,2] = 0.0; 
             k = 1
@@ -394,6 +405,10 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                 for j = 1:nsteps+1
                     P = Pres[i] + (j-1)*( (Pres[i+1] - Pres[i])/ (nsteps+1) )
                     T = Temp[i] + (j-1)*( (Temp[i+1] - Temp[i])/ (nsteps+1) )
+
+                    if var_buffer == true
+                        bufferN = Buff[i] + (j-1)*( (Buff[i+1] - Buff[i])/ (nsteps+1) )
+                    end
 
                     if assim == "true"
                         bulk   .= (1.0 .- step ./ (1.0 .+ step .* j)) .* bulk .+ (step ./ (1.0 .+ step .* j)) .* bulk_assim
@@ -454,7 +469,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                 end
             end
             
-            Out_PTX[k] = deepcopy( point_wise_minimization(Pres[np],Temp[np], gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
+            Out_PTX[k] = deepcopy( point_wise_minimization(Pres[np],Temp[np], gv, z_b, DB, splx_data, sys_in; buffer_n=Buff[np], rm_list=phase_selection, name_solvus=true) )
   
             for k = 1:n_tot
                 for l=1:length(Out_PTX[k].ph)

@@ -1,20 +1,29 @@
 """
     Retrieve layout for rare earth elements figure
 """
-function get_layout_ree(norm,show_type)
+function get_layout_ree(norm        :: String,
+                        show_type   :: String,
+                        kds_db      :: String)
 
-    if show_type == "ree"
-        xaxis_title = "Rare Earth Elements"
-    elseif show_type == "all"
+    if kds_db == "OL"                 
+        if show_type == "ree"
+            xaxis_title = "Rare Earth Elements"
+        elseif show_type == "all"
+            xaxis_title = "Trace Elements"
+        end
+        yaxis_title = "C"*show_type*"/"*norm*" log10[μg/g]"
+    elseif kds_db == "EODC"
         xaxis_title = "Trace Elements"
+        yaxis_title = "Cte log10[μg/g]"
     end
+
     layout_ree      =  Layout(
         font        = attr(size = 10),
         height      = 240,
         margin      = attr(autoexpand = false, l=12, r=12, b=8, t=32),
         autosize    = false,
         xaxis_title = xaxis_title,
-        yaxis_title = "C"*show_type*"/"*norm*" log10[μg/g]",
+        yaxis_title = yaxis_title,
         yaxis_type  = "log",
         showlegend  = true,
         dragmode    = false,
@@ -29,21 +38,26 @@ function get_layout_ree(norm,show_type)
 end
 
 
-function get_data_ree_plot(point_id_te, norm, show_type)
+function get_data_ree_plot(point_id_te, norm, show_type, kds_db)
 
     ree             = ["La", "Ce", "Pr", "Nd", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu"]
     te_chondrite    = ["Rb", "Ba", "Th", "U", "Nb", "Ta", "La", "Ce", "Pb", "Pr", "Sr", "Nd", "Zr", "Hf", "Sm", "Eu", "Gd", "Tb", "Dy", "Y", "Ho", "Er", "Tm", "Yb", "Lu", "V", "Sc"]
     ppm_chondrite   = [2.3, 2.41,0.029,0.0074,0.24,0.0136,0.237,0.613,2.47,0.0928,7.25,0.457,3.82,0.103,0.148,0.0563,0.199,0.0361,0.246,1.57,0.0546,0.160,0.0247,0.161,0.0246,56,5.92]
 
-    # chondrite   = [0.315, 0.813, 0.116, 0.597, 0.192, 0.072, 0.259, 0.049, 0.325, 0.073, 0.213, 0.03, 0.208, 0.032]
-
-    if show_type == "ree"
-        te      = ree
-        te_idx  = [findfirst(isequal(x), Out_TE_XY[point_id_te].elements) for x in ree];
-    elseif show_type == "all"
+    if kds_db == "OL"
+        if show_type == "ree"
+            te      = ree
+            te_idx  = [findfirst(isequal(x), Out_TE_XY[point_id_te].elements) for x in ree];
+        elseif show_type == "all"
+            te      = Out_TE_XY[point_id_te].elements
+            te_idx  = [findfirst(isequal(x), Out_TE_XY[point_id_te].elements) for x in te_chondrite];
+        end
+    elseif kds_db == "EODC"
         te      = Out_TE_XY[point_id_te].elements
-        te_idx  = [findfirst(isequal(x), Out_TE_XY[point_id_te].elements) for x in te_chondrite];
+        te_idx  = [1:length(te);]
     end
+
+
 
     n_ree   = length(te_idx)
 
@@ -75,19 +89,22 @@ function get_data_ree_plot(point_id_te, norm, show_type)
 
     # te_idx   = [findfirst(isequal(x), Out_TE_XY[point_id_te].elements) for x in ree];
     k = 1
-
-    if show_type == "ree"
-        if norm == "chondrite"
-            C_norm = copy(ppm_chondrite[te_idx])
-        elseif norm == "bulk"
-            C_norm = copy(Out_TE_XY[point_id_te].C0[te_idx])
+    if kds_db == "OL"
+        if show_type == "ree"
+            if norm == "chondrite"
+                C_norm = copy(ppm_chondrite[te_idx])
+            elseif norm == "bulk"
+                C_norm = copy(Out_TE_XY[point_id_te].C0[te_idx])
+            end
+        elseif show_type == "all"
+            if norm == "chondrite"
+                C_norm = copy(ppm_chondrite[te_idx])
+            elseif norm == "bulk"
+                C_norm = copy(Out_TE_XY[point_id_te].C0[te_idx])
+            end
         end
-    elseif show_type == "all"
-        if norm == "chondrite"
-            C_norm = copy(ppm_chondrite[te_idx])
-        elseif norm == "bulk"
-            C_norm = copy(Out_TE_XY[point_id_te].C0[te_idx])
-        end
+    elseif kds_db == "EODC"
+        C_norm = 1;
     end
 
 
@@ -194,7 +211,7 @@ function update_colormap_phaseDiagram_te(       xtitle,     ytitle,     type,   
                                 colorbar_title  =  fieldname,
                                 reversescale    =  reverseColorMap,
                                 hoverinfo       = "skip",
-                                colorbar        = attr(     lenmode         = "fraction",
+                                colorbar        =  attr(    lenmode         = "fraction",
                                                             len             =  0.75,
                                                             thicknessmode   = "fraction",
                                                             tickness        =  0.5,
