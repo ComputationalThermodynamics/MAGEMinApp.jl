@@ -305,7 +305,7 @@ function get_TAS_phase_diagram()
     return tas, layout
 end
 
-function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2, PTpath, watsat)
+function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2, PTpath, watsat, watsat_val)
 
     ptx_data    = copy(PTpath)
     np      = length(ptx_data)
@@ -414,7 +414,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     PD_infos[2] *= dgtype *"<br>"
 
     if watsat == "true"
-        PD_infos[2] *= "Computed at solidus <br>"
+        PD_infos[2] *= "Computed at solidus (+ $(watsat_val) mol% H2O) <br>"
     end
 
     PD_infos[2] *= solv *"<br>"
@@ -700,7 +700,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                     dtb,        diagType,   verbose,    scp,    solver,     phase_selection,
                                     fixT,       fixP,
                                     sub,        refLvl,
-                                    watsat,     cpx,        limOpx,     limOpxVal,  PTpath,
+                                    watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  PTpath,
                                     bulk_L,     bulk_R,     oxi,
                                     bufferType, bufferN1,   bufferN2,
                                     minColor,   maxColor,
@@ -729,7 +729,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
             pChip_wat, pChip_T = get_wat_sat_function(         Yrange,     bulk_L,     oxi,    phase_selection,
                                                                 dtb,        bufferType, solver,
                                                                 verbose,    bufferN1,
-                                                                cpx,        limOpx,     limOpxVal)
+                                                                cpx,        limOpx,     limOpxVal, watsat_val)
         else
             pChip_wat, pChip_T = nothing, nothing
         end
@@ -802,7 +802,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
 
         get_phase_infos(Out_XY,data)                                                                                
 
-        PT_infos = get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat)
+        PT_infos = get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat,watsat_val)
 
         data_plot, annotations, txt_list = get_diagram_labels(  Out_XY,
                                                                 Hash_XY,
@@ -900,7 +900,7 @@ end
 """
 function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                 Xrange,     Yrange,     fieldname,  customTitle,
-                                dtb,        diagType,   watsat,     
+                                dtb,        diagType,   watsat,  watsat_val,   
                                 verbose,    scp,        solver, phase_selection,
                                 fixT,       fixP,
                                 sub,        refLvl,
@@ -955,7 +955,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                                                                     Xrange,
                                                                                     Yrange )
     
-    PT_infos                           = get_phase_diagram_information(npoints,dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat)
+    PT_infos                           = get_phase_diagram_information(npoints,dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat,watsat_val)
                                                               
     data_plot, annotations,txt_list = get_diagram_labels(   Out_XY,
                                                             Hash_XY,

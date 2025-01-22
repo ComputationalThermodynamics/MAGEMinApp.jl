@@ -58,7 +58,8 @@ function Tab_Simulation_Callbacks(app)
         State(  "test-2-te-dropdown",               "value"       ),
 
         State(  "watsat-dropdown",                  "value"       ),
-        
+        State(  "watsat-val-id",                    "value"       ),
+
         prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
     ) do click, filename,
 
@@ -71,7 +72,7 @@ function Tab_Simulation_Callbacks(app)
         test, test2,
         buffer1, buffer2,
         te_test, te_test2,
-        watsat
+        watsat, watsat_val
 
         global db, dbte
 
@@ -82,7 +83,7 @@ function Tab_Simulation_Callbacks(app)
         file            = "saved_states/"*String(filename)*"_options.jld2"
 
         println("Saving phase diagram options..."); t0 = time()
-        @save file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ptx_table pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver verbose scp test test2 buffer1 buffer2 te_test te_test2 watsat
+        @save file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ptx_table pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver verbose scp test test2 buffer1 buffer2 te_test te_test2 watsat watsat_val
         println("Saved phase diagram options in $(round(time()-t0, digits=3)) seconds"); 
 
         gv_names    = ["infos","layout","data", "data_plot", "data_reaction","iso_show", "n_lbl","data_isopleth", "data_isopleth_out","Out_XY", "Hash_XY", "Out_TE_XY", "all_TE_ph", "n_phase_XY", "addedRefinementLvl", "pChip_wat", "pChip_T"]
@@ -146,10 +147,11 @@ function Tab_Simulation_Callbacks(app)
         Output(  "buffer-2-mul-id",                  "value"       ),
 
         Output(  "watsat-dropdown",                  "value"       ),
+        Output(  "watsat-val-id",                    "value"       ),
         Output(  "load-state-id",                    "value"       ),
         Input(   "load-state-diagram-button",        "n_clicks"    ),
         State(   "save-state-filename-id",           "value"       ),
-        State(   "load-state-id",                     "value"       ),
+        State(   "load-state-id",                    "value"       ),
         
         prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
     ) do click, filename, state_id
@@ -181,10 +183,10 @@ function Tab_Simulation_Callbacks(app)
         global db, dbte
         file = "saved_states/"*String(filename)*"_options.jld2"
         try 
-            @load file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver verbose scp buffer1 buffer2 watsat
+            @load file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver verbose scp buffer1 buffer2 watsat watsat_val
 
             success, failed = "success", ""
-            return success, failed, database, diagram_type, mb_cpx, limit_ca_opx, ca_opx_val, tepm, kds_dtb, zrsat_dtb, pmin, pmax, tmin, tmax, pfix, tfix, grid_sub, refinement, refinement_level, buffer, solver, verbose, scp, buffer1, buffer2, watsat, state_id
+            return success, failed, database, diagram_type, mb_cpx, limit_ca_opx, ca_opx_val, tepm, kds_dtb, zrsat_dtb, pmin, pmax, tmin, tmax, pfix, tfix, grid_sub, refinement, refinement_level, buffer, solver, verbose, scp, buffer1, buffer2, watsat, watsat_val, state_id
         catch e
             success, failed = "", "failed"
             return success, failed, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, state_id
@@ -454,6 +456,20 @@ function Tab_Simulation_Callbacks(app)
         return style
     end
 
+    # callback to display clinopyroxene choice for the metabasite database
+    callback!(
+        app,
+        Output("watsat-display-id", "style"),
+        Input("watsat-dropdown", "value"),
+    ) do value
+        # global db
+        if value == "true"
+            style  = Dict("display" => "block")
+        else 
+            style  = Dict("display" => "none")
+        end
+        return style
+    end
 
     # callback to display initial title of the pseudosections
     callback!(
