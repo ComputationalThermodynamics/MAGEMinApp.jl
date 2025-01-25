@@ -390,13 +390,15 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("buffer-1-mul-id",        "value"     ),
         State("buffer-2-mul-id",        "value"     ),  
         State("phase-selection",        "value"     ),
+        State("pure-phase-selection",   "value"     ),
         State("solver-dropdown",        "value"     ),            # bulk-rock 1
         
 
         prevent_initial_call = true,
-    ) do click_info, pie_unit, dtb, diagType, buffer, buffer_n1, buffer_n2, phase_selection, solver
+    ) do click_info, pie_unit, dtb, diagType, buffer, buffer_n1, buffer_n2, phase_selection, pure_phase_selection, solver
 
-        phase_selection                 = remove_phases(string_vec_dif(phase_selection,dtb),dtb)
+        phase_selection                 = remove_phases(string_vec_diff_ss(phase_selection,dtb),dtb)
+        pure_phase_selection            = remove_phases(string_vec_diff_ss(pure_phase_selection,dtb),dtb)
 
         global point_id
 
@@ -469,6 +471,9 @@ function Tab_PhaseDiagram_Callbacks(app)
                 bufn    = ""
             end
             if !isnothing(phase_selection)
+                if !isnothing(pure_phase_selection)
+                    phase_selection = vcat(phase_selection,pure_phase_selection)
+                end
                 rm_list = ", rm_list=$phase_selection"
             else
                 rm_list = ""
@@ -613,6 +618,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("limit-ca-opx-id",        "value"),           # ON,OFF -> 0,1
         State("ca-opx-val-id",          "value"),           # 0.0-1.0 -> 0,1
         State("phase-selection",        "value"),
+        State("pure-phase-selection",    "value"),
 
         State("pt-x-table",             "data"),
         State("tmin-id",                "value"),           # tmin
@@ -677,7 +683,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             n_clicks_mesh, n_clicks_refine, uni_n_clicks_refine, 
             minColor,   maxColor,
             colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  updateTitle,     loadstateid, customTitle, txt_list,
-            diagType,   dtb,        watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  phase_selection, PTpath,
+            diagType,   dtb,        watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  ph_selection, pure_ph_selection, PTpath,
             tmin,       tmax,       pmin,       pmax,
             fixT,       fixP,
             sub,        refType,    refLvl,
@@ -692,7 +698,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             active_tab
 
 
-        phase_selection                 = remove_phases(string_vec_dif(phase_selection,dtb),dtb)
+        phase_selection                 = remove_phases(string_vec_diff(ph_selection,pure_ph_selection,dtb),dtb)
         smooth                          = smooth
         xtitle, ytitle, Xrange, Yrange  = diagram_type(diagType, tmin, tmax, pmin, pmax)                # get axis information
         bufferN1, bufferN2, fixT, fixP  = convert2Float64(bufferN1, bufferN2, fixT, fixP)               # convert buffer_n to float
@@ -761,7 +767,13 @@ function Tab_PhaseDiagram_Callbacks(app)
         elseif bid == "refine-pb-button" || bid == "uni-refine-pb-button"
                 
             CompProgress.title = "Calculation Progress"
-            CompProgress.stage = "refine all phase boundaries"
+
+            if bid == "uni-refine-pb-button"
+                CompProgress.stage = "refine uniformly"
+            elseif bid == "refine-pb-button"
+                CompProgress.stage = "refine phase boundaries"
+            end
+
             CompProgress.total_levels = 0
             CompProgress.refinement_level = 1
             CompProgress.tinit = time()

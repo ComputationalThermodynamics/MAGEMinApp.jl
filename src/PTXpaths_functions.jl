@@ -143,7 +143,7 @@ function compute_Tliq(          pressure,   tolerance,  bulk_ini,   oxi,    phas
 
     if "liq" in phase_selection 
         
-        phase_selection = remove_phases(string_vec_dif(phase_selection,dtb),dtb)
+        phase_selection = remove_phases(string_vec_diff_ss(phase_selection,dtb),dtb)
 
         Tsol        = 600.0;
         Tmax        = 2200.0;
@@ -234,7 +234,7 @@ function compute_Tsol(          pressure,   tolerance,  bulk_ini,   oxi,    phas
 
     if "liq" in phase_selection 
         
-        phase_selection = remove_phases(string_vec_dif(phase_selection,dtb),dtb)
+        phase_selection = remove_phases(string_vec_diff_ss(phase_selection,dtb),dtb)
 
         Tmin        = 500.0;
         Tliq        = 2200.0;

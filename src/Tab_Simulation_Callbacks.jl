@@ -199,6 +199,8 @@ function Tab_Simulation_Callbacks(app)
         app,
         Output("phase-selection","options"),
         Output("phase-selection","value"),
+        Output("pure-phase-selection","options"),
+        Output("pure-phase-selection","value"),
         Input("database-dropdown","value"),
 
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
@@ -213,7 +215,17 @@ function Tab_Simulation_Callbacks(app)
         phase_selection_value   = db_in.ss_name
 
 
-        return phase_selection_options, phase_selection_value
+        # this is the phase selection part for the database when compute a diagram
+        pp_all  = db_in.data_pp
+        pp_disp = setdiff(pp_all, AppData.hidden_pp)
+
+        pure_phase_selection_options = [Dict(    "label"     => " "*i,
+                                                 "value"     => i )
+                                                for i in pp_disp ]
+        pure_phase_selection_value   = pp_disp
+
+
+        return phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value
     end
 
 
@@ -429,7 +441,7 @@ function Tab_Simulation_Callbacks(app)
     ) do value
         # global db
         if value == "ig"
-            style  = Dict("display" => "block")
+            style  = Dict("display" => "none")
         elseif value == "igd"
             style  = Dict("display" => "block")    
         elseif value == "alk"
@@ -888,7 +900,24 @@ function Tab_Simulation_Callbacks(app)
         return is_open 
             
     end
+    # open/close Curve interpretation box
+    callback!(app,
+        Output("collapse-pure-phase-selection", "is_open"),
+        [Input("button-pure-phase-selection", "n_clicks")],
+        [State("collapse-pure-phase-selection", "is_open")], ) do  n, is_open
+        
+        if isnothing(n); n=0 end
 
+        if n>0
+            if is_open==1
+                is_open = 0
+            elseif is_open==0
+                is_open = 1
+            end
+        end
+        return is_open 
+            
+    end
     # open/close Curve interpretation box
     callback!(app,
         Output("collapse-general-parameters", "is_open"),

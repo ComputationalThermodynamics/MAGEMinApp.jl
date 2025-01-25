@@ -633,6 +633,8 @@ for (i,val) in enumerate(db.frac2_wt)
     db.frac2_wt[i] = round.(val,digits= 6)
 end
 
+hidden_pp = ["O2","qfm","mw","qif","nno","hm","cco","aH2O","aO2","aMgO","aFeO","aAl2O3","aTiO2",]
+
 AppData = ( contribs            = contribs,
             db                  = db,
             dba                 = dba,
@@ -640,4 +642,6 @@ AppData = ( contribs            = contribs,
             dbte                = dbte,
             KDs_OL              = KDs_OL,
             KDs_EODC_Exp        = KDs_EODC_Exp,
-            KDs_EODC_Nat        = KDs_EODC_Nat)
+            KDs_EODC_Nat        = KDs_EODC_Nat,
+            hidden_pp           = hidden_pp
+            )   

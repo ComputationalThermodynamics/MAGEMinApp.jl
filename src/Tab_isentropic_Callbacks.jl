@@ -144,6 +144,7 @@ function Tab_isoSpaths_Callbacks(app)
 
         State("select-bulk-unit-isoS",      "value"),
         State("phase-selection-isoS",       "value"),
+        State("pure-phase-selection-isoS",  "value"),
         State("phase-selector-isoS-id",     "options"),
 
         State("starting-pressure-isoS-id",  "value"),
@@ -169,7 +170,7 @@ function Tab_isoSpaths_Callbacks(app)
         prevent_initial_call = true,
 
         ) do    compute,    upsys,      
-                sys_unit,   phase_selection,    phase_list,
+                sys_unit,   phase_selection,    pure_phase_selection,    phase_list,
                 Pini,       Tini,       Pfinal, tolerance,  nsteps,    
                 dtb,        bufferType, solver,
                 verbose,    bulk,       bufferN,
@@ -189,7 +190,7 @@ function Tab_isoSpaths_Callbacks(app)
             bufferN                 = Float64(bufferN)               # convert buffer_n to float
             bulk_ini, bulk_ini, oxi = get_bulkrock_prop(bulk, bulk; sys_unit=sys_unit)  
 
-            compute_new_IsentropicPath(     nsteps,     bulk_ini,   oxi,    phase_selection,
+            compute_new_IsentropicPath(     nsteps,     bulk_ini,   oxi,    phase_selection,    pure_phase_selection,
                                             Pini,       Tini,       Pfinal, tolerance,
                                             dtb,        bufferType, solver,
                                             verbose,    bulk,       bufferN,
@@ -377,7 +378,7 @@ function Tab_isoSpaths_Callbacks(app)
     ) do value
         # global db
         if value == "ig"
-            style  = Dict("display" => "block")
+            style  = Dict("display" => "none")
         elseif value == "igd"
             style  = Dict("display" => "block")    
         elseif value == "alk"
@@ -430,6 +431,8 @@ function Tab_isoSpaths_Callbacks(app)
         Output("database-caption-isoS","value"),
         Output("phase-selection-isoS","options"),
         Output("phase-selection-isoS","value"),
+        Output("pure-phase-selection-isoS","options"),
+        Output("pure-phase-selection-isoS","value"),
         Input("select-bulk-unit-isoS","value"),
 
         Input("test-dropdown-isoS","value"),
@@ -437,7 +440,8 @@ function Tab_isoSpaths_Callbacks(app)
         Input("output-data-uploadn-isoS", "is_open"),        # this listens for changes and updated the list
 
         State("table-bulk-rock-isoS","data"),
-        prevent_initial_call=true,
+
+        prevent_initial_call = false,
     ) do sys_unit, 
         test, dtb, update,
         tb_data
@@ -469,13 +473,24 @@ function Tab_isoSpaths_Callbacks(app)
 
         db_in       = retrieve_solution_phase_information(dtb)
 
+        # this is the phase selection part for the database when compute a diagram
         phase_selection_options = [Dict(    "label"     => " "*i,
                                             "value"     => i )
                                                 for i in db_in.ss_name ]
         phase_selection_value   = db_in.ss_name
 
 
-        return data, opts, val, cap, phase_selection_options, phase_selection_value                 
+        # this is the phase selection part for the database when compute a diagram
+        pp_all  = db_in.data_pp
+        pp_disp = setdiff(pp_all, AppData.hidden_pp)
+
+        pure_phase_selection_options = [Dict(    "label"     => " "*i,
+                                                 "value"     => i )
+                                                for i in pp_disp ]
+        pure_phase_selection_value   = pp_disp
+
+
+        return data, opts, val, cap, phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value                
     end
 
 
@@ -499,6 +514,24 @@ function Tab_isoSpaths_Callbacks(app)
             
     end
 
+    # open/close Curve interpretation box
+    callback!(app,
+        Output("collapse-pure-phase-selection-isoS", "is_open"),
+        [Input("button-pure-phase-selection-isoS", "n_clicks")],
+        [State("collapse-pure-phase-selection-isoS", "is_open")], ) do  n, is_open
+        
+        if isnothing(n); n=0 end
+
+        if n>0
+            if is_open==1
+                is_open = 0
+            elseif is_open==0
+                is_open = 1
+            end
+        end
+        return is_open 
+            
+    end
 
     callback!(app,
         Output("collapse-config-isoS", "is_open"),
