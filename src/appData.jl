@@ -635,6 +635,14 @@ end
 
 hidden_pp = ["O2","qfm","mw","qif","nno","hm","cco","aH2O","aO2","aMgO","aFeO","aAl2O3","aTiO2",]
 
+# load ss and em informations to be display in information tab
+# Read the JSON file
+file_path   = joinpath(pkg_dir,"src","./tools/em_name.json")
+dict_em     = JSON.parsefile(file_path)
+file_path   = joinpath(pkg_dir,"src","./tools/ss_name.json")
+dict_ss     = JSON.parsefile(file_path)
+
+
 AppData = ( contribs            = contribs,
             db                  = db,
             dba                 = dba,
@@ -643,5 +651,7 @@ AppData = ( contribs            = contribs,
             KDs_OL              = KDs_OL,
             KDs_EODC_Exp        = KDs_EODC_Exp,
             KDs_EODC_Nat        = KDs_EODC_Nat,
-            hidden_pp           = hidden_pp
+            hidden_pp           = hidden_pp,
+            dict_em             = dict_em,  
+            dict_ss             = dict_ss,
             )   
