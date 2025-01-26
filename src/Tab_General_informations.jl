@@ -29,11 +29,11 @@ where \$\\mu_{oxide}\$ is the chemical potential of the oxide and \$G_{pp}^0\$ i
 """
 
 water_saturation = """
-**Water saturation at solidus for P-T diagrams**
+**Water saturation at solidus (first liquid) for P-T diagrams**
 
 - First, for the given pressure range (and using 50 pressure steps), the water-saturated solidus is extracted using bisection method.
 - Subsequently, the pressure-dependent solidus temperature is interpolated using PChip interpolant.
-- At Tsuprasolidus = Tsolidus + 0.1 K, a second interpolation is used to retrieve the amount of water saturating the melt. The latter interpolant is then used to prescribe the water content of the bulk, ensuring pressure-dependent water saturation at solidus (+ 0.1 K). 
+- At Tsuprasolidus = Tsolidus + 0.01 K, a second interpolation is used to retrieve the amount of water saturating the melt. The latter interpolant is then used to prescribe the water content of the bulk, ensuring pressure-dependent water saturation at solidus (+ 0.1 K). 
 
 *Note that the provided water content needs to be large enough to ensure water saturation. This can be easily done by increasing the \$H_2O\$ content in the bulk table.*
 
