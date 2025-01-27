@@ -60,6 +60,55 @@ function Tab_General_informations(db_inf)
     html_div([
         html_div("‎ "),
         dbc_row([ 
+
+
+        dbc_col([
+            dbc_row([
+                html_h1("Solution phase information", style = Dict("textAlign" => "center","font-size" => "130%", "marginTop" => 4)),
+                dash_datatable(
+                    id="table-solution-phases",
+                    columns=(  [    Dict("id" =>  "ss",         "name" =>  "solution name",     "editable" => false),
+                                    Dict("id" =>  "ss_abrev",   "name" =>  "abbreviation",      "editable" => false),
+                                    Dict("id" =>  "solvus",     "name" =>  "solvus",            "editable" => false)     
+                                ]
+                    ),
+                    data        =   [Dict(  "ss"         => AppData.dict_ss[i][1],
+                                            "ss_abrev"   => i,
+                                            "solvus"     => join(map((x, y) -> "$x, $y", AppData.dict_ss[i][2][2], AppData.dict_ss[i][2][1]), "; ") )
+                                                for i in keys(AppData.dict_ss) ],
+
+                    style_cell  = (textAlign="center", fontSize="120%",),
+                    style_header= (fontWeight="bold",),
+                    editable    = false,
+                    page_size   = 16,
+                    filter_action="native"
+                ),
+                html_div("‎ "),
+            ]),
+            dbc_row([
+                html_h1("End-members information", style = Dict("textAlign" => "center","font-size" => "130%", "marginTop" => 4)),
+                dash_datatable(
+                    id="table-endmember-phases",
+                    columns=(  [    Dict("id" =>  "em",         "name" =>  "end-member name",   "editable" => false),
+                                    Dict("id" =>  "em_abrev",   "name" =>  "abbreviation",      "editable" => false),
+                                    Dict("id" =>  "compo",      "name" =>  join(vcat(AppData.dict_em["_header_"][3]...),", "),       "editable" => false)     
+                                ]
+                    ),
+                    data        =   [Dict(  "em"         => AppData.dict_em[i][2],
+                                            "em_abrev"   => i,
+                                            "compo"      => join(vcat(AppData.dict_em[i][3]...),", ") )
+                                                for i in keys(AppData.dict_em) if i != "_header-"],
+
+                    style_cell  = (textAlign="center", fontSize="120%",),
+                    style_header= (fontWeight="bold",),
+                    editable    = false,
+                    page_size   = 16,
+                    filter_action="native"
+                ),
+                html_div("‎ "),
+            ]),
+        ],width=6),
+
             dbc_col([ 
 
                 dbc_row([
@@ -85,52 +134,6 @@ function Tab_General_informations(db_inf)
             ],width=6),
 
 
-            dbc_col([
-                dbc_row([
-                    html_h1("Solution phase information", style = Dict("textAlign" => "center","font-size" => "130%", "marginTop" => 4)),
-                    dash_datatable(
-                        id="table-solution-phases",
-                        columns=(  [    Dict("id" =>  "ss",         "name" =>  "solution name",     "editable" => false),
-                                        Dict("id" =>  "ss_abrev",   "name" =>  "abbreviation",      "editable" => false),
-                                        Dict("id" =>  "solvus",     "name" =>  "solvus",            "editable" => false)     
-                                    ]
-                        ),
-                        data        =   [Dict(  "ss"         => AppData.dict_ss[i][1],
-                                                "ss_abrev"   => i,
-                                                "solvus"     => join(map((x, y) -> "$x, $y", AppData.dict_ss[i][2][2], AppData.dict_ss[i][2][1]), "; ") )
-                                                    for i in keys(AppData.dict_ss) ],
-
-                        style_cell  = (textAlign="center", fontSize="120%",),
-                        style_header= (fontWeight="bold",),
-                        editable    = false,
-                        page_size   = 16,
-                        filter_action="native"
-                    ),
-                    html_div("‎ "),
-                ]),
-                dbc_row([
-                    html_h1("End-members information", style = Dict("textAlign" => "center","font-size" => "130%", "marginTop" => 4)),
-                    dash_datatable(
-                        id="table-endmember-phases",
-                        columns=(  [    Dict("id" =>  "em",         "name" =>  "end-member name",   "editable" => false),
-                                        Dict("id" =>  "em_abrev",   "name" =>  "abbreviation",      "editable" => false),
-                                        Dict("id" =>  "compo",      "name" =>  join(vcat(AppData.dict_em["_header_"][3]...),", "),       "editable" => false)     
-                                    ]
-                        ),
-                        data        =   [Dict(  "em"         => AppData.dict_em[i][2],
-                                                "em_abrev"   => i,
-                                                "compo"      => join(vcat(AppData.dict_em[i][3]...),", ") )
-                                                    for i in keys(AppData.dict_em) if i != "_header-"],
-
-                        style_cell  = (textAlign="center", fontSize="120%",),
-                        style_header= (fontWeight="bold",),
-                        editable    = false,
-                        page_size   = 16,
-                        filter_action="native"
-                    ),
-                    html_div("‎ "),
-                ]),
-            ],width=6),
 
 
         ]),
