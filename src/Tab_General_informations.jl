@@ -29,11 +29,11 @@ where \$\\mu_{oxide}\$ is the chemical potential of the oxide and \$G_{pp}^0\$ i
 """
 
 water_saturation = """
-**Water saturation at solidus for P-T diagrams**
+**Water saturation at solidus (first liquid) for P-T diagrams**
 
 - First, for the given pressure range (and using 50 pressure steps), the water-saturated solidus is extracted using bisection method.
 - Subsequently, the pressure-dependent solidus temperature is interpolated using PChip interpolant.
-- At Tsuprasolidus = Tsolidus + 0.1 K, a second interpolation is used to retrieve the amount of water saturating the melt. The latter interpolant is then used to prescribe the water content of the bulk, ensuring pressure-dependent water saturation at solidus (+ 0.1 K). 
+- At Tsuprasolidus = Tsolidus + 0.01 K, a second interpolation is used to retrieve the amount of water saturating the melt. The latter interpolant is then used to prescribe the water content of the bulk, ensuring pressure-dependent water saturation at solidus (+ 0.1 K). 
 
 *Note that the provided water content needs to be large enough to ensure water saturation. This can be easily done by increasing the \$H_2O\$ content in the bulk table.*
 
@@ -60,6 +60,55 @@ function Tab_General_informations(db_inf)
     html_div([
         html_div("‎ "),
         dbc_row([ 
+
+
+        dbc_col([
+            dbc_row([
+                html_h1("Solution phase information", style = Dict("textAlign" => "center","font-size" => "130%", "marginTop" => 4)),
+                dash_datatable(
+                    id="table-solution-phases",
+                    columns=(  [    Dict("id" =>  "ss",         "name" =>  "solution name",     "editable" => false),
+                                    Dict("id" =>  "ss_abrev",   "name" =>  "abbreviation",      "editable" => false),
+                                    Dict("id" =>  "solvus",     "name" =>  "solvus",            "editable" => false)     
+                                ]
+                    ),
+                    data        =   [Dict(  "ss"         => AppData.dict_ss[i][1],
+                                            "ss_abrev"   => i,
+                                            "solvus"     => join(map((x, y) -> "$x, $y", AppData.dict_ss[i][2][2], AppData.dict_ss[i][2][1]), "; ") )
+                                                for i in keys(AppData.dict_ss) ],
+
+                    style_cell  = (textAlign="center", fontSize="120%",),
+                    style_header= (fontWeight="bold",),
+                    editable    = false,
+                    page_size   = 16,
+                    filter_action="native"
+                ),
+                html_div("‎ "),
+            ]),
+            dbc_row([
+                html_h1("End-members information", style = Dict("textAlign" => "center","font-size" => "130%", "marginTop" => 4)),
+                dash_datatable(
+                    id="table-endmember-phases",
+                    columns=(  [    Dict("id" =>  "em",         "name" =>  "end-member name",   "editable" => false),
+                                    Dict("id" =>  "em_abrev",   "name" =>  "abbreviation",      "editable" => false),
+                                    Dict("id" =>  "compo",      "name" =>  join(vcat(AppData.dict_em["_header_"][3]...),", "),       "editable" => false)     
+                                ]
+                    ),
+                    data        =   [Dict(  "em"         => AppData.dict_em[i][2],
+                                            "em_abrev"   => i,
+                                            "compo"      => join(vcat(AppData.dict_em[i][3]...),", ") )
+                                                for i in keys(AppData.dict_em) if i != "_header-"],
+
+                    style_cell  = (textAlign="center", fontSize="120%",),
+                    style_header= (fontWeight="bold",),
+                    editable    = false,
+                    page_size   = 16,
+                    filter_action="native"
+                ),
+                html_div("‎ "),
+            ]),
+        ],width=6),
+
             dbc_col([ 
 
                 dbc_row([
@@ -83,6 +132,8 @@ function Tab_General_informations(db_inf)
                 ]),
 
             ],width=6),
+
+
 
 
         ]),

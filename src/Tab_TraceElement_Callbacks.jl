@@ -265,7 +265,8 @@ function Tab_TraceElement_Callbacks(app)
                                                                 bufferN1,
                                                                 bufferN2,
                                                                 PTpath,
-                                                                "false")
+                                                                "false",
+                                                                0)
 
                 data_plot_te, annotations, txt_list = get_diagram_labels(   Out_XY,
                                                                             Hash_XY,

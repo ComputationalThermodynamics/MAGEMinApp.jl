@@ -80,11 +80,28 @@ function get_init_param(    dtb         :: String,
 
 end
 
+function string_vec_diff(solution_ph_selection, pure_ph_selection, dtb)
+
+    ss_selection = string_vec_diff_ss(solution_ph_selection,    dtb)
+    pp_selection = string_vec_diff_pp(pure_ph_selection,        dtb)
+
+    if isnothing(ss_selection) && isnothing(pp_selection)
+        return nothing
+    elseif isnothing(ss_selection)
+        return pp_selection
+    elseif isnothing(pp_selection)
+        return ss_selection
+    else
+        return vcat(ss_selection,pp_selection)
+    end
+
+end
+
 
 """
     Function to retrieve active set of solution phases
 """
-function string_vec_dif(phase_selection,dtb)
+function string_vec_diff_ss(phase_selection,dtb)
 
     db_in                           = retrieve_solution_phase_information(dtb)
     set_A                           = phase_selection
@@ -97,6 +114,23 @@ function string_vec_dif(phase_selection,dtb)
     return phase_selection
 end
 
+"""
+    Function to retrieve active set of pure phases
+"""
+function string_vec_diff_pp(phase_selection,dtb)
+
+    db_in                           = retrieve_solution_phase_information(dtb)
+    set_A                           = phase_selection
+    pp_all                          = db_in.data_pp
+    set_B                           = setdiff(pp_all, AppData.hidden_pp)
+
+    pure_phase_selection            = setdiff(set_B, set_A)
+    if isempty(pure_phase_selection)
+        pure_phase_selection = nothing
+    end
+
+    return pure_phase_selection
+end
 
 
 """

@@ -25,6 +25,7 @@ app     *= "Brendan Dyck\n"
 app     *= "Buchanan Kerswell\n"
 app     *= "Cerine Bouadani\n"
 app     *= "Dinarte Lucas\n"
+app     *= "Dimitrios Moutzouris\n"
 app     *= "Evangelos Moulas\n"
 app     *= "Guillaume Duclaux\n"
 app     *= "Ian Cawood\n"
@@ -633,6 +634,16 @@ for (i,val) in enumerate(db.frac2_wt)
     db.frac2_wt[i] = round.(val,digits= 6)
 end
 
+hidden_pp = ["O2","qfm","mw","qif","nno","hm","cco","aH2O","aO2","aMgO","aFeO","aAl2O3","aTiO2",]
+
+# load ss and em informations to be display in information tab
+# Read the JSON file
+file_path   = joinpath(pkg_dir,"src","./tools/em_name.json")
+dict_em     = JSON.parsefile(file_path)
+file_path   = joinpath(pkg_dir,"src","./tools/ss_name.json")
+dict_ss     = JSON.parsefile(file_path)
+
+
 AppData = ( contribs            = contribs,
             db                  = db,
             dba                 = dba,
@@ -640,4 +651,8 @@ AppData = ( contribs            = contribs,
             dbte                = dbte,
             KDs_OL              = KDs_OL,
             KDs_EODC_Exp        = KDs_EODC_Exp,
-            KDs_EODC_Nat        = KDs_EODC_Nat)
+            KDs_EODC_Nat        = KDs_EODC_Nat,
+            hidden_pp           = hidden_pp,
+            dict_em             = dict_em,  
+            dict_ss             = dict_ss,
+            )   

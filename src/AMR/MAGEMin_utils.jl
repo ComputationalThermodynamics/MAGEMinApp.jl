@@ -11,10 +11,12 @@
 function get_wat_sat_function(     Yrange,     bulk_ini,   oxi,    phase_selection,
                                     dtb,        bufferType, solver,
                                     verbose,    bufferN,
-                                    cpx,        limOpx,     limOpxVal)
+                                    cpx,        limOpx,     limOpxVal, watsat_val)
    
     id_h2o      = findall(oxi .== "H2O")[1]   
     hydrated    = 1;
+    watsat_val  = watsat_val/100.0
+
     if bulk_ini[id_h2o] == 0.0
         hydrated = 0;
     end
@@ -48,7 +50,7 @@ function get_wat_sat_function(     Yrange,     bulk_ini,   oxi,    phase_selecti
 
         Tmin        = 500.0;
         Tliq        = 2200.0;
-        tolerance   = 0.1;      
+        tolerance   = 0.01;      
 
         Tsol        = zeros(Float64,length(Prange))
         SatSol      = zeros(Float64,length(Prange))
@@ -91,8 +93,8 @@ function get_wat_sat_function(     Yrange,     bulk_ini,   oxi,    phase_selecti
                 n += 1
             end
 
-            Tsol[i]     = (a+b)/2.0
-            out         = deepcopy( point_wise_minimization(pressure, Tsol[i] + 0.5 , gv, z_b, DB, splx_data, sys_in;buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
+            Tsol[i]     = b
+            out         = deepcopy( point_wise_minimization(pressure, b , gv, z_b, DB, splx_data, sys_in;buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
 
             id_dry      = findall(out.oxides .!= "H2O")
             id_h2o      = findall(out.oxides .== "H2O")[1]
@@ -109,6 +111,12 @@ function get_wat_sat_function(     Yrange,     bulk_ini,   oxi,    phase_selecti
             end            
 
             tmp_bulk ./= sum(tmp_bulk)              # normalize to 100%
+
+            if watsat_val > 0.0
+                tmp_bulk[id_h2o] += watsat_val/(1.0 - watsat_val)
+                tmp_bulk ./= sum(tmp_bulk) 
+            end
+
             tmp_bulk ./= sum(tmp_bulk[id_dry])      # normalize on anhydrous basis, to get water content
             
             SatSol[i]  = tmp_bulk[id_h2o]

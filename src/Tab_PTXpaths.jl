@@ -29,39 +29,117 @@ function Tab_PTXpaths(db_inf)
 
                                     ]),
 
+                                    # dbc_row([  
+                                    #     dbc_col([ 
+                                    #         html_h1("Solution phase selection", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                    #     ]),
+
+                                    #     dbc_col([ 
+                                    #         dbc_button( "", id="button-phase-selection-PTX", color="light", className="me-2", n_clicks=0,
+                                    #                             style       = Dict( "textAlign"     => "center",
+                                    #                                                 "font-size"     => "100%",
+                                    #                                                 "border"        =>"1px grey solid")), 
+                                    #         dbc_collapse(
+                                    #             dbc_card(dbc_cardbody([
+                
+                                    #                     dbc_col([ 
+                
+                                    #                         dcc_checklist(
+                                    #                             id      = "phase-selection-PTX",
+                                    #                             options = [Dict(    "label"     => " "*i,
+                                    #                                                 "value"     => i )
+                                    #                                             for i in db_inf.ss_name ],
+                                    #                             value = db_inf.ss_name,
+                                    #                             # inline = true,
+                                    #                         ),
+                    
+                                    #                     ]),
+                
+                                    #                 ])),
+                                    #                 id="collapse-phase-selection-PTX",
+                                    #                 is_open=false,
+                                    #         ),
+                                    #     ]),
+                                    # ]),
                                     dbc_row([  
                                         dbc_col([ 
-                                            html_h1("Solution phase selection", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            html_h1("Phase selection", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                        ],width=6),
+
+                                        dbc_col([ 
+                                            dbc_row([  
+                                                html_h1("Solution phase", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                            ]),
+                            
+                                            dbc_row([  
+                                                dbc_button( "", id="button-phase-selection-PTX", color="light", className="me-2", n_clicks=0,
+                                                                style       = Dict( "textAlign"     => "center",
+                                                                                    "font-size"     => "100%",
+                                                                                    "border"        =>"1px grey solid",
+                                                                                    "width"         => "40px" )), 
+                                            ],justify="center"),                                        
+                                            dbc_row([  
+                                                dbc_collapse(
+                                                    dbc_card(dbc_cardbody([
+                    
+                                                            dbc_col([ 
+                    
+                                                                dcc_checklist(
+                                                                    id      = "phase-selection-PTX",
+                                                                    options = [Dict(    "label"     => " "*i,
+                                                                                        "value"     => i )
+                                                                                    for i in db_inf.ss_name ],
+                                                                    value = db_inf.ss_name,
+                                                                    # inline = true,
+                                                                ),
+                        
+                                                            ]),
+                    
+                                                        ])),
+                                                        id="collapse-phase-selection-PTX",
+                                                        is_open=false,
+                                                ),
+                                            ]),
                                         ]),
 
                                         dbc_col([ 
-                                            dbc_button( "", id="button-phase-selection-PTX", color="light", className="me-2", n_clicks=0,
-                                                                style       = Dict( "textAlign"     => "center",
-                                                                                    "font-size"     => "100%",
-                                                                                    "border"        =>"1px grey solid")), 
-                                            dbc_collapse(
-                                                dbc_card(dbc_cardbody([
-                
-                                                        dbc_col([ 
-                
-                                                            dcc_checklist(
-                                                                id      = "phase-selection-PTX",
-                                                                options = [Dict(    "label"     => " "*i,
-                                                                                    "value"     => i )
-                                                                                for i in db_inf.ss_name ],
-                                                                value = db_inf.ss_name,
-                                                                # inline = true,
-                                                            ),
+                                            dbc_row([  
+                                                html_h1("Pure phase", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                            ]),
+                                    
+                                            dbc_row([  
+                                                dbc_button( "", id="button-pure-phase-selection-PTX", color="light", className="me-2", n_clicks=0,
+                                                                    style       = Dict( "textAlign"     => "center",
+                                                                                        "font-size"     => "100%",
+                                                                                        "border"        =>"1px grey solid",
+                                                                                        "width"         => "40px" )), 
+                                                ],justify="center"),                                        
+                                                dbc_row([ 
+                                                dbc_collapse(
+                                                    dbc_card(dbc_cardbody([
                     
-                                                        ]),
-                
-                                                    ])),
-                                                    id="collapse-phase-selection-PTX",
-                                                    is_open=false,
-                                            ),
+                                                            dbc_col([ 
+                    
+                                                                dcc_checklist(
+                                                                    id      = "pure-phase-selection-PTX",
+                                                                    options = [],
+                                                                    value = "",
+                                                                    # inline = true,
+                                                                ),
+                        
+                                                            ]),
+                    
+                                                        ])),
+                                                        id="collapse-pure-phase-selection-PTX",
+                                                        is_open=false,
+                                                ),
+                                            ]),
                                         ]),
-                                    ]),
 
+                                    ],style = Dict("marginTop" => "2px", "marginBottom" => "2px")),
+
+
+                                    
                                     #clinopyroxene for metabasite
                                     html_div([
                                         html_div("‎ "),  

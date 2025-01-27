@@ -1,5 +1,5 @@
 
-function compute_new_IsentropicPath(    nsteps,     bulk_ini,   oxi,    phase_selection,
+function compute_new_IsentropicPath(    nsteps,     bulk_ini,   oxi,    phase_selection,    pure_phase_selection,
                                         Pini,       Tini,       Pfinal, tolerance,
                                         dtb,        bufferType, solver,
                                         verbose,    bulk,       bufferN,
@@ -10,7 +10,7 @@ function compute_new_IsentropicPath(    nsteps,     bulk_ini,   oxi,    phase_se
     nsteps = Int64(nsteps)
 
     # get indexes of phases to remove
-    phase_selection = remove_phases(string_vec_dif(phase_selection,dtb),dtb)
+    phase_selection = remove_phases(string_vec_diff(phase_selection,pure_phase_selection,dtb),dtb)
 
     # prepare flags
     mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb,        solver,

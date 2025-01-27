@@ -58,7 +58,8 @@ function Tab_Simulation_Callbacks(app)
         State(  "test-2-te-dropdown",               "value"       ),
 
         State(  "watsat-dropdown",                  "value"       ),
-        
+        State(  "watsat-val-id",                    "value"       ),
+
         prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
     ) do click, filename,
 
@@ -71,7 +72,7 @@ function Tab_Simulation_Callbacks(app)
         test, test2,
         buffer1, buffer2,
         te_test, te_test2,
-        watsat
+        watsat, watsat_val
 
         global db, dbte
 
@@ -82,7 +83,7 @@ function Tab_Simulation_Callbacks(app)
         file            = "saved_states/"*String(filename)*"_options.jld2"
 
         println("Saving phase diagram options..."); t0 = time()
-        @save file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ptx_table pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver verbose scp test test2 buffer1 buffer2 te_test te_test2 watsat
+        @save file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ptx_table pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver verbose scp test test2 buffer1 buffer2 te_test te_test2 watsat watsat_val
         println("Saved phase diagram options in $(round(time()-t0, digits=3)) seconds"); 
 
         gv_names    = ["infos","layout","data", "data_plot", "data_reaction","iso_show", "n_lbl","data_isopleth", "data_isopleth_out","Out_XY", "Hash_XY", "Out_TE_XY", "all_TE_ph", "n_phase_XY", "addedRefinementLvl", "pChip_wat", "pChip_T"]
@@ -146,10 +147,11 @@ function Tab_Simulation_Callbacks(app)
         Output(  "buffer-2-mul-id",                  "value"       ),
 
         Output(  "watsat-dropdown",                  "value"       ),
+        Output(  "watsat-val-id",                    "value"       ),
         Output(  "load-state-id",                    "value"       ),
         Input(   "load-state-diagram-button",        "n_clicks"    ),
         State(   "save-state-filename-id",           "value"       ),
-        State(   "load-state-id",                     "value"       ),
+        State(   "load-state-id",                    "value"       ),
         
         prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
     ) do click, filename, state_id
@@ -181,10 +183,10 @@ function Tab_Simulation_Callbacks(app)
         global db, dbte
         file = "saved_states/"*String(filename)*"_options.jld2"
         try 
-            @load file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver verbose scp buffer1 buffer2 watsat
+            @load file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver verbose scp buffer1 buffer2 watsat watsat_val
 
             success, failed = "success", ""
-            return success, failed, database, diagram_type, mb_cpx, limit_ca_opx, ca_opx_val, tepm, kds_dtb, zrsat_dtb, pmin, pmax, tmin, tmax, pfix, tfix, grid_sub, refinement, refinement_level, buffer, solver, verbose, scp, buffer1, buffer2, watsat, state_id
+            return success, failed, database, diagram_type, mb_cpx, limit_ca_opx, ca_opx_val, tepm, kds_dtb, zrsat_dtb, pmin, pmax, tmin, tmax, pfix, tfix, grid_sub, refinement, refinement_level, buffer, solver, verbose, scp, buffer1, buffer2, watsat, watsat_val, state_id
         catch e
             success, failed = "", "failed"
             return success, failed, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, state_id
@@ -197,6 +199,8 @@ function Tab_Simulation_Callbacks(app)
         app,
         Output("phase-selection","options"),
         Output("phase-selection","value"),
+        Output("pure-phase-selection","options"),
+        Output("pure-phase-selection","value"),
         Input("database-dropdown","value"),
 
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
@@ -211,7 +215,17 @@ function Tab_Simulation_Callbacks(app)
         phase_selection_value   = db_in.ss_name
 
 
-        return phase_selection_options, phase_selection_value
+        # this is the phase selection part for the database when compute a diagram
+        pp_all  = db_in.data_pp
+        pp_disp = setdiff(pp_all, AppData.hidden_pp)
+
+        pure_phase_selection_options = [Dict(    "label"     => " "*i,
+                                                 "value"     => i )
+                                                for i in pp_disp ]
+        pure_phase_selection_value   = pp_disp
+
+
+        return phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value
     end
 
 
@@ -427,7 +441,7 @@ function Tab_Simulation_Callbacks(app)
     ) do value
         # global db
         if value == "ig"
-            style  = Dict("display" => "block")
+            style  = Dict("display" => "none")
         elseif value == "igd"
             style  = Dict("display" => "block")    
         elseif value == "alk"
@@ -454,6 +468,20 @@ function Tab_Simulation_Callbacks(app)
         return style
     end
 
+    # callback to display clinopyroxene choice for the metabasite database
+    callback!(
+        app,
+        Output("watsat-display-id", "style"),
+        Input("watsat-dropdown", "value"),
+    ) do value
+        # global db
+        if value == "true"
+            style  = Dict("display" => "block")
+        else 
+            style  = Dict("display" => "none")
+        end
+        return style
+    end
 
     # callback to display initial title of the pseudosections
     callback!(
@@ -872,7 +900,24 @@ function Tab_Simulation_Callbacks(app)
         return is_open 
             
     end
+    # open/close Curve interpretation box
+    callback!(app,
+        Output("collapse-pure-phase-selection", "is_open"),
+        [Input("button-pure-phase-selection", "n_clicks")],
+        [State("collapse-pure-phase-selection", "is_open")], ) do  n, is_open
+        
+        if isnothing(n); n=0 end
 
+        if n>0
+            if is_open==1
+                is_open = 0
+            elseif is_open==0
+                is_open = 1
+            end
+        end
+        return is_open 
+            
+    end
     # open/close Curve interpretation box
     callback!(app,
         Output("collapse-general-parameters", "is_open"),

@@ -357,13 +357,14 @@ function Tab_PTXpaths_Callbacks(app)
         Input("compute-path-button",    "n_clicks"),
         Input("sys-unit-ptx",           "value"),
 
-        State("select-bulk-unit-ptx",    "value"),
+        State("select-bulk-unit-ptx",   "value"),
         State("phase-selection-PTX",    "value"),
+        State("pure-phase-selection-PTX","value"),
         State("phase-selector-id",      "options"),
         State("n-steps-id-ptx",         "value"),
         State("ptx-table",              "data"),
         State("mode-dropdown-ptx",      "value"),
-        State("assimilation-dropdown-ptx",      "value"),
+        State("assimilation-dropdown-ptx", "value"),
         State("variable-buffer-ptx-id", "value"),
         
         State("database-dropdown-ptx",  "value"),
@@ -386,7 +387,7 @@ function Tab_PTXpaths_Callbacks(app)
         prevent_initial_call = true,
 
         ) do    compute,    upsys,      
-                sys_unit,   phase_selection,    phase_list, nsteps,     PTdata,     mode,   assim,  var_buffer,
+                sys_unit,   phase_selection, pure_phase_selection,    phase_list, nsteps,     PTdata,     mode,   assim,  var_buffer,
                 dtb,        bufferType, solver,
                 verbose,    bulk,       bulk2,      bufferN,
                 cpx,        limOpx,     limOpxVal,  test,   sysunit,
@@ -394,7 +395,7 @@ function Tab_PTXpaths_Callbacks(app)
 
 
         bid                     = pushed_button( callback_context() )    # get which button has been pushed
-        phase_selection         = remove_phases(string_vec_dif(phase_selection,dtb),dtb)
+        phase_selection         = remove_phases(string_vec_diff(phase_selection,pure_phase_selection,dtb),dtb)
         title                   = db[(db.db .== dtb), :].title[test+1]
         loading                 = ""
         
@@ -449,7 +450,7 @@ function Tab_PTXpaths_Callbacks(app)
     ) do value
         # global db
         if value == "ig"
-            style  = Dict("display" => "block")
+            style  = Dict("display" => "none")
         elseif value == "igd"
             style  = Dict("display" => "block")    
         elseif value == "alk"
@@ -538,7 +539,8 @@ function Tab_PTXpaths_Callbacks(app)
         Output("database-caption-ptx","value"),
         Output("phase-selection-PTX","options"),
         Output("phase-selection-PTX","value"),
-
+        Output("pure-phase-selection-PTX","options"),
+        Output("pure-phase-selection-PTX","value"),
         Input("select-bulk-unit-ptx","value"),
 
         Input("test-dropdown-ptx","value"),
@@ -547,7 +549,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         State("table-bulk-rock-ptx","data"),
 
-        prevent_initial_call=true,
+        prevent_initial_call=false,
     ) do sys_unit, 
         test, dtb, update, tb_data
 
@@ -579,13 +581,24 @@ function Tab_PTXpaths_Callbacks(app)
 
         db_in       = retrieve_solution_phase_information(dtb)
 
+        # this is the phase selection part for the database when compute a diagram
         phase_selection_options = [Dict(    "label"     => " "*i,
                                             "value"     => i )
                                                 for i in db_in.ss_name ]
         phase_selection_value   = db_in.ss_name
 
 
-        return data, opts, val, cap, phase_selection_options, phase_selection_value                 
+        # this is the phase selection part for the database when compute a diagram
+        pp_all  = db_in.data_pp
+        pp_disp = setdiff(pp_all, AppData.hidden_pp)
+
+        pure_phase_selection_options = [Dict(    "label"     => " "*i,
+                                                 "value"     => i )
+                                                for i in pp_disp ]
+        pure_phase_selection_value   = pp_disp
+
+
+        return data, opts, val, cap, phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value              
     end
 
 
@@ -787,6 +800,24 @@ function Tab_PTXpaths_Callbacks(app)
             
     end
 
+    # open/close Curve interpretation box
+    callback!(app,
+        Output("collapse-pure-phase-selection-PTX", "is_open"),
+        [Input("button-pure-phase-selection-PTX", "n_clicks")],
+        [State("collapse-pure-phase-selection-PTX", "is_open")], ) do  n, is_open
+        
+        if isnothing(n); n=0 end
+
+        if n>0
+            if is_open==1
+                is_open = 0
+            elseif is_open==0
+                is_open = 1
+            end
+        end
+        return is_open 
+            
+    end
 
 
 
