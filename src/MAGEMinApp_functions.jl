@@ -779,10 +779,11 @@ function get_diagram_labels(    Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float
 
             dx              = (data.Xrange[2]-data.Xrange[1])/(size(gridded_fields,1)-1)
             dy              = (data.Yrange[2]-data.Yrange[1])/(size(gridded_fields,2)-1)
-            minX            = data.Xrange[1] + dx*(bnds[1]) - dx*2
-            maxX            = data.Xrange[1] + dx*(bnds[2]) + dx*2
-            minY            = data.Yrange[1] + dy*(bnds[3]) - dy*2
-            maxY            = data.Yrange[1] + dy*(bnds[4]) + dy*2
+            
+            minX            = data.Xrange[1] + dx*(bnds[1]-1) - dx/2
+            maxX            = data.Xrange[1] + dx*(bnds[2]-1) + dx/2
+            minY            = data.Yrange[1] + dy*(bnds[3]-1) - dy/2
+            maxY            = data.Yrange[1] + dy*(bnds[4]-1) + dy/2
 
             area[id]        = Float64(sum(mask))*dx*dy/fac
             centers         = select_point(mask, range(minY, maxY, size(mask,2)+1) , range(minX, maxX, size(mask,1)+1) )
