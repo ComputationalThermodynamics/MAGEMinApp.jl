@@ -552,6 +552,97 @@ function Tab_PhaseDiagram_Callbacks(app)
     end
 
 
+
+    # update the dictionary of the solution phases and end-members for isopleths
+    callback!(
+        app,
+        Output("reaction-line-dropdown","options"),
+        Output("reaction-line-dropdown","value"),
+        Input("trigger-update-reaction-line-list","value"),
+
+        prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
+    ) do reac_update
+    
+        global phase_infos;
+
+        # bid         = pushed_button( callback_context() ) 
+        pp          = phase_infos.act_pp;
+        ss          = phase_infos.act_ss;
+
+        ph          = vcat(ss,pp);
+
+        reac_opt    = [Dict(    "label"     => " "*i,
+                                "value"     => i )
+                            for i in ph ];
+
+        reac_val    = ph[1];
+
+
+        return reac_opt, reac_val
+    end
+
+    # update the dictionary of the solution phases and end-members for isopleths
+    callback!(
+        app,
+        Output("line-style-dropdown-reaction",  "value"     ),
+        Output("iso-line-width-id-reaction",    "value"     ),
+        Output("colorpicker-reaction",          "value"     ),
+        Output("iso-text-size-id-reaction",     "value"     ),
+        Input("reaction-line-dropdown",         "value"     ),
+        Input("save-reaction-line",           "n_clicks"  ),
+        Input("reset-reaction-line",            "n_clicks"  ),
+        State("line-style-dropdown-reaction",   "value"     ),
+        State("iso-line-width-id-reaction",     "value"     ),
+        State("colorpicker-reaction",           "value"     ),
+        State("iso-text-size-id-reaction",      "value"     ),
+
+        prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
+    ) do ph, up, reset, ls, lw, col, ts
+        bid     = pushed_button( callback_context() ) 
+        global phase_infos;
+
+        opt     = ("solid",0.75,"#000000",10.0,"")
+
+        if bid == "reaction-line-dropdown"
+
+            if ph in phase_infos.act_ss
+                id  = findfirst(phase_infos.act_ss .== ph)
+                opt = phase_infos.reac_ss[id]
+            else
+                id  = findfirst(phase_infos.act_pp .== ph)
+                opt = phase_infos.reac_pp[id]
+            end
+
+            return opt[1], opt[2], opt[3], opt[4]
+        elseif bid == "save-reaction-line"
+
+            opt = (ls,lw,col,ts,ph)
+
+            if ph in phase_infos.act_ss
+                id  = findfirst(phase_infos.act_ss .== ph)
+                phase_infos.reac_ss[id] = opt
+            else
+                id  = findfirst(phase_infos.act_pp .== ph)
+                phase_infos.reac_pp[id] = opt
+            end
+
+            return no_update(), no_update(), no_update(), no_update()
+        elseif bid == "reset-reaction-line"
+
+            if ph in phase_infos.act_ss
+                id  = findfirst(phase_infos.act_ss .== ph)
+                phase_infos.reac_ss[id] = opt
+            else
+                id  = findfirst(phase_infos.act_pp .== ph)
+                phase_infos.reac_pp[id] = opt
+            end
+
+            return opt[1], opt[2], opt[3], opt[4]
+        end
+
+    end
+
+
     """
         Callback function to update the phase diagram based on the user input
     """
@@ -575,9 +666,12 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("max-color-id",              "value"),
         Output("output-loading-id",         "children"),
         Output("trigger-update-ss-list",    "value"),
+        Output("trigger-update-reaction-line-list",    "value"),
         Output("show-text-list-id",         "style"),
         Output("stop-trigger",              "data"),
         
+        
+        Input("update-reaction-line",       "n_clicks"), 
         Input("show-grid",                  "value"), 
         Input("show-full-grid",             "value"), 
         Input("show-lbl-id",                "value"),
@@ -679,7 +773,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         prevent_initial_call = true,
 
-    ) do    grid,       full_grid,  lbl,        addIso,     removeIso,  removeAllIso,    isoShow,   isoHide, isoShowAll,    isoHideAll,    
+    ) do    reac_up,    grid,       full_grid,  lbl,        addIso,     removeIso,  removeAllIso,    isoShow,   isoHide, isoShowAll,    isoHideAll,    
             n_clicks_mesh, n_clicks_refine, uni_n_clicks_refine, 
             minColor,   maxColor,
             colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  updateTitle,     loadstateid, customTitle, txt_list,
@@ -712,6 +806,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         field2plot[1]       =  1
         loading             = ""  
         update_ss_list      = ""
+        update_reaction_list      = ""
         store_stop   = string(rand())
 
 
@@ -763,6 +858,10 @@ function Tab_PhaseDiagram_Callbacks(app)
             minColor        = round(minimum(skipmissing(gridded)),digits=2); 
             maxColor        = round(maximum(skipmissing(gridded)),digits=2);  
             update_ss_list  = 1
+            update_reaction_list  = 1
+        elseif bid == "update-reaction-line"
+
+            data_reaction   = show_hide_reaction_lines(sub,refLvl,Xrange,Yrange)
 
         elseif bid == "refine-pb-button" || bid == "uni-refine-pb-button"
                 
@@ -805,6 +904,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             data_reaction   = show_hide_reaction_lines(sub,refLvl,Xrange,Yrange)
             data_grid       = show_hide_mesh_grid()
             update_ss_list  = 1
+            update_reaction_list  = 1
 
         elseif bid == "load-state-id"
             data_plot,layout =  update_diplayed_field_phaseDiagram( xtitle,     ytitle,     
@@ -999,10 +1099,10 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                         width    =  900,
                                                                         scale    =  2.0,       ).fields)
 
-        if isempty(update_ss_list)
-            return grid, full_grid, fig_cap, config_cap, fig, config, infos, txt_list, isopleths, isoplethsHid, smooth, active_tab, minColor,   maxColor, loading, no_update(), show_text_list, store_stop
-        else
-            return grid, full_grid, fig_cap, config_cap, fig, config, infos, txt_list, isopleths, isoplethsHid, smooth, active_tab, minColor,   maxColor, loading, update_ss_list, show_text_list, store_stop
+        if isempty(update_ss_list) && isempty(update_reaction_list)
+            return grid, full_grid, fig_cap, config_cap, fig, config, infos, txt_list, isopleths, isoplethsHid, smooth, active_tab, minColor,   maxColor, loading, no_update(), no_update(), show_text_list, store_stop
+       else
+            return grid, full_grid, fig_cap, config_cap, fig, config, infos, txt_list, isopleths, isoplethsHid, smooth, active_tab, minColor,   maxColor, loading, update_ss_list, update_reaction_list, show_text_list, store_stop
         end
     end
 

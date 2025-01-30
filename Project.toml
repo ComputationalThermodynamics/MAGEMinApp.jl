@@ -1,13 +1,14 @@
 name = "MAGEMinApp"
 uuid = "3bfd43b6-b983-4998-9dd6-d5d715d830b7"
 authors = ["Nicolas Riel <nriel@uni-mainz.de>", "Boris Kaus <kaus@uni-mainz.de>"]
-version = "0.6.8"
+version = "0.6.9"
 
 [deps]
 Base64 = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 Bibliography = "f1be7e48-bf82-45af-a471-ae754a193061"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 ConcaveHull = "7d11a335-8259-52c9-8750-e30c45c66484"
+Contour = "d38c429a-6771-53c6-b99e-75d170b6e991"
 Dash = "1b08a953-4be3-4667-9a23-3db579824955"
 DashBootstrapComponents = "1b08a953-4be3-4667-9a23-fa6d05876a1e"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
@@ -38,6 +39,7 @@ UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 Bibliography = "0.2.20"
 CSV = "0.10"
 ConcaveHull = "1.0"
+Contour = "0.6.3"
 Dash = "1.5"
 DashBootstrapComponents = "1.4.1"
 DataFrames = "1"

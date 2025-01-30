@@ -230,6 +230,7 @@ function Tab_Simulation_Callbacks(app)
 
 
 
+
     # update the dictionary of the solution phases and end-members for isopleths
     callback!(
         app,
@@ -955,7 +956,6 @@ function Tab_Simulation_Callbacks(app)
         return is_open 
             
     end
-
 
     # open/close Curve interpretation box
     callback!(app,

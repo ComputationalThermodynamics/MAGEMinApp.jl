@@ -1047,6 +1047,82 @@ end
 
 
 """
+   This function creates a binary mask, then contours it to retriev the phase boundary
+
+"""
+function get_phase_boundary(    ph     :: String,
+                                n      :: Int,  
+                                phase  :: Vector{Int},
+                                mask   :: Matrix{Int},
+                                data,
+                                Out_XY )
+
+    np_grid = length(data.points)
+
+    for i=1:np_grid
+        phase[i] = 0;
+        if (ph in Out_XY[i].ph)
+            phase[i] = 1;
+        end
+    end
+
+    dx  = (data.Xrange[2]-data.Xrange[1])/(n-1)
+    dy  = (data.Yrange[2]-data.Yrange[1])/(n-1)
+
+    x   = range(data.Xrange[1], stop = data.Xrange[2], length = n)
+    y   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
+
+    for k=1:np_grid
+        ii              = compute_index(data.points[k][1], data.Xrange[1], dx)
+        jj              = compute_index(data.points[k][2], data.Yrange[1], dy)
+        mask[ii,jj]     = phase[k] 
+    end
+
+    for i=1:length(data.cells)
+        cell   = data.cells[i]
+        tmp    = phase[cell[1]]
+
+        ii_min = compute_index(data.points[cell[2]][1], data.Xrange[1], dx)
+        ii_max = compute_index(data.points[cell[3]][1], data.Xrange[1], dx)
+        jj_ix  = compute_index(data.points[cell[2]][2], data.Yrange[1], dy)
+        for ii = ii_min+1:ii_max-1
+            mask[ii, jj_ix] = tmp
+        end
+
+        jj_min = compute_index(data.points[cell[1]][2], data.Yrange[1], dy)
+        jj_max = compute_index(data.points[cell[2]][2], data.Yrange[1], dy)
+        ii_ix = compute_index(data.points[cell[1]][1],  data.Xrange[1], dx)
+        for jj in jj_min+1:jj_max-1
+            mask[ii_ix, jj] = tmp
+        end
+
+        jj_min = compute_index(data.points[cell[4]][2], data.Yrange[1], dy)
+        jj_max = compute_index(data.points[cell[3]][2], data.Yrange[1], dy)
+        ii_ix = compute_index(data.points[cell[4]][1],  data.Xrange[1], dx)
+        for jj in jj_min+1:jj_max-1
+            mask[ii_ix, jj] = tmp
+        end
+
+        ii_min = compute_index(data.points[data.cells[i][1]][1], data.Xrange[1], dx)
+        ii_max = compute_index(data.points[data.cells[i][4]][1], data.Xrange[1], dx)
+        jj_ix  = compute_index(data.points[data.cells[i][1]][2], data.Yrange[1], dy)
+
+        for ii in ii_min+1:ii_max-1
+            mask[ii, jj_ix] = tmp
+            for jj in jj_min+1:jj_max-1
+                mask[ii, jj] = tmp
+            end
+        end
+    end
+
+    phase_boundary    = CTR.contours(x,y,mask,[0.5])
+    # phase_boundary  = cl.contours[1].lines[1].vertices
+
+    return phase_boundary
+end
+
+
+"""
     show_hide_reaction_lines(    xtitle,     ytitle,     grid,  
                                     Xrange,     Yrange,     fieldname,
                                     dtb,
@@ -1059,31 +1135,72 @@ function  show_hide_reaction_lines(     sub,
                                         Xrange, 
                                         Yrange  )
 
-    global data, Hash_XY, addedRefinementLvl
+    global data, Hash_XY, Out_XY, addedRefinementLvl, phase_infos
 
-    ncells_c    = retrieve_ncells_c(data)
+    n           = 2^(sub + refLvl+ addedRefinementLvl)+1
+    phase       = Vector{Int}(undef,length(data.points));
+    mask        = Matrix{Int}(undef,n,n);
 
-    np          = length(ncells_c)
-    bnd_x       = zeros(Float64,np)
-    bnd_y       = zeros(Float64,np)
- 
-    for i=1:np
-        bnd_x[i] = ncells_c[i][1]
-        bnd_y[i] = ncells_c[i][2]
+    phase_contours = ()
+    for ph in phase_infos.act_ss
+        phase_boundary = get_phase_boundary(    ph,
+                                                n,
+                                                phase,
+                                                mask,
+                                                data,
+                                                Out_XY )
+
+        phase_contours = (phase_contours..., (ph, phase_boundary))
     end
-    
-    # grid_plot = GenericTrace{Dict{Symbol, Any}}
-    grid_plot =  scatter(   x           = bnd_x,
-                            y           = bnd_y,
-                            mode        = "markers",
-                            marker      = attr(color = "#333333", size = 1.5),
-                            hoverinfo   = "skip",
-                            showlegend  = false     );
 
-    return grid_plot
+    for ph in phase_infos.act_pp
+        phase_boundary = get_phase_boundary(    ph,
+                                                n,
+                                                phase,
+                                                mask,
+                                                data,
+                                                Out_XY )
+
+        phase_contours = (phase_contours..., (ph, phase_boundary))
+    end
+
+
+    data_contour      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef,length(phase_contours));
+
+    n_ss = length(phase_infos.act_ss)
+    n_pp = length(phase_infos.act_pp)
+
+    for i=1:(n_ss+n_pp)
+        if i <= n_ss
+            opt = phase_infos.reac_ss[i]
+        else
+            opt = phase_infos.reac_pp[i - n_ss]
+        end
+
+        x       = []
+        y       = []
+
+        for j=1:length(phase_contours[i][2].contours[1].lines)
+            ctr     = phase_contours[i][2].contours[1].lines[j].vertices
+            x       = vcat(x, [ctr[k][1] for k in 1:size(ctr,1)],missing)
+            y       = vcat(y, [ctr[k][2] for k in 1:size(ctr,1)],missing)
+        end
+
+        data_contour[i] = scatter(      x           = x, 
+                                        y           = y, 
+                                        hoverinfo   = "skip",
+                                        mode        = "lines",
+                                        name        = opt[5],
+                                        showscale   = false,
+                                        showlegend  = false,
+                                        line        = attr( color   = opt[3], 
+                                                            dash    = opt[1],
+                                                            width   = opt[2])                )
+    end
+
+    return data_contour
+
 end
-
-
 
 """
     show_hide_reaction_lines(    xtitle,     ytitle,     grid,  

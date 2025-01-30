@@ -678,6 +678,12 @@ function get_phase_infos(       Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float
     # here we also get information about the phases that are stable accross the diagram and their potential solvus
     act_ss      = []
     act_pp      = []
+
+    reac_ss     = []
+    reac_pp     = []
+
+    def         = ("solid",0.75,"#000000",10.0,"")
+
     act_sol     = []
     for i = 1:np
         n_ph = length(Out_XY[i].ph)
@@ -691,6 +697,7 @@ function get_phase_infos(       Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float
         for k in Out_XY[i].ph[1:n_SS]
             if k in act_ss
             else 
+                push!(reac_ss, def) 
                 push!(act_ss, k) 
             end
         end
@@ -698,6 +705,7 @@ function get_phase_infos(       Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float
             for k in Out_XY[i].ph[1+n_SS:n_ph]
                 if k in act_pp
                 else
+                    push!(reac_pp, def) 
                     push!(act_pp, k)
                 end
             end
@@ -707,7 +715,9 @@ function get_phase_infos(       Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float
 
     phase_infos = ( act_pp       = act_pp,
                     act_ss       = act_ss,
-                    act_sol      = act_sol)
+                    reac_pp      = reac_pp,
+                    reac_ss      = reac_ss,
+                    act_sol      = act_sol  )
     return nothing
 end
 
@@ -779,10 +789,11 @@ function get_diagram_labels(    Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float
 
             dx              = (data.Xrange[2]-data.Xrange[1])/(size(gridded_fields,1)-1)
             dy              = (data.Yrange[2]-data.Yrange[1])/(size(gridded_fields,2)-1)
-            minX            = data.Xrange[1] + dx*(bnds[1]) - dx*2
-            maxX            = data.Xrange[1] + dx*(bnds[2]) + dx*2
-            minY            = data.Yrange[1] + dy*(bnds[3]) - dy*2
-            maxY            = data.Yrange[1] + dy*(bnds[4]) + dy*2
+            
+            minX            = data.Xrange[1] + dx*(bnds[1]-1) - dx/2
+            maxX            = data.Xrange[1] + dx*(bnds[2]-1) + dx/2
+            minY            = data.Yrange[1] + dy*(bnds[3]-1) - dy/2
+            maxY            = data.Yrange[1] + dy*(bnds[4]-1) + dy/2
 
             area[id]        = Float64(sum(mask))*dx*dy/fac
             centers         = select_point(mask, range(minY, maxY, size(mask,2)+1) , range(minX, maxX, size(mask,1)+1) )
