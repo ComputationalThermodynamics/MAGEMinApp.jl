@@ -678,6 +678,12 @@ function get_phase_infos(       Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float
     # here we also get information about the phases that are stable accross the diagram and their potential solvus
     act_ss      = []
     act_pp      = []
+
+    reac_ss     = []
+    reac_pp     = []
+
+    def         = ("solid",0.75,"#000000",10.0)
+
     act_sol     = []
     for i = 1:np
         n_ph = length(Out_XY[i].ph)
@@ -691,6 +697,7 @@ function get_phase_infos(       Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float
         for k in Out_XY[i].ph[1:n_SS]
             if k in act_ss
             else 
+                push!(reac_ss, def) 
                 push!(act_ss, k) 
             end
         end
@@ -698,6 +705,7 @@ function get_phase_infos(       Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float
             for k in Out_XY[i].ph[1+n_SS:n_ph]
                 if k in act_pp
                 else
+                    push!(reac_pp, def) 
                     push!(act_pp, k)
                 end
             end
@@ -707,7 +715,9 @@ function get_phase_infos(       Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float
 
     phase_infos = ( act_pp       = act_pp,
                     act_ss       = act_ss,
-                    act_sol      = act_sol)
+                    reac_pp      = reac_pp,
+                    reac_ss      = reac_ss,
+                    act_sol      = act_sol  )
     return nothing
 end
 

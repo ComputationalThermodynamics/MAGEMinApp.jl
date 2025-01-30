@@ -15,6 +15,8 @@ using Bibliography
 using Images, PolygonInbounds, LazyGrids, Graphs
 using MAGEMin_C
 
+import Contour as CTR
+
 pkg_dir = Base.pkgdir(MAGEMinApp)
 
 export App
@@ -172,28 +174,8 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                                                     ),
                                                             dbc_tab(    tab_id      = "tab-phase-diagram",
                                                                         label       = "Diagram",
-                                                                        children    = [
-                                                                            Tab_PhaseDiagram()
-                                                                                    #     children    = [dbc_tabs([
-                                                                                    #             dbc_tab(    tab_id      = "tab-pd-info",
-                                                                                    #                         label       = "Information",
-                                                                                    #                         children    = [Tab_PD_info(db_inf)],
-                                                                                    #                     ),
-                                                                                    #             dbc_tab(    tab_id      = "tab-pd-isopleth",
-                                                                                    #                         label       = "Isopleths",
-                                                                                    #                         children    = [Tab_PD_isopleth()]
-                                                                                    #                     ),
-                                                                                    #             dbc_tab(    tab_id      = "tab-pd-display",
-                                                                                    #                         label       = "Display option",
-                                                                                    #                         children    = [Tab_PD_display()],
-                                                                                    #                     ),
-                                                                                    #     ], id = "tabs_PD"), ]
-                                                                                    ]
+                                                                        children    = [Tab_PhaseDiagram(db_inf)]
                                                                     ),
-                                                            # dbc_tab(    tab_id      = "tab-classification",
-                                                            #             label       = "Classification",
-                                                            #             children    = [Tab_Classification()],
-                                                            #     ),
                                                             dbc_tab(    tab_id      = "tab-te",
                                                                         label       = "Trace-elements",
                                                                         children    = [Tab_TraceElement()],

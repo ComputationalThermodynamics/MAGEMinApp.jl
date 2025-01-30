@@ -1,4 +1,4 @@
-function Tab_PhaseDiagram()
+function Tab_PhaseDiagram(db_inf)
     html_div([
     # one column for the plots
         dbc_col([
@@ -451,34 +451,7 @@ function Tab_PhaseDiagram()
                                     html_div("‎ "),
                                     html_h1("Diagram options", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                     html_hr(),
-        
-                                        dbc_row([
-                                            dbc_col([ 
-                                                html_h1("Show reaction lines", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                            ], width=5),
-                                            dbc_col([
-                                                dcc_dropdown(   id          = "show-grid",
-                                                                options     =  ["true","false"],
-                                                                value       = "true" ,
-                                                                clearable   =  false,
-                                                                multi       =  false),
-                                            ]), 
-                                        ]),
-        
-        
-                                        dbc_row([
-                                            dbc_col([ 
-                                                html_h1("Show stable phases", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                            ], width=5),
-                                            dbc_col([
-                                                dcc_dropdown(   id          = "show-lbl-id",
-                                                                options     =  ["true","false"],
-                                                                value       = "true" ,
-                                                                clearable   =  false,
-                                                                multi       =  false),
-                                            ]), 
-                                        ]),
-        
+                
                                         dbc_row([
                                             dbc_col([ 
                                                 html_h1("Show grid", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
@@ -491,6 +464,151 @@ function Tab_PhaseDiagram()
                                                                 multi       =  false),
                                             ]), 
                                         ]),
+
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("Show stable phases", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ], width=5),
+                                            dbc_col([
+                                                dcc_dropdown(   id          = "show-lbl-id",
+                                                                options     =  ["true","false"],
+                                                                value       = "true" ,
+                                                                clearable   =  false,
+                                                                multi       =  false),
+                                            ]), 
+                                        ]),
+
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("Show reaction lines", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ], width=5),
+                                            dbc_col([
+                                                dcc_dropdown(   id          = "show-grid",
+                                                                options     =  ["true","false"],
+                                                                value       = "true" ,
+                                                                clearable   =  false,
+                                                                multi       =  false),
+                                            ]), 
+                                        ]),
+
+                                        html_div([
+                                            dbc_input(
+                                                id      = "trigger-update-reaction-line-list",
+                                                type    = "number", 
+                                                value   = -1,
+                                                debounce = true   ),
+                                        ], style = Dict("display" => "none"), id      = "trigger-update-reaction-line-list-display"),
+
+                                        # html_h1("Reaction line style", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                        # html_hr(),
+                                        html_div([
+                                        html_div("‎ "),
+                                        dbc_row([
+
+                                            dbc_col([ 
+                                                dbc_row([
+                                                    # html_h1("Phase", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                    dcc_dropdown(   id      = "reaction-line-dropdown",
+                                                        options = [Dict(    "label"     => " "*i,
+                                                                            "value"     => i )
+                                                                        for i in db_inf.ss_name ],
+
+                                                        value       = db_inf.ss_name[1],
+                                                        clearable   = false,
+                                                        multi       = false),
+                                                ]),
+                                                html_div("‎ "),
+                                                dbc_row([  
+                                                    dbc_button( "Save", id="save-reaction-line", color="light", className="me-2", n_clicks=0,
+                                                                    style       = Dict( "textAlign"     => "center",
+                                                                                        "font-size"     => "100%",
+                                                                                        "border"        => "1px grey solid",
+                                                                                        "width"         => "86%" )), 
+                                                ],justify="center"), 
+                                                dbc_row([  
+                                                    dbc_button( "Reset", id="reset-reaction-line", color="light", className="me-2", n_clicks=0,
+                                                                    style       = Dict( "textAlign"     => "center",
+                                                                                        "font-size"     => "100%",
+                                                                                        "border"        => "1px grey solid",
+                                                                                        "width"         => "86%" )), 
+                                                ],justify="center"),   
+                                                dbc_row([  
+                                                    dbc_button( "Update", id="update-reaction-line", color="light", className="me-2", n_clicks=0,
+                                                                    style       = Dict( "textAlign"     => "center",
+                                                                                        "font-size"     => "100%",
+                                                                                        "border"        => "1px grey solid",
+                                                                                        "width"         => "86%" )), 
+                                                ],justify="center"), 
+                                            ], width=4),
+                                            dbc_col([
+                                                html_div("", style = Dict("borderLeft" => "1px solid grey", "height" => "100%", "display" => "flex", "alignItems" => "center", "justifyContent" => "center"))
+                                            ], width = 1),
+                                            dbc_col([
+                                                dbc_row([    
+                                                    dbc_col([
+                                                        html_h1("Line style", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                                    ],width=6),
+                                                    dbc_col([ 
+                                                        dcc_dropdown(   id      = "line-style-dropdown-reaction",
+                                                        options = [
+                                                            (label = "Solid",                   value = "solid"),
+                                                            (label = "Dot",                     value = "dot"),
+                                                            (label = "Dash",                    value = "dash"),
+                                                            (label = "Longdash",                value = "longdash"),
+                                                            (label = "Dashdot",                 value = "dashdot"),
+                                                            (label = "Longdashdot",             value = "longdashdot"),
+                                                        ],
+                                                        value       = "solid",
+                                                        clearable   = false,
+                                                        multi       = false),
+                                                    ]),
+                                                ]),
+                                                dbc_row([    
+                                                    dbc_col([
+                                                        html_h1("Line width", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                                    ],width=6),
+                                                    dbc_col([ 
+                                                        dbc_input(
+                                                        id      = "iso-line-width-id-reaction",
+                                                        type    = "number", 
+                                                        min     = 0,  
+                                                        max     = 10,  
+                                                        value   = 0.75   ),
+                                                    ]),
+                                                ]),
+                                                dbc_row([
+                                                    dbc_col([
+                                                        html_h1("Color", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                                    ],width=6),
+                                                    dbc_col([ 
+                                                        dbc_input(
+                                                            type    = "color",
+                                                            id      = "colorpicker-reaction",
+                                                            value   = "#000000",
+                                                            style   = Dict("width" => 75, "height" => 25),
+                                                        ),
+                                                    ]),
+
+                                                ]),
+                                                dbc_row([    
+                                                    dbc_col([
+                                                        html_h1("Label size", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                                    ],width=6),
+                                                    dbc_col([ 
+                                                        dbc_input(
+                                                        id      = "iso-text-size-id-reaction",
+                                                        type    = "number", 
+                                                        min     = 6,  
+                                                        max     = 20,  
+                                                        value   = 10   ),
+                                                    ]),
+                                                ]),
+                                            ],width=7),
+                                        ]),
+                                        ], style = Dict("display" => "block"), id      = "reaction-line-display"),
+
+
+
                                         html_div("‎ "),
                                         html_h1("Color options", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                         html_hr(),
@@ -605,7 +723,20 @@ function Tab_PhaseDiagram()
         
         
                                 ]),
-                            dbc_tab(label="Isopleths", children=[
+
+                                # dbc_tab(label="Diagram options", children=[
+                                #     dbc_collapse(
+                                #         dbc_card(dbc_cardbody([ 
+
+
+                                #         ])),
+                                #         id="collapse-diagram-options",
+                                #         is_open=true,
+                                #     ),
+
+                                # ]),
+
+                                dbc_tab(label="Isopleths", children=[
 
                                 dbc_collapse(
                                     dbc_card(dbc_cardbody([
