@@ -682,7 +682,7 @@ function get_phase_infos(       Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float
     reac_ss     = []
     reac_pp     = []
 
-    def         = ("solid",0.75,"#000000",10.0)
+    def         = ("solid",0.75,"#000000",10.0,"")
 
     act_sol     = []
     for i = 1:np

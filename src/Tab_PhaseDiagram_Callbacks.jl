@@ -601,7 +601,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         bid     = pushed_button( callback_context() ) 
         global phase_infos;
 
-        opt     = ("solid",0.75,"#000000",10.0)
+        opt     = ("solid",0.75,"#000000",10.0,"")
 
         if bid == "reaction-line-dropdown"
 
@@ -616,7 +616,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             return opt[1], opt[2], opt[3], opt[4]
         elseif bid == "save-reaction-line"
 
-            opt = (ls,lw,col,ts)
+            opt = (ls,lw,col,ts,ph)
 
             if ph in phase_infos.act_ss
                 id  = findfirst(phase_infos.act_ss .== ph)
