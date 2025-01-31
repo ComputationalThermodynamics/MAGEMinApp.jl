@@ -1189,10 +1189,12 @@ function  show_hide_reaction_lines(     sub,
         data_contour[i] = scatter(      x           = x, 
                                         y           = y, 
                                         hoverinfo   = "skip",
-                                        mode        = "lines",
+                                        mode        = "markers+lines",
                                         name        = opt[5],
                                         showscale   = false,
                                         showlegend  = false,
+                                        marker      = attr( size    = 10,  # Set the marker size here
+                                                            color   = "rgba(0,0,0,0)" ),
                                         line        = attr( color   = opt[3], 
                                                             dash    = opt[1],
                                                             width   = opt[2])                )
