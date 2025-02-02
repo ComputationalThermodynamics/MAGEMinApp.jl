@@ -1092,6 +1092,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         else
             fig_cap = plot(data_isopleth.isoCap[data_isopleth.active],layoutCap)
         end
+        
         config_cap  = PlotConfig(    toImageButtonOptions  = attr(      name     = "Download as svg",
                                                                         format   = "svg",
                                                                         filename =  (replace(customTitle, " " => "_"))*"_label",
