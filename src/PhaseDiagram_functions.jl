@@ -845,13 +845,19 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                             fixedrange    = true,
                                     ),
                 )
+        minColor        = round(minimum(skipmissing(gridded)),digits=2); 
+        maxColor        = round(maximum(skipmissing(gridded)),digits=2);    
         if set_white == "true"
             colorm = set_min_to_white(colorm; reverseColorMap)
         end
-
+        # if fieldname == "Variance"
+        #     colorm = discretize_colormap(colorm,minColor,maxColor)
+        # end
         heat_map = heatmap( x               = X,
                             y               = Y,
                             z               = gridded,
+                            zmin            =  minColor,
+                            zmax            =  maxColor,
                             zsmooth         = smooth,
                             connectgaps     = true,
                             type            = "heatmap",
@@ -1023,6 +1029,9 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
     if set_white == "true"
         colorm = set_min_to_white(colorm; reverseColorMap)
     end
+    # if fieldname == "Variance"
+    #     colorm = discretize_colormap(colorm,minColor,maxColor)
+    # end
     data_plot[1] = heatmap( x               =  X,
                             y               =  Y,
                             z               =  gridded,
