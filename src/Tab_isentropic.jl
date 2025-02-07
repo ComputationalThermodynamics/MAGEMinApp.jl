@@ -171,6 +171,7 @@ function Tab_IsentropicPaths(db_inf)
                                                 (label = "no buffer",value = "none"),
                                                 (label = "QFM",      value = "qfm"),
                                                 (label = "MW",       value = "mw"), 
+                                                (label = "IW",       value = "iw"), 
                                                 (label = "QIF",      value = "qif"),
                                                 (label = "CCO",      value = "cco"),
                                                 (label = "HM",       value = "hm"), 

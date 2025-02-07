@@ -244,7 +244,7 @@ function Tab_Simulation(db_inf)
                                                 dcc_dropdown(   id      = "kds-dropdown",
                                                 options = [
                                                     (label = "O. Laurent (2012)",               value = "OL"),
-                                                    # (label = "E. Oliviera Da Costa (202x)",     value = "EODC"),
+                                                    (label = "E. Oliviera Da Costa (202x)",     value = "EODC"),
                                                 ],
                                                 value       = "OL" ,
                                                 clearable   =  false,
@@ -526,6 +526,7 @@ function Tab_Simulation(db_inf)
                                                 (label = "no buffer",value = "none"),
                                                 (label = "QFM",      value = "qfm"),
                                                 (label = "MW",       value = "mw"), 
+                                                (label = "IW",       value = "iw"), 
                                                 (label = "QIF",      value = "qif"),
                                                 (label = "CCO",      value = "cco"),
                                                 (label = "HM",       value = "hm"), 

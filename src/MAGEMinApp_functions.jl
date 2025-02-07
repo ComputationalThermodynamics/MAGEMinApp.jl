@@ -15,6 +15,33 @@ function set_min_to_white(colormap; reverseColorMap = false)
     return colormap
 end
 
+function discretize_colormap(colormap,min,max)
+
+    color       = colormap
+    nc          = length(color)
+    n           = Int64((max - min)+1)
+    stp         = Int64(floor(nc / n ))
+    println("color $color")
+    println("nc $nc n $n stp $stp")
+
+    tmp  = Vector{String}(undef, n)
+    tmp  = ["rgba($(round(color[i].r,digits=5)),$(round(color[i].g,digits=5)),$(round(color[i].b,digits=5)),1.0)" for i = 1:stp:nc]
+
+    cust_color = Vector{Any}[]
+    for i=1:n
+        line1 = [round(Float64((i)/n - 1/n),digits=5),tmp[i]]
+        line2 = [round(Float64((i)/n),digits=5),tmp[i]]
+        
+        push!(cust_color,line1)
+        push!(cust_color,line2)
+    end  
+    # cust_color[1][1] = 0.001
+
+    println("cust_color $cust_color")
+
+    return cust_color
+end
+
 
 function get_jet_colormap(n)
 
