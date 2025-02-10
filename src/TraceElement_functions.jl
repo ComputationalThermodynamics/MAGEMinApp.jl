@@ -223,7 +223,7 @@ end
 
 
 """
-    update_diplayed_field_phaseDiagram(   xtitle,     ytitle,     
+    update_displayed_field_phaseDiagram(   xtitle,     ytitle,     
                                                     Xrange,     Yrange,     fieldname,
                                                     dtb,        oxi,
                                                     sub,        refLvl,
@@ -231,7 +231,7 @@ end
                                                     test                                  )
     Updates the field displayed
 """
-function  update_diplayed_field_phaseDiagram_te(    xtitle,     ytitle,     type,                  varBuilder, norm,
+function  update_displayed_field_phaseDiagram_te(    xtitle,     ytitle,     type,                  varBuilder, norm,
                                                     Xrange,     Yrange,     fieldname,
                                                     dtb,        oxi,
                                                     sub,        refLvl,

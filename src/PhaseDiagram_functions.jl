@@ -850,9 +850,9 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
         if set_white == "true"
             colorm = set_min_to_white(colorm; reverseColorMap)
         end
-        # if fieldname == "Variance"
+        if fieldname == "Variance"
         #     colorm = discretize_colormap(colorm,minColor,maxColor)
-        # end
+        end
         heat_map = heatmap( x               = X,
                             y               = Y,
                             z               = gridded,
@@ -1244,7 +1244,7 @@ end
 
 
 """
-    update_diplayed_field_phaseDiagram(   xtitle,     ytitle,     
+    update_displayed_field_phaseDiagram(   xtitle,     ytitle,     
                                                     Xrange,     Yrange,     fieldname,
                                                     dtb,        oxi,
                                                     sub,        refLvl,
@@ -1252,7 +1252,7 @@ end
                                                     test                                  )
     Updates the field displayed
 """
-function  update_diplayed_field_phaseDiagram(   xtitle,     ytitle,     
+function  update_displayed_field_phaseDiagram(   xtitle,     ytitle,     
                                                 Xrange,     Yrange,     fieldname,
                                                 dtb,        oxi,
                                                 sub,        refLvl,
@@ -1367,7 +1367,7 @@ end
 function add_isopleth_phaseDiagram(         Xrange,     Yrange, 
                                             sub,        refLvl,
                                             dtb,        oxi,
-                                            isopleths,  phase,      ss,     em,   ox,  of,     ot,  sys,    calc, cust,
+                                            isopleths,  phase,      ss,     em,   ox,  of,     ot,  sys,    calc, cust, calc_sf, cust_sf,
                                             isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,       
                                             minIso,     stepIso,    maxIso      )
 
@@ -1413,7 +1413,14 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
         else
             name    = ss*"_["*calc*"]"
         end
-        # name    = ss*"_["*calc*"]"
+    elseif (phase == "ss" && ot == "calc_sf")
+        mod     = "ss_calc_sf"
+        em      = ""
+        if cust != "none"
+            name    = ss*"_["*cust_sf*"]"
+        else
+            name    = ss*"_["*calc_sf*"]"
+        end
     elseif (phase == "of")
         em      = ""
         ss      = ""
@@ -1425,7 +1432,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
 
     global data_isopleth, nIsopleths, data, Out_XY, data_plot, X, Y, addedRefinementLvl
 
-    gridded, X, Y = get_isopleth_map(   mod, ss, em, ox, of, ot, calc,
+    gridded, X, Y = get_isopleth_map(   mod, ss, em, ox, of, ot, calc, calc_sf,
                                         oxi,
                                         Out_XY,
                                         sub,

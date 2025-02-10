@@ -234,22 +234,25 @@ function Tab_Simulation_Callbacks(app)
     # update the dictionary of the solution phases and end-members for isopleths
     callback!(
         app,
-        Output("ss-dropdown","options"),
-        Output("ss-dropdown","value"),
-        Output("calc-1-id","style"),
-        Output("em-1-id","style"),
-        Output("ox-1-id","style"),
-        Output("ss-1-id","style"),
-        Output("of-1-id","style"),
-        Output("other-1-id","style"),
+        Output("ss-dropdown",       "options"),
+        Output("ss-dropdown",       "value"),
+        Output("calc-1-id",         "style"),
+        Output("calc-1-sf-id",      "style"),
+        Output("em-1-id",           "style"),
+        Output("ox-1-id",           "style"),
+        Output("ss-1-id",           "style"),
+        Output("of-1-id",           "style"),
+        Output("other-1-id",        "style"),
         Output("sys-unit-isopleth-id","style"),
+
         Input("trigger-update-ss-list","value"),
-        Input("phase-dropdown","value"),
-        Input("other-dropdown","value"),
-        State("ss-dropdown","value"),
+        Input("phase-dropdown",     "value"),
+        Input("other-dropdown",     "value"),
+        State("ss-dropdown",        "value"),
+        State("database-dropdown",  "value"),
 
         prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
-    ) do pd_update, phase, other, ph
+    ) do pd_update, phase, other, ph, dtb
     
         bid         = pushed_button( callback_context() ) 
 
@@ -263,6 +266,7 @@ function Tab_Simulation_Callbacks(app)
             style_em    = Dict("display" => "none")
             style_ox    = Dict("display" => "none")
             style_calc  = Dict("display" => "none")
+            style_calc_sf = Dict("display" => "none")
             style_ot    = Dict("display" => "none")
             style_of    = Dict("display" => "block")
             style_sys   = Dict("display" => "none")
@@ -297,6 +301,13 @@ function Tab_Simulation_Callbacks(app)
                 style_calc  = Dict("display" => "none")
             end
 
+            if other == "calc_sf"
+                style_calc_sf  = Dict("display" => "block")
+                style_sys   = Dict("display" => "none")
+            else
+                style_calc_sf  = Dict("display" => "none")
+            end
+
             if other == "MgNum"
                 style_sys   = Dict("display" => "none")
             end
@@ -317,6 +328,7 @@ function Tab_Simulation_Callbacks(app)
             style_ox    = Dict("display" => "none")
             style_ot    = Dict("display" => "none")
             style_calc  = Dict("display" => "none")
+            style_calc_sf  = Dict("display" => "none")
             style_ph    = Dict("display" => "block")
             style_of    = Dict("display" => "none")
             style_sys   = Dict("display" => "block")
@@ -329,7 +341,7 @@ function Tab_Simulation_Callbacks(app)
 
         end
 
-        return opts_ph, val, style_calc, style_em, style_ox, style_ph, style_of, style_ot, style_sys
+        return opts_ph, val, style_calc, style_calc_sf, style_em, style_ox, style_ph, style_of, style_ot, style_sys
     end
 
 
@@ -341,13 +353,15 @@ function Tab_Simulation_Callbacks(app)
         Output("em-dropdown","value"),
         Output("ox-dropdown","options"),
         Output("ox-dropdown","value"),
+        Output("display-sites-id",  "value"),
+       
         Input("database-dropdown","value"),
         Input("ss-dropdown","value"),
         State("phase-dropdown","value"),
         State("mb-cpx-switch","value"),
 
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
-    ) do dtb, id, ph, mbCpx
+    ) do dtb, ph_name, ph, mbCpx
         bid  = pushed_button( callback_context() ) 
         if mbCpx == true
             aug = 1
@@ -356,16 +370,19 @@ function Tab_Simulation_Callbacks(app)
         end
 
         if ph == "ss"
-            db_in           = retrieve_solution_phase_information(dtb)
-            id              = get_ss_from_mineral(dtb, id, aug)
 
-            if id in db_in.ss_name
+            ph_name         = get_ss_from_mineral(dtb, ph_name, aug)
+            db_in           = retrieve_solution_phase_information(dtb)
+            ph_id           = findfirst(db_in.ss_name .== ph_name)
+            sf_names        = join(db_in.data_ss[ph_id].ss_sf[2:end], " ")
+
+            if ph_name in db_in.ss_name
                 # id = get_ss_from_mineral(dtb, id, aug)
             else
-                id = db_in.ss_name[1]
+                ph_name = db_in.ss_name[1]
             end
 
-            ssid        = findall(db_in.ss_name .== id)[1]
+            ssid        = findall(db_in.ss_name .== ph_name)[1]
             n_em        = length(db_in.data_ss[ssid].ss_em)
 
             val         = "none"
@@ -378,9 +395,9 @@ function Tab_Simulation_Callbacks(app)
                                     "value"     => db[(db.db .== dtb), :].oxide[1][i])
                                         for i=1:length(db[(db.db .== dtb), :].oxide[1]) ]
 
-            return opts_em, val, opts_ox, "SiO2"
+            return opts_em, val, opts_ox, "SiO2", sf_names
         else
-            return "", "", "", ""
+            return "", "", "", "", ""
         end
 
     end

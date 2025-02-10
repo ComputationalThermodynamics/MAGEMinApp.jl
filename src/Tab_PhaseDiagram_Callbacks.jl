@@ -669,7 +669,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("trigger-update-reaction-line-list",    "value"),
         Output("show-text-list-id",         "style"),
         Output("stop-trigger",              "data"),
-        
+        Output("range-slider-color",        "value"),
         
         Input("update-reaction-line",       "n_clicks"), 
         Input("show-grid",                  "value"), 
@@ -762,6 +762,8 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("sys-unit-isopleth-dropdown",  "value"),
         State("input-calc-id",          "value"),
         State("input-cust-id",          "value"),
+        State("input-calc-sf-id",       "value"),
+        State("input-cust-sf-id",       "value"),
         State("line-style-dropdown",    "value"),
         State("iso-line-width-id",      "value"),
         State("colorpicker_isoL",       "value"),
@@ -786,7 +788,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             bufferN1,   bufferN2,
             tepm,       kds_mod,    zrsat_mod,  bulkte1,    bulkte2, eodc_type, eodc_ratio, 
             test,
-            isopleths,  isoplethsID,isoplethsHid,  isoplethsHidID,  phase,      ss,         em,     ox,    of,     ot, sys, calc, cust,
+            isopleths,  isoplethsID,isoplethsHid,  isoplethsHidID,  phase,      ss,         em,     ox,    of,     ot, sys, calc, cust, calc_sf, cust_sf,
             isoLineStyle, isoLineWidth, isoColorLine,           isoLabelSize,   
             minIso,     stepIso,    maxIso,
             active_tab
@@ -826,6 +828,11 @@ function Tab_PhaseDiagram_Callbacks(app)
         
             CompProgress.stage = "Initial G isopleth"
             data_isopleth = initialize_g_isopleth(; n_iso_max = 32)
+
+            if fieldname == "Variance"
+                rangeColor = [1,7]
+                colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)
+            end
 
             data_plot, layout, npoints, meant, txt_list  =  compute_new_phaseDiagram(   xtitle,     ytitle,     lbl,
                                                                                         Xrange,     Yrange,     fieldname,  customTitle,
@@ -907,7 +914,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             update_reaction_list  = 1
 
         elseif bid == "load-state-id"
-            data_plot,layout =  update_diplayed_field_phaseDiagram( xtitle,     ytitle,     
+            data_plot,layout =  update_displayed_field_phaseDiagram( xtitle,     ytitle,     
             Xrange,     Yrange,     fieldname,
             dtb,        oxi,
             sub,        refLvl,
@@ -929,7 +936,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         elseif bid == "fields-dropdown"
 
-            data_plot,layout =  update_diplayed_field_phaseDiagram( xtitle,     ytitle,     
+            data_plot,layout =  update_displayed_field_phaseDiagram( xtitle,     ytitle,     
                                                                     Xrange,     Yrange,     fieldname,
                                                                     dtb,        oxi,
                                                                     sub,        refLvl,
@@ -956,7 +963,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             data_isopleth, isopleths = add_isopleth_phaseDiagram(   Xrange,     Yrange,
                                                                     sub,        refLvl,
                                                                     dtb,        oxi,
-                                                                    isopleths,  phase,      ss,     em,  ox,   of,     ot, sys, calc, cust,
+                                                                    isopleths,  phase,      ss,     em,  ox,   of,     ot, sys, calc, cust, calc_sf, cust_sf,
                                                                     isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,   
                                                                     minIso,     stepIso,    maxIso                      )
             data_isopleth_out = data_isopleth.isoP[data_isopleth.active]
@@ -1101,9 +1108,9 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                         scale    =  2.0,       ).fields)
 
         if isempty(update_ss_list) && isempty(update_reaction_list)
-            return grid, full_grid, fig_cap, config_cap, fig, config, infos, txt_list, isopleths, isoplethsHid, smooth, active_tab, minColor,   maxColor, loading, no_update(), no_update(), show_text_list, store_stop
+            return grid, full_grid, fig_cap, config_cap, fig, config, infos, txt_list, isopleths, isoplethsHid, smooth, active_tab, minColor,   maxColor, loading, no_update(), no_update(), show_text_list, store_stop, rangeColor
        else
-            return grid, full_grid, fig_cap, config_cap, fig, config, infos, txt_list, isopleths, isoplethsHid, smooth, active_tab, minColor,   maxColor, loading, update_ss_list, update_reaction_list, show_text_list, store_stop
+            return grid, full_grid, fig_cap, config_cap, fig, config, infos, txt_list, isopleths, isoplethsHid, smooth, active_tab, minColor,   maxColor, loading, update_ss_list, update_reaction_list, show_text_list, store_stop, rangeColor
         end
     end
 
