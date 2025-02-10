@@ -634,7 +634,7 @@ for (i,val) in enumerate(db.frac2_wt)
     db.frac2_wt[i] = round.(val,digits= 6)
 end
 
-hidden_pp = ["O2","qfm","mw","qif","nno","hm","cco","aH2O","aO2","aMgO","aFeO","aAl2O3","aTiO2",]
+hidden_pp = ["O2","qfm","mw","iw","qif","nno","hm","cco","aH2O","aO2","aMgO","aFeO","aAl2O3","aTiO2",]
 
 # load ss and em informations to be display in information tab
 # Read the JSON file

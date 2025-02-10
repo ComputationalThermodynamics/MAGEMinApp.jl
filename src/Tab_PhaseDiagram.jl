@@ -793,11 +793,12 @@ function Tab_PhaseDiagram(db_inf)
                                                     dbc_col([
                                                         dcc_dropdown(   id      = "other-dropdown",
                                                         options = [
-                                                            (label = "Mode",      value = "mode"),
-                                                            (label = "Oxide composition",  value = "oxComp"),
-                                                            (label = "Endmember mode",  value = "emMode"),
-                                                            (label = "Mg#",             value = "MgNum"),
-                                                            (label = "Calculator",      value = "calc"),
+                                                            (label = "Mode",                value = "mode"),
+                                                            (label = "Oxide composition",   value = "oxComp"),
+                                                            (label = "Endmember mode",      value = "emMode"),
+                                                            (label = "Mg#",                 value = "MgNum"),
+                                                            (label = "Calculator apfu",     value = "calc"),
+                                                            (label = "Calculator site fractions",       value = "calc_sf"),
                                                             ],
                                                         value       = "mode",
                                                         clearable   = false,
@@ -849,6 +850,47 @@ function Tab_PhaseDiagram(db_inf)
                                                     ]), 
                                                 ]),
                                             ], style = Dict("display" => "none"), id      = "calc-1-id"),
+
+
+                                            html_div([
+
+
+                                            dbc_row([
+                                                dbc_col([    
+                                                    dcc_textarea(
+                                                        id          ="display-sites-id",
+                                                        value       = "",
+                                                        readOnly    = true,
+                                                        disabled    = true,
+                                                        draggable   = false,
+                                                        style       = Dict("height" => "48px","resize"=> "none","textAlign" => "center","font-size" => "100%", "width"=> "100%",),
+                                                    ),
+                                                ]),
+                                            ]),
+                                                dbc_row([
+                                                    dbc_col([ 
+                                                        html_h1("Calculator (site fractions)", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                    ]),
+                                                    dbc_col([
+                                                        dbc_input(
+                                                            id      = "input-calc-sf-id",
+                                                            type    = "text", 
+                                                            value   = " ... "   ),
+                                                    ]), 
+                                                ]),
+                                                dbc_row([
+                                                    dbc_col([ 
+                                                        html_h1("Custom name", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                    ]),
+                                                    dbc_col([
+                                                        dbc_input(
+                                                            id      = "input-cust-sf-id",
+                                                            type    = "text", 
+                                                            value   = "none"   ),
+                                                    ]), 
+                                                ]),
+                                            ], style = Dict("display" => "none"), id      = "calc-1-sf-id"),
+
 
                                             html_div([
                                                 dbc_row([

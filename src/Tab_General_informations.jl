@@ -1,3 +1,12 @@
+SiteFractionCalculator = """
+**Site Fraction calculator (isopleths)**
+
+- When calculating isopleths using the 'Calculator (site fractions)' options for solution phases, the list of available mixing sites is displayed in a text box.
+- Complete description of site mixing formulation and related activity-composition models (solution phase) can be found on the THERMOCALC website: https://hpxeosandthermocalc.org/downloads/
+
+"""
+
+
 phase_deactivation = """
 **Phase deactivation**
 
@@ -128,6 +137,10 @@ function Tab_General_informations(db_inf)
                     html_div("‎ "),
                     dbc_card([
                         dcc_markdown(heatCapacity;          mathjax=true, style = Dict("font-size" => "130%")),
+                    ]),
+                    html_div("‎ "),
+                    dbc_card([
+                        dcc_markdown(SiteFractionCalculator;          mathjax=true, style = Dict("font-size" => "130%")),
                     ]),
                 ]),
 

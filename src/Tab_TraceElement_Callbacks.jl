@@ -357,7 +357,7 @@ function Tab_TraceElement_Callbacks(app)
                                                                                 smooth,     colorm,     reverseColorMap, set_white                                                   )
             elseif bid == "compute-display-te"
 
-                data_plot_te, layout_te =  update_diplayed_field_phaseDiagram_te(   xtitle,     ytitle,     "te",                  varBuilder, norm,
+                data_plot_te, layout_te =  update_displayed_field_phaseDiagram_te(   xtitle,     ytitle,     "te",                  varBuilder, norm,
                                                                                     Xrange,     Yrange,     fieldname,
                                                                                     dtb,        oxi,
                                                                                     sub,        refLvl,
@@ -368,7 +368,7 @@ function Tab_TraceElement_Callbacks(app)
 
             elseif bid == "fields-dropdown-zr"
 
-                data_plot_te, layout_te =  update_diplayed_field_phaseDiagram_te(   xtitle,     ytitle,     "zr",                  varBuilder, norm,
+                data_plot_te, layout_te =  update_displayed_field_phaseDiagram_te(   xtitle,     ytitle,     "zr",                  varBuilder, norm,
                                                                                     Xrange,     Yrange,     fieldname,
                                                                                     dtb,        oxi,
                                                                                     sub,        refLvl,

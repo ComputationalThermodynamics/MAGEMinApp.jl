@@ -655,7 +655,7 @@ end
     Function to restrict colormap range
 """
 function restrict_colorMapRange(    colorMap    ::String,
-                                    rangeColor  ::JSON3.Array{Int64, Base.CodeUnits{UInt8, String}, SubArray{UInt64, 1, Vector{UInt64}, Tuple{UnitRange{Int64}}, true}})
+                                    rangeColor  :: Union{JSON3.Array{Int64, Base.CodeUnits{UInt8, String}, SubArray{UInt64, 1, Vector{UInt64}, Tuple{UnitRange{Int64}}, true}},Vector{Int64}} )
 
     n       = rangeColor[2]-rangeColor[1]
     colorm  = Vector{Vector{Any}}(undef,10)
@@ -1477,6 +1477,7 @@ function get_isopleth_map(  mod         ::String,
                             of          ::String,
                             ot          ::String,
                             calc        ::String,
+                            calc_sf     ::String,
                             oxi         ::Vector{String},
                             Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
                             sub         ::Int64,
@@ -1540,6 +1541,33 @@ function get_isopleth_map(  mod         ::String,
                 for j = 1:n_el
                     if occursin(el[j], calc)
                         cmd2eval = replace(cmd2eval, el[j] => "Out_XY[$i].SS_vec[$id].Comp_apfu[$j]")
+                    end
+                end
+                command  = Meta.parse(cmd2eval)
+                field[i] = eval(command)
+
+            else
+                field[i] = 0.0
+            end
+        end  
+    elseif mod == "ss_calc_sf"
+
+        global i, j, id
+        for i=1:np
+            id       = findall(Out_XY[i].ph .== ss)
+
+            if ~isempty(id)  
+
+                id          = id[1]
+                sf        = Out_XY[i].SS_vec[id].siteFractionsNames
+                n_sf        = length(sf)
+
+                cmd2eval    = calc_sf
+                
+
+                for j = 1:n_sf
+                    if occursin(sf[j], calc_sf)
+                        cmd2eval = replace(cmd2eval, sf[j] => "Out_XY[$i].SS_vec[$id].siteFractions[$j]")
                     end
                 end
                 command  = Meta.parse(cmd2eval)
