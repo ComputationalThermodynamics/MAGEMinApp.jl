@@ -1416,7 +1416,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
     elseif (phase == "ss" && ot == "calc_sf")
         mod     = "ss_calc_sf"
         em      = ""
-        if cust != "none"
+        if cust_sf != "none"
             name    = ss*"_["*cust_sf*"]"
         else
             name    = ss*"_["*calc_sf*"]"
