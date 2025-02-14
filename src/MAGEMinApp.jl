@@ -53,7 +53,6 @@ include(joinpath(pkg_dir,"src","Boundaries/poly.jl"))
 include(joinpath(pkg_dir,"src","Boundaries/purge.jl"))
 include(joinpath(pkg_dir,"src","Boundaries/utils.jl"))
 
-const GUI_version = string(pkgversion(MAGEMinApp))
 
 # retrieve MAGEMin version number info
 data = Initialize_MAGEMin("mp", verbose=false);
@@ -61,7 +60,9 @@ data = use_predefined_bulk_rock(data, 0);
 out  = point_wise_minimization(4.0,400.0, data);
 Finalize_MAGEMin(data);
 
-const MAGEMin_version = out.MAGEMin_ver
+const GUI_version       = string(pkgversion(MAGEMinApp))
+const MAGEMin_version   = out.MAGEMin_ver
+const MAGEMin_C_version = string(pkgversion(MAGEMin_C))
 
 
 """
@@ -74,6 +75,11 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
     # Keep track of simulation progress - note that this should be added to a single global variable
     global CompProgress =   ComputationalProgress()
 
+    global GUI_link          = get_zenodo_link("ComputationalThermodynamics", "MAGEMinApp",  String(GUI_version)         )
+    global MAGEMin_C_link    = get_zenodo_link("ComputationalThermodynamics", "MAGEMin_C",   String(MAGEMin_C_version)   )
+    global MAGEMin_link      = get_zenodo_link("ComputationalThermodynamics", "MAGEMin",     String(split(MAGEMin_version)[1])     )
+    
+    
     message     = fetch_message()
     message2    = fetch_message2()
     cur_dir     = pwd()                 # directory from where you started the GUI

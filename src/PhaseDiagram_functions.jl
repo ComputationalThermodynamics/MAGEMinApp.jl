@@ -346,7 +346,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     db_in     = retrieve_solution_phase_information(dtb)
 
 
-    PD_infos[1]  = "Phase Diagram computed using MAGEMin $(MAGEMin_version) (MAGEMin_C v$(string(pkgversion(MAGEMin_C))); GUI $(GUI_version)) <br>"
+    PD_infos[1]  = "Phase Diagram computed using MAGEMin $(MAGEMin_version) (MAGEMin_C v$(MAGEMin_C_version); GUI $(GUI_version)) <br>"
     PD_infos[1] *= "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾<br>"
     PD_infos[1] *= "Number of points <br>"
     
@@ -1416,7 +1416,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
     elseif (phase == "ss" && ot == "calc_sf")
         mod     = "ss_calc_sf"
         em      = ""
-        if cust != "none"
+        if cust_sf != "none"
             name    = ss*"_["*cust_sf*"]"
         else
             name    = ss*"_["*calc_sf*"]"

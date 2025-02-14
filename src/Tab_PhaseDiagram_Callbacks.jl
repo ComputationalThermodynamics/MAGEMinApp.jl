@@ -395,11 +395,11 @@ function Tab_PhaseDiagram_Callbacks(app)
         
 
         prevent_initial_call = true,
-    ) do click_info, pie_unit, dtb, diagType, buffer, buffer_n1, buffer_n2, phase_selection, pure_phase_selection, solver
+    ) do click_info, pie_unit, dtb, diagType, buffer, buffer_n1, buffer_n2, ph_selection, pure_ph_selection, solver
 
-        phase_selection                 = remove_phases(string_vec_diff_ss(phase_selection,dtb),dtb)
-        pure_phase_selection            = remove_phases(string_vec_diff_ss(pure_phase_selection,dtb),dtb)
-
+        # phase_selection                 = remove_phases(string_vec_diff_ss(phase_selection,dtb),dtb)
+        # pure_phase_selection            = remove_phases(string_vec_diff_ss(pure_phase_selection,dtb),dtb)
+        phase_selection                 = remove_phases(string_vec_diff(ph_selection,pure_ph_selection,dtb),dtb)
         global point_id
 
         all_ox  = ["CO2","Cl","MnO","Na2O","CaO","K2O","FeO","MgO","Al2O3","SiO2","H2O","TiO2","O","S"];
@@ -471,9 +471,9 @@ function Tab_PhaseDiagram_Callbacks(app)
                 bufn    = ""
             end
             if !isnothing(phase_selection)
-                if !isnothing(pure_phase_selection)
-                    phase_selection = vcat(phase_selection,pure_phase_selection)
-                end
+                # if !isnothing(pure_phase_selection)
+                #     phase_selection = vcat(phase_selection,pure_phase_selection)
+                # end
                 rm_list = ", rm_list=$phase_selection"
             else
                 rm_list = ""
