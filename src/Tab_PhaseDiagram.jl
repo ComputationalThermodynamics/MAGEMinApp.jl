@@ -361,7 +361,32 @@ function Tab_PhaseDiagram(db_inf)
                                                 ]),
                                             ]),
 
-
+                                            dbc_row([   
+                                                dbc_button("Statement of code availability",id="button-code-avail",color="light"),
+                                                dbc_collapse(
+                                                    dbc_card(dbc_cardbody([
+                                                        dcc_textarea(
+                                                            id          = "code-avail",
+                                                            value       = "The version of the softwares used to produce the equilibrium thermodynamics calculations are available on Zenodo at, MAGEMin v$(split(MAGEMin_version)[1]): $MAGEMin_link, MAGEMin_C v$MAGEMin_C_version: $MAGEMin_C_link and MAGEMinApp v$GUI_version: $GUI_link.",
+                                                            readOnly    = true,
+                                                            disabled    = true,
+                                                            draggable   = false,
+                                                            style       = Dict("textAlign" => "left","font-size" => "100%", "width"=> "100%", "resize"=> "auto","height" => "100px")
+                                                        ),
+                                                        dcc_clipboard(
+                                                            target_id="code-avail",
+                                                            title="copy",
+                                                            style=Dict(
+                                                                "display" => "inline-block",
+                                                                "fontSize"=> 20,
+                                                                "verticalAlign"=> "top",
+                                                            ),
+                                                        ),
+                                                    ])),
+                                                    id="collapse-code-avail",
+                                                    is_open=false,
+                                                ),
+                                            ]),
                                             html_hr(),
 
                                             dbc_row([   
