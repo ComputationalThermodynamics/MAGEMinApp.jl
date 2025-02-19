@@ -8,6 +8,7 @@ mutable struct AMR_data
     ncells          :: Vector{Vector{Int64}}
     points          :: Vector{Vector{Float64}}
     npoints         :: Vector{Vector{Float64}}
+    npoints_ig      :: Vector{Tuple}
     hash_map        :: Dict{Vector{Float64}, Int}
     bnd_cells       :: Vector{Tuple}
     split_cell_list :: Vector{Int64}
@@ -34,6 +35,7 @@ function init_AMR(Xrange,Yrange,igs)
     points          = Vector{Vector{Float64}}(undef, 0)
     cells           = Vector{Vector{Int64}}(undef, 0)
     npoints         = Vector{Vector{Float64}}(undef, 0)
+    npoints_ig      = Vector{Tuple}(undef, 0)               #this create a tuple listing the nearby points for each new point to be used as initial guess
     ncells          = Vector{Vector{Int64}}(undef, 0)
     hash_map        = Dict{Vector{Float64}, Int}()
     bnd_cells       = Vector{Tuple}(undef, 0)
@@ -56,6 +58,7 @@ function init_AMR(Xrange,Yrange,igs)
                         ncells,
                         points,
                         npoints,
+                        npoints_ig,
                         hash_map,
                         bnd_cells,
                         split_cell_list,
@@ -131,6 +134,7 @@ end
 """
 function perform_AMR(data)
     npoints         = Vector{Vector{Float64}}(undef, 0)
+    npoints_ig      = Vector{Tuple}(undef, 0)
     ncells          = Vector{Vector{Int64}}(undef, 0)
 
     tp              = length(data.points)
@@ -142,6 +146,7 @@ function perform_AMR(data)
             p = data.hash_map[tmp]
         else
             push!(npoints, tmp)
+            push!(npoints_ig, (data.cells[data.split_cell_list[i]][1], data.cells[data.split_cell_list[i]][2], data.cells[data.split_cell_list[i]][3], data.cells[data.split_cell_list[i]][4]))
             tp += 1
             data.hash_map[tmp] = tp
             p  = tp
@@ -153,6 +158,7 @@ function perform_AMR(data)
             p = data.hash_map[tmp]
         else
             push!(npoints, tmp)
+            push!(npoints_ig, (data.cells[data.split_cell_list[i]][1], data.cells[data.split_cell_list[i]][2]))
             tp += 1
             data.hash_map[tmp] = tp
             p  = tp
@@ -164,6 +170,8 @@ function perform_AMR(data)
             p = data.hash_map[tmp]
         else
             push!(npoints, tmp)
+            push!(npoints_ig, (data.cells[data.split_cell_list[i]][2], data.cells[data.split_cell_list[i]][3]))
+            
             tp += 1
             data.hash_map[tmp] = tp
             p  = tp
@@ -175,6 +183,8 @@ function perform_AMR(data)
             p = data.hash_map[tmp]
         else
             push!(npoints, tmp)
+            push!(npoints_ig, (data.cells[data.split_cell_list[i]][3], data.cells[data.split_cell_list[i]][4]))
+            
             tp += 1
             data.hash_map[tmp] = tp
             p  = tp
@@ -186,6 +196,8 @@ function perform_AMR(data)
             p = data.hash_map[tmp]
         else
             push!(npoints, tmp)
+            push!(npoints_ig, (data.cells[data.split_cell_list[i]][4], data.cells[data.split_cell_list[i]][1]))
+            
             tp += 1
             data.hash_map[tmp] = tp
             p  = tp
@@ -221,7 +233,10 @@ function perform_AMR(data)
 
     data.ncells     = ncells
     data.npoints    = npoints
+    data.npoints_ig = npoints_ig
 
+    # println("npoints $(data.npoints)")
+    # println("npoints_ig $(data.npoints_ig)")
     return data
 end
 
