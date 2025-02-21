@@ -697,7 +697,7 @@ end
 """
 function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                     Xrange,     Yrange,     fieldname,  customTitle,
-                                    dtb,        diagType,   verbose,    scp,    solver,     phase_selection,
+                                    dtb,        diagType,   verbose,    scp,    solver,    boost,  phase_selection,
                                     fixT,       fixP,
                                     sub,        refLvl,
                                     watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  PTpath,
@@ -755,7 +755,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                                         phase_selection, fixT, fixP,
                                                         oxi, bulk_L, bulk_R,
                                                         bufferType, bufferN1, bufferN2,
-                                                        scp, refType,
+                                                        scp, boost, refType,
                                                         pChip_wat, pChip_T    )
 
         
@@ -774,7 +774,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                                                                     phase_selection, fixT, fixP,
                                                                                     oxi, bulk_L, bulk_R,
                                                                                     bufferType, bufferN1, bufferN2,
-                                                                                    scp, refType,
+                                                                                    scp, boost, refType,
                                                                                     pChip_wat, pChip_T ) # recompute points that have not been computed before
                                                                      
             println("Computed $(length(data.npoints)) new points in $t seconds")
@@ -907,7 +907,7 @@ end
 function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                 Xrange,     Yrange,     fieldname,  customTitle,
                                 dtb,        diagType,   watsat,  watsat_val,   
-                                verbose,    scp,        solver, phase_selection,
+                                verbose,    scp,        solver, boost, phase_selection,
                                 fixT,       fixP,
                                 sub,        refLvl,
                                 cpx,        limOpx,     limOpxVal,  PTpath,
@@ -936,7 +936,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                                                             phase_selection, fixT, fixP,
                                                                             oxi, bulk_L, bulk_R,
                                                                             bufferType, bufferN1, bufferN2, 
-                                                                            scp, refType,
+                                                                            scp, boost, refType,
                                                                             pChip_wat,  pChip_T) # recompute points that have not been computed before
 
     println("Computed $(length(data.npoints)) new points in $(round(t, digits=3)) seconds")

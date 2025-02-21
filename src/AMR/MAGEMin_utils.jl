@@ -233,6 +233,7 @@ function refine_MAGEMin(data,
                         bufferN1        :: Float64,
                         bufferN2        :: Float64,
                         scp             :: Int64,
+                        boost           :: Bool,
                         refType         :: String,
                         pChip_wat       , 
                         pChip_T         )
@@ -253,29 +254,38 @@ function refine_MAGEMin(data,
     end
 
     if n_new_points > 0
-       
+        Tvec = zeros(Float64,n_new_points);
+        Pvec = zeros(Float64,n_new_points);
+        Xvec = Vector{Vector{Float64}}(undef,n_new_points);
+        Bvec = zeros(Float64,n_new_points);
+        if !isempty(data.split_cell_list) && boost == true
+            Gvec = Vector{Vector{LibMAGEMin.mSS_data}}(undef,n_new_points);
+        else
+            Gvec = nothing;
+        end
         if diagType == "tx"
-            Tvec = zeros(Float64,n_new_points);
-            Pvec = zeros(Float64,n_new_points);
-            Xvec = Vector{Vector{Float64}}(undef,n_new_points);
-            Bvec = zeros(Float64,n_new_points);
+
             for i = 1:n_new_points
                 Pvec[i] = fixP;
                 Tvec[i] = npoints[i][2];
                 Xvec[i] = bulk_L*(1.0 - npoints[i][1]) + bulk_R*npoints[i][1];
                 Bvec[i] = bufferN1*(1.0 - npoints[i][1]) + bufferN2*npoints[i][1];
+                if !isempty(data.split_cell_list) && boost == true
+                    tmp = [Out_XY[data.npoints_ig[i][j]].mSS_vec for j=1:length(data.npoints_ig[i])]
+                    Gvec[i] = vcat(tmp...)
+                end
             end
         elseif diagType == "px"
-            Tvec = zeros(Float64,n_new_points);
-            Pvec = zeros(Float64,n_new_points);
-            Xvec = Vector{Vector{Float64}}(undef,n_new_points);
-            Bvec = zeros(Float64,n_new_points);
+
             for i = 1:n_new_points
                 Tvec[i] = fixT;
                 Pvec[i] = npoints[i][2];
                 Xvec[i] = bulk_L*(1.0 - npoints[i][1]) + bulk_R*npoints[i][1];
                 Bvec[i] = bufferN1*(1.0 - npoints[i][1]) + bufferN2*npoints[i][1];
-
+                if !isempty(data.split_cell_list) && boost == true
+                    tmp = [Out_XY[data.npoints_ig[i][j]].mSS_vec for j=1:length(data.npoints_ig[i])]
+                    Gvec[i] = vcat(tmp...)
+                end
             end
         elseif diagType == "pt"
 
@@ -284,14 +294,15 @@ function refine_MAGEMin(data,
                 id_dry      = findall(oxi .!= "H2O")
             end
 
-            Tvec = zeros(Float64,n_new_points);
-            Pvec = zeros(Float64,n_new_points);
-            Xvec = Vector{Vector{Float64}}(undef,n_new_points);
-            Bvec = zeros(Float64,n_new_points);
             for i = 1:n_new_points
                 Tvec[i] = npoints[i][1];
                 Pvec[i] = npoints[i][2];
                 Bvec[i] = bufferN1;
+                
+                if !isempty(data.split_cell_list) && boost == true
+                    tmp = [Out_XY[data.npoints_ig[i][j]].mSS_vec for j=1:length(data.npoints_ig[i])]
+                    Gvec[i] = vcat(tmp...)
+                end
 
                 # here we check if the water need to be saturated at sub-solidus
                 if ~isnothing(pChip_wat)
@@ -326,19 +337,21 @@ function refine_MAGEMin(data,
             pChipInterp_P = Interpolator(x, Pres)
             pChipInterp_T = Interpolator(x, Temp)
 
-            Tvec = zeros(Float64,n_new_points);
-            Pvec = zeros(Float64,n_new_points);
-            Xvec = Vector{Vector{Float64}}(undef,n_new_points);
-            Bvec = zeros(Float64,n_new_points);
             for i = 1:n_new_points
                 Tvec[i] = pChipInterp_T(npoints[i][2]); 
                 Pvec[i] = pChipInterp_P(npoints[i][2]);
                 Xvec[i] = bulk_L*(  1.0 - npoints[i][1]) + bulk_R*npoints[i][1];
                 Bvec[i] = bufferN1*(1.0 - npoints[i][1]) + bufferN2*npoints[i][1];
+                if !isempty(data.split_cell_list) && boost == true
+                    tmp = [Out_XY[data.npoints_ig[i][j]].mSS_vec for j=1:length(data.npoints_ig[i])]
+                    Gvec[i] = vcat(tmp...)
+                end
             end
         end
 
-        Out_XY_new  =   multi_point_minimization(Pvec, Tvec, MAGEMin_data, X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol", scp=scp, rm_list=phase_selection, name_solvus=true, callback_fn = update_progress); 
+        Out_XY_new  =   multi_point_minimization(   Pvec, Tvec, MAGEMin_data;
+                                                    X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol", G=Gvec, scp=scp, 
+                                                    rm_list=phase_selection, name_solvus=true, iguess=boost, callback_fn = update_progress); 
     else
         println("There is no new point to compute...")
     end

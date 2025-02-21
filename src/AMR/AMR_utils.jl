@@ -235,8 +235,6 @@ function perform_AMR(data)
     data.npoints    = npoints
     data.npoints_ig = npoints_ig
 
-    # println("npoints $(data.npoints)")
-    # println("npoints_ig $(data.npoints_ig)")
     return data
 end
 

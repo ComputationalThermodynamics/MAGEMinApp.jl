@@ -514,6 +514,21 @@ function Tab_Simulation(db_inf)
                                                 value   = 2   ),
                                         ]),
                                     ]),
+                                    dbc_row([
+                                        dbc_col([ 
+                                            html_h1("Refinement boost mode", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                        ]),
+                                        dbc_col([ 
+                                            dcc_dropdown(   id      = "boost-mode-dropdown",
+                                            options = [
+                                                (label = "true",         value = true),
+                                                (label = "false",        value = false),
+                                            ],
+                                            value       = false ,
+                                            clearable   =  false,
+                                            multi       =  false),
+                                        ]),
+                                    ]),
                                     html_hr(),
                                     #buffer
                                     dbc_row([
