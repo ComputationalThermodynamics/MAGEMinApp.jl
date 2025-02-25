@@ -470,17 +470,16 @@ function Tab_Simulation(db_inf)
                                                 type    = "number", 
                                                 min     = 2, 
                                                 max     = 9, 
-                                                value   = 3   ),
+                                                value   = 4   ),
                                         ], width=3),
                                         dbc_col([ 
                                             dcc_textarea(
                                                 id          ="grid-subdivision",
-                                                value       = "8 × 8 grid",
+                                                value       = "16 × 16 grid",
                                                 readOnly    = true,
                                                 disabled    = true,
                                                 draggable   = false,
                                                 style       = Dict("height" => "26px","resize"=> "none","textAlign" => "center","font-size" => "100%", "width"=> "100%",),
-                                                # style       = Dict("textAlign" => "center","font-size" => "100%", "width"=> "100%", "resize"=> "none")
                                             ),
                                         ], width=3),
 
@@ -516,7 +515,7 @@ function Tab_Simulation(db_inf)
                                     ]),
                                     dbc_row([
                                         dbc_col([ 
-                                            html_h1("Refinement boost mode", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            html_h1("Boost mode", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
                                         ]),
                                         dbc_col([ 
                                             dcc_dropdown(   id      = "boost-mode-dropdown",
@@ -524,7 +523,7 @@ function Tab_Simulation(db_inf)
                                                 (label = "true",         value = true),
                                                 (label = "false",        value = false),
                                             ],
-                                            value       = false ,
+                                            value       =  false,
                                             clearable   =  false,
                                             multi       =  false),
                                         ]),

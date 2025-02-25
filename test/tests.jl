@@ -79,7 +79,7 @@ for i = 1:81
     @test Out_XY[i].G_system ≈ results[i] rtol=1e-4
 end
 
-for i = 1:Threads.nthreads()
+for i = 1:Threads.maxthreadid()
     finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i])
 end
 

@@ -155,7 +155,7 @@ function perform_AMR(data)
     e_coor = [1.0 1.0; 2.0 1.0; 2.0 0.0; 2.0 -1.0; 1.0 -1.0; 1.0 0.0];          e_coor = vcat(e_coor,e_coor .* -1.0)
     s_coor = [1.0 -1.0; 1.0 -2.0; 0.0 -2.0; -1.0 -2.0; -1.0 -1.0; 0.0 -1.0];    s_coor = vcat(s_coor,s_coor .* -1.0)
     w_coor = [-1.0 -1.0; -2.0 -1.0; -2.0 0.0; -2.0 1.0; -1.0 1.0; -1.0 0.0];    w_coor = vcat(w_coor,w_coor .* -1.0)
-
+    p_coor = [0.0 2.0; 2.0 0.0; 0.0 -2.0; -2.0 0.0];                            
     for i=1:ns
         delta   = (data.points[data.cells[data.split_cell_list[i]][3]] .- data.points[data.cells[data.split_cell_list[i]][1]]) ./ 2.0
 
@@ -164,7 +164,15 @@ function perform_AMR(data)
             p = data.hash_map[tmp]
         else
             push!(npoints, tmp)
-            push!(npoints_ig, (data.cells[data.split_cell_list[i]][1], data.cells[data.split_cell_list[i]][2], data.cells[data.split_cell_list[i]][3], data.cells[data.split_cell_list[i]][4]))
+            list =  (data.cells[data.split_cell_list[i]][1], data.cells[data.split_cell_list[i]][2], data.cells[data.split_cell_list[i]][3], data.cells[data.split_cell_list[i]][4])
+            for ii = 1:size(p_coor,1)
+                tmp2 = tmp .+ (p_coor[ii,:] .* delta)
+                if haskey(hash_map0, tmp2)
+                    p2      = hash_map0[tmp2]
+                    list    = (list..., p2)
+                end
+            end
+            push!(npoints_ig, list)
             tp += 1
             data.hash_map[tmp] = tp
             p  = tp

@@ -780,7 +780,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
             println("Computed $(length(data.npoints)) new points in $t seconds")
         end
 
-        for i = 1:Threads.nthreads()
+        for i = 1:Threads.maxthreadid()
             finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i])
         end
 
@@ -942,7 +942,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
     println("Computed $(length(data.npoints)) new points in $(round(t, digits=3)) seconds")
     addedRefinementLvl += 1;
 
-    for i = 1:Threads.nthreads()
+    for i = 1:Threads.maxthreadid()
         finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i])
     end
 

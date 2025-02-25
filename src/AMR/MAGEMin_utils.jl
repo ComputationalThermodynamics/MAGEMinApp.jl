@@ -249,7 +249,7 @@ function refine_MAGEMin(data,
         npoints         = data.npoints
     end
 
-    for i in 1:Threads.nthreads()
+    for i in 1:Threads.maxthreadid()
         MAGEMin_data.gv[i].buffer = pointer(bufferType)
     end
 

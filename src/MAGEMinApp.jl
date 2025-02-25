@@ -227,7 +227,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
 
         # determine how many cores you use and how many are available
         num_available_cores = Sys.CPU_THREADS
-        nthreads = Threads.nthreads();
+        nthreads = Threads.maxthreadid();
 
         str = "id=$(session_id);   MAGEMinApp GUI v=$(GUI_version);   using $nthreads/$num_available_cores threads"
         return String("$(session_id)"), str
