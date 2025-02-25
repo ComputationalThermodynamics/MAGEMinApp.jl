@@ -729,6 +729,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         State("buffer-dropdown",        "value"),           # none,qfm,mw,qif,cco,hm,nno
         State("solver-dropdown",        "value"),           # pge,lp
+        State("boost-mode-dropdown",    "value"),           # false,true
         State("verbose-dropdown",       "value"),           # none,light,full -> -1,0,1
         State("scp-dropdown",           "value"),           # none,light,full -> -1,0,1
 
@@ -783,7 +784,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             tmin,       tmax,       pmin,       pmax,
             fixT,       fixP,
             sub,        refType,    refLvl,
-            bufferType, solver,     verbose,    scp,
+            bufferType, solver,     boost,      verbose,    scp,
             bulk1,      bulk2,      sys_unit,   
             bufferN1,   bufferN2,
             tepm,       kds_mod,    zrsat_mod,  bulkte1,    bulkte2, eodc_type, eodc_ratio, 
@@ -836,7 +837,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             data_plot, layout, npoints, meant, txt_list  =  compute_new_phaseDiagram(   xtitle,     ytitle,     lbl,
                                                                                         Xrange,     Yrange,     fieldname,  customTitle,
-                                                                                        dtb,        diagType,   verbose,    scp,        solver,     phase_selection,
+                                                                                        dtb,        diagType,   verbose,    scp,        solver,     boost, phase_selection,
                                                                                         fixT,       fixP,
                                                                                         sub,        refLvl,
                                                                                         watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  PTpath,
@@ -886,7 +887,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             data_plot, layout, npoints, meant, txt_list   =  refine_phaseDiagram(   xtitle,     ytitle,     lbl, 
                                                                                     Xrange,     Yrange,     fieldname,  customTitle,
-                                                                                    dtb,        diagType,   watsat,     watsat_val, verbose,    scp,    solver, phase_selection,
+                                                                                    dtb,        diagType,   watsat,     watsat_val, verbose,    scp,    solver,  boost, phase_selection,
                                                                                     fixT,       fixP,
                                                                                     sub,        refLvl,
                                                                                     cpx,        limOpx,     limOpxVal,  PTpath,

@@ -5,15 +5,18 @@ function get_zenodo_link(   organization    :: String,
                             package_name    :: String, 
                             version         :: String )
 
-    query       = "https://zenodo.org/api/records/?q=$organization+$package_name+$version"
-    response    = HTTP.get(query)
     link        = "(link will be available soon)"
-
-    if response.status == 200
-        records = JSON3.read(response.body)
-        if length(records["hits"]["hits"]) > 0 && occursin(package_name,records["hits"]["hits"][1]["metadata"]["title"])
-            link = records["hits"]["hits"][1]["links"]["self_html"]
+    try
+        query       = "https://zenodo.org/api/records/?q=$organization+$package_name+$version"
+        response    = HTTP.get(query)
+        if response.status == 200
+            records = JSON3.read(response.body)
+            if length(records["hits"]["hits"]) > 0 && occursin(package_name,records["hits"]["hits"][1]["metadata"]["title"])
+                link = records["hits"]["hits"][1]["links"]["self_html"]
+            end
         end
+    catch err
+        link = "(offline, cannot fetch link)"
     end
     return link
 end

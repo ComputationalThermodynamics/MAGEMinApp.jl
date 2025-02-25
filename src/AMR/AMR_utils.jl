@@ -4,10 +4,12 @@ export init_AMR, select_cells_to_split_and_keep, perform_AMR, retrieve_ncells_c
     AMR_data
 """
 mutable struct AMR_data
+    refinement      :: Int64
     cells           :: Vector{Vector{Int64}}
     ncells          :: Vector{Vector{Int64}}
     points          :: Vector{Vector{Float64}}
     npoints         :: Vector{Vector{Float64}}
+    npoints_ig      :: Vector{Tuple}
     hash_map        :: Dict{Vector{Float64}, Int}
     bnd_cells       :: Vector{Tuple}
     split_cell_list :: Vector{Int64}
@@ -34,6 +36,7 @@ function init_AMR(Xrange,Yrange,igs)
     points          = Vector{Vector{Float64}}(undef, 0)
     cells           = Vector{Vector{Int64}}(undef, 0)
     npoints         = Vector{Vector{Float64}}(undef, 0)
+    npoints_ig      = Vector{Tuple}(undef, 0)               #this create a tuple listing the nearby points for each new point to be used as initial guess
     ncells          = Vector{Vector{Int64}}(undef, 0)
     hash_map        = Dict{Vector{Float64}, Int}()
     bnd_cells       = Vector{Tuple}(undef, 0)
@@ -41,9 +44,15 @@ function init_AMR(Xrange,Yrange,igs)
     keep_cell_list  = Vector{Int64}(undef, 0)
 
     # initialize rectinilinear grid
+    p_id = 1
     for j in 1:np_per_dim
         for i in 1:np_per_dim
-            push!(points, [(j-1)*(Xrange[2]-Xrange[1])/(np_per_dim-1) + Xrange[1], (i-1)*(Yrange[2]-Yrange[1])/(np_per_dim-1) + Yrange[1]])
+            point = [(j-1)*(Xrange[2]-Xrange[1])/(np_per_dim-1) + Xrange[1], (i-1)*(Yrange[2]-Yrange[1])/(np_per_dim-1) + Yrange[1]]
+            push!(points, point)
+
+            # adding computed point to hash map, this part is important to check for existing points
+            hash_map[point] = p_id
+            p_id += 1
         end
     end
     for j in 1:nc_per_dim
@@ -52,10 +61,12 @@ function init_AMR(Xrange,Yrange,igs)
         end
     end
 
-    data = AMR_data(    cells,
+    data = AMR_data(    0,
+                        cells,
                         ncells,
                         points,
                         npoints,
+                        npoints_ig,
                         hash_map,
                         bnd_cells,
                         split_cell_list,
@@ -76,6 +87,7 @@ end
     select_cells_to_split_and_keep(data)
 """
 function select_cells_to_split_and_keep(data; bid = "")
+    data.refinement        += 1
     kp                      = length(data.keep_cell_list)
     data.split_cell_list    = []
     data.keep_cell_list     = []
@@ -131,61 +143,124 @@ end
 """
 function perform_AMR(data)
     npoints         = Vector{Vector{Float64}}(undef, 0)
+    npoints_ig      = Vector{Tuple}(undef, 0)
     ncells          = Vector{Vector{Int64}}(undef, 0)
+
+    hash_map0       = copy(data.hash_map)
 
     tp              = length(data.points)
     ns              = length(data.split_cell_list)
+              
+    n_coor = [-1.0 1.0; -1.0 2.0; 0.0 2.0; 1.0 2.0; 1.0 1.0; 0.0 1.0];          n_coor = vcat(n_coor,n_coor .* -1.0)
+    e_coor = [1.0 1.0; 2.0 1.0; 2.0 0.0; 2.0 -1.0; 1.0 -1.0; 1.0 0.0];          e_coor = vcat(e_coor,e_coor .* -1.0)
+    s_coor = [1.0 -1.0; 1.0 -2.0; 0.0 -2.0; -1.0 -2.0; -1.0 -1.0; 0.0 -1.0];    s_coor = vcat(s_coor,s_coor .* -1.0)
+    w_coor = [-1.0 -1.0; -2.0 -1.0; -2.0 0.0; -2.0 1.0; -1.0 1.0; -1.0 0.0];    w_coor = vcat(w_coor,w_coor .* -1.0)
+    p_coor = [0.0 2.0; 2.0 0.0; 0.0 -2.0; -2.0 0.0];                            
     for i=1:ns
+        delta   = (data.points[data.cells[data.split_cell_list[i]][3]] .- data.points[data.cells[data.split_cell_list[i]][1]]) ./ 2.0
 
         tmp     = data.points[data.cells[data.split_cell_list[i]][1]]/2.0 + data.points[data.cells[data.split_cell_list[i]][3]]/2.0
         if haskey(data.hash_map, tmp)
             p = data.hash_map[tmp]
         else
             push!(npoints, tmp)
+            list =  (data.cells[data.split_cell_list[i]][1], data.cells[data.split_cell_list[i]][2], data.cells[data.split_cell_list[i]][3], data.cells[data.split_cell_list[i]][4])
+            for ii = 1:size(p_coor,1)
+                tmp2 = tmp .+ (p_coor[ii,:] .* delta)
+                if haskey(hash_map0, tmp2)
+                    p2      = hash_map0[tmp2]
+                    list    = (list..., p2)
+                end
+            end
+            push!(npoints_ig, list)
             tp += 1
             data.hash_map[tmp] = tp
             p  = tp
         end
         c       = p;
 
+        #west middle point
         tmp = data.points[data.cells[data.split_cell_list[i]][1]]/2.0 + data.points[data.cells[data.split_cell_list[i]][2]]/2.0
         if haskey(data.hash_map, tmp)
             p = data.hash_map[tmp]
         else
             push!(npoints, tmp)
+            list =  (data.cells[data.split_cell_list[i]][1], data.cells[data.split_cell_list[i]][2])
+            for ii = 1:size(w_coor,1)
+                tmp2 = tmp .+ (w_coor[ii,:] .* delta)
+                if haskey(hash_map0, tmp2)
+                    p2      = hash_map0[tmp2]
+                    list    = (list..., p2)
+                end
+            end
+            push!(npoints_ig, list)
+
             tp += 1
             data.hash_map[tmp] = tp
             p  = tp
         end
         w       = p;
 
+        # North middle point
         tmp = data.points[data.cells[data.split_cell_list[i]][2]]/2.0 + data.points[data.cells[data.split_cell_list[i]][3]]/2.0
         if haskey(data.hash_map, tmp)
             p = data.hash_map[tmp]
         else
             push!(npoints, tmp)
+            list =  (data.cells[data.split_cell_list[i]][2], data.cells[data.split_cell_list[i]][3])
+            for ii = 1:size(n_coor,1)
+                tmp2 = tmp .+ (n_coor[ii,:] .* delta)
+                if haskey(hash_map0, tmp2)
+                    p2      = hash_map0[tmp2]
+                    list    = (list..., p2)
+                end
+            end
+            push!(npoints_ig, list)
+            
             tp += 1
             data.hash_map[tmp] = tp
             p  = tp
         end
         n       = p;
 
+        #east middle point
         tmp = data.points[data.cells[data.split_cell_list[i]][3]]/2.0 + data.points[data.cells[data.split_cell_list[i]][4]]/2.0
         if haskey(data.hash_map, tmp)
             p = data.hash_map[tmp]
         else
             push!(npoints, tmp)
+            list = (data.cells[data.split_cell_list[i]][3], data.cells[data.split_cell_list[i]][4])
+            for ii = 1:size(e_coor,1)
+                tmp2 = tmp .+ (e_coor[ii,:] .* delta)
+                if haskey(hash_map0, tmp2)
+                    p2      = hash_map0[tmp2]
+                    list    = (list..., p2)
+                end
+            end
+            push!(npoints_ig, list)
+            
             tp += 1
             data.hash_map[tmp] = tp
             p  = tp
         end
         e       = p;
 
+        #south middle point
         tmp = data.points[data.cells[data.split_cell_list[i]][4]]/2.0 + data.points[data.cells[data.split_cell_list[i]][1]]/2.0
         if haskey(data.hash_map, tmp)
             p = data.hash_map[tmp]
         else
             push!(npoints, tmp)
+            list = (data.cells[data.split_cell_list[i]][4], data.cells[data.split_cell_list[i]][1])
+            for ii = 1:size(s_coor,1)
+                tmp2 = tmp .+ (s_coor[ii,:] .* delta)
+                if haskey(hash_map0, tmp2)
+                    p2      = hash_map0[tmp2]
+                    list    = (list..., p2)
+                end
+            end
+            push!(npoints_ig, list)
+            
             tp += 1
             data.hash_map[tmp] = tp
             p  = tp
@@ -221,6 +296,7 @@ function perform_AMR(data)
 
     data.ncells     = ncells
     data.npoints    = npoints
+    data.npoints_ig = npoints_ig
 
     return data
 end
