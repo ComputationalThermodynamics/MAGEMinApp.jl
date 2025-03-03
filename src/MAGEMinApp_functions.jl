@@ -1768,6 +1768,10 @@ function get_oxide_list(dbin::String)
         MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO";"Na2O"]; 
     elseif dbin == "mpe"
         MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "MnO"; "H2O"; "CO2"; "S"];
+    elseif dbin == "sb11"
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "FeO"; "MgO"; "Na2O"]; 
+    elseif dbin == "sb21"
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "FeO"; "MgO"; "Na2O"]; 
     else
         print("Database not implemented...\n")
     end
