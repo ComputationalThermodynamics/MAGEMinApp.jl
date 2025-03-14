@@ -1,5 +1,21 @@
 function Tab_PhaseDiagram_Callbacks(app)
 
+    """
+        Callback to compute and display TAS diagram
+    """
+    callback!(
+        app,
+        Output("code-avail",            "value"),
+        Input("retrieve-statement",      "n_clicks"),
+
+        prevent_initial_call = true,
+
+        ) do    n_click
+
+        return retrieve_statement()
+
+    end
+
 
     """
         Callback to compute and display TAS diagram

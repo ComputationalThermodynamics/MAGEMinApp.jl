@@ -1,25 +1,4 @@
-"""
-    Function to recover Zenodo link for MAGEMin packages
-"""
-function get_zenodo_link(   organization    :: String,
-                            package_name    :: String, 
-                            version         :: String )
 
-    link        = "(link will be available soon)"
-    try
-        query       = "https://zenodo.org/api/records/?q=$organization+$package_name+$version"
-        response    = HTTP.get(query)
-        if response.status == 200
-            records = JSON3.read(response.body)
-            if length(records["hits"]["hits"]) > 0 && occursin(package_name,records["hits"]["hits"][1]["metadata"]["title"])
-                link = records["hits"]["hits"][1]["links"]["self_html"]
-            end
-        end
-    catch err
-        link = "(offline, cannot fetch link)"
-    end
-    return link
-end
 
 
 function set_min_to_white(colormap; reverseColorMap = false)

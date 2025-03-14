@@ -1,4 +1,4 @@
-function Tab_PTXpaths(db_inf)
+function Tab_PTXpaths()
     html_div([
         html_div("‎ "),
         dbc_row([ 
@@ -29,38 +29,7 @@ function Tab_PTXpaths(db_inf)
 
                                     ]),
 
-                                    # dbc_row([  
-                                    #     dbc_col([ 
-                                    #         html_h1("Solution phase selection", style = Dict("textAlign" => "center","font-size" => "120%")),
-                                    #     ]),
-
-                                    #     dbc_col([ 
-                                    #         dbc_button( "", id="button-phase-selection-PTX", color="light", className="me-2", n_clicks=0,
-                                    #                             style       = Dict( "textAlign"     => "center",
-                                    #                                                 "font-size"     => "100%",
-                                    #                                                 "border"        =>"1px grey solid")), 
-                                    #         dbc_collapse(
-                                    #             dbc_card(dbc_cardbody([
-                
-                                    #                     dbc_col([ 
-                
-                                    #                         dcc_checklist(
-                                    #                             id      = "phase-selection-PTX",
-                                    #                             options = [Dict(    "label"     => " "*i,
-                                    #                                                 "value"     => i )
-                                    #                                             for i in db_inf.ss_name ],
-                                    #                             value = db_inf.ss_name,
-                                    #                             # inline = true,
-                                    #                         ),
-                    
-                                    #                     ]),
-                
-                                    #                 ])),
-                                    #                 id="collapse-phase-selection-PTX",
-                                    #                 is_open=false,
-                                    #         ),
-                                    #     ]),
-                                    # ]),
+                                    
                                     dbc_row([  
                                         dbc_col([ 
                                             html_h1("Phase selection", style = Dict("textAlign" => "center","font-size" => "120%")),
@@ -88,8 +57,8 @@ function Tab_PTXpaths(db_inf)
                                                                     id      = "phase-selection-PTX",
                                                                     options = [Dict(    "label"     => " "*i,
                                                                                         "value"     => i )
-                                                                                    for i in db_inf.ss_name ],
-                                                                    value = db_inf.ss_name,
+                                                                                    for i in AppData.db_inf.ss_name ],
+                                                                    value = AppData.db_inf.ss_name,
                                                                     # inline = true,
                                                                 ),
                         

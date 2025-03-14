@@ -708,7 +708,24 @@ dict_em     = JSON.parsefile(file_path)
 file_path   = joinpath(pkg_dir,"src","./tools/ss_name.json")
 dict_ss     = JSON.parsefile(file_path)
 
+db_inf      = retrieve_solution_phase_information("ig");
 
+
+# retrieve MAGEMin version number info
+data = Initialize_MAGEMin("mp", verbose=false);
+data = use_predefined_bulk_rock(data, 0);
+out  = point_wise_minimization(4.0,400.0, data);
+Finalize_MAGEMin(data);
+
+const GUI_version       = string(pkgversion(MAGEMinApp))
+const MAGEMin_version   = out.MAGEMin_ver
+const MAGEMin_C_version = string(pkgversion(MAGEMin_C))
+
+# Keep track of simulation progress - note that this should be added to a single global variable
+global CompProgress      =  ComputationalProgress()
+
+
+HTTP.Connections.closeall()
 AppData = ( contribs            = contribs,
             db                  = db,
             dba                 = dba,
@@ -720,4 +737,8 @@ AppData = ( contribs            = contribs,
             hidden_pp           = hidden_pp,
             dict_em             = dict_em,  
             dict_ss             = dict_ss,
+            db_inf              = db_inf,
+            # CompProgress        = CompProgress,
+            # message             = message,
+            # message2            = message2,
             )   

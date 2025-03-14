@@ -1,4 +1,4 @@
-function Tab_IsentropicPaths(db_inf)
+function Tab_IsentropicPaths()
     html_div([
         html_div("‎ "),
         dbc_row([ 
@@ -55,8 +55,8 @@ function Tab_IsentropicPaths(db_inf)
                                                                     id      = "phase-selection-isoS",
                                                                     options = [Dict(    "label"     => " "*i,
                                                                                         "value"     => i )
-                                                                                    for i in db_inf.ss_name ],
-                                                                    value = db_inf.ss_name,
+                                                                                    for i in AppData.db_inf.ss_name ],
+                                                                    value = AppData.db_inf.ss_name,
                                                                     # inline = true,
                                                                 ),
                         

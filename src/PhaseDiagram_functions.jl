@@ -15,6 +15,7 @@ mutable struct db_infos
 end
 
 
+
 mutable struct isopleth_data
     n_iso   :: Int64
     n_iso_max   :: Int64
@@ -27,6 +28,39 @@ mutable struct isopleth_data
 
     label   :: Vector{String}
     value   :: Vector{Int64}
+end
+
+
+"""
+    Function to recover Zenodo link for MAGEMin packages
+"""
+function get_zenodo_link(   organization    :: String,
+                            package_name    :: String, 
+                            version         :: String )
+
+    link        = "(link will be available soon)"
+    try
+        query       = "https://zenodo.org/api/records/?q=$organization+$package_name+$version"
+        response    = HTTP.get(query)
+        if response.status == 200
+            records = JSON3.read(response.body)
+            if length(records["hits"]["hits"]) > 0 && occursin(package_name,records["hits"]["hits"][1]["metadata"]["title"])
+                link = records["hits"]["hits"][1]["links"]["self_html"]
+            end
+        end
+    catch err
+        link = "(offline, cannot fetch link)"
+    end
+    return link
+end
+
+function retrieve_statement()
+    GUI_link          = get_zenodo_link("ComputationalThermodynamics", "MAGEMinApp",  String(GUI_version)         )
+    MAGEMin_C_link    = get_zenodo_link("ComputationalThermodynamics", "MAGEMin_C",   String(MAGEMin_C_version)   )
+    MAGEMin_link      = get_zenodo_link("ComputationalThermodynamics", "MAGEMin",     String(split(MAGEMin_version)[1])     )
+    statement         = "The version of the softwares used to produce the equilibrium thermodynamics calculations are available on Zenodo at, MAGEMin v$(split(MAGEMin_version)[1]): $MAGEMin_link, MAGEMin_C v$MAGEMin_C_version: $MAGEMin_C_link and MAGEMinApp v$GUI_version: $GUI_link."
+
+    return statement
 end
 
 
