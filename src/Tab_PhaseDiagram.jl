@@ -490,10 +490,22 @@ function Tab_PhaseDiagram()
                                                                 multi       =  false),
                                             ]), 
                                         ]),
-
+                                        dbc_row([    
+                                            dbc_col([
+                                                html_h1("Minimum field size", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                            ],width=6),
+                                            dbc_col([ 
+                                                dbc_input(
+                                                id      = "field-size-id",
+                                                type    = "number", 
+                                                min     = 0,  
+                                                max     = 1024,  
+                                                value   = 16   ),
+                                            ]),
+                                        ]),
                                         dbc_row([
                                             dbc_col([ 
-                                                html_h1("Show stable phases", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                html_h1("Show phase label", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                             ], width=5),
                                             dbc_col([
                                                 dcc_dropdown(   id          = "show-lbl-id",

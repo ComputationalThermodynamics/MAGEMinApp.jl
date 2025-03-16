@@ -523,7 +523,7 @@ function Tab_Simulation()
                                                 (label = "true",         value = true),
                                                 (label = "false",        value = false),
                                             ],
-                                            value       =  false,
+                                            value       =  true,
                                             clearable   =  false,
                                             multi       =  false),
                                         ]),

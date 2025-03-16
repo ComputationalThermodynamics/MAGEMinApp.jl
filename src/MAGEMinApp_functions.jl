@@ -754,11 +754,12 @@ end
 """
     Function to retrieve the field labels
 """
-function get_diagram_labels(    Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
-                                Hash_XY     ::Vector{UInt64},
-                                refType     ::String,
-                                data        ::MAGEMinApp.AMR_data,
-                                PT_infos    ::Vector{String} )
+function get_diagram_labels(    Out_XY      :: Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
+                                Hash_XY     :: Vector{UInt64},
+                                refType     :: String,
+                                data        :: MAGEMinApp.AMR_data,
+                                PT_infos    :: Vector{String};
+                                field_size  :: Int64 = 4 )
 
     global n_lbl, gridded_fields, phase_infos
     print("Get phase diagram labels ..."); t0 = time();
@@ -799,6 +800,7 @@ function get_diagram_labels(    Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float
     hull        = unique(Hash_XY)
     n_hull      = length(hull)
     area        = Vector{Any}(undef,    n_hull)
+    n_pix       = Vector{Int64}(undef,    n_hull)
     ph_list     = Vector{String}(undef, n_hull)
     phd_list    = Vector{String}(undef, n_hull)
     id          = 0
@@ -824,8 +826,8 @@ function get_diagram_labels(    Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float
             maxX            = data.Xrange[1] + dx*(bnds[2]-1) + dx/2
             minY            = data.Yrange[1] + dy*(bnds[3]-1) - dy/2
             maxY            = data.Yrange[1] + dy*(bnds[4]-1) + dy/2
-
-            area[id]        = Float64(sum(mask))*dx*dy/fac
+            n_pix[id]       = Float64(sum(mask))
+            area[id]        = n_pix[id]*dx*dy/fac
             centers         = select_point(mask, range(minY, maxY, size(mask,2)+1) , range(minX, maxX, size(mask,1)+1) )
             
             push!(coor,centers)
@@ -851,70 +853,67 @@ function get_diagram_labels(    Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float
     
 
         ctr     = coor[i]
-        if area[i] < 0.004      # place an arrow
-            ax = -15
-            ay = -15
+        if n_pix[i] > field_size
+            if area[i] < 0.004      # place an arrow
+                ax = -15
+                ay = -15
 
-            annotations[i] =   attr(    xref        = "x",
-                                        yref        = "y",
-                                        x           = ctr[1],
-                                        y           = ctr[2],
-                                        ax          = ax,
-                                        ay          = ay,
-                                        text        = string(cnt),
-                                        showarrow   = true,
-                                        arrowhead   = 1,
-                                        visible     = true,
-                                        font        = attr( size = 9, color = "#212121"),
-                                    )  
-            txt_list *= string(cnt)*") "*ph_list[i]*"\n"
-            cnt +=1
-        elseif area[i] > 0.03 # place full label
-            annotations[i] =   attr(    xref        = "x",
-                                        yref        = "y",
-                                        align       = "left",
-                                        valign      = "top",
-                                        x           = ctr[1],
-                                        y           = ctr[2],
-                                        text        = phd_list[i],
-                                        showarrow   = false,
-                                        visible     = true,
-                                        font        = attr( size = 10, color = "#212121"),  
-                                    )                     
-        else    # place number
-            annotations[i] =   attr(    xref        = "x",
-                                        yref        = "y",
-                                        align       = "left",
-                                        valign      = "top",
-                                        x           = ctr[1],
-                                        y           = ctr[2],
-                                        text        = string(cnt),
-                                        showarrow   = false,
-                                        visible     = true,
-                                        font        = attr( size = 10, color = "#212121"),
-                                    )  
-    
-            txt_list *= string(cnt)*") "*ph_list[i]*"\n" 
-            cnt +=1  
-        end 
+                annotations[i] =   attr(    xref        = "x",
+                                            yref        = "y",
+                                            x           = ctr[1],
+                                            y           = ctr[2],
+                                            ax          = ax,
+                                            ay          = ay,
+                                            text        = string(cnt),
+                                            showarrow   = true,
+                                            arrowhead   = 1,
+                                            visible     = true,
+                                            font        = attr( size = 9, color = "#212121"),
+                                        )  
+                txt_list *= string(cnt)*") "*ph_list[i]*"\n"
+                cnt +=1
+            elseif area[i] > 0.03 # place full label
+                annotations[i] =   attr(    xref        = "x",
+                                            yref        = "y",
+                                            align       = "left",
+                                            valign      = "top",
+                                            x           = ctr[1],
+                                            y           = ctr[2],
+                                            text        = phd_list[i],
+                                            showarrow   = false,
+                                            visible     = true,
+                                            font        = attr( size = 10, color = "#212121"),  
+                                        )                     
+            else    # place number
+                annotations[i] =   attr(    xref        = "x",
+                                            yref        = "y",
+                                            align       = "left",
+                                            valign      = "top",
+                                            x           = ctr[1],
+                                            y           = ctr[2],
+                                            text        = string(cnt),
+                                            showarrow   = false,
+                                            visible     = true,
+                                            font        = attr( size = 10, color = "#212121"),
+                                        )  
+        
+                txt_list *= string(cnt)*") "*ph_list[i]*"\n" 
+                cnt +=1  
+            end 
+        else
+            annotations[i] = attr(  xref        = "x",
+                                    yref        = "y",
+                                    align       = "left",
+                                    valign      = "top",
+                                    x           = ctr[1],
+                                    y           = ctr[2],
+                                    text        = "",
+                                    showarrow   = false,
+                                    visible     = false,
+                                    font        = attr( size = 10, color = "#212121"),
+                                )  
+        end
     end
-    
-    # annotations[n_trace+1] =   attr(    xref        = "paper",
-    #                                     yref        = "paper",
-    #                                     align       = "left",
-    #                                     valign      = "top",
-    #                                     height      = 960,
-    #                                     x           = 0.0,
-    #                                     y           = 0.0,
-    #                                     xshift      = 640,
-    #                                     yshift      = -360,
-    #                                     text        = txt_list,
-    #                                     showarrow   = false,
-    #                                     clicktoshow = false,
-    #                                     visible     = true,
-    #                                     font        = attr( size = 10),
-    # )  
-
 
     annotations[n_trace+1] =   attr(    xref        = "paper",
                                         yref        = "paper",
@@ -943,7 +942,6 @@ function get_diagram_labels(    Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float
                                         visible     = true,
                                         font        = attr( size = 10),
                                         )   
-    n_lbl = n_trace
     println("\rGet phase diagram labels $(round(time()-t0, digits=3)) seconds"); 
 
     return traces, annotations, txt_list 

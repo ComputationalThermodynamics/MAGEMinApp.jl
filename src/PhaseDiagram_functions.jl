@@ -729,7 +729,7 @@ end
 
     Compute a new phase diagram from scratch
 """
-function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
+function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_size, 
                                     Xrange,     Yrange,     fieldname,  customTitle,
                                     dtb,        diagType,   verbose,    scp,    solver,    boost,  phase_selection,
                                     fixT,       fixP,
@@ -842,7 +842,8 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,
                                                                 Hash_XY,
                                                                 refType,
                                                                 data,
-                                                                PT_infos )
+                                                                PT_infos;
+                                                                field_size = field_size )
         ticks   = 4
         frame   = get_plot_frame(Xrange,Yrange, ticks)                                  
         layout  = Layout(
@@ -938,7 +939,7 @@ end
                                     test,       PT_infos,   refType                                   )
     Refine existing phase diagram
 """
-function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
+function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                 Xrange,     Yrange,     fieldname,  customTitle,
                                 dtb,        diagType,   watsat,  watsat_val,   
                                 verbose,    scp,        solver, boost, phase_selection,
@@ -1001,7 +1002,8 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,
                                                             Hash_XY,
                                                             refType,
                                                             data,
-                                                            PT_infos )
+                                                            PT_infos;
+                                                            field_size = field_size )
                                            
     layout[:annotations] = annotations 
     layout[:title] = attr(
