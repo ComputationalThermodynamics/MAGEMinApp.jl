@@ -1,4 +1,4 @@
-function Tab_Simulation(db_inf)
+function Tab_Simulation()
     html_div([
     # one column for the plots
         dbc_col([
@@ -56,8 +56,8 @@ function Tab_Simulation(db_inf)
                                                                     id      = "phase-selection",
                                                                     options = [Dict(    "label"     => " "*i,
                                                                                         "value"     => i )
-                                                                                    for i in db_inf.ss_name ],
-                                                                    value = db_inf.ss_name,
+                                                                                    for i in AppData.db_inf.ss_name ],
+                                                                    value = AppData.db_inf.ss_name,
                                                                     # inline = true,
                                                                 ),
                         
@@ -523,7 +523,7 @@ function Tab_Simulation(db_inf)
                                                 (label = "true",         value = true),
                                                 (label = "false",        value = false),
                                             ],
-                                            value       =  false,
+                                            value       =  true,
                                             clearable   =  false,
                                             multi       =  false),
                                         ]),

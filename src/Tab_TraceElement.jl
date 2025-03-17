@@ -350,7 +350,7 @@ function Tab_TraceElement()
 
                                 dbc_row([
                                     dbc_col([ 
-                                        html_h1("Show stable phases", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                        html_h1("Show phase label", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                     ], width=5),
                                     dbc_col([
                                         dcc_dropdown(   id          = "show-lbl-id-te",

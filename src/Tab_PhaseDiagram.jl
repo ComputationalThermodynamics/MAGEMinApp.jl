@@ -1,4 +1,4 @@
-function Tab_PhaseDiagram(db_inf)
+function Tab_PhaseDiagram()
     html_div([
     # one column for the plots
         dbc_col([
@@ -365,9 +365,10 @@ function Tab_PhaseDiagram(db_inf)
                                                 dbc_button("Statement of code availability",id="button-code-avail",color="light"),
                                                 dbc_collapse(
                                                     dbc_card(dbc_cardbody([
+                                                        dbc_button("Retrieve statement",id="retrieve-statement", color="light", className="me-2", n_clicks=0),
                                                         dcc_textarea(
                                                             id          = "code-avail",
-                                                            value       = "The version of the softwares used to produce the equilibrium thermodynamics calculations are available on Zenodo at, MAGEMin v$(split(MAGEMin_version)[1]): $MAGEMin_link, MAGEMin_C v$MAGEMin_C_version: $MAGEMin_C_link and MAGEMinApp v$GUI_version: $GUI_link.",
+                                                            value       = "Retrieving Zenodo links can take up to a few minutes...",
                                                             readOnly    = true,
                                                             disabled    = true,
                                                             draggable   = false,
@@ -489,10 +490,22 @@ function Tab_PhaseDiagram(db_inf)
                                                                 multi       =  false),
                                             ]), 
                                         ]),
-
+                                        dbc_row([    
+                                            dbc_col([
+                                                html_h1("Minimum field size", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                            ],width=6),
+                                            dbc_col([ 
+                                                dbc_input(
+                                                id      = "field-size-id",
+                                                type    = "number", 
+                                                min     = 0,  
+                                                max     = 1024,  
+                                                value   = 16   ),
+                                            ]),
+                                        ]),
                                         dbc_row([
                                             dbc_col([ 
-                                                html_h1("Show stable phases", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                html_h1("Show phase label", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                             ], width=5),
                                             dbc_col([
                                                 dcc_dropdown(   id          = "show-lbl-id",
@@ -536,9 +549,9 @@ function Tab_PhaseDiagram(db_inf)
                                                     dcc_dropdown(   id      = "reaction-line-dropdown",
                                                         options = [Dict(    "label"     => " "*i,
                                                                             "value"     => i )
-                                                                        for i in db_inf.ss_name ],
+                                                                        for i in AppData.db_inf.ss_name ],
 
-                                                        value       = db_inf.ss_name[1],
+                                                        value       = AppData.db_inf.ss_name[1],
                                                         clearable   = false,
                                                         multi       = false),
                                                 ]),

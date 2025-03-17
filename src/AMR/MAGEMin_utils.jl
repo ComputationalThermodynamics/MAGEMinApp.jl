@@ -152,7 +152,7 @@ function MAGEMin_data2table( out:: Union{Vector{MAGEMin_C.gmin_struct{Float64, I
     end
     np      = length(out)
 
-    table   = "# MAGEMin " * " $(out[1].MAGEMin_ver);" * datetoday * ", " * rightnow * "; using database " * db_in.db_info * "\n"
+    table   = "# MAGEMin " * " $(out[1].MAGEMin_ver);" * datetoday * ", " * rightnow * "; using database " * AppData.db_inf.db_info * "\n"
     table   *=   "point[#] X[0.0-1.0] P[kbar] T[°C]" *" phase" * " mode[mol%]" * " mode[wt%]" * " log10(fO2)" * " log10(dQFM)" * " aH2O" * " aSiO2" * " aTiO2" *  " aAl2O3" *  " aMgO" *  " aFeO" * 
                 " density[kg/m3]" * " volume[cm3/mol]" * " heatCapacity[kJ/K]" * " alpha[1/K]" * " Entropy[J/K]" * " Enthalpy[J]" *
                 " Vp[km/s]" * " Vs[km/s]" * " Vp_S[km/s]" * " Vs_S[km/s]" *" BulkMod[GPa]" * " ShearMod[GPa]" *

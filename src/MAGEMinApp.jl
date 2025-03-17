@@ -52,18 +52,8 @@ include(joinpath(pkg_dir,"src","Boundaries/center.jl"))
 include(joinpath(pkg_dir,"src","Boundaries/poly.jl"))
 include(joinpath(pkg_dir,"src","Boundaries/purge.jl"))
 include(joinpath(pkg_dir,"src","Boundaries/utils.jl"))
-
-
-# retrieve MAGEMin version number info
-data = Initialize_MAGEMin("mp", verbose=false);
-data = use_predefined_bulk_rock(data, 0);
-out  = point_wise_minimization(4.0,400.0, data);
-Finalize_MAGEMin(data);
-
-const GUI_version       = string(pkgversion(MAGEMinApp))
-const MAGEMin_version   = out.MAGEMin_ver
-const MAGEMin_C_version = string(pkgversion(MAGEMin_C))
-
+include(joinpath(pkg_dir,"src","appData.jl"))
+  
 
 """
     App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
@@ -71,30 +61,17 @@ const MAGEMin_C_version = string(pkgversion(MAGEMin_C))
 Starts the MAGEMin App.
 """
 function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
-    
-    # Keep track of simulation progress - note that this should be added to a single global variable
-    global CompProgress =   ComputationalProgress()
 
-    global GUI_link          = get_zenodo_link("ComputationalThermodynamics", "MAGEMinApp",  String(GUI_version)         )
-    global MAGEMin_C_link    = get_zenodo_link("ComputationalThermodynamics", "MAGEMin_C",   String(MAGEMin_C_version)   )
-    global MAGEMin_link      = get_zenodo_link("ComputationalThermodynamics", "MAGEMin",     String(split(MAGEMin_version)[1])     )
-    
-    
     message     = fetch_message()
     message2    = fetch_message2()
     cur_dir     = pwd()                 # directory from where you started the GUI
     pkg_dir     = pkgdir(MAGEMinApp)   # package dir
-    
-    include(joinpath(pkg_dir,"src","appData.jl"))
-  
-    db_inf      = retrieve_solution_phase_information("ig");
     cd(pkg_dir)
 
     app         = dash(external_stylesheets = [dbc_themes.BOOTSTRAP], prevent_initial_callbacks=false)
     app.title   = "MAGEMinApp"
     app.layout  = html_div() do
  
-        pkg_dir       = pkgdir(MAGEMinApp)
         dbc_container(fluid=false, [
             dbc_col([
             dbc_row([
@@ -176,11 +153,11 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                                         children    = [dbc_tabs([
                                                             dbc_tab(    tab_id      = "tab-Simulation",
                                                                         label       = "Setup",
-                                                                        children    = [Tab_Simulation(db_inf)],
+                                                                        children    = [Tab_Simulation()],
                                                                     ),
                                                             dbc_tab(    tab_id      = "tab-phase-diagram",
                                                                         label       = "Diagram",
-                                                                        children    = [Tab_PhaseDiagram(db_inf)]
+                                                                        children    = [Tab_PhaseDiagram()]
                                                                     ),
                                                             dbc_tab(    tab_id      = "tab-te",
                                                                         label       = "Trace-elements",
@@ -192,15 +169,15 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
 
                             dbc_tab(    tab_id      = "tab-PTX-path",
                                         label       = "PTX path",
-                                        children    = [Tab_PTXpaths(db_inf)]
+                                        children    = [Tab_PTXpaths()]
                                     ),
                             dbc_tab(    tab_id      = "tab-isentropic-path",
                                         label       = "Isentropic path",
-                                        children    = [Tab_IsentropicPaths(db_inf)]
+                                        children    = [Tab_IsentropicPaths()]
                                     ),
                             dbc_tab(    tab_id      = "tab-general-info",
                                         label       = "General information",
-                                        children    = [Tab_General_informations(db_inf)]
+                                        children    = [Tab_General_informations()]
                                     ),
 
                         ],
@@ -210,13 +187,13 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                     ], width=12),
 
         dcc_store(id="session-id", data =  "")     # gives a unique number of our session
-
         ])
 
     end
-    
+
     # This creates an initial session id that is unique for this session
     # it will run on first start 
+    
     callback!(app, 
         Dash.Output("session-id", "data"),
         Dash.Output("label-id", "children"),
@@ -227,7 +204,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
 
         # determine how many cores you use and how many are available
         num_available_cores = Sys.CPU_THREADS
-        nthreads = Threads.maxthreadid();
+        nthreads = Threads.nthreads();
 
         str = "id=$(session_id);   MAGEMinApp GUI v=$(GUI_version);   using $nthreads/$num_available_cores threads"
         return String("$(session_id)"), str
@@ -247,6 +224,4 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
 
 end
 
-# App( debug=true ) #### trick  to have hot reloading: first launch normaly then quit and go to src and run julia -t 5 MAGEMinApp.jl
-
-end # module MAGEMinApp
+end

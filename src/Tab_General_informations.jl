@@ -65,7 +65,7 @@ heatCapacity = """
 When having correct heat budget is important it is therefore recommanded to employ the second approach.*
 """
 
-function Tab_General_informations(db_inf)
+function Tab_General_informations()
     html_div([
         html_div("‎ "),
         dbc_row([ 

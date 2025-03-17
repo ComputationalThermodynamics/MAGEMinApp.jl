@@ -1,5 +1,21 @@
 function Tab_PhaseDiagram_Callbacks(app)
 
+    """
+        Callback to compute and display TAS diagram
+    """
+    callback!(
+        app,
+        Output("code-avail",            "value"),
+        Input("retrieve-statement",      "n_clicks"),
+
+        prevent_initial_call = true,
+
+        ) do    n_click
+
+        return retrieve_statement()
+
+    end
+
 
     """
         Callback to compute and display TAS diagram
@@ -675,6 +691,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("show-grid",                  "value"), 
         Input("show-full-grid",             "value"), 
         Input("show-lbl-id",                "value"),
+     
         Input("button-add-isopleth",        "n_clicks"),
         Input("button-remove-isopleth",     "n_clicks"),
         Input("button-remove-all-isopleth", "n_clicks"),
@@ -700,6 +717,8 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("fields-dropdown",        "value"),
         Input("update-title-button",    "n_clicks"),
         Input("load-state-id",          "value"),
+
+        State("field-size-id",              "value"),
         State("title-id",               "value"),
         State("stable-assemblage-id",   "children"),   
 
@@ -776,10 +795,11 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         prevent_initial_call = true,
 
-    ) do    reac_up,    grid,       full_grid,  lbl,        addIso,     removeIso,  removeAllIso,    isoShow,   isoHide, isoShowAll,    isoHideAll,    
+    ) do    reac_up,    grid,       full_grid,  lbl,     addIso,     removeIso,  removeAllIso,    isoShow,   isoHide, isoShowAll,    isoHideAll,    
             n_clicks_mesh, n_clicks_refine, uni_n_clicks_refine, 
             minColor,   maxColor,
-            colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  updateTitle,     loadstateid, customTitle, txt_list,
+            colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  updateTitle,     loadstateid, 
+            field_size, customTitle, txt_list,
             diagType,   dtb,        watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  ph_selection, pure_ph_selection, PTpath,
             tmin,       tmax,       pmin,       pmax,
             fixT,       fixP,
@@ -835,7 +855,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                 colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)
             end
 
-            data_plot, layout, npoints, meant, txt_list  =  compute_new_phaseDiagram(   xtitle,     ytitle,     lbl,
+            data_plot, layout, npoints, meant, txt_list  =  compute_new_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                                                                         Xrange,     Yrange,     fieldname,  customTitle,
                                                                                         dtb,        diagType,   verbose,    scp,        solver,     boost, phase_selection,
                                                                                         fixT,       fixP,
@@ -885,7 +905,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             CompProgress.refinement_level = 1
             CompProgress.tinit = time()
 
-            data_plot, layout, npoints, meant, txt_list   =  refine_phaseDiagram(   xtitle,     ytitle,     lbl, 
+            data_plot, layout, npoints, meant, txt_list   =  refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                                                                     Xrange,     Yrange,     fieldname,  customTitle,
                                                                                     dtb,        diagType,   watsat,     watsat_val, verbose,    scp,    solver,  boost, phase_selection,
                                                                                     fixT,       fixP,
