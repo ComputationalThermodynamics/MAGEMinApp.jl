@@ -942,6 +942,8 @@ function get_diagram_labels(    Out_XY      :: Vector{MAGEMin_C.gmin_struct{Floa
                                         visible     = true,
                                         font        = attr( size = 10),
                                         )   
+
+    n_lbl = n_trace
     println("\rGet phase diagram labels $(round(time()-t0, digits=3)) seconds"); 
 
     return traces, annotations, txt_list 
