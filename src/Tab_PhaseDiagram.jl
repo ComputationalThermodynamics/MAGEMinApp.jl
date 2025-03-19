@@ -493,7 +493,7 @@ function Tab_PhaseDiagram()
                                         dbc_row([    
                                             dbc_col([
                                                 html_h1("Minimum field size", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
-                                            ],width=6),
+                                            ],width=5),
                                             dbc_col([ 
                                                 dbc_input(
                                                 id      = "field-size-id",
