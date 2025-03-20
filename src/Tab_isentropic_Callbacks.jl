@@ -154,6 +154,7 @@ function Tab_isoSpaths_Callbacks(app)
         
         State("n-steps-id-isoS",         "value"),
         State("database-dropdown-isoS",  "value"),
+        State("dataset-dropdown-isoS",  "value"),
         State("buffer-dropdown-isoS",    "value"),
         State("solver-dropdown-isoS",    "value"),    
         State("verbose-dropdown-isoS",   "value"),   
@@ -172,7 +173,7 @@ function Tab_isoSpaths_Callbacks(app)
         ) do    compute,    upsys,      
                 sys_unit,   phase_selection,    pure_phase_selection,    phase_list,
                 Pini,       Tini,       Pfinal, tolerance,  nsteps,    
-                dtb,        bufferType, solver,
+                dtb,        dataset,    bufferType, solver,
                 verbose,    bulk,       bufferN,
                 cpx,        limOpx,     limOpxVal,  test,   sysunit
 
@@ -192,7 +193,7 @@ function Tab_isoSpaths_Callbacks(app)
 
             compute_new_IsentropicPath(     nsteps,     bulk_ini,   oxi,    phase_selection,    pure_phase_selection,
                                             Pini,       Tini,       Pfinal, tolerance,
-                                            dtb,        bufferType, solver,
+                                            dtb,        dataset,    bufferType, solver,
                                             verbose,    bulk,       bufferN,
                                             cpx,        limOpx,     limOpxVal    )
 
@@ -433,8 +434,10 @@ function Tab_isoSpaths_Callbacks(app)
         Output("phase-selection-isoS","value"),
         Output("pure-phase-selection-isoS","options"),
         Output("pure-phase-selection-isoS","value"),
-        Input("select-bulk-unit-isoS","value"),
+        Output("dataset-dropdown-isoS","options"),
+        Output("dataset-dropdown-isoS","value"),
 
+        Input("select-bulk-unit-isoS","value"),
         Input("test-dropdown-isoS","value"),
         Input("database-dropdown-isoS","value"),
         Input("output-data-uploadn-isoS", "is_open"),        # this listens for changes and updated the list
@@ -489,8 +492,12 @@ function Tab_isoSpaths_Callbacks(app)
                                                 for i in pp_disp ]
         pure_phase_selection_value   = pp_disp
 
+        dataset_options = [Dict(    "label"     => "ds$(db_in.dataset_opt[i])",
+                                    "value"     => db_in.dataset_opt[i] )
+                                for i = 1:length(db_in.dataset_opt) ]
+        dataset_value    = db_in.db_dataset
 
-        return data, opts, val, cap, phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value                
+        return data, opts, val, cap, phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value, dataset_options, dataset_value        
     end
 
 

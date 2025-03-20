@@ -137,7 +137,7 @@ end
 
 
 function compute_Tliq(          pressure,   tolerance,  bulk_ini,   oxi,    phase_selection,
-                                dtb,        bufferType, solver,
+                                dtb,        dataset,    bufferType, solver,
                                 verbose,    bulk,       bufferN,
                                 cpx,        limOpx,     limOpxVal       )
 
@@ -158,6 +158,7 @@ function compute_Tliq(          pressure,   tolerance,  bulk_ini,   oxi,    phas
         GC.gc() 
         gv, z_b, DB, splx_data = init_MAGEMin(  dtb;        
                                                 verbose     = verbose,
+                                                dataset     = dataset,
                                                 mbCpx       = mbCpx,
                                                 limitCaOpx  = limitCaOpx,
                                                 CaOpxLim    = CaOpxLim,
@@ -228,7 +229,7 @@ end
 
 
 function compute_Tsol(          pressure,   tolerance,  bulk_ini,   oxi,    phase_selection,
-                                dtb,        bufferType, solver,
+                                dtb,        dataset,    bufferType, solver,
                                 verbose,    bulk,       bufferN,
                                 cpx,        limOpx,     limOpxVal       )
 
@@ -249,6 +250,7 @@ function compute_Tsol(          pressure,   tolerance,  bulk_ini,   oxi,    phas
         GC.gc() 
         gv, z_b, DB, splx_data = init_MAGEMin(  dtb;        
                                                 verbose     = verbose,
+                                                dataset     = dataset,
                                                 mbCpx       = mbCpx,
                                                 limitCaOpx  = limitCaOpx,
                                                 CaOpxLim    = CaOpxLim,
@@ -311,7 +313,7 @@ end
 
 
 function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   bulk_assim, oxi,    phase_selection,    assim, var_buffer,
-                                dtb,        bufferType, solver,
+                                dtb,        dataset,    bufferType, solver,
                                 verbose,    bufferN,
                                 cpx,        limOpx,     limOpxVal,
                                 nCon,       nRes                                  )
@@ -375,6 +377,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             GC.gc() 
             gv, z_b, DB, splx_data = init_MAGEMin(  dtb;        
                                                     verbose     = verbose,
+                                                    dataset     = dataset,
                                                     mbCpx       = mbCpx,
                                                     limitCaOpx  = limitCaOpx,
                                                     CaOpxLim    = CaOpxLim,

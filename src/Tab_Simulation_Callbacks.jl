@@ -204,6 +204,7 @@ function Tab_Simulation_Callbacks(app)
         Output("pure-phase-selection","value"),
         Output("dataset-dropdown","options"),
         Output("dataset-dropdown","value"),
+
         Input("database-dropdown","value"),
 
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
