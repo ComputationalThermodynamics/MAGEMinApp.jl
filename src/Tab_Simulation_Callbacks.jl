@@ -202,6 +202,8 @@ function Tab_Simulation_Callbacks(app)
         Output("phase-selection","value"),
         Output("pure-phase-selection","options"),
         Output("pure-phase-selection","value"),
+        Output("dataset-dropdown","options"),
+        Output("dataset-dropdown","value"),
         Input("database-dropdown","value"),
 
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
@@ -226,7 +228,13 @@ function Tab_Simulation_Callbacks(app)
         pure_phase_selection_value   = pp_disp
 
 
-        return phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value
+        dataset_options = [Dict(    "label"     => "ds$(db_in.dataset_opt[i])",
+                                    "value"     => db_in.dataset_opt[i] )
+                                for i = 1:length(db_in.dataset_opt) ]
+        dataset_value    = db_in.db_dataset
+
+
+        return phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value, dataset_options, dataset_value
     end
 
     

@@ -724,6 +724,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         State("diagram-dropdown",       "value"),           # pt, px, tx
         State("database-dropdown",      "value"),           # mp, mb, ig ,igd, um, alk
+        State("dataset-dropdown",       "value"),           # pt, px, tx
         State("watsat-dropdown",        "value"),           # false,true -> 0,1
         State("watsat-val-id",        "value"),           # false,true -> 0,1
         
@@ -800,7 +801,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             minColor,   maxColor,
             colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  updateTitle,     loadstateid, 
             field_size, customTitle, txt_list,
-            diagType,   dtb,        watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  ph_selection, pure_ph_selection, PTpath,
+            diagType,   dtb,        dataset,    watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  ph_selection, pure_ph_selection, PTpath,
             tmin,       tmax,       pmin,       pmax,
             fixT,       fixP,
             sub,        refType,    refLvl,
@@ -857,7 +858,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             data_plot, layout, npoints, meant, txt_list  =  compute_new_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                                                                         Xrange,     Yrange,     fieldname,  customTitle,
-                                                                                        dtb,        diagType,   verbose,    scp,        solver,     boost, phase_selection,
+                                                                                        dtb,        dataset,    diagType,   verbose,    scp,        solver,     boost, phase_selection,
                                                                                         fixT,       fixP,
                                                                                         sub,        refLvl,
                                                                                         watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  PTpath,
@@ -907,7 +908,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             data_plot, layout, npoints, meant, txt_list   =  refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                                                                     Xrange,     Yrange,     fieldname,  customTitle,
-                                                                                    dtb,        diagType,   watsat,     watsat_val, verbose,    scp,    solver,  boost, phase_selection,
+                                                                                    dtb,        dataset,    diagType,   watsat,     watsat_val, verbose,    scp,    solver,  boost, phase_selection,
                                                                                     fixT,       fixP,
                                                                                     sub,        refLvl,
                                                                                     cpx,        limOpx,     limOpxVal,  PTpath,

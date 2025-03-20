@@ -731,7 +731,7 @@ end
 """
 function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_size, 
                                     Xrange,     Yrange,     fieldname,  customTitle,
-                                    dtb,        diagType,   verbose,    scp,    solver,    boost,  phase_selection,
+                                    dtb,        dataset,    diagType,   verbose,    scp,    solver,    boost,  phase_selection,
                                     fixT,       fixP,
                                     sub,        refLvl,
                                     watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  PTpath,
@@ -771,6 +771,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
         CompProgress.stage = "Initialize MAGEMin"
         MAGEMin_data    =   Initialize_MAGEMin( dtb;
                                                 verbose     = false,
+                                                dataset     = dataset,
                                                 limitCaOpx  = limitCaOpx,
                                                 CaOpxLim    = CaOpxLim,
                                                 mbCpx       = mbCpx,
@@ -941,7 +942,7 @@ end
 """
 function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                 Xrange,     Yrange,     fieldname,  customTitle,
-                                dtb,        diagType,   watsat,  watsat_val,   
+                                dtb,        dataset,    diagType,   watsat,  watsat_val,   
                                 verbose,    scp,        solver, boost, phase_selection,
                                 fixT,       fixP,
                                 sub,        refLvl,
@@ -959,6 +960,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
 
     MAGEMin_data    =   Initialize_MAGEMin( dtb;
                                             verbose     = false,
+                                            dataset     = dataset,
                                             limitCaOpx  = limitCaOpx,
                                             CaOpxLim    = CaOpxLim,
                                             mbCpx       = mbCpx,
