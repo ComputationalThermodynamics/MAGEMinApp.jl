@@ -219,6 +219,17 @@ function get_dominant_em(   ph,
     return ph_em
 end
 
+function get_data_thread( MAGEMin_db :: MAGEMin_Data )
+
+    id          = Threads.threadid()
+    gv          = MAGEMin_db.gv[id]
+    z_b         = MAGEMin_db.z_b[id]
+    DB          = MAGEMin_db.DB[id]
+    splx_data   = MAGEMin_db.splx_data[id]
+    
+   return (gv, z_b, DB, splx_data)
+end
+
 function refine_MAGEMin(data, 
                         MAGEMin_data    :: MAGEMin_Data, 
                         diagType        :: String,
@@ -226,6 +237,10 @@ function refine_MAGEMin(data,
                         phase_selection :: Union{Nothing,Vector{Int64}},
                         fixT            :: Float64,
                         fixP            :: Float64,
+                        e1_liq          :: Float64,
+                        e2_liq          :: Float64,
+                        e1_remain       :: Float64,
+                        e2_remain       :: Float64,
                         oxi             :: Vector{String},
                         bulk_L          :: Vector{Float64},
                         bulk_R          :: Vector{Float64},
@@ -258,100 +273,226 @@ function refine_MAGEMin(data,
         Pvec = zeros(Float64,n_new_points);
         Xvec = Vector{Vector{Float64}}(undef,n_new_points);
         Bvec = zeros(Float64,n_new_points);
+
         if !isempty(data.split_cell_list) && boost == true
             Gvec = Vector{Vector{LibMAGEMin.mSS_data}}(undef,n_new_points);
         else
             Gvec = nothing;
         end
-        if diagType == "tx"
 
-            for i = 1:n_new_points
-                Pvec[i] = fixP;
-                Tvec[i] = npoints[i][2];
-                Xvec[i] = bulk_L*(1.0 - npoints[i][1]) + bulk_R*npoints[i][1];
-                Bvec[i] = bufferN1*(1.0 - npoints[i][1]) + bufferN2*npoints[i][1];
-                if !isempty(data.split_cell_list) && boost == true
-                    tmp = [Out_XY[data.npoints_ig[i][j]].mSS_vec for j=1:length(data.npoints_ig[i])]
-                    Gvec[i] = vcat(tmp...)
+        if diagType != "tt"    
+            if diagType == "tx"
+
+                for i = 1:n_new_points
+                    Pvec[i] = fixP;
+                    Tvec[i] = npoints[i][2];
+                    Xvec[i] = bulk_L*(1.0 - npoints[i][1]) + bulk_R*npoints[i][1];
+                    Bvec[i] = bufferN1*(1.0 - npoints[i][1]) + bufferN2*npoints[i][1];
+                    if !isempty(data.split_cell_list) && boost == true
+                        tmp = [Out_XY[data.npoints_ig[i][j]].mSS_vec for j=1:length(data.npoints_ig[i])]
+                        Gvec[i] = vcat(tmp...)
+                    end
                 end
-            end
-        elseif diagType == "px"
+            elseif diagType == "px"
 
-            for i = 1:n_new_points
-                Tvec[i] = fixT;
-                Pvec[i] = npoints[i][2];
-                Xvec[i] = bulk_L*(1.0 - npoints[i][1]) + bulk_R*npoints[i][1];
-                Bvec[i] = bufferN1*(1.0 - npoints[i][1]) + bufferN2*npoints[i][1];
-                if !isempty(data.split_cell_list) && boost == true
-                    tmp = [Out_XY[data.npoints_ig[i][j]].mSS_vec for j=1:length(data.npoints_ig[i])]
-                    Gvec[i] = vcat(tmp...)
+                for i = 1:n_new_points
+                    Tvec[i] = fixT;
+                    Pvec[i] = npoints[i][2];
+                    Xvec[i] = bulk_L*(1.0 - npoints[i][1]) + bulk_R*npoints[i][1];
+                    Bvec[i] = bufferN1*(1.0 - npoints[i][1]) + bufferN2*npoints[i][1];
+                    if !isempty(data.split_cell_list) && boost == true
+                        tmp = [Out_XY[data.npoints_ig[i][j]].mSS_vec for j=1:length(data.npoints_ig[i])]
+                        Gvec[i] = vcat(tmp...)
+                    end
                 end
-            end
-        elseif diagType == "pt"
+            elseif diagType == "pt"
 
-            if "H2O" in oxi
-                id_h2o      = findall(oxi .== "H2O")[1]
-                id_dry      = findall(oxi .!= "H2O")
-            end
-
-            for i = 1:n_new_points
-                Tvec[i] = npoints[i][1];
-                Pvec[i] = npoints[i][2];
-                Bvec[i] = bufferN1;
-                
-                if !isempty(data.split_cell_list) && boost == true
-                    tmp = [Out_XY[data.npoints_ig[i][j]].mSS_vec for j=1:length(data.npoints_ig[i])]
-                    Gvec[i] = vcat(tmp...)
+                if "H2O" in oxi
+                    id_h2o      = findall(oxi .== "H2O")[1]
+                    id_dry      = findall(oxi .!= "H2O")
                 end
 
-                # here we check if the water need to be saturated at sub-solidus
-                if ~isnothing(pChip_wat)
-                    TsatSol     = pChip_T(Pvec[i])
-                    waterSat    = pChip_wat(Pvec[i])
-                    if Tvec[i] > TsatSol        # if we are above the solidus then we use the water content from the sub-solidus curve
-                        bulk_tmp              = deepcopy(bulk_L)
-                        bulk_tmp            ./= sum(bulk_tmp[id_dry])
-                        bulk_tmp[id_h2o]      = waterSat
-                        bulk_tmp            ./= sum(bulk_tmp)
-                        Xvec[i]               = bulk_tmp
+                for i = 1:n_new_points
+                    Tvec[i] = npoints[i][1];
+                    Pvec[i] = npoints[i][2];
+                    Bvec[i] = bufferN1;
+                    
+                    if !isempty(data.split_cell_list) && boost == true
+                        tmp = [Out_XY[data.npoints_ig[i][j]].mSS_vec for j=1:length(data.npoints_ig[i])]
+                        Gvec[i] = vcat(tmp...)
+                    end
+
+                    # here we check if the water need to be saturated at sub-solidus
+                    if ~isnothing(pChip_wat)
+                        TsatSol     = pChip_T(Pvec[i])
+                        waterSat    = pChip_wat(Pvec[i])
+                        if Tvec[i] > TsatSol        # if we are above the solidus then we use the water content from the sub-solidus curve
+                            bulk_tmp              = deepcopy(bulk_L)
+                            bulk_tmp            ./= sum(bulk_tmp[id_dry])
+                            bulk_tmp[id_h2o]      = waterSat
+                            bulk_tmp            ./= sum(bulk_tmp)
+                            Xvec[i]               = bulk_tmp
+                        else
+                            Xvec[i] = bulk_L;
+                        end
                     else
                         Xvec[i] = bulk_L;
                     end
-                else
-                    Xvec[i] = bulk_L;
+                end
+            elseif diagType == "ptx"
+
+                ptx_data    = copy(PTpath)
+                np          = length(ptx_data)
+                Pres        = zeros(Float64,np)
+                Temp        = zeros(Float64,np)
+                x           = zeros(Float64,np)
+                for i=1:np
+                    Pres[i] = ptx_data[i][Symbol("col-1")]
+                    Temp[i] = ptx_data[i][Symbol("col-2")]
+                    x[i]    = (i-1)*(1.0/(np-1))
+                end
+                pChipInterp_P = Interpolator(x, Pres)
+                pChipInterp_T = Interpolator(x, Temp)
+
+                for i = 1:n_new_points
+                    Tvec[i] = pChipInterp_T(npoints[i][2]); 
+                    Pvec[i] = pChipInterp_P(npoints[i][2]);
+                    Xvec[i] = bulk_L*(  1.0 - npoints[i][1]) + bulk_R*npoints[i][1];
+                    Bvec[i] = bufferN1*(1.0 - npoints[i][1]) + bufferN2*npoints[i][1];
+                    if !isempty(data.split_cell_list) && boost == true
+                        tmp = [Out_XY[data.npoints_ig[i][j]].mSS_vec for j=1:length(data.npoints_ig[i])]
+                        Gvec[i] = vcat(tmp...)
+                    end
                 end
             end
-        elseif diagType == "ptx"
 
-            ptx_data    = copy(PTpath)
-            np          = length(ptx_data)
-            Pres        = zeros(Float64,np)
-            Temp        = zeros(Float64,np)
-            x           = zeros(Float64,np)
-            for i=1:np
-                Pres[i] = ptx_data[i][Symbol("col-1")]
-                Temp[i] = ptx_data[i][Symbol("col-2")]
-                x[i]    = (i-1)*(1.0/(np-1))
-            end
+            Out_XY_new  =   multi_point_minimization(   Pvec, Tvec, MAGEMin_data;
+                                                        X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol", G=Gvec, scp=scp, 
+                                                        rm_list=phase_selection, name_solvus=true, iguess=boost, callback_fn = update_progress); 
+        else
+            # if TT diagram does not exist, compute it
+            if isempty(data.split_cell_list)    
+                n           = Int64(sqrt(n_new_points))
+                Out_col_1   = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,n)
+                start_bulk  = deepcopy(bulk_L)
+                for i=1:n
+                    out    = single_point_minimization(     fixP, npoints[i][2], MAGEMin_data;
+                                                            X=start_bulk, B=bufferN1, Xoxides=oxi, sys_in="mol",  scp=scp, 
+                                                            rm_list=phase_selection, name_solvus=true)   
+                    
+                    if "fl" in out.ph || "H2O" in out.ph || "liq" in out.ph
+                        if "fl" in out.ph
+                            id = findfirst(out.ph .== "fl")
+                            start_bulk .-= out.SS_vec[id].Comp .* out.ph_frac[id]
+                        end
+                        if "H2O" in out.ph
+                            id = findfirst(out.ph .== "H2O")
+                            start_bulk .-= out.PP_vec[id - out.n_SS].Comp .* out.ph_frac[id]
+                        end
+                        if "liq" in out.ph
+                            id = findfirst(out.ph .== "liq")
 
-            pChipInterp_P = Interpolator(x, Pres)
-            pChipInterp_T = Interpolator(x, Temp)
-
-            for i = 1:n_new_points
-                Tvec[i] = pChipInterp_T(npoints[i][2]); 
-                Pvec[i] = pChipInterp_P(npoints[i][2]);
-                Xvec[i] = bulk_L*(  1.0 - npoints[i][1]) + bulk_R*npoints[i][1];
-                Bvec[i] = bufferN1*(1.0 - npoints[i][1]) + bufferN2*npoints[i][1];
-                if !isempty(data.split_cell_list) && boost == true
-                    tmp = [Out_XY[data.npoints_ig[i][j]].mSS_vec for j=1:length(data.npoints_ig[i])]
-                    Gvec[i] = vcat(tmp...)
+                            if  out.ph_frac_vol[id] > e1_liq/100.0
+                                ratio        = 1.0 - e1_remain/100.0/out.ph_frac_vol[id]
+                                start_bulk .-= out.SS_vec[id].Comp .* (out.ph_frac[id]*ratio)
+                            end
+                        end
+                        start_bulk ./= sum(start_bulk)
+        
+                        out    = single_point_minimization(     fixP, npoints[i][2], MAGEMin_data;
+                                                                X=start_bulk, B=bufferN1, Xoxides=oxi, sys_in="mol",  scp=scp, 
+                                                                rm_list=phase_selection, name_solvus=true)   
+        
+                        Out_col_1[i] = deepcopy(out)
+                    else
+                        Out_col_1[i] = deepcopy(out)
+                    end
                 end
+
+                Out_rows    = Vector{Vector{MAGEMin_C.gmin_struct{Float64, Int64}}}(undef, n);
+                progr       = Progress(n, desc="Computing $n Polymetamorphic paths...") # progress meter
+                @threads :static for i=1:n
+
+                    Out_PT      = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef, n)
+                    P_          = fixP
+                    T_          = collect(range(data.Xrange[1], stop=data.Xrange[2], length=n))
+                    bulk_       = deepcopy(Out_col_1[i].bulk)
+
+                    gv, z_b, DB, splx_data = get_data_thread(MAGEMin_data)
+        
+                    unsafe_copyto!(gv.bulk_rock, pointer(bulk_), gv.len_ox)            # copy the bulk-rock
+                    LibMAGEMin.norm_array(gv.bulk_rock, gv.len_ox)
+
+                    for j=1:n 
+                        out     = point_wise_minimization(  P_, T_[j], gv, z_b, DB, splx_data;
+                                buffer_n=bufferN1, name_solvus=true, scp=scp, rm_list=phase_selection)
+
+                        if "fl" in out.ph || "H2O" in out.ph
+                            if "fl" in out.ph
+                                id = findfirst(out.ph .== "fl")
+                                bulk_ .-= out.SS_vec[id].Comp .* out.ph_frac[id] .* 1.25
+                            end
+                            if "H2O" in out.ph
+                                id = findfirst(out.ph .== "H2O")
+                                bulk_ .-= out.PP_vec[id - out.n_SS].Comp .* out.ph_frac[id] .* 1.25
+                            end
+                            if "liq" in out.ph
+                                id = findfirst(out.ph .== "liq")
+        
+                                if  out.ph_frac_vol[id] > e2_liq/100.0
+                                    ratio        = 1.0 - e2_remain/100.0/out.ph_frac_vol[id]
+                                    bulk_ .-= out.SS_vec[id].Comp .* (out.ph_frac[id]*ratio)
+                                end
+                            end
+
+                            unsafe_copyto!(gv.bulk_rock, pointer(bulk_), gv.len_ox)            # copy the bulk-rock
+                            LibMAGEMin.norm_array(gv.bulk_rock, gv.len_ox)
+
+                            out     = point_wise_minimization(  P_, T_[j], gv, z_b, DB, splx_data;
+                            buffer_n=bufferN1, name_solvus=true, scp=scp, rm_list=phase_selection)
+
+                            Out_PT[j] = deepcopy(out)
+                        else
+                            Out_PT[j] = deepcopy(out)
+                        end
+                    end
+                    Out_rows[i] = Out_PT
+                    next!(progr)
+                end
+                finish!(progr)
+
+                for i=1:n
+                    for j=1:n
+                        Out_XY_new[(i-1)*n+j] = Out_rows[j][i]
+                    end
+                end
+
+            else #refinement of the TT diagram
+                for i = 1:n_new_points
+                    Tvec[i] = npoints[i][1];
+                    Pvec[i] = fixP;
+                    Bvec[i] = bufferN1;
+
+                    tmp_bulk = zeros(length(oxi))
+                    for j=1:length(data.ncorners[i])
+                        tmp_bulk .+= Out_XY[data.ncorners[i][j]].bulk
+                    end
+                    tmp_bulk  ./= Float64(length(data.ncorners[i]))
+                    Xvec[i]     = tmp_bulk
+
+                    if !isempty(data.split_cell_list) && boost == true
+                        tmp = [Out_XY[data.npoints_ig[i][j]].mSS_vec for j=1:length(data.npoints_ig[i])]
+                        Gvec[i] = vcat(tmp...)
+                    end
+                end
+
+                Out_XY_new  =   multi_point_minimization(   Pvec, Tvec, MAGEMin_data;
+                                                            X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol", G=Gvec, scp=scp, 
+                                                            rm_list=phase_selection, name_solvus=true, iguess=boost, callback_fn = update_progress); 
+
             end
         end
 
-        Out_XY_new  =   multi_point_minimization(   Pvec, Tvec, MAGEMin_data;
-                                                    X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol", G=Gvec, scp=scp, 
-                                                    rm_list=phase_selection, name_solvus=true, iguess=boost, callback_fn = update_progress); 
     else
         println("There is no new point to compute...")
     end

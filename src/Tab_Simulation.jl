@@ -128,10 +128,11 @@ function Tab_Simulation()
                                         dbc_col([ 
                                             dcc_dropdown(   id      = "diagram-dropdown",
                                             options = [
-                                                (label = "P-T diagram",         value = "pt"),
-                                                (label = "P-X diagram",         value = "px"),
-                                                (label = "T-X diagram",         value = "tx"),
-                                                (label = "PT-X diagram",        value = "ptx"),
+                                                (label = "P-T diagram (fixed composition)",         value = "pt"),
+                                                (label = "P-X diagram (fixed temperature)",         value = "px"),
+                                                (label = "T-X diagram (fixed pressure)",            value = "tx"),
+                                                (label = "PT-X diagram",                            value = "ptx"),
+                                                (label = "T-T diagram (poly-metamorphic)",          value = "tt"),
                                             ],
                                             value="pt" ,
                                             clearable   = false,
@@ -469,7 +470,191 @@ function Tab_Simulation()
                                         ]),
                                     ]),
                                     ], style = Dict("display" => "none"),id = "fixed-temperature-id"), #none, block
-                                   
+
+                                    # poly meta T 1
+                                    html_div([
+                                        html_div("‎ "),  
+                                        dbc_row([    
+                                            dbc_col([
+                                                html_div("Event 1", className="vertical-text", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 40))
+                                            ],width=1),
+                                            dbc_col([
+                                                html_div("", style = Dict("borderLeft" => "1px solid grey", "height" => "100%", "display" => "flex", "alignItems" => "center", "justifyContent" => "center"))
+                                            ], width = 1),
+                                            dbc_col([
+                                                dbc_row([
+                                                    dbc_col([ 
+                                                    ], width=5),
+                                                    dbc_col([ 
+                                                        html_h1("min", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                    ]),
+                                                    dbc_col([ 
+                                                        html_h1("max", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                    ]),
+                                                ]),    
+        
+                                                dbc_row([
+                                                    dbc_col([ 
+                                                        html_h1("Temperature [°C]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                                    ], width=5),
+                                                    dbc_col([ 
+                                                        dbc_row([
+                                                        dbc_col([ 
+                                                                # html_h1("T min", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                                dbc_input(
+                                                                    id      ="event1-tmin-id",
+                                                                    type    ="number", 
+                                                                    min     = 0.0, 
+                                                                    max     = 4000.0, 
+                                                                    value   = 800.0   ),
+                                                            ]),
+                                                            dbc_col([ 
+                                                                # html_h1("T max", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                                dbc_input(
+                                                                    id      = "event1-tmax-id",
+                                                                    type    = "number", 
+                                                                    min     = 0.0, 
+                                                                    max     = 4000.0,
+                                                                    value   = 1400.0   ),
+                                                            ]),
+                                                        ]),
+                                                    ]),
+                                                ]),
+        
+                                                dbc_row([
+                                                    dbc_col([ 
+                                                        html_h1("Liq extract threshold [vol%]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                                    ], width=5),
+                                                    dbc_col([ 
+                                                        dbc_row([
+                                                        dbc_col([ 
+                                                                # html_h1("T min", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                                dbc_input(
+                                                                    id      ="event1-threshold-id",
+                                                                    type    ="number", 
+                                                                    min     = 0.0, 
+                                                                    max     = 101.0, 
+                                                                    value   = 7.0   ),
+                                                            ]),
+                                                        ]),
+                                                    ]),
+                                                ]),
+                                                dbc_row([
+                                                    dbc_col([ 
+                                                        html_h1("Remaining liq fraction [vol%]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                                    ], width=5),
+                                                    dbc_col([ 
+                                                        dbc_row([
+                                                        dbc_col([ 
+                                                                # html_h1("T min", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                                dbc_input(
+                                                                    id      ="event1-remain-id",
+                                                                    type    ="number", 
+                                                                    min     = 0.0, 
+                                                                    max     = 100.0, 
+                                                                    value   = 1.0   ),
+                                                            ]),
+                                                        ]),
+                                                    ]),
+                                                ]),
+                                            
+                                            ], width=10)
+                                        ]),
+                                        
+
+
+
+                                    ], style = Dict("display" => "none"), id      = "event1-temperature-id"), #none, block
+                                    
+                                    # poly meta T 2
+                                    html_div("‎ "),  
+                                    html_div([
+                                        dbc_row([  
+                                        dbc_col([
+                                            html_div("Event 2", className="vertical-text", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 40 ))
+                                        ],width=1),
+                                        dbc_col([
+                                            html_div("", style = Dict("borderLeft" => "1px solid grey", "height" => "100%", "display" => "flex", "alignItems" => "center", "justifyContent" => "center"))
+                                        ], width = 1),
+                                        dbc_col([
+                                            dbc_row([
+                                                dbc_col([ 
+                                                ], width=5),
+                                                dbc_col([ 
+                                                    html_h1("min", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                ]),
+                                                dbc_col([ 
+                                                    html_h1("max", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                ]),
+                                            ]),                                                    
+                                            dbc_row([
+                                                dbc_col([ 
+                                                    html_h1("Temperature [°C]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                                ], width=5),
+                                                dbc_col([ 
+                                                    dbc_row([
+                                                    dbc_col([ 
+                                                            # html_h1("T min", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                            dbc_input(
+                                                                id      ="event2-tmin-id",
+                                                                type    ="number", 
+                                                                min     = 0.0, 
+                                                                max     = 4000.0, 
+                                                                value   = 800.0   ),
+                                                        ]),
+                                                        dbc_col([ 
+                                                            # html_h1("T max", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                            dbc_input(
+                                                                id      = "event2-tmax-id",
+                                                                type    = "number", 
+                                                                min     = 0.0, 
+                                                                max     = 4000.0,
+                                                                value   = 1400.0   ),
+                                                        ]),
+                                                    ]),
+                                                ]),
+                                            ]),
+
+                                            dbc_row([
+                                                dbc_col([ 
+                                                    html_h1("Liq extract threshold [vol%]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                                ], width=5),
+                                                dbc_col([ 
+                                                    dbc_row([
+                                                    dbc_col([ 
+                                                            # html_h1("T min", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                            dbc_input(
+                                                                id      ="event2-threshold-id",
+                                                                type    ="number", 
+                                                                min     = 0.0, 
+                                                                max     = 101.0, 
+                                                                value   = 101.0   ),
+                                                        ]),
+                                                    ]),
+                                                ]),
+                                            ]),
+                                            dbc_row([
+                                                dbc_col([ 
+                                                    html_h1("Remaining liq fraction [vol%]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                                ], width=6),
+                                                dbc_col([ 
+                                                    dbc_row([
+                                                    dbc_col([ 
+                                                            # html_h1("T min", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                            dbc_input(
+                                                                id      ="event2-remain-id",
+                                                                type    ="number", 
+                                                                min     = 0.0, 
+                                                                max     = 100.0, 
+                                                                value   = 1.0   ),
+                                                        ]),
+                                                    ]),
+                                                ]),
+                                            ]),
+                                        ], width=10),
+                                        ]),
+                                    ], style = Dict("display" => "none"), id      = "event2-temperature-id"), #none, block
+
 
                                     html_hr(),
                                     #subdivision
@@ -498,6 +683,7 @@ function Tab_Simulation()
 
                                     ]),
                                     #refinement type
+                                    html_div([
                                     dbc_row([
                                         dbc_col([ 
                                             html_h1("Refinement type", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
@@ -510,7 +696,7 @@ function Tab_Simulation()
                                             ],
                                             value   = "ph", 
                                             clearable   = false,
-                                            multi   = false),
+                                            multi       = false),
                                         ]),
                                     ]),
                                     #refinement levels 
@@ -541,6 +727,8 @@ function Tab_Simulation()
                                             multi       =  false),
                                         ]),
                                     ]),
+                                    ], style = Dict("display" => "block"), id      = "display-refine-option-id"), #none, block
+
                                     html_hr(),
                                     #buffer
                                     dbc_row([

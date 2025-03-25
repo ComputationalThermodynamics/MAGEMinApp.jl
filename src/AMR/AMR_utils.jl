@@ -10,6 +10,7 @@ mutable struct AMR_data
     points          :: Vector{Vector{Float64}}
     npoints         :: Vector{Vector{Float64}}
     npoints_ig      :: Vector{Tuple}
+    ncorners        :: Vector{Tuple}
     hash_map        :: Dict{Vector{Float64}, Int}
     bnd_cells       :: Vector{Tuple}
     split_cell_list :: Vector{Int64}
@@ -37,6 +38,7 @@ function init_AMR(Xrange,Yrange,igs)
     cells           = Vector{Vector{Int64}}(undef, 0)
     npoints         = Vector{Vector{Float64}}(undef, 0)
     npoints_ig      = Vector{Tuple}(undef, 0)               #this create a tuple listing the nearby points for each new point to be used as initial guess
+    ncorners        = Vector{Tuple}(undef, 0)
     ncells          = Vector{Vector{Int64}}(undef, 0)
     hash_map        = Dict{Vector{Float64}, Int}()
     bnd_cells       = Vector{Tuple}(undef, 0)
@@ -67,6 +69,7 @@ function init_AMR(Xrange,Yrange,igs)
                         points,
                         npoints,
                         npoints_ig,
+                        ncorners,
                         hash_map,
                         bnd_cells,
                         split_cell_list,
@@ -145,6 +148,7 @@ function perform_AMR(data)
     npoints         = Vector{Vector{Float64}}(undef, 0)
     npoints_ig      = Vector{Tuple}(undef, 0)
     ncells          = Vector{Vector{Int64}}(undef, 0)
+    ncorners        = Vector{Tuple}(undef, 0)
 
     hash_map0       = copy(data.hash_map)
 
@@ -155,10 +159,10 @@ function perform_AMR(data)
     e_coor = [1.0 1.0; 2.0 1.0; 2.0 0.0; 2.0 -1.0; 1.0 -1.0; 1.0 0.0];          e_coor = vcat(e_coor,e_coor .* -1.0)
     s_coor = [1.0 -1.0; 1.0 -2.0; 0.0 -2.0; -1.0 -2.0; -1.0 -1.0; 0.0 -1.0];    s_coor = vcat(s_coor,s_coor .* -1.0)
     w_coor = [-1.0 -1.0; -2.0 -1.0; -2.0 0.0; -2.0 1.0; -1.0 1.0; -1.0 0.0];    w_coor = vcat(w_coor,w_coor .* -1.0)
-    p_coor = [0.0 2.0; 2.0 0.0; 0.0 -2.0; -2.0 0.0];                            
+    p_coor = [0.0 2.0; 2.0 0.0; 0.0 -2.0; -2.0 0.0];
+
     for i=1:ns
         delta   = (data.points[data.cells[data.split_cell_list[i]][3]] .- data.points[data.cells[data.split_cell_list[i]][1]]) ./ 2.0
-
         tmp     = data.points[data.cells[data.split_cell_list[i]][1]]/2.0 + data.points[data.cells[data.split_cell_list[i]][3]]/2.0
         if haskey(data.hash_map, tmp)
             p = data.hash_map[tmp]
@@ -172,6 +176,7 @@ function perform_AMR(data)
                     list    = (list..., p2)
                 end
             end
+            push!(ncorners, (data.cells[data.split_cell_list[i]][1], data.cells[data.split_cell_list[i]][2], data.cells[data.split_cell_list[i]][3], data.cells[data.split_cell_list[i]][4]))
             push!(npoints_ig, list)
             tp += 1
             data.hash_map[tmp] = tp
@@ -193,6 +198,7 @@ function perform_AMR(data)
                     list    = (list..., p2)
                 end
             end
+            push!(ncorners, (data.cells[data.split_cell_list[i]][1], data.cells[data.split_cell_list[i]][2])) 
             push!(npoints_ig, list)
 
             tp += 1
@@ -215,6 +221,7 @@ function perform_AMR(data)
                     list    = (list..., p2)
                 end
             end
+            push!(ncorners, (data.cells[data.split_cell_list[i]][2], data.cells[data.split_cell_list[i]][3]))
             push!(npoints_ig, list)
             
             tp += 1
@@ -237,6 +244,7 @@ function perform_AMR(data)
                     list    = (list..., p2)
                 end
             end
+            push!(ncorners, (data.cells[data.split_cell_list[i]][3], data.cells[data.split_cell_list[i]][4]))
             push!(npoints_ig, list)
             
             tp += 1
@@ -259,6 +267,7 @@ function perform_AMR(data)
                     list    = (list..., p2)
                 end
             end
+            push!(ncorners, (data.cells[data.split_cell_list[i]][1], data.cells[data.split_cell_list[i]][4]))
             push!(npoints_ig, list)
             
             tp += 1
@@ -271,6 +280,8 @@ function perform_AMR(data)
         push!(ncells, [w, data.cells[data.split_cell_list[i]][2], n, c])
         push!(ncells, [c, n, data.cells[data.split_cell_list[i]][3], e])
         push!(ncells, [s, c, e, data.cells[data.split_cell_list[i]][4]])
+
+        # push!(ncorners, [data.cells[data.split_cell_list[i]][1], data.cells[data.split_cell_list[i]][2], data.cells[data.split_cell_list[i]][3], data.cells[data.split_cell_list[i]][4]])
     end
 
     data.points     = vcat(data.points, npoints)
@@ -297,6 +308,7 @@ function perform_AMR(data)
     data.ncells     = ncells
     data.npoints    = npoints
     data.npoints_ig = npoints_ig
+    data.ncorners   = ncorners
 
     return data
 end
