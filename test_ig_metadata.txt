@@ -1,1 +1,0 @@
-# MAGEMin  1.7.4 [18/03/2025];2025-03-21, 20:30:27.266; using database Igneous (Green et al., 2025, corrected after Holland et al., 2018)
