@@ -366,6 +366,8 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         dgtype = "Temperature-Composition, fixed pressure"
     elseif diagType == "ptx"
         dgtype = "Pressure Temperature path-Composition"
+    elseif diagType == "tt"
+        dgtype = "Polymetamorphic T-T path, fixed pressure"
     end
 
     if solver == "lp"
@@ -434,6 +436,12 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         PD_infos[1] *= "PT path [P kbar]<br>"
         PD_infos[1] *= "PT path [T °C]<br>"
         # add ptx path here
+    elseif diagType == "ttx"
+        PD_infos[1] *= "Starting comp [mol] <br>"
+        if bufferType != "none"
+            PD_infos[1] *= "Buffer factor <br>"
+        end           
+        PD_infos[1] *= "Fixed Pres <br>"
     end
     oxi_string = replace.(oxi,"2"=>"₂", "3"=>"₃");
 
@@ -493,7 +501,18 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         end        
         PD_infos[2] *= join(Pres, " ") *"<br>"
         PD_infos[2] *= join(Temp, " ") *"<br>"
+    elseif diagType == "tt"
+        PD_infos[2] *= join(round.(bulk_L,digits=6), " ") *"<br>"
+        if bufferType != "none"
+            PD_infos[2] *= string(bufferN1) *"<br>"
+        end        
+        # PD_infos[2] *= join(round.(bulk_R,digits=6), " ") *"<br>"
+        # if bufferType != "none"
+        #     PD_infos[2] *= string(bufferN2) *"<br>"
+        # end        
+        PD_infos[2] *= join(fixP, " ") *"<br>"
     end
+
     PD_infos[2] *= "_"
 
     return PD_infos
@@ -505,7 +524,7 @@ end
 
     returns axis titles and axis ranges
 """
-function diagram_type(diagType, tmin, tmax, pmin, pmax)
+function diagram_type(diagType, tmin, tmax, pmin, pmax, e1_tmin, e1_tmax, e2_tmin, e2_tmax)
     if diagType == "pt"
         xtitle = "Temperature [Celsius]"
         ytitle = "Pressure [kbar]"
@@ -526,6 +545,11 @@ function diagram_type(diagType, tmin, tmax, pmin, pmax)
         Yrange          = (Float64(0.0),Float64(1.0))
         xtitle = "Composition [X0 -> X1]"
         ytitle = "Pressure-Temperature path"
+    elseif diagType == "tt"
+            xtitle = "Event 2: temperature [Celsius]"
+            ytitle = "Event 1: temperature [Celsius]"
+            Xrange          = (Float64(e2_tmin),Float64(e2_tmax))
+            Yrange          = (Float64(e1_tmin),Float64(e1_tmax))
     end
     return xtitle, ytitle, Xrange, Yrange
 end
@@ -535,13 +559,16 @@ end
 
     converts input to float if the provided value is an integer
 """
-function convert2Float64(bufferN1, bufferN2,fixT,fixP)
+function convert2Float64(bufferN1, bufferN2,fixT,fixP,e1_liq,e2_liq,e1_remain,e2_remain)
     bufferN1 = Float64(bufferN1)
     bufferN2 = Float64(bufferN2)
     fixT     = Float64(fixT)
     fixP     = Float64(fixP)
-
-    return bufferN1, bufferN2, fixT, fixP
+    e1_liq   = Float64(e1_liq)
+    e2_liq   = Float64(e2_liq)
+    e1_remain   = Float64(e1_remain)
+    e2_remain   = Float64(e2_remain)
+    return bufferN1, bufferN2, fixT, fixP, e1_liq, e2_liq,e1_remain, e2_remain
 end
 
 """
@@ -731,8 +758,9 @@ end
 """
 function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_size, 
                                     Xrange,     Yrange,     fieldname,  customTitle,
-                                    dtb,        diagType,   verbose,    scp,    solver,    boost,  phase_selection,
+                                    dtb,        dataset,    diagType,   verbose,    scp,    solver,    boost,  phase_selection,
                                     fixT,       fixP,
+                                    e1_liq,     e2_liq,     e1_remain,  e2_remain,
                                     sub,        refLvl,
                                     watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  PTpath,
                                     bulk_L,     bulk_R,     oxi,
@@ -771,6 +799,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
         CompProgress.stage = "Initialize MAGEMin"
         MAGEMin_data    =   Initialize_MAGEMin( dtb;
                                                 verbose     = false,
+                                                dataset     = dataset,
                                                 limitCaOpx  = limitCaOpx,
                                                 CaOpxLim    = CaOpxLim,
                                                 mbCpx       = mbCpx,
@@ -787,6 +816,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
 
         Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(  data, MAGEMin_data, diagType, PTpath,
                                                         phase_selection, fixT, fixP,
+                                                        e1_liq,     e2_liq,     e1_remain,  e2_remain,
                                                         oxi, bulk_L, bulk_R,
                                                         bufferType, bufferN1, bufferN2,
                                                         scp, boost, refType,
@@ -795,24 +825,27 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
         
         #________________________________________________________________________________________#     
         # Refine the mesh along phase boundaries
-        CompProgress.stage = "refine grid level ->"
-        for irefine = 1:refLvl
-            # update computational progress 
-            CompProgress.refinement_level = irefine
-            CompProgress.tinit =  time()
-            
-            data    = select_cells_to_split_and_keep(data)
-            data    = perform_AMR(data)
-            CompProgress.total_points = length(data.npoints)
-            t = @elapsed Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(              data, MAGEMin_data, diagType, PTpath,
-                                                                                    phase_selection, fixT, fixP,
-                                                                                    oxi, bulk_L, bulk_R,
-                                                                                    bufferType, bufferN1, bufferN2,
-                                                                                    scp, boost, refType,
-                                                                                    pChip_wat, pChip_T ) # recompute points that have not been computed before
-                                                                     
-            println("Computed $(length(data.npoints)) new points in $t seconds")
-        end
+        # if diagType != "tt"
+            CompProgress.stage = "refine grid level ->"
+            for irefine = 1:refLvl
+                # update computational progress 
+                CompProgress.refinement_level = irefine
+                CompProgress.tinit =  time()
+                
+                data    = select_cells_to_split_and_keep(data)
+                data    = perform_AMR(data)
+                CompProgress.total_points = length(data.npoints)
+                t = @elapsed Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(              data, MAGEMin_data, diagType, PTpath,
+                                                                                        phase_selection, fixT, fixP,
+                                                                                        e1_liq,     e2_liq,     e1_remain,  e2_remain,
+                                                                                        oxi, bulk_L, bulk_R,
+                                                                                        bufferType, bufferN1, bufferN2,
+                                                                                        scp, boost, refType,
+                                                                                        pChip_wat, pChip_T ) # recompute points that have not been computed before
+                                                                        
+                println("Computed $(length(data.npoints)) new points in $t seconds")
+            end
+        # end
 
         for i = 1:Threads.maxthreadid()
             finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i])
@@ -941,9 +974,10 @@ end
 """
 function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                 Xrange,     Yrange,     fieldname,  customTitle,
-                                dtb,        diagType,   watsat,  watsat_val,   
+                                dtb,        dataset,    diagType,   watsat,  watsat_val,   
                                 verbose,    scp,        solver, boost, phase_selection,
                                 fixT,       fixP,
+                                e1_liq,     e2_liq,     e1_remain,  e2_remain,
                                 sub,        refLvl,
                                 cpx,        limOpx,     limOpxVal,  PTpath,
                                 bulk_L,     bulk_R,     oxi,
@@ -959,6 +993,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
 
     MAGEMin_data    =   Initialize_MAGEMin( dtb;
                                             verbose     = false,
+                                            dataset     = dataset,
                                             limitCaOpx  = limitCaOpx,
                                             CaOpxLim    = CaOpxLim,
                                             mbCpx       = mbCpx,
@@ -969,6 +1004,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
     data    = perform_AMR(data)
     t = @elapsed Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin( data,       MAGEMin_data, diagType, PTpath,
                                                                             phase_selection, fixT, fixP,
+                                                                            e1_liq,     e2_liq,     e1_remain,  e2_remain,
                                                                             oxi, bulk_L, bulk_R,
                                                                             bufferType, bufferN1, bufferN2, 
                                                                             scp, boost, refType,
@@ -1008,7 +1044,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
     layout[:annotations] = annotations 
     layout[:title] = attr(
         text    = customTitle,
-        x       = 0.4,
+        x       = 0.5,
         xanchor = "center",
         yanchor = "top"
     )

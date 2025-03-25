@@ -164,6 +164,10 @@ function Tab_TraceElement_Callbacks(app)
         State("tmax-id",                "value"         ),           # tmax
         State("pmin-id",                "value"         ),           # pmin
         State("pmax-id",                "value"         ),           # pmax
+        State("event1-tmin-id",         "value"         ),           # tmin
+        State("event1-tmax-id",         "value"         ),           # tmax
+        State("event2-tmin-id",         "value"         ),           # tmin
+        State("event2-tmax-id",         "value"         ),           # tmax
 
         State("table-bulk-rock",        "data"          ),           # bulk-rock 1
         State("table-2-bulk-rock",      "data"          ),           # bulk-rock 2
@@ -207,7 +211,7 @@ function Tab_TraceElement_Callbacks(app)
 
                 colorMap,   smooth,     rangeColor, set_white, reverse,    minColor, maxColor,
                 updateTitle,customTitle,tepm,       varBuilder, norm, type, norm_te,
-                dtb,        diagType,   tmin,       tmax,       pmin,       pmax,
+                dtb,        diagType,   tmin,       tmax,       pmin,       pmax,       e1_tmin,    e1_tmax,    e2_tmin,    e2_tmax,  
                 bulk1,      bulk2,
                 sub,        refType,    refLvl,
                 fixT,       fixP,       solver,     bufferType, bufferN1,   bufferN2,   PTpath,
@@ -216,7 +220,7 @@ function Tab_TraceElement_Callbacks(app)
                 isoLineStyle, isoLineWidth, isoColorLine, isoLabelSize,   
                 minIso,     stepIso,    maxIso, txt_list
 
-        xtitle, ytitle, Xrange, Yrange  = diagram_type(diagType, tmin, tmax, pmin, pmax) 
+        xtitle, ytitle, Xrange, Yrange  = diagram_type(diagType, tmin, tmax, pmin, pmax, e1_tmin, e1_tmax, e2_tmin, e2_tmax) 
         bulk_L, bulk_R, oxi             = get_bulkrock_prop(bulk1, bulk2) 
         colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)              # get colormap information
         bid                             = pushed_button( callback_context() )                           # get the ID of the last pushed button

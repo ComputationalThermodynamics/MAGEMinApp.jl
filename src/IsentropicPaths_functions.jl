@@ -1,7 +1,7 @@
 
 function compute_new_IsentropicPath(    nsteps,     bulk_ini,   oxi,    phase_selection,    pure_phase_selection,
                                         Pini,       Tini,       Pfinal, tolerance,
-                                        dtb,        bufferType, solver,
+                                        dtb,        dataset,    bufferType, solver,
                                         verbose,    bulk,       bufferN,
                                         cpx,        limOpx,     limOpxVal                                )
 
@@ -29,6 +29,7 @@ function compute_new_IsentropicPath(    nsteps,     bulk_ini,   oxi,    phase_se
     GC.gc() 
     gv, z_b, DB, splx_data = init_MAGEMin(  dtb;        
                                             verbose     = verbose,
+                                            dataset     = dataset,
                                             mbCpx       = mbCpx,
                                             limitCaOpx  = limitCaOpx,
                                             CaOpxLim    = CaOpxLim,
@@ -52,7 +53,7 @@ function compute_new_IsentropicPath(    nsteps,     bulk_ini,   oxi,    phase_se
 
             P = Pini + (j-1)*( (Pfinal - Pini)/ (nsteps+1) )
 
-            a           = Out_ISOS[j-1].T_C - 2*delta_T
+            a           = Out_ISOS[j-1].T_C - 2.0*delta_T
             b           = Out_ISOS[j-1].T_C
             n           = 1
             conv        = 0

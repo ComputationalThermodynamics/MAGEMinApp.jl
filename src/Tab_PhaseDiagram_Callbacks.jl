@@ -724,6 +724,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         State("diagram-dropdown",       "value"),           # pt, px, tx
         State("database-dropdown",      "value"),           # mp, mb, ig ,igd, um, alk
+        State("dataset-dropdown",       "value"),           # pt, px, tx
         State("watsat-dropdown",        "value"),           # false,true -> 0,1
         State("watsat-val-id",        "value"),           # false,true -> 0,1
         
@@ -738,7 +739,16 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("tmax-id",                "value"),           # tmax
         State("pmin-id",                "value"),           # pmin
         State("pmax-id",                "value"),           # pmax
+        State("event1-tmin-id",         "value"),           # tmin
+        State("event1-tmax-id",         "value"),           # tmax
+        State("event2-tmin-id",         "value"),           # tmin
+        State("event2-tmax-id",         "value"),           # tmax
 
+        State("event1-threshold-id",    "value"),           # tmax
+        State("event2-threshold-id",    "value"),           # tmax
+        State("event1-remain-id",       "value"),           # tmax
+        State("event2-remain-id",       "value"),           # tmax
+    
         State("fixed-temperature-val-id","value"),          # fix T
         State("fixed-pressure-val-id",  "value"),           # fix P
 
@@ -800,8 +810,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             minColor,   maxColor,
             colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  updateTitle,     loadstateid, 
             field_size, customTitle, txt_list,
-            diagType,   dtb,        watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  ph_selection, pure_ph_selection, PTpath,
-            tmin,       tmax,       pmin,       pmax,
+            diagType,   dtb,        dataset,    watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  ph_selection, pure_ph_selection, PTpath,
+            tmin,       tmax,       pmin,       pmax,       e1_tmin,    e1_tmax,    e2_tmin,    e2_tmax,    e1_liq,     e2_liq,  e1_remain,     e2_remain,      
             fixT,       fixP,
             sub,        refType,    refLvl,
             bufferType, solver,     boost,      verbose,    scp,
@@ -817,8 +827,8 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         phase_selection                 = remove_phases(string_vec_diff(ph_selection,pure_ph_selection,dtb),dtb)
         smooth                          = smooth
-        xtitle, ytitle, Xrange, Yrange  = diagram_type(diagType, tmin, tmax, pmin, pmax)                # get axis information
-        bufferN1, bufferN2, fixT, fixP  = convert2Float64(bufferN1, bufferN2, fixT, fixP)               # convert buffer_n to float
+        xtitle, ytitle, Xrange, Yrange  = diagram_type(diagType, tmin, tmax, pmin, pmax, e1_tmin, e1_tmax, e2_tmin, e2_tmax)                # get axis information
+        bufferN1, bufferN2, fixT, fixP, e1_liq, e2_liq,  e1_remain,  e2_remain,  = convert2Float64(bufferN1, bufferN2, fixT, fixP, e1_liq, e2_liq,     e1_remain,  e2_remain,)               # convert buffer_n to float
         bid                             = pushed_button( callback_context() )                           # get the ID of the last pushed button
         bulkte_L, bulkte_R, elem        = get_terock_prop(bulkte1, bulkte2)
         colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)              # get colormap information
@@ -857,8 +867,9 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             data_plot, layout, npoints, meant, txt_list  =  compute_new_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                                                                         Xrange,     Yrange,     fieldname,  customTitle,
-                                                                                        dtb,        diagType,   verbose,    scp,        solver,     boost, phase_selection,
+                                                                                        dtb,        dataset,    diagType,   verbose,    scp,        solver,     boost, phase_selection,
                                                                                         fixT,       fixP,
+                                                                                        e1_liq,     e2_liq,     e1_remain,  e2_remain,
                                                                                         sub,        refLvl,
                                                                                         watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  PTpath,
                                                                                         bulk_L,     bulk_R,     oxi,
@@ -907,8 +918,9 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             data_plot, layout, npoints, meant, txt_list   =  refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                                                                     Xrange,     Yrange,     fieldname,  customTitle,
-                                                                                    dtb,        diagType,   watsat,     watsat_val, verbose,    scp,    solver,  boost, phase_selection,
+                                                                                    dtb,        dataset,    diagType,   watsat,     watsat_val, verbose,    scp,    solver,  boost, phase_selection,
                                                                                     fixT,       fixP,
+                                                                                    e1_liq,     e2_liq,     e1_remain,  e2_remain,
                                                                                     sub,        refLvl,
                                                                                     cpx,        limOpx,     limOpxVal,  PTpath,
                                                                                     bulk_L,     bulk_R,     oxi,

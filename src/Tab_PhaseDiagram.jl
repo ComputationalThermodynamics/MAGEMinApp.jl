@@ -68,6 +68,7 @@ function Tab_PhaseDiagram()
 
                                     ], style = Dict("display" => "none"), id      = "show-hidden-relay-button-id"), #none, block
                                 ]),
+                                html_div([
                                 dbc_row([
                                     dbc_button(
                                         "Refine uniformly", id="uni-refine-pb-button-raw", color="light", className="me-2", n_clicks=0,
@@ -84,6 +85,8 @@ function Tab_PhaseDiagram()
                                                             "background-color" => "#d3f2ce",
                                                             "width"         => "100%" )), 
                                 ]),
+                                ], style = Dict("display" => "block"), id      = "display-refine-option-2-id"), #none, block
+
                             ], width=2), 
 
                         ]), 

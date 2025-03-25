@@ -202,6 +202,9 @@ function Tab_Simulation_Callbacks(app)
         Output("phase-selection","value"),
         Output("pure-phase-selection","options"),
         Output("pure-phase-selection","value"),
+        Output("dataset-dropdown","options"),
+        Output("dataset-dropdown","value"),
+
         Input("database-dropdown","value"),
 
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
@@ -226,7 +229,13 @@ function Tab_Simulation_Callbacks(app)
         pure_phase_selection_value   = pp_disp
 
 
-        return phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value
+        dataset_options = [Dict(    "label"     => "ds$(db_in.dataset_opt[i])",
+                                    "value"     => db_in.dataset_opt[i] )
+                                for i = 1:length(db_in.dataset_opt) ]
+        dataset_value    = db_in.db_dataset
+
+
+        return phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value, dataset_options, dataset_value
     end
 
     
@@ -619,6 +628,10 @@ function Tab_Simulation_Callbacks(app)
         Output("test-2-te-id", "style"),
         Output("table-2-te-id", "style"),
         Output("subsolsat-id", "style"),
+        Output("event1-temperature-id", "style"),
+        Output("event2-temperature-id", "style"),
+        Output("display-refine-option-id", "style"),
+        Output("display-refine-option-2-id", "style"),
         Input("diagram-dropdown", "value"),
     ) do value
 
@@ -632,7 +645,11 @@ function Tab_Simulation_Callbacks(app)
             PTx     = Dict("display" => "none")
             testte2 = Dict("display" => "block")  
             tabte2  = Dict("display" => "block")  
-            watsat  = Dict("display" => "none")  
+            watsat  = Dict("display" => "none")
+            T1      = Dict("display" => "none")
+            T2      = Dict("display" => "none")
+            refine  = Dict("display" => "block")  
+            refine2 = Dict("display" => "block")  
         elseif value == "tx"
             Tstyle  = Dict("display" => "none")
             Pstyle  = Dict("display" => "block")
@@ -644,6 +661,10 @@ function Tab_Simulation_Callbacks(app)
             testte2 = Dict("display" => "block")  
             tabte2  = Dict("display" => "block") 
             watsat  = Dict("display" => "none")  
+            T1      = Dict("display" => "none")
+            T2      = Dict("display" => "none")
+            refine  = Dict("display" => "block")  
+            refine2 = Dict("display" => "block")
         elseif value == "pt"
             Tstyle  = Dict("display" => "none")
             Pstyle  = Dict("display" => "none")
@@ -654,7 +675,11 @@ function Tab_Simulation_Callbacks(app)
             PTx     = Dict("display" => "none")
             testte2 = Dict("display" => "none")  
             tabte2  = Dict("display" => "none") 
-            watsat  = Dict("display" => "block")  
+            watsat  = Dict("display" => "block")
+            T1      = Dict("display" => "none")
+            T2      = Dict("display" => "none")  
+            refine  = Dict("display" => "block")  
+            refine2 = Dict("display" => "block")
         elseif value == "ptx"
             Tstyle  = Dict("display" => "none")
             Pstyle  = Dict("display" => "none")
@@ -666,9 +691,42 @@ function Tab_Simulation_Callbacks(app)
             testte2 = Dict("display" => "block")  
             tabte2  = Dict("display" => "block") 
             watsat  = Dict("display" => "none")  
+            T1      = Dict("display" => "none")
+            T2      = Dict("display" => "none")
+            refine  = Dict("display" => "block")  
+            refine2 = Dict("display" => "block")
+        elseif value == "tt"
+            Tstyle  = Dict("display" => "none")
+            Pstyle  = Dict("display" => "block")
+            Ts      = Dict("display" => "none")
+            Ps      = Dict("display" => "none")
+            test2   = Dict("display" => "none")  
+            table2  = Dict("display" => "none") 
+            PTx     = Dict("display" => "none")
+            testte2 = Dict("display" => "none")  
+            tabte2  = Dict("display" => "none") 
+            watsat  = Dict("display" => "none")  
+            T1      = Dict("display" => "block")
+            T2      = Dict("display" => "block")
+            refine  = Dict("display" => "block")  #was none, trying to refine TT diagrams now
+            refine2 = Dict("display" => "block")  #was none, trying to refine TT diagrams now
+        else
+            Tstyle  = Dict("display" => "none")
+            Pstyle  = Dict("display" => "none")
+            Ts      = Dict("display" => "none")
+            Ps      = Dict("display" => "none")
+            test2   = Dict("display" => "none")  
+            table2  = Dict("display" => "none") 
+            PTx     = Dict("display" => "none")
+            testte2 = Dict("display" => "none")  
+            tabte2  = Dict("display" => "none") 
+            watsat  = Dict("display" => "none")  
+            T1      = Dict("display" => "none")
+            T2      = Dict("display" => "none")
+            refine  = Dict("display" => "none")  
         end
 
-        return Tstyle, Pstyle, Ts, Ps, test2, table2, PTx, testte2, tabte2, watsat
+        return Tstyle, Pstyle, Ts, Ps, test2, table2, PTx, testte2, tabte2, watsat, T1, T2, refine, refine2
     end
 
 

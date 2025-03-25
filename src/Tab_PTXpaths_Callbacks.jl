@@ -300,6 +300,7 @@ function Tab_PTXpaths_Callbacks(app)
         State("display-solidus-textarea",     "value"),
 
         State("database-dropdown-ptx",  "value"),
+        State("dataset-dropdown-ptx",  "value"),
         State("buffer-dropdown-ptx",    "value"),
         State("solver-dropdown-ptx",    "value"),    
         State("verbose-dropdown-ptx",   "value"),   
@@ -316,9 +317,9 @@ function Tab_PTXpaths_Callbacks(app)
 
         ) do    compute,    compute_sol,     phase_selection,   pressure,   tolerance, sol_pressure, sol_tolerance,
                 Tliq,       Tsol,
-                dtb,        bufferType,     solver,
+                dtb,        dataset,        bufferType,     solver,
                 verbose,    bulk,           bufferN,
-                cpx,        limOpx,         limOpxVal,          test,       sysunit
+                cpx,        limOpx,         limOpxVal,      test,       sysunit
 
         bid             = pushed_button( callback_context() )    # get which button has been pushed
 
@@ -327,7 +328,7 @@ function Tab_PTXpaths_Callbacks(app)
             bulk_ini, bulk_ini, oxi = get_bulkrock_prop(bulk, bulk)  
 
             Tliq = compute_Tliq(    pressure,   tolerance,  bulk_ini,   oxi,    phase_selection,
-                                    dtb,        bufferType, solver,
+                                    dtb,        dataset,    bufferType, solver,
                                     verbose,    bulk,       bufferN,
                                     cpx,        limOpx,     limOpxVal  )
         elseif bid == "find-solidus-button"
@@ -335,7 +336,7 @@ function Tab_PTXpaths_Callbacks(app)
             bulk_ini, bulk_ini, oxi = get_bulkrock_prop(bulk, bulk)  
 
             Tsol = compute_Tsol(    sol_pressure,   sol_tolerance,  bulk_ini,   oxi,    phase_selection,
-                                    dtb,        bufferType, solver,
+                                    dtb,        dataset,    bufferType, solver,
                                     verbose,    bulk,       bufferN,
                                     cpx,        limOpx,     limOpxVal  )
         end
@@ -368,6 +369,7 @@ function Tab_PTXpaths_Callbacks(app)
         State("variable-buffer-ptx-id", "value"),
         
         State("database-dropdown-ptx",  "value"),
+        State("dataset-dropdown-ptx",  "value"),
         State("buffer-dropdown-ptx",    "value"),
         State("solver-dropdown-ptx",    "value"),    
         State("verbose-dropdown-ptx",   "value"),   
@@ -388,7 +390,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         ) do    compute,    upsys,      
                 sys_unit,   phase_selection, pure_phase_selection,    phase_list, nsteps,     PTdata,     mode,   assim,  var_buffer,
-                dtb,        bufferType, solver,
+                dtb,        dataset,    bufferType, solver,
                 verbose,    bulk,       bulk2,      bufferN,
                 cpx,        limOpx,     limOpxVal,  test,   sysunit,
                 nCon,       nRes  
@@ -407,7 +409,7 @@ function Tab_PTXpaths_Callbacks(app)
             bulk_ini, bulk_assim, oxi = get_bulkrock_prop(bulk, bulk2; sys_unit=sys_unit)  
 
             compute_new_PTXpath(    nsteps,     PTdata,     mode,       bulk_ini,  bulk_assim,  oxi,    phase_selection,    assim, var_buffer,
-                                    dtb,        bufferType, solver,
+                                    dtb,        dataset,    bufferType, solver,
                                     verbose,    bufferN,
                                     cpx,        limOpx,     limOpxVal,
                                     nCon,       nRes                                  )
@@ -458,6 +460,7 @@ function Tab_PTXpaths_Callbacks(app)
         else 
             style  = Dict("display" => "none")
         end
+
         return style
     end
 
@@ -541,6 +544,9 @@ function Tab_PTXpaths_Callbacks(app)
         Output("phase-selection-PTX","value"),
         Output("pure-phase-selection-PTX","options"),
         Output("pure-phase-selection-PTX","value"),
+
+        Output("dataset-dropdown-ptx","options"),
+        Output("dataset-dropdown-ptx","value"),
         Input("select-bulk-unit-ptx","value"),
 
         Input("test-dropdown-ptx","value"),
@@ -597,8 +603,12 @@ function Tab_PTXpaths_Callbacks(app)
                                                 for i in pp_disp ]
         pure_phase_selection_value   = pp_disp
 
+        dataset_options = [Dict(    "label"     => "ds$(db_in.dataset_opt[i])",
+                                    "value"     => db_in.dataset_opt[i] )
+                                for i = 1:length(db_in.dataset_opt) ]
+        dataset_value    = db_in.db_dataset
 
-        return data, opts, val, cap, phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value              
+        return data, opts, val, cap, phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value, dataset_options, dataset_value
     end
 
 

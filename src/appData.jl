@@ -738,7 +738,4 @@ AppData = ( contribs            = contribs,
             dict_em             = dict_em,  
             dict_ss             = dict_ss,
             db_inf              = db_inf,
-            # CompProgress        = CompProgress,
-            # message             = message,
-            # message2            = message2,
             )   
