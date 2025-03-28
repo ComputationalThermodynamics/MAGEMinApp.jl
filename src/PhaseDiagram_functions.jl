@@ -436,7 +436,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         PD_infos[1] *= "PT path [P kbar]<br>"
         PD_infos[1] *= "PT path [T °C]<br>"
         # add ptx path here
-    elseif diagType == "ttx"
+    elseif diagType == "tt"
         PD_infos[1] *= "Starting comp [mol] <br>"
         if bufferType != "none"
             PD_infos[1] *= "Buffer factor <br>"

@@ -371,38 +371,39 @@ function refine_MAGEMin(data,
                                                         rm_list=phase_selection, name_solvus=true, iguess=boost, callback_fn = update_progress); 
         else
             # if TT diagram does not exist, compute it
+            id_h2o = findfirst(oxi .== "H2O") # check if H2O is in the oxides
             if isempty(data.split_cell_list)    
                 n           = Int64(sqrt(n_new_points))
                 Out_col_1   = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,n)
                 start_bulk  = deepcopy(bulk_L)
                 for i=1:n
-                    out    = single_point_minimization(     fixP, npoints[i][2], MAGEMin_data;
+                    out     = single_point_minimization(    fixP, npoints[i][2], MAGEMin_data;
                                                             X=start_bulk, B=bufferN1, Xoxides=oxi, sys_in="mol",  scp=scp, 
                                                             rm_list=phase_selection, name_solvus=true)   
                     
                     if "fl" in out.ph || "H2O" in out.ph || "liq" in out.ph
                         if "fl" in out.ph
-                            id = findfirst(out.ph .== "fl")
-                            start_bulk .-= out.SS_vec[id].Comp .* out.ph_frac[id]
+                            id               = findfirst(out.ph .== "fl")
+                            start_bulk      .= out.bulk .- out.SS_vec[id].Comp .* out.ph_frac[id]
                         end
                         if "H2O" in out.ph
-                            id = findfirst(out.ph .== "H2O")
-                            start_bulk .-= out.PP_vec[id - out.n_SS].Comp .* out.ph_frac[id]
+                            id               = findfirst(out.ph .== "H2O")
+                            start_bulk      .= out.bulk .- out.PP_vec[id - out.n_SS].Comp .* out.ph_frac[id]
                         end
                         if "liq" in out.ph
                             id = findfirst(out.ph .== "liq")
 
                             if  out.ph_frac_vol[id] > e1_liq/100.0
-                                ratio        = 1.0 - e1_remain/100.0/out.ph_frac_vol[id]
-                                start_bulk .-= out.SS_vec[id].Comp .* (out.ph_frac[id]*ratio)
+                                ratio        = (out.ph_frac_vol[id] - e1_remain/100.0)/out.ph_frac_vol[id]
+                                start_bulk  .= out.bulk .- out.SS_vec[id].Comp .* (out.ph_frac[id]*ratio)
                             end
                         end
                         start_bulk ./= sum(start_bulk)
         
-                        out    = single_point_minimization(     fixP, npoints[i][2], MAGEMin_data;
-                                                                X=start_bulk, B=bufferN1, Xoxides=oxi, sys_in="mol",  scp=scp, 
-                                                                rm_list=phase_selection, name_solvus=true)   
-        
+                        out         = single_point_minimization(    fixP, npoints[i][2], MAGEMin_data;
+                                                                    X=start_bulk, B=bufferN1, Xoxides=oxi, sys_in="mol",  scp=scp, 
+                                                                    rm_list=phase_selection, name_solvus=true)   
+            
                         Out_col_1[i] = deepcopy(out)
                     else
                         Out_col_1[i] = deepcopy(out)
@@ -419,37 +420,33 @@ function refine_MAGEMin(data,
                     bulk_       = deepcopy(Out_col_1[i].bulk)
 
                     gv, z_b, DB, splx_data = get_data_thread(MAGEMin_data)
-        
-                    unsafe_copyto!(gv.bulk_rock, pointer(bulk_), gv.len_ox)            # copy the bulk-rock
-                    LibMAGEMin.norm_array(gv.bulk_rock, gv.len_ox)
-
+                    gv          = define_bulk_rock(gv, bulk_, oxi, "mol",unsafe_string(gv.db))
                     for j=1:n 
-                        out     = point_wise_minimization(  P_, T_[j], gv, z_b, DB, splx_data;
-                                buffer_n=bufferN1, name_solvus=true, scp=scp, rm_list=phase_selection)
 
-                        if "fl" in out.ph || "H2O" in out.ph
+                        out     = point_wise_minimization(  P_, T_[j], gv, z_b, DB, splx_data;
+                                                            buffer_n=bufferN1, name_solvus=true, scp=scp, rm_list=phase_selection)
+
+                        if "fl" in out.ph || "H2O" in out.ph || "liq" in out.ph
                             if "fl" in out.ph
-                                id = findfirst(out.ph .== "fl")
-                                bulk_ .-= out.SS_vec[id].Comp .* out.ph_frac[id] .* 1.25
+                                id              = findfirst(out.ph .== "fl")
+                                bulk_          .= out.bulk .- out.SS_vec[id].Comp .* out.ph_frac[id]
+                                bulk_[id_h2o]  += 1e-3;
                             end
                             if "H2O" in out.ph
-                                id = findfirst(out.ph .== "H2O")
-                                bulk_ .-= out.PP_vec[id - out.n_SS].Comp .* out.ph_frac[id] .* 1.25
+                                id              = findfirst(out.ph .== "H2O")
+                                bulk_          .= out.bulk .- out.PP_vec[id - out.n_SS].Comp .* out.ph_frac[id]
+                                bulk_[id_h2o]  += 1e-3;
                             end
                             if "liq" in out.ph
                                 id = findfirst(out.ph .== "liq")
-        
                                 if  out.ph_frac_vol[id] > e2_liq/100.0
-                                    ratio        = 1.0 - e2_remain/100.0/out.ph_frac_vol[id]
-                                    bulk_ .-= out.SS_vec[id].Comp .* (out.ph_frac[id]*ratio)
+                                    ratio        = (out.ph_frac_vol[id] - e2_remain/100.0)/out.ph_frac_vol[id]
+                                    bulk_       .= out.bulk .- out.SS_vec[id].Comp .* (out.ph_frac[id]*ratio)
                                 end
                             end
-
-                            unsafe_copyto!(gv.bulk_rock, pointer(bulk_), gv.len_ox)            # copy the bulk-rock
-                            LibMAGEMin.norm_array(gv.bulk_rock, gv.len_ox)
-
+                            gv      = define_bulk_rock(gv, bulk_, oxi, "mol",unsafe_string(gv.db))
                             out     = point_wise_minimization(  P_, T_[j], gv, z_b, DB, splx_data;
-                            buffer_n=bufferN1, name_solvus=true, scp=scp, rm_list=phase_selection)
+                                                                buffer_n=bufferN1, name_solvus=true, scp=scp, rm_list=phase_selection)
 
                             Out_PT[j] = deepcopy(out)
                         else
