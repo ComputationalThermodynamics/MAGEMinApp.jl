@@ -506,7 +506,7 @@ function Tab_Simulation()
                                                                     type    ="number", 
                                                                     min     = 0.0, 
                                                                     max     = 4000.0, 
-                                                                    value   = 800.0   ),
+                                                                    value   = 400.0   ),
                                                             ]),
                                                             dbc_col([ 
                                                                 # html_h1("T max", style = Dict("textAlign" => "center","font-size" => "100%")),
@@ -515,7 +515,7 @@ function Tab_Simulation()
                                                                     type    = "number", 
                                                                     min     = 0.0, 
                                                                     max     = 4000.0,
-                                                                    value   = 1400.0   ),
+                                                                    value   = 1000.0   ),
                                                             ]),
                                                         ]),
                                                     ]),
@@ -552,7 +552,7 @@ function Tab_Simulation()
                                                                     type    ="number", 
                                                                     min     = 0.0, 
                                                                     max     = 100.0, 
-                                                                    value   = 1.0   ),
+                                                                    value   = 2.0   ),
                                                             ]),
                                                         ]),
                                                     ]),
@@ -600,7 +600,7 @@ function Tab_Simulation()
                                                                 type    ="number", 
                                                                 min     = 0.0, 
                                                                 max     = 4000.0, 
-                                                                value   = 800.0   ),
+                                                                value   = 400.0   ),
                                                         ]),
                                                         dbc_col([ 
                                                             # html_h1("T max", style = Dict("textAlign" => "center","font-size" => "100%")),
@@ -609,7 +609,7 @@ function Tab_Simulation()
                                                                 type    = "number", 
                                                                 min     = 0.0, 
                                                                 max     = 4000.0,
-                                                                value   = 1400.0   ),
+                                                                value   = 1000.0   ),
                                                         ]),
                                                     ]),
                                                 ]),
@@ -636,7 +636,7 @@ function Tab_Simulation()
                                             dbc_row([
                                                 dbc_col([ 
                                                     html_h1("Remaining liq fraction [vol%]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
-                                                ], width=6),
+                                                ], width=5),
                                                 dbc_col([ 
                                                     dbc_row([
                                                     dbc_col([ 
@@ -646,7 +646,7 @@ function Tab_Simulation()
                                                                 type    ="number", 
                                                                 min     = 0.0, 
                                                                 max     = 100.0, 
-                                                                value   = 1.0   ),
+                                                                value   = 2.0   ),
                                                         ]),
                                                     ]),
                                                 ]),
@@ -770,9 +770,9 @@ function Tab_Simulation()
                                                 (label = "Legacy",      value = "lp"),
                                                 (label = "Hybrid",      value = "hyb")
                                             ],
-                                            value="hyb" ,
+                                            value="lp" ,
                                             clearable   = false,
-                                            multi   = false),
+                                            multi       = false),
                                         ]),
                                     ]),
                                     #verbose
