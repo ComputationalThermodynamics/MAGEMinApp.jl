@@ -1,4 +1,5 @@
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://github.com/ComputationalThermodynamics/Resources)
+
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://computationalthermodynamics.github.io/MAGEMin_C.jl/dev/)
 [![Build Status](https://github.com/ComputationalThermodynamics/MAGEMinApp.jl/workflows/CI/badge.svg)](https://github.com/ComputationalThermodynamics/MAGEMinApp.jl/actions)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14605704.svg)](https://doi.org/10.5281/zenodo.14605704)
 # MAGEMinApp.jl
