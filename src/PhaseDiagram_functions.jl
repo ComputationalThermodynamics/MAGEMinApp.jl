@@ -711,8 +711,8 @@ function tepm_function( diagType    :: String,
         KDs_dtb     = AppData.KDs_OL;
     end
 
-    bulkte_L          = adjust_chemical_system( KDs_dtb, bulkte_L, elem_TE );
-    bulkte_R          = adjust_chemical_system( KDs_dtb, bulkte_R, elem_TE );
+    bulkte_L      = adjust_chemical_system( KDs_dtb, bulkte_L, elem_TE );
+    bulkte_R      = adjust_chemical_system( KDs_dtb, bulkte_R, elem_TE );
     for i = 1:np
 
         if diagType != "pt"
@@ -1449,6 +1449,9 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
         if sys == "mol"
             mod     = "ph_frac"
             name    = ss*"_frac_[mol]"
+        elseif  sys == "vol"
+            mod     = "ph_frac_vol"
+            name    = ss*"_frac_[vol]"
         else 
             mod     = "ph_frac_wt"
             name    = ss*"_frac_[wt]"

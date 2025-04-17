@@ -1511,6 +1511,15 @@ function get_isopleth_map(  mod         ::String,
                     field[i] = 0.0
                 end
             end
+        elseif mod == "ph_frac_vol" 
+            for i=1:np
+                id       = findall(Out_XY[i].ph .== ss)
+                if ~isempty(id)  
+                    field[i] = Out_XY[i].ph_frac_vol[id[1] ]
+                else
+                    field[i] = 0.0
+                end
+            end
     elseif mod == "ss_MgNum"
         for i=1:np
             id       = findall(Out_XY[i].ph .== ss)
