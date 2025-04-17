@@ -461,8 +461,12 @@ function Tab_PhaseDiagram()
                                                                 (label = "ρ_solid",                 value = "rho_S"),
                                                                 (label = "ρ_melt",                  value = "rho_M"),
                                                                 (label = "Δρ",                      value = "Delta_rho"),
-                                                                (label = "Solid fraction",          value = "frac_S"),
-                                                                (label = "Melt fraction",           value = "frac_M"),                                                            
+                                                                (label = "Solid mol fraction",      value = "frac_S"),
+                                                                (label = "Solid wt fraction",       value = "frac_S_wt"),
+                                                                (label = "Solid vol fraction",      value = "frac_S_vol"),
+                                                                (label = "Melt mol fraction",       value = "frac_M"), 
+                                                                (label = "Melt wt fraction",        value = "frac_M_wt"),
+                                                                (label = "Melt vol fraction",       value = "frac_M_vol"),                                                                     
                                                                 (label = "Vp",                      value = "Vp"),
                                                                 (label = "Vs",                      value = "Vs"),                                                            
                                                                 (label = "Vp_S",                    value = "Vp_S"),
@@ -857,7 +861,8 @@ function Tab_PhaseDiagram()
                                                     dbc_col([
                                                         dcc_dropdown(   id      = "sys-unit-isopleth-dropdown",
                                                         options = [ (label = "mol",    value = "mol"),
-                                                                    (label = "wt",     value = "wt")
+                                                                    (label = "wt",     value = "wt"),
+                                                                    (label = "vol",    value = "vol")
                                                                     ],
                                                         value       = "mol",
                                                         clearable   = false,
