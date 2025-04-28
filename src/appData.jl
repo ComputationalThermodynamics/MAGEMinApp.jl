@@ -45,12 +45,14 @@ app     *= "Yishen Zhang"
 contact  = "**Links**\n"
 contact *= "[Tutorials](https://github.com/ComputationalThermodynamics/Resources)\n"
 contact *= "[Post issue](https://github.com/ComputationalThermodynamics/MAGEMinApp.jl/issues)\n"
-contact *= "[Open discussion](https://github.com/ComputationalThermodynamics/MAGEMin/discussions)"
+contact *= "[Open discussion](https://github.com/ComputationalThermodynamics/MAGEMin/discussions)\n"
+contact *= "[Discord](https://discord.gg/fjmVZyej9F)"
 
 descri  = "**Comments**\n"
 descri *= "Set of example on how to use MAGEMinApp\n"
 descri *= "Something is not working properly?\n"
-descri *= "Need additional options?"
+descri *= "Need additional options?\n"
+descri *= "... or join our Discord!"
 
 
 contribs = [debug,app,contact,descri]
