@@ -856,6 +856,25 @@ function Tab_PhaseDiagram()
                                                 dbc_row([
 
                                                     dbc_col([
+                                                        html_h1("Remove excess fluid\n (renormalize)", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                                    ]),
+                                                    dbc_col([
+                                                        dcc_dropdown(   id      = "rm-exfluid-isopleth-dropdown",
+                                                        options = [ (label = "true",    value = true),
+                                                                    (label = "false",     value = false)
+                                                                    ],
+                                                        value       = false,
+                                                        clearable   = false,
+                                                        multi       = false),
+                                                    ]),
+
+                                                ]),
+                                            ], style = Dict("display" => "block"), id      = "rm-exfluid-isopleth-id"),
+
+                                            html_div([
+                                                dbc_row([
+
+                                                    dbc_col([
                                                         html_h1("Unit", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
                                                     ]),
                                                     dbc_col([
@@ -871,6 +890,8 @@ function Tab_PhaseDiagram()
 
                                                 ]),
                                             ], style = Dict("display" => "none"), id      = "sys-unit-isopleth-id"),
+
+
 
                                             html_div([
                                                 dbc_row([

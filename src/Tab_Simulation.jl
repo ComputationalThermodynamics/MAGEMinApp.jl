@@ -291,10 +291,12 @@ function Tab_Simulation()
                                                 dbc_col([ 
                                                     dcc_dropdown(   id      = "eodc-options-dropdown",
                                                     options = [
-                                                        (label = "Experimental (Li)",           value = "EXP"),
-                                                        (label = "Natural (Li, Cs, Be, Ta)",    value = "NAT")
+                                                        (label = "Li - Exp. Koopmans 23",        value = "KP"),
+                                                        (label = "Li - Exp. London 1995-2003",   value = "IL"),
+                                                        (label = "Li - Nat. Baloaurd 2023",      value = "B"),
+                                                        (label = "Li - Nat. Acosta-Vigil 2012",  value = "AV"),
                                                     ],
-                                                    value       = "EXP" ,
+                                                    value       = "KP" ,
                                                     clearable   =  false,
                                                     multi       =  false),
                                                 ]),

@@ -1481,6 +1481,7 @@ function get_isopleth_map(  mod         ::String,
                             ot          ::String,
                             calc        ::String,
                             calc_sf     ::String,
+                            rmf         ::Bool,
                             oxi         ::Vector{String},
                             Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
                             sub         ::Int64,
@@ -1498,6 +1499,18 @@ function get_isopleth_map(  mod         ::String,
             id       = findall(Out_XY[i].ph .== ss)
             if ~isempty(id) 
                 field[i] = Out_XY[i].ph_frac[id[1] ]
+
+                if rmf == true 
+                    if "H2O" in Out_XY[i].ph
+                        id = findfirst(Out_XY[i].ph .== "H2O")
+                        field[i] = field[i] / (1.0 - Out_XY[i].ph_frac[id])
+                    end
+                    if "fl" in Out_XY[i].ph
+                        id = findfirst(Out_XY[i].ph .== "fl")
+                        field[i] = field[i] / (1.0 - Out_XY[i].ph_frac[id])
+                    end
+                end
+
             else
                 field[i] = 0.0
             end
@@ -1507,6 +1520,18 @@ function get_isopleth_map(  mod         ::String,
                 id       = findall(Out_XY[i].ph .== ss)
                 if ~isempty(id)  
                     field[i] = Out_XY[i].ph_frac_wt[id[1] ]
+
+                    if rmf == true 
+                        if "H2O" in Out_XY[i].ph
+                            id = findfirst(Out_XY[i].ph .== "H2O")
+                            field[i] = field[i] / (1.0 - Out_XY[i].ph_frac_wt[id])
+                        end
+                        if "fl" in Out_XY[i].ph
+                            id = findfirst(Out_XY[i].ph .== "fl")
+                            field[i] = field[i] / (1.0 - Out_XY[i].ph_frac_wt[id])
+                        end
+                    end
+
                 else
                     field[i] = 0.0
                 end
@@ -1516,6 +1541,17 @@ function get_isopleth_map(  mod         ::String,
                 id       = findall(Out_XY[i].ph .== ss)
                 if ~isempty(id)  
                     field[i] = Out_XY[i].ph_frac_vol[id[1] ]
+
+                    if rmf == true 
+                        if "H2O" in Out_XY[i].ph
+                            id = findfirst(Out_XY[i].ph .== "H2O")
+                            field[i] = field[i] / (1.0 - Out_XY[i].ph_frac_vol[id])
+                        end
+                        if "fl" in Out_XY[i].ph
+                            id = findfirst(Out_XY[i].ph .== "fl")
+                            field[i] = field[i] / (1.0 - Out_XY[i].ph_frac_vol[id])
+                        end
+                    end
                 else
                     field[i] = 0.0
                 end
