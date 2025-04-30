@@ -380,7 +380,6 @@ push!(db,Dict(          :bulk       => "predefined",
                         ), cols=:union)
 
 
-
 # IGNEOUS ALKALINE DRY DATABASE
 push!(db,Dict(          :bulk       => "predefined",
                         :title      => "Ne-Syenite",

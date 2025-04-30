@@ -168,6 +168,25 @@ function PTX_frac_plot()
             )
 end
 
+function PTX_removed_plot()
+
+    fig =  plot(    Layout( height= 360 ))
+
+    dcc_graph(
+                id          = "ptx-removed-plot",
+                figure      = fig,
+            )
+end
+
+function PTX_removed_int_plot()
+
+    fig =  plot(    Layout( height= 360 ))
+
+    dcc_graph(
+                id          = "ptx-removed-int-plot",
+                figure      = fig,
+            )
+end
 
 function PTX_plot()
 

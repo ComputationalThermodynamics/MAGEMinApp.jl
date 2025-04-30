@@ -1,6 +1,100 @@
 function Tab_PTXpaths_Callbacks(app)
 
 
+    #save references to bibtex
+    callback!(
+        app,
+        Output("export-removed-save-ptx", "is_open"),
+        Output("export-removed-failed-ptx", "is_open"),
+        Input("export-removed-button-ptx", "n_clicks"),
+        State("export-removed-id-ptx", "value"),
+        State("database-dropdown-ptx","value"),
+        prevent_initial_call=true,
+    ) do n_clicks, fname, dtb
+
+        if fname != "filename"
+            output  = "_rm_"*dtb
+            fileout = fname*output
+
+            n_ox    = length(Out_PTX[1].oxides)
+            oxides  = Out_PTX[1].oxides
+            n_tot   = length(Out_PTX)
+
+            P       = Vector{Float64}(undef, n_tot)
+            T       = Vector{Float64}(undef, n_tot)
+
+            for k=1:n_tot
+                P[k]    = Out_PTX[k].P_kbar
+                T[k]    = Out_PTX[k].T_C
+            end
+
+            rmB      = Matrix{Union{Float64,Missing}}(undef, n_tot, n_ox) .= 0.0
+            rmB     .= removedBulk
+            if any(isnan, rmB)
+                rmB[isnan.(rmB)]    .= 0.0
+            end
+            rmB[rmB .== 0.0]        .= missing
+
+            rmB2        = Matrix{Union{Float64,Missing}}(undef, n_tot, n_ox) .= 0.0
+            cumfrac     = accumulate(+, fracEvol[:,2])
+            start_id    = findfirst(removedBulk[:,1] .!= 0.0)
+        
+            if isnothing(start_id)
+                rmB2   .= missing
+            else
+                rmB2[start_id,:]    .= removedBulk[start_id,:]
+                for i=start_id+1:n_tot
+                    tmp = removedBulk[i,:] .* fracEvol[i,2] .+  rmB2[i-1,:].*cumfrac[i-1]
+                    rmB2[i,:] .= tmp ./sum(tmp)
+                end
+                if any(isnan, rmB2)
+                    rmB2[isnan.(rmB2)]     .= 0.0
+                end
+                rmB2[rmB2 .== 0.0]        .= missing
+            end
+            
+            # Here we create the dataframe's header:
+            MAGEMin_db = DataFrame(         Symbol("point[#]")          => Int64[],
+                                            Symbol("P[kbar]")           => Float64[],
+                                            Symbol("T[°C]")             => Float64[],
+                                            Symbol("Stepwise mol%")     => Float64[])
+
+            for i in oxides
+                col = i*"_step"
+                MAGEMin_db[!, col] = Float64[] 
+            end
+            MAGEMin_db[!, "Integrated mol%"] = Float64[] 
+            for i in oxides
+                col = i*"_int"
+                MAGEMin_db[!, col] = Float64[] 
+            end
+
+            for k=1:n_tot
+                part_1 = Dict(  "point[#]"      => k,
+                                "P[kbar]"       => P[k],
+                                "T[°C]"         => T[k],
+                                "Stepwise mol%" => fracEvol[k,2])
+
+                part_2 = Dict(  (oxides[j]*"_step" => rmB[k,j].*100.0)
+                                for j in eachindex(oxides))
+
+                part_3 = Dict(  "Integrated mol%" => cumfrac[k])
+
+                part_4 = Dict(  (oxides[j]*"_int" => rmB2[k,j].*100.0)
+                                for j in eachindex(oxides))
+
+                row    = merge(part_1,part_2,part_3,part_4)   
+                push!(MAGEMin_db, row, cols=:union)        
+            end
+
+            filename = fileout*".csv"
+            CSV.write(filename, MAGEMin_db)
+        
+            return "success", ""
+        else
+            return  "", "failed"
+        end
+    end
 
     #save references to bibtex
     callback!(
@@ -352,6 +446,10 @@ function Tab_PTXpaths_Callbacks(app)
         app,
         Output("ptx-plot",              "figure"),
         Output("ptx-plot",              "config"),
+        Output("ptx-removed-plot",      "figure"),
+        Output("ptx-removed-plot",      "config"),
+        Output("ptx-removed-int-plot",      "figure"),
+        Output("ptx-removed-int-plot",      "config"),
         Output("phase-selector-id",     "options"),
         Output("output-loading-id-ptx", "children"),
 
@@ -403,7 +501,7 @@ function Tab_PTXpaths_Callbacks(app)
         
         if bid == "compute-path-button"
 
-            global Out_PTX, ph_names_ptx, layout_ptx, data_plot_ptx, fracEvol
+            global Out_PTX, ph_names_ptx, layout_ptx, data_plot_ptx, fracEvol, removedBulk, layout_rm_ptx, data_comp_rm_plot, layout_rm_int_ptx, data_comp_rm_int_plot
 
             bufferN                 = Float64(bufferN)               # convert buffer_n to float
             bulk_ini, bulk_assim, oxi = get_bulkrock_prop(bulk, bulk2; sys_unit=sys_unit)  
@@ -419,7 +517,20 @@ function Tab_PTXpaths_Callbacks(app)
 
             data_plot_ptx, phase_list   = get_data_plot(sysunit)
 
-            figPTX                  = plot(data_plot_ptx,layout_ptx)
+            figPTX                      = plot(data_plot_ptx,layout_ptx)
+
+
+            layout_rm_ptx               = initialize_rm_layout()
+            data_comp_rm_plot           = get_data_comp_rm_plot()
+
+            figrmPTX                    = plot(data_comp_rm_plot,layout_rm_ptx)
+
+            layout_rm_int_ptx           = initialize_rm_layout()
+            data_comp_rm_int_plot       = get_data_comp_rm_int_plot()
+
+            figrmintPTX                  = plot(data_comp_rm_int_plot,layout_rm_int_ptx)
+
+
 
         elseif bid == "sys-unit-ptx"
             data_plot_ptx, phase_list   = get_data_plot(sysunit)
@@ -428,9 +539,13 @@ function Tab_PTXpaths_Callbacks(app)
             layout_ptx[:yaxis_title]    = ytitle
 
             figPTX                  = plot(data_plot_ptx,layout_ptx)
+            figrmPTX                = plot(data_comp_rm_plot,layout_rm_ptx)
+            figrmintPTX             = plot(data_comp_rm_int_plot,layout_rm_int_ptx)
 
         else
             figPTX                  = plot(    Layout( height= 320 ))
+            figrmPTX                = plot(    Layout( height= 320 ))
+            figrmintPTX                = plot(    Layout( height= 320 ))
         end
 
         configPTX   = PlotConfig(   toImageButtonOptions  = attr(     name     = "Download as svg",
@@ -439,8 +554,20 @@ function Tab_PTXpaths_Callbacks(app)
                                     height   =  360,
                                     width    =  960,
                                     scale    =  2.0,       ).fields)
+        configrmPTX   = PlotConfig( toImageButtonOptions  = attr(     name     = "Download as svg",
+                                    format   = "svg",
+                                    filename =  "PTX_path_removed_"*replace(title, " " => "_"),
+                                    height   =  360,
+                                    width    =  960,
+                                    scale    =  2.0,       ).fields)
+        configrmintPTX   = PlotConfig( toImageButtonOptions  = attr(     name     = "Download as svg",
+                                    format   = "svg",
+                                    filename =  "PTX_path_integrated_removed_"*replace(title, " " => "_"),
+                                    height   =  360,
+                                    width    =  960,
+                                    scale    =  2.0,       ).fields)
 
-        return figPTX, configPTX, phase_list, loading
+        return figPTX, configPTX, figrmPTX, configrmPTX, figrmintPTX, configrmintPTX, phase_list, loading
     end
 
 

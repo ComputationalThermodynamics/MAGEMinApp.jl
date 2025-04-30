@@ -274,7 +274,6 @@ function compute_Tsol(          pressure,   tolerance,  bulk_ini,   oxi,    phas
             c = (a+b)/2.0
 
             out     = deepcopy( point_wise_minimization(pressure, c , gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
-            # cmp     = setdiff(out.ph,ref)
 
             if "liq" in out.ph
                 result = 1;
@@ -318,7 +317,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                 cpx,        limOpx,     limOpxVal,
                                 nCon,       nRes                                  )
 
-        global Out_PTX, ph_names_ptx, fracEvol, compo_matrix
+        global Out_PTX, ph_names_ptx, fracEvol, compo_matrix, removedBulk
 
 
         nsteps = Int64(nsteps)
@@ -335,14 +334,15 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
         else
             ph_names_ptx= Vector{String}()
 
-            n_tot   = np + (np-1)*nsteps
-            fracEvol= Matrix{Float64}(undef,n_tot,2)
-            Out_PTX = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,n_tot)
+            n_tot       = np + (np-1)*nsteps
+            fracEvol    = Matrix{Float64}(undef,n_tot,2)
+            removedBulk = Matrix{Float64}(undef,n_tot,length(bulk_ini))
+            Out_PTX     = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,n_tot)
 
-            Pres    = zeros(Float64,np)
-            Temp    = zeros(Float64,np)
-            Add     = zeros(Float64,np)
-            Buff    = zeros(Float64,np)
+            Pres        = zeros(Float64,np)
+            Temp        = zeros(Float64,np)
+            Add         = zeros(Float64,np)
+            Buff        = zeros(Float64,np)
 
             for i=1:np
                 Pres[i] = data[i][Symbol("col-1")]
@@ -394,8 +394,9 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
 
             gv      =  define_bulk_rock(gv, bulk, oxi, sys_in, dtb);
 
-            fracEvol[1,1] = 1.0;          # starting material fraction is always one as we want to measure the relative change here
-            fracEvol[1,2] = 0.0; 
+            fracEvol[1,1]            = 1.0;          # starting material fraction is always one as we want to measure the relative change here
+            fracEvol[1,2]            = 0.0; 
+            removedBulk[1,:]        .= zeros(length(bulk_ini))
             k = 1
             @showprogress for i = 1:np-1
                 # if we assimilate a second bulk then we compute the assimilated fraction per step
@@ -424,48 +425,54 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                         if Out_PTX[k].frac_S > 0.0
                             if nCon > 0.0
                                 if Out_PTX[k].frac_M > nCon/100.0
-                                    bulk .= Out_PTX[k].bulk_S .*((100.0-nCon)/100.0) .+ Out_PTX[k].bulk_M .*(nCon/100.0)
-
-                                    fracEvol[k+1,1] = fracEvol[k,1] * (Out_PTX[k].frac_S + Out_PTX[k].frac_F + nCon/100.0) 
-                                    fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
+                                    bulk                .= Out_PTX[k].bulk_S .*((100.0-nCon)/100.0) .+ Out_PTX[k].bulk_M .*(nCon/100.0)
+                                    removedBulk[k+1,:]    .= Out_PTX[k].bulk_S .*(nCon/100.0) .+ Out_PTX[k].bulk_M .*((100.0-nCon)/100.0)
+                                    fracEvol[k+1,1]      = fracEvol[k,1] * (Out_PTX[k].frac_S + Out_PTX[k].frac_F + nCon/100.0) 
+                                    fracEvol[k+1,2]      = 1.0 - fracEvol[k+1,1] 
                                 else
-                                    fracEvol[k+1,1] = fracEvol[k,1]
-                                    fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
+                                    removedBulk[k+1,:]    .= zeros(length(bulk_ini))
+                                    fracEvol[k+1,1]      = fracEvol[k,1]
+                                    fracEvol[k+1,2]      = 1.0 - fracEvol[k+1,1] 
                                 end
                             else
-                                bulk .= Out_PTX[k].bulk_S
-                                fracEvol[k+1,1] = fracEvol[k,1]
-                                fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
+                                bulk                .= Out_PTX[k].bulk_S
+                                removedBulk[k+1,:]    .= zeros(length(bulk_ini))
+                                fracEvol[k+1,1]      = fracEvol[k,1]
+                                fracEvol[k+1,2]      = 1.0 - fracEvol[k+1,1] 
                             end
                         else
-                            fracEvol[k+1,1] = fracEvol[k,1]
-                            fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
+                            removedBulk[k+1,:]    .= zeros(length(bulk_ini))
+                            fracEvol[k+1,1]      = fracEvol[k,1]
+                            fracEvol[k+1,2]      = 1.0 - fracEvol[k+1,1] 
                         end
                     elseif mode == "fc"
                         if Out_PTX[k].frac_M > 0.0
 
                             if nRes > 0.0
                                 if Out_PTX[k].frac_S > nRes/100.0
-                                    bulk .= Out_PTX[k].bulk_M .*((100.0-nRes)/100.0) .+ Out_PTX[k].bulk_S .*(nRes/100.0)
-
-                                    fracEvol[k+1,1] = fracEvol[k,1] * (Out_PTX[k].frac_M + nRes/100.0) 
-                                    fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
+                                    bulk                .= Out_PTX[k].bulk_M .*((100.0-nRes)/100.0) .+ Out_PTX[k].bulk_S .*(nRes/100.0)
+                                    removedBulk[k+1,:]    .= Out_PTX[k].bulk_M .*(nRes/100.0) .+ Out_PTX[k].bulk_S .*((100.0-nRes)/100.0)
+                                    fracEvol[k+1,1]      = fracEvol[k,1] * (Out_PTX[k].frac_M + nRes/100.0) 
+                                    fracEvol[k+1,2]      = 1.0 - fracEvol[k+1,1] 
                                 else
-                                    fracEvol[k+1,1] = fracEvol[k,1] * (Out_PTX[k].frac_M + Out_PTX[k].frac_S) 
-                                    fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
+                                    fracEvol[k+1,1]      = fracEvol[k,1] * (Out_PTX[k].frac_M + Out_PTX[k].frac_S) 
+                                    fracEvol[k+1,2]      = 1.0 - fracEvol[k+1,1] 
                                 end
                             else
-                                bulk .= Out_PTX[k].bulk_M
-                                fracEvol[k+1,1] = fracEvol[k,1] * (Out_PTX[k].frac_M) 
-                                fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
+                                bulk                .= Out_PTX[k].bulk_M
+                                removedBulk[k+1,:]    .= Out_PTX[k].bulk_S
+                                fracEvol[k+1,1]      = fracEvol[k,1] * (Out_PTX[k].frac_M) 
+                                fracEvol[k+1,2]      = 1.0 - fracEvol[k+1,1] 
                             end
                         else
-                            fracEvol[k+1,1] = fracEvol[k,1]
-                            fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
+                            removedBulk[k+1,:]    .= zeros(length(bulk_ini))
+                            fracEvol[k+1,1]      = fracEvol[k,1]
+                            fracEvol[k+1,2]      = 1.0 - fracEvol[k+1,1] 
                         end
                     else
-                        fracEvol[k+1,1] = fracEvol[k,1]
-                        fracEvol[k+1,2] = 1.0 - fracEvol[k+1,1] 
+                        removedBulk[k+1,:]    .= zeros(length(bulk_ini))
+                        fracEvol[k+1,1]      = fracEvol[k,1]
+                        fracEvol[k+1,2]      = 1.0 - fracEvol[k+1,1] 
                     end
 
                     k += 1
@@ -669,6 +676,169 @@ function get_data_comp_plot(sysunit,phases)
 end
 
 
+function initialize_rm_layout()
+    ytitle               = "Oxide fraction [mol%]"
+    layout_rm_ptx  = Layout(
+
+        title= attr(
+            text    = "",
+            x       = 0.5,
+            xanchor = "center",
+            yanchor = "top"
+        ),
+        margin      = attr(autoexpand = false, l=16, r=16, b=16, t=16),
+        hoverlabel = attr(
+            bgcolor     = "#566573",
+            bordercolor = "#f8f9f9",
+        ),
+        plot_bgcolor = "#FFF",
+        paper_bgcolor = "#FFF",
+        xaxis_title = "P-T conditions [kbar, °C]",
+        yaxis_title = ytitle,
+        # annotations = annotations,
+        # width       = 900,
+        height      = 360,
+        xaxis       = attr(     fixedrange    = true,
+                            ),
+        yaxis       = attr(     fixedrange    = true,
+                            ),
+    )
+
+    return layout_rm_ptx
+end
+
+function get_data_comp_rm_plot()
+
+    global removedBulk
+
+    n_ox    = length(Out_PTX[1].oxides)
+    oxides  = Out_PTX[1].oxides
+    n_tot   = length(Out_PTX)
+
+    data_comp_rm_plot   = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_ox+2);
+    x                   = Vector{String}(undef, n_tot)
+    colormap            = get_jet_colormap(n_ox)
+ 
+    for k=1:n_tot
+        x[k]    = string(round(Out_PTX[k].P_kbar,digits=1))*"; "*string(round(Out_PTX[k].T_C,digits=1))
+    end
+
+    rmB      = Matrix{Union{Float64,Missing}}(undef, n_tot, n_ox) .= 0.0
+    rmB     .= removedBulk
+    if any(isnan, rmB)
+        rmB[isnan.(rmB)]         .= 0.0
+    end
+    rmB[rmB .== 0.0]        .= missing
+    for k=1:n_ox
+        data_comp_rm_plot[k] = scatter(;    x           = x,
+                                            y           = rmB[:,k].*100.0,
+                                            name        = oxides[k],
+                                            mode        = "markers+lines",
+                                            marker      = attr(     size    = 5.0,
+                                                                    color   = colormap[k]),
+
+                                            line        = attr(     width   = 1.0,
+                                                                    color   = colormap[k])  )
+    end
+    data_comp_rm_plot[n_ox+1] = scatter(    x               = x,
+                                            name            = "removed %",
+                                            y               = fracEvol[:,2].*100.0, 
+                                            hoverinfo       = "skip",
+                                            # mode            = "markers+lines",
+                                            mode            = "lines",
+                                            # marker          = attr(     size    = 5.0,
+                                            #                             color   = "black"),
+                                            line            = attr( dash    = "dash",
+                                                                    color   = "black", 
+                                                                    width   = 0.75)                ) 
+
+    data_comp_rm_plot[n_ox+2] = scatter(    x               = x,
+                                            y               = fracEvol[:,1].*100.0, 
+                                            name            = "remaining %",
+                                            hoverinfo       = "skip",
+                                            # mode            = "markers+lines",
+                                            mode            = "lines",
+                                            # marker          = attr(     size    = 5.0,
+                                            #                             color   = "black"),
+                                            line            = attr( color   = "black", 
+                                                                    width   = 0.75)                ) 
+    return data_comp_rm_plot
+end
+
+
+function get_data_comp_rm_int_plot()
+
+    global removedBulk, fracEvol
+
+    n_ox    = length(Out_PTX[1].oxides)
+    oxides  = Out_PTX[1].oxides
+    n_tot   = length(Out_PTX)
+
+    data_comp_rm_in_plot   = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_ox+2);
+    x                   = Vector{String}(undef, n_tot)
+    colormap            = get_jet_colormap(n_ox)
+ 
+    for k=1:n_tot
+        x[k]    = string(round(Out_PTX[k].P_kbar,digits=1))*"; "*string(round(Out_PTX[k].T_C,digits=1))
+    end
+
+    rmB      = Matrix{Union{Float64,Missing}}(undef, n_tot, n_ox) .= 0.0
+    cumfrac  = accumulate(+, fracEvol[:,2])
+    start_id = findfirst(removedBulk[:,1] .!= 0.0)
+
+    if isnothing(start_id)
+        rmB .= missing
+    else
+        rmB[start_id,:]    .= removedBulk[start_id,:]
+        for i=start_id+1:n_tot
+            tmp = removedBulk[i,:] .* fracEvol[i,2] .+  rmB[i-1,:].*cumfrac[i-1]
+            rmB[i,:] .= tmp ./sum(tmp)
+        end
+        if any(isnan, rmB)
+            rmB[isnan.(rmB)]         .= 0.0
+        end
+        rmB[rmB .== 0.0]        .= missing
+    end
+    
+
+    for k=1:n_ox
+        data_comp_rm_in_plot[k] = scatter(;     x           = x,
+                                                y           = rmB[:,k].*100.0,
+                                                name        = oxides[k],
+                                                mode        = "markers+lines",
+                                                marker      = attr(     size    = 5.0,
+                                                                        color   = colormap[k]),
+
+                                                line        = attr(     width   = 1.0,
+                                                                        color   = colormap[k])  )
+    end
+    data_comp_rm_in_plot[n_ox+1] = scatter( x               = x,
+                                            name            = "removed %",
+                                            y               = fracEvol[:,2].*100.0, 
+                                            hoverinfo       = "skip",
+                                            # mode            = "markers+lines",
+                                            mode            = "lines",
+                                            # marker          = attr(     size    = 5.0,
+                                            #                             color   = "black"),
+                                            line            = attr( dash    = "dash",
+                                                                    color   = "black", 
+                                                                    width   = 0.75)                ) 
+
+     data_comp_rm_in_plot[n_ox+2] = scatter(    x               = x,
+                                                y               = fracEvol[:,1].*100.0, 
+                                                name            = "remaining %",
+                                                hoverinfo       = "skip",
+                                                # mode            = "markers+lines",
+                                                mode            = "lines",
+                                                # marker          = attr(     size    = 5.0,
+                                                #                             color   = "black"),
+                                                line            = attr( color   = "black", 
+                                                                        width   = 0.75)                ) 
+
+    return data_comp_rm_in_plot
+end
+
+
 function initialize_layout(title,sysunit)
     ytitle               = "Phase fraction ["*sysunit*"%]"
     layout_ptx  = Layout(
@@ -704,12 +874,12 @@ function initialize_comp_layout(sysunit)
     ytitle               = "oxide fraction ["*sysunit*"%]"
     layout_comp  = Layout(
 
-        title= attr(
-            text    = "Phase composition",
-            x       = 0.5,
-            xanchor = "center",
-            yanchor = "top"
-        ),
+        # title= attr(
+        #     text    = "Phase composition",
+        #     x       = 0.5,
+        #     xanchor = "center",
+        #     yanchor = "top"
+        # ),
         margin      = attr(autoexpand = false, l=16, r=16, b=16, t=16),
         hoverlabel = attr(
             bgcolor     = "#566573",

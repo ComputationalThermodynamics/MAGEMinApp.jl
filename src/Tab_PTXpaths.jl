@@ -790,7 +790,40 @@ function Tab_PTXpaths()
                                                 duration=4000,
                                             ),
                                         ]),
-
+                                        html_div("‎ "),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Export removed composition", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 0)),    
+                                            ], width=3),
+                                            dbc_col([ 
+                                                dbc_input(
+                                                    id      = "export-removed-id-ptx",
+                                                    type    = "text", 
+                                                    style   = Dict("textAlign" => "center") ,
+                                                    value   = "filename"   ),     
+                                            ], width=4),
+                                            dbc_col([    
+                                                dbc_button("csv file", id="export-removed-button-ptx", color="light",  n_clicks=0,
+                                                style       = Dict( "textAlign"     => "center",
+                                                                    "font-size"     => "100%",
+                                                                    "border"        =>"1px grey solid")), 
+                                            ]),
+                                        ]),
+                                        dbc_row([
+                                            dbc_alert(
+                                                "Successfully saved removed composition information",
+                                                id      ="export-removed-save-ptx",
+                                                is_open =false,
+                                                duration=4000,
+                                            ),
+                                            dbc_alert(
+                                                "Provide a valid filename (without extension)",
+                                                color="danger",
+                                                id      ="export-removed-failed-ptx",
+                                                is_open =false,
+                                                duration=4000,
+                                            ),
+                                        ]),
                                         html_div("‎ "),
                                         dbc_row([
                                             dbc_col([
@@ -880,7 +913,7 @@ function Tab_PTXpaths()
                             ], width=12),
                             ]),
                         ]),
-                        dbc_tab(label="Composition", children=[
+                        dbc_tab(label="Phase composition", children=[
                             dbc_row([                                                                                     
                                 dbc_col([
                                     html_div("‎ "),
@@ -915,6 +948,35 @@ function Tab_PTXpaths()
                                 ], width=12),
                             ]),
                         ]),
+                        dbc_tab(label="Removed composition", children=[
+                            dbc_tabs([
+                                dbc_tab(label="Stepwise", children=[
+                                    dbc_row([                                                                                     
+                                        dbc_col([
+
+                                            dbc_row([
+                                                dbc_card(dbc_cardbody([
+                                                    PTX_removed_plot()
+                                                ])),
+                                            ]),
+                                    ], width=12),
+                                    ]),
+                                ]),
+                                dbc_tab(label="Integrated", children=[
+                                    dbc_row([                                                                                     
+                                        dbc_col([
+
+                                            dbc_row([
+                                                dbc_card(dbc_cardbody([
+                                                    PTX_removed_int_plot()
+                                                ])),
+                                            ]),
+                                    ], width=12),
+                                    ]),
+                                ]),
+                            ]), 
+                        ]),
+
                         dbc_tab(label="TAS diagram", children=[
                             html_div("‎ "),
                             dbc_row([                                                                                     
