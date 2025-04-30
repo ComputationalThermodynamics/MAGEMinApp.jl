@@ -701,10 +701,17 @@ function tepm_function( diagType    :: String,
     if kds_mod == "OL"
         KDs_dtb     = AppData.KDs_OL;
     elseif kds_mod == "EODC"
-        if eodc_type == "EXP"
-            KDs_dtb     = AppData.KDs_EODC_Exp;
-        else
-            KDs_dtb     = AppData.KDs_EODC_Nat;
+        if eodc_type == "KP"
+            KDs_dtb     = AppData.KDs_KP_Exp;
+            option      = 1
+        elseif eodc_type == "IL"
+            KDs_dtb     = AppData.KDs_IL_Exp;
+            option      = 1
+        elseif eodc_type == "B"
+            KDs_dtb     = AppData.KDs_B_Nat;
+            option      = 3
+        elseif eodc_type == "AV"
+            KDs_dtb     = AppData.KDs_AV_Nat;
             option      = 3
         end 
     else
@@ -1439,7 +1446,7 @@ end
 function add_isopleth_phaseDiagram(         Xrange,     Yrange, 
                                             sub,        refLvl,
                                             dtb,        oxi,
-                                            isopleths,  phase,      ss,     em,   ox,  of,     ot,  sys,    calc, cust, calc_sf, cust_sf,
+                                            isopleths,  phase,      ss,     em,   ox,  of,     ot,  sys,   rmf,  calc, cust, calc_sf, cust_sf,
                                             isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,       
                                             minIso,     stepIso,    maxIso      )
 
@@ -1507,7 +1514,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
 
     global data_isopleth, nIsopleths, data, Out_XY, data_plot, X, Y, addedRefinementLvl
 
-    gridded, X, Y = get_isopleth_map(   mod, ss, em, ox, of, ot, calc, calc_sf,
+    gridded, X, Y = get_isopleth_map(   mod, ss, em, ox, of, ot, calc, calc_sf, rmf, 
                                         oxi,
                                         Out_XY,
                                         sub,

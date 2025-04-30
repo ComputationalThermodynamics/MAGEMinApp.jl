@@ -790,6 +790,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("of-dropdown",            "value"),
         State("other-dropdown",         "value"),
         State("sys-unit-isopleth-dropdown",  "value"),
+        State("rm-exfluid-isopleth-dropdown",  "value"),
         State("input-calc-id",          "value"),
         State("input-cust-id",          "value"),
         State("input-calc-sf-id",       "value"),
@@ -819,7 +820,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             bufferN1,   bufferN2,
             tepm,       kds_mod,    zrsat_mod,  bulkte1,    bulkte2, eodc_type, eodc_ratio, 
             test,
-            isopleths,  isoplethsID,isoplethsHid,  isoplethsHidID,  phase,      ss,         em,     ox,    of,     ot, sys, calc, cust, calc_sf, cust_sf,
+            isopleths,  isoplethsID,isoplethsHid,  isoplethsHidID,  phase,      ss,         em,     ox,    of,     ot, sys, rmf, calc, cust, calc_sf, cust_sf,
             isoLineStyle, isoLineWidth, isoColorLine,           isoLabelSize,   
             minIso,     stepIso,    maxIso,
             active_tab
@@ -996,7 +997,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             data_isopleth, isopleths = add_isopleth_phaseDiagram(   Xrange,     Yrange,
                                                                     sub,        refLvl,
                                                                     dtb,        oxi,
-                                                                    isopleths,  phase,      ss,     em,  ox,   of,     ot, sys, calc, cust, calc_sf, cust_sf,
+                                                                    isopleths,  phase,      ss,     em,  ox,   of,     ot, sys, rmf,    calc, cust, calc_sf, cust_sf,
                                                                     isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,   
                                                                     minIso,     stepIso,    maxIso                      )
             data_isopleth_out = data_isopleth.isoP[data_isopleth.active]

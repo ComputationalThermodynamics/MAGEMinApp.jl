@@ -45,12 +45,14 @@ app     *= "Yishen Zhang"
 contact  = "**Links**\n"
 contact *= "[Tutorials](https://github.com/ComputationalThermodynamics/Resources)\n"
 contact *= "[Post issue](https://github.com/ComputationalThermodynamics/MAGEMinApp.jl/issues)\n"
-contact *= "[Open discussion](https://github.com/ComputationalThermodynamics/MAGEMin/discussions)"
+contact *= "[Open discussion](https://github.com/ComputationalThermodynamics/MAGEMin/discussions)\n"
+contact *= "[Discord](https://discord.gg/fjmVZyej9F)"
 
 descri  = "**Comments**\n"
 descri *= "Set of example on how to use MAGEMinApp\n"
 descri *= "Something is not working properly?\n"
-descri *= "Need additional options?"
+descri *= "Need additional options?\n"
+descri *= "... or join our Discord!"
 
 
 contribs = [debug,app,contact,descri]
@@ -376,7 +378,6 @@ push!(db,Dict(          :bulk       => "predefined",
                         :frac       => [50.0810,  8.6901,  11.6698, 12.1438, 7.7832,  0.2150,  2.4978,  1.0059,  0.4670,  0.0100, 5.4364],
                         :frac2      => [50.0810,  8.6901,  11.6698, 12.1438, 7.7832,  0.2150,  2.4978,  1.0059,  0.4670,  0.0100, 5.4364],
                         ), cols=:union)
-
 
 
 # IGNEOUS ALKALINE DRY DATABASE
@@ -732,9 +733,11 @@ push!(dbte,Dict(    :composition=> "predefined",
                     :μg_g2       => [1.5,0.03,0.025,0.6,6.6,0.0795,0.0203,0.658,0.037,0.648,1.675,0.150,0.254,19.9,1.25,10.5,0.283,0.406,0.154,0.544,0.099,0.674,4.30,0.149,0.438,0.068,0.441,0.0675,8.2,16.2],
                 ), cols=:union)
 
-KDs_OL          = get_OL_KDs_database();
-KDs_EODC_Exp    = get_EODC_Exp_KDs_database()
-KDs_EODC_Nat    = get_EODC_Nat_KDs_database()
+KDs_OL          = get_OL_KDs_database()
+KDs_KP_Exp      = get_KP_Exp_KDs_database()
+KDs_IL_Exp      = get_IL_Exp_KDs_database()
+KDs_B_Nat       = get_B_Nat_KDs_database()
+KDs_AV_Nat      = get_AV_Nat_KDs_database()
 
 db.frac_wt  .= mol2wt.(db.frac,db.oxide)
 db.frac2_wt .= mol2wt.(db.frac2,db.oxide)
@@ -779,8 +782,10 @@ AppData = ( contribs            = contribs,
             dtb_dict            = dtb_dict,
             dbte                = dbte,
             KDs_OL              = KDs_OL,
-            KDs_EODC_Exp        = KDs_EODC_Exp,
-            KDs_EODC_Nat        = KDs_EODC_Nat,
+            KDs_KP_Exp          = KDs_KP_Exp,
+            KDs_IL_Exp          = KDs_IL_Exp,
+            KDs_B_Nat           = KDs_B_Nat,
+            KDs_AV_Nat          = KDs_AV_Nat,
             hidden_pp           = hidden_pp,
             dict_em             = dict_em,  
             dict_ss             = dict_ss,

@@ -292,6 +292,7 @@ function Tab_Simulation_Callbacks(app)
         Output("of-1-id",           "style"),
         Output("other-1-id",        "style"),
         Output("sys-unit-isopleth-id","style"),
+        Output("rm-exfluid-isopleth-id","style"),
 
         Input("trigger-update-ss-list","value"),
         Input("phase-dropdown",     "value"),
@@ -318,6 +319,7 @@ function Tab_Simulation_Callbacks(app)
             style_ot    = Dict("display" => "none")
             style_of    = Dict("display" => "block")
             style_sys   = Dict("display" => "none")
+            style_rmf   = Dict("display" => "none")
             opts_ph     = []
             val         = nothing
         elseif phase == "ss"
@@ -329,15 +331,18 @@ function Tab_Simulation_Callbacks(app)
             style_ph    = Dict("display" => "block")
             style_of    = Dict("display" => "none")
             style_sys   = Dict("display" => "block")
-            
+            style_rmf   = Dict("display" => "block")
+
             if other == "emMode"
                 style_em    = Dict("display" => "block")
+                style_rmf   = Dict("display" => "none")
             else
                 style_em    = Dict("display" => "none")
             end
 
             if other == "oxComp"
                 style_ox    = Dict("display" => "block")
+                style_rmf   = Dict("display" => "none")
             else
                 style_ox    = Dict("display" => "none")
             end
@@ -350,14 +355,16 @@ function Tab_Simulation_Callbacks(app)
             end
 
             if other == "calc_sf"
-                style_calc_sf  = Dict("display" => "block")
-                style_sys   = Dict("display" => "none")
+                style_calc_sf   = Dict("display" => "block")
+                style_sys       = Dict("display" => "none")
+                style_rmf       = Dict("display" => "none")
             else
                 style_calc_sf  = Dict("display" => "none")
             end
 
             if other == "MgNum"
                 style_sys   = Dict("display" => "none")
+                style_rmf   = Dict("display" => "none")
             end
 
             if bid != "other-dropdown"
@@ -380,6 +387,7 @@ function Tab_Simulation_Callbacks(app)
             style_ph    = Dict("display" => "block")
             style_of    = Dict("display" => "none")
             style_sys   = Dict("display" => "block")
+            style_rmf   = Dict("display" => "block")
 
             if n_pp > 0
                 val         = pp[1]
@@ -389,7 +397,7 @@ function Tab_Simulation_Callbacks(app)
 
         end
 
-        return opts_ph, val, style_calc, style_calc_sf, style_em, style_ox, style_ph, style_of, style_ot, style_sys
+        return opts_ph, val, style_calc, style_calc_sf, style_em, style_ox, style_ph, style_of, style_ot, style_sys, style_rmf
     end
 
 
@@ -489,7 +497,7 @@ function Tab_Simulation_Callbacks(app)
                 zr      = Dict("display" => "none"  )
                 opeodc  = Dict("display" => "block" )
                 show_norm = Dict("display" => "none")
-                if eodc_opt == "NAT"
+                if eodc_opt == "B" || eodc_opt == "AV"
                     type_eodc   = Dict("display" => "block" )
                 end
             end
