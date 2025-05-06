@@ -300,9 +300,10 @@ function save_rho_for_LaMEM(    dtb         ::String,
     for i=n_ox+1:11
         file   *= @sprintf("\n")
     end
-    for i=1:20
+    for i=1:19
         file   *= @sprintf("\n")
     end
+    file       *= @sprintf("[meltRho, rho, kg/m^3] [meltFrac, wtPercent, NoUnits] [rockRho, rho, kg/m^3] [Temperature, T, K] [Pressure, P, bar]   \n");
     file       *= @sprintf("%5.10f\n",minimum(T));
     file       *= @sprintf("%5.10f\n",dT);
     file       *= @sprintf("%d\n",nT);
@@ -462,9 +463,10 @@ function save_rho_for_GeoModel(     dtb         ::String,
     for i=n_ox+1:11
         file   *= @sprintf("\n")
     end
-    for i=1:20
+    for i=1:19
         file   *= @sprintf("\n")
     end
+    file       *= @sprintf("[meltRho, rho, kg/m^3] [meltFrac, wtPercent, NoUnits] [rockRho, rho, kg/m^3] [Vp, vp, km/s] [Vs, vs, km/s] [SpecificCp, scp, J/kg/K] [Temperature, T, K] [Pressure, P, bar]   \n");
     file       *= @sprintf("%5.10f\n",minimum(T));
     file       *= @sprintf("%5.10f\n",dT);
     file       *= @sprintf("%d\n",nT);
