@@ -65,8 +65,8 @@ dtb_dict = [
     Dict("label" => "Igneous alkaline dry (Weller et al., 2024)", "value" => "igad"),
     Dict("label" => "Ultramafic (Evans & Frost., 2021)", "value" => "um"),
     Dict("label" => "Mantle (Holland et al., 2013)", "value" => "mtl"),
-    # Dict("label" => "Stixrude & Lithgow-Bertelloni (2011)", "value" => "sb11"),
-    # Dict("label" => "Stixrude & Lithgow-Bertelloni (2021)", "value" => "sb21"),
+    Dict("label" => "Stixrude & Lithgow-Bertelloni (2011)", "value" => "sb11"),
+    Dict("label" => "Stixrude & Lithgow-Bertelloni (2021)", "value" => "sb21"),
     Dict("label" => "- CUSTOM DATABASE -", "value" => "separator", "disabled" => true),  # Simulate a horizontal line
     Dict("label" => "Ultramafic extended (Evans & Frost., 2021)", "value" => "ume"),
     Dict("label" => "Metapelite extended (White et al., 2014, Green et al., 2016, Evans & Frost., 2021)", "value" => "mpe")
