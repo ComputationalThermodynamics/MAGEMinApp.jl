@@ -100,13 +100,13 @@ push!(dba,Dict(         :database    => "Mantle (Holland et al., 2013)",
                         :acronym     => "mtl",
                         ), cols=:union)
 
-push!(dba,Dict(         :database    => "Stixrude & Lithgow-Bertelloni (2011)",
-                        :acronym     => "sb11",
-                        ), cols=:union)
+# push!(dba,Dict(         :database    => "Stixrude & Lithgow-Bertelloni (2011)",
+#                         :acronym     => "sb11",
+#                         ), cols=:union)
 
-push!(dba,Dict(         :database    => "Stixrude & Lithgow-Bertelloni (2021)",
-                        :acronym     => "sb21",
-                        ), cols=:union)
+# push!(dba,Dict(         :database    => "Stixrude & Lithgow-Bertelloni (2021)",
+#                         :acronym     => "sb21",
+#                         ), cols=:union)
 
 push!(dba,Dict(         :database    => "Ultramafic extended (Evans & Frost., 2021) + pl, hb and aug from Green et al., 2016",
                         :acronym     => "ume",
