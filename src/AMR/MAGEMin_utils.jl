@@ -103,10 +103,10 @@ function get_wat_sat_function(     Yrange,     bulk_ini,   oxi,    phase_selecti
 
             # extracting excess water
             if "H2O" in out.ph
-                id = findall(out.ph .== "H2O")[1]
+                id = findfirst(out.ph .== "H2O")
                 tmp_bulk .-= out.PP_vec[id - out.n_SS].Comp .* out.ph_frac[id]
             elseif "fl" in out.ph
-                id = findall(out.ph .== "fl")[1]
+                id = findfirst(out.ph .== "fl")
                 tmp_bulk .-= out.SS_vec[id].Comp .* out.ph_frac[id]
             end            
 
@@ -120,6 +120,7 @@ function get_wat_sat_function(     Yrange,     bulk_ini,   oxi,    phase_selecti
             tmp_bulk ./= sum(tmp_bulk[id_dry])      # normalize on anhydrous basis, to get water content
             
             SatSol[i]  = tmp_bulk[id_h2o]
+            
         end
         pChip_wat   = Interpolator(Prange, SatSol)
         pChip_T     = Interpolator(Prange, Tsol)
