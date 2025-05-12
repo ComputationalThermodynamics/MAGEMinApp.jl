@@ -24,6 +24,7 @@ println("  Test P-T diagram computation")
 global Out_XY =  Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,0)
 Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(  data, 
                                                 MAGEMin_data,
+                                                false,
                                                 "pt",
                                                 0.0,
                                                 nothing,
@@ -60,6 +61,7 @@ data    = perform_AMR(data)
 
 Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(   data,
                                                 MAGEMin_data,
+                                                false,
                                                 "pt",
                                                 0.0,
                                                 nothing,

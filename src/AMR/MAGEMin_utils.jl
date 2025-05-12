@@ -233,6 +233,7 @@ end
 
 function refine_MAGEMin(data, 
                         MAGEMin_data    :: MAGEMin_Data, 
+                        custW           :: Bool,
                         diagType        :: String,
                         PTpath,
                         phase_selection :: Union{Nothing,Vector{Int64}},
@@ -255,6 +256,28 @@ function refine_MAGEMin(data,
                         pChip_T         )
     global Out_XY;
     
+    #= First we create a structure to store the data in memory =#
+    if !isempty(AppData.customWs) && custW == true
+        df = AppData.customWs
+        n_entries = size(df,1)
+        new_Ws = Vector{MAGEMin_C.W_data{Float64,Int64}}(undef, n_entries)
+
+        for i=1:size(df,1)
+            dtb     = df[i, :dtb]
+            ss_id   = df[i, :id]
+            n_Ws    = df[i, :n_Ws]
+            Ws      = split(df[i, :Ws], ";")
+            Ws      = parse.(Float64, Ws)
+            Ws      = reshape(Ws, n_Ws, 3)
+            
+            new_Ws[i] = MAGEMin_C.W_data(dtb, ss_id, n_Ws, Ws)   
+        end
+    else
+        new_Ws = nothing
+    end
+
+
+
     if isempty(data.split_cell_list)
         Out_XY_new      = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,length(data.points))
         n_new_points    = length(data.points)
@@ -369,7 +392,7 @@ function refine_MAGEMin(data,
 
             Out_XY_new  =   multi_point_minimization(   Pvec, Tvec, MAGEMin_data;
                                                         X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol", G=Gvec, scp=scp, 
-                                                        rm_list=phase_selection, name_solvus=true, iguess=boost, callback_fn = update_progress); 
+                                                        rm_list=phase_selection, name_solvus=true, iguess=boost, callback_fn = update_progress, W=new_Ws); 
         else
             # if TT diagram does not exist, compute it
             id_h2o = findfirst(oxi .== "H2O") # check if H2O is in the oxides
@@ -403,7 +426,7 @@ function refine_MAGEMin(data,
         
                         out         = single_point_minimization(    fixP, npoints[i][2], MAGEMin_data;
                                                                     X=start_bulk, B=bufferN1, Xoxides=oxi, sys_in="mol",  scp=scp, 
-                                                                    rm_list=phase_selection, name_solvus=true)   
+                                                                    rm_list=phase_selection, name_solvus=true, W=new_Ws)   
             
                         Out_col_1[i] = deepcopy(out)
                     else
@@ -425,7 +448,7 @@ function refine_MAGEMin(data,
                     for j=1:n 
 
                         out     = point_wise_minimization(  P_, T_[j], gv, z_b, DB, splx_data;
-                                                            buffer_n=bufferN1, name_solvus=true, scp=scp, rm_list=phase_selection)
+                                                            buffer_n=bufferN1, name_solvus=true, scp=scp, rm_list=phase_selection, W=new_Ws)
 
                         if "fl" in out.ph || "H2O" in out.ph || "liq" in out.ph
                             if "fl" in out.ph
@@ -447,7 +470,7 @@ function refine_MAGEMin(data,
                             end
                             gv      = define_bulk_rock(gv, bulk_, oxi, "mol",unsafe_string(gv.db))
                             out     = point_wise_minimization(  P_, T_[j], gv, z_b, DB, splx_data;
-                                                                buffer_n=bufferN1, name_solvus=true, scp=scp, rm_list=phase_selection)
+                                                                buffer_n=bufferN1, name_solvus=true, scp=scp, rm_list=phase_selection, W=new_Ws)
 
                             Out_PT[j] = deepcopy(out)
                         else
@@ -486,7 +509,7 @@ function refine_MAGEMin(data,
 
                 Out_XY_new  =   multi_point_minimization(   Pvec, Tvec, MAGEMin_data;
                                                             X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol", G=Gvec, scp=scp, 
-                                                            rm_list=phase_selection, name_solvus=true, iguess=boost, callback_fn = update_progress); 
+                                                            rm_list=phase_selection, name_solvus=true, iguess=boost, callback_fn = update_progress, W=new_Ws); 
 
             end
         end

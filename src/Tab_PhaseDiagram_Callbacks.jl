@@ -5,6 +5,32 @@ function Tab_PhaseDiagram_Callbacks(app)
     """
     callback!(
         app,
+        Output("load-exp-success",   "is_open"),
+        Output("load-exp-failed",    "is_open"),
+        Input("load-exp-button",     "n_clicks"),
+        State("load-exp-id",         "value"),
+
+        prevent_initial_call = true,
+
+        ) do n_click, filename
+
+        println("Loading experimental data from file: $filename")
+        println("$(pwd())")
+        if isfile(filename)
+            global AppData = merge(AppData, (customWs = CSV.read(filename, DataFrame),))
+            return success, failed = "success", ""
+        else
+            return success, failed = "", "failed"
+            println("File not found: $filename, check path")
+        end
+    end
+
+
+    """
+        Callback to compute and display TAS diagram
+    """
+    callback!(
+        app,
         Output("code-avail",            "value"),
         Input("retrieve-statement",      "n_clicks"),
 
@@ -722,6 +748,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("title-id",               "value"),
         State("stable-assemblage-id",   "children"),   
 
+        State("exp-dropdown",           "value"),           # true,false
         State("diagram-dropdown",       "value"),           # pt, px, tx
         State("database-dropdown",      "value"),           # mp, mb, ig ,igd, um, alk
         State("dataset-dropdown",       "value"),           # pt, px, tx
@@ -811,7 +838,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             minColor,   maxColor,
             colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  updateTitle,     loadstateid, 
             field_size, customTitle, txt_list,
-            diagType,   dtb,        dataset,    watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  ph_selection, pure_ph_selection, PTpath,
+            custW,      diagType,   dtb,        dataset,    watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  ph_selection, pure_ph_selection, PTpath,
             tmin,       tmax,       pmin,       pmax,       e1_tmin,    e1_tmax,    e2_tmin,    e2_tmax,    e1_liq,     e2_liq,  e1_remain,     e2_remain,      
             fixT,       fixP,
             sub,        refType,    refLvl,
@@ -868,7 +895,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             data_plot, layout, npoints, meant, txt_list  =  compute_new_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                                                                         Xrange,     Yrange,     fieldname,  customTitle,
-                                                                                        dtb,        dataset,    diagType,   verbose,    scp,        solver,     boost, phase_selection,
+                                                                                        dtb,        dataset,    custW,      diagType,   verbose,    scp,        solver,     boost, phase_selection,
                                                                                         fixT,       fixP,
                                                                                         e1_liq,     e2_liq,     e1_remain,  e2_remain,
                                                                                         sub,        refLvl,
@@ -919,7 +946,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             data_plot, layout, npoints, meant, txt_list   =  refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                                                                     Xrange,     Yrange,     fieldname,  customTitle,
-                                                                                    dtb,        dataset,    diagType,   watsat,     watsat_val, verbose,    scp,    solver,  boost, phase_selection,
+                                                                                    dtb,        dataset,    custW,      diagType,   watsat,     watsat_val, verbose,    scp,    solver,  boost, phase_selection,
                                                                                     fixT,       fixP,
                                                                                     e1_liq,     e2_liq,     e1_remain,  e2_remain,
                                                                                     sub,        refLvl,

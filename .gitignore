@@ -5,3 +5,4 @@ Manifest.toml
 *libMAGEMin.dylib
 saved_states/*
 src/.DS_Store
+*.csv*
