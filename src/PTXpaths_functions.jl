@@ -1,7 +1,7 @@
 """
     Retrieve TAS diagram
 """
-function get_TAS_diagram(phases)
+function get_TAS_diagram(phases,title)
 
     tas      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, 16);
 
@@ -106,12 +106,13 @@ function get_TAS_diagram(phases)
     layout_ptx  = Layout(
 
         title= attr(
-            text    = "TAS Diagram (Anhydrous)",
+            text    = title,
             x       = 0.5,
+            y       = 1.10,
             xanchor = "center",
             yanchor = "top"
         ),
-        margin      = attr(autoexpand = false, l=16, r=16, b=16, t=16),
+        margin      = attr(autoexpand = false, l=16, r=16, b=16, t=24),
         hoverlabel = attr(
             bgcolor     = "#566573",
             bordercolor = "#f8f9f9",
@@ -125,10 +126,23 @@ function get_TAS_diagram(phases)
         annotations = annotations,
         width       = 760,
         height      = 480,
-        xaxis       = attr(     fixedrange    = true,
-                            ),
-        yaxis       = attr(     fixedrange    = true,
-                            ),
+        xaxis       = attr(
+            fixedrange    = true,
+            # showgrid      = false,  # Disable gridlines inside the plot
+            # zeroline      = true,   # Show the axis line
+            # #zerolinecolor = "black", # Set axis line color to black
+            # linecolor     = "black", # Set the bottom axis line color
+            # linewidth     = 1       # Set the thickness of the axis line
+        ),
+        yaxis       = attr(
+            fixedrange    = true,
+            # showgrid      = false,  # Disable gridlines inside the plot
+            # zeroline      = true,   # Show the axis line
+            # #zerolinecolor = "black", # Set axis line color to black
+            # linecolor     = "black", # Set the left axis line color
+            # linewidth     = 1,       # Set the thickness of the axis line
+            # range         = [0.0, nothing]
+        ),
     )
 
    
@@ -216,7 +230,7 @@ function compute_Tliq(          pressure,   tolerance,  bulk_ini,   oxi,    phas
 
         LibMAGEMin.FreeDatabases(gv, DB, z_b)
 
-        Tliq  = string((a+b)/2.0)
+        Tliq  = string( round((a+b)/2.0,digits=2))
     else
         print("Cannot compute liquidus temperature if liq is removed from the solution phase list\n") 
         Tliq        = ""
@@ -299,7 +313,7 @@ function compute_Tsol(          pressure,   tolerance,  bulk_ini,   oxi,    phas
 
         LibMAGEMin.FreeDatabases(gv, DB, z_b)
 
-        Tsol  = string((a+b)/2.0)
+        Tsol  = string(   round((a+b)/2.0,digits=2) )
     else
         print("Cannot compute solidus temperature if liq is removed from the solution phase list\n") 
         Tsol        = ""
@@ -426,17 +440,17 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                             if nCon > 0.0
                                 if Out_PTX[k].frac_M > nCon/100.0
                                     bulk                .= Out_PTX[k].bulk_S .*((100.0-nCon)/100.0) .+ Out_PTX[k].bulk_M .*(nCon/100.0)
-                                    removedBulk[k+1,:]    .= Out_PTX[k].bulk_S .*(nCon/100.0) .+ Out_PTX[k].bulk_M .*((100.0-nCon)/100.0)
+                                    removedBulk[k+1,:]  .= Out_PTX[k].bulk_S .*(nCon/100.0) .+ Out_PTX[k].bulk_M .*((100.0-nCon)/100.0)
                                     fracEvol[k+1,1]      = fracEvol[k,1] * (Out_PTX[k].frac_S + Out_PTX[k].frac_F + nCon/100.0) 
                                     fracEvol[k+1,2]      = 1.0 - fracEvol[k+1,1] 
                                 else
-                                    removedBulk[k+1,:]    .= zeros(length(bulk_ini))
+                                    removedBulk[k+1,:]  .= zeros(length(bulk_ini))
                                     fracEvol[k+1,1]      = fracEvol[k,1]
                                     fracEvol[k+1,2]      = 1.0 - fracEvol[k+1,1] 
                                 end
                             else
                                 bulk                .= Out_PTX[k].bulk_S
-                                removedBulk[k+1,:]    .= zeros(length(bulk_ini))
+                                removedBulk[k+1,:]  .= zeros(length(bulk_ini))
                                 fracEvol[k+1,1]      = fracEvol[k,1]
                                 fracEvol[k+1,2]      = 1.0 - fracEvol[k+1,1] 
                             end
@@ -451,26 +465,26 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                             if nRes > 0.0
                                 if Out_PTX[k].frac_S > nRes/100.0
                                     bulk                .= Out_PTX[k].bulk_M .*((100.0-nRes)/100.0) .+ Out_PTX[k].bulk_S .*(nRes/100.0)
-                                    removedBulk[k+1,:]    .= Out_PTX[k].bulk_M .*(nRes/100.0) .+ Out_PTX[k].bulk_S .*((100.0-nRes)/100.0)
-                                    fracEvol[k+1,1]      = fracEvol[k,1] * (Out_PTX[k].frac_M + nRes/100.0) 
-                                    fracEvol[k+1,2]      = 1.0 - fracEvol[k+1,1] 
+                                    removedBulk[k+1,:]  .= Out_PTX[k].bulk_M .*(nRes/100.0) .+ Out_PTX[k].bulk_S .*((100.0-nRes)/100.0)
+                                    fracEvol[k+1,1]      = fracEvol[k,1] * (Out_PTX[k].frac_M - nRes/100.0)     #removed
+                                    fracEvol[k+1,2]      = 1.0 - fracEvol[k+1,1]                                #remained
                                 else
-                                    fracEvol[k+1,1]      = fracEvol[k,1] * (Out_PTX[k].frac_M + Out_PTX[k].frac_S) 
+                                    fracEvol[k+1,1]      = fracEvol[k,1] * (Out_PTX[k].frac_M - Out_PTX[k].frac_S) 
                                     fracEvol[k+1,2]      = 1.0 - fracEvol[k+1,1] 
                                 end
                             else
                                 bulk                .= Out_PTX[k].bulk_M
-                                removedBulk[k+1,:]    .= Out_PTX[k].bulk_S
+                                removedBulk[k+1,:]  .= Out_PTX[k].bulk_S
                                 fracEvol[k+1,1]      = fracEvol[k,1] * (Out_PTX[k].frac_M) 
                                 fracEvol[k+1,2]      = 1.0 - fracEvol[k+1,1] 
                             end
                         else
-                            removedBulk[k+1,:]    .= zeros(length(bulk_ini))
+                            removedBulk[k+1,:]  .= zeros(length(bulk_ini))
                             fracEvol[k+1,1]      = fracEvol[k,1]
                             fracEvol[k+1,2]      = 1.0 - fracEvol[k+1,1] 
                         end
                     else
-                        removedBulk[k+1,:]    .= zeros(length(bulk_ini))
+                        removedBulk[k+1,:]  .= zeros(length(bulk_ini))
                         fracEvol[k+1,1]      = fracEvol[k,1]
                         fracEvol[k+1,2]      = 1.0 - fracEvol[k+1,1] 
                     end
@@ -478,6 +492,9 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                     k += 1
                 end
             end
+
+            fracEvol[fracEvol .< 0.0] .= 0.0
+
             
             Out_PTX[k] = deepcopy( point_wise_minimization(Pres[np],Temp[np], gv, z_b, DB, splx_data, sys_in; buffer_n=Buff[np], rm_list=phase_selection, name_solvus=true) )
   
@@ -496,7 +513,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
 
 end
 
-function get_data_plot(sysunit)
+function get_data_plot(display_mode,sysunit)
 
     n_ph    = length(ph_names_ptx)
     n_tot   = length(Out_PTX)
@@ -537,24 +554,37 @@ function get_data_plot(sysunit)
         Y[:,k] .= Y[:,k]/sum(Y[:,k]) .* 100.0
     end
 
-    for i=1:n_ph
-        data_plot_ptx[i] = scatter(;    x           =  x,
-                                        y           =  Y[i,:],
-                                        name        = ph_names_ptx[i],
-                                        stackgroup  = "one",
-                                        mode        = "lines",
-                                        line        = attr(     width   =  0.5,
-                                                                color   = colormap[i])  )
-     end
-
+    if display_mode == "stacked"
+        for i=1:n_ph
+            data_plot_ptx[i] = scatter(;    x           =  x,
+                                            y           =  Y[i,:],
+                                            name        = ph_names_ptx[i],
+                                            stackgroup  = "one",
+                                            mode        = "lines",
+                                            line        = attr(     width   =  0.5,
+                                                                    color   = colormap[i])  )
+        end
+    else 
+        for i=1:n_ph
+            data_plot_ptx[i] = scatter(;    x           =  x,
+                                            y           =  Y[i,:],
+                                            name        = ph_names_ptx[i],
+                                            mode        = "markers+lines",
+                                            marker = attr(
+                                                size    = 5.0,          # Set the size of the circle
+                                                color   = colormap[i],      # Set the color of the circle
+                                                symbol  = "circle-open", # Use an open circle marker
+                                                opacity = 0.5           # Set the transparency (0.0 = fully transparent, 1.0 = fully opaque)
+                                            ),
+                                            line        = attr(     width   = 0.75,
+                                                                    color   = colormap[i])   )
+         end
+    end
      data_plot_ptx[n_ph+1] = scatter(   x               = x,
                                     name            = "removed %",
                                     y               = fracEvol[:,2].*100.0, 
                                     hoverinfo       = "skip",
-                                    # mode            = "markers+lines",
                                     mode            = "lines",
-                                    # marker          = attr(     size    = 5.0,
-                                    #                             color   = "black"),
                                     line            = attr( dash    = "dash",
                                                             color   = "black", 
                                                             width   = 0.75)                ) 
@@ -563,10 +593,7 @@ function get_data_plot(sysunit)
                                     y               = fracEvol[:,1].*100.0, 
                                     name            = "remaining %",
                                     hoverinfo       = "skip",
-                                    # mode            = "markers+lines",
                                     mode            = "lines",
-                                    # marker          = attr(     size    = 5.0,
-                                    #                             color   = "black"),
                                     line            = attr( color   = "black", 
                                                             width   = 0.75)                ) 
 
@@ -578,6 +605,107 @@ function get_data_plot(sysunit)
     return data_plot_ptx, phase_list
 end
 
+
+function get_extracted_data_plot(ext_mode,sysunit,mode,nRes,nCon)
+
+    n_ph    = length(ph_names_ptx)
+    n_tot   = length(Out_PTX)
+
+    ph_names_ext_ptx = []
+    for i in ph_names_ptx
+        if i != "liq"
+            push!(ph_names_ext_ptx,i)
+        end
+    end
+
+    n_ph_e = length(ph_names_ext_ptx)
+    data_extracted_plot_ptx  = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_ph_e);
+
+    x       = Vector{String}(undef, n_tot)
+    melt    = zeros(Int64, n_tot)
+    Z       = Matrix{Union{Float64,Missing}}(undef, n_ph_e, n_tot) .= missing
+    Y       = zeros(Float64, n_ph_e, n_tot)
+
+    colormap = get_jet_colormap(n_ph_e)
+
+    for i=1:n_ph_e
+        
+        ph = ph_names_ext_ptx[i]
+
+        for k=1:n_tot
+            
+            x[k]    = string(round(Out_PTX[k].P_kbar, digits=1))*"; "*string(round(Out_PTX[k].T_C, digits=1))
+            id      = findall(Out_PTX[k].ph .== ph )
+            if "liq" in Out_PTX[k].ph 
+                melt[k] = 1
+            end
+
+            if mode == "fc"
+                frac = fracEvol[k,1] * 1.0 - (nRes/100.0)
+            else
+                frac = 0.0
+            end
+
+            if sysunit == "mol"
+                if ~isempty(id)
+                    Y[i,k] = sum(Out_PTX[k].ph_frac[id]) .* frac .*100.0                # we sum in case of solvi
+                end
+            elseif sysunit == "wt"
+                if ~isempty(id)
+                    Y[i,k] = sum(Out_PTX[k].ph_frac_wt[id]) .* frac .*100.0                # we sum in case of solvi
+                end
+            elseif sysunit == "vol"
+                if ~isempty(id)
+                    Y[i,k] = sum(Out_PTX[k].ph_frac_vol[id]) .* frac .*100.0                # we sum in case of solvi
+                end
+            end
+
+
+        
+        end
+
+    end 
+
+    Z .= hcat([accumulate(+,Y[i,:]) for i=1:n_ph_e]...)'
+
+    for i=1:n_tot
+        if melt[i] == 0
+            Z[:,i] .= missing
+        end
+    end
+
+    if ext_mode == "stacked"
+        for i=1:n_ph_e
+            data_extracted_plot_ptx[i] = scatter(;  x           =  x,
+                                                    y           =  Z[i,:],
+                                                    name        = ph_names_ext_ptx[i],
+                                                    stackgroup  = "one",
+                                                    mode        = "lines",
+                                                    line        = attr(     width   =  1.0,
+                                                                            color   = colormap[i])  )
+        end
+    else 
+        for i=1:n_ph_e
+            data_extracted_plot_ptx[i] = scatter(;  x           =  x,
+                                                    y           =  Z[i,:],
+                                                    name        = ph_names_ext_ptx[i],
+                                                    mode        = "markers+lines",
+                                                    marker = attr(
+                                                        size    = 5.0,          # Set the size of the circle
+                                                        color   = colormap[i],      # Set the color of the circle
+                                                        symbol  = "circle-open", # Use an open circle marker
+                                                        opacity = 0.5           # Set the transparency (0.0 = fully transparent, 1.0 = fully opaque)
+                                                    ),
+                                                    line        = attr(     width   = 1.0,
+                                                                            color   = colormap[i])   )
+         end
+    end
+
+    # build phase list:
+    phase_list_ext = [Dict("label" => "  "*ph_names_ext_ptx[i], "value" => ph_names_ext_ptx[i]) for i=1:n_ph_e]
+
+    return data_extracted_plot_ptx, phase_list_ext
+end
 
 """
     function get_data_comp_plot(sysunit,phases)
@@ -664,9 +792,12 @@ function get_data_comp_plot(sysunit,phases)
                                         y           =  compo_matrix[k,:],
                                         name        = oxides[k],
                                         mode        = "markers+lines",
-                                        marker      = attr(     size    = 5.0,
-                                                                color   = colormap[k]),
-
+                                        marker = attr(
+                                            size    = 5.0,          # Set the size of the circle
+                                            color   = colormap[k],      # Set the color of the circle
+                                            symbol  = "circle-open", # Use an open circle marker
+                                            opacity = 0.5           # Set the transparency (0.0 = fully transparent, 1.0 = fully opaque)
+                                        ),
                                         line        = attr(     width   = 1.0,
                                                                 color   = colormap[k])  )
     end
@@ -675,37 +806,6 @@ function get_data_comp_plot(sysunit,phases)
     return data_comp_plot
 end
 
-
-function initialize_rm_layout()
-    ytitle               = "Oxide fraction [mol%]"
-    layout_rm_ptx  = Layout(
-
-        title= attr(
-            text    = "",
-            x       = 0.5,
-            xanchor = "center",
-            yanchor = "top"
-        ),
-        margin      = attr(autoexpand = false, l=16, r=16, b=16, t=16),
-        hoverlabel = attr(
-            bgcolor     = "#566573",
-            bordercolor = "#f8f9f9",
-        ),
-        plot_bgcolor = "#FFF",
-        paper_bgcolor = "#FFF",
-        xaxis_title = "P-T conditions [kbar, °C]",
-        yaxis_title = ytitle,
-        # annotations = annotations,
-        # width       = 900,
-        height      = 360,
-        xaxis       = attr(     fixedrange    = true,
-                            ),
-        yaxis       = attr(     fixedrange    = true,
-                            ),
-    )
-
-    return layout_rm_ptx
-end
 
 function get_data_comp_rm_plot()
 
@@ -734,9 +834,12 @@ function get_data_comp_rm_plot()
                                             y           = rmB[:,k].*100.0,
                                             name        = oxides[k],
                                             mode        = "markers+lines",
-                                            marker      = attr(     size    = 5.0,
-                                                                    color   = colormap[k]),
-
+                                            marker = attr(
+                                                size    = 5.0,          # Set the size of the circle
+                                                color   = colormap[k],      # Set the color of the circle
+                                                symbol  = "circle-open", # Use an open circle marker
+                                                opacity = 0.5           # Set the transparency (0.0 = fully transparent, 1.0 = fully opaque)
+                                            ),
                                             line        = attr(     width   = 1.0,
                                                                     color   = colormap[k])  )
     end
@@ -744,10 +847,7 @@ function get_data_comp_rm_plot()
                                             name            = "removed %",
                                             y               = fracEvol[:,2].*100.0, 
                                             hoverinfo       = "skip",
-                                            # mode            = "markers+lines",
                                             mode            = "lines",
-                                            # marker          = attr(     size    = 5.0,
-                                            #                             color   = "black"),
                                             line            = attr( dash    = "dash",
                                                                     color   = "black", 
                                                                     width   = 0.75)                ) 
@@ -756,10 +856,7 @@ function get_data_comp_rm_plot()
                                             y               = fracEvol[:,1].*100.0, 
                                             name            = "remaining %",
                                             hoverinfo       = "skip",
-                                            # mode            = "markers+lines",
                                             mode            = "lines",
-                                            # marker          = attr(     size    = 5.0,
-                                            #                             color   = "black"),
                                             line            = attr( color   = "black", 
                                                                     width   = 0.75)                ) 
     return data_comp_rm_plot
@@ -806,9 +903,12 @@ function get_data_comp_rm_int_plot()
                                                 y           = rmB[:,k].*100.0,
                                                 name        = oxides[k],
                                                 mode        = "markers+lines",
-                                                marker      = attr(     size    = 5.0,
-                                                                        color   = colormap[k]),
-
+                                                marker = attr(
+                                                    size    = 5.0,          # Set the size of the circle
+                                                    color   = colormap[k],      # Set the color of the circle
+                                                    symbol  = "circle-open", # Use an open circle marker
+                                                    opacity = 0.5           # Set the transparency (0.0 = fully transparent, 1.0 = fully opaque)
+                                                ),
                                                 line        = attr(     width   = 1.0,
                                                                         color   = colormap[k])  )
     end
@@ -816,10 +916,7 @@ function get_data_comp_rm_int_plot()
                                             name            = "removed %",
                                             y               = fracEvol[:,2].*100.0, 
                                             hoverinfo       = "skip",
-                                            # mode            = "markers+lines",
                                             mode            = "lines",
-                                            # marker          = attr(     size    = 5.0,
-                                            #                             color   = "black"),
                                             line            = attr( dash    = "dash",
                                                                     color   = "black", 
                                                                     width   = 0.75)                ) 
@@ -828,14 +925,54 @@ function get_data_comp_rm_int_plot()
                                                 y               = fracEvol[:,1].*100.0, 
                                                 name            = "remaining %",
                                                 hoverinfo       = "skip",
-                                                # mode            = "markers+lines",
                                                 mode            = "lines",
-                                                # marker          = attr(     size    = 5.0,
-                                                #                             color   = "black"),
                                                 line            = attr( color   = "black", 
                                                                         width   = 0.75)                ) 
 
     return data_comp_rm_in_plot
+end
+
+
+# ------------------------------------------------ LAYOUTS ------------------------------------------------#
+function initialize_rm_layout()
+    ytitle         = "Oxide fraction [mol%]"
+    layout_rm_ptx  = Layout(
+
+        title= attr(
+            text    = "",
+            x       = 0.5,
+            y       = 1.10,
+            xanchor = "center",
+            yanchor = "top"
+        ),
+        margin      = attr(autoexpand = false, l=16, r=16, b=16, t=24),
+        hoverlabel = attr(
+            bgcolor     = "#566573",
+            bordercolor = "#f8f9f9",
+        ),
+        plot_bgcolor = "#FFF",
+        paper_bgcolor = "#FFF",
+        xaxis_title = "P-T conditions [kbar, °C]",
+        yaxis_title = ytitle,
+        height      = 360,
+        xaxis       = attr(
+            fixedrange    = true,
+            showgrid      = false,  # Disable gridlines inside the plot
+            zeroline      = true,   # Show the axis line
+            linecolor     = "black", # Set the bottom axis line color
+            linewidth     = 1       # Set the thickness of the axis line
+        ),
+        yaxis       = attr(
+            fixedrange    = true,
+            showgrid      = false,  # Disable gridlines inside the plot
+            zeroline      = true,   # Show the axis line
+            linecolor     = "black", # Set the left axis line color
+            linewidth     = 1,       # Set the thickness of the axis line
+            range         = [0.0, nothing]
+        ),
+    )
+
+    return layout_rm_ptx
 end
 
 
@@ -846,10 +983,14 @@ function initialize_layout(title,sysunit)
         title= attr(
             text    = title,
             x       = 0.5,
+            y       = 1.10,
             xanchor = "center",
-            yanchor = "top"
+            yanchor = "top",
+            font    = attr(
+                size  = 14,
+            )
         ),
-        margin      = attr(autoexpand = false, l=16, r=16, b=16, t=16),
+        margin      = attr(autoexpand = false, l=16, r=16, b=16, t=24),
         hoverlabel = attr(
             bgcolor     = "#566573",
             bordercolor = "#f8f9f9",
@@ -858,29 +999,81 @@ function initialize_layout(title,sysunit)
         paper_bgcolor = "#FFF",
         xaxis_title = "P-T conditions [kbar, °C]",
         yaxis_title = ytitle,
-        # annotations = annotations,
-        # width       = 900,
         height      = 360,
-        xaxis       = attr(     fixedrange    = true,
-                            ),
-        yaxis       = attr(     fixedrange    = true,
-                            ),
+        xaxis       = attr(
+            fixedrange    = true,
+            showgrid      = false,  # Disable gridlines inside the plot
+            zeroline      = true,   # Show the axis line
+            linecolor     = "black", # Set the bottom axis line color
+            linewidth     = 1       # Set the thickness of the axis line
+        ),
+        yaxis       = attr(
+            fixedrange    = true,
+            showgrid      = false,  # Disable gridlines inside the plot
+            zeroline      = true,   # Show the axis line
+            linecolor     = "black", # Set the left axis line color
+            linewidth     = 1,       # Set the thickness of the axis line
+            range         = [0.0, nothing]
+        ),
     )
 
     return layout_ptx
+end
+
+
+
+
+function initialize_ext_layout(title,sysunit)
+    ytitle               = "Fractionated phase fraction ["*sysunit*"%]"
+    layout_ext_ptx  = Layout(
+
+        title= attr(
+            text    = title,
+            x       = 0.5,
+            y       = 1.10,
+            xanchor = "center",
+            yanchor = "top",
+            font    = attr(
+                size  = 14, 
+            )
+        ),
+        margin      = attr(autoexpand = false, l=16, r=16, b=16, t=24),
+        hoverlabel = attr(
+            bgcolor     = "#566573",
+            bordercolor = "#f8f9f9",
+        ),
+        plot_bgcolor = "#FFF",
+        paper_bgcolor = "#FFF",
+        xaxis_title = "P-T conditions [kbar, °C]",
+        yaxis_title = ytitle,
+
+        height      = 360,
+        xaxis       = attr(
+            fixedrange    = true,
+            showgrid      = false,  # Disable gridlines inside the plot
+            zeroline      = true,   # Show the axis line
+            linecolor     = "black", # Set the bottom axis line color
+            linewidth     = 1       # Set the thickness of the axis line
+        ),
+        yaxis       = attr(
+            fixedrange    = true,
+            showgrid      = false,  # Disable gridlines inside the plot
+            zeroline      = true,   # Show the axis line
+            linecolor     = "black", # Set the left axis line color
+            linewidth     = 1,       # Set the thickness of the axis line
+            range         = [0.0, nothing]
+        ),
+    )
+
+    return layout_ext_ptx
 end
 
 function initialize_comp_layout(sysunit)
     ytitle               = "oxide fraction ["*sysunit*"%]"
     layout_comp  = Layout(
 
-        # title= attr(
-        #     text    = "Phase composition",
-        #     x       = 0.5,
-        #     xanchor = "center",
-        #     yanchor = "top"
-        # ),
-        margin      = attr(autoexpand = false, l=16, r=16, b=16, t=16),
+
+        margin      = attr(autoexpand = false, l=16, r=16, b=16, t=24),
         hoverlabel = attr(
             bgcolor     = "#566573",
             bordercolor = "#f8f9f9",
@@ -889,13 +1082,23 @@ function initialize_comp_layout(sysunit)
         paper_bgcolor = "#FFF",
         xaxis_title = "P-T conditions [kbar, °C]",
         yaxis_title = ytitle,
-        # annotations = annotations,
-        # width       = 900,
+
         height      = 360,
-        xaxis       = attr(     fixedrange    = true,
-                            ),
-        yaxis       = attr(     fixedrange    = true,
-                            ),
+        xaxis       = attr(
+            fixedrange    = true,
+            showgrid      = false,  # Disable gridlines inside the plot
+            zeroline      = true,   # Show the axis line
+            linecolor     = "black", # Set the bottom axis line color
+            linewidth     = 1       # Set the thickness of the axis line
+        ),
+        yaxis       = attr(
+            fixedrange    = true,
+            showgrid      = false,  # Disable gridlines inside the plot
+            zeroline      = true,   # Show the axis line
+            linecolor     = "black", # Set the left axis line color
+            linewidth     = 1,       # Set the thickness of the axis line
+            range         = [0.0, nothing]
+        ),
     )
 
     return layout_comp

@@ -13,7 +13,7 @@ function Tab_PTXpaths()
                                 dbc_row([
                                     dbc_col([ 
                                         html_h1("Thermodynamic database", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 2)),
-                                    ]),
+                                    ],width=4),
                                     dbc_col([ 
                                         dcc_dropdown(   id      = "database-dropdown-ptx",
                                                         # options = [
@@ -30,7 +30,7 @@ function Tab_PTXpaths()
                                     dbc_row([
                                         dbc_col([ 
                                             html_h1("Dataset", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
-                                        ]),
+                                        ],width=4),
                                         dbc_col([ 
                                             dcc_dropdown(   id      = "dataset-dropdown-ptx",
                                                             options = [Dict(    "label"     => "ds$(AppData.db_inf.dataset_opt[i])",
@@ -45,7 +45,7 @@ function Tab_PTXpaths()
                                     dbc_row([  
                                         dbc_col([ 
                                             html_h1("Phase selection", style = Dict("textAlign" => "center","font-size" => "120%")),
-                                        ],width=6),
+                                        ],width=4),
 
                                         dbc_col([ 
                                             dbc_row([  
@@ -126,8 +126,8 @@ function Tab_PTXpaths()
                                         html_div("‎ "),  
                                         dbc_row([
                                             dbc_col([ 
-                                                html_h1("clinopyroxene", style = Dict("textAlign" => "center","font-size" => "120%")),
-                                            ],width=6),
+                                                html_h1("Clinopyroxene", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            ],width=4),
                                             dbc_col([ 
                                                 html_div("Omph"),
                                             ],width=3),
@@ -145,7 +145,7 @@ function Tab_PTXpaths()
                                         html_div("‎ "),  
                                         dbc_row([
                                             dbc_col([ 
-                                            ],width=6),
+                                            ],width=4),
 
                                             dbc_col([ 
                                                 dcc_checklist(
@@ -177,7 +177,7 @@ function Tab_PTXpaths()
                                     dbc_row([
                                         dbc_col([ 
                                             html_h1("Buffer", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                        ]),
+                                        ],width=4),
                                         dbc_col([ 
                                             dcc_dropdown(   id      = "buffer-dropdown-ptx",
                                             options = [
@@ -207,7 +207,7 @@ function Tab_PTXpaths()
                                         dbc_row([
                                             dbc_col([ 
                                                 html_h1("Variable buffer", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                            ]),
+                                            ],width=4),
                                             dbc_col([ 
                                                 dcc_dropdown(   id      = "variable-buffer-ptx-id",
                                                 options = [
@@ -225,7 +225,7 @@ function Tab_PTXpaths()
                                     dbc_row([
                                         dbc_col([ 
                                             html_h1("Solver", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                        ]),
+                                        ],width=4),
                                         dbc_col([ 
                                             dcc_dropdown(   id      = "solver-dropdown-ptx",
                                             options = [
@@ -242,7 +242,7 @@ function Tab_PTXpaths()
                                     dbc_row([
                                         dbc_col([ 
                                             html_h1("Verbose", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                        ]),
+                                        ],width=4),
                                         dbc_col([ 
                                             dcc_dropdown(   id      = "verbose-dropdown-ptx",
                                             options = [
@@ -581,8 +581,8 @@ function Tab_PTXpaths()
 
                                         dash_datatable(
                                             id      = "ptx-table",
-                                            columns =[  Dict("name" => "P [kbar]",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
-                                                        Dict("name" => "T [°C]",    "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")],
+                                            columns =[  Dict("name" => "P_kbar",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                                                        Dict("name" => "T_°C",    "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")],
                                             data=[
                                                 Dict("col-1" => 5.0,    "col-2"   => 500.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0),
                                                 Dict("col-1" => 10.0,   "col-2"   => 800.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0),
@@ -608,7 +608,7 @@ function Tab_PTXpaths()
                                                                                 
                             ])
 
-                        ], width=4),
+                        ], width=3),
 
                         dbc_col([  
                         ]), #, width=1
@@ -633,7 +633,7 @@ function Tab_PTXpaths()
                                                                                 
                             ])
 
-                        ], width=3),
+                        ], width=4),
 
                         dbc_col([  
                         ]), #, width=1
@@ -656,7 +656,7 @@ function Tab_PTXpaths()
                                                     type    = "number", 
                                                     min     = 1, 
                                                     max     = 1024, 
-                                                    value   = 4   ),
+                                                    value   = 32  ),
                                             ]),
                                         ]),                               
                                         # PTX mode
@@ -714,7 +714,7 @@ function Tab_PTXpaths()
                                         html_div([
                                             dbc_row([
                                                 dbc_col([ 
-                                                    html_h1("Residual fraction [%]", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                    html_h1("Residual rock fraction [%]", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                                 ], width=6),
                                                 dbc_col([ 
                                                         dbc_input(
@@ -722,7 +722,7 @@ function Tab_PTXpaths()
                                                         type    = "number", 
                                                         min     = 0, 
                                                         max     = 100.0, 
-                                                        value   = 7.0   ),
+                                                        value   = 0.0   ),
                                                 ]),
                                             ]), 
                                         ], style = Dict("display" => "none"), id      = "show-residual-id"), #none, block
@@ -793,7 +793,7 @@ function Tab_PTXpaths()
                                         html_div("‎ "),
                                         dbc_row([
                                             dbc_col([
-                                                html_h1("Export removed composition", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 0)),    
+                                                html_h1("Save fractionated material", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 0)),    
                                             ], width=3),
                                             dbc_col([ 
                                                 dbc_input(
@@ -902,23 +902,87 @@ function Tab_PTXpaths()
                     # html_div("‎ "),
                     dbc_tabs([
                         dbc_tab(label="PTX path", children=[
+
                             dbc_row([                                                                                     
                                 dbc_col([
 
-                                    dbc_row([
                                         dbc_card(dbc_cardbody([
-                                            PTX_plot()
+                                            dbc_row([
+                                                dbc_row([
+                                                    html_div("‎ "),
+                                                    html_hr(),
+                                                ]),
+                                                dbc_row([
+                                                    dbc_col([
+                                                        html_h1("Stable phase fraction", style = Dict("textAlign" => "center","font-size" => "200%", "marginTop" => 16)),
+                                                    ],width=11),
+                                                    dbc_col([ 
+                                                        dcc_dropdown(   id      = "display-mode",
+                                                                        options = [
+                                                                            (label = "stacked",  value = "stacked"),
+                                                                            (label = "lines",    value = "lines"),
+                                                                        ],
+                                                                        value=     "stacked" ,
+                                                                        clearable   = false,
+                                                                        multi       = false),
+                                                    ],width=1),
+                                                ]),
+                                                dbc_row([
+                                                    html_hr(),
+                                                    html_div("‎ "),
+                                                ]),
+                                                dbc_row([
+                                                    PTX_plot()
+                                                ]),
+                                            ]),
+
+                                            dbc_row([
+                                                # html_div([                                                     
+                                                    dbc_row([
+                                                        html_div("‎ "),
+                                                        html_hr(),
+                                                    ]),
+                                                    dbc_row([
+                                                        dbc_col([
+                                                            html_h1("Fractionated phase fraction (integrated)", style = Dict("textAlign" => "center","font-size" => "200%", "marginTop" => 16)),
+                                                        ],width=11),
+                                                        dbc_col([ 
+                                                            dcc_dropdown(   id      = "ext-display-mode",
+                                                                            options = [
+                                                                                (label = "stacked",  value = "stacked"),
+                                                                                (label = "lines",    value = "lines"),
+                                                                            ],
+                                                                            value=     "stacked" ,
+                                                                            clearable   = false,
+                                                                            multi       = false),
+                                                        ],width=1),
+                                                    ]),
+                                                    dbc_row([
+                                                        html_hr(),
+                                                        html_div("‎ "),
+                                                    ]),
+                                                    dbc_row([
+                                                        PTX_extracted_plot()
+                                                    ]),
+                                                # ], style = Dict("display" => "none"), id  = "show-frac-id-ptx"), #none, block
+                                            ]),                                                        
                                         ])),
-                                    ]),
-                            ], width=12),
+
+                                ], width=12),
                             ]),
+
                         ]),
                         dbc_tab(label="Phase composition", children=[
                             dbc_row([                                                                                     
                                 dbc_col([
-                                    html_div("‎ "),
-                                    dbc_row([
+                                    # html_div("‎ "),
+                                    # dbc_row([
                                         dbc_card(dbc_cardbody([
+                                            dbc_row([
+                                                html_h1("Stable phase composition", style = Dict("textAlign" => "center","font-size" => "200%", "marginTop" => 8)),
+                                                html_hr(),
+                                                html_div("‎ "),
+                                            ]),
                                             dbc_row([
                                                 dbc_col([ 
                                                     PTX_frac_plot()
@@ -940,53 +1004,66 @@ function Tab_PTXpaths()
                                                     ])),
 
                                                 ], width=2)
-                                            ])
+                                            ]),
+                                            dbc_row([
+                                                html_div("‎ "),
+                                                html_hr(),
+                                                html_h1("Fractionated composition", style = Dict("textAlign" => "center","font-size" => "200%", "marginTop" => 8)),
+                                                html_hr(),
+                                                html_div("‎ "),
+                                            ]),
+                                            dbc_tabs([
+                                                dbc_tab(label="Stepwise", children=[
+                                                    dbc_row([                                                                                     
+                                                        dbc_col([
+                
+                                                            dbc_row([
+                                                                dbc_card(dbc_cardbody([
+                                                                    PTX_removed_plot()
+                                                                ])),
+                                                            ]),
+                                                    ], width=12),
+                                                    ]),
+                                                ]),
+                                                dbc_tab(label="Integrated", children=[
+                                                    dbc_row([                                                                                     
+                                                        dbc_col([
+                
+                                                            dbc_row([
+                                                                dbc_card(dbc_cardbody([
+                                                                    PTX_removed_int_plot()
+                                                                ])),
+                                                            ]),
+                                                    ], width=12),
+                                                    ]),
+                                                ]),
+                                            ]), 
+
+
                                         ])),
 
-                                    ]),      
+                                    # ]),      
                                 
                                 ], width=12),
                             ]),
                         ]),
-                        dbc_tab(label="Removed composition", children=[
-                            dbc_tabs([
-                                dbc_tab(label="Stepwise", children=[
-                                    dbc_row([                                                                                     
-                                        dbc_col([
+                        # dbc_tab(label="Removed composition", children=[
 
-                                            dbc_row([
-                                                dbc_card(dbc_cardbody([
-                                                    PTX_removed_plot()
-                                                ])),
-                                            ]),
-                                    ], width=12),
-                                    ]),
-                                ]),
-                                dbc_tab(label="Integrated", children=[
-                                    dbc_row([                                                                                     
-                                        dbc_col([
+                        # ]),
 
-                                            dbc_row([
-                                                dbc_card(dbc_cardbody([
-                                                    PTX_removed_int_plot()
-                                                ])),
-                                            ]),
-                                    ], width=12),
-                                    ]),
-                                ]),
-                            ]), 
-                        ]),
-
-                        dbc_tab(label="TAS diagram", children=[
-                            html_div("‎ "),
-                            dbc_row([                                                                                     
-                                dbc_col([
+                        dbc_tab(label="TAS diagram", children=[                                                                               
+                            dbc_col([
+                                dbc_card(dbc_cardbody([
                                     dbc_row([
-                                        dbc_card(dbc_cardbody([
-                                            TAS_plot()
-                                        ])),
+                                        html_h1("Total alkali-silica diagram", style = Dict("textAlign" => "center","font-size" => "200%", "marginTop" => 8)),
+                                        html_hr(),
+                                        html_div("‎ "),
                                     ]),
-                                ]),
+                                    dbc_row([
+                                        TAS_plot()
+                                    ]),
+
+                                ])),
                             ]),
                         ]),
                     ]),

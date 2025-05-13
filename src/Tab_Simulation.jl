@@ -816,7 +816,7 @@ function Tab_Simulation()
                             is_open=true,
                             ),
                             dbc_row([dbc_label("", id="label-id")])                                                  
-                            ])
+                            ]),
                         ], width=4),
 
 
@@ -1278,6 +1278,59 @@ function Tab_Simulation()
                                                 draggable   = false,
                                                 style       = Dict("textAlign" => "center","font-size" => "100%", "width"=> "100%", "resize"=> "none")
                                             ),
+
+
+                                            dbc_row([dbc_button("",id="button-advanced", color="light"),
+                                            dbc_collapse(
+                                                dbc_card(dbc_cardbody([
+
+                                                        dbc_row([
+                                                            dbc_col([ 
+                                                                dbc_input(
+                                                                    id      = "load-exp-id",
+                                                                    type    = "text", 
+                                                                    style   = Dict("textAlign" => "center") ,
+                                                                    value   = "filename path"   ),     
+                                                            ], width=6),
+                                                            dbc_col([    
+                                                                dbc_button("Load W's", id="load-exp-button", color="light",  n_clicks=0,
+                                                                style       = Dict( "textAlign"     => "center",
+                                                                                    "font-size"     => "100%",
+                                                                                    "border"        => "1px grey solid")), 
+                                                            ], width=3),
+                                                            dbc_col([ 
+                                                                dcc_dropdown(   id      = "exp-dropdown",
+                                                                                options = [
+                                                                                    (label = "on",         value = true),
+                                                                                    (label = "off",        value = false),
+                                                                                ],
+                                                                                value       = false,
+                                                                                clearable   = false,
+                                                                                multi       = false),
+                                                            ],width=3),
+
+                                                        ]),
+                                                        dbc_alert(
+                                                            "Loaded phase diagram state successfully",
+                                                            id      = "load-exp-success",
+                                                            is_open = false,
+                                                            duration= 4000,
+                                                        ),
+                                                        dbc_alert(
+                                                            "Phase diagram state composition(s) failed to load, check input file format",
+                                                            color="danger",
+                                                            id      ="load-exp-failed",
+                                                            is_open = false,
+                                                            duration= 4000,
+                                                        ),
+
+                                                    ])
+                                                ),
+                                                id="collapse-advanced",
+                                                is_open=false,
+                                                ),                                                 
+                                            ])
+
 
                                         ])
 

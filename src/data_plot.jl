@@ -197,6 +197,15 @@ function PTX_plot()
                 figure      = fig,
             )
 end
+function PTX_extracted_plot()
+
+    fig =  plot(    Layout( height= 360 ))
+
+    dcc_graph(
+                id          = "ptx-extracted-plot",
+                figure      = fig,
+            )
+end
 
 function TAS_plot()
 

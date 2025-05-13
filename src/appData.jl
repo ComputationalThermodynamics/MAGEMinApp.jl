@@ -25,6 +25,7 @@ app     *= "Brendan Dyck\n"
 app     *= "Buchanan Kerswell\n"
 app     *= "Cerine Bouadani\n"
 app     *= "Dinarte Lucas\n"
+app     *= "Ding Chenlong\n"
 app     *= "Dimitrios Moutzouris\n"
 app     *= "Evangelos Moulas\n"
 app     *= "Guillaume Duclaux\n"
@@ -65,8 +66,8 @@ dtb_dict = [
     Dict("label" => "Igneous alkaline dry (Weller et al., 2024)", "value" => "igad"),
     Dict("label" => "Ultramafic (Evans & Frost., 2021)", "value" => "um"),
     Dict("label" => "Mantle (Holland et al., 2013)", "value" => "mtl"),
-    # Dict("label" => "Stixrude & Lithgow-Bertelloni (2011)", "value" => "sb11"),
-    # Dict("label" => "Stixrude & Lithgow-Bertelloni (2021)", "value" => "sb21"),
+    Dict("label" => "Stixrude & Lithgow-Bertelloni (2011)", "value" => "sb11"),
+    Dict("label" => "Stixrude & Lithgow-Bertelloni (2021)", "value" => "sb21"),
     Dict("label" => "- CUSTOM DATABASE -", "value" => "separator", "disabled" => true),  # Simulate a horizontal line
     Dict("label" => "Ultramafic extended (Evans & Frost., 2021)", "value" => "ume"),
     Dict("label" => "Metapelite extended (White et al., 2014, Green et al., 2016, Evans & Frost., 2021)", "value" => "mpe")
@@ -773,6 +774,7 @@ const MAGEMin_C_version = string(pkgversion(MAGEMin_C))
 
 # Keep track of simulation progress - note that this should be added to a single global variable
 global CompProgress      =  ComputationalProgress()
+customWs                 =  DataFrame()
 
 
 HTTP.Connections.closeall()
@@ -790,4 +792,5 @@ AppData = ( contribs            = contribs,
             dict_em             = dict_em,  
             dict_ss             = dict_ss,
             db_inf              = db_inf,
+            customWs            = customWs,    
             )   

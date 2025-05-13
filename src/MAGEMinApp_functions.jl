@@ -1883,6 +1883,8 @@ function bulk_file_to_db(datain)
 end
 
 
+
+
 function parse_bulk_rock(contents, filename)
     try
         content_type, content_string = split(contents, ',');
