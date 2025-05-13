@@ -358,7 +358,7 @@ function Tab_PTXpaths_Callbacks(app)
         title       = db[(db.db .== dtb), :].title[test+1]
 
         if "liq" in phases
-            tas, layout_ptx = get_TAS_diagram(phases)
+            tas, layout_ptx = get_TAS_diagram(phases,title)
             figTAS      = plot( tas, layout_ptx)
         else
             figTAS      =  plot(Layout( height= 360 ))
@@ -446,12 +446,15 @@ function Tab_PTXpaths_Callbacks(app)
         app,
         Output("ptx-plot",              "figure"),
         Output("ptx-plot",              "config"),
+        Output("ptx-extracted-plot",    "figure"),
+        Output("ptx-extracted-plot",    "config"),
         Output("ptx-removed-plot",      "figure"),
         Output("ptx-removed-plot",      "config"),
-        Output("ptx-removed-int-plot",      "figure"),
-        Output("ptx-removed-int-plot",      "config"),
+        Output("ptx-removed-int-plot",  "figure"),
+        Output("ptx-removed-int-plot",  "config"),
         Output("phase-selector-id",     "options"),
         Output("output-loading-id-ptx", "children"),
+        # Output("show-frac-id-ptx",      "style"),
 
         Input("compute-path-button",    "n_clicks"),
         Input("sys-unit-ptx",           "value"),
@@ -498,13 +501,14 @@ function Tab_PTXpaths_Callbacks(app)
         phase_selection         = remove_phases(string_vec_diff(phase_selection,pure_phase_selection,dtb),dtb)
         title                   = db[(db.db .== dtb), :].title[test+1]
         loading                 = ""
+        # mode                    == "fc" ? disp_frac = Dict("display" => "block")    : disp_frac = Dict("display" => "none")    
         
         if bid == "compute-path-button"
 
-            global Out_PTX, ph_names_ptx, layout_ptx, data_plot_ptx, fracEvol, removedBulk, layout_rm_ptx, data_comp_rm_plot, layout_rm_int_ptx, data_comp_rm_int_plot
+            global Out_PTX, ph_names_ptx, layout_ptx, layout_extracted_ptx, data_plot_ptx, fracEvol, removedBulk, layout_rm_ptx, data_comp_rm_plot, layout_rm_int_ptx, data_comp_rm_int_plot
 
-            bufferN                 = Float64(bufferN)               # convert buffer_n to float
-            bulk_ini, bulk_assim, oxi = get_bulkrock_prop(bulk, bulk2; sys_unit=sys_unit)  
+            bufferN                     = Float64(bufferN)               # convert buffer_n to float
+            bulk_ini, bulk_assim, oxi   = get_bulkrock_prop(bulk, bulk2; sys_unit=sys_unit)  
 
             compute_new_PTXpath(    nsteps,     PTdata,     mode,       bulk_ini,  bulk_assim,  oxi,    phase_selection,    assim, var_buffer,
                                     dtb,        dataset,    bufferType, solver,
@@ -514,11 +518,12 @@ function Tab_PTXpaths_Callbacks(app)
 
 
             layout_ptx                  = initialize_layout(title,sysunit)
-
+            layout_extracted_ptx        = initialize_ext_layout(title,sysunit)
             data_plot_ptx, phase_list   = get_data_plot(sysunit)
+            data_extracted_plot_ptx, phase_list_ext   = get_extracted_data_plot(sysunit,mode,nRes,nCon)
 
             figPTX                      = plot(data_plot_ptx,layout_ptx)
-
+            figExtractedPTX             = plot(data_extracted_plot_ptx,layout_extracted_ptx)
 
             layout_rm_ptx               = initialize_rm_layout()
             data_comp_rm_plot           = get_data_comp_rm_plot()
@@ -528,29 +533,35 @@ function Tab_PTXpaths_Callbacks(app)
             layout_rm_int_ptx           = initialize_rm_layout()
             data_comp_rm_int_plot       = get_data_comp_rm_int_plot()
 
-            figrmintPTX                  = plot(data_comp_rm_int_plot,layout_rm_int_ptx)
-
-
+            figrmintPTX                 = plot(data_comp_rm_int_plot,layout_rm_int_ptx)
 
         elseif bid == "sys-unit-ptx"
             data_plot_ptx, phase_list   = get_data_plot(sysunit)
-            ytitle                  = "Phase fraction ["*sysunit*"%]"
-            
-            layout_ptx[:yaxis_title]    = ytitle
+            data_extracted_plot_ptx, phase_list_ext   = get_extracted_data_plot(sysunit,mode,nRes,nCon)
 
+            layout_ptx[:yaxis_title]    = "Phase fraction ["*sysunit*"%]"
+            layout_extracted_ptx[:yaxis_title]        = "Extracted phase fraction ["*sysunit*"%]"
             figPTX                  = plot(data_plot_ptx,layout_ptx)
+            figExtractedPTX         = plot(data_extracted_plot_ptx,layout_extracted_ptx)
             figrmPTX                = plot(data_comp_rm_plot,layout_rm_ptx)
             figrmintPTX             = plot(data_comp_rm_int_plot,layout_rm_int_ptx)
 
         else
             figPTX                  = plot(    Layout( height= 320 ))
+            figExtractedPTX         = plot(    Layout( height= 320 ))
             figrmPTX                = plot(    Layout( height= 320 ))
-            figrmintPTX                = plot(    Layout( height= 320 ))
+            figrmintPTX             = plot(    Layout( height= 320 ))
         end
 
         configPTX   = PlotConfig(   toImageButtonOptions  = attr(     name     = "Download as svg",
                                     format   = "svg",
                                     filename =  "PTX_path_"*replace(title, " " => "_"),
+                                    height   =  360,
+                                    width    =  960,
+                                    scale    =  2.0,       ).fields)
+        configExtractedPTX   = PlotConfig(   toImageButtonOptions  = attr(     name     = "Download as svg",
+                                    format   = "svg",
+                                    filename =  "PTX_path_extracted_"*replace(title, " " => "_"),
                                     height   =  360,
                                     width    =  960,
                                     scale    =  2.0,       ).fields)
@@ -567,7 +578,7 @@ function Tab_PTXpaths_Callbacks(app)
                                     width    =  960,
                                     scale    =  2.0,       ).fields)
 
-        return figPTX, configPTX, figrmPTX, configrmPTX, figrmintPTX, configrmintPTX, phase_list, loading
+        return figPTX, configPTX, figExtractedPTX, configExtractedPTX, figrmPTX, configrmPTX, figrmintPTX, configrmintPTX, phase_list, loading#, disp_frac
     end
 
 

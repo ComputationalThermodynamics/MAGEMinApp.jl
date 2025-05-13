@@ -13,7 +13,7 @@ function Tab_IsentropicPaths()
                                 dbc_row([
                                     dbc_col([ 
                                         html_h1("Thermodynamic database", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 2)),
-                                    ]),
+                                    ],width=4),
                                     dbc_col([ 
                                         dcc_dropdown(   id      = "database-dropdown-isoS",
                                                         # options = [
@@ -30,7 +30,7 @@ function Tab_IsentropicPaths()
                                     dbc_row([
                                         dbc_col([ 
                                             html_h1("Dataset", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
-                                        ]),
+                                        ],width=4),
                                         dbc_col([ 
                                             dcc_dropdown(   id      = "dataset-dropdown-isoS",
                                                             options = [Dict(    "label"     => "ds$(AppData.db_inf.dataset_opt[i])",
@@ -44,7 +44,7 @@ function Tab_IsentropicPaths()
                                     dbc_row([  
                                         dbc_col([ 
                                             html_h1("Phase selection", style = Dict("textAlign" => "center","font-size" => "120%")),
-                                        ],width=6),
+                                        ],width=4),
 
                                         dbc_col([ 
                                             dbc_row([  
@@ -124,8 +124,8 @@ function Tab_IsentropicPaths()
                                         html_div("‎ "),  
                                         dbc_row([
                                             dbc_col([ 
-                                                html_h1("clinopyroxene", style = Dict("textAlign" => "center","font-size" => "120%")),
-                                            ],width=6),
+                                                html_h1("Clinopyroxene", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            ],width=4),
                                             dbc_col([ 
                                                 html_div("Omph"),
                                             ],width=3),
@@ -143,7 +143,7 @@ function Tab_IsentropicPaths()
                                         html_div("‎ "),  
                                         dbc_row([
                                             dbc_col([ 
-                                            ],width=6),
+                                            ],width=4),
 
                                             dbc_col([ 
                                                 dcc_checklist(
@@ -177,7 +177,7 @@ function Tab_IsentropicPaths()
                                     dbc_row([
                                         dbc_col([ 
                                             html_h1("Buffer", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                        ]),
+                                        ],width=4),
                                         dbc_col([ 
                                             dcc_dropdown(   id      = "buffer-dropdown-isoS",
                                             options = [
@@ -205,7 +205,7 @@ function Tab_IsentropicPaths()
                                     dbc_row([
                                         dbc_col([ 
                                             html_h1("Solver", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                        ]),
+                                        ],width=4),
                                         dbc_col([ 
                                             dcc_dropdown(   id      = "solver-dropdown-isoS",
                                             options = [
@@ -222,7 +222,7 @@ function Tab_IsentropicPaths()
                                     dbc_row([
                                         dbc_col([ 
                                             html_h1("Verbose", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                        ]),
+                                        ],width=4),
                                         dbc_col([ 
                                             dcc_dropdown(   id      = "verbose-dropdown-isoS",
                                             options = [
