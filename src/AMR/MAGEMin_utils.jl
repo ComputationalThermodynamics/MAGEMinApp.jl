@@ -257,26 +257,28 @@ function refine_MAGEMin(data,
     global Out_XY;
     
     #= First we create a structure to store the data in memory =#
-    if !isempty(AppData.customWs) && custW == true
-        df = AppData.customWs
-        n_entries = size(df,1)
-        new_Ws = Vector{MAGEMin_C.W_data{Float64,Int64}}(undef, n_entries)
+    if custW == true
+        if !isempty(AppData.customWs)
+            df = AppData.customWs
+            n_entries = size(df,1)
+            new_Ws = Vector{MAGEMin_C.W_data{Float64,Int64}}(undef, n_entries)
 
-        for i=1:size(df,1)
-            dtb     = df[i, :dtb]
-            ss_id   = df[i, :id]
-            n_Ws    = df[i, :n_Ws]
-            Ws      = split(df[i, :Ws], ";")
-            Ws      = parse.(Float64, Ws)
-            Ws      = reshape(Ws, n_Ws, 3)
-            
-            new_Ws[i] = MAGEMin_C.W_data(dtb, ss_id, n_Ws, Ws)   
+            for i=1:size(df,1)
+                dtb     = df[i, :dtb]
+                ss_id   = df[i, :id]
+                n_Ws    = df[i, :n_Ws]
+                Ws      = split(df[i, :Ws], ";")
+                Ws      = parse.(Float64, Ws)
+                Ws      = reshape(Ws, n_Ws, 3)
+                
+                new_Ws[i] = MAGEMin_C.W_data(dtb, ss_id, n_Ws, Ws)   
+            end
+        else
+            new_Ws = nothing
         end
     else
         new_Ws = nothing
     end
-
-
 
     if isempty(data.split_cell_list)
         Out_XY_new      = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,length(data.points))
