@@ -141,7 +141,7 @@ function get_TAS_diagram(phases,title)
             # #zerolinecolor = "black", # Set axis line color to black
             # linecolor     = "black", # Set the left axis line color
             # linewidth     = 1,       # Set the thickness of the axis line
-            # range         = [0.0, 100.0]
+            # range         = [0.0, nothing]
         ),
     )
 
@@ -492,6 +492,9 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                     k += 1
                 end
             end
+
+            fracEvol[fracEvol .< 0.0] .= 0.0
+
             
             Out_PTX[k] = deepcopy( point_wise_minimization(Pres[np],Temp[np], gv, z_b, DB, splx_data, sys_in; buffer_n=Buff[np], rm_list=phase_selection, name_solvus=true) )
   
@@ -510,7 +513,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
 
 end
 
-function get_data_plot(sysunit)
+function get_data_plot(display_mode,sysunit)
 
     n_ph    = length(ph_names_ptx)
     n_tot   = length(Out_PTX)
@@ -551,24 +554,37 @@ function get_data_plot(sysunit)
         Y[:,k] .= Y[:,k]/sum(Y[:,k]) .* 100.0
     end
 
-    for i=1:n_ph
-        data_plot_ptx[i] = scatter(;    x           =  x,
-                                        y           =  Y[i,:],
-                                        name        = ph_names_ptx[i],
-                                        stackgroup  = "one",
-                                        mode        = "lines",
-                                        line        = attr(     width   =  0.5,
-                                                                color   = colormap[i])  )
-     end
-
+    if display_mode == "stacked"
+        for i=1:n_ph
+            data_plot_ptx[i] = scatter(;    x           =  x,
+                                            y           =  Y[i,:],
+                                            name        = ph_names_ptx[i],
+                                            stackgroup  = "one",
+                                            mode        = "lines",
+                                            line        = attr(     width   =  0.5,
+                                                                    color   = colormap[i])  )
+        end
+    else 
+        for i=1:n_ph
+            data_plot_ptx[i] = scatter(;    x           =  x,
+                                            y           =  Y[i,:],
+                                            name        = ph_names_ptx[i],
+                                            mode        = "markers+lines",
+                                            marker = attr(
+                                                size    = 5.0,          # Set the size of the circle
+                                                color   = colormap[i],      # Set the color of the circle
+                                                symbol  = "circle-open", # Use an open circle marker
+                                                opacity = 0.5           # Set the transparency (0.0 = fully transparent, 1.0 = fully opaque)
+                                            ),
+                                            line        = attr(     width   = 0.75,
+                                                                    color   = colormap[i])   )
+         end
+    end
      data_plot_ptx[n_ph+1] = scatter(   x               = x,
                                     name            = "removed %",
                                     y               = fracEvol[:,2].*100.0, 
                                     hoverinfo       = "skip",
-                                    # mode            = "markers+lines",
                                     mode            = "lines",
-                                    # marker          = attr(     size    = 5.0,
-                                    #                             color   = "black"),
                                     line            = attr( dash    = "dash",
                                                             color   = "black", 
                                                             width   = 0.75)                ) 
@@ -577,10 +593,7 @@ function get_data_plot(sysunit)
                                     y               = fracEvol[:,1].*100.0, 
                                     name            = "remaining %",
                                     hoverinfo       = "skip",
-                                    # mode            = "markers+lines",
                                     mode            = "lines",
-                                    # marker          = attr(     size    = 5.0,
-                                    #                             color   = "black"),
                                     line            = attr( color   = "black", 
                                                             width   = 0.75)                ) 
 
@@ -593,7 +606,7 @@ function get_data_plot(sysunit)
 end
 
 
-function get_extracted_data_plot(sysunit,mode,nRes,nCon)
+function get_extracted_data_plot(ext_mode,sysunit,mode,nRes,nCon)
 
     n_ph    = length(ph_names_ptx)
     n_tot   = length(Out_PTX)
@@ -629,8 +642,6 @@ function get_extracted_data_plot(sysunit,mode,nRes,nCon)
 
             if mode == "fc"
                 frac = fracEvol[k,1] * 1.0 - (nRes/100.0)
-            # elseif mode == "fm"
-            #     frac = fracEvol[k,2]
             else
                 frac = 0.0
             end
@@ -663,40 +674,32 @@ function get_extracted_data_plot(sysunit,mode,nRes,nCon)
         end
     end
 
-
-    for i=1:n_ph_e
-        data_extracted_plot_ptx[i] = scatter(;  x           =  x,
-                                                y           =  Z[i,:],
-                                                name        = ph_names_ext_ptx[i],
-                                                stackgroup  = "one",
-                                                mode        = "lines",
-                                                line        = attr(     width   =  1.0,
-                                                                        color   = colormap[i])  )
-     end
-
-    #  data_extracted_plot_ptx[n_ph_e+1] = scatter( x               = x,
-    #                                             name            = "removed %",
-    #                                             y               = fracEvol[:,2].*100.0, 
-    #                                             hoverinfo       = "skip",
-    #                                             # mode            = "markers+lines",
-    #                                             mode            = "lines",
-    #                                             # marker          = attr(     size    = 5.0,
-    #                                             #                             color   = "black"),
-    #                                             line            = attr( dash    = "dash",
-    #                                                                     color   = "black", 
-    #                                                                     width   = 1.0)                ) 
-
-    #  data_extracted_plot_ptx[n_ph_e+2] = scatter( x               = x,
-    #                                             y               = fracEvol[:,1].*100.0, 
-    #                                             name            = "remaining %",
-    #                                             hoverinfo       = "skip",
-    #                                             # mode            = "markers+lines",
-    #                                             mode            = "lines",
-    #                                             # marker          = attr(     size    = 5.0,
-    #                                             #                             color   = "black"),
-    #                                             line            = attr( color   = "black", 
-    #                                                                     width   = 1.0)                ) 
-
+    if ext_mode == "stacked"
+        for i=1:n_ph_e
+            data_extracted_plot_ptx[i] = scatter(;  x           =  x,
+                                                    y           =  Z[i,:],
+                                                    name        = ph_names_ext_ptx[i],
+                                                    stackgroup  = "one",
+                                                    mode        = "lines",
+                                                    line        = attr(     width   =  1.0,
+                                                                            color   = colormap[i])  )
+        end
+    else 
+        for i=1:n_ph_e
+            data_extracted_plot_ptx[i] = scatter(;  x           =  x,
+                                                    y           =  Z[i,:],
+                                                    name        = ph_names_ext_ptx[i],
+                                                    mode        = "markers+lines",
+                                                    marker = attr(
+                                                        size    = 5.0,          # Set the size of the circle
+                                                        color   = colormap[i],      # Set the color of the circle
+                                                        symbol  = "circle-open", # Use an open circle marker
+                                                        opacity = 0.5           # Set the transparency (0.0 = fully transparent, 1.0 = fully opaque)
+                                                    ),
+                                                    line        = attr(     width   = 1.0,
+                                                                            color   = colormap[i])   )
+         end
+    end
 
     # build phase list:
     phase_list_ext = [Dict("label" => "  "*ph_names_ext_ptx[i], "value" => ph_names_ext_ptx[i]) for i=1:n_ph_e]
@@ -795,9 +798,6 @@ function get_data_comp_plot(sysunit,phases)
                                             symbol  = "circle-open", # Use an open circle marker
                                             opacity = 0.5           # Set the transparency (0.0 = fully transparent, 1.0 = fully opaque)
                                         ),
-                                        # marker      = attr(     size    = 2.0,
-                                        #                         color   = colormap[k]),
-
                                         line        = attr(     width   = 1.0,
                                                                 color   = colormap[k])  )
     end
@@ -840,8 +840,6 @@ function get_data_comp_rm_plot()
                                                 symbol  = "circle-open", # Use an open circle marker
                                                 opacity = 0.5           # Set the transparency (0.0 = fully transparent, 1.0 = fully opaque)
                                             ),
-                                            # marker      = attr(     size    = 2.0,
-                                            #                         color   = colormap[k]),
                                             line        = attr(     width   = 1.0,
                                                                     color   = colormap[k])  )
     end
@@ -849,10 +847,7 @@ function get_data_comp_rm_plot()
                                             name            = "removed %",
                                             y               = fracEvol[:,2].*100.0, 
                                             hoverinfo       = "skip",
-                                            # mode            = "markers+lines",
                                             mode            = "lines",
-                                            # marker          = attr(     size    = 5.0,
-                                            #                             color   = "black"),
                                             line            = attr( dash    = "dash",
                                                                     color   = "black", 
                                                                     width   = 0.75)                ) 
@@ -861,10 +856,7 @@ function get_data_comp_rm_plot()
                                             y               = fracEvol[:,1].*100.0, 
                                             name            = "remaining %",
                                             hoverinfo       = "skip",
-                                            # mode            = "markers+lines",
                                             mode            = "lines",
-                                            # marker          = attr(     size    = 5.0,
-                                            #                             color   = "black"),
                                             line            = attr( color   = "black", 
                                                                     width   = 0.75)                ) 
     return data_comp_rm_plot
@@ -917,9 +909,6 @@ function get_data_comp_rm_int_plot()
                                                     symbol  = "circle-open", # Use an open circle marker
                                                     opacity = 0.5           # Set the transparency (0.0 = fully transparent, 1.0 = fully opaque)
                                                 ),
-                                                # marker      = attr(     size    = 2.0,
-                                                #                         color   = colormap[k]),
-
                                                 line        = attr(     width   = 1.0,
                                                                         color   = colormap[k])  )
     end
@@ -927,10 +916,7 @@ function get_data_comp_rm_int_plot()
                                             name            = "removed %",
                                             y               = fracEvol[:,2].*100.0, 
                                             hoverinfo       = "skip",
-                                            # mode            = "markers+lines",
                                             mode            = "lines",
-                                            # marker          = attr(     size    = 5.0,
-                                            #                             color   = "black"),
                                             line            = attr( dash    = "dash",
                                                                     color   = "black", 
                                                                     width   = 0.75)                ) 
@@ -939,10 +925,7 @@ function get_data_comp_rm_int_plot()
                                                 y               = fracEvol[:,1].*100.0, 
                                                 name            = "remaining %",
                                                 hoverinfo       = "skip",
-                                                # mode            = "markers+lines",
                                                 mode            = "lines",
-                                                # marker          = attr(     size    = 5.0,
-                                                #                             color   = "black"),
                                                 line            = attr( color   = "black", 
                                                                         width   = 0.75)                ) 
 
@@ -971,14 +954,11 @@ function initialize_rm_layout()
         paper_bgcolor = "#FFF",
         xaxis_title = "P-T conditions [kbar, °C]",
         yaxis_title = ytitle,
-        # annotations = annotations,
-        # width       = 900,
         height      = 360,
         xaxis       = attr(
             fixedrange    = true,
             showgrid      = false,  # Disable gridlines inside the plot
             zeroline      = true,   # Show the axis line
-            #zerolinecolor = "black", # Set axis line color to black
             linecolor     = "black", # Set the bottom axis line color
             linewidth     = 1       # Set the thickness of the axis line
         ),
@@ -986,10 +966,9 @@ function initialize_rm_layout()
             fixedrange    = true,
             showgrid      = false,  # Disable gridlines inside the plot
             zeroline      = true,   # Show the axis line
-            #zerolinecolor = "black", # Set axis line color to black
             linecolor     = "black", # Set the left axis line color
             linewidth     = 1,       # Set the thickness of the axis line
-            range         = [0.0, 100.0]
+            range         = [0.0, nothing]
         ),
     )
 
@@ -1008,8 +987,7 @@ function initialize_layout(title,sysunit)
             xanchor = "center",
             yanchor = "top",
             font    = attr(
-                size  = 14,  # Set the font size here
-                # color = "black"  # Optionally set the font color
+                size  = 14,
             )
         ),
         margin      = attr(autoexpand = false, l=16, r=16, b=16, t=24),
@@ -1026,7 +1004,6 @@ function initialize_layout(title,sysunit)
             fixedrange    = true,
             showgrid      = false,  # Disable gridlines inside the plot
             zeroline      = true,   # Show the axis line
-            #zerolinecolor = "black", # Set axis line color to black
             linecolor     = "black", # Set the bottom axis line color
             linewidth     = 1       # Set the thickness of the axis line
         ),
@@ -1034,10 +1011,9 @@ function initialize_layout(title,sysunit)
             fixedrange    = true,
             showgrid      = false,  # Disable gridlines inside the plot
             zeroline      = true,   # Show the axis line
-            #zerolinecolor = "black", # Set axis line color to black
             linecolor     = "black", # Set the left axis line color
             linewidth     = 1,       # Set the thickness of the axis line
-            range         = [0.0, 100.0]
+            range         = [0.0, nothing]
         ),
     )
 
@@ -1058,8 +1034,7 @@ function initialize_ext_layout(title,sysunit)
             xanchor = "center",
             yanchor = "top",
             font    = attr(
-                size  = 14,  # Set the font size here
-                # color = "black"  # Optionally set the font color
+                size  = 14, 
             )
         ),
         margin      = attr(autoexpand = false, l=16, r=16, b=16, t=24),
@@ -1077,7 +1052,6 @@ function initialize_ext_layout(title,sysunit)
             fixedrange    = true,
             showgrid      = false,  # Disable gridlines inside the plot
             zeroline      = true,   # Show the axis line
-            #zerolinecolor = "black", # Set axis line color to black
             linecolor     = "black", # Set the bottom axis line color
             linewidth     = 1       # Set the thickness of the axis line
         ),
@@ -1085,10 +1059,9 @@ function initialize_ext_layout(title,sysunit)
             fixedrange    = true,
             showgrid      = false,  # Disable gridlines inside the plot
             zeroline      = true,   # Show the axis line
-            #zerolinecolor = "black", # Set axis line color to black
             linecolor     = "black", # Set the left axis line color
             linewidth     = 1,       # Set the thickness of the axis line
-            range         = [0.0, 100.0]
+            range         = [0.0, nothing]
         ),
     )
 
@@ -1115,7 +1088,6 @@ function initialize_comp_layout(sysunit)
             fixedrange    = true,
             showgrid      = false,  # Disable gridlines inside the plot
             zeroline      = true,   # Show the axis line
-            #zerolinecolor = "black", # Set axis line color to black
             linecolor     = "black", # Set the bottom axis line color
             linewidth     = 1       # Set the thickness of the axis line
         ),
@@ -1123,10 +1095,9 @@ function initialize_comp_layout(sysunit)
             fixedrange    = true,
             showgrid      = false,  # Disable gridlines inside the plot
             zeroline      = true,   # Show the axis line
-            #zerolinecolor = "black", # Set axis line color to black
             linecolor     = "black", # Set the left axis line color
             linewidth     = 1,       # Set the thickness of the axis line
-            range         = [0.0, 100.0]
+            range         = [0.0, nothing]
         ),
     )
 

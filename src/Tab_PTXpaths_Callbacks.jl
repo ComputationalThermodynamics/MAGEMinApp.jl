@@ -4,16 +4,20 @@ function Tab_PTXpaths_Callbacks(app)
     #save references to bibtex
     callback!(
         app,
-        Output("export-removed-save-ptx", "is_open"),
+        Output("export-removed-save-ptx",   "is_open"),
         Output("export-removed-failed-ptx", "is_open"),
-        Input("export-removed-button-ptx", "n_clicks"),
-        State("export-removed-id-ptx", "value"),
-        State("database-dropdown-ptx","value"),
+        Input("export-removed-button-ptx",  "n_clicks"),
+        State("export-removed-id-ptx",      "value"),
+        State("database-dropdown-ptx",      "value"),
+        State("sys-unit-ptx",               "value"),
+        State("mode-dropdown-ptx",          "value"),
+        State("residual-id",                "value"),
+
         prevent_initial_call=true,
-    ) do n_clicks, fname, dtb
+    ) do n_clicks, fname, dtb, sysunit, mode, nRes
 
         if fname != "filename"
-            output  = "_rm_"*dtb
+            output  = "_fractionated_bulk_"*dtb
             fileout = fname*output
 
             n_ox    = length(Out_PTX[1].oxides)
@@ -57,13 +61,14 @@ function Tab_PTXpaths_Callbacks(app)
             MAGEMin_db = DataFrame(         Symbol("point[#]")          => Int64[],
                                             Symbol("P[kbar]")           => Float64[],
                                             Symbol("T[°C]")             => Float64[],
-                                            Symbol("Stepwise mol%")     => Float64[])
+                                            Symbol("Removed $(sysunit)%")     => Float64[],
+                                            Symbol("Remaining $(sysunit)%")     => Float64[])
 
             for i in oxides
                 col = i*"_step"
                 MAGEMin_db[!, col] = Float64[] 
             end
-            MAGEMin_db[!, "Integrated mol%"] = Float64[] 
+            MAGEMin_db[!, "Integrated $(sysunit)%"] = Float64[] 
             for i in oxides
                 col = i*"_int"
                 MAGEMin_db[!, col] = Float64[] 
@@ -73,12 +78,13 @@ function Tab_PTXpaths_Callbacks(app)
                 part_1 = Dict(  "point[#]"      => k,
                                 "P[kbar]"       => P[k],
                                 "T[°C]"         => T[k],
-                                "Stepwise mol%" => fracEvol[k,2])
+                                "Removed $(sysunit)%" => fracEvol[k,2],
+                                "Remaining $(sysunit)%" => fracEvol[k,1])
 
                 part_2 = Dict(  (oxides[j]*"_step" => rmB[k,j].*100.0)
                                 for j in eachindex(oxides))
 
-                part_3 = Dict(  "Integrated mol%" => cumfrac[k])
+                part_3 = Dict(  "Integrated $(sysunit)%" => cumfrac[k])
 
                 part_4 = Dict(  (oxides[j]*"_int" => rmB2[k,j].*100.0)
                                 for j in eachindex(oxides))
@@ -90,6 +96,110 @@ function Tab_PTXpaths_Callbacks(app)
             filename = fileout*".csv"
             CSV.write(filename, MAGEMin_db)
         
+
+            if mode == "fc"
+                output  = "_fractionated_phases_"*dtb
+                fileout = fname*output
+
+                n_ox    = length(Out_PTX[1].oxides)
+                oxides  = Out_PTX[1].oxides
+                n_tot   = length(Out_PTX)
+
+                P       = Vector{Float64}(undef, n_tot)
+                T       = Vector{Float64}(undef, n_tot)
+
+                for k=1:n_tot
+                    P[k]    = Out_PTX[k].P_kbar
+                    T[k]    = Out_PTX[k].T_C
+                end
+
+                n_ph    = length(ph_names_ptx)
+
+                ph_names_ext_ptx = []
+                for i in ph_names_ptx
+                    if i != "liq"
+                        push!(ph_names_ext_ptx,i)
+                    end
+                end
+                n_ph_e = length(ph_names_ext_ptx)
+
+                x       = Vector{String}(undef, n_tot)
+                melt    = zeros(Int64, n_tot)
+                Z       = Matrix{Union{Float64,Missing}}(undef, n_ph_e, n_tot) .= missing
+                Y       = zeros(Float64, n_ph_e, n_tot)
+
+                for i=1:n_ph_e
+                    
+                    ph = ph_names_ext_ptx[i]
+
+                    for k=1:n_tot
+                        
+                        x[k]    = string(round(Out_PTX[k].P_kbar, digits=1))*"; "*string(round(Out_PTX[k].T_C, digits=1))
+                        id      = findall(Out_PTX[k].ph .== ph )
+                        if "liq" in Out_PTX[k].ph 
+                            melt[k] = 1
+                        end
+
+                        if mode == "fc"
+                            frac = fracEvol[k,1] * 1.0 - (nRes/100.0)
+                        else
+                            frac = 0.0
+                        end
+
+                        if sysunit == "mol"
+                            if ~isempty(id)
+                                Y[i,k] = sum(Out_PTX[k].ph_frac[id]) .* frac .*100.0                # we sum in case of solvi
+                            end
+                        elseif sysunit == "wt"
+                            if ~isempty(id)
+                                Y[i,k] = sum(Out_PTX[k].ph_frac_wt[id]) .* frac .*100.0                # we sum in case of solvi
+                            end
+                        elseif sysunit == "vol"
+                            if ~isempty(id)
+                                Y[i,k] = sum(Out_PTX[k].ph_frac_vol[id]) .* frac .*100.0                # we sum in case of solvi
+                            end
+                        end
+
+                    end
+                end 
+                Z .= hcat([accumulate(+,Y[i,:]) for i=1:n_ph_e]...)'
+                for i=1:n_tot
+                    if melt[i] == 0
+                        Z[:,i] .= missing
+                    end
+                end
+        
+                # Here we create the dataframe's header:
+                MAGEMin_db = DataFrame(         Symbol("point[#]")              => Int64[],
+                                                Symbol("P[kbar]")               => Float64[],
+                                                Symbol("T[°C]")                 => Float64[],
+                                                Symbol("Removed $(sysunit)%")   => Float64[],
+                                                Symbol("Remaining $(sysunit)%") => Float64[])
+
+
+                for i in ph_names_ext_ptx
+                    col = i*"_$(sysunit)%"
+                    MAGEMin_db[!, col] = Float64[] 
+                end
+
+                for k=1:n_tot
+                    part_1 = Dict(  "point[#]"              => k,
+                                    "P[kbar]"               => P[k],
+                                    "T[°C]"                 => T[k],
+                                    "Removed $(sysunit)%"   => fracEvol[k,2],
+                                    "Remaining $(sysunit)%" => fracEvol[k,1])
+
+                    part_2 = Dict(  (ph_names_ext_ptx[j]*"_$(sysunit)%" => Z[j,k])
+                                    for j in eachindex(ph_names_ext_ptx))
+
+                    row    = merge(part_1,part_2)   
+                    push!(MAGEMin_db, row, cols=:union)        
+                end
+
+                filename = fileout*".csv"
+                CSV.write(filename, MAGEMin_db)
+            end
+
             return "success", ""
         else
             return  "", "failed"
@@ -458,6 +568,8 @@ function Tab_PTXpaths_Callbacks(app)
 
         Input("compute-path-button",    "n_clicks"),
         Input("sys-unit-ptx",           "value"),
+        Input("display-mode",           "value"),
+        Input("ext-display-mode",       "value"),
 
         State("select-bulk-unit-ptx",   "value"),
         State("phase-selection-PTX",    "value"),
@@ -489,8 +601,8 @@ function Tab_PTXpaths_Callbacks(app)
     
         prevent_initial_call = true,
 
-        ) do    compute,    upsys,      
-                sys_unit,   phase_selection, pure_phase_selection,    phase_list, nsteps,     PTdata,     mode,   assim,  var_buffer,
+        ) do    compute,    upsys,      display_mode,               ext_display_mode,    
+                sys_unit,   phase_selection, pure_phase_selection,  phase_list, nsteps,     PTdata,     mode,   assim,  var_buffer,
                 dtb,        dataset,    bufferType, solver,
                 verbose,    bulk,       bulk2,      bufferN,
                 cpx,        limOpx,     limOpxVal,  test,   sysunit,
@@ -519,8 +631,8 @@ function Tab_PTXpaths_Callbacks(app)
 
             layout_ptx                  = initialize_layout(title,sysunit)
             layout_extracted_ptx        = initialize_ext_layout(title,sysunit)
-            data_plot_ptx, phase_list   = get_data_plot(sysunit)
-            data_extracted_plot_ptx, phase_list_ext   = get_extracted_data_plot(sysunit,mode,nRes,nCon)
+            data_plot_ptx, phase_list   = get_data_plot(display_mode,sysunit)
+            data_extracted_plot_ptx, phase_list_ext   = get_extracted_data_plot(ext_display_mode,sysunit,mode,nRes,nCon)
 
             figPTX                      = plot(data_plot_ptx,layout_ptx)
             figExtractedPTX             = plot(data_extracted_plot_ptx,layout_extracted_ptx)
@@ -535,9 +647,9 @@ function Tab_PTXpaths_Callbacks(app)
 
             figrmintPTX                 = plot(data_comp_rm_int_plot,layout_rm_int_ptx)
 
-        elseif bid == "sys-unit-ptx"
-            data_plot_ptx, phase_list   = get_data_plot(sysunit)
-            data_extracted_plot_ptx, phase_list_ext   = get_extracted_data_plot(sysunit,mode,nRes,nCon)
+        elseif bid == "sys-unit-ptx" || bid == "ext-display-mode" || bid == "display-mode"
+            data_plot_ptx, phase_list   = get_data_plot(display_mode,sysunit)
+            data_extracted_plot_ptx, phase_list_ext   = get_extracted_data_plot(ext_display_mode,sysunit,mode,nRes,nCon)
 
             layout_ptx[:yaxis_title]    = "Phase fraction ["*sysunit*"%]"
             layout_extracted_ptx[:yaxis_title]        = "Extracted phase fraction ["*sysunit*"%]"
@@ -545,7 +657,6 @@ function Tab_PTXpaths_Callbacks(app)
             figExtractedPTX         = plot(data_extracted_plot_ptx,layout_extracted_ptx)
             figrmPTX                = plot(data_comp_rm_plot,layout_rm_ptx)
             figrmintPTX             = plot(data_comp_rm_int_plot,layout_rm_int_ptx)
-
         else
             figPTX                  = plot(    Layout( height= 320 ))
             figExtractedPTX         = plot(    Layout( height= 320 ))

@@ -793,7 +793,7 @@ function Tab_PTXpaths()
                                         html_div("‎ "),
                                         dbc_row([
                                             dbc_col([
-                                                html_h1("Export removed composition", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 0)),    
+                                                html_h1("Save fractionated material", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 0)),    
                                             ], width=3),
                                             dbc_col([ 
                                                 dbc_input(
@@ -908,23 +908,59 @@ function Tab_PTXpaths()
 
                                         dbc_card(dbc_cardbody([
                                             dbc_row([
-                                                html_h1("Stable phase fraction", style = Dict("textAlign" => "center","font-size" => "200%", "marginTop" => 8)),
-                                                html_hr(),
-                                                html_div("‎ "),
+                                                dbc_row([
+                                                    html_div("‎ "),
+                                                    html_hr(),
+                                                ]),
+                                                dbc_row([
+                                                    dbc_col([
+                                                        html_h1("Stable phase fraction", style = Dict("textAlign" => "center","font-size" => "200%", "marginTop" => 16)),
+                                                    ],width=11),
+                                                    dbc_col([ 
+                                                        dcc_dropdown(   id      = "display-mode",
+                                                                        options = [
+                                                                            (label = "stacked",  value = "stacked"),
+                                                                            (label = "lines",    value = "lines"),
+                                                                        ],
+                                                                        value=     "stacked" ,
+                                                                        clearable   = false,
+                                                                        multi       = false),
+                                                    ],width=1),
+                                                ]),
+                                                dbc_row([
+                                                    html_hr(),
+                                                    html_div("‎ "),
+                                                ]),
+                                                dbc_row([
+                                                    PTX_plot()
+                                                ]),
                                             ]),
-                                            dbc_row([
-                                                PTX_plot()
-                                            ]),
+
                                             dbc_row([
                                                 # html_div([                                                     
                                                     dbc_row([
                                                         html_div("‎ "),
                                                         html_hr(),
-                                                        html_h1("Fractionated phase fraction (integrated)", style = Dict("textAlign" => "center","font-size" => "200%", "marginTop" => 8)),
+                                                    ]),
+                                                    dbc_row([
+                                                        dbc_col([
+                                                            html_h1("Fractionated phase fraction (integrated)", style = Dict("textAlign" => "center","font-size" => "200%", "marginTop" => 16)),
+                                                        ],width=11),
+                                                        dbc_col([ 
+                                                            dcc_dropdown(   id      = "ext-display-mode",
+                                                                            options = [
+                                                                                (label = "stacked",  value = "stacked"),
+                                                                                (label = "lines",    value = "lines"),
+                                                                            ],
+                                                                            value=     "stacked" ,
+                                                                            clearable   = false,
+                                                                            multi       = false),
+                                                        ],width=1),
+                                                    ]),
+                                                    dbc_row([
                                                         html_hr(),
                                                         html_div("‎ "),
                                                     ]),
-                                                    html_div("‎ "),
                                                     dbc_row([
                                                         PTX_extracted_plot()
                                                     ]),
