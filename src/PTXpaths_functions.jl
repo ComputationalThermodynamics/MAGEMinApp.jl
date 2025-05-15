@@ -150,7 +150,7 @@ function get_TAS_diagram(phases,title)
 end
 
 
-function compute_Tliq(          pressure,   tolerance,  bulk_ini,   oxi,    phase_selection,
+function compute_Tliq(          sysunit, pressure,   tolerance,  bulk_ini,   oxi,    phase_selection,
                                 dtb,        dataset,    bufferType, solver,
                                 verbose,    bulk,       bufferN,
                                 cpx,        limOpx,     limOpxVal       )
@@ -178,7 +178,11 @@ function compute_Tliq(          pressure,   tolerance,  bulk_ini,   oxi,    phas
                                                 CaOpxLim    = CaOpxLim,
                                                 buffer      = bufferType,
                                                 solver      = sol    );
-        sys_in  = "mol"
+        if sysunit == 1
+            sys_in = "mol"
+        else
+            sys_in = "wt"
+        end
         gv      =  define_bulk_rock(gv, bulk_ini, oxi, sys_in, dtb);
 
         out     = deepcopy( point_wise_minimization(pressure, Tmax, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
@@ -242,7 +246,7 @@ end
 
 
 
-function compute_Tsol(          pressure,   tolerance,  bulk_ini,   oxi,    phase_selection,
+function compute_Tsol(          sysunit,    pressure,   tolerance,  bulk_ini,   oxi,    phase_selection,
                                 dtb,        dataset,    bufferType, solver,
                                 verbose,    bulk,       bufferN,
                                 cpx,        limOpx,     limOpxVal       )
@@ -270,7 +274,13 @@ function compute_Tsol(          pressure,   tolerance,  bulk_ini,   oxi,    phas
                                                 CaOpxLim    = CaOpxLim,
                                                 buffer      = bufferType,
                                                 solver      = sol    );
-        sys_in  = "mol"
+
+                         
+        if sysunit == 1
+            sys_in = "mol"
+        else
+            sys_in = "wt"
+        end
         gv      =  define_bulk_rock(gv, bulk_ini, oxi, sys_in, dtb);
 
         out     = deepcopy( point_wise_minimization(pressure, Tliq, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )

@@ -334,7 +334,7 @@ function save_rho_for_GeoModel(     dtb         ::String,
 
     np          = length(Out_XY)
 
-    field2save  = ["rho_M","rho_S","frac_M","Vp","Vs","s_cp"]
+    field2save  = ["rho_M","rho_S","frac_M","Vp","Vs","s_cp","alpha"]
     ncol        = length(field2save)
     field       = Matrix{Union{Float64,Missing}}(undef,np,ncol);
 
@@ -342,6 +342,10 @@ function save_rho_for_GeoModel(     dtb         ::String,
         if field2save[j] == "s_cp"
             for i=1:np
                 field[i,j] = Out_XY[i].s_cp[1];
+            end
+        elseif field2save[j] == "s_cp"
+            for i=1:np
+                field[i,j] = Out_XY[i].alpha[1];
             end
         else
             for i=1:np
@@ -1145,6 +1149,10 @@ function get_gridded_map(   fieldname   ::String,
             for i=1:np
                 field[i] = Out_XY[i].s_cp[1];
             end
+        elseif fieldname == "alpha"
+            for i=1:np
+                field[i] = Out_XY[i].alpha[1];
+            end
         elseif fieldname == "Delta_rho"
             for i=1:np
                 field[i] = 0.0
@@ -1426,6 +1434,10 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
             for i=1:np
                 field[i] = Out_XY[i].s_cp[1];
             end
+        elseif fieldname == "alpha"
+            for i=1:np
+                field[i] = Out_XY[i].alpha[1];
+            end
         elseif fieldname == "Delta_rho"
             for i=1:np
                 field[i] = 0.0
@@ -1671,6 +1683,10 @@ function get_isopleth_map(  mod         ::String,
         if of == "s_cp"
             for i=1:np
                 field[i] = Out_XY[i].s_cp[1];
+            end
+        elseif of == "alpha"
+            for i=1:np
+                field[i] = Out_XY[i].alpha[1];
             end
         else
             for i=1:np

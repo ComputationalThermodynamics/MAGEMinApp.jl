@@ -515,7 +515,7 @@ function Tab_PTXpaths_Callbacks(app)
         State("limit-ca-opx-id-ptx",    "value"),           # ON,OFF -> 0,1
         State("ca-opx-val-id-ptx",      "value"),           # 0.0-1.0 -> 0,1
         State("test-dropdown-ptx",      "value"),
-        State("sys-unit-ptx",           "value"),
+        State("select-bulk-unit-ptx",    "value"),
 
         prevent_initial_call = true,
 
@@ -531,7 +531,7 @@ function Tab_PTXpaths_Callbacks(app)
             bufferN                 = Float64(bufferN)               # convert buffer_n to float
             bulk_ini, bulk_ini, oxi = get_bulkrock_prop(bulk, bulk)  
 
-            Tliq = compute_Tliq(    pressure,   tolerance,  bulk_ini,   oxi,    phase_selection,
+            Tliq = compute_Tliq(    sysunit,    pressure,   tolerance,  bulk_ini,   oxi,    phase_selection,
                                     dtb,        dataset,    bufferType, solver,
                                     verbose,    bulk,       bufferN,
                                     cpx,        limOpx,     limOpxVal  )
@@ -539,7 +539,7 @@ function Tab_PTXpaths_Callbacks(app)
             bufferN                 = Float64(bufferN)               # convert buffer_n to float
             bulk_ini, bulk_ini, oxi = get_bulkrock_prop(bulk, bulk)  
 
-            Tsol = compute_Tsol(    sol_pressure,   sol_tolerance,  bulk_ini,   oxi,    phase_selection,
+            Tsol = compute_Tsol(    sysunit,    sol_pressure,   sol_tolerance,  bulk_ini,   oxi,    phase_selection,
                                     dtb,        dataset,    bufferType, solver,
                                     verbose,    bulk,       bufferN,
                                     cpx,        limOpx,     limOpxVal  )
