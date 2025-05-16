@@ -7,13 +7,16 @@ debug   *= "**Debugging and Additions**\n"
 debug   *= "Alexandre Peillod\n"
 debug   *= "Anton Popov\n"
 debug   *= "Boris Kaus\n"
+debug   *= "Ding Chenlong\n"
 debug   *= "Hugo Dominguez\n"
 debug   *= "Hendrik Ranocha\n"
+debug   *= "Jamison Assunção\n"
 debug   *= "Jean-François Moyen\n"
 debug   *= "Joshua Laughton\n"
 debug   *= "Jun Ren\n"
 debug   *= "Lorenzo Candioti\n"
 debug   *= "Owen Weller\n"
+debug   *= "Paul Tackley\n"
 debug   *= "Pierre Lanari\n"
 debug   *= "Simon Schorn\n"
 debug   *= "Tim J.B. Holland\n"
@@ -38,13 +41,14 @@ app     *= "Nathwani Chetan Lalitkumar\n"
 app     *= "Nicholas Lucas\n"
 app     *= "Olivier Namur\n"
 app     *= "Owen Weller\n"
+app     *= "Paul Tackley\n"
 app     *= "Pierre Lanari\n"
 app     *= "Renee Tamblyn\n"
 app     *= "Simon Schorn\n"
 app     *= "Yishen Zhang"
 
 contact  = "**Links**\n"
-contact *= "[Tutorials](https://github.com/ComputationalThermodynamics/Resources)\n"
+contact *= "[Tutorials](https://computationalthermodynamics.github.io/MAGEMin_C.jl/dev/)\n"
 contact *= "[Post issue](https://github.com/ComputationalThermodynamics/MAGEMinApp.jl/issues)\n"
 contact *= "[Open discussion](https://github.com/ComputationalThermodynamics/MAGEMin/discussions)\n"
 contact *= "[Discord](https://discord.gg/fjmVZyej9F)"
@@ -65,6 +69,7 @@ dtb_dict = [
     Dict("label" => "Igneous (Green et al., 2025, after H18)", "value" => "ig"),
     Dict("label" => "Igneous alkaline dry (Weller et al., 2024)", "value" => "igad"),
     Dict("label" => "Ultramafic (Evans & Frost., 2021)", "value" => "um"),
+    Dict("label" => "- MANTLE DATABASE -", "value" => "separator", "disabled" => true),  # Simulate a horizontal line
     Dict("label" => "Mantle (Holland et al., 2013)", "value" => "mtl"),
     Dict("label" => "Stixrude & Lithgow-Bertelloni (2011)", "value" => "sb11"),
     Dict("label" => "Stixrude & Lithgow-Bertelloni (2021)", "value" => "sb21"),

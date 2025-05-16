@@ -1843,12 +1843,12 @@ function bulk_file_to_db(datain)
         comments   	= string(datain[i,idx]);
 
         idx 		= findall(datain[1,:] .== "db")[1];
-        dbin   		= datain[i,idx];
+        dbin   		= lowercase(datain[i,idx]);
 
         test 		= length(db[(db.db .== dbin), :].test);
 
         idx 		= findall(datain[1,:] .== "sysUnit")[1];
-        sysUnit   	= datain[i,idx];
+        sysUnit   	= lowercase(datain[i,idx]);
 
         idx 		= findall(datain[1,:] .== "oxide")[1];
         oxide   	= rsplit(datain[i,idx],",");
