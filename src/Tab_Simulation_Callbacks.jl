@@ -204,12 +204,19 @@ function Tab_Simulation_Callbacks(app)
         Output("pure-phase-selection","value"),
         Output("dataset-dropdown","options"),
         Output("dataset-dropdown","value"),
+        Output("dataset-display-id", "style"),
 
         Input("database-dropdown","value"),
 
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
     ) do dtb
     
+
+        if dtb == "sb11" || dtb == "sb21"
+            style  = Dict("display" => "none")
+        else
+            style   = Dict("display" => "block")
+        end
         db_in       = retrieve_solution_phase_information(dtb)
 
         # this is the phase selection part for the database when compute a diagram
@@ -235,7 +242,7 @@ function Tab_Simulation_Callbacks(app)
         dataset_value    = db_in.db_dataset
 
 
-        return phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value, dataset_options, dataset_value
+        return phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value, dataset_options, dataset_value, style
     end
 
     
@@ -534,7 +541,7 @@ function Tab_Simulation_Callbacks(app)
         Input("database-dropdown", "value"),
     ) do value
         # global db
-        if value == "mb"
+        if value == "mb" || value == "mbe"
             style  = Dict("display" => "block")
         else 
             style  = Dict("display" => "none")

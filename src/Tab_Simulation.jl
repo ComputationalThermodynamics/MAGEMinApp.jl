@@ -28,20 +28,22 @@ function Tab_Simulation()
                                                             multi       = false),
                                         ]),
                                     ]),
-                                    dbc_row([
-                                        dbc_col([ 
-                                            html_h1("Dataset", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                    html_div([
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("Dataset", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ]),
+                                            dbc_col([ 
+                                                dcc_dropdown(   id      = "dataset-dropdown",
+                                                                options = [Dict(    "label"     => "ds$(AppData.db_inf.dataset_opt[i])",
+                                                                                    "value"     => AppData.db_inf.dataset_opt[i] )
+                                                                                for i = 1:length(AppData.db_inf.dataset_opt) ],
+                                                                value       = AppData.db_inf.db_dataset,
+                                                                clearable   = false,
+                                                                multi       = false),
+                                            ]),
                                         ]),
-                                        dbc_col([ 
-                                            dcc_dropdown(   id      = "dataset-dropdown",
-                                                            options = [Dict(    "label"     => "ds$(AppData.db_inf.dataset_opt[i])",
-                                                                                "value"     => AppData.db_inf.dataset_opt[i] )
-                                                                            for i = 1:length(AppData.db_inf.dataset_opt) ],
-                                                            value       = AppData.db_inf.db_dataset,
-                                                            clearable   = false,
-                                                            multi       = false),
-                                        ]),
-                                    ]),
+                                    ], style = Dict("display" => "block"), id  = "dataset-display-id"), #none, block
                                     dbc_row([  
                                         dbc_col([ 
                                             html_h1("Phase selection", style = Dict("textAlign" => "center","font-size" => "120%")),
@@ -382,7 +384,7 @@ function Tab_Simulation()
                                                     id="pmin-id",
                                                     type="number", 
                                                     min=0.001, 
-                                                    max=1000.01, 
+                                                    max=1500.01, 
                                                     value=0.01   ),
                                             ]),
                                             dbc_col([ 
@@ -390,7 +392,7 @@ function Tab_Simulation()
                                                     id="pmax-id",
                                                     type="number", 
                                                     min=0.001, 
-                                                    max=1000.01, 
+                                                    max=1500.01, 
                                                     value=20.01   ),
                                             ]), 
                                             ]),
@@ -450,7 +452,7 @@ function Tab_Simulation()
                                                 id      = "fixed-pressure-val-id",
                                                 type    = "number", 
                                                 min     = 0.001, 
-                                                max     = 1000.01, 
+                                                max     = 1500.01, 
                                                 value   = 10.01   ),
                                         ]),
                                     ]),
@@ -517,7 +519,7 @@ function Tab_Simulation()
                                                                     type    = "number", 
                                                                     min     = 0.0, 
                                                                     max     = 4000.0,
-                                                                    value   = 1000.0   ),
+                                                                    value   = 1500.0   ),
                                                             ]),
                                                         ]),
                                                     ]),

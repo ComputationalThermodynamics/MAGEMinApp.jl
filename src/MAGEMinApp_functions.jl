@@ -89,12 +89,12 @@ function get_init_param(    dtb         :: String,
 
         # set clinopyroxene for the metabasite database
         mbCpx = 0
-        if cpx == true && dtb =="mb"
+        if cpx == true && (dtb =="mb" || dtb =="mbe"  )
             mbCpx = 1;
         end
         limitCaOpx  = 0
         CaOpxLim    = 1.0
-        if limOpx == "ON" && (dtb =="mb" || dtb =="ig" || dtb =="igd" || dtb =="alk")
+        if limOpx == "ON" && (dtb =="mb" || dtb =="mbe" || dtb =="ig" || dtb =="igd" || dtb =="alk")
             limitCaOpx   = 1
             CaOpxLim     = limOpxVal
         end
@@ -334,7 +334,7 @@ function save_rho_for_GeoModel(     dtb         ::String,
 
     np          = length(Out_XY)
 
-    field2save  = ["rho_M","rho_S","frac_M","Vp","Vs","s_cp"]
+    field2save  = ["rho_M","rho_S","frac_M","Vp","Vs","s_cp","alpha"]
     ncol        = length(field2save)
     field       = Matrix{Union{Float64,Missing}}(undef,np,ncol);
 
@@ -342,6 +342,10 @@ function save_rho_for_GeoModel(     dtb         ::String,
         if field2save[j] == "s_cp"
             for i=1:np
                 field[i,j] = Out_XY[i].s_cp[1];
+            end
+        elseif field2save[j] == "s_cp"
+            for i=1:np
+                field[i,j] = Out_XY[i].alpha[1];
             end
         else
             for i=1:np
@@ -1145,6 +1149,10 @@ function get_gridded_map(   fieldname   ::String,
             for i=1:np
                 field[i] = Out_XY[i].s_cp[1];
             end
+        elseif fieldname == "alpha"
+            for i=1:np
+                field[i] = Out_XY[i].alpha[1];
+            end
         elseif fieldname == "Delta_rho"
             for i=1:np
                 field[i] = 0.0
@@ -1426,6 +1434,10 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
             for i=1:np
                 field[i] = Out_XY[i].s_cp[1];
             end
+        elseif fieldname == "alpha"
+            for i=1:np
+                field[i] = Out_XY[i].alpha[1];
+            end
         elseif fieldname == "Delta_rho"
             for i=1:np
                 field[i] = 0.0
@@ -1672,6 +1684,10 @@ function get_isopleth_map(  mod         ::String,
             for i=1:np
                 field[i] = Out_XY[i].s_cp[1];
             end
+        elseif of == "alpha"
+            for i=1:np
+                field[i] = Out_XY[i].alpha[1];
+            end
         else
             for i=1:np
                 field[i] = Float64(get_property(Out_XY[i], of));
@@ -1781,10 +1797,10 @@ function get_oxide_list(dbin::String)
     if dbin == "ig"
 	    MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"; "H2O"];
     elseif dbin == "igad"
-        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"];      
-    # elseif dbin == "igt"
-    #     MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"];     
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"];        
     elseif dbin == "mb"
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "H2O"];     
+    elseif dbin == "mbe"
         MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "H2O"];     
     elseif dbin == "um"
         MAGEMin_ox      = ["SiO2"; "Al2O3"; "MgO" ;"FeO"; "O"; "H2O"; "S"];
@@ -1827,12 +1843,12 @@ function bulk_file_to_db(datain)
         comments   	= string(datain[i,idx]);
 
         idx 		= findall(datain[1,:] .== "db")[1];
-        dbin   		= datain[i,idx];
+        dbin   		= lowercase(datain[i,idx]);
 
         test 		= length(db[(db.db .== dbin), :].test);
 
         idx 		= findall(datain[1,:] .== "sysUnit")[1];
-        sysUnit   	= datain[i,idx];
+        sysUnit   	= lowercase(datain[i,idx]);
 
         idx 		= findall(datain[1,:] .== "oxide")[1];
         oxide   	= rsplit(datain[i,idx],",");
