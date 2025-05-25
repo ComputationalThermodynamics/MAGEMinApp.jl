@@ -27,20 +27,22 @@ function Tab_PTXpaths()
                                                         multi       = false),
                                         ]),
                                     ]),
-                                    dbc_row([
-                                        dbc_col([ 
-                                            html_h1("Dataset", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
-                                        ],width=4),
-                                        dbc_col([ 
-                                            dcc_dropdown(   id      = "dataset-dropdown-ptx",
-                                                            options = [Dict(    "label"     => "ds$(AppData.db_inf.dataset_opt[i])",
-                                                                                "value"     => AppData.db_inf.dataset_opt[i] )
-                                                                            for i = 1:length(AppData.db_inf.dataset_opt) ],
-                                                            value       = AppData.db_inf.db_dataset,
-                                                            clearable   = false,
-                                                            multi       = false),
+                                    html_div([
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("Dataset", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ],width=4),
+                                            dbc_col([ 
+                                                dcc_dropdown(   id      = "dataset-dropdown-ptx",
+                                                                options = [Dict(    "label"     => "ds$(AppData.db_inf.dataset_opt[i])",
+                                                                                    "value"     => AppData.db_inf.dataset_opt[i] )
+                                                                                for i = 1:length(AppData.db_inf.dataset_opt) ],
+                                                                value       = AppData.db_inf.db_dataset,
+                                                                clearable   = false,
+                                                                multi       = false),
+                                            ]),
                                         ]),
-                                    ]),
+                                    ], style = Dict("display" => "none"), id  = "dataset-ptx-display-id"), #none, block
                                     
                                     dbc_row([  
                                         dbc_col([ 
@@ -753,14 +755,21 @@ function Tab_PTXpaths()
                                                                     "font-size"     => "100%",
                                                                     "border"        =>"1px grey solid")), 
                                                 dcc_download(id="download-all-table-ptx-text"),  
-                                            ]),
+                                            ], style=Dict("padding"=>"0px", "margin"=>"0px", "width"=>"auto")),
                                             dbc_col([    
-                                                dbc_button("csv file", id="save-all-csv-ptx-button", color="light",  n_clicks=0,
+                                                dbc_button("csv", id="save-all-csv-ptx-button", color="light",  n_clicks=0,
                                                 style       = Dict( "textAlign"     => "center",
                                                                     "font-size"     => "100%",
                                                                     "border"        =>"1px grey solid")), 
                                                 dcc_download(id="download-all-csv-ptx-text"),  
-                                            ]),
+                                            ], style=Dict("padding"=>"0px", "margin"=>"0px", "width"=>"auto")),
+                                            dbc_col([    
+                                                dbc_button("csv inlined", id="save-all-csv-inlined-ptx-button", color="light",  n_clicks=0,
+                                                style       = Dict( "textAlign"     => "center",
+                                                                    "font-size"     => "100%",
+                                                                    "border"        =>"1px grey solid")), 
+                                                dcc_download(id="download-all-csv-inlined-ptx-text"),  
+                                            ], style=Dict("padding"=>"0px", "margin"=>"0px", "width"=>"auto")),
                                         ]),
                                         dbc_row([
                                             dbc_alert(
@@ -786,6 +795,19 @@ function Tab_PTXpaths()
                                                 "Provide a valid filename (without extension)",
                                                 color="danger",
                                                 id      ="data-all-save-csv-ptx-failed",
+                                                is_open =false,
+                                                duration=4000,
+                                            ),
+                                            dbc_alert(
+                                                "Successfully saved all data points information",
+                                                id      ="data-all-csv-inlined-ptx-save",
+                                                is_open =false,
+                                                duration=4000,
+                                            ),
+                                            dbc_alert(
+                                                "Provide a valid filename (without extension)",
+                                                color="danger",
+                                                id      ="data-all-save-csv-inlined-ptx-failed",
                                                 is_open =false,
                                                 duration=4000,
                                             ),

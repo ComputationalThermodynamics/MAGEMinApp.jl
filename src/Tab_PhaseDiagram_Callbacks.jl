@@ -285,6 +285,11 @@ function Tab_PhaseDiagram_Callbacks(app)
                 push!(selection, String(bib.keys[id_occm]))
                 id_um= findfirst(bib[bib.keys[i]].fields["info"] .== "um" for i=1:n_ref)
                 push!(selection, String(bib.keys[id_um]))
+            elseif dtb == "mbe"   
+                id_ta = findfirst(bib[bib.keys[i]].fields["info"] .== "ta" for i=1:n_ref)
+                push!(selection, String(bib.keys[id_ta]))
+                id_oamp = findfirst(bib[bib.keys[i]].fields["info"] .== "oamp" for i=1:n_ref)
+                push!(selection, String(bib.keys[id_oamp]))
             end
 
             selected_bib    = Bibliography.select(bib, selection)

@@ -89,12 +89,12 @@ function get_init_param(    dtb         :: String,
 
         # set clinopyroxene for the metabasite database
         mbCpx = 0
-        if cpx == true && dtb =="mb"
+        if cpx == true && (dtb =="mb" || dtb =="mbe"  )
             mbCpx = 1;
         end
         limitCaOpx  = 0
         CaOpxLim    = 1.0
-        if limOpx == "ON" && (dtb =="mb" || dtb =="ig" || dtb =="igd" || dtb =="alk")
+        if limOpx == "ON" && (dtb =="mb" || dtb =="mbe" || dtb =="ig" || dtb =="igd" || dtb =="alk")
             limitCaOpx   = 1
             CaOpxLim     = limOpxVal
         end
@@ -1797,10 +1797,10 @@ function get_oxide_list(dbin::String)
     if dbin == "ig"
 	    MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"; "H2O"];
     elseif dbin == "igad"
-        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"];      
-    # elseif dbin == "igt"
-    #     MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"];     
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"];        
     elseif dbin == "mb"
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "H2O"];     
+    elseif dbin == "mbe"
         MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "H2O"];     
     elseif dbin == "um"
         MAGEMin_ox      = ["SiO2"; "Al2O3"; "MgO" ;"FeO"; "O"; "H2O"; "S"];

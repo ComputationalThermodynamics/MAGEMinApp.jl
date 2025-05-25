@@ -283,6 +283,27 @@ function Tab_PTXpaths_Callbacks(app)
     end
 
 
+    #save all table to an inlined CSV file
+    callback!(
+        app,
+        Output("data-all-csv-inlined-ptx-save", "is_open"),
+        Output("data-all-save-csv-inlined-ptx-failed", "is_open"),
+        Input("save-all-csv-inlined-ptx-button", "n_clicks"),
+        State("Filename-all-ptx-id", "value"),
+        State("database-dropdown-ptx","value"),
+        prevent_initial_call=true,
+    ) do n_clicks, fname, dtb
+
+        if fname != "filename"
+            datab   = "_inlined_"*dtb
+            fileout = fname*datab
+
+            MAGEMin_data2dataframe_inlined(Out_PTX,dtb,fileout)
+            return "success", ""
+        else
+            return  "", "failed"
+        end
+    end
 
     #save all table to file
     callback!(
@@ -697,6 +718,7 @@ function Tab_PTXpaths_Callbacks(app)
     callback!(
         app,
         Output("switch-opx-id-ptx", "style"),
+        Output("dataset-ptx-display-id", "style"),
         Input("database-dropdown-ptx", "value"),
     ) do value
         # global db
@@ -710,7 +732,13 @@ function Tab_PTXpaths_Callbacks(app)
             style  = Dict("display" => "none")
         end
 
-        return style
+        if value == "sb11" || value == "sb21"
+            style_dataset = Dict("display" => "none")
+        else
+            style_dataset = Dict("display" => "block")
+        end
+
+        return style, style_dataset
     end
 
 
@@ -721,7 +749,7 @@ function Tab_PTXpaths_Callbacks(app)
         Input("database-dropdown-ptx",  "value"),
     ) do value
 
-        if value == "mb"
+        if value == "mb" || value == "mbe"
             style  = Dict("display" => "block")
         else 
             style  = Dict("display" => "none")

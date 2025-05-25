@@ -75,7 +75,8 @@ dtb_dict = [
     Dict("label" => "Stixrude & Lithgow-Bertelloni (2021)", "value" => "sb21"),
     Dict("label" => "- CUSTOM DATABASE -", "value" => "separator", "disabled" => true),  # Simulate a horizontal line
     Dict("label" => "Ultramafic extended (Evans & Frost., 2021)", "value" => "ume"),
-    Dict("label" => "Metapelite extended (White et al., 2014, Green et al., 2016, Evans & Frost., 2021)", "value" => "mpe")
+    Dict("label" => "Metapelite extended (White et al., 2014, Green et al., 2016, Evans & Frost., 2021)", "value" => "mpe"),
+    Dict("label" => "Metabasite extended (Green et al., 2016, Diener et al., 2007)", "value" => "mbe"),
 ]
 
 # LIST AVAILABLE DATABASE
@@ -122,6 +123,9 @@ push!(dba,Dict(         :database    => "Metapelite extended (White et al., 2014
                         :acronym     => "mpe",
                         ), cols=:union)
 
+push!(dba,Dict(         :database    => "Metabasite (Green et al., 2016; Diener et al., 2007)",
+                        :acronym     => "mbe",
+                        ), cols=:union)
 
 
 db = DataFrame(         bulk        = String[],
@@ -651,6 +655,17 @@ push!(db,Dict(          :bulk       => "predefined",
                         # :frac       => [44.71,3.98,3.17,8.18,38.73,0.13],
                         # :frac2      => [44.71,3.98,3.17,8.18,38.73,0.13],
                         ), cols=:union) 
+
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "RE46 - Icelandic basalt",
+                        :comments   => "Yang et al., 1996",
+                        :db         => "sb11",
+                        :test       => 4,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","FeO","MgO","Na2O"],
+                        :frac       => [ 50.72,	9.16,15.21, 7.06, 16.25, 1.47],
+                        :frac2      => [ 50.72,	9.16,15.21, 7.06, 16.25, 1.47],
+                        ), cols=:union) 
                         
 #MANTLE DATABASE STIXRUDE 2021
 push!(db,Dict(          :bulk       => "predefined",
@@ -699,6 +714,85 @@ push!(db,Dict(          :bulk       => "predefined",
                         # :frac2      => [44.71,3.98,3.17,8.18,38.73,0.13],
                         ), cols=:union)  
 
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "RE46 - Icelandic basalt",
+                        :comments   => "Yang et al., 1996",
+                        :db         => "sb21",
+                        :test       => 4,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","FeO","MgO","Na2O"],
+                        :frac       => [ 50.72,	9.16,15.21, 7.06, 16.25, 1.47],
+                        :frac2      => [ 50.72,	9.16,15.21, 7.06, 16.25, 1.47],
+                        ), cols=:union) 
+                    
+
+# METABASITE DATABASE
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "FWorldMedian metabasite - water over saturated",
+                        :comments   => "Forshaw et al., 2024",
+                        :db         => "mbe",
+                        :test       => 0,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","H2O"],
+                        :frac       => [53.5839, 9.5138, 10.7349, 10.6198, 10.0168, 0.3326, 2.852, 1.0439, 1.3023, 40.0],
+                        :frac2      => [53.5839, 9.5138, 10.7349, 10.6198, 10.0168, 0.3326, 2.852, 1.0439, 1.3023, 40.0],
+                        ), cols=:union)
+
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "FWorldMedian metabasite - water undersaturated",
+                        :comments   => "Forshaw et al., 2024",
+                        :db         => "mbe",
+                        :test       => 1,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","H2O"],
+                        :frac       => [53.5839, 9.5138, 10.7349, 10.6198, 10.0168, 0.3326, 2.852, 1.0439, 1.3023, 5.0],
+                        :frac2      => [53.5839, 9.5138, 10.7349, 10.6198, 10.0168, 0.3326, 2.852, 1.0439, 1.3023, 5.0],
+                        ), cols=:union)
+
+
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "SM89 oxidised average MORB composition",
+                        :comments   => "Sun & McDonough, 1989",
+                        :db         => "mbe",
+                        :test       => 2,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","H2O"],
+                        :frac       => [52.47, 9.10, 12.21, 12.71, 8.15, 0.23, 2.61, 1.05, 1.47, 20.0],
+                        :frac2      => [52.47, 9.10, 12.21, 12.71, 8.15, 0.23, 2.61, 1.05, 1.47, 20.0],
+                        ), cols=:union)
+
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "Natural amphibolites and low-temperature granulites",
+                        :comments   => "unpublished",
+                        :db         => "mbe",
+                        :test       => 3,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","H2O"],
+                        :frac       => [51.08, 9.68, 13.26, 11.21, 11.66, 0.16, 0.79, 1.37, 0.80, 20.0],
+                        :frac2      => [51.08, 9.68, 13.26, 11.21, 11.66, 0.16, 0.79, 1.37, 0.80, 20.0],
+                        ), cols=:union)
+
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "SQA Synthetic amphibolite composition",
+                        :comments   => "Patino Douce & Beard, 1995",
+                        :db         => "mbe",
+                        :test       => 4,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","H2O"],
+                        :frac       => [60.05, 6.62, 8.31, 9.93, 6.57, 0.44, 1.83, 1.27, 0.33, 4.64],
+                        :frac2      => [60.05, 6.62, 8.31, 9.93, 6.57, 0.44, 1.83, 1.27, 0.33, 4.64],
+                        ), cols=:union)
+
+push!(db,Dict(          :bulk       => "predefined",
+                        :title      => "BL478: Sample 478",
+                        :comments   => "Beard & Lofgren, 1991",
+                        :db         => "mbe",
+                        :test       => 5,
+                        :sysUnit    => "mol",
+                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","H2O"],
+                        :frac       => [53.96, 9.26, 10.15, 8.11, 10.14, 0.11, 2.54, 1.35, 0.98, 3.42],
+                        :frac2      => [53.96, 9.26, 10.15, 8.11, 10.14, 0.11, 2.54, 1.35, 0.98, 3.42],
+                        ), cols=:union)
 
 
 dbte = DataFrame(       composition = String[],

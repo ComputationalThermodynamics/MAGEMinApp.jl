@@ -27,20 +27,22 @@ function Tab_IsentropicPaths()
                                                         multi       = false),
                                         ]),
                                     ]),
-                                    dbc_row([
-                                        dbc_col([ 
-                                            html_h1("Dataset", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
-                                        ],width=4),
-                                        dbc_col([ 
-                                            dcc_dropdown(   id      = "dataset-dropdown-isoS",
-                                                            options = [Dict(    "label"     => "ds$(AppData.db_inf.dataset_opt[i])",
-                                                                                "value"     => AppData.db_inf.dataset_opt[i] )
-                                                                            for i = 1:length(AppData.db_inf.dataset_opt) ],
-                                                            value       = AppData.db_inf.db_dataset,
-                                                            clearable   = false,
-                                                            multi       = false),
+                                    html_div([
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("Dataset", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ],width=4),
+                                            dbc_col([ 
+                                                dcc_dropdown(   id      = "dataset-dropdown-isoS",
+                                                                options = [Dict(    "label"     => "ds$(AppData.db_inf.dataset_opt[i])",
+                                                                                    "value"     => AppData.db_inf.dataset_opt[i] )
+                                                                                for i = 1:length(AppData.db_inf.dataset_opt) ],
+                                                                value       = AppData.db_inf.db_dataset,
+                                                                clearable   = false,
+                                                                multi       = false),
+                                            ]),
                                         ]),
-                                    ]),
+                                    ], style = Dict("display" => "block"), id  = "dataset-isentropic-display-id"), #none, block
                                     dbc_row([  
                                         dbc_col([ 
                                             html_h1("Phase selection", style = Dict("textAlign" => "center","font-size" => "120%")),

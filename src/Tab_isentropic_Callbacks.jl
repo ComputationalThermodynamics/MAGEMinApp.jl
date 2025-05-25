@@ -375,6 +375,7 @@ function Tab_isoSpaths_Callbacks(app)
     callback!(
         app,
         Output("switch-opx-id-isoS", "style"),
+        Output("dataset-isentropic-display-id", "style"),
         Input("database-dropdown-isoS", "value"),
     ) do value
         # global db
@@ -387,7 +388,14 @@ function Tab_isoSpaths_Callbacks(app)
         else 
             style  = Dict("display" => "none")
         end
-        return style
+
+        if value == "sb11" || value == "sb21"
+            style_dataset =  Dict("display" => "none")  
+        else
+            style_dataset =  Dict("display" => "block")  
+        end
+
+        return style, style_dataset
     end
 
 
@@ -398,7 +406,7 @@ function Tab_isoSpaths_Callbacks(app)
         Input("database-dropdown-isoS",  "value"),
     ) do value
 
-        if value == "mb"
+        if value == "mb" || value == "mbe"
             style  = Dict("display" => "block")
         else 
             style  = Dict("display" => "none")
