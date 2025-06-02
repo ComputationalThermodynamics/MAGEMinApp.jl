@@ -13,7 +13,7 @@ function get_wat_sat_function(     Yrange,     bulk_ini,   oxi,    phase_selecti
                                     verbose,    bufferN,
                                     cpx,        limOpx,     limOpxVal, watsat_val)
    
-    id_h2o      = findall(oxi .== "H2O")[1]   
+    id_h2o      = findfirst(oxi .== "H2O")
     hydrated    = 1;
     watsat_val  = watsat_val/100.0
 
@@ -28,7 +28,7 @@ function get_wat_sat_function(     Yrange,     bulk_ini,   oxi,    phase_selecti
 
     if liq == 1 && hydrated == 1                                
         println("Computing water-saturation at sub-solidus. Make sure you provided enough water to oversaturate below solidus.")
-        stp     = (Yrange[2] - Yrange[1])/49.0                        
+        stp     = (Yrange[2] - Yrange[1])/31.0                        
         Prange  = Vector(Yrange[1]:stp:Yrange[2])
 
         # prepare flags
@@ -109,7 +109,6 @@ function get_wat_sat_function(     Yrange,     bulk_ini,   oxi,    phase_selecti
                 id = findfirst(out.ph .== "fl")
                 tmp_bulk .-= out.SS_vec[id].Comp .* out.ph_frac[id]
             end            
-
             tmp_bulk ./= sum(tmp_bulk)              # normalize to 100%
 
             if watsat_val > 0.0
@@ -118,14 +117,14 @@ function get_wat_sat_function(     Yrange,     bulk_ini,   oxi,    phase_selecti
             end
 
             tmp_bulk ./= sum(tmp_bulk[id_dry])      # normalize on anhydrous basis, to get water content
-            
             SatSol[i]  = tmp_bulk[id_h2o]
             
         end
+
+        # println("SatSol $SatSol")
         pChip_wat   = Interpolator(Prange, SatSol)
         pChip_T     = Interpolator(Prange, Tsol)
         LibMAGEMin.FreeDatabases(gv, DB, z_b)
- 
     else
         println("To compute water-saturation at sub-solidus liq must be part of the solution phase model and the bulk composition must contain water")
         println("Phase diagram will be computed without water-saturation at sub-solidus...")
@@ -254,8 +253,8 @@ function refine_MAGEMin(data,
                         refType         :: String,
                         pChip_wat       , 
                         pChip_T         )
-    global Out_XY;
-    
+    global Out_XY, addedRefinementLvl;
+
     #= First we create a structure to store the data in memory =#
     if custW == true
         if !isempty(AppData.customWs)
@@ -302,7 +301,9 @@ function refine_MAGEMin(data,
 
         if !isempty(data.split_cell_list) && boost == true
             Gvec = Vector{Vector{LibMAGEMin.mSS_data}}(undef,n_new_points);
+            Ivec = Vector{Bool}(undef,n_new_points) .= true;
         else
+            Ivec = false
             Gvec = nothing;
         end
 
@@ -334,7 +335,7 @@ function refine_MAGEMin(data,
             elseif diagType == "pt"
 
                 if "H2O" in oxi
-                    id_h2o      = findall(oxi .== "H2O")[1]
+                    id_h2o      = findfirst(oxi .== "H2O")
                     id_dry      = findall(oxi .!= "H2O")
                 end
 
@@ -352,12 +353,22 @@ function refine_MAGEMin(data,
                     if ~isnothing(pChip_wat)
                         TsatSol     = pChip_T(Pvec[i])
                         waterSat    = pChip_wat(Pvec[i])
+
                         if Tvec[i] > TsatSol        # if we are above the solidus then we use the water content from the sub-solidus curve
-                            bulk_tmp              = deepcopy(bulk_L)
-                            bulk_tmp            ./= sum(bulk_tmp[id_dry])
-                            bulk_tmp[id_h2o]      = waterSat
-                            bulk_tmp            ./= sum(bulk_tmp)
-                            Xvec[i]               = bulk_tmp
+                            tmp_bulk              = deepcopy(bulk_L)
+                            tmp_bulk            ./= sum(tmp_bulk[id_dry])
+                            tmp_bulk[id_h2o]      = waterSat
+                            tmp_bulk            ./= sum(tmp_bulk)
+
+                            if !isempty(data.ncorners) && boost == true #refinement level is zero
+                                # check_bulk = vcat([Out_XY[data.ncorners[i][j]].bulk[id_h2o] for j=1:length(data.ncorners[i])]...)
+                                check_bulk = vcat([Out_XY[data.npoints_ig[i][j]].bulk[id_h2o] for j=1:length(data.npoints_ig[i])]...)
+                                if tmp_bulk[id_h2o] > maximum(check_bulk) || tmp_bulk[id_h2o] < minimum(check_bulk)
+                                    Ivec[i] = false
+                                end
+                            end   
+
+                            Xvec[i]               = tmp_bulk
                         else
                             Xvec[i] = bulk_L;
                         end
@@ -394,7 +405,7 @@ function refine_MAGEMin(data,
 
             Out_XY_new  =   multi_point_minimization(   Pvec, Tvec, MAGEMin_data;
                                                         X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol", G=Gvec, scp=scp, 
-                                                        rm_list=phase_selection, name_solvus=true, iguess=boost, callback_fn = update_progress, W=new_Ws); 
+                                                        rm_list=phase_selection, name_solvus=true, iguess=Ivec, callback_fn = update_progress, W=new_Ws); 
         else
             # if TT diagram does not exist, compute it
             id_h2o = findfirst(oxi .== "H2O") # check if H2O is in the oxides
