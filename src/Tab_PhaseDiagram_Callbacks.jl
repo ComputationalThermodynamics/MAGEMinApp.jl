@@ -1181,6 +1181,40 @@ function Tab_PhaseDiagram_Callbacks(app)
     end
 
 
+    # save to file
+    callback!(
+        app,
+        Output("iso-save",              "is_open"),
+        Output("iso-save-failed",       "is_open"),
+        Input("button-export-isopleth", "n_clicks"),
+        State("database-dropdown",      "value"),
+        State("title-id",               "value"),
+        prevent_initial_call=true,
+    ) do n_clicks, dtb, title
+
+        global data_isopleth
+        n = data_isopleth.n_iso
+        if n > 0
+
+            isoT = data_isopleth.isoT[data_isopleth.active]
+            lbl = data_isopleth.label[data_isopleth.active]
+
+            for i = 1:n
+                export_contours_to_txt(isoT[i], lbl[i], "isopleth_"*replace(title, " " => "_")*"_"*lbl[i]*".txt")
+            end
+
+            return "success", ""
+        else
+            return "", "failed"
+        end
+    end
+
+
+    global data_isopleth
+
+
+    
+
     """
         Callback function to toggle the visibility of the collapse element
         and the collapse element containing the phase diagram information
