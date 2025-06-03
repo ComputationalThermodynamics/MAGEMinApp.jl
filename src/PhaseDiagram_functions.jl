@@ -1,3 +1,5 @@
+import Contour as CTR
+
 mutable struct ss_infos
     ss_name :: String
     n_em    :: Int64
@@ -13,8 +15,6 @@ mutable struct db_infos
     ss_name :: Array{String}
     data_pp :: Array{String}
 end
-
-
 
 mutable struct isopleth_data
     n_iso   :: Int64
