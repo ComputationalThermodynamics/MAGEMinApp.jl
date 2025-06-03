@@ -360,8 +360,7 @@ function refine_MAGEMin(data,
                             tmp_bulk[id_h2o]      = waterSat
                             tmp_bulk            ./= sum(tmp_bulk)
 
-                            if !isempty(data.ncorners) && boost == true #refinement level is zero
-                                # check_bulk = vcat([Out_XY[data.ncorners[i][j]].bulk[id_h2o] for j=1:length(data.ncorners[i])]...)
+                            if !isempty(data.ncorners) && boost == true # Here we roughly check if the bulk composition is feasible with respect to initial guess
                                 check_bulk = vcat([Out_XY[data.npoints_ig[i][j]].bulk[id_h2o] for j=1:length(data.npoints_ig[i])]...)
                                 if tmp_bulk[id_h2o] > maximum(check_bulk) || tmp_bulk[id_h2o] < minimum(check_bulk)
                                     Ivec[i] = false

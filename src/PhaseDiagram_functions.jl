@@ -24,6 +24,7 @@ mutable struct isopleth_data
     active  :: Vector{Int64}
     hidden  :: Vector{Int64}
     isoP    :: Vector{GenericTrace{Dict{Symbol, Any}}}
+    isoT    :: Vector{CTR.ContourCollection{CTR.ContourLevel{Tuple{Float64, Float64}, Float64}}}
     isoCap  :: Vector{GenericTrace{Dict{Symbol, Any}}}
 
     label   :: Vector{String}
@@ -1395,6 +1396,7 @@ function initialize_g_isopleth(; n_iso_max = 32)
     active    = []
     hidden    = []
     isoP      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
+    isoT      = Vector{CTR.ContourCollection{CTR.ContourLevel{Tuple{Float64, Float64}, Float64}}}(undef, n_iso_max); # + 1 to store the heatmap
     isoCap    = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
 
     for i=1:n_iso_max
@@ -1406,7 +1408,7 @@ function initialize_g_isopleth(; n_iso_max = 32)
     value     = Vector{Int64}(undef,n_iso_max)
 
     data_isopleth = isopleth_data(0, n_iso_max,
-                                status, active, hidden, isoP, isoCap,
+                                status, active, hidden, isoP, isoT, isoCap,
                                 label, value)
 
     
@@ -1425,6 +1427,7 @@ function initialize_g_isopleth_te(; n_iso_max = 32)
     active    = []
     hidden    = []
     isoP      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
+    isoT      = Vector{CTR.ContourCollection{CTR.ContourLevel{Tuple{Float64, Float64}, Float64}}}(undef, n_iso_max); # + 1 to store the heatmap
     isoCap    = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
 
     for i=1:n_iso_max
@@ -1436,7 +1439,7 @@ function initialize_g_isopleth_te(; n_iso_max = 32)
     value     = Vector{Int64}(undef,n_iso_max)
 
     data_isopleth_te = isopleth_data(   0, n_iso_max,
-                                        status, active, hidden, isoP, isoCap,
+                                        status, active, hidden, isoP, isoT, isoCap,
                                         label, value)
 
     
@@ -1529,7 +1532,8 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
 
     data_isopleth.n_iso += 1
 
-    data_isopleth.isoP[data_isopleth.n_iso]= contour(   x                   = X,
+    data_isopleth.isoT[data_isopleth.n_iso] = CTR.contours(X[1:size(gridded,1)],Y[1:size(gridded,1):end],Float64.(coalesce.(gridded, NaN)),collect(range(minIso, maxIso, Int(floor((maxIso-minIso)/stepIso)+1) )))
+    data_isopleth.isoP[data_isopleth.n_iso] = contour(  x                   = X,
                                                         y                   = Y,
                                                         z                   = gridded,
                                                         contours_coloring   = "lines",
@@ -1649,4 +1653,27 @@ function remove_all_isopleth_phaseDiagram()
     isoplethsHid = []       
 
     return data_isopleth, isopleths, isoplethsHid, data_plot
+end
+
+
+function export_contours_to_txt(cont, name, filename)
+    open(filename, "w") do io
+        println(io, "isocontour: $name")
+        for i=1:length(cont.contours)
+            println(io, "level: $(cont.contours[i].level)")
+            println(io, "Number of lines: $(length(cont.contours[i].lines))")
+            l = 0
+            for line in cont.contours[i].lines
+                l += 1
+                println(io, "Line: $(l); $(length(line.vertices)) vertices:")
+
+                x = [line.vertices[j][1] for j in 1:length(line.vertices)]
+                y = [line.vertices[j][2] for j in 1:length(line.vertices)]
+
+                println(io, "x = [" * join(x, ", ") * "]")
+                println(io, "y = [" * join(y, ", ") * "]")
+            end
+            println(io) # blank line between contours
+        end
+    end
 end

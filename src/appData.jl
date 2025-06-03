@@ -54,7 +54,7 @@ contact *= "[Open discussion](https://github.com/ComputationalThermodynamics/MAG
 contact *= "[Discord](https://discord.gg/fjmVZyej9F)"
 
 descri  = "**Comments**\n"
-descri *= "Set of example on how to use MAGEMinApp\n"
+descri *= "Set of examples on how to use MAGEMinApp\n"
 descri *= "Something is not working properly?\n"
 descri *= "Need additional options?\n"
 descri *= "... or join our Discord!"

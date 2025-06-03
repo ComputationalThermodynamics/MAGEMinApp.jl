@@ -1229,6 +1229,28 @@ function Tab_PhaseDiagram()
                                                 ], width=6),
 
                                             ]),
+                                            html_div("‎ "),
+                                            dbc_row([
+                                                dbc_button("Export isocontour(s)",id="button-export-isopleth", color="light",
+                                                style       = Dict( "textAlign"     => "center",
+                                                                    "font-size"     => "100%",
+                                                                    "border"        =>"1px lightgray solid")),
+                                                                                                  
+                                                dbc_alert(
+                                                    "Successfully exported isopleths",
+                                                    id      ="iso-save",
+                                                    is_open =false,
+                                                    duration=4000,
+                                                ),
+                                                dbc_alert(
+                                                    "Isopleths need to be displayed before exporting",
+                                                    color="danger",
+                                                    id      ="iso-save-failed",
+                                                    is_open =false,
+                                                    duration=4000,
+                                                ),
+                                    
+                                            ]),  
 
                                         ])),
                                         id="collapse-isopleths",
