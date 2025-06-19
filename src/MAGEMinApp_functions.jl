@@ -1988,9 +1988,10 @@ function te_bulk_file_to_db(datain, kdsDB)
     dbte = dbte[(dbte.composition .== "predefined"), :];
 
     if kdsDB == "OL"
-        KDs_dtb = get_OL_KDs_database();    #has to take into account possible other Kds database
+        KDs_dtb = MAGEMin_C.create_custom_KDs_database(AppData.KDs_OL[2], AppData.KDs_OL[3], AppData.KDs_OL[4]; info = AppData.KDs_OL[1])
     else
-        print("Kd's database $kdsDB not implemented\n")
+        KDs_dtb = MAGEMin_C.create_custom_KDs_database(AppData.KDs_OL[2], AppData.KDs_OL[3], AppData.KDs_OL[4]; info = AppData.KDs_OL[1])
+        # print("Kd's database $kdsDB not implemented\n")
     end
 
     id_title 		= findfirst(datain[1,:] .== "title")
@@ -2014,7 +2015,7 @@ function te_bulk_file_to_db(datain, kdsDB)
         frac 		= replace.(frac,r"\]"=>"",r"\["=>"")
         frac 		= parse.(Float64,frac)
 
-        bulkte      = adjust_chemical_system( KDs_dtb, frac, elements)
+        bulkte      = MAGEMin_C.adjust_chemical_system( KDs_dtb, frac, elements)
         bulkte     .= round.(bulkte; digits = 4)
 
         if ~isempty(datain[i,id_frac2])
@@ -2022,7 +2023,7 @@ function te_bulk_file_to_db(datain, kdsDB)
             frac2 		= strip.(convert.(String,frac2));
             frac2 		= replace.(frac2,r"\]"=>"",r"\["=>"");
             frac2		= parse.(Float64,frac2);
-            bulkte2     = adjust_chemical_system( KDs_dtb, frac2, elements);
+            bulkte2     = MAGEMin_C.adjust_chemical_system( KDs_dtb, frac2, elements);
             bulkte2    .= round.(bulkte2; digits = 4)
         else
             bulkte2     = deepcopy(bulkte)

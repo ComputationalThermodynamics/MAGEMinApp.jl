@@ -498,15 +498,15 @@ function Tab_Simulation_Callbacks(app)
                 opeodc  = Dict("display" => "none"  )
                 show_norm = Dict("display" => "block")
 
-            elseif kds == "EODC"
-                opt     = Dict("display" => "block" )    
-                panel   = Dict("display" => "block" )
-                zr      = Dict("display" => "none"  )
-                opeodc  = Dict("display" => "block" )
-                show_norm = Dict("display" => "none")
-                if eodc_opt == "B" || eodc_opt == "AV"
-                    type_eodc   = Dict("display" => "block" )
-                end
+            # elseif kds == "EODC"
+            #     opt     = Dict("display" => "block" )    
+            #     panel   = Dict("display" => "block" )
+            #     zr      = Dict("display" => "none"  )
+            #     opeodc  = Dict("display" => "block" )
+            #     show_norm = Dict("display" => "none")
+            #     if eodc_opt == "B" || eodc_opt == "AV"
+            #         type_eodc   = Dict("display" => "block" )
+            #     end
             end
         end
 

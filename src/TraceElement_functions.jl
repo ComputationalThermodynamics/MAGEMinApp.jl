@@ -12,9 +12,9 @@ function get_layout_ree(norm        :: String,
             xaxis_title = "Trace Elements"
         end
         yaxis_title = "C"*show_type*"/"*norm*" log10[μg/g]"
-    elseif kds_db == "EODC"
-        xaxis_title = "Trace Elements"
-        yaxis_title = "Cte log10[μg/g]"
+    # elseif kds_db == "EODC"
+    #     xaxis_title = "Trace Elements"
+    #     yaxis_title = "Cte log10[μg/g]"
     end
 
     layout_ree      =  Layout(
@@ -52,9 +52,9 @@ function get_data_ree_plot(point_id_te, norm, show_type, kds_db)
             te      = Out_TE_XY[point_id_te].elements
             te_idx  = [findfirst(isequal(x), Out_TE_XY[point_id_te].elements) for x in te_chondrite];
         end
-    elseif kds_db == "EODC"
-        te      = Out_TE_XY[point_id_te].elements
-        te_idx  = [1:length(te);]
+    # elseif kds_db == "EODC"
+    #     te      = Out_TE_XY[point_id_te].elements
+    #     te_idx  = [1:length(te);]
     end
 
 
@@ -103,8 +103,8 @@ function get_data_ree_plot(point_id_te, norm, show_type, kds_db)
                 C_norm = copy(Out_TE_XY[point_id_te].C0[te_idx])
             end
         end
-    elseif kds_db == "EODC"
-        C_norm = 1;
+    # elseif kds_db == "EODC"
+    #     C_norm = 1;
     end
 
 
