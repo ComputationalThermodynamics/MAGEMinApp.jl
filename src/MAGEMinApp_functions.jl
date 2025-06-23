@@ -1981,18 +1981,15 @@ end
 """
   function to parse bulk-te composition file
 """
-function te_bulk_file_to_db(datain, kdsDB)
+function te_bulk_file_to_db(datain, kds_mod)
 
     global dbte;
 
     dbte = dbte[(dbte.composition .== "predefined"), :];
 
-    if kdsDB == "OL"
-        KDs_dtb = MAGEMin_C.create_custom_KDs_database(AppData.KDs_OL[2], AppData.KDs_OL[3], AppData.KDs_OL[4]; info = AppData.KDs_OL[1])
-    else
-        KDs_dtb = MAGEMin_C.create_custom_KDs_database(AppData.KDs_OL[2], AppData.KDs_OL[3], AppData.KDs_OL[4]; info = AppData.KDs_OL[1])
-        # print("Kd's database $kdsDB not implemented\n")
-    end
+    TE_models   = [AppData.KDs[i][4] for i in 1:length(AppData.KDs)]
+    id_TE_model = findfirst(TE_models .== kds_mod)
+    KDs_dtb     = MAGEMin_C.create_custom_KDs_database(AppData.KDs[id_TE_model][1], AppData.KDs[id_TE_model][2], AppData.KDs[id_TE_model][3]; info = AppData.KDs[id_TE_model][6])
 
     id_title 		= findfirst(datain[1,:] .== "title")
     id_comments		= findfirst(datain[1,:] .== "comments")
@@ -2043,6 +2040,53 @@ function te_bulk_file_to_db(datain, kdsDB)
 
 end
 
+
+function read_xlsx_KDs( filename  :: String;
+                        sheet_name :: String = "KDs" )
+
+    if !isfile(filename)
+        error("File $filename does not exist.")
+        return nothing
+    else
+        info, name    = "", ""
+        status  = 0
+        XLSX.openxlsx(filename) do xf
+            if sheet_name in XLSX.sheetnames(xf)
+                sheet   = xf[sheet_name]
+                acr     = sheet[1, 1]  
+                name    = sheet[1, 2]  
+                info    = sheet[1, 3]  
+
+                data    = XLSX.readtable(filename, sheet_name; first_row=2) |> DataFrame
+
+                el      = names(data)[2:end]
+                ph      = string.(data[!, "Phase"])
+                KDs     = Matrix{String}(string.(data[:, 2:end]))
+
+                return (el, ph, KDs, acr, name, info)
+            else
+                error("Sheet 'KDs' not found in $filename.")
+                return nothing
+            end
+        end
+    end
+
+end
+
+function parse_contents(contents, filename)
+    # We need to extract the base64 part and decode it
+    content_string  = split(contents, ",")[2]
+    file_bytes      = base64decode(content_string)
+
+    # Save to a temporary file
+    temp_filename = tempname() * ".xlsx"
+    open(temp_filename, "w") do f
+        write(f, file_bytes)
+    end
+    KDs         = read_xlsx_KDs(temp_filename)
+
+    return KDs
+end
 
 
 

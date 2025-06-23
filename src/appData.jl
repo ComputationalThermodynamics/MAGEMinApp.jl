@@ -834,8 +834,6 @@ push!(dbte,Dict(    :composition=> "predefined",
                 ), cols=:union)
 
 
-file_path   = joinpath(pkg_dir,"src","./tools/OL12.jld2")
-@load file_path OL12
 
 db.frac_wt  .= mol2wt.(db.frac,db.oxide)
 db.frac2_wt .= mol2wt.(db.frac2,db.oxide)
@@ -873,6 +871,12 @@ const MAGEMin_C_version = string(pkgversion(MAGEMin_C))
 global CompProgress      =  ComputationalProgress()
 customWs                 =  DataFrame()
 
+# Here we fill a tupple with the KDs for the OL12 database
+file_path   = joinpath(pkg_dir,"src","./tools/OL12.jld2")
+@load file_path OL12
+
+KDs = ((OL12[2],OL12[3],OL12[4],"OL","Laurent, O. 2012",OL12[1]))
+
 
 HTTP.Connections.closeall()
 AppData = ( contribs            = contribs,
@@ -880,7 +884,7 @@ AppData = ( contribs            = contribs,
             dba                 = dba,
             dtb_dict            = dtb_dict,
             dbte                = dbte,
-            KDs_OL              = OL12,
+            KDs                 = KDs,
             hidden_pp           = hidden_pp,
             dict_em             = dict_em,  
             dict_ss             = dict_ss,

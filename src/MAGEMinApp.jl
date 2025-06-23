@@ -4,7 +4,7 @@ module MAGEMinApp
 
 using Dash
 using DashBootstrapComponents
-using PlotlyJS, JSON3, JSON, Printf, Statistics, DataFrames, CSV, Dates, Base64
+using PlotlyJS, JSON3, JSON, Printf, Statistics, DataFrames, CSV, XLSX, Dates, Base64
 using UUIDs, HTTP
 using JLD2, DelimitedFiles, Interpolations
 using ConcaveHull,PolygonOps
