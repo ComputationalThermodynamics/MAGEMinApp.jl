@@ -15,6 +15,45 @@ function Tab_Simulation_Callbacks(app)
     end
 
 
+
+
+    callback!(
+        app,
+        Output( "kds-dropdown",                 "options"),
+        Output( "kds-dropdown",                 "value"   ),
+        Input(  "upload-TE-data",                  "contents"),
+        Input(  "kds-dropdown-trigger",         "value"   ),
+        State(  "upload-TE-data",                  "filename"),
+        State(  "kds-dropdown",                 "options"),
+        State(  "kds-dropdown",                 "value"   ),
+        prevent_initial_call = true,  
+    ) do contents, KDs_dtb, filename, KDs_options, KDs_value
+
+        bid = pushed_button( callback_context() ) 
+
+        if bid == "upload-TE-data"
+            if isnothing(contents)
+                return ""
+            end
+
+            KDs_new     = parse_contents(contents, filename)
+            KDs_old     = AppData.KDs
+
+            KDs_update  = (KDs_new, KDs_old)
+
+            global AppData = merge(AppData, (KDs = KDs_update,))
+
+            np              = length(KDs_update)
+            KDs_options     = [Dict(     "label"     => KDs_update[i][5],
+                                         "value"     => KDs_update[i][4] )
+                                for i=1:np ];
+        elseif bid == "kds-dropdown-trigger"
+            KDs_value    = KDs_dtb;
+        end
+
+        return KDs_options, KDs_value
+    end
+
     # update the dictionary of the solution phases and end-members for isopleths
     callback!(
         app,
@@ -126,7 +165,7 @@ function Tab_Simulation_Callbacks(app)
         Output(  "ca-opx-val-id",                    "value"       ),
 
         Output(  "tepm-dropdown",                    "value"       ),
-        Output(  "kds-dropdown",                     "value"       ),
+        Output(  "kds-dropdown-trigger",             "value"       ),
         Output(  "zrsat-dropdown",                   "value"       ),
 
         Output(  "pmin-id",                          "value"       ),
@@ -472,45 +511,26 @@ function Tab_Simulation_Callbacks(app)
         Output("tepm-options-id",   "style"),
         Output("te-panel-id",       "style"),
         Output("zr-options-id",     "style"),
-        Output("eodc-options-id",   "style"),
-        Output("eodc-ratio-display-id",   "style"),
         Output("display-show-norm-id",   "style"),
         
         Input("tepm-dropdown",      "value"),
         Input("kds-dropdown",       "value"),
-        Input("eodc-options-dropdown",       "value"),
-    ) do tepm, kds, eodc_opt
-
-        type_eodc   = Dict("display" => "none" )
+    ) do tepm, kds
 
         if tepm == "false"
             opt     = Dict("display" => "none")
             panel   = Dict("display" => "none")
             zr      = Dict("display" => "none")
-            opeodc  = Dict("display" => "none")
             show_norm = Dict("display" => "none")
 
         elseif tepm == "true" 
-            if kds == "OL"
-                opt     = Dict("display" => "block" )    
-                panel   = Dict("display" => "block" )
-                zr      = Dict("display" => "block" )
-                opeodc  = Dict("display" => "none"  )
-                show_norm = Dict("display" => "block")
-
-            elseif kds == "EODC"
-                opt     = Dict("display" => "block" )    
-                panel   = Dict("display" => "block" )
-                zr      = Dict("display" => "none"  )
-                opeodc  = Dict("display" => "block" )
-                show_norm = Dict("display" => "none")
-                if eodc_opt == "B" || eodc_opt == "AV"
-                    type_eodc   = Dict("display" => "block" )
-                end
-            end
+            opt     = Dict("display" => "block" )    
+            panel   = Dict("display" => "block" )
+            zr      = Dict("display" => "block" )
+            show_norm = Dict("display" => "block")
         end
 
-        return opt, panel, zr, opeodc, type_eodc, show_norm
+        return opt, panel, zr, show_norm
     end
 
 

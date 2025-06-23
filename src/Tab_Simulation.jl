@@ -253,6 +253,36 @@ function Tab_Simulation()
                                     #options for trace element predictive modelling
                                     html_div([
                                         dbc_row([
+                                            # this parts serves as a relay to trigger an update of the phase diagram and loading the progress bar
+                                            html_div([
+                                                dcc_dropdown(   id      = "kds-dropdown-trigger",
+                                                options = [
+                                                    (label = "O. Laurent (2012)",               value = "OL"),
+                                                ],
+                                                value       = "OL" ,
+                                                clearable   =  false,
+                                                multi       =  false),
+                                            ], style = Dict("display" => "none"), id      = "KDs-relay-id"), #none, block
+                                        ]),
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("Upload Kd's", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ]),
+                                            dbc_col([ 
+                                                dcc_upload(
+                                                    id          = "upload-TE-data",
+                                                    children    =  html_div("Select an XLSX File"),
+                                                    style       =  Dict("borderWidth" => "1px",
+                                                                        "borderStyle" => "dashed",
+                                                                        "borderRadius" => "5px",
+                                                                        "textAlign" => "center",
+                                                                        "margin" => "10px"
+                                                    ),
+                                                    multiple=false
+                                                ),
+                                            ]),
+                                        ]),   
+                                        dbc_row([
                                             dbc_col([ 
                                                 html_h1("Kd's database", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
                                             ]),
@@ -260,7 +290,6 @@ function Tab_Simulation()
                                                 dcc_dropdown(   id      = "kds-dropdown",
                                                 options = [
                                                     (label = "O. Laurent (2012)",               value = "OL"),
-                                                    # (label = "E. Oliviera Da Costa (202x)",     value = "EODC"),
                                                 ],
                                                 value       = "OL" ,
                                                 clearable   =  false,

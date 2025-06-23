@@ -688,9 +688,7 @@ function tepm_function( diagType    :: String,
                         zrsat_mod   :: String,
                         bulkte_L    :: Vector{Float64},
                         bulkte_R    :: Vector{Float64},
-                        elem_TE     :: Vector{String},
-                        eodc_type   :: String,
-                        eodc_ratio  :: Float64)
+                        elem_TE     :: Vector{String})
 
     np          = length(Out_XY)
     
@@ -699,28 +697,13 @@ function tepm_function( diagType    :: String,
     all_TE_ph   = []
     option      = 1
 
-    if kds_mod == "OL"
-        KDs_dtb     = AppData.KDs_OL;
-    elseif kds_mod == "EODC"
-        if eodc_type == "KP"
-            KDs_dtb     = AppData.KDs_KP_Exp;
-            option      = 1
-        elseif eodc_type == "IL"
-            KDs_dtb     = AppData.KDs_IL_Exp;
-            option      = 1
-        elseif eodc_type == "B"
-            KDs_dtb     = AppData.KDs_B_Nat;
-            option      = 3
-        elseif eodc_type == "AV"
-            KDs_dtb     = AppData.KDs_AV_Nat;
-            option      = 3
-        end 
-    else
-        KDs_dtb     = AppData.KDs_OL;
-    end
+    TE_models   = [AppData.KDs[i][4] for i in 1:length(AppData.KDs)]
+    id_TE_model = findfirst(TE_models .== kds_mod)
+    KDs_dtb     = MAGEMin_C.create_custom_KDs_database(AppData.KDs[id_TE_model][1], AppData.KDs[id_TE_model][2], AppData.KDs[id_TE_model][3]; info = AppData.KDs[id_TE_model][6])
 
-    bulkte_L      = adjust_chemical_system( KDs_dtb, bulkte_L, elem_TE );
-    bulkte_R      = adjust_chemical_system( KDs_dtb, bulkte_R, elem_TE );
+    bulkte_L      = MAGEMin_C.adjust_chemical_system( KDs_dtb, bulkte_L, elem_TE );
+    bulkte_R      = MAGEMin_C.adjust_chemical_system( KDs_dtb, bulkte_R, elem_TE );
+
     for i = 1:np
 
         if diagType != "pt"
@@ -729,11 +712,7 @@ function tepm_function( diagType    :: String,
             TEvec = bulkte_L
         end
 
-        Out_TE_XY[i]  = TE_prediction(  TEvec, KDs_dtb, Out_XY[i], dtb; 
-                                        ZrSat_model = zrsat_mod,
-                                        model       = kds_mod,
-                                        option      = option,
-                                        ratio       = eodc_ratio);
+        Out_TE_XY[i]  = TE_prediction(Out_XY[i], TEvec, KDs_dtb, dtb; ZrSat_model = "CB")
 
         if ~isnothing(Out_TE_XY[i].ph_TE)
             for j in Out_TE_XY[i].ph_TE
