@@ -39,13 +39,14 @@ function Tab_Simulation_Callbacks(app)
             KDs_new     = parse_contents(contents, filename)
             KDs_old     = AppData.KDs
 
-            KDs_update  = (KDs_new, KDs_old)
+            push!(KDs_old, KDs_new)
+            # KDs_update  = (KDs_new, KDs_old)
 
-            global AppData = merge(AppData, (KDs = KDs_update,))
+            global AppData = merge(AppData, (KDs = KDs_old,))
 
-            np              = length(KDs_update)
-            KDs_options     = [Dict(     "label"     => KDs_update[i][5],
-                                         "value"     => KDs_update[i][4] )
+            np              = length(KDs_old)
+            KDs_options     = [Dict(     "label"     => KDs_old[i][5],
+                                         "value"     => KDs_old[i][4] )
                                 for i=1:np ];
         elseif bid == "kds-dropdown-trigger"
             KDs_value    = KDs_dtb;
