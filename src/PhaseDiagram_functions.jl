@@ -697,9 +697,13 @@ function tepm_function( diagType    :: String,
     all_TE_ph   = []
     option      = 1
 
-    TE_models   = [AppData.KDs[i][4] for i in 1:length(AppData.KDs)]
-    id_TE_model = findfirst(TE_models .== kds_mod)
-    KDs_dtb     = MAGEMin_C.create_custom_KDs_database(AppData.KDs[id_TE_model][1], AppData.KDs[id_TE_model][2], AppData.KDs[id_TE_model][3]; info = AppData.KDs[id_TE_model][6])
+    # if AppData.KDs[4] != "OL"
+        TE_models   = [AppData.KDs[i][4] for i in 1:length(AppData.KDs)]
+        id_TE_model = findfirst(TE_models .== kds_mod)
+        KDs_dtb     = MAGEMin_C.create_custom_KDs_database(AppData.KDs[id_TE_model][1], AppData.KDs[id_TE_model][2], AppData.KDs[id_TE_model][3]; info = AppData.KDs[id_TE_model][6])
+    # else
+    #     KDs_dtb     = MAGEMin_C.create_custom_KDs_database(AppData.KDs[1], AppData.KDs[2], AppData.KDs[3]; info = AppData.KDs[6])
+    # end
 
     bulkte_L      = MAGEMin_C.adjust_chemical_system( KDs_dtb, bulkte_L, elem_TE );
     bulkte_R      = MAGEMin_C.adjust_chemical_system( KDs_dtb, bulkte_R, elem_TE );
