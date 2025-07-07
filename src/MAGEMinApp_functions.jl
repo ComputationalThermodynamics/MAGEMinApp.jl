@@ -343,13 +343,13 @@ function save_rho_for_GeoModel(     dtb         ::String,
             for i=1:np
                 field[i,j] = Out_XY[i].s_cp[1];
             end
-        elseif field2save[j] == "s_cp"
+        elseif field2save[j] == "alpha"
             for i=1:np
                 field[i,j] = Out_XY[i].alpha[1];
             end
         else
             for i=1:np
-                field[i,j] = Float64(get_property(Out_XY[i], field2save[j]));
+                field[i,j] = Float64.(get_property(Out_XY[i], field2save[j]));
             end
         end
     end
