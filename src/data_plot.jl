@@ -218,6 +218,16 @@ function TAS_plot()
             )
 end
 
+function TAS_pluto_plot()
+
+    fig =  plot(    Layout(     width       = 740,
+                                height      = 400 ))
+
+    dcc_graph(
+                id          = "TAS-pluto-plot",
+                figure      = fig,
+            )
+end
 function TAS_plot_pd()
 
     fig =  plot(    Layout(     width       = 640,
@@ -228,7 +238,16 @@ function TAS_plot_pd()
                 figure      = fig,
             )
 end
+function TAS_pluto_plot_pd()
 
+    fig =  plot(    Layout(     width       = 640,
+                                height      = 400 ))
+
+    dcc_graph(
+                id          = "TAS-pluto-plot-pd",
+                figure      = fig,
+            )
+end
 function AFM_plot_pd()
 
     fig =  plot(    Layout(     width       = 640,

@@ -50,6 +50,8 @@ function Tab_PhaseDiagram_Callbacks(app)
         app,
         Output("TAS-plot-pd",            "figure"),
         Output("TAS-plot-pd",            "config"),
+        Output("TAS-pluto-plot-pd",      "figure"),
+        Output("TAS-pluto-plot-pd",      "config"),
         Output("AFM-plot-pd",            "figure"),
         Output("AFM-plot-pd",            "config"),
         
@@ -72,17 +74,30 @@ function Tab_PhaseDiagram_Callbacks(app)
         if @isdefined(points_in_idx) && @isdefined(Out_XY)
             tas, layout     = get_TAS_phase_diagram()
             figTAS          = plot( tas, layout)
+
+            tas_pluto, layout_pluto     = get_TAS_pluto_phase_diagram()
+            figTAS_pluto                = plot( tas_pluto, layout_pluto)
+       
             
             afm, layout_afm = get_AFM_phase_diagram()
             figAFM          = plot( afm, layout_afm)
         else
             figTAS          = plot(Layout( height= 740 ))
+            figTAS_pluto    = plot(Layout( height= 740 ))
             figAFM          = plot(Layout( height= 740 ))
         end
 
         configTAS   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
                                         format   = "svg",
                                         filename = "TAS_diagram_"*replace(title, " " => "_"),
+                                        width       = 760,
+                                        height      = 480,
+                                        scale    =  2.0,       ).fields)
+
+
+        configTAS_pluto   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
+                                        format   = "svg",
+                                        filename = "TAS_plutonic_diagram_"*replace(title, " " => "_"),
                                         width       = 760,
                                         height      = 480,
                                         scale    =  2.0,       ).fields)
@@ -94,7 +109,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                         height      = 480,
                                         scale    =  2.0,       ).fields)
 
-        return figTAS, configTAS, figAFM, configAFM
+        return figTAS, configTAS, figTAS_pluto, configTAS_pluto, figAFM, configAFM
     end
 
     callback!(
@@ -1256,6 +1271,22 @@ function Tab_PhaseDiagram_Callbacks(app)
         return is_open    
     end
 
+    callback!(app,
+        Output("collapse-phase-label", "is_open"),
+        [Input("phase-label", "n_clicks")],
+        [State("collapse-phase-label", "is_open")], ) do  n, is_open
+        
+        if isnothing(n); n=0 end
+
+        if n>0
+            if is_open==1
+                is_open = 0
+            elseif is_open==0
+                is_open = 1
+            end
+        end
+        return is_open    
+    end
 
 
     return app

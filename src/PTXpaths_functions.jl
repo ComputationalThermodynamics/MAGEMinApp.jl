@@ -150,6 +150,155 @@ function get_TAS_diagram(phases,title)
 end
 
 
+
+"""
+    Retrieve TAS diagram
+"""
+function get_TAS_pluto_diagram(phases,title)
+
+    tas      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, 16);
+
+    fields   = ([40.433 9.475; 35.836 6.548; 35.836 5.52; 38.901 4.022; 43.452 8.291; 40.433 9.475], [48.885 14.972; 40.433 9.475; 43.452 8.291; 45.635 9.497; 51.858 13.274; 48.885 14.972], [51.904 15.978; 48.885 14.972; 51.858 13.274; 54.876 11.285; 58.034 11.508; 61.842 13.922; 53.994 15.955; 51.904 15.978], [61.889 10.056; 58.034 11.508; 61.842 13.922; 68.854 11.777; 64.954 8.983; 61.889 10.056], [73.963 9.52; 68.854 11.777; 64.954 8.983; 69.969 5.43; 74.009 8.492; 73.963 9.52], [63.003 6.972; 64.954 8.983; 69.969 5.43; 62.91 3.352; 63.003 6.972], [54.876 5.52; 63.003 6.994; 62.91 3.352; 56.827 1.497; 54.969 1.497; 54.876 5.52], [51.95 5.587; 54.876 5.52; 54.969 1.497; 51.95 1.52; 51.95 5.587], [44.427 5.765; 51.95 5.587; 51.95 1.52; 43.87 1.497; 40.898 3.062; 44.427 5.765], [44.427 5.765; 40.898 3.062; 38.901 4.022; 43.452 8.291; 45.635 9.497; 47.91 8.514; 46.006 7.017; 44.427 5.765], [47.91 8.514; 45.635 9.497; 51.858 13.274; 54.876 11.285; 50.0 9.296; 47.91 8.514], [54.923 9.296; 50.0 9.296; 54.876 11.285; 58.034 11.508; 61.889 10.056; 56.78 8.961; 54.923 9.296], [52.926 7.017; 56.78 8.961; 61.889 10.056; 64.954 8.983; 63.003 6.994; 54.876 5.52; 51.95 5.587; 52.926 7.017], [52.926 7.017; 51.95 5.587; 44.427 5.765; 46.053 7.039; 52.926 7.017], [56.78 8.961; 52.926 7.017; 46.053 7.039; 47.91 8.514; 50.0 9.296; 54.923 9.296; 56.78 8.961])
+    nf       = length(fields)
+    xc       = zeros(nf)
+    yc       = zeros(nf)
+
+    for i=1:nf
+        xc[i] = sum(fields[i][2:end,1])/(Float64(size(fields[i],1)) -1.0)
+        yc[i] = sum(fields[i][2:end,2])/(Float64(size(fields[i],1)) -1.0)
+    end
+
+    # annotations shifts
+    xc[6]   +=0.75;
+
+    name = [
+        "Ijolite",
+        "",
+        "Nepheline<br>syenite",
+        "Syenite",
+        "Granite",
+        "Granodiorite",
+        "diorite",
+        "Gabbro<br>diorite",
+        "Gabbro",
+        "",
+        "",
+        "Syenite",
+        "Syenodiorite",
+        "Gabbro",
+        "Syenodiorite"
+    ] 
+
+    for i = 1:nf
+        tas[i] = scatter(   x           = fields[i][:,1], 
+                            y           = fields[i][:,2], 
+                            hoverinfo   = "skip",
+                            mode        = "lines",
+                            showscale   = false,
+                            showlegend  = false,
+                            line        = attr( color   = "black", 
+                                                width   = 0.75)                )
+    end
+
+
+    n_ox    = length(Out_PTX[1].oxides)
+    oxides  = Out_PTX[1].oxides
+    n_tot   = length(Out_PTX)
+
+    liq_tas         = Matrix{Union{Float64,Missing}}(undef, n_ox, (n_tot+1))      .= missing
+    colormap        = get_jet_colormap(n_tot+1)
+ 
+    for j=1:n_tot
+        id      = findall(Out_PTX[j].ph .== "liq")
+        if ~isempty(id)
+            liq_tas[:,j] = Out_PTX[j].SS_vec[id[1]].Comp_wt .*100.0
+        end
+    end
+
+    dry  = findall(oxides .!= "H2O") 
+    id_Y = findall(oxides .== "K2O" .|| oxides .== "Na2O")
+    id_X = findall(oxides .== "SiO2") 
+
+    if ~isempty(dry)
+        liq_tas ./=sum(liq_tas[dry,:],dims=1)
+        liq_tas .*= 100.0
+    end
+
+    tas[end] = scatter(     x           = liq_tas[id_X,:], 
+                            y           = sum(liq_tas[id_Y,:],dims=1), 
+                            hoverinfo   = "skip",
+                            mode        = "markers",
+                            opacity     = 0.8,
+                            showscale   = false,
+                            showlegend  = false,
+                            marker      = attr(     size        = fracEvol[:,1].*15.0 .+ 6.0,
+                                                    color       = colormap,
+                                                    line        = attr( width = 0.75,
+                                                                        color = "black" )    ))
+
+    annotations = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,nf)
+
+    for i=1:nf
+        annotations[i] =   attr(    xref        = "x",
+                                    yref        = "y",
+                                    x           = xc[i],
+                                    y           = yc[i],
+                                    text        = name[i],
+                                    showarrow   = false,
+                                    visible     = true,
+                                    font        = attr( size = 10, color = "#212121"),
+                                )  
+    end
+
+    layout_ptx  = Layout(
+
+        title= attr(
+            text    = title,
+            x       = 0.5,
+            y       = 1.10,
+            xanchor = "center",
+            yanchor = "top"
+        ),
+        margin      = attr(autoexpand = false, l=16, r=16, b=16, t=24),
+        hoverlabel = attr(
+            bgcolor     = "#566573",
+            bordercolor = "#f8f9f9",
+        ),
+        plot_bgcolor = "#FFF",
+        paper_bgcolor = "#FFF",
+        xaxis_title = "SiO2 [wt%]",
+        yaxis_title = "K2O + Na2O [wt%]",
+        xaxis_range = [35.0, 85.0], 
+        # yaxis_range = [0.0,15.0],
+        annotations = annotations,
+        width       = 760,
+        height      = 480,
+        xaxis       = attr(
+            fixedrange    = true,
+            # showgrid      = false,  # Disable gridlines inside the plot
+            # zeroline      = true,   # Show the axis line
+            # #zerolinecolor = "black", # Set axis line color to black
+            # linecolor     = "black", # Set the bottom axis line color
+            # linewidth     = 1       # Set the thickness of the axis line
+        ),
+        yaxis       = attr(
+            fixedrange    = true,
+            # showgrid      = false,  # Disable gridlines inside the plot
+            # zeroline      = true,   # Show the axis line
+            # #zerolinecolor = "black", # Set axis line color to black
+            # linecolor     = "black", # Set the left axis line color
+            # linewidth     = 1,       # Set the thickness of the axis line
+            # range         = [0.0, nothing]
+        ),
+    )
+
+   
+    return tas, layout_ptx
+end
+
+
+
+
 function compute_Tliq(          sysunit, pressure,   tolerance,  bulk_ini,   oxi,    phase_selection,
                                 dtb,        dataset,    bufferType, solver,
                                 verbose,    bulk,       bufferN,

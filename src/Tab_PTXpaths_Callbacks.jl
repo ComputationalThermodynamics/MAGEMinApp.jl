@@ -472,6 +472,8 @@ function Tab_PTXpaths_Callbacks(app)
         app,
         Output("TAS-plot",              "figure"),
         Output("TAS-plot",              "config"),
+        Output("TAS-pluto-plot",        "figure"),
+        Output("TAS-pluto-plot",        "config"),
         
         Input("phase-selector-id",      "value"),
 
@@ -484,25 +486,34 @@ function Tab_PTXpaths_Callbacks(app)
         ) do    phases,
                 dtb,    test,   sysunit
 
-
         bid         = pushed_button( callback_context() )    # get which button has been pushed
         title       = db[(db.db .== dtb), :].title[test+1]
 
         if "liq" in phases
             tas, layout_ptx = get_TAS_diagram(phases,title)
-            figTAS      = plot( tas, layout_ptx)
+            figTAS          = plot( tas, layout_ptx)
+            tas_pluto, layout_ptx_pluto = get_TAS_pluto_diagram(phases,title)
+            figTAS_pluto    = plot( tas_pluto, layout_ptx_pluto)
         else
-            figTAS      =  plot(Layout( height= 360 ))
+            figTAS          =  plot(Layout( height= 360 ))
+            figTAS_pluto    =  plot(Layout( height= 360 ))
         end
 
-        configTAS   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
+        configTAS   = PlotConfig(       toImageButtonOptions  = attr(     name     = "Download as svg",
                                         format   = "svg",
                                         filename = "TAS_diagram_"*replace(title, " " => "_"),
                                         width       = 760,
                                         height      = 480,
                                         scale    =  2.0,       ).fields)
 
-        return figTAS, configTAS
+        configTAS_pluto = PlotConfig(   toImageButtonOptions  = attr(     name     = "Download as svg",
+                                        format   = "svg",
+                                        filename = "TAS_plutonic_diagram_"*replace(title, " " => "_"),
+                                        width       = 760,
+                                        height      = 480,
+                                        scale    =  2.0,       ).fields)
+
+        return figTAS, configTAS, figTAS_pluto, configTAS_pluto
     end
 
 

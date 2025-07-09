@@ -141,31 +141,47 @@ function Tab_PhaseDiagram()
                                     diagram_plot()
                                 ]),
                             ], width=9),
-                            dbc_col([
-                                html_div([
-                                    dbc_row([
-                                        html_div("‎ "),
-                                        html_div("‎ "), 
-                                        dcc_clipboard(
-                                            target_id   = "stable-assemblage-id",
-                                            title       = "copy",
-                                            style       =  Dict(    "display"       => "inline-block",
-                                                                    "fontSize"      =>  20,
-                                                                    "verticalAlign" => "top"    ),
-                                        ),
-                                    ]),
-                                    dbc_row([
-                                        dbc_card([
-                                            dcc_markdown(   id          = "stable-assemblage-id", 
-                                                            children    = "",
-                                                            style       = Dict(     "white-space" => "pre", 
-                                                                                    "max-height" => "640px",
-                                                                                    "overflow-y" => "auto"      ))
-                                        ])
-                                    ]),
-                                ], style = Dict("display" => "block"), id      = "show-text-list-id"), #none, block
 
+
+                            dbc_col([
+                                html_div("‎ "),
+                                html_div("‎ "), 
+
+                                dbc_row([dbc_button("Phase assemblages",id="phase-label"),
+                                dbc_collapse(
+                                    dbc_card(dbc_cardbody([
+
+                                        html_div([
+                                            dbc_row([
+
+                                                dcc_clipboard(
+                                                    target_id   = "stable-assemblage-id",
+                                                    title       = "copy",
+                                                    style       =  Dict(    "display"       => "inline-block",
+                                                                            "fontSize"      =>  20,
+                                                                            "verticalAlign" => "top"    ),
+                                                ),
+                                            ]),
+                                            dbc_row([
+                                                dbc_card([
+                                                    dcc_markdown(   id          = "stable-assemblage-id", 
+                                                                    children    = "",
+                                                                    style       = Dict(     "white-space" => "pre", 
+                                                                                            "max-height" => "640px",
+                                                                                            "overflow-y" => "auto"      ))
+                                                ])
+                                            ]),
+                                        ], style = Dict("display" => "block"), id      = "show-text-list-id"), #none, block
+
+                                    ])),
+                                    id="collapse-phase-label",
+                                    is_open=true,
+                                    dimension="width",
+                                ),
+                                ]),
                             ], width=3),
+
+                        
                         ]),
 
                     ], width=9),
@@ -1288,6 +1304,9 @@ function Tab_PhaseDiagram()
                                                         TAS_plot_pd()
                                                     ]),
                                                     dbc_row([                                                                                     
+                                                        TAS_pluto_plot_pd()
+                                                    ]),
+                                                    dbc_row([                                                                                     
                                                         AFM_plot_pd()
                                                     ]),
                                                 ],
@@ -1297,7 +1316,7 @@ function Tab_PhaseDiagram()
                                                     is_open = false,
                                                     placement = "start",
                                                     style   = Dict( "width"             => "660px",
-                                                                    "background-color"  => "rgba(255, 255, 255, 0.7)"),
+                                                                    "background-color"  => "rgba(255, 255, 255, 1.0)"),
                                                 ),
                                             ]),
                                             html_div("‎ "),
