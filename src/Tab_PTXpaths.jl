@@ -1084,6 +1084,9 @@ function Tab_PTXpaths()
                                     dbc_row([
                                         TAS_plot()
                                     ]),
+                                    dbc_row([
+                                        TAS_pluto_plot()
+                                    ]),
 
                                 ])),
                             ]),

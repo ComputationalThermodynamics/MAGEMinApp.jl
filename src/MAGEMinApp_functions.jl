@@ -1149,6 +1149,14 @@ function get_gridded_map(   fieldname   ::String,
             for i=1:np
                 field[i] = Out_XY[i].s_cp[1];
             end
+        elseif fieldname == "entropy"
+            for i=1:np
+                field[i] = Out_XY[i].entropy[1];
+            end
+        elseif fieldname == "enthalpy"
+            for i=1:np
+                field[i] = Out_XY[i].enthalpy[1];
+            end
         elseif fieldname == "alpha"
             for i=1:np
                 field[i] = Out_XY[i].alpha[1];
@@ -1433,6 +1441,14 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
             for i=1:np
                 field[i] = Out_XY[i].s_cp[1];
             end
+        elseif fieldname == "entropy"
+            for i=1:np
+                field[i] = Out_XY[i].entropy[1];
+            end
+        elseif fieldname == "enthalpy"
+            for i=1:np
+                field[i] = Out_XY[i].enthalpy[1];
+            end
         elseif fieldname == "alpha"
             for i=1:np
                 field[i] = Out_XY[i].alpha[1];
@@ -1682,6 +1698,14 @@ function get_isopleth_map(  mod         ::String,
         if of == "s_cp"
             for i=1:np
                 field[i] = Out_XY[i].s_cp[1];
+            end
+        elseif fieldname == "entropy"
+            for i=1:np
+                field[i] = Out_XY[i].entropy[1];
+            end
+        elseif fieldname == "enthalpy"
+            for i=1:np
+                field[i] = Out_XY[i].enthalpy[1];
             end
         elseif of == "alpha"
             for i=1:np
