@@ -162,7 +162,7 @@ function MAGEMin_data2table( out:: Union{Vector{MAGEMin_C.gmin_struct{Float64, I
         nss = out[k].n_SS
         npp = out[k].n_PP
         table *= "$k" * prt(out[k].X[1])* prt(out[k].P_kbar) * prt(out[k].T_C) * " system" * " 100.0" * " 100.0" * prt(out[k].fO2[1]) * prt(out[k].dQFM[1]) *prt(out[k].aH2O) *prt(out[k].aSiO2) *prt(out[k].aTiO2) *prt(out[k].aAl2O3) *prt(out[k].aMgO) *prt(out[k].aFeO) *
-        prt(out[k].rho) * prt(out[k].V) * prt(out[k].cp) * prt(out[k].alpha) * prt(out[k].entropy) * prt(out[k].enthalpy) *
+        prt(out[k].rho) * prt(out[k].V) * prt(out[k].s_cp[1]) * prt(out[k].alpha) * prt(out[k].entropy) * prt(out[k].enthalpy) *
         prt(out[k].Vp) * prt(out[k].Vs) *prt(out[k].Vp_S) * prt(out[k].Vs_S) *prt(out[k].bulkMod) * prt(out[k].shearMod) *
         prt(out[k].bulk.*100.0) * prt(out[k].bulk_wt.*100.0) * "\n"
         for i=1:nss
