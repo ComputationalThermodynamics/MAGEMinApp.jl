@@ -276,12 +276,19 @@ function Tab_PhaseDiagram()
                                                         style   = Dict("textAlign" => "center") ,
                                                         value   = "filename"   ),     
                                                 ], width=4),
+                                                # dbc_col([    
+                                                #     dbc_button("Table", id="save-eq-table-button", color="light",  n_clicks=0,
+                                                #     style       = Dict( "textAlign"     => "center",
+                                                #                         "font-size"     => "100%",
+                                                #                         "border"        =>"1px grey solid")), 
+                                                #     dcc_download(id="download-table-text"),  
+                                                # ]),
                                                 dbc_col([    
-                                                    dbc_button("Table", id="save-eq-table-button", color="light",  n_clicks=0,
+                                                    dbc_button("csv file", id="save-eq-csv-button", color="light",  n_clicks=0,
                                                     style       = Dict( "textAlign"     => "center",
                                                                         "font-size"     => "100%",
                                                                         "border"        =>"1px grey solid")), 
-                                                    dcc_download(id="download-table-text"),  
+                                                    dcc_download(id="download-csv-text"),  
                                                 ]),
                                                 dbc_col([    
                                                     dbc_button("Text", id="save-eq-button", color="light",  n_clicks=0,
@@ -290,6 +297,7 @@ function Tab_PhaseDiagram()
                                                                         "border"        =>"1px grey solid")), 
                                                     dcc_download(id="download-text"),  
                                                 ]),
+
                                             ]),
                                             dbc_row([
                                                 dbc_alert(
@@ -315,6 +323,19 @@ function Tab_PhaseDiagram()
                                                     "Provide a valid filename (without extension)",
                                                     color="danger",
                                                     id      ="data-eq-save-table-failed",
+                                                    is_open =false,
+                                                    duration=4000,
+                                                ),
+                                                dbc_alert(
+                                                    "Successfully saved data point information",
+                                                    id      ="data-eq-csv-save",
+                                                    is_open =false,
+                                                    duration=4000,
+                                                ),
+                                                dbc_alert(
+                                                    "Provide a valid filename (without extension)",
+                                                    color="danger",
+                                                    id      ="data-eq-save-csv-failed",
                                                     is_open =false,
                                                     duration=4000,
                                                 ),

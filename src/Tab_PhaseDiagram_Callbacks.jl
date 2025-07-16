@@ -210,6 +210,28 @@ function Tab_PhaseDiagram_Callbacks(app)
 
     end
 
+    # save table to file
+    callback!(
+        app,
+        Output("data-eq-csv-save", "is_open"),
+        Output("data-eq-save-csv-failed", "is_open"),
+        Input("save-eq-csv-button", "n_clicks"),
+        State("Filename-eq-id", "value"),
+        State("database-dropdown","value"),
+        prevent_initial_call=true,
+    ) do n_clicks, fname, dtb
+
+        if fname != "filename"
+            datab   = "_"*dtb
+            fileout = fname*datab
+            MAGEMin_data2dataframe(Out_XY[point_id],dtb,fileout)
+
+            return  "success", ""
+        else
+            return  "", "failed"
+        end
+
+    end
 
     # save table to file
     callback!(
