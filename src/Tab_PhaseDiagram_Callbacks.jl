@@ -78,7 +78,6 @@ function Tab_PhaseDiagram_Callbacks(app)
             tas_pluto, layout_pluto     = get_TAS_pluto_phase_diagram()
             figTAS_pluto                = plot( tas_pluto, layout_pluto)
        
-            
             afm, layout_afm = get_AFM_phase_diagram()
             figAFM          = plot( afm, layout_afm)
         else

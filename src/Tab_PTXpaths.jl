@@ -1073,7 +1073,7 @@ function Tab_PTXpaths()
 
                         # ]),
 
-                        dbc_tab(label="TAS diagram", children=[                                                                               
+                        dbc_tab(label="Classification diagrams", children=[                                                                               
                             dbc_col([
                                 dbc_card(dbc_cardbody([
                                     dbc_row([
@@ -1087,7 +1087,9 @@ function Tab_PTXpaths()
                                     dbc_row([
                                         TAS_pluto_plot()
                                     ]),
-
+                                    dbc_row([
+                                        AFM_plot()
+                                    ]),
                                 ])),
                             ]),
                         ]),

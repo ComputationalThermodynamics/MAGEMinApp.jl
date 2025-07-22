@@ -258,7 +258,16 @@ function AFM_plot_pd()
                 figure      = fig,
             )
 end
+function AFM_plot()
 
+    fig =  plot(    Layout(     width       = 640,
+                                height      = 400 ))
+
+    dcc_graph(
+                id          = "AFM-plot",
+                figure      = fig,
+            )
+end
 function isoS_frac_plot()
 
     fig =  plot(    Layout( height= 360 ))

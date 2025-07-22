@@ -474,7 +474,8 @@ function Tab_PTXpaths_Callbacks(app)
         Output("TAS-plot",              "config"),
         Output("TAS-pluto-plot",        "figure"),
         Output("TAS-pluto-plot",        "config"),
-        
+        Output("AFM-plot",              "figure"),
+        Output("AFM-plot",              "config"),
         Input("phase-selector-id",      "value"),
 
         State("database-dropdown-ptx",  "value"),
@@ -494,9 +495,12 @@ function Tab_PTXpaths_Callbacks(app)
             figTAS          = plot( tas, layout_ptx)
             tas_pluto, layout_ptx_pluto = get_TAS_pluto_diagram(phases,title)
             figTAS_pluto    = plot( tas_pluto, layout_ptx_pluto)
+            afm, layout_afm = get_AFM()
+            figAFM          = plot( afm, layout_afm)
         else
             figTAS          =  plot(Layout( height= 360 ))
             figTAS_pluto    =  plot(Layout( height= 360 ))
+            figAFM          =  plot(Layout( height= 640 ))
         end
 
         configTAS   = PlotConfig(       toImageButtonOptions  = attr(     name     = "Download as svg",
@@ -513,7 +517,14 @@ function Tab_PTXpaths_Callbacks(app)
                                         height      = 480,
                                         scale    =  2.0,       ).fields)
 
-        return figTAS, configTAS, figTAS_pluto, configTAS_pluto
+        configAFM = PlotConfig(         toImageButtonOptions  = attr(     name     = "Download as svg",
+                                        format   = "svg",
+                                        filename = "AFM_diagram_"*replace(title, " " => "_"),
+                                        width       = 760,
+                                        height      = 480,
+                                        scale    =  2.0,       ).fields)
+
+        return figTAS, configTAS, figTAS_pluto, configTAS_pluto, figAFM, configAFM
     end
 
 
