@@ -699,7 +699,7 @@ end
 
     converts input to float if the provided value is an integer
 """
-function convert2Float64(bufferN1, bufferN2,fixT,fixP,e1_liq,e2_liq,e1_remain,e2_remain)
+function convert2Float64(bufferN1, bufferN2,fixT,fixP,e1_liq,e2_liq,e1_remain_wat,e2_remain_wat,e1_remain,e2_remain)
     bufferN1 = Float64(bufferN1)
     bufferN2 = Float64(bufferN2)
     fixT     = Float64(fixT)
@@ -708,7 +708,9 @@ function convert2Float64(bufferN1, bufferN2,fixT,fixP,e1_liq,e2_liq,e1_remain,e2
     e2_liq   = Float64(e2_liq)
     e1_remain   = Float64(e1_remain)
     e2_remain   = Float64(e2_remain)
-    return bufferN1, bufferN2, fixT, fixP, e1_liq, e2_liq,e1_remain, e2_remain
+    e1_remain_wat   = Float64(e1_remain_wat)
+    e2_remain_wat   = Float64(e2_remain_wat)
+    return bufferN1, bufferN2, fixT, fixP, e1_liq, e2_liq,e1_remain_wat,e2_remain_wat,e1_remain, e2_remain
 end
 
 """
@@ -890,7 +892,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                     Xrange,     Yrange,     fieldname,  customTitle,
                                     dtb,        dataset,    custW,      diagType,   verbose,    scp,    solver,    boost,  phase_selection,
                                     fixT,       fixP,
-                                    e1_liq,     e2_liq,     e1_remain,  e2_remain,
+                                    e1_liq,     e2_liq,     e1_remain_wat,  e2_remain_wat,     e1_remain,  e2_remain,
                                     sub,        refLvl,
                                     watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  PTpath,
                                     bulk_L,     bulk_R,     oxi,
@@ -946,7 +948,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
 
         Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(  data, MAGEMin_data, custW,  diagType, PTpath,
                                                         phase_selection, fixT, fixP,
-                                                        e1_liq,     e2_liq,     e1_remain,  e2_remain,
+                                                        e1_liq,     e2_liq,     e1_remain_wat,  e2_remain_wat,     e1_remain,  e2_remain,
                                                         oxi, bulk_L, bulk_R,
                                                         bufferType, bufferN1, bufferN2,
                                                         scp, boost, refType,
@@ -967,7 +969,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                 CompProgress.total_points = length(data.npoints)
                 t = @elapsed Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(              data, MAGEMin_data, custW,  diagType, PTpath,
                                                                                         phase_selection, fixT, fixP,
-                                                                                        e1_liq,     e2_liq,     e1_remain,  e2_remain,
+                                                                                        e1_liq,     e2_liq,     e1_remain_wat,  e2_remain_wat,     e1_remain,  e2_remain,
                                                                                         oxi, bulk_L, bulk_R,
                                                                                         bufferType, bufferN1, bufferN2,
                                                                                         scp, boost, refType,
@@ -1108,7 +1110,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                 dtb,        dataset,    custW,  diagType,   watsat,  watsat_val,   
                                 verbose,    scp,        solver, boost, phase_selection,
                                 fixT,       fixP,
-                                e1_liq,     e2_liq,     e1_remain,  e2_remain,
+                                e1_liq,     e2_liq,     e1_remain_wat,  e2_remain_wat,     e1_remain,  e2_remain,
                                 sub,        refLvl,
                                 cpx,        limOpx,     limOpxVal,  PTpath,
                                 bulk_L,     bulk_R,     oxi,
@@ -1135,7 +1137,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
     data    = perform_AMR(data)
     t = @elapsed Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin( data,       MAGEMin_data, custW,  diagType, PTpath,
                                                                             phase_selection, fixT, fixP,
-                                                                            e1_liq,     e2_liq,     e1_remain,  e2_remain,
+                                                                            e1_liq,     e2_liq,     e1_remain_wat,  e2_remain_wat,     e1_remain,  e2_remain,
                                                                             oxi, bulk_L, bulk_R,
                                                                             bufferType, bufferN1, bufferN2, 
                                                                             scp, boost, refType,

@@ -240,6 +240,8 @@ function refine_MAGEMin(data,
                         fixP            :: Float64,
                         e1_liq          :: Float64,
                         e2_liq          :: Float64,
+                        e1_remain_wat       :: Float64,
+                        e2_remain_wat       :: Float64,
                         e1_remain       :: Float64,
                         e2_remain       :: Float64,
                         oxi             :: Vector{String},
@@ -421,10 +423,12 @@ function refine_MAGEMin(data,
                         if "fl" in out.ph
                             id               = findfirst(out.ph .== "fl")
                             start_bulk      .= out.bulk .- out.SS_vec[id].Comp .* out.ph_frac[id]
+                            start_bulk     .+= e1_remain_wat .* out.SS_vec[id].Comp;
                         end
                         if "H2O" in out.ph
                             id               = findfirst(out.ph .== "H2O")
                             start_bulk      .= out.bulk .- out.PP_vec[id - out.n_SS].Comp .* out.ph_frac[id]
+                            start_bulk[id_h2o]  += e1_remain_wat;
                         end
                         if "liq" in out.ph
                             id = findfirst(out.ph .== "liq")
@@ -466,12 +470,12 @@ function refine_MAGEMin(data,
                             if "fl" in out.ph
                                 id              = findfirst(out.ph .== "fl")
                                 bulk_          .= out.bulk .- out.SS_vec[id].Comp .* out.ph_frac[id]
-                                bulk_[id_h2o]  += 1e-3;
+                                bulk_           .+= e2_remain_wat .* out.SS_vec[id].Comp;
                             end
                             if "H2O" in out.ph
                                 id              = findfirst(out.ph .== "H2O")
                                 bulk_          .= out.bulk .- out.PP_vec[id - out.n_SS].Comp .* out.ph_frac[id]
-                                bulk_[id_h2o]  += 1e-3;
+                                bulk_[id_h2o]  += e2_remain_wat;
                             end
                             if "liq" in out.ph
                                 id = findfirst(out.ph .== "liq")

@@ -548,12 +548,29 @@ function Tab_Simulation()
                                                                     type    = "number", 
                                                                     min     = 0.0, 
                                                                     max     = 4000.0,
-                                                                    value   = 1500.0   ),
+                                                                    value   = 1000.0   ),
                                                             ]),
                                                         ]),
                                                     ]),
                                                 ]),
-        
+                                                dbc_row([
+                                                    dbc_col([ 
+                                                        html_h1("Remaing water [mol%]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                                    ], width=5),
+                                                    dbc_col([ 
+                                                        dbc_row([
+                                                        dbc_col([ 
+                                                                # html_h1("T min", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                                dbc_input(
+                                                                    id      ="event1-remaining-water-id",
+                                                                    type    ="number", 
+                                                                    min     = 0.0, 
+                                                                    max     = 101.0, 
+                                                                    value   = 0.1   ),
+                                                            ]),
+                                                        ]),
+                                                    ]),
+                                                ]),
                                                 dbc_row([
                                                     dbc_col([ 
                                                         html_h1("Liq extract threshold [vol%]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
@@ -647,7 +664,24 @@ function Tab_Simulation()
                                                     ]),
                                                 ]),
                                             ]),
-
+                                                dbc_row([
+                                                    dbc_col([ 
+                                                        html_h1("Remaing water [mol%]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                                    ], width=5),
+                                                    dbc_col([ 
+                                                        dbc_row([
+                                                        dbc_col([ 
+                                                                # html_h1("T min", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                                dbc_input(
+                                                                    id      ="event2-remaining-water-id",
+                                                                    type    ="number", 
+                                                                    min     = 0.0, 
+                                                                    max     = 101.0, 
+                                                                    value   = 0.1   ),
+                                                            ]),
+                                                        ]),
+                                                    ]),
+                                                ]),
                                             dbc_row([
                                                 dbc_col([ 
                                                     html_h1("Liq extract threshold [vol%]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),

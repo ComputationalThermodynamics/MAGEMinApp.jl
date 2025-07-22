@@ -815,6 +815,8 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         State("event1-threshold-id",    "value"),           # tmax
         State("event2-threshold-id",    "value"),           # tmax
+        State("event1-remaining-water-id",       "value"),           # tmax
+        State("event2-remaining-water-id",       "value"),           # tmax
         State("event1-remain-id",       "value"),           # tmax
         State("event2-remain-id",       "value"),           # tmax
     
@@ -879,7 +881,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  updateTitle,     loadstateid, 
             field_size, customTitle, txt_list,
             custW,      diagType,   dtb,        dataset,    watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  ph_selection, pure_ph_selection, PTpath,
-            tmin,       tmax,       pmin,       pmax,       e1_tmin,    e1_tmax,    e2_tmin,    e2_tmax,    e1_liq,     e2_liq,  e1_remain,     e2_remain,      
+            tmin,       tmax,       pmin,       pmax,       e1_tmin,    e1_tmax,    e2_tmin,    e2_tmax,    e1_liq,     e2_liq,  e1_remain_wat,     e2_remain_wat,e1_remain,     e2_remain,      
             fixT,       fixP,
             sub,        refType,    refLvl,
             bufferType, solver,     boost,      verbose,    scp,
@@ -896,7 +898,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         phase_selection                 = remove_phases(string_vec_diff(ph_selection,pure_ph_selection,dtb),dtb)
         smooth                          = smooth
         xtitle, ytitle, Xrange, Yrange  = diagram_type(diagType, tmin, tmax, pmin, pmax, e1_tmin, e1_tmax, e2_tmin, e2_tmax)                # get axis information
-        bufferN1, bufferN2, fixT, fixP, e1_liq, e2_liq,  e1_remain,  e2_remain,  = convert2Float64(bufferN1, bufferN2, fixT, fixP, e1_liq, e2_liq,     e1_remain,  e2_remain,)               # convert buffer_n to float
+        bufferN1, bufferN2, fixT, fixP, e1_liq, e2_liq,  e1_remain_wat,  e2_remain_wat,  e1_remain,  e2_remain,  = convert2Float64(bufferN1, bufferN2, fixT, fixP, e1_liq, e2_liq,  e1_remain_wat,  e2_remain_wat,     e1_remain,  e2_remain,)               # convert buffer_n to float
         bid                             = pushed_button( callback_context() )                           # get the ID of the last pushed button
         bulkte_L, bulkte_R, elem        = get_terock_prop(bulkte1, bulkte2)
         colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)              # get colormap information
@@ -937,7 +939,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                                         Xrange,     Yrange,     fieldname,  customTitle,
                                                                                         dtb,        dataset,    custW,      diagType,   verbose,    scp,        solver,     boost, phase_selection,
                                                                                         fixT,       fixP,
-                                                                                        e1_liq,     e2_liq,     e1_remain,  e2_remain,
+                                                                                        e1_liq,     e2_liq,     e1_remain_wat,  e2_remain_wat,     e1_remain,  e2_remain,
                                                                                         sub,        refLvl,
                                                                                         watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  PTpath,
                                                                                         bulk_L,     bulk_R,     oxi,
@@ -988,7 +990,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                                     Xrange,     Yrange,     fieldname,  customTitle,
                                                                                     dtb,        dataset,    custW,      diagType,   watsat,     watsat_val, verbose,    scp,    solver,  boost, phase_selection,
                                                                                     fixT,       fixP,
-                                                                                    e1_liq,     e2_liq,     e1_remain,  e2_remain,
+                                                                                    e1_liq,     e2_liq,     e1_remain_wat,  e2_remain_wat,e1_remain,  e2_remain,
                                                                                     sub,        refLvl,
                                                                                     cpx,        limOpx,     limOpxVal,  PTpath,
                                                                                     bulk_L,     bulk_R,     oxi,
