@@ -370,7 +370,7 @@ function Tab_PTXpaths()
                                                             html_div([
                                                                 dash_datatable(
                                                                     id="table-bulk-rock-ptx",
-                                                                    columns=(  [    Dict("id" =>  "oxide",          "name" =>  "oxide",         "editable" => false),
+                                                                    columns=(  [    Dict("id" =>  "oxide",      "name" =>  "oxide",     "editable" => false),
                                                                                     Dict("id" =>  "fraction",   "name" =>  "fraction",  "editable" => true)]
                                                                     ),
                                                                     data        =   [Dict(  "oxide"         => db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1][i],

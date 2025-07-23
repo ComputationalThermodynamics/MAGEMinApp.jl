@@ -398,23 +398,71 @@ function Tab_PTXpaths_Callbacks(app)
 
     callback!(
         app,
-        Output("output-data-uploadn-ptx", "is_open"),
-        Output("output-data-uploadn-failed-ptx", "is_open"),
-        Input("upload-bulk-ptx", "contents"),
-        State("upload-bulk-ptx", "filename"),
-        prevent_initial_call=true,
-    ) do contents, filename
+        Output("output-data-uploadn-ptx",           "is_open"   ),
+        Output("output-data-uploadn-failed-ptx",    "is_open"   ),
 
-        if !(contents isa Nothing)
-            status = parse_bulk_rock(contents, filename)
-            if status == 1
-                return "success", ""
+        Input("transfer-bulk-button",               "n_clicks"  ),
+        Input("upload-bulk-ptx",                    "contents"  ),
+
+        State("upload-bulk-ptx",                    "filename"  ),
+        State("transfer-bulk-name",                 "value"     ),
+        State("transfer-bulk-id",                   "value"     ),
+
+        prevent_initial_call=true,
+    ) do bulk, contents, filename, transfer_bulk_name, transfer_bulk_id
+
+        bid         = pushed_button( callback_context() ) 
+        
+        if bid == "upload-bulk-ptx"
+            if !(contents isa Nothing)
+                status = parse_bulk_rock(contents, filename)
+                if status == 1
+                    return "success", ""
+                else
+                    return "", "failed"
+                end
+            end
+        elseif bid == "transfer-bulk-button"
+            global point_id
+
+            bulkrock    = zeros(Float64,length(Out_XY[point_id].oxides))
+            oxides      = Out_XY[point_id].oxides
+            dbin        = Out_XY[point_id].database
+            test 		= length(db[(db.db .== dbin), :].test);
+            if transfer_bulk_id == "Solid"
+                bulkrock = Out_XY[point_id].bulk_S
+            elseif transfer_bulk_id == "Melt"
+                bulkrock = Out_XY[point_id].bulk_M
             else
+                bulkrock = Out_XY[point_id].bulk
+            end
+
+            if sum(bulkrock) == 0.0
                 return "", "failed"
+            else
+                bulkrock2       = copy(bulkrock)
+                bulkrock_wt     = round.(mol2wt(bulkrock, oxides),  digits = 6)
+                bulkrock2_wt    = round.(mol2wt(bulkrock2, oxides), digits = 6)
+                bulkrock        = round.(bulkrock   .* 100.0,       digits = 6)
+                bulkrock2       = round.(bulkrock2  .* 100.0,       digits = 6)
+                push!(db,Dict(  :bulk       => "custom",
+                                :title      => transfer_bulk_name*"_"*transfer_bulk_id,
+                                :comments   => "pd2ptx",
+                                :db         => dbin,
+                                :test       => test,
+                                :sysUnit    => "mol",
+                                :oxide      => oxides,
+                                :frac       => bulkrock,
+                                :frac2      => bulkrock2,
+                                :frac_wt    => bulkrock_wt,
+                                :frac2_wt   => bulkrock2_wt,
+                            ), cols=:union)
+
+                return "success", ""
             end
         end
-    end
 
+    end
 
 
     """
@@ -866,7 +914,7 @@ function Tab_PTXpaths_Callbacks(app)
         end
 
         if sys_unit == 1
-            data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
+            data        =   [Dict(  "oxide"     => db[(db.db .== dtb) .& (db.test .== t), :].oxide[1][i],
                                     "fraction"  => db[(db.db .== dtb) .& (db.test .== t), :].frac[1][i])
                                         for i=1:length(db[(db.db .== dtb) .& (db.test .== t), :].oxide[1]) ]
         elseif sys_unit == 2

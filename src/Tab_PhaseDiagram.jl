@@ -220,17 +220,46 @@ function Tab_PhaseDiagram()
                                             dbc_row([
                                                 dbc_col([ 
                                                     pie_plot(),
-                                                ]#=, width=6=#),
+                                                ]),
                                             ]),
+
+                                            html_div("‎ "),
+                                            html_h1("Transfer point as bulk for PTX path", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
+                                            html_hr(),
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("Name", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),    
+                                                ], width=2),
+                                                dbc_col([ 
+                                                    dbc_input(
+                                                        id      = "transfer-bulk-name",
+                                                        type    = "text", 
+                                                        style   = Dict("textAlign" => "center") ,
+                                                        value   = "bulk-name"   ),     
+                                                ], width=3),
+                                                dbc_col([
+                                                    dcc_dropdown(   id          = "transfer-bulk-id",
+                                                                    options     =  ["Solid","Melt","Whole-rock"],
+                                                                    value       = "Melt" ,
+                                                                    clearable   =  false,
+                                                                    multi       =  false),
+                                                ], width=3), 
+                                                dbc_col([    
+                                                    dbc_button("transfer", id="transfer-bulk-button", color="light",  n_clicks=0,
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"1px grey solid")), 
+                                                ], width=3),
+                                            ]),
+
 
                                             html_div([
                                             ], style = Dict("display" => "none"), id      = "test-show-id"),
 
-                                            html_div("‎ "), 
+                                            # html_div("‎ "), 
                                             html_div([
                                                 dbc_row([
                                                     dbc_col([ 
-                                                        
                                                         html_h3(id="ph-comp-title", "Mineral composition", style = Dict("textAlign" => "center","font-size" => "140%", "marginTop" => 8)),  # Title with an id
                                                     ], width=11),
                                                     dbc_col([ 
@@ -267,7 +296,7 @@ function Tab_PhaseDiagram()
                                             html_hr(),
                                             dbc_row([
                                                 dbc_col([
-                                                    html_h1("Save point", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                                    html_h1("Save point", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),    
                                                 ], width=3),
                                                 dbc_col([ 
                                                     dbc_input(
@@ -342,7 +371,7 @@ function Tab_PhaseDiagram()
                                             ]),
                                             dbc_row([
                                                 dbc_col([
-                                                    html_h1("Save all", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
+                                                    html_h1("Save all", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),    
                                                 ], width=3),
                                                 dbc_col([ 
                                                     dbc_input(
@@ -400,7 +429,7 @@ function Tab_PhaseDiagram()
                                                         html_div("Output path and progress are displayed in the Julia terminal")],target="export-citation-button"),
                                                 ]),
                                             ]),
-
+                                            html_hr(),
                                             dbc_row([   
                                                 dbc_button("Statement of code availability",id="button-code-avail",color="light"),
                                                 dbc_collapse(
