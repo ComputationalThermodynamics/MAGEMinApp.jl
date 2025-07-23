@@ -1,10 +1,97 @@
+
+"""
+    Retrieve AFM diagram
+"""
+function get_AFM()
+
+    global Out_PTX;
+
+    n_ox    = length(Out_PTX[1].oxides)
+    oxides  = Out_PTX[1].oxides
+    n_tot   = length(Out_PTX)
+
+    liq_afm        = Matrix{Union{Float64,Missing}}(undef, n_ox, (n_tot+1))    .= missing
+    liq_wt          = Vector{Union{Float64,Missing}}(undef, (n_tot+1))          .= missing
+    liq_P           = Vector{Union{Float64,Missing}}(undef, (n_tot+1))          .= missing
+    colormap        = get_jet_colormap(n_tot+1)
+ 
+    for j=1:n_tot
+        id      = findall(Out_PTX[j].ph .== "liq")
+        if ~isempty(id)
+            liq_afm[:,j] = Out_PTX[j].SS_vec[id[1]].Comp_wt .*100.0
+            liq_wt[j]    = Out_PTX[j].ph_frac_wt[id[1]]
+            liq_P[j]     = Out_PTX[j].P_kbar
+        end
+    end
+
+    afm_  = findall(oxides .== "Al2O3" .|| oxides .== "FeO" .|| oxides .== "MgO") 
+
+    id_A = findall(oxides .== "Al2O3") 
+    id_F = findall(oxides .== "FeO")
+    id_M = findall(oxides .== "MgO")
+
+    if ~isempty(afm_)
+        liq_afm ./= sum(liq_afm[afm_,:],dims=1)
+        liq_afm .*= 100.0
+    end
+
+    A   = liq_afm[id_A,:]
+    F   = liq_afm[id_F,:]
+    M   = liq_afm[id_M,:]
+
+    # Create the ternary plot
+    afm = scatterternary(
+        b       = A,
+        a       = F,
+        c       = M,
+        mode    = "markers",
+        hoverinfo   = "skip",
+        opacity     = 0.6,
+        marker  = attr(     size        = liq_wt .*20.0 .+ 2.0,
+                            color       = liq_P,
+                            colorscale  = colormap,
+                            line        = attr( width = 0.75,
+                                                color = "black" )    ),
+        name    = "Sample Points"
+    )
+    
+    layout_afm = Layout(
+        title= attr(
+            text    = "AFM Diagram [wt%]",
+            x       = 0.2,
+            xanchor = "center",
+            yanchor = "top"
+        ),
+        ternary=attr(
+            sum     = 100,
+            baxis   = attr(title="A [Al2O3]", gridcolor     = "darkgray",
+                                                showline    =  true,
+                                                linecolor   = "darkgray"),
+            aaxis   = attr(title="F [FeOt]" ,   gridcolor   = "darkgray",
+                                                showline    =  true,
+                                                linecolor   = "darkgray"),
+            caxis   = attr(title="M [MgO]"  ,   gridcolor   = "darkgray",
+                                                showline    =  true,
+                                                linecolor   = "darkgray"),
+            bgcolor = "#FFF",
+            width       = 640,
+            height      = 400,
+        ),
+        paper_bgcolor = "#FFF",
+    )
+
+    return afm, layout_afm
+end
+
+
+
 """
     Retrieve TAS diagram
 """
 function get_TAS_diagram(phases,title)
 
     tas      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, 16);
-
+ 
     F        = [35. 0; 41 0; 41 7; 45 9.4; 48.4 11.5; 52.5 14; 48 16; 35 16;35 0]
     Pc       = [41. 0; 45 0; 45 3; 41 3;41 0]
     U1       = [41. 3; 45 3; 45 5; 49.4 7.3; 45 9.4; 41 7;41 3]
