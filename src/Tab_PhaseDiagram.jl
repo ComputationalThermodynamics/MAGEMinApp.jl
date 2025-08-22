@@ -147,6 +147,23 @@ function Tab_PhaseDiagram()
                                 html_div("‎ "),
                                 html_div("‎ "), 
 
+                                dbc_row([dbc_button("Export figure",id="export-figure"),
+                                dbc_collapse(
+                                    dbc_card(dbc_cardbody([
+                                        dbc_row([
+                                            dbc_button("Export layers", 
+                                                        id          = "export-layers", color="light",  n_clicks=0,
+                                                        style       =  Dict( "textAlign"    => "center",
+                                                                            "font-size"     => "100%",
+                                                                            "border"        =>"1px grey solid")), 
+                                                            ]),
+                                    ])),
+                                    id          = "collapse-export-figure",
+                                    is_open     =  true,
+                                    dimension   = "width",
+                                ),
+                                ]),
+
                                 dbc_row([dbc_button("Phase assemblages",id="phase-label"),
                                 dbc_collapse(
                                     dbc_card(dbc_cardbody([
@@ -179,6 +196,9 @@ function Tab_PhaseDiagram()
                                     dimension="width",
                                 ),
                                 ]),
+
+
+
                             ], width=3),
 
                         

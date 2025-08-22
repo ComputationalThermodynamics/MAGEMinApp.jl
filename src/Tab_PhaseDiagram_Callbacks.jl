@@ -784,7 +784,9 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("fields-dropdown",        "value"),
         Input("update-title-button",    "n_clicks"),
         Input("load-state-id",          "value"),
+        Input("export-layers",          "n_clicks"),
 
+        # STATES
         State("field-size-id",              "value"),
         State("title-id",               "value"),
         State("stable-assemblage-id",   "children"),   
@@ -874,10 +876,11 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         prevent_initial_call = true,
 
-    ) do    reac_up,    grid,       full_grid,  lbl,     addIso,     removeIso,  removeAllIso,    isoShow,   isoHide, isoShowAll,    isoHideAll,    
+    ) do    reac_up,    grid,       full_grid,  lbl,     addIso,     removeIso,  removeAllIso,    isoShow,   isoHide,   isoShowAll,    isoHideAll,    
             n_clicks_mesh, n_clicks_refine, uni_n_clicks_refine, 
             minColor,   maxColor,
-            colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  updateTitle,     loadstateid, 
+            colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  updateTitle,     loadstateid,       exportFig,
+            # STATES
             field_size, customTitle, txt_list,
             custW,      diagType,   dtb,        dataset,    watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  ph_selection, pure_ph_selection, PTpath,
             tmin,       tmax,       pmin,       pmax,       e1_tmin,    e1_tmax,    e2_tmin,    e2_tmax,    e1_liq,     e2_liq,  e1_remain_wat,     e2_remain_wat,e1_remain,     e2_remain,      
@@ -903,6 +906,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)              # get colormap information
         bulk_L, bulk_R, oxi             = get_bulkrock_prop(bulk1, bulk2; sys_unit=sys_unit)                               # get bulk rock composition information
         fieldNames                      = ["data_plot","data_reaction","data_grid","data_isopleth_out"]
+        fieldNames_exp                  = ["data_plot","data_reaction","data_grid","data_isopleth_out_export"]
         field2plot                      = zeros(Int64,4)
 
         field2plot[1]       =  1
@@ -920,7 +924,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             global addedRefinementLvl   = 0;
             global n_lbl                = 0;
             global iso_show             = 1;
-            global data_plot, data_reaction, data_grid, layout, data_isopleth, data_isopleth_out, PT_infos, infos;
+            global data_plot, data_reaction, data_grid, layout, data_isopleth, data_isopleth_out, data_isopleth_out_export, PT_infos, infos, heat_map_export;
             global Out_XY =  Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,0)
             global CompProgress
 
@@ -934,18 +938,18 @@ function Tab_PhaseDiagram_Callbacks(app)
                 colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)
             end
 
-            data_plot, layout, npoints, meant, txt_list  =  compute_new_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
-                                                                                        Xrange,     Yrange,     fieldname,  customTitle,
-                                                                                        dtb,        dataset,    custW,      diagType,   verbose,    scp,        solver,     boost, phase_selection,
-                                                                                        fixT,       fixP,
-                                                                                        e1_liq,     e2_liq,     e1_remain_wat,  e2_remain_wat,     e1_remain,  e2_remain,
-                                                                                        sub,        refLvl,
-                                                                                        watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  PTpath,
-                                                                                        bulk_L,     bulk_R,     oxi,
-                                                                                        bufferType, bufferN1,   bufferN2,
-                                                                                        minColor,   maxColor,
-                                                                                        smooth,     colorm,     reverseColorMap, set_white,
-                                                                                        test,       refType                          )
+            data_plot, layout, npoints, meant, txt_list, heat_map_export  =  compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_size,
+                                                                                                        Xrange,     Yrange,     fieldname,  customTitle,
+                                                                                                        dtb,        dataset,    custW,      diagType,   verbose,    scp,        solver,     boost, phase_selection,
+                                                                                                        fixT,       fixP,
+                                                                                                        e1_liq,     e2_liq,     e1_remain_wat,  e2_remain_wat,     e1_remain,  e2_remain,
+                                                                                                        sub,        refLvl,
+                                                                                                        watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  PTpath,
+                                                                                                        bulk_L,     bulk_R,     oxi,
+                                                                                                        bufferType, bufferN1,   bufferN2,
+                                                                                                        minColor,   maxColor,
+                                                                                                        smooth,     colorm,     reverseColorMap, set_white,
+                                                                                                        test,       refType                           )
             if tepm == "true"
                 if dtb != "um" && dtb != "ume" && dtb != "mtl"
                     t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
@@ -985,7 +989,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             CompProgress.refinement_level = 1
             CompProgress.tinit = time()
 
-            data_plot, layout, npoints, meant, txt_list   =  refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
+            data_plot, layout, npoints, meant, txt_list, heat_map_export   =  refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                                                                     Xrange,     Yrange,     fieldname,  customTitle,
                                                                                     dtb,        dataset,    custW,      diagType,   watsat,     watsat_val, verbose,    scp,    solver,  boost, phase_selection,
                                                                                     fixT,       fixP,
@@ -1016,7 +1020,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             update_reaction_list  = 1
 
         elseif bid == "load-state-id"
-            data_plot,layout =  update_displayed_field_phaseDiagram( xtitle,     ytitle,     
+            data_plot,layout,heat_map_export =  update_displayed_field_phaseDiagram( xtitle,     ytitle,     
             Xrange,     Yrange,     fieldname,
             dtb,        oxi,
             sub,        refLvl,
@@ -1038,7 +1042,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         elseif bid == "fields-dropdown"
 
-            data_plot,layout =  update_displayed_field_phaseDiagram( xtitle,     ytitle,     
+            data_plot,layout,heat_map_export =  update_displayed_field_phaseDiagram( xtitle,     ytitle,     
                                                                     Xrange,     Yrange,     fieldname,
                                                                     dtb,        oxi,
                                                                     sub,        refLvl,
@@ -1069,6 +1073,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,   
                                                                     minIso,     stepIso,    maxIso                      )
             data_isopleth_out = data_isopleth.isoP[data_isopleth.active]
+            data_isopleth_out_export = data_isopleth.isoPexp[data_isopleth.active]
             field2plot[4] = 1
             iso_show      = 1
 
@@ -1077,10 +1082,12 @@ function Tab_PhaseDiagram_Callbacks(app)
             if (isoplethsID) in data_isopleth.active
                 data_isopleth, isopleths, isoplethsHid = hide_single_isopleth_phaseDiagram(isoplethsID)
                 data_isopleth_out = data_isopleth.isoP[data_isopleth.active]
+                data_isopleth_out_export = data_isopleth.isoPexp[data_isopleth.active]
                 field2plot[4] = 1
             else
                 println("Cannot hide isopleth, did you select one?")
                 data_isopleth_out = data_isopleth.isoP[data_isopleth.active]
+                data_isopleth_out_export = data_isopleth.isoPexp[data_isopleth.active]
                 field2plot[4] = 1
             end
         elseif bid == "button-show-isopleth"
@@ -1088,10 +1095,12 @@ function Tab_PhaseDiagram_Callbacks(app)
             if (isoplethsHidID) in data_isopleth.hidden
                 data_isopleth, isopleths, isoplethsHid = show_single_isopleth_phaseDiagram(isoplethsHidID)
                 data_isopleth_out = data_isopleth.isoP[data_isopleth.active]
+                data_isopleth_out_export = data_isopleth.isoPexp[data_isopleth.active]
                 field2plot[4] = 1
             else
                 println("Cannot show isopleth, did you select one?")
                 data_isopleth_out = data_isopleth.isoP[data_isopleth.active]
+                data_isopleth_out_export = data_isopleth.isoPexp[data_isopleth.active]
                 field2plot[4] = 1
             end
         elseif bid == "button-remove-isopleth"
@@ -1100,6 +1109,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                 if data_isopleth.n_iso > 1
                     data_isopleth, isopleths = remove_single_isopleth_phaseDiagram(isoplethsID)
                     data_isopleth_out = data_isopleth.isoP[data_isopleth.active]
+                    data_isopleth_out_export = data_isopleth.isoPexp[data_isopleth.active]
                     field2plot[4] = 1
                 else
                     data_isopleth, isopleths, isoplethsHid, data_plot = remove_all_isopleth_phaseDiagram()
@@ -1108,6 +1118,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             else
                 println("Cannot remove isopleth, did you select one?")
                 data_isopleth_out = data_isopleth.isoP[data_isopleth.active]
+                data_isopleth_out_export = data_isopleth.isoPexp[data_isopleth.active]
                 field2plot[4] = 1
             end
 
@@ -1119,6 +1130,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             iso_show          = 1
             data_isopleth_out = data_isopleth.isoP[data_isopleth.active]
+            data_isopleth_out_export = data_isopleth.isoPexp[data_isopleth.active]
             field2plot[4] = 1
 
         elseif bid == "button-hide-all-isopleth"
@@ -1139,13 +1151,13 @@ function Tab_PhaseDiagram_Callbacks(app)
         end
 
         if lbl == "true"
-            for i=1:n_lbl+1
+            for i=1:n_lbl
                 layout[:annotations][i][:visible] = true
             end
             show_text_list  = Dict("display" => "block")  
 
         else
-            for i=1:n_lbl+1
+            for i=1:n_lbl
                 layout[:annotations][i][:visible] = false
             end
             show_text_list  = Dict("display" => "none")  
@@ -1176,6 +1188,114 @@ function Tab_PhaseDiagram_Callbacks(app)
             end
 
             fig = plot_diagram(data_all,layout)
+
+        end
+
+        if bid == "export-layers"
+            lyt     = copy(layout)
+            outline = [attr(
+                                    type = "rect",
+                                    xref = "x",
+                                    yref = "y",
+                                    x0 = Xrange[1],
+                                    y0 = Yrange[1],
+                                    x1 = Xrange[2],
+                                    y1 = Yrange[2],
+                                    line = attr(color = "black", width = 2),
+                                    fillcolor = "rgba(0,0,0,0)"  # transparent fill
+                                )]
+            nticks      = 6  # number of ticks
+            tick_length = 0.01 * (Yrange[2] - Yrange[1])  # length of tick in data units
+
+            # X-axis ticks
+            xticks = range(Xrange[1], Xrange[2], length=nticks)
+            x_tick_shapes_B = [
+                attr(
+                    type = "line",
+                    xref = "x",
+                    yref = "y",
+                    x0 = x,
+                    y0 = Yrange[1],
+                    x1 = x,
+                    y1 = Yrange[1] + tick_length,
+                    line = attr(color = "black", width = 1)
+                ) for x in xticks
+            ]
+            x_tick_shapes_T = [
+                attr(
+                    type = "line",
+                    xref = "x",
+                    yref = "y",
+                    x0 = x,
+                    y0 = Yrange[2] - tick_length,
+                    x1 = x,
+                    y1 = Yrange[2],
+                    line = attr(color = "black", width = 1)
+                ) for x in xticks
+            ]
+
+            yticks = range(Yrange[1], Yrange[2], length=nticks)
+            tick_length = 0.01 * (Xrange[2] - Xrange[1])  # length of tick in data units
+            y_tick_shapes_L = [
+                attr(
+                    type = "line",
+                    xref = "x",
+                    yref = "y",
+                    x0 = Xrange[1],
+                    y0 = y,
+                    x1 = Xrange[1] + tick_length,
+                    y1 = y,
+                    line = attr(color = "black", width = 1)
+                ) for y in yticks
+            ]
+            y_tick_shapes_R = [
+                attr(
+                    type = "line",
+                    xref = "x",
+                    yref = "y",
+                    x0 = Xrange[2] - tick_length,
+                    y0 = y,
+                    x1 = Xrange[2],
+                    y1 = y,
+                    line = attr(color = "black", width = 1)
+                ) for y in yticks
+            ]
+            lyt[:shapes] = vcat(get(layout, :shapes, PlotlyBase.PlotlyAttribute[]), outline, y_tick_shapes_L, y_tick_shapes_R, x_tick_shapes_B, x_tick_shapes_T)
+
+            for i=1:n_lbl
+                lyt[:annotations][i][:visible] = false
+            end
+            filename = "./output/"*replace(customTitle, " " => "_") * "_heat_map.svg"
+            savefig(plot(heat_map_export,lyt), filename; width=720, height=900)
+            np       = length(fieldNames_exp)
+            for i in 2:np
+                if field2plot[i] == 1
+                    if fieldNames_exp[i] == "data_isopleth_out_export"
+                        ni = length(data_isopleth.active)
+                        names = [trace[:name] for trace in data_isopleth.isoCap[data_isopleth.active] if haskey(trace, :name)]
+                        println("names: $names")
+                        for j = 1:ni
+                            trace_fig = plot_diagram(data_isopleth.isoPexp[data_isopleth.active[j]], lyt)
+                            filename = "./output/"*replace(customTitle, " " => "_") * "_$(fieldNames_exp[i])_$j.svg"
+                            savefig(trace_fig, filename; width=720, height=900)
+                        end
+                    else
+                        trace_fig = plot_diagram(eval(Symbol(fieldNames_exp[i])), lyt)
+                        filename = "./output/"*replace(customTitle, " " => "_") * "_$(fieldNames_exp[i]).svg"
+                        savefig(trace_fig, filename; width=720, height=900)
+                    end
+                end
+            end
+
+            if field2plot[2] == 1
+                for i=1:n_lbl
+                    lyt[:annotations][i][:visible] = true
+                end
+                
+                filename = "./output/"*replace(customTitle, " " => "_") * "_labels.svg"
+                savefig(plot(PlotlyJS.AbstractTrace[], lyt), filename; width=720, height=900)
+            end
+            
         end
 
         config   = PlotConfig(    toImageButtonOptions  = attr(     name     = "Download as svg",
@@ -1211,7 +1331,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         if isempty(update_ss_list) && isempty(update_reaction_list)
             return grid, full_grid, fig_cap, config_cap, fig, config, infos, txt_list, isopleths, isoplethsHid, smooth, active_tab, minColor,   maxColor, loading, no_update(), no_update(), show_text_list, store_stop, rangeColor
-       else
+        else
             return grid, full_grid, fig_cap, config_cap, fig, config, infos, txt_list, isopleths, isoplethsHid, smooth, active_tab, minColor,   maxColor, loading, update_ss_list, update_reaction_list, show_text_list, store_stop, rangeColor
         end
     end
@@ -1311,6 +1431,22 @@ function Tab_PhaseDiagram_Callbacks(app)
         return is_open    
     end
 
+    callback!(app,
+        Output("collapse-export-figure", "is_open"),
+        [Input("export-figure", "n_clicks")],
+        [State("collapse-export-figure", "is_open")], ) do  n, is_open
+        
+        if isnothing(n); n=0 end
+
+        if n>0
+            if is_open==1
+                is_open = 0
+            elseif is_open==0
+                is_open = 1
+            end
+        end
+        return is_open    
+    end
 
     return app
 end

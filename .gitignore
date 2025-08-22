@@ -7,3 +7,4 @@ saved_states/*
 src/.DS_Store
 *.csv*
 **/.DS_Store
+/output/*.svg

@@ -24,6 +24,7 @@ mutable struct isopleth_data
     active  :: Vector{Int64}
     hidden  :: Vector{Int64}
     isoP    :: Vector{GenericTrace{Dict{Symbol, Any}}}
+    isoPexp :: Vector{GenericTrace{Dict{Symbol, Any}}}
     isoT    :: Vector{CTR.ContourCollection{CTR.ContourLevel{Tuple{Float64, Float64}, Float64}}}
     isoCap  :: Vector{GenericTrace{Dict{Symbol, Any}}}
 
@@ -1074,6 +1075,33 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                                         x               =  1.005,
                                                         y               =  0.5         ),)
 
+
+        n       = 2^(sub + refLvl)+1
+        xvals   = range(data.Xrange[1], stop = data.Xrange[2], length = n)
+        yvals   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
+        heat_map_export = heatmap(  x               = xvals,
+                                    y               = yvals,
+                                    z               = gridded',
+                                    zmin            = minColor,
+                                    zmax            = maxColor,
+                                    zsmooth         = smooth,
+                                    connectgaps     = true,
+                                    type            = "heatmap",
+                                    colorscale      = colorm,
+                                    reversescale    = reverseColorMap,
+                                    colorbar_title  = fieldname,
+                                    hoverinfo       = "skip",
+                                    showlegend      = false,
+                                    colorbar        = attr(     lenmode         = "fraction",
+                                                                len             =  0.75,
+                                                                thicknessmode   = "fraction",
+                                                                exponentformat  = "e" ,
+                                                                tickness        =  0.5,
+                                                                x               =  1.005,
+                                                                y               =  0.5         ),)
+
+        # savefig(plot(heat_map_export,layout), "phase_diagram.svg"; width=720, height=900)
+
         hover_lbl = heatmap(    x               = X,
                                 y               = Y,
                                 z               = X,
@@ -1087,7 +1115,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
 
         data_plot[1]    = heat_map
 
-        return vcat(data_plot,hover_lbl), layout, npoints, meant, txt_list 
+        return vcat(data_plot,hover_lbl), layout, npoints, meant, txt_list, heat_map_export
 end
 
 
@@ -1201,7 +1229,29 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                                         tickness        =  0.5,
                                                         x               =  1.005,
                                                         y               =  0.5         ),)
-
+    n       = 2^(sub + refLvl + addedRefinementLvl)+1
+    xvals   = range(data.Xrange[1], stop = data.Xrange[2], length = n)
+    yvals   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
+    heat_map_export = heatmap(  x               = xvals,
+                                y               = yvals,
+                                z               = gridded',
+                                zmin            = minColor,
+                                zmax            = maxColor,
+                                zsmooth         = smooth,
+                                connectgaps     = true,
+                                type            = "heatmap",
+                                colorscale      = colorm,
+                                reversescale    = reverseColorMap,
+                                colorbar_title  = fieldname,
+                                hoverinfo       = "skip",
+                                showlegend      = false,
+                                colorbar        = attr(     lenmode         = "fraction",
+                                                            len             =  0.75,
+                                                            thicknessmode   = "fraction",
+                                                            exponentformat  = "e" ,
+                                                            tickness        =  0.5,
+                                                            x               =  1.005,
+                                                            y               =  0.5         ),)
     hover_lbl = heatmap(    x               = X,
                             y               = Y,
                             z               = X,
@@ -1212,7 +1262,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                             showlegend      = false,
                             text            = gridded_info )
 
-    return vcat(data_plot,hover_lbl), layout, npoints, meant, txt_list 
+    return vcat(data_plot,hover_lbl), layout, npoints, meant, txt_list, heat_map_export
 
 end
 
@@ -1506,7 +1556,31 @@ function  update_displayed_field_phaseDiagram(   xtitle,     ytitle,
                                                         x               =  1.005,
                                                         y               =  0.5         ),)
 
-    return data_plot,layout
+
+    n       = 2^(sub + refLvl + addedRefinementLvl)+1
+    xvals   = range(data.Xrange[1], stop = data.Xrange[2], length = n)
+    yvals   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
+    heat_map_export = heatmap(  x               = xvals,
+                                y               = yvals,
+                                z               = gridded',
+                                zsmooth         = smooth,
+                                connectgaps     = true,
+                                type            = "heatmap",
+                                colorscale      = colorm,
+                                colorbar_title  = fieldname,
+                                reversescale    = reverseColorMap,
+                                hoverinfo       = "skip",
+                                # hoverinfo       = "text",
+                                # text            = gridded_info,
+                                colorbar        = attr(     lenmode         = "fraction",
+                                                            len             =  0.75,
+                                                            thicknessmode   = "fraction",
+                                                            exponentformat  = "e" ,
+                                                            tickness        =  0.5,
+                                                            x               =  1.005,
+                                                            y               =  0.5         ),)
+
+    return data_plot,layout, heat_map_export
 end
 
 """
@@ -1520,20 +1594,22 @@ function initialize_g_isopleth(; n_iso_max = 32)
     active    = []
     hidden    = []
     isoP      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
+    isoPexp   = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
     isoT      = Vector{CTR.ContourCollection{CTR.ContourLevel{Tuple{Float64, Float64}, Float64}}}(undef, n_iso_max); # + 1 to store the heatmap
     isoCap    = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
 
     for i=1:n_iso_max
-        isoP[i] = contour()
-        isoCap[i] = scatter()
+        isoP[i]     = contour()
+        isoPexp[i]  = contour()
+        isoCap[i]   = scatter()
     end
 
     label     = Vector{String}(undef,n_iso_max)
     value     = Vector{Int64}(undef,n_iso_max)
 
-    data_isopleth = isopleth_data(0, n_iso_max,
-                                status, active, hidden, isoP, isoT, isoCap,
-                                label, value)
+    data_isopleth = isopleth_data(  0, n_iso_max, status, active, hidden, 
+                                    isoP, isoPexp, isoT, isoCap,
+                                    label, value)
 
     
     return data_isopleth
@@ -1676,6 +1752,30 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                                                                                             color   = isoColorLine,  )
                                                         )
                                                     );
+    n       = 2^(sub + refLvl + addedRefinementLvl)+1
+    xvals   = range(data.Xrange[1], stop = data.Xrange[2], length = n)
+    yvals   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
+
+    data_isopleth.isoPexp[data_isopleth.n_iso] = contour(   x                   = xvals,
+                                                            y                   = yvals,
+                                                            z                   = gridded',
+                                                            contours_coloring   = "lines",
+                                                            colorscale          = [[0, isoColorLine], [1, isoColorLine]],
+                                                            # connectgaps         = false,
+                                                            contours_start      = minIso,
+                                                            contours_end        = maxIso,
+                                                            contours_size       = stepIso,
+                                                            line_width          = isoLineWidth,
+                                                            line_dash           = isoLineStyle,
+                                                            showscale           = false,
+                                                            hoverinfo           = "skip",
+                                                            contours            =  attr(    coloring    = "lines",
+                                                                                            showlabels  = true,
+                                                                                            labelfont   = attr( size    = isoLabelSize,
+                                                                                                                color   = isoColorLine,  )
+                                                            )
+                                                        );
+
 
     data_isopleth.isoCap[data_isopleth.n_iso]   = scatter(  x           = [nothing],
                                                             y           = [nothing],
