@@ -1,5 +1,7 @@
 
-
+function sanitize_names(names::Vector{String})
+    return [replace(replace(replace(replace(name, " " => "_"), "/" => "o"),"[" => ""),"]" => "") for name in names]
+end
 
 function set_min_to_white(colormap; reverseColorMap = false)
 
@@ -1843,6 +1845,50 @@ function get_isopleth_map_te(   mod         ::String,
         gridded_TE[ii,jj]  = field[k] 
     end
 
+    for i=1:length(data.cells)
+        cell   = data.cells[i]
+
+        ii_min = compute_index(data.points[cell[2]][1], Xrange[1], dx)
+        ii_max = compute_index(data.points[cell[3]][1], Xrange[1], dx)
+        jj_ix  = compute_index(data.points[cell[2]][2], Yrange[1], dy)
+        for ii = ii_min+1:ii_max-1
+            f = (ii - ii_min)/ (ii_max - ii_min)
+            gridded_TE[ii, jj_ix] = field[cell[2]]*(1.0 - f) + field[cell[3]]*f
+        end
+
+        jj_min = compute_index(data.points[cell[1]][2], Yrange[1], dy)
+        jj_max = compute_index(data.points[cell[2]][2], Yrange[1], dy)
+        ii_ix = compute_index(data.points[cell[1]][1], Xrange[1], dx)
+        for jj = jj_min+1:jj_max-1
+            f = (jj - jj_min)/ (jj_max - jj_min)
+            gridded_TE[ii_ix, jj] = field[cell[1]]*(1.0 - f) + field[cell[2]]*f
+        end
+
+        jj_min = compute_index(data.points[cell[4]][2], Yrange[1], dy)
+        jj_max = compute_index(data.points[cell[3]][2], Yrange[1], dy)
+        ii_ix = compute_index(data.points[cell[4]][1], Xrange[1], dx)
+        for jj in jj_min+1:jj_max-1
+            f = (jj - jj_min)/ (jj_max - jj_min)
+            gridded_TE[ii_ix, jj] = field[cell[4]]*(1.0 - f) + field[cell[3]]*f
+        end
+
+        ii_min = compute_index(data.points[data.cells[i][1]][1], Xrange[1], dx)
+        ii_max = compute_index(data.points[data.cells[i][4]][1], Xrange[1], dx)
+        jj_ix  = compute_index(data.points[data.cells[i][1]][2], Yrange[1], dy)
+
+        for ii = ii_min+1:ii_max-1
+            f = (ii - ii_min)/ (ii_max - ii_min)
+            gridded_TE[ii, jj_ix] = field[cell[1]]*(1.0 - f) + field[cell[4]]*f
+
+            bot = field[cell[1]]*(1.0 - f) + field[cell[4]]*f
+            top = field[cell[2]]*(1.0 - f) + field[cell[3]]*f
+            for jj = jj_min+1:jj_max-1
+                g = (jj - jj_min)/ (jj_max - jj_min)
+                gridded_TE[ii, jj] = bot*(1.0 -g) + top*g
+            end
+        end
+
+    end
     return gridded_TE, X, Y
 end
 

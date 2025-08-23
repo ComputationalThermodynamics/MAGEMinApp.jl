@@ -70,28 +70,68 @@ function Tab_TraceElement()
                             ]),
                         ], width=9),
                         dbc_col([
-                            html_div([
-                                dbc_row([
-                                    html_div("‎ "),
-                                    html_div("‎ "), 
-                                    dcc_clipboard(
-                                        target_id   = "stable-assemblage-id-te",
-                                        title       = "copy",
-                                        style       =  Dict(    "display"       => "inline-block",
-                                                                "fontSize"      =>  20,
-                                                                "verticalAlign" => "top"    ),
-                                    ),
-                                ]),
-                                dbc_row([
-                                    dbc_card([
-                                        dcc_markdown(   id          = "stable-assemblage-id-te", 
-                                                        children    = "",
-                                                        style       = Dict(     "white-space" => "pre", 
-                                                                                "max-height" => "640px",
-                                                                                "overflow-y" => "auto"      ))
-                                    ])
-                                ]),
-                            ], style = Dict("display" => "block"), id      = "show-text-list-id-te"), #none, block
+                            html_div("‎ "),
+                            html_div("‎ "), 
+                            dbc_row([dbc_button("Export figure",id="export-figure-te"),
+                            dbc_collapse(
+                                dbc_card(dbc_cardbody([
+                                    dbc_row([
+                                        dbc_button("Export all layers", 
+                                                    id          = "export-layers-te", color="light",  n_clicks=0,
+                                                    style       =  Dict( "textAlign"    => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"1px grey solid")), 
+                                    ]),
+                                    dbc_row([
+                                        html_div("‎ "),
+                                        dcc_textarea(
+                                            id          ="state-directory-2-te",
+                                            value       = "Figure directory: $(pwd())/output/",
+                                            readOnly    = true,
+                                            disabled    = true,
+                                            draggable   = false,
+                                            style       = Dict("textAlign" => "center","font-size" => "100%", "width"=> "100%", "resize"=> "none")
+                                        )
+                                    ]),
+
+                                ])),
+                                id          = "collapse-export-figure-te",
+                                is_open     =  true,
+                            ),
+                            ]),
+                            
+                            dbc_row([dbc_button("Phase assemblages",id="phase-label-te"),
+                            dbc_collapse(
+                                dbc_card(dbc_cardbody([
+
+                                    html_div([
+                                        dbc_row([
+
+                                            dcc_clipboard(
+                                                target_id   = "stable-assemblage-id-te",
+                                                title       = "copy",
+                                                style       =  Dict(    "display"       => "inline-block",
+                                                                        "fontSize"      =>  20,
+                                                                        "verticalAlign" => "top"    ),
+                                            ),
+                                        ]),
+                                        dbc_row([
+                                            dbc_card([
+                                                dcc_markdown(   id          = "stable-assemblage-id-te", 
+                                                                children    = "",
+                                                                style       = Dict(     "white-space" => "pre", 
+                                                                                        "max-height" => "640px",
+                                                                                        "overflow-y" => "auto"      ))
+                                            ])
+                                        ]),
+                                    ], style = Dict("display" => "block"), id      = "show-text-list-id-te"), #none, block
+
+                                                            ])),
+                                id="collapse-phase-label-te",
+                                is_open=true,
+                                dimension="width",
+                            ),
+                            ]),
 
                         ], width=3),
                     ]),

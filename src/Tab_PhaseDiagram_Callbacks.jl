@@ -787,7 +787,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("export-layers",          "n_clicks"),
 
         # STATES
-        State("field-size-id",              "value"),
+        State("field-size-id",          "value"),
         State("title-id",               "value"),
         State("stable-assemblage-id",   "children"),   
 
@@ -796,13 +796,13 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("database-dropdown",      "value"),           # mp, mb, ig ,igd, um, alk
         State("dataset-dropdown",       "value"),           # pt, px, tx
         State("watsat-dropdown",        "value"),           # false,true -> 0,1
-        State("watsat-val-id",        "value"),           # false,true -> 0,1
+        State("watsat-val-id",          "value"),           # false,true -> 0,1
         
         State("mb-cpx-switch",          "value"),           # false,true -> 0,1
         State("limit-ca-opx-id",        "value"),           # ON,OFF -> 0,1
         State("ca-opx-val-id",          "value"),           # 0.0-1.0 -> 0,1
         State("phase-selection",        "value"),
-        State("pure-phase-selection",    "value"),
+        State("pure-phase-selection",   "value"),
 
         State("pt-x-table",             "data"),
         State("tmin-id",                "value"),           # tmin
@@ -859,8 +859,8 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("ox-dropdown",            "value"),
         State("of-dropdown",            "value"),
         State("other-dropdown",         "value"),
-        State("sys-unit-isopleth-dropdown",  "value"),
-        State("rm-exfluid-isopleth-dropdown",  "value"),
+        State("sys-unit-isopleth-dropdown",     "value"),
+        State("rm-exfluid-isopleth-dropdown",   "value"),
         State("input-calc-id",          "value"),
         State("input-cust-id",          "value"),
         State("input-calc-sf-id",       "value"),
@@ -1033,12 +1033,13 @@ function Tab_PhaseDiagram_Callbacks(app)
             active_tab      = "tab-phase-diagram"     
         elseif bid == "set-min-white" || bid == "min-color-id" || bid == "max-color-id" || bid == "colormaps_cross" || bid == "smooth-colormap" || bid == "range-slider-color" || bid == "reverse-colormap"
 
-            data_plot, layout =  update_colormap_phaseDiagram(  xtitle,     ytitle,     
-                                                                Xrange,     Yrange,     fieldname,
-                                                                dtb,        diagType,
-                                                                minColor,   maxColor,
-                                                                smooth,     colorm,     reverseColorMap, set_white,
-                                                                test                                                    )
+            data_plot, layout, heat_map_export =  update_colormap_phaseDiagram(  xtitle,     ytitle,     
+                                                                                Xrange,     Yrange,     fieldname,
+                                                                                dtb,        diagType,
+                                                                                sub,        refLvl,
+                                                                                minColor,   maxColor,
+                                                                                smooth,     colorm,     reverseColorMap, set_white,
+                                                                                test                                                    )
 
         elseif bid == "fields-dropdown"
 
@@ -1191,6 +1192,18 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         end
 
+        layoutCap = Layout(     height          =  30,        
+                                plot_bgcolor    = "white", 
+                                paper_bgcolor   = "white", 
+                                title           = "",
+                                xaxis           = attr(showticklabels=false),
+                                yaxis           = attr(showticklabels=false),
+                                legend=attr(
+                                    x           =  0.05,             
+                                    xanchor     = "left",
+                                    orientation = "h"
+                                ))
+
         if bid == "export-layers"
             lyt     = copy(layout)
             outline = [attr(
@@ -1265,26 +1278,31 @@ function Tab_PhaseDiagram_Callbacks(app)
             for i=1:n_lbl
                 lyt[:annotations][i][:visible] = false
             end
-            filename = "./output/"*replace(customTitle, " " => "_") * "_heat_map.svg"
+            filename = "./output/"*replace(customTitle, " " => "_") * "_$fieldname.svg"
             savefig(plot(heat_map_export,lyt), filename; width=720, height=900)
             np       = length(fieldNames_exp)
-            for i in 2:np
-                if field2plot[i] == 1
-                    if fieldNames_exp[i] == "data_isopleth_out_export"
-                        ni = length(data_isopleth.active)
-                        names = [trace[:name] for trace in data_isopleth.isoCap[data_isopleth.active] if haskey(trace, :name)]
-                        println("names: $names")
-                        for j = 1:ni
-                            trace_fig = plot_diagram(data_isopleth.isoPexp[data_isopleth.active[j]], lyt)
-                            filename = "./output/"*replace(customTitle, " " => "_") * "_$(fieldNames_exp[i])_$j.svg"
+            if np > 0
+                for i in 2:np
+                    if field2plot[i] == 1
+                        if fieldNames_exp[i] == "data_isopleth_out_export"
+                            ni = length(data_isopleth.active)
+                            names_raw = [trace[:name] for trace in data_isopleth.isoCap[data_isopleth.active] if haskey(trace, :name)]
+                            names = sanitize_names(names_raw)
+                            for j = 1:ni
+                                trace_fig = plot_diagram(data_isopleth.isoPexp[data_isopleth.active[j]], lyt)
+                                filename = "./output/"*replace(customTitle, " " => "_") * "_$(fieldNames_exp[i])_$(names[j]).svg"
+                                savefig(trace_fig, filename; width=720, height=900)
+                            end
+                        else
+                            trace_fig = plot_diagram(eval(Symbol(fieldNames_exp[i])), lyt)
+                            filename = "./output/"*replace(customTitle, " " => "_") * "_$(fieldNames_exp[i]).svg"
                             savefig(trace_fig, filename; width=720, height=900)
                         end
-                    else
-                        trace_fig = plot_diagram(eval(Symbol(fieldNames_exp[i])), lyt)
-                        filename = "./output/"*replace(customTitle, " " => "_") * "_$(fieldNames_exp[i]).svg"
-                        savefig(trace_fig, filename; width=720, height=900)
+                        filename = "./output/"*replace(customTitle, " " => "_") * "_isopleths_caption.svg"
+                        savefig(plot(data_isopleth.isoCap[data_isopleth.active],layoutCap), filename; width=900, height=30)
                     end
                 end
+
             end
 
             if field2plot[2] == 1
@@ -1294,8 +1312,11 @@ function Tab_PhaseDiagram_Callbacks(app)
                 
                 filename = "./output/"*replace(customTitle, " " => "_") * "_labels.svg"
                 savefig(plot(PlotlyJS.AbstractTrace[], lyt), filename; width=720, height=900)
+                open("./output/" * replace(customTitle, " " => "_") * "_phase_equilibria.txt", "w") do io
+                    write(io, txt_list)
+                end
             end
-            
+
         end
 
         config   = PlotConfig(    toImageButtonOptions  = attr(     name     = "Download as svg",
@@ -1305,17 +1326,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     width    =  720,
                                                                     scale    =  2.0,       ).fields)
 
-        layoutCap = Layout(     height          =  30,        
-                                plot_bgcolor    = "white", 
-                                paper_bgcolor   = "white", 
-                                title           = "",
-                                xaxis           = attr(showticklabels=false),
-                                yaxis           = attr(showticklabels=false),
-                                legend=attr(
-                                    x           =  0.05,             
-                                    xanchor     = "left",
-                                    orientation = "h"
-                                ))
+
         if field2plot[4] == 0
             fig_cap = plot(layoutCap)
         else

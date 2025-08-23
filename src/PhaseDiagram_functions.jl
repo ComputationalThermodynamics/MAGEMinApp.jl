@@ -1278,10 +1278,11 @@ end
 function update_colormap_phaseDiagram(      xtitle,     ytitle,     
                                             Xrange,     Yrange,     fieldname,
                                             dtb,        diagType,
+                                            sub,        refLvl,
                                             minColor,   maxColor,
                                             smooth,     colorm,     reverseColorMap, set_white,
                                             test                                  )
-    global PT_infos, layout
+    global PT_infos, layout, addedRefinementLvl
     if set_white == "true"
         colorm = set_min_to_white(colorm; reverseColorMap)
     end
@@ -1308,7 +1309,30 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
                                                         x               =  1.005,
                                                         y               =  0.5         ),)
 
-    return data_plot,layout
+
+    n       = 2^(sub + refLvl + addedRefinementLvl)+1
+    xvals   = range(data.Xrange[1], stop = data.Xrange[2], length = n)
+    yvals   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
+    heat_map_export = heatmap(  x               = xvals,
+                                y               = yvals,
+                                z               = gridded',
+                                zmin            =  minColor,
+                                zmax            =  maxColor,
+                                zsmooth         =  smooth,
+                                connectgaps     = true,
+                                type            = "heatmap",
+                                colorscale      =  colorm,
+                                colorbar_title  =  fieldname,
+                                reversescale    =  reverseColorMap,
+                                hoverinfo       = "skip",
+                                colorbar        = attr(     lenmode         = "fraction",
+                                                            len             =  0.75,
+                                                            thicknessmode   = "fraction",
+                                                            exponentformat  = "e" ,
+                                                            tickness        =  0.5,
+                                                            x               =  1.005,
+                                                            y               =  0.5         ),)
+    return data_plot,layout, heat_map_export
 end
 
 
@@ -1627,11 +1651,13 @@ function initialize_g_isopleth_te(; n_iso_max = 32)
     active    = []
     hidden    = []
     isoP      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
+    isoPexp   = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
     isoT      = Vector{CTR.ContourCollection{CTR.ContourLevel{Tuple{Float64, Float64}, Float64}}}(undef, n_iso_max); # + 1 to store the heatmap
     isoCap    = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
 
     for i=1:n_iso_max
         isoP[i] = contour()
+        isoPexp[i]  = contour()
         isoCap[i] = scatter()
     end
 
@@ -1639,7 +1665,7 @@ function initialize_g_isopleth_te(; n_iso_max = 32)
     value     = Vector{Int64}(undef,n_iso_max)
 
     data_isopleth_te = isopleth_data(   0, n_iso_max,
-                                        status, active, hidden, isoP, isoT, isoCap,
+                                        status, active, hidden, isoP, isoPexp, isoT, isoCap,
                                         label, value)
 
     
