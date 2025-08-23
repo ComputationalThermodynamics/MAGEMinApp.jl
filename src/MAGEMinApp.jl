@@ -229,7 +229,10 @@ function (@main)(ARGS)
     println("Running MAGEMinApp...")
 
     if length(ARGS) > 0
-        App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
+        x = popfirst!(ARGS)
+        if x == "run"
+            App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
+        end
     end
 
     return 0
