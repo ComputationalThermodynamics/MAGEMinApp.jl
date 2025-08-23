@@ -226,11 +226,12 @@ end
 
 
 function (@main)(ARGS)
-    println("Running MAGEMinApp...")
+
 
     if length(ARGS) > 0
         x = popfirst!(ARGS)
         if x == "run"
+            println("Running MAGEMinApp, wait a bit...")
             App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
         end
     end
