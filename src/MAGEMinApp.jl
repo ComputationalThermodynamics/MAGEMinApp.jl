@@ -226,7 +226,7 @@ end
 
 Base.@main function main(ARGS)
     println("UPDATED3!")
-    App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
+    # App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
     return 0
 end
 
