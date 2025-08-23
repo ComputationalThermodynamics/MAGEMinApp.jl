@@ -225,14 +225,44 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
 end
 
 
-function (@main)(ARGS)
+# function (@main)(ARGS)
 
+#     if length(ARGS) > 0
+#         x = popfirst!(ARGS)
+#         if x == "run"
+#             println("Running MAGEMinApp, wait a bit...")
+#             App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
+#         end
+#     end
+
+#     return 0
+# end
+
+Base.@main function main(ARGS)
+    # Check for --threads flag
+    for (i, arg) in pairs(ARGS)
+        if arg == "--threads" && i < length(ARGS)
+            n = parse(Int, ARGS[i+1])
+            if Threads.nthreads() != n
+                println("Restarting with $n threads...")
+                cmd = `$(Base.julia_cmd()) -t $n -m MAGEMinApp $(ARGS[1:end]...)`
+                run(cmd)
+                return 0
+            end
+        end
+    end
+
+    # Check for "run" keyword
     if length(ARGS) > 0
         x = popfirst!(ARGS)
         if x == "run"
             println("Running MAGEMinApp, wait a bit...")
             App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
+        else
+            println("Unknown command: $x")
         end
+    else
+        println("No command provided. Try: mageminapp run [--threads N]")
     end
 
     return 0
