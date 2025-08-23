@@ -224,10 +224,11 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
 
 end
 
-Base.@main function main(app=false)
+
+function (@main)(ARGS)
     println("UPDATED3!")
 
-    if app
+    if length(argv) > 0
         App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
     end
 
@@ -236,3 +237,5 @@ end
 
 
 end
+
+
