@@ -225,7 +225,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
 end
 
 
-function (@main)(ARGS)
+function main(ARGS)
 
     # By default, start with --threads auto if no thread flag is provided
     has_threads_flag = any(x -> x == "--threads" || x == "-t", ARGS)
@@ -272,6 +272,10 @@ function (@main)(ARGS)
     end
 
     return 0
+end
+
+@static if isdefined(Base, Symbol("@main"))
+    @main
 end
 
 end
