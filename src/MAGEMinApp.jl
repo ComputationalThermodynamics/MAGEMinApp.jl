@@ -227,6 +227,18 @@ end
 
 function (@main)(ARGS)
 
+    # By default, start with --threads auto if no thread flag is provided
+    has_threads_flag = any(x -> x == "--threads" || x == "-t", ARGS)
+    if !has_threads_flag
+        n = Sys.CPU_THREADS
+        if Threads.nthreads() != n
+            println("Restarting with $n threads (auto)...")
+            cmd = `$(Base.julia_cmd()) -t $n -m MAGEMinApp $(ARGS...)`
+            run(cmd)
+            return 0
+        end
+    end
+
     if length(ARGS) > 0
 
         # Check for --threads or -t flag
