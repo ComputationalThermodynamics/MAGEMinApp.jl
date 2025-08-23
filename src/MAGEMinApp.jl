@@ -254,8 +254,8 @@ function (@main)(ARGS)
         end
     end
 
-return 0
-
+    return 0
+end
 
 end
 
