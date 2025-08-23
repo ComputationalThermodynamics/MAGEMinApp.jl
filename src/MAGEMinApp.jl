@@ -274,6 +274,7 @@ function main(ARGS)
     return 0
 end
 
+# added for compatibility with Julia 1.10 and 1.11
 @static if isdefined(Base, Symbol("@main"))
     @main
 end
