@@ -228,7 +228,7 @@ end
 function (@main)(ARGS)
     println("UPDATED3!")
 
-    if length(argv) > 0
+    if length(ARGS) > 0
         App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
     end
 
