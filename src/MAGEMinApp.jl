@@ -233,7 +233,12 @@ function (@main)(ARGS)
         i = 1
         while i <= length(ARGS)
             if (ARGS[i] == "--threads" || ARGS[i] == "-t") && i < length(ARGS)
-                n = parse(Int, ARGS[i+1])
+                nstr = ARGS[i+1]
+                if nstr == "auto"
+                    n = Sys.CPU_THREADS
+                else
+                    n = parse(Int, nstr)
+                end
                 if Threads.nthreads() != n
                     println("Restarting with $n threads...")
                     # Remove the thread flag and its value from ARGS for restart
