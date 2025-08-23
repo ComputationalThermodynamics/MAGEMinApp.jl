@@ -224,9 +224,13 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
 
 end
 
-Base.@main function main(ARGS)
+Base.@main function main(app=false)
     println("UPDATED3!")
-    # App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
+
+    if run
+        App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
+    end
+
     return 0
 end
 
