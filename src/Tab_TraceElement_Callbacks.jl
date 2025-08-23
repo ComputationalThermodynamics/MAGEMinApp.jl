@@ -151,6 +151,8 @@ function Tab_TraceElement_Callbacks(app)
         Input("max-color-id-te",            "value"     ),
 
         Input("update-title-button",        "n_clicks"  ),
+        Input("export-layers-te",           "n_clicks"  ),
+
         State("title-id",                   "value"     ),
         State("tepm-dropdown",              "value"     ),
         State("input-te-id",                "value"     ),
@@ -209,8 +211,9 @@ function Tab_TraceElement_Callbacks(app)
 
                 addIso,     removeIso,  removeAllIso,           isoShow,    isoHide, isoShowAll,    isoHideAll,
 
-                colorMap,   smooth,     rangeColor, set_white, reverse,    minColor, maxColor,
-                updateTitle,customTitle,tepm,       varBuilder, norm, type, norm_te,
+                colorMap,   smooth,     rangeColor, set_white, reverse,    minColor, maxColor, 
+                updateTitle,exportFig,
+                customTitle,tepm,       varBuilder, norm, type, norm_te,
                 dtb,        diagType,   tmin,       tmax,       pmin,       pmax,       e1_tmin,    e1_tmax,    e2_tmin,    e2_tmax,  
                 bulk1,      bulk2,
                 sub,        refType,    refLvl,
@@ -225,6 +228,7 @@ function Tab_TraceElement_Callbacks(app)
         colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)              # get colormap information
         bid                             = pushed_button( callback_context() )                           # get the ID of the last pushed button
         fieldNames                      = ["data_plot_te","data_reaction","data_grid","data_isopleth_out_te"]
+        fieldNames_exp                  = ["data_plot_te","data_reaction","data_grid","data_isopleth_out_export_te"]
         field2plot                      = zeros(Int64,4)
         fieldType                       = type
         loading                         = ""
@@ -235,7 +239,8 @@ function Tab_TraceElement_Callbacks(app)
                 fieldType = "zr"
                 global gridded_te, gridded_info_te, gridded_fields_te, X_te, Y_te, npoints_te, meant_te
                 global layout_te, n_lbl, addedRefinementLvl
-                global data_plot_te,  data_reaction_te, data_grid_te, PT_infos_te, data_isopleth_te, data_isopleth_out_te
+                global data_plot_te,  data_reaction_te, data_grid_te, PT_infos_te, data_isopleth_te, data_isopleth_out_te, data_isopleth_out_export_te
+                global heat_map_export_te
 
                 global iso_show_te             = 1;
                 data_isopleth_te = initialize_g_isopleth_te(; n_iso_max = 32)
@@ -334,6 +339,32 @@ function Tab_TraceElement_Callbacks(app)
                                                                 x               =  1.005,
                                                                 y               =  0.5         ),)
 
+
+
+                n       = 2^(sub + refLvl)+1
+                xvals   = range(data.Xrange[1], stop = data.Xrange[2], length = n)
+                yvals   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
+                heat_map_export_te = heatmap(   x               = xvals,
+                                                y               = yvals,
+                                                z               = gridded_te',
+                                                zmin            = minColor,
+                                                zmax            = maxColor,
+                                                zsmooth         = smooth,
+                                                connectgaps     = true,
+                                                type            = "heatmap",
+                                                colorscale      = colorm,
+                                                reversescale    = reverseColorMap,
+                                                colorbar_title  = fieldname,
+                                                hoverinfo       = "skip",
+                                                showlegend      = false,
+                                                colorbar        = attr(     lenmode         = "fraction",
+                                                                            len             =  0.75,
+                                                                            thicknessmode   = "fraction",
+                                                                            exponentformat  = "e" ,
+                                                                            tickness        =  0.5,
+                                                                            x               =  1.005,
+                                                                            y               =  0.5         ),)
+
                 hover_lbl = heatmap(    x               = X_te,
                                         y               = Y_te,
                                         z               = X_te,
@@ -354,14 +385,15 @@ function Tab_TraceElement_Callbacks(app)
 
             elseif bid == "set-min-white-te" || bid == "min-color-id-te" || bid == "max-color-id-te" || bid == "colormaps_cross-te" || bid == "smooth-colormap-te" || bid == "range-slider-color-te" || bid == "reverse-colormap-te"
 
-                data_plot_te, layout_te =  update_colormap_phaseDiagram_te(     xtitle,     ytitle,     type,               varBuilder,   
+                data_plot_te, layout_te, heat_map_export_te =  update_colormap_phaseDiagram_te(     xtitle,     ytitle,     type,               varBuilder,   
                                                                                 Xrange,     Yrange,     fieldname,
                                                                                 dtb,        diagType,
+                                                                                sub,        refLvl,
                                                                                 minColor,   maxColor,
                                                                                 smooth,     colorm,     reverseColorMap, set_white                                                   )
             elseif bid == "compute-display-te"
 
-                data_plot_te, layout_te =  update_displayed_field_phaseDiagram_te(   xtitle,     ytitle,     "te",                  varBuilder, norm,
+                data_plot_te, layout_te, heat_map_export_te =  update_displayed_field_phaseDiagram_te(  xtitle,     ytitle,     "te",                  varBuilder, norm,
                                                                                     Xrange,     Yrange,     fieldname,
                                                                                     dtb,        oxi,
                                                                                     sub,        refLvl,
@@ -372,7 +404,7 @@ function Tab_TraceElement_Callbacks(app)
 
             elseif bid == "fields-dropdown-zr"
 
-                data_plot_te, layout_te =  update_displayed_field_phaseDiagram_te(   xtitle,     ytitle,     "zr",                  varBuilder, norm,
+                data_plot_te, layout_te, heat_map_export_te =  update_displayed_field_phaseDiagram_te(   xtitle,     ytitle,     "zr",                  varBuilder, norm,
                                                                                     Xrange,     Yrange,     fieldname,
                                                                                     dtb,        oxi,
                                                                                     sub,        refLvl,
@@ -400,6 +432,7 @@ function Tab_TraceElement_Callbacks(app)
                                                                                 isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,   
                                                                                 minIso,     stepIso,    maxIso                      )
                 data_isopleth_out_te = data_isopleth_te.isoP[data_isopleth_te.active]
+                data_isopleth_out_export_te = data_isopleth_te.isoPexp[data_isopleth_te.active]
                 field2plot[4] = 1
                 iso_show_te   = 1
 
@@ -408,10 +441,12 @@ function Tab_TraceElement_Callbacks(app)
                 if (isoplethsID_te) in data_isopleth_te.active
                     data_isopleth_te, isopleths_te, isoplethsHid_te = hide_single_isopleth_phaseDiagram_te(isoplethsID_te)
                     data_isopleth_out_te = data_isopleth_te.isoP[data_isopleth_te.active]
+                    data_isopleth_out_export_te = data_isopleth_te.isoPexp[data_isopleth_te.active]
                     field2plot[4] = 1
                 else
                     println("Cannot hide isopleth, did you select one?")
                     data_isopleth_out_te = data_isopleth_te.isoP[data_isopleth_te.active]
+                    data_isopleth_out_export_te = data_isopleth_te.isoPexp[data_isopleth_te.active]
                     field2plot[4] = 1
                 end
             elseif bid == "button-show-isopleth-te"
@@ -419,10 +454,12 @@ function Tab_TraceElement_Callbacks(app)
                 if (isoplethsHidID_te) in data_isopleth_te.hidden
                     data_isopleth_te, isopleths_te, isoplethsHid_te = show_single_isopleth_phaseDiagram_te(isoplethsHidID_te)
                     data_isopleth_out_te = data_isopleth_te.isoP[data_isopleth_te.active]
+                    data_isopleth_out_export_te = data_isopleth_te.isoPexp[data_isopleth_te.active]
                     field2plot[4] = 1
                 else
                     println("Cannot show isopleth, did you select one?")
                     data_isopleth_out_te = data_isopleth_te.isoP[data_isopleth_te.active]
+                    data_isopleth_out_export_te = data_isopleth_te.isoPexp[data_isopleth_te.active]
                     field2plot[4] = 1
                 end
             elseif bid == "button-remove-isopleth-te"
@@ -431,6 +468,7 @@ function Tab_TraceElement_Callbacks(app)
                     if data_isopleth_te.n_iso > 1
                         data_isopleth_te, isopleths_te = remove_single_isopleth_phaseDiagram_te(isoplethsID_te)
                         data_isopleth_out_te = data_isopleth_te.isoP[data_isopleth_te.active]
+                        data_isopleth_out_export_te = data_isopleth_te.isoPexp[data_isopleth_te.active]
                         field2plot[4] = 1
                     else
                         data_isopleth_te, isopleths_te, data_plot_te = remove_all_isopleth_phaseDiagram_te()
@@ -439,6 +477,7 @@ function Tab_TraceElement_Callbacks(app)
                 else
                     print("cannot remove isopleth, did you select one?")
                     data_isopleth_out_te = data_isopleth_te.isoP[data_isopleth_te.active]
+                    data_isopleth_out_export_te = data_isopleth_te.isoPexp[data_isopleth_te.active]
                     field2plot[4] = 1
                 end
     
@@ -450,6 +489,7 @@ function Tab_TraceElement_Callbacks(app)
     
                 iso_show_te          = 1
                 data_isopleth_out_te = data_isopleth_te.isoP[data_isopleth_te.active]
+                data_isopleth_out_export_te = data_isopleth_te.isoPexp[data_isopleth_te.active]
                 field2plot[4] = 1
     
             elseif bid == "button-hide-all-isopleth-te"
@@ -526,7 +566,127 @@ function Tab_TraceElement_Callbacks(app)
                                         xanchor     = "left",
                                         orientation = "h"
                                     ))
+
                                     
+
+            if bid == "export-layers-te"
+                lyt     = copy(layout_te)
+                outline = [attr(
+                                        type = "rect",
+                                        xref = "x",
+                                        yref = "y",
+                                        x0 = Xrange[1],
+                                        y0 = Yrange[1],
+                                        x1 = Xrange[2],
+                                        y1 = Yrange[2],
+                                        line = attr(color = "black", width = 2),
+                                        fillcolor = "rgba(0,0,0,0)"  # transparent fill
+                                    )]
+                nticks      = 6  # number of ticks
+                tick_length = 0.01 * (Yrange[2] - Yrange[1])  # length of tick in data units
+
+                # X-axis ticks
+                xticks = range(Xrange[1], Xrange[2], length=nticks)
+                x_tick_shapes_B = [
+                    attr(
+                        type = "line",
+                        xref = "x",
+                        yref = "y",
+                        x0 = x,
+                        y0 = Yrange[1],
+                        x1 = x,
+                        y1 = Yrange[1] + tick_length,
+                        line = attr(color = "black", width = 1)
+                    ) for x in xticks
+                ]
+                x_tick_shapes_T = [
+                    attr(
+                        type = "line",
+                        xref = "x",
+                        yref = "y",
+                        x0 = x,
+                        y0 = Yrange[2] - tick_length,
+                        x1 = x,
+                        y1 = Yrange[2],
+                        line = attr(color = "black", width = 1)
+                    ) for x in xticks
+                ]
+
+                yticks = range(Yrange[1], Yrange[2], length=nticks)
+                tick_length = 0.01 * (Xrange[2] - Xrange[1])  # length of tick in data units
+                y_tick_shapes_L = [
+                    attr(
+                        type = "line",
+                        xref = "x",
+                        yref = "y",
+                        x0 = Xrange[1],
+                        y0 = y,
+                        x1 = Xrange[1] + tick_length,
+                        y1 = y,
+                        line = attr(color = "black", width = 1)
+                    ) for y in yticks
+                ]
+                y_tick_shapes_R = [
+                    attr(
+                        type = "line",
+                        xref = "x",
+                        yref = "y",
+                        x0 = Xrange[2] - tick_length,
+                        y0 = y,
+                        x1 = Xrange[2],
+                        y1 = y,
+                        line = attr(color = "black", width = 1)
+                    ) for y in yticks
+                ]
+                lyt[:shapes] = vcat(get(layout_te, :shapes, PlotlyBase.PlotlyAttribute[]), outline, y_tick_shapes_L, y_tick_shapes_R, x_tick_shapes_B, x_tick_shapes_T)
+
+                for i=1:n_lbl
+                    lyt[:annotations][i][:visible] = false
+                end
+                filename = "./output/"*replace(customTitle, " " => "_") * "_$fieldname.svg"
+                savefig(plot(heat_map_export_te,lyt), filename; width=720, height=900)
+                np       = length(fieldNames_exp)
+                if np > 0
+                    for i in 2:np
+                        if field2plot[i] == 1
+                            if fieldNames_exp[i] == "data_isopleth_out_export_te"
+                                ni = length(data_isopleth_te.active)
+                                names_raw = [trace[:name] for trace in data_isopleth_te.isoCap[data_isopleth_te.active] if haskey(trace, :name)]
+                                names = sanitize_names(names_raw)
+
+                                for j = 1:ni
+                                    trace_fig = plot_diagram(data_isopleth_te.isoPexp[data_isopleth_te.active[j]], lyt)
+                                    filename = "./output/"*replace(customTitle, " " => "_") * "_$(fieldNames_exp[i])_$(names[j])_te.svg"
+                                    savefig(trace_fig, filename; width=720, height=900)
+                                end
+                            else
+                                trace_fig = plot_diagram(eval(Symbol(fieldNames_exp[i])), lyt)
+                                filename = "./output/"*replace(customTitle, " " => "_") * "_$(fieldNames_exp[i])_te.svg"
+                                savefig(trace_fig, filename; width=720, height=900)
+                            end
+                            filename = "./output/"*replace(customTitle, " " => "_") * "_isopleths_caption_te.svg"
+                            savefig(plot(data_isopleth_te.isoCap[data_isopleth_te.active],layoutCap), filename; width=900, height=30)
+                        end
+                    end
+
+                end
+
+                if field2plot[2] == 1
+                    for i=1:n_lbl
+                        lyt[:annotations][i][:visible] = true
+                    end
+                    
+                    filename = "./output/"*replace(customTitle, " " => "_") * "_labels.svg"
+                    savefig(plot(PlotlyJS.AbstractTrace[], lyt), filename; width=720, height=900)
+                    open("./output/" * replace(customTitle, " " => "_") * "_phase_equilibria.txt", "w") do io
+                        write(io, txt_list)
+                    end
+                end
+
+            end
+
+
+
             if field2plot[4] == 0
                 fig_cap = plot(layoutCap)
             else
@@ -545,80 +705,6 @@ function Tab_TraceElement_Callbacks(app)
             print("Compute a phase diagram with activated trace-element in the Setup tab first!\n")
         end
 
-        # if lbl == "true"
-        #     for i=1:n_lbl+1
-        #         layout_te[:annotations][i][:visible] = true
-        #     end
-        #     show_text_list  = Dict("display" => "block")  
-        # else
-        #     for i=1:n_lbl+1
-        #         layout_te[:annotations][i][:visible] = false
-        #     end
-        #     show_text_list  = Dict("display" => "none")  
-        # end  
-
-        # # check state of unchanged variables ["data_plot","data_reaction","data_grid","data_isopleth_out_te"]
-        # if grid == "true"
-        #     field2plot[2] = 1
-        # end
-        # if full_grid == "true"
-        #     field2plot[3] = 1
-        # end
-        # if data_isopleth_te.n_iso > 0 && iso_show_te == 1
-        #     field2plot[4] = 1
-        # end
-
-        # # Fetch the fields to display
-        # if sum(field2plot) == 0
-        #     fig = plot()
-        # else
-        #     data_all = eval(Symbol(fieldNames[1]))
-        #     np       = length(field2plot)
-
-        #     for i=2:np
-        #         if field2plot[i] == 1
-        #             data_all = vcat( data_all, eval(Symbol(fieldNames[i])) )
-        #         end
-        #     end
-
-        #     fig_te = plot_diagram(data_all,layout_te)
-        # end
-
-
-        # config   = PlotConfig(    toImageButtonOptions  = attr(     name     = "Download as svg",
-        #                                                             format   = "svg",
-        #                                                             filename =  replace(customTitle, " " => "_"),
-        #                                                             height   =  900,
-        #                                                             width    =  720,
-        #                                                             scale    =  2.0,       ).fields)
-
-        # layoutCap = Layout(     height          =  30,        
-        #                         plot_bgcolor    = "white", 
-        #                         paper_bgcolor   = "white", 
-        #                         title           = "",
-        #                         xaxis           = attr(showticklabels=false),
-        #                         yaxis           = attr(showticklabels=false),
-        #                         legend=attr(
-        #                             x           =  0.05,             
-        #                             xanchor     = "left",
-        #                             orientation = "h"
-        #                         ))
-                                
-        # if field2plot[4] == 0
-        #     fig_cap = plot(layoutCap)
-        # else
-        #     fig_cap = plot(data_isopleth_te.isoCap[data_isopleth_te.active],layoutCap)
-        # end
-        # config_cap  = PlotConfig(    toImageButtonOptions  = attr(      name     = "Download as svg",
-        #                                                                 format   = "svg",
-        #                                                                 filename =  (replace(customTitle, " " => "_"))*"_TE_label",
-        #                                                                 height   =  30,
-        #                                                                 width    =  900,
-        #                                                                 scale    =  2.0,       ).fields)
-
-
-        # return grid, full_grid, fig_cap, config_cap, fig_te, config, fieldType, minColor, maxColor, isopleths_te, isoplethsHid_te, txt_list, show_text_list, loading
-            
     end
 
 
@@ -743,6 +829,41 @@ function Tab_TraceElement_Callbacks(app)
         Output("collapse-spectrum", "is_open"),
         [Input("button-spectrum", "n_clicks")],
         [State("collapse-spectrum", "is_open")], ) do  n, is_open
+        
+        if isnothing(n); n=0 end
+
+        if n>0
+            if is_open==1
+                is_open = 0
+            elseif is_open==0
+                is_open = 1
+            end
+        end
+        return is_open    
+    end
+
+
+    callback!(app,
+        Output("collapse-phase-label-te", "is_open"),
+        [Input("phase-label-te", "n_clicks")],
+        [State("collapse-phase-label-te", "is_open")], ) do  n, is_open
+        
+        if isnothing(n); n=0 end
+
+        if n>0
+            if is_open==1
+                is_open = 0
+            elseif is_open==0
+                is_open = 1
+            end
+        end
+        return is_open    
+    end
+
+    callback!(app,
+        Output("collapse-export-figure-te", "is_open"),
+        [Input("export-figure-te", "n_clicks")],
+        [State("collapse-export-figure-te", "is_open")], ) do  n, is_open
         
         if isnothing(n); n=0 end
 

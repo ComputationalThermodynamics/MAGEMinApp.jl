@@ -776,7 +776,7 @@ function Tab_Simulation()
                                                 id      = "refinement-levels",
                                                 type    = "number", 
                                                 min     = 0,  
-                                                value   = 2   ),
+                                                value   = 3   ),
                                         ]),
                                     ]),
                                     dbc_row([

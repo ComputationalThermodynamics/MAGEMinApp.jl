@@ -151,16 +151,27 @@ function Tab_PhaseDiagram()
                                 dbc_collapse(
                                     dbc_card(dbc_cardbody([
                                         dbc_row([
-                                            dbc_button("Export layers", 
+                                            dbc_button("Export all layers", 
                                                         id          = "export-layers", color="light",  n_clicks=0,
                                                         style       =  Dict( "textAlign"    => "center",
                                                                             "font-size"     => "100%",
                                                                             "border"        =>"1px grey solid")), 
-                                                            ]),
+                                        ]),
+                                        dbc_row([
+                                            html_div("‎ "),
+                                            dcc_textarea(
+                                                id          ="state-directory-2",
+                                                value       = "Figure directory: $(pwd())/output/",
+                                                readOnly    = true,
+                                                disabled    = true,
+                                                draggable   = false,
+                                                style       = Dict("textAlign" => "center","font-size" => "100%", "width"=> "100%", "resize"=> "none")
+                                            )
+                                        ]),
+
                                     ])),
                                     id          = "collapse-export-figure",
                                     is_open     =  true,
-                                    dimension   = "width",
                                 ),
                                 ]),
 
