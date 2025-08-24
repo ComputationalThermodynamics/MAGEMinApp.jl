@@ -147,6 +147,34 @@ function Tab_PhaseDiagram()
                                 html_div("‎ "),
                                 html_div("‎ "), 
 
+                                dbc_row([dbc_button("Export figure",id="export-figure"),
+                                dbc_collapse(
+                                    dbc_card(dbc_cardbody([
+                                        dbc_row([
+                                            dbc_button("Export all layers", 
+                                                        id          = "export-layers", color="light",  n_clicks=0,
+                                                        style       =  Dict( "textAlign"    => "center",
+                                                                            "font-size"     => "100%",
+                                                                            "border"        =>"1px grey solid")), 
+                                        ]),
+                                        dbc_row([
+                                            html_div("‎ "),
+                                            dcc_textarea(
+                                                id          ="state-directory-2",
+                                                value       = "Figure directory: $(pwd())/output/",
+                                                readOnly    = true,
+                                                disabled    = true,
+                                                draggable   = false,
+                                                style       = Dict("textAlign" => "center","font-size" => "100%", "width"=> "100%", "resize"=> "none")
+                                            )
+                                        ]),
+
+                                    ])),
+                                    id          = "collapse-export-figure",
+                                    is_open     =  true,
+                                ),
+                                ]),
+
                                 dbc_row([dbc_button("Phase assemblages",id="phase-label"),
                                 dbc_collapse(
                                     dbc_card(dbc_cardbody([
@@ -179,6 +207,9 @@ function Tab_PhaseDiagram()
                                     dimension="width",
                                 ),
                                 ]),
+
+
+
                             ], width=3),
 
                         

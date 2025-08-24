@@ -191,9 +191,10 @@ end
 function update_colormap_phaseDiagram_te(       xtitle,     ytitle,     type,       varBuilder,
                                                 Xrange,     Yrange,     fieldname, 
                                                 dtb,        diagType,
+                                                sub,        refLvl,
                                                 minColor,   maxColor,
                                                 smooth,     colorm,     reverseColorMap, set_white)
-    global PT_infos_te, layout_te
+    global PT_infos_te, layout_te, addedRefinementLvl
 
     if type == "te"
         fieldname = varBuilder
@@ -219,8 +220,29 @@ function update_colormap_phaseDiagram_te(       xtitle,     ytitle,     type,   
                                                             tickness        =  0.5,
                                                             x               =  1.005,
                                                             y               =  0.5         ),)
-
-    return data_plot_te, layout_te
+    n       = 2^(sub + refLvl + addedRefinementLvl)+1
+    xvals   = range(data.Xrange[1], stop = data.Xrange[2], length = n)
+    yvals   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
+    heat_map_export_te = heatmap(  x               = xvals,
+                                y               = yvals,
+                                z               = gridded_te',
+                                zmin            =  minColor,
+                                zmax            =  maxColor,
+                                zsmooth         =  smooth,
+                                connectgaps     = true,
+                                type            = "heatmap",
+                                colorscale      =  colorm,
+                                colorbar_title  =  fieldname,
+                                reversescale    =  reverseColorMap,
+                                hoverinfo       = "skip",
+                                colorbar        = attr(     lenmode         = "fraction",
+                                                            len             =  0.75,
+                                                            thicknessmode   = "fraction",
+                                                            exponentformat  = "e" ,
+                                                            tickness        =  0.5,
+                                                            x               =  1.005,
+                                                            y               =  0.5         ),)
+    return data_plot_te, layout_te, heat_map_export_te
 end
 
 
@@ -283,7 +305,30 @@ function  update_displayed_field_phaseDiagram_te(    xtitle,     ytitle,     typ
                                                             x               =  1.005,
                                                             y               =  0.5         ),)
 
-    return data_plot_te, layout_te
+    n       = 2^(sub + refLvl + addedRefinementLvl)+1
+    xvals   = range(data.Xrange[1], stop = data.Xrange[2], length = n)
+    yvals   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
+    heat_map_export_te = heatmap(  x               = xvals,
+                                y               = yvals,
+                                z               = gridded_te',
+                                zsmooth         = smooth,
+                                connectgaps     = true,
+                                type            = "heatmap",
+                                colorscale      = colorm,
+                                colorbar_title  = fieldname,
+                                reversescale    = reverseColorMap,
+                                hoverinfo       = "skip",
+                                # hoverinfo       = "text",
+                                # text            = gridded_info,
+                                colorbar        = attr(     lenmode         = "fraction",
+                                                            len             =  0.75,
+                                                            thicknessmode   = "fraction",
+                                                            exponentformat  = "e" ,
+                                                            tickness        =  0.5,
+                                                            x               =  1.005,
+                                                            y               =  0.5         ),)         
+
+    return data_plot_te, layout_te, heat_map_export_te
 end
 
 
@@ -344,6 +389,29 @@ function add_isopleth_phaseDiagram_te(      Xrange,     Yrange,
                                                                                             showlabels  = true,
                                                                                             labelfont   = attr( size    = isoLabelSize,
                                                                                                                 color   = isoColorLine,  )
+                                                            )
+                                                        );
+    n       = 2^(sub + refLvl + addedRefinementLvl)+1
+    xvals   = range(data.Xrange[1], stop = data.Xrange[2], length = n)
+    yvals   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
+    
+    data_isopleth_te.isoPexp[data_isopleth_te.n_iso] = contour(   x                   = xvals,
+                                                                y                   = yvals,
+                                                                z                   = gridded_te',
+                                                                contours_coloring   = "lines",
+                                                                colorscale          = [[0, isoColorLine], [1, isoColorLine]],
+                                                                # connectgaps         = false,
+                                                                contours_start      = minIso,
+                                                                contours_end        = maxIso,
+                                                                contours_size       = stepIso,
+                                                                line_width          = isoLineWidth,
+                                                                line_dash           = isoLineStyle,
+                                                                showscale           = false,
+                                                                hoverinfo           = "skip",
+                                                                contours            =  attr(    coloring    = "lines",
+                                                                                                showlabels  = true,
+                                                                                                labelfont   = attr( size    = isoLabelSize,
+                                                                                                                    color   = isoColorLine,  )
                                                             )
                                                         );
 
