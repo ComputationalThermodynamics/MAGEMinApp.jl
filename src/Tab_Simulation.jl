@@ -1376,13 +1376,13 @@ function Tab_Simulation()
 
                                                         ]),
                                                         dbc_alert(
-                                                            "Loaded phase diagram state successfully",
+                                                            "Loaded W's successfully",
                                                             id      = "load-exp-success",
                                                             is_open = false,
                                                             duration= 4000,
                                                         ),
                                                         dbc_alert(
-                                                            "Phase diagram state composition(s) failed to load, check input file format",
+                                                            "W's failed to load, check input file format",
                                                             color="danger",
                                                             id      ="load-exp-failed",
                                                             is_open = false,

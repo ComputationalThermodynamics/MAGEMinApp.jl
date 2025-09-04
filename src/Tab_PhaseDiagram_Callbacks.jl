@@ -726,6 +726,32 @@ function Tab_PhaseDiagram_Callbacks(app)
     end
 
 
+    callback!(
+        app,
+        Output("sys-unit-isopleth-dropdown",    "options"   ),
+        Output("sys-unit-isopleth-dropdown",    "value"     ),
+        Input("other-dropdown",                 "value"     ),
+        State("sys-unit-isopleth-dropdown",     "value"     ),
+
+        prevent_initial_call = true,
+    ) do other, val
+    
+        if other == "calc_ox" || other == "oxComp"
+            options        = [  (label = "mol",    value = "mol"),
+                                (label = "wt",     value = "wt")]
+            if val == "vol"
+                val = "mol"
+            end
+        else
+            options        = [  (label = "mol",    value = "mol"),
+                                (label = "wt",     value = "wt"),
+                                (label = "vol",    value = "vol")]
+        end
+
+        return options, val
+    end
+
+
     """
         Callback function to update the phase diagram based on the user input
     """
@@ -864,7 +890,9 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("input-calc-id",          "value"),
         State("input-cust-id",          "value"),
         State("input-calc-sf-id",       "value"),
+        State("input-calc-ox-id",       "value"),
         State("input-cust-sf-id",       "value"),
+        State("input-cust-ox-id",       "value"),
         State("line-style-dropdown",    "value"),
         State("iso-line-width-id",      "value"),
         State("colorpicker_isoL",       "value"),
@@ -891,7 +919,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             bufferN1,   bufferN2,
             tepm,       kds_mod,    zrsat_mod,  bulkte1,    bulkte2,
             test,
-            isopleths,  isoplethsID,isoplethsHid,  isoplethsHidID,  phase,      ss,         em,     ox,    of,     ot, sys, rmf, calc, cust, calc_sf, cust_sf,
+            isopleths,  isoplethsID,isoplethsHid,  isoplethsHidID,  phase,      ss,         em,     ox,    of,     ot, sys, rmf, calc, cust, calc_sf, calc_ox, cust_sf, cust_ox,
             isoLineStyle, isoLineWidth, isoColorLine,           isoLabelSize,   
             minIso,     stepIso,    maxIso,
             active_tab
@@ -1070,7 +1098,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             data_isopleth, isopleths = add_isopleth_phaseDiagram(   Xrange,     Yrange,
                                                                     sub,        refLvl,
                                                                     dtb,        oxi,
-                                                                    isopleths,  phase,      ss,     em,  ox,   of,     ot, sys, rmf,    calc, cust, calc_sf, cust_sf,
+                                                                    isopleths,  phase,      ss,     em,  ox,   of,     ot, sys, rmf,    calc, cust, calc_sf, calc_ox, cust_sf, cust_ox,
                                                                     isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,   
                                                                     minIso,     stepIso,    maxIso                      )
             data_isopleth_out = data_isopleth.isoP[data_isopleth.active]

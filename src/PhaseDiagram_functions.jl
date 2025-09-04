@@ -1679,7 +1679,7 @@ end
 function add_isopleth_phaseDiagram(         Xrange,     Yrange, 
                                             sub,        refLvl,
                                             dtb,        oxi,
-                                            isopleths,  phase,      ss,     em,   ox,  of,     ot,  sys,   rmf,  calc, cust, calc_sf, cust_sf,
+                                            isopleths,  phase,      ss,     em,   ox,  of,     ot,  sys,   rmf,  calc, cust, calc_sf, calc_ox, cust_sf, cust_ox,
                                             isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,       
                                             minIso,     stepIso,    maxIso      )
 
@@ -1708,8 +1708,13 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
             name    = ss*"_"*em*"_frac_[wt]"
         end
     elseif (phase == "ss" && ot == "oxComp")
-
-        if sys == "mol"
+        if sys == "vol" 
+            sys_cor = "wt"
+            println("Warning: for oxides, the system unit has to be mol or wt. Setting value to wt%")
+        else 
+            sys_cor = sys
+        end
+        if sys_cor == "mol"
             mod     = "ox_comp"
             name    = ss*"_"*ox*"_frac_[mol]"
         else 
@@ -1730,12 +1735,25 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
         end
     elseif (phase == "ss" && ot == "calc_sf")
         mod     = "ss_calc_sf"
-        em      = ""
         if cust_sf != "none"
             name    = ss*"_["*cust_sf*"]"
         else
             name    = ss*"_["*calc_sf*"]"
         end
+    elseif (phase == "ss" && ot == "calc_ox")
+        if sys == "vol" 
+            sys_cor = "wt"
+            println("Warning: for oxides, the system unit has to be mol or wt. Setting value to wt%")
+        else
+            sys_cor = sys
+        end
+        mod         = "ss_calc_ox_"*sys_cor
+        if cust_ox != "none"
+            name    = ss*"_["*cust_ox*"]"*"_"*sys_cor
+        else
+            name    = ss*"_["*calc_ox*"]"*"_"*sys_cor
+        end
+
     elseif (phase == "of")
         em      = ""
         ss      = ""
@@ -1747,7 +1765,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
 
     global data_isopleth, nIsopleths, data, Out_XY, data_plot, X, Y, addedRefinementLvl
 
-    gridded, X, Y = get_isopleth_map(   mod, ss, em, ox, of, ot, calc, calc_sf, rmf, 
+    gridded, X, Y = get_isopleth_map(   mod, ss, em, ox, of, ot, calc, calc_sf, calc_ox, rmf, 
                                         oxi,
                                         Out_XY,
                                         sub,

@@ -333,6 +333,7 @@ function Tab_Simulation_Callbacks(app)
         Output("ss-dropdown",       "value"),
         Output("calc-1-id",         "style"),
         Output("calc-1-sf-id",      "style"),
+        Output("calc-1-ox-id",      "style"),
         Output("em-1-id",           "style"),
         Output("ox-1-id",           "style"),
         Output("ss-1-id",           "style"),
@@ -363,6 +364,7 @@ function Tab_Simulation_Callbacks(app)
             style_ox    = Dict("display" => "none")
             style_calc  = Dict("display" => "none")
             style_calc_sf = Dict("display" => "none")
+            style_calc_ox = Dict("display" => "none")
             style_ot    = Dict("display" => "none")
             style_of    = Dict("display" => "block")
             style_sys   = Dict("display" => "none")
@@ -405,8 +407,18 @@ function Tab_Simulation_Callbacks(app)
                 style_calc_sf   = Dict("display" => "block")
                 style_sys       = Dict("display" => "none")
                 style_rmf       = Dict("display" => "none")
+                style_calc_ox   = Dict("display" => "none")
             else
-                style_calc_sf  = Dict("display" => "none")
+                style_calc_sf   = Dict("display" => "none")
+            end
+
+            if other == "calc_ox"
+                style_calc_ox   = Dict("display" => "block")
+                style_sys       = Dict("display" => "block")
+                style_rmf       = Dict("display" => "none")
+                style_calc_sf   = Dict("display" => "none")
+            else
+                style_calc_ox   = Dict("display" => "none")
             end
 
             if other == "MgNum"
@@ -431,6 +443,7 @@ function Tab_Simulation_Callbacks(app)
             style_ot    = Dict("display" => "none")
             style_calc  = Dict("display" => "none")
             style_calc_sf  = Dict("display" => "none")
+            style_calc_ox  = Dict("display" => "none")
             style_ph    = Dict("display" => "block")
             style_of    = Dict("display" => "none")
             style_sys   = Dict("display" => "block")
@@ -444,7 +457,7 @@ function Tab_Simulation_Callbacks(app)
 
         end
 
-        return opts_ph, val, style_calc, style_calc_sf, style_em, style_ox, style_ph, style_of, style_ot, style_sys, style_rmf
+        return opts_ph, val, style_calc, style_calc_sf, style_calc_ox, style_em, style_ox, style_ph, style_of, style_ot, style_sys, style_rmf
     end
 
 

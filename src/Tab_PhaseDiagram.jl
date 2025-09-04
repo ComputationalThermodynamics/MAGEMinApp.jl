@@ -940,6 +940,7 @@ function Tab_PhaseDiagram()
                                                             (label = "Oxide composition",   value = "oxComp"),
                                                             (label = "Endmember mode",      value = "emMode"),
                                                             (label = "Mg#",                 value = "MgNum"),
+                                                            (label = "Calculator oxides",   value = "calc_ox"),
                                                             (label = "Calculator apfu",     value = "calc"),
                                                             (label = "Calculator site fractions",       value = "calc_sf"),
                                                             ],
@@ -1016,6 +1017,30 @@ function Tab_PhaseDiagram()
                                                 ]),
                                             ], style = Dict("display" => "none"), id      = "calc-1-id"),
 
+                                            html_div([
+                                                dbc_row([
+                                                    dbc_col([ 
+                                                        html_h1("Calculator (oxides)", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                    ]),
+                                                    dbc_col([
+                                                        dbc_input(
+                                                            id      = "input-calc-ox-id",
+                                                            type    = "text", 
+                                                            value   = "MgO / (MgO + FeO)"   ),
+                                                    ]), 
+                                                ]),
+                                                dbc_row([
+                                                    dbc_col([ 
+                                                        html_h1("Custom name", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                    ]),
+                                                    dbc_col([
+                                                        dbc_input(
+                                                            id      = "input-cust-ox-id",
+                                                            type    = "text", 
+                                                            value   = "none"   ),
+                                                    ]), 
+                                                ]),
+                                            ], style = Dict("display" => "none"), id      = "calc-1-ox-id"),
 
                                             html_div([
 
