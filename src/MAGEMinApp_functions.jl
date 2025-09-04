@@ -1512,6 +1512,7 @@ function get_isopleth_map(  mod         ::String,
                             ot          ::String,
                             calc        ::String,
                             calc_sf     ::String,
+                            calc_ox     ::String,
                             rmf         ::Bool,
                             oxi         ::Vector{String},
                             Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
@@ -1613,7 +1614,6 @@ function get_isopleth_map(  mod         ::String,
         for i=1:np
             id       = findall(Out_XY[i].ph .== ss)
             if ~isempty(id)  
-                
                 cmd2eval    = calc
                 id          = id[1]
 
@@ -1652,6 +1652,37 @@ function get_isopleth_map(  mod         ::String,
                 command  = Meta.parse(cmd2eval)
                 field[i] = eval(command)
 
+            else
+                field[i] = 0.0
+            end
+        end 
+    elseif mod == "ss_calc_ox_mol" || mod == "ss_calc_ox_wt"
+        el          = Out_XY[1].oxides
+        n_el        = length(el)
+
+        O_id        = findfirst(Out_XY[1].oxides .== "O")
+        if !isnothing(O_id)
+            el[O_id]    = "o"   # put to lower case to avoid issue when evaluating the command
+        end
+
+        global i, j, id
+        for i=1:np
+            id       = findall(Out_XY[i].ph .== ss)
+            if ~isempty(id)  
+                cmd2eval    = calc_ox
+                id          = id[1]
+
+                for j = 1:n_el
+                    if occursin(el[j], calc_ox)
+                        if mod == "ss_calc_ox_mol" 
+                            cmd2eval = replace(cmd2eval, el[j] => "Out_XY[$i].SS_vec[$id].Comp[$j]")
+                        elseif mod == "ss_calc_ox_wt" 
+                            cmd2eval = replace(cmd2eval, el[j] => "Out_XY[$i].SS_vec[$id].Comp_wt[$j]")
+                        end
+                    end
+                end
+                command  = Meta.parse(cmd2eval)
+                field[i] = eval(command)
             else
                 field[i] = 0.0
             end
@@ -1701,11 +1732,11 @@ function get_isopleth_map(  mod         ::String,
             for i=1:np
                 field[i] = Out_XY[i].s_cp[1];
             end
-        elseif fieldname == "entropy"
+        elseif of == "entropy"
             for i=1:np
                 field[i] = Out_XY[i].entropy[1];
             end
-        elseif fieldname == "enthalpy"
+        elseif of == "enthalpy"
             for i=1:np
                 field[i] = Out_XY[i].enthalpy[1];
             end

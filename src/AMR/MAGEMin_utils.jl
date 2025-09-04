@@ -273,6 +273,8 @@ function refine_MAGEMin(data,
                 Ws      = reshape(Ws, n_Ws, 3)
                 
                 new_Ws[i] = MAGEMin_C.W_data(dtb, ss_id, n_Ws, Ws)   
+
+                # println("new_Ws: $(new_Ws)")
             end
         else
             new_Ws = nothing
