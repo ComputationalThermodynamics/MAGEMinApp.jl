@@ -1032,7 +1032,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                     width       = 720,
                     height      = 900,
                     autosize    = false,
-                    margin      = attr(autoexpand = false, l=0, r=0, b=260, t=50, pad=1),
+                    margin      = attr(autoexpand = false, l=0, r=116, b=260, t=50, pad=1),
                     xaxis_range = Xrange, 
                     yaxis_range = Yrange,
                     xaxis       = attr(     tickmode    = "linear",
@@ -1064,7 +1064,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                             type            = "heatmap",
                             colorscale      = colorm,
                             reversescale    = reverseColorMap,
-                            colorbar_title  = fieldname,
+                            # colorbar_title  = fieldname,
                             hoverinfo       = "skip",
                             showlegend      = false,
                             colorbar        = attr(     lenmode         = "fraction",
@@ -1073,7 +1073,9 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                                         exponentformat  = "e" ,
                                                         tickness        =  0.5,
                                                         x               =  1.005,
-                                                        y               =  0.5         ),)
+                                                        y               =  0.5,
+                                                                title = attr(   text = fieldname,
+                                                                                side = "right")         ),)
 
 
         n       = 2^(sub + refLvl)+1
@@ -1089,7 +1091,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                     type            = "heatmap",
                                     colorscale      = colorm,
                                     reversescale    = reverseColorMap,
-                                    colorbar_title  = fieldname,
+                                    # colorbar_title  = fieldname,
                                     hoverinfo       = "skip",
                                     showlegend      = false,
                                     colorbar        = attr(     lenmode         = "fraction",
@@ -1098,7 +1100,9 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                                                 exponentformat  = "e" ,
                                                                 tickness        =  0.5,
                                                                 x               =  1.005,
-                                                                y               =  0.5         ),)
+                                                                y               =  0.5,
+                                                                title = attr(   text = fieldname,
+                                                                                side = "right")         ),)
 
         # savefig(plot(heat_map_export,layout), "phase_diagram.svg"; width=720, height=900)
 
@@ -1219,7 +1223,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                             zsmooth         =  smooth,
                             type            = "heatmap",
                             colorscale      = colorm,
-                            colorbar_title  = fieldname,
+                            # colorbar_title  = fieldname,
                             reversescale    = reverseColorMap,
                             hoverinfo       = "skip",
                             colorbar        = attr(     lenmode         = "fraction",
@@ -1228,7 +1232,9 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                                         exponentformat  = "e" ,
                                                         tickness        =  0.5,
                                                         x               =  1.005,
-                                                        y               =  0.5         ),)
+                                                        y               =  0.5,
+                                                                title = attr(   text = fieldname,
+                                                                                side = "right")         ),)
     n       = 2^(sub + refLvl + addedRefinementLvl)+1
     xvals   = range(data.Xrange[1], stop = data.Xrange[2], length = n)
     yvals   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
@@ -1242,7 +1248,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                 type            = "heatmap",
                                 colorscale      = colorm,
                                 reversescale    = reverseColorMap,
-                                colorbar_title  = fieldname,
+                                # colorbar_title  = fieldname,
                                 hoverinfo       = "skip",
                                 showlegend      = false,
                                 colorbar        = attr(     lenmode         = "fraction",
@@ -1251,7 +1257,9 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                                             exponentformat  = "e" ,
                                                             tickness        =  0.5,
                                                             x               =  1.005,
-                                                            y               =  0.5         ),)
+                                                            y               =  0.5,
+                                                                title = attr(   text = fieldname,
+                                                                                side = "right")         ),)
     hover_lbl = heatmap(    x               = X,
                             y               = Y,
                             z               = X,
@@ -1298,7 +1306,7 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
                             connectgaps     = true,
                             type            = "heatmap",
                             colorscale      =  colorm,
-                            colorbar_title  =  fieldname,
+                            # colorbar_title  =  fieldname,
                             reversescale    =  reverseColorMap,
                             hoverinfo       = "skip",
                             colorbar        = attr(     lenmode         = "fraction",
@@ -1307,7 +1315,9 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
                                                         exponentformat  = "e" ,
                                                         tickness        =  0.5,
                                                         x               =  1.005,
-                                                        y               =  0.5         ),)
+                                                        y               =  0.5,
+                                                                title = attr(   text = fieldname,
+                                                                                side = "right")         ),)
 
 
     n       = 2^(sub + refLvl + addedRefinementLvl)+1
@@ -1322,7 +1332,7 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
                                 connectgaps     = true,
                                 type            = "heatmap",
                                 colorscale      =  colorm,
-                                colorbar_title  =  fieldname,
+                                # colorbar_title  =  fieldname,
                                 reversescale    =  reverseColorMap,
                                 hoverinfo       = "skip",
                                 colorbar        = attr(     lenmode         = "fraction",
@@ -1331,7 +1341,9 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
                                                             exponentformat  = "e" ,
                                                             tickness        =  0.5,
                                                             x               =  1.005,
-                                                            y               =  0.5         ),)
+                                                            y               =  0.5,
+                                                                title = attr(   text = fieldname,
+                                                                                side = "right")         ),)
     return data_plot,layout, heat_map_export
 end
 
@@ -1567,7 +1579,7 @@ function  update_displayed_field_phaseDiagram(   xtitle,     ytitle,
                             connectgaps     = true,
                             type            = "heatmap",
                             colorscale      = colorm,
-                            colorbar_title  = fieldname,
+                            # colorbar_title  = fieldname,
                             reversescale    = reverseColorMap,
                             hoverinfo       = "skip",
                             # hoverinfo       = "text",
@@ -1578,7 +1590,9 @@ function  update_displayed_field_phaseDiagram(   xtitle,     ytitle,
                                                         exponentformat  = "e" ,
                                                         tickness        =  0.5,
                                                         x               =  1.005,
-                                                        y               =  0.5         ),)
+                                                        y               =  0.5,
+                                                                title = attr(   text = fieldname,
+                                                                                side = "right")         ),)
 
 
     n       = 2^(sub + refLvl + addedRefinementLvl)+1
@@ -1591,7 +1605,7 @@ function  update_displayed_field_phaseDiagram(   xtitle,     ytitle,
                                 connectgaps     = true,
                                 type            = "heatmap",
                                 colorscale      = colorm,
-                                colorbar_title  = fieldname,
+                                # colorbar_title  = fieldname,
                                 reversescale    = reverseColorMap,
                                 hoverinfo       = "skip",
                                 # hoverinfo       = "text",
@@ -1602,7 +1616,9 @@ function  update_displayed_field_phaseDiagram(   xtitle,     ytitle,
                                                             exponentformat  = "e" ,
                                                             tickness        =  0.5,
                                                             x               =  1.005,
-                                                            y               =  0.5         ),)
+                                                            y               =  0.5,
+                                                                title = attr(   text = fieldname,
+                                                                                side = "right")         ),)
 
     return data_plot,layout, heat_map_export
 end
