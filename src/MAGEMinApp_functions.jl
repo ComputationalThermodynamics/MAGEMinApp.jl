@@ -1346,6 +1346,9 @@ function get_parsed_command(    point       :: Int64;
                         elseif st[1] == "M"
                             part1 = ref*".Cliq"
                             part2 = "["*string(id_el)*"]"
+                        elseif st[1] == "C0"
+                            part1 = ref*".C0"
+                            part2 = "["*string(id_el)*"]"
                         else
                             id_ph = findfirst(Out_TE_XY[point].ph_TE .== st[1])
                             if isnothing(id_ph)

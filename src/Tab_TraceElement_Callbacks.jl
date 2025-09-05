@@ -66,7 +66,7 @@ function Tab_TraceElement_Callbacks(app)
         if @isdefined(all_TE_ph)
              tmp = join(all_TE_ph, " ")
 
-             phase_te_list = "**"*"M S "*tmp*"**"
+             phase_te_list = "**"*"C0 M S"*tmp*"**"
         else
             phase_te_list = " "
         end
@@ -304,7 +304,7 @@ function Tab_TraceElement_Callbacks(app)
                                 width       = 720,
                                 height      = 900,
                                 autosize    = false,
-                                margin      = attr(autoexpand = false, l=0, r=0, b=260, t=50, pad=1),
+                                margin      = attr(autoexpand = false, l=0, r=116, b=260, t=50, pad=1),
                                 xaxis_range = Xrange, 
                                 yaxis_range = Yrange,
                                 xaxis       = attr(     tickmode    = "linear",
@@ -329,7 +329,7 @@ function Tab_TraceElement_Callbacks(app)
                                     type            = "heatmap",
                                     colorscale      =  colorm,
                                     reversescale    =  reverseColorMap,
-                                    colorbar_title  =  fieldname,
+                                    # colorbar_title  =  fieldname,
                                     hoverinfo       = "skip",
                                     showlegend      =  false,
                                     colorbar        =  attr(    lenmode         = "fraction",
@@ -337,7 +337,10 @@ function Tab_TraceElement_Callbacks(app)
                                                                 thicknessmode   = "fraction",
                                                                 tickness        =  0.5,
                                                                 x               =  1.005,
-                                                                y               =  0.5         ),)
+                                                                y               =  0.5,
+                                                                title = attr(   text = fieldname,
+                                                                                side = "right")
+                                                            ),)
 
 
 
@@ -354,7 +357,7 @@ function Tab_TraceElement_Callbacks(app)
                                                 type            = "heatmap",
                                                 colorscale      = colorm,
                                                 reversescale    = reverseColorMap,
-                                                colorbar_title  = fieldname,
+                                                # colorbar_title  = fieldname,
                                                 hoverinfo       = "skip",
                                                 showlegend      = false,
                                                 colorbar        = attr(     lenmode         = "fraction",
@@ -363,7 +366,9 @@ function Tab_TraceElement_Callbacks(app)
                                                                             exponentformat  = "e" ,
                                                                             tickness        =  0.5,
                                                                             x               =  1.005,
-                                                                            y               =  0.5         ),)
+                                                                            y               =  0.5,
+                                                                title = attr(   text = fieldname,
+                                                                                side = "right")         ),)
 
                 hover_lbl = heatmap(    x               = X_te,
                                         y               = Y_te,
