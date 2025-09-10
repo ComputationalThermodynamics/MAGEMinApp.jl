@@ -857,6 +857,14 @@ dict_em     = JSON.parsefile(file_path)
 file_path   = joinpath(pkg_dir,"src","./tools/ss_name.json")
 dict_ss     = JSON.parsefile(file_path)
 
+file_path   = joinpath(pkg_dir,"src","./tools/OL12_KDs_g52l63.json")
+dict_OL12_KDs_g52l63     = JSON.parsefile(file_path)
+file_path   = joinpath(pkg_dir,"src","./tools/OL12_KDs_g63.json")
+dict_OL12_KDs_g63     = JSON.parsefile(file_path)
+file_path   = joinpath(pkg_dir,"src","./tools/OL12_KDs_l52.json")
+dict_OL12_KDs_l52     = JSON.parsefile(file_path)
+
+
 db_inf      = retrieve_solution_phase_information("ig");
 
 
@@ -891,6 +899,10 @@ AppData = ( contribs            = contribs,
             hidden_pp           = hidden_pp,
             dict_em             = dict_em,  
             dict_ss             = dict_ss,
+            dict_OL12_KDs_l52   = dict_OL12_KDs_l52,
+            dict_OL12_KDs_g63   = dict_OL12_KDs_g63,
+            dict_OL12_KDs_g52l63= dict_OL12_KDs_g52l63,
+            GUI_version         = GUI_version,
             db_inf              = db_inf,
             customWs            = customWs
             )   

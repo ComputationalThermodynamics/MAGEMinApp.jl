@@ -1310,8 +1310,12 @@ function get_parsed_command(    point       :: Int64;
     # te_chondrite    = ["Rb", "Ba", "Th", "U", "Nb", "Ta", "La", "Ce", "Pb", "Pr", "Sr", "Nd", "Zr", "Hf", "Sm", "Eu", "Gd", "Tb", "Dy", "Y", "Ho", "Er", "Tm", "Yb", "Lu", "V", "Sc"]
     ppm_chondrite   = [2.3, 2.41,0.029,0.0074,0.24,0.0136,0.237,0.613,2.47,0.0928,7.25,0.457,3.82,0.103,0.148,0.0563,0.199,0.0361,0.246,1.57,0.0546,0.160,0.0247,0.161,0.0246,56,5.92]
 
-    # if !isnan.(Out_TE_XY[point].Cliq)
-    if all(!isnan, Out_TE_XY[point].Cliq)
+    compute = true
+    if all(isnan, Out_TE_XY[point].Csol) && occursin("S_",varBuilder)
+        compute = false
+    end
+
+    if all(!isnan, Out_TE_XY[point].Cliq) && compute == true
         # varBuilder         = "[M_Dy]/([g_Dy]*[S_Yb])"
         pattern     = r"\[([^\]]+)\]"
         matches     = eachmatch(pattern, varBuilder)

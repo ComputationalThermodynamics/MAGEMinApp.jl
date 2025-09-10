@@ -66,7 +66,7 @@ function Tab_TraceElement_Callbacks(app)
         if @isdefined(all_TE_ph)
              tmp = join(all_TE_ph, " ")
 
-             phase_te_list = "**"*"C0 M S"*tmp*"**"
+             phase_te_list = "**"*"C0 M S "*tmp*"**"
         else
             phase_te_list = " "
         end
