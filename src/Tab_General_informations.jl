@@ -116,6 +116,89 @@ function Tab_General_informations()
                 ),
                 html_div("‎ "),
             ]),
+            dbc_row([
+
+                html_h1("Trace-Elements partitioning coefficients (O. Laurent, 2012)", style = Dict("textAlign" => "center","font-size" => "130%", "marginTop" => 4)),
+            dbc_tabs([
+                dbc_tab(label="SiO2 < 52 wt%", children=[
+                    dbc_row([   
+                        
+                        dash_datatable(
+                            id          ="table-ol12-l52",
+                            columns=(  [    Dict("id" =>  vcat("Element",string.(keys(AppData.dict_OL12_KDs_l52["Rb"])))[i], "name" =>  vcat("Element",string.(keys(AppData.dict_OL12_KDs_l52["Rb"])))[i], "editable" => false) for i in 1:length(vcat("Element",string.(keys(AppData.dict_OL12_KDs_l52["Rb"])))) ]),
+                            data = [
+                                merge(Dict("Element" => string.(keys(AppData.dict_OL12_KDs_l52))[i]), Dict(vcat("Element",string.(keys(AppData.dict_OL12_KDs_l52["Rb"])))[j] => round(AppData.dict_OL12_KDs_l52[string.(keys(AppData.dict_OL12_KDs_l52))[i]][vcat("Element",string.(keys(AppData.dict_OL12_KDs_l52["Rb"])))[j]],digits=5) for j in 2:length(vcat("Element",string.(keys(AppData.dict_OL12_KDs_l52["Rb"]))))))
+                                for i in 1:length(string.(keys(AppData.dict_OL12_KDs_l52)))
+                            ],
+                            style_cell  = Dict(
+                                "textAlign" => "center",
+                                "fontSize" => "120%",
+                                "userSelect" => "text"  # <-- This makes cell content selectable
+                            ),
+                            style_header= (fontWeight="bold",),
+                            style_data_conditional = [
+                                Dict("if" => Dict("column_id" => "Element"), "fontWeight" => "bold")
+                            ],
+                            editable    = false,
+                            page_size   = 32,
+                            filter_action="native"
+                        ),
+                    ]),
+                ]),
+                dbc_tab(label="52 wt% <= SiO2 < 63 wt%", children=[
+                    dbc_row([   
+                        html_h1("Trace-Elements partitioning coefficients (Laurent, 2012)", style = Dict("textAlign" => "center","font-size" => "130%", "marginTop" => 4)),
+                        dash_datatable(
+                            id          ="table-ol12-g53l63",
+                            columns=(  [    Dict("id" =>  vcat("Element",string.(keys(AppData.dict_OL12_KDs_g52l63["Rb"])))[i], "name" =>  vcat("Element",string.(keys(AppData.dict_OL12_KDs_g52l63["Rb"])))[i], "editable" => false) for i in 1:length(vcat("Element",string.(keys(AppData.dict_OL12_KDs_g52l63["Rb"])))) ]),
+                            data = [
+                                merge(Dict("Element" => string.(keys(AppData.dict_OL12_KDs_g52l63))[i]), Dict(vcat("Element",string.(keys(AppData.dict_OL12_KDs_g52l63["Rb"])))[j] => round(AppData.dict_OL12_KDs_g52l63[string.(keys(AppData.dict_OL12_KDs_g52l63))[i]][vcat("Element",string.(keys(AppData.dict_OL12_KDs_g52l63["Rb"])))[j]],digits=5) for j in 2:length(vcat("Element",string.(keys(AppData.dict_OL12_KDs_g52l63["Rb"]))))))
+                                for i in 1:length(string.(keys(AppData.dict_OL12_KDs_g52l63)))
+                            ],
+                            style_cell  = Dict(
+                                "textAlign" => "center",
+                                "fontSize" => "120%",
+                                "userSelect" => "text"  # <-- This makes cell content selectable
+                            ),
+                            style_header= (fontWeight="bold",),
+                            style_data_conditional = [
+                                Dict("if" => Dict("column_id" => "Element"), "fontWeight" => "bold")
+                            ],
+                            editable    = false,
+                            page_size   = 32,
+                            filter_action="native"
+                        ),
+                    ]),
+                ]),
+                dbc_tab(label="63 wt% <= SiO2 ", children=[
+                    dbc_row([   
+                        html_h1("Trace-Elements partitioning coefficients (Laurent, 2012)", style = Dict("textAlign" => "center","font-size" => "130%", "marginTop" => 4)),
+                        dash_datatable(
+                            id          ="table-ol12-g63",
+                            columns=(  [    Dict("id" =>  vcat("Element",string.(keys(AppData.dict_OL12_KDs_g63["Rb"])))[i], "name" =>  vcat("Element",string.(keys(AppData.dict_OL12_KDs_g63["Rb"])))[i], "editable" => false) for i in 1:length(vcat("Element",string.(keys(AppData.dict_OL12_KDs_g63["Rb"])))) ]),
+                            data = [
+                                merge(Dict("Element" => string.(keys(AppData.dict_OL12_KDs_g63))[i]), Dict(vcat("Element",string.(keys(AppData.dict_OL12_KDs_g63["Rb"])))[j] => round(AppData.dict_OL12_KDs_g63[string.(keys(AppData.dict_OL12_KDs_g63))[i]][vcat("Element",string.(keys(AppData.dict_OL12_KDs_g63["Rb"])))[j]],digits=5) for j in 2:length(vcat("Element",string.(keys(AppData.dict_OL12_KDs_g63["Rb"]))))))
+                                for i in 1:length(string.(keys(AppData.dict_OL12_KDs_g63)))
+                            ],
+                            style_cell  = Dict(
+                                "textAlign" => "center",
+                                "fontSize" => "120%",
+                                "userSelect" => "text"  # <-- This makes cell content selectable
+                            ),
+                            style_header= (fontWeight="bold",),
+                            style_data_conditional = [
+                                Dict("if" => Dict("column_id" => "Element"), "fontWeight" => "bold")
+                            ],
+                            editable    = false,
+                            page_size   = 32,
+                            filter_action="native"
+                        ),
+                    ]),
+                ]),
+
+            ]),
+        ]),
+
         ],width=6),
 
             dbc_col([ 

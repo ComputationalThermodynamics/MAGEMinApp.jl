@@ -17,8 +17,10 @@ debug   *= "Jun Ren\n"
 debug   *= "Lorenzo Candioti\n"
 debug   *= "Owen Weller\n"
 debug   *= "Paul Tackley\n"
+debug   *= "Peter Luffi\n"
 debug   *= "Pierre Lanari\n"
 debug   *= "Renato Moraes\n"
+debug   *= "Richard Palin\n"
 debug   *= "Simon Schorn\n"
 debug   *= "Tim J.B. Holland\n"
 debug   *= "Tobias Keller"
@@ -857,6 +859,14 @@ dict_em     = JSON.parsefile(file_path)
 file_path   = joinpath(pkg_dir,"src","./tools/ss_name.json")
 dict_ss     = JSON.parsefile(file_path)
 
+file_path   = joinpath(pkg_dir,"src","./tools/OL12_KDs_g52l63.json")
+dict_OL12_KDs_g52l63     = JSON.parsefile(file_path)
+file_path   = joinpath(pkg_dir,"src","./tools/OL12_KDs_g63.json")
+dict_OL12_KDs_g63     = JSON.parsefile(file_path)
+file_path   = joinpath(pkg_dir,"src","./tools/OL12_KDs_l52.json")
+dict_OL12_KDs_l52     = JSON.parsefile(file_path)
+
+
 db_inf      = retrieve_solution_phase_information("ig");
 
 
@@ -891,6 +901,10 @@ AppData = ( contribs            = contribs,
             hidden_pp           = hidden_pp,
             dict_em             = dict_em,  
             dict_ss             = dict_ss,
+            dict_OL12_KDs_l52   = dict_OL12_KDs_l52,
+            dict_OL12_KDs_g63   = dict_OL12_KDs_g63,
+            dict_OL12_KDs_g52l63= dict_OL12_KDs_g52l63,
+            GUI_version         = GUI_version,
             db_inf              = db_inf,
             customWs            = customWs
             )   
