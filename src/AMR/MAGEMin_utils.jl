@@ -400,7 +400,11 @@ function refine_MAGEMin(data,
                     Xvec[i] = bulk_L*(  1.0 - npoints[i][1]) + bulk_R*npoints[i][1];
                     Bvec[i] = bufferN1*(1.0 - npoints[i][1]) + bufferN2*npoints[i][1];
                     if !isempty(data.split_cell_list) && boost == true
-                        tmp = [Out_XY[data.npoints_ig[i][j]].mSS_vec for j=1:length(data.npoints_ig[i])]
+
+                        n_ph = [ length(Out_XY[data.npoints_ig[i][j]].ph) for j=1:length(data.npoints_ig[i])]
+                        ids  = sortperm(n_ph, rev=true)
+
+                        tmp = [Out_XY[data.npoints_ig[i][ids[j]]].mSS_vec for j=1:length(data.npoints_ig[i])]
                         Gvec[i] = vcat(tmp...)
                     end
                 end
