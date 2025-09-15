@@ -409,10 +409,14 @@ function refine_MAGEMin(data,
                     end
                 end
             end
-
+            if diagType == "pt"
+                fixed_bulk = true
+            else
+                fixed_bulk = false
+            end
             Out_XY_new  =   multi_point_minimization(   Pvec, Tvec, MAGEMin_data;
                                                         X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol", G=Gvec, scp=scp, 
-                                                        rm_list=phase_selection, name_solvus=true, iguess=Ivec, callback_fn = update_progress, W=new_Ws); 
+                                                        rm_list=phase_selection, name_solvus=true, fixed_bulk=fixed_bulk, iguess=Ivec, callback_fn = update_progress, W=new_Ws); 
         else
             # if TT diagram does not exist, compute it
             id_h2o = findfirst(oxi .== "H2O") # check if H2O is in the oxides
