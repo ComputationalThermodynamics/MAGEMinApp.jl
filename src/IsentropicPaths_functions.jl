@@ -44,7 +44,7 @@ function compute_new_IsentropicPath(    nsteps,     bulk_ini,   oxi,    phase_se
     Out_ISOS[1] = deepcopy( point_wise_minimization(Pini,Tini, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
 
     # retrieve reference entropy of the system
-    Sref        = Out_ISOS[1].entropy;
+    Sref        = Out_ISOS[1].entropy[1];
     n_max       = 32
 
     delta_T     = (Pini-Pfinal)/(nsteps+1)*(8.0);
@@ -63,7 +63,7 @@ function compute_new_IsentropicPath(    nsteps,     bulk_ini,   oxi,    phase_se
             while n < n_max && conv == 0
                 c       = (a+b)/2.0
                 out     = deepcopy( point_wise_minimization(P, c , gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
-                result  = out.entropy - Sref
+                result  = out.entropy[1] - Sref
 
                 sign_c  = sign(result)
     

@@ -64,6 +64,10 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
 
     message     = fetch_message()
     message2    = fetch_message2()
+
+    vApp = "Running MAGEMinApp@$(AppData.GUI_version) -> Last version @$(message2) - Julia 1.10+"
+
+
     cur_dir     = pwd()                 # directory from where you started the GUI
     pkg_dir     = pkgdir(MAGEMinApp)   # package dir
     cd(pkg_dir)
@@ -87,7 +91,7 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
                             ]),
                             dbc_row([
                                 html_div("‎ "),
-                                html_div(message2, style = Dict("textAlign" => "center","font-size" => "120%")),    
+                                html_div(vApp, style = Dict("textAlign" => "center","font-size" => "120%")),    
                             ]),
                         ], width="auto" ),
 

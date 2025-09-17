@@ -205,7 +205,7 @@ function Tab_isoSpaths_Callbacks(app)
 
             figIsoS                 = plot(data_plot,layout_isoS)
             figIsoSPath             = plot(df_path_plot, x=:x, y=:y, layout_path)
-            entropy                 = Out_ISOS[1].entropy
+            entropy                 = Out_ISOS[1].entropy[1]
         elseif bid == "sys-unit-isoS"
             data_plot, phase_list   = get_data_plot_isoS(sysunit)
             ytitle                  = "Phase fraction ["*sysunit*"%]"
@@ -214,7 +214,7 @@ function Tab_isoSpaths_Callbacks(app)
 
             figIsoS                 = plot(data_plot,layout_isoS)
             figIsoSPath             = plot(df_path_plot, x=:x, y=:y, layout_path)
-            entropy                 = Out_ISOS[1].entropy
+            entropy                 = Out_ISOS[1].entropy[1]
         else
             figIsoS                 = plot(    Layout( height= 320 ))
         end

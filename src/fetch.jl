@@ -35,7 +35,7 @@ function fetch_message2()
             return "Failed to retrieve the text file. Status code: " * string(response.status)
         end
     catch e
-        return " "
+        return "?.?.?"
     end
 end
 
