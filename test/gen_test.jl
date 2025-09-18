@@ -22,7 +22,7 @@ oxides          = ["SiO2", "Al2O3", "CaO", "MgO", "FeO", "K2O", "Na2O", "TiO2", 
 
 println("  Test P-T diagram computation")
 global Out_XY =  Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,0)
-Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(  data, 
+Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(  "ig", data, 
                                                 MAGEMin_data,
                                                 false,
                                                 "pt",
@@ -61,7 +61,7 @@ print("$res\n")
 data    = select_cells_to_split_and_keep(data)
 data    = perform_AMR(data)
 
-Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(   data,
+Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(   "ig", data,
                                                 MAGEMin_data,
                                                 false,
                                                 "pt",

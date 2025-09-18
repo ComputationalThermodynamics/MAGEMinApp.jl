@@ -947,7 +947,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
         CompProgress.tinit =  time()
         CompProgress.total_points = length(data.npoints)
 
-        Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(  data, MAGEMin_data, custW,  diagType, PTpath,
+        Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(  dtb, data, MAGEMin_data, custW,  diagType, PTpath,
                                                         phase_selection, fixT, fixP,
                                                         e1_liq,     e2_liq,     e1_remain_wat,  e2_remain_wat,     e1_remain,  e2_remain,
                                                         oxi, bulk_L, bulk_R,
@@ -968,7 +968,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                 data    = select_cells_to_split_and_keep(data)
                 data    = perform_AMR(data)
                 CompProgress.total_points = length(data.npoints)
-                t = @elapsed Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(              data, MAGEMin_data, custW,  diagType, PTpath,
+                t = @elapsed Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(              dtb, data, MAGEMin_data, custW,  diagType, PTpath,
                                                                                         phase_selection, fixT, fixP,
                                                                                         e1_liq,     e2_liq,     e1_remain_wat,  e2_remain_wat,     e1_remain,  e2_remain,
                                                                                         oxi, bulk_L, bulk_R,
@@ -1167,7 +1167,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
 
     data    = select_cells_to_split_and_keep(data; bid = bid)
     data    = perform_AMR(data)
-    t = @elapsed Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin( data,       MAGEMin_data, custW,  diagType, PTpath,
+    t = @elapsed Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin( dtb, data,       MAGEMin_data, custW,  diagType, PTpath,
                                                                             phase_selection, fixT, fixP,
                                                                             e1_liq,     e2_liq,     e1_remain_wat,  e2_remain_wat,     e1_remain,  e2_remain,
                                                                             oxi, bulk_L, bulk_R,
