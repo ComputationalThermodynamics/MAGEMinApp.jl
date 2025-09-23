@@ -230,7 +230,7 @@ function get_data_thread( MAGEMin_db :: MAGEMin_Data )
    return (gv, z_b, DB, splx_data)
 end
 
-function refine_MAGEMin(data, 
+function refine_MAGEMin(dtb,data, 
                         MAGEMin_data    :: MAGEMin_Data, 
                         custW           :: Bool,
                         diagType        :: String,
@@ -409,7 +409,7 @@ function refine_MAGEMin(data,
                     end
                 end
             end
-            if diagType == "pt"
+            if diagType == "pt" && dtb != "sb11" && dtb != "sb21"
                 fixed_bulk = true
             else
                 fixed_bulk = false

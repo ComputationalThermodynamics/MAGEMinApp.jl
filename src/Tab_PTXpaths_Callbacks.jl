@@ -127,7 +127,7 @@ function Tab_PTXpaths_Callbacks(app)
                 melt    = zeros(Int64, n_tot)
                 Z       = Matrix{Union{Float64,Missing}}(undef, n_ph_e, n_tot) .= missing
                 Y       = zeros(Float64, n_ph_e, n_tot)
-
+# add a zero line first
                 for i=1:n_ph_e
                     
                     ph = ph_names_ext_ptx[i]
@@ -181,7 +181,8 @@ function Tab_PTXpaths_Callbacks(app)
                     col = i*"_$(sysunit)%"
                     MAGEMin_db[!, col] = Float64[] 
                 end
-
+                
+                Z = hcat(zeros(length(ph_names_ext_ptx)),Z)
                 for k=1:n_tot
                     part_1 = Dict(  "point[#]"              => k,
                                     "P[kbar]"               => P[k],
