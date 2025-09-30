@@ -50,7 +50,7 @@ function get_wat_sat_function(     Yrange,     bulk_ini,   oxi,    phase_selecti
 
         Tmin        = 500.0;
         Tliq        = 2200.0;
-        tolerance   = 0.01;      
+        tolerance   = 1e-4;      
 
         Tsol        = zeros(Float64,length(Prange))
         SatSol      = zeros(Float64,length(Prange))
@@ -59,7 +59,7 @@ function get_wat_sat_function(     Yrange,     bulk_ini,   oxi,    phase_selecti
 
             pressure    = Prange[i]
             out         = deepcopy( point_wise_minimization(pressure, Tliq, gv, z_b, DB, splx_data, sys_in;buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
-            n_max       = 32
+            n_max       = 64
             a           = Tmin
             b           = Tliq
             n           = 1
@@ -93,8 +93,8 @@ function get_wat_sat_function(     Yrange,     bulk_ini,   oxi,    phase_selecti
                 n += 1
             end
 
-            Tsol[i]     = b
-            out         = deepcopy( point_wise_minimization(pressure, b , gv, z_b, DB, splx_data, sys_in;buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
+            Tsol[i]     = (a+b)/2.0
+            out         = deepcopy( point_wise_minimization(pressure, (a+b)/2.0 + 0.01 , gv, z_b, DB, splx_data, sys_in;buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
 
             id_dry      = findall(out.oxides .!= "H2O")
             id_h2o      = findall(out.oxides .== "H2O")[1]
