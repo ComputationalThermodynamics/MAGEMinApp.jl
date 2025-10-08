@@ -228,8 +228,8 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
 
 end
 
-
-function main()
+# this is the main function that will be called when you run the app
+function main(ARGS)
 
     App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
 
