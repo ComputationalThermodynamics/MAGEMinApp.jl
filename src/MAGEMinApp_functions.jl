@@ -1163,6 +1163,16 @@ function get_gridded_map(   fieldname   ::String,
             for i=1:np
                 field[i] = Out_XY[i].alpha[1];
             end
+        elseif fieldname == "Vp/Vs"
+            for i=1:np
+                field[i] = Out_XY[i].Vp / Out_XY[i].Vs;
+            end
+            field[isnan.(field)] .= missing
+        elseif fieldname == "Vp_S/Vs_S"
+            for i=1:np
+                field[i] = Out_XY[i].Vp_S / Out_XY[i].Vs_S;
+            end
+            field[isnan.(field)] .= missing
         elseif fieldname == "Delta_rho"
             for i=1:np
                 field[i] = 0.0
@@ -1462,6 +1472,16 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
             for i=1:np
                 field[i] = Out_XY[i].alpha[1];
             end
+        elseif fieldname == "Vp/Vs"
+            for i=1:np
+                field[i] = Out_XY[i].Vp / Out_XY[i].Vs;
+            end
+            field[isnan.(field)] .= missing
+        elseif fieldname == "Vp_S/Vs_S"
+            for i=1:np
+                field[i] = Out_XY[i].Vp_S / Out_XY[i].Vs_S;
+            end
+            field[isnan.(field)] .= missing
         elseif fieldname == "Delta_rho"
             for i=1:np
                 field[i] = 0.0
@@ -1734,28 +1754,44 @@ function get_isopleth_map(  mod         ::String,
                 field[i] = 0.0
             end
         end 
-    elseif mod == "of_mod"
-        if of == "s_cp"
-            for i=1:np
-                field[i] = Out_XY[i].s_cp[1];
-            end
-        elseif of == "entropy"
-            for i=1:np
-                field[i] = Out_XY[i].entropy[1];
-            end
-        elseif of == "enthalpy"
-            for i=1:np
-                field[i] = Out_XY[i].enthalpy[1];
-            end
-        elseif of == "alpha"
-            for i=1:np
-                field[i] = Out_XY[i].alpha[1];
-            end
-        else
-            for i=1:np
-                field[i] = Float64(get_property(Out_XY[i], of));
-            end
+        elseif mod == "of_mod"
+            if of == "s_cp"
+                for i=1:np
+                    field[i] = Out_XY[i].s_cp[1];
+                end
+            elseif of == "entropy"
+                for i=1:np
+                    field[i] = Out_XY[i].entropy[1];
+                end
+            elseif of == "enthalpy"
+                for i=1:np
+                    field[i] = Out_XY[i].enthalpy[1];
+                end
+            elseif of == "alpha"
+                for i=1:np
+                    field[i] = Out_XY[i].alpha[1];
+                end
+            elseif of == "Vp/Vs"
+                for i=1:np
+                    field[i] = Out_XY[i].Vp / Out_XY[i].Vs;
+                end
+            elseif of == "Vp_S/Vs_S"
+                for i=1:np
+                    field[i] = Out_XY[i].Vp_S / Out_XY[i].Vs_S;
+                end
+            elseif of == "Delta_rho"
+                for i=1:np
+                    field[i] = 0.0
+                    if (Out_XY[i].frac_M > 0.0 && Out_XY[i].frac_S > 0.0)
+                        field[i] = Out_XY[i].rho_S - Out_XY[i].rho_M
+                    end
+                end
+            else
+                for i=1:np
+                    field[i] = Float64(get_property(Out_XY[i], of));
+                end
         end
+
         field[isnan.(field)] .= missing
         if of == "frac_M" || of == "rho_M" || of == "rho_S"
             field[isless.(field, 1e-8)] .= 0.0              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
