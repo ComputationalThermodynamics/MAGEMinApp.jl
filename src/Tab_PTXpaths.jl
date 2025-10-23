@@ -909,6 +909,42 @@ function Tab_PTXpaths()
                                                 multi       =  false    ),
                                             ]),
                                         ]),
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("Color options", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ], width=6),
+                                            dbc_col([ 
+                                                dbc_button("change",id="style-canvas-button", color="light",  n_clicks=0,
+                                                style       = Dict( "textAlign"     => "center",
+                                                                    "font-size"     => "100%",
+                                                                    "border"        =>"1px grey solid",
+                                                                    "width"         => "100%" )), 
+                                            ]),
+                                        ]),
+
+
+                                        dbc_row([    
+                                            dbc_offcanvas(
+                                            [
+                                                # dbc_row([                                                                                     
+                                                #     TAS_plot_pd()
+                                                # ]),
+                                                # dbc_row([                                                                                     
+                                                #     TAS_pluto_plot_pd()
+                                                # ]),
+                                                # dbc_row([                                                                                     
+                                                #     AFM_plot_pd()
+                                                # ]),
+                                            ],
+            
+                                                id      = "style-canvas",
+                                                title   = "Color options",
+                                                is_open = false,
+                                                placement = "start",
+                                                style   = Dict( "width"             => "660px",
+                                                                "background-color"  => "rgba(255, 255, 255, 1.0)"),
+                                            ),
+                                        ]),
    
 
 
@@ -930,10 +966,7 @@ function Tab_PTXpaths()
 
                                         dbc_card(dbc_cardbody([
                                             dbc_row([
-                                                dbc_row([
-                                                    html_div("‎ "),
-                                                    html_hr(),
-                                                ]),
+
                                                 dbc_row([
                                                     dbc_col([
                                                         html_h1("Stable phase fraction", style = Dict("textAlign" => "center","font-size" => "200%", "marginTop" => 16)),
@@ -962,7 +995,6 @@ function Tab_PTXpaths()
                                                 # html_div([                                                     
                                                     dbc_row([
                                                         html_div("‎ "),
-                                                        html_hr(),
                                                     ]),
                                                     dbc_row([
                                                         dbc_col([
@@ -1029,7 +1061,7 @@ function Tab_PTXpaths()
                                             ]),
                                             dbc_row([
                                                 html_div("‎ "),
-                                                html_hr(),
+                                                # html_hr(),
                                                 html_h1("Fractionated composition", style = Dict("textAlign" => "center","font-size" => "200%", "marginTop" => 8)),
                                                 html_hr(),
                                                 html_div("‎ "),

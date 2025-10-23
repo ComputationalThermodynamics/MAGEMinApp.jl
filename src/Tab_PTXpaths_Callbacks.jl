@@ -1,5 +1,24 @@
+#=~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#   Project      : MAGEMin_App
+#   License      : GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
+#   Developers   : Nicolas Riel, Boris Kaus
+#   Contributors : Dominguez, H., Moyen, J-F.
+#   Organization : Institute of Geosciences, Johannes-Gutenberg University, Mainz
+#   Contact      : nriel[at]uni-mainz.de
+#
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ =#
+
 function Tab_PTXpaths_Callbacks(app)
 
+    callback!(
+        app,
+        Output("style-canvas", "is_open"),
+        Input("style-canvas-button", "n_clicks"),
+        State("style-canvas", "is_open"),
+    ) do n1, is_open
+        return n1 > 0 ? is_open == 0 : is_open
+    end;
 
     #save references to bibtex
     callback!(
@@ -720,6 +739,7 @@ function Tab_PTXpaths_Callbacks(app)
                                     cpx,        limOpx,     limOpxVal,
                                     nCon,       nRes                                  )
 
+            phase_infos_PTX             = get_phase_infos(Out_PTX)
 
             layout_ptx                  = initialize_layout(title,sysunit)
             layout_extracted_ptx        = initialize_ext_layout(title,sysunit)

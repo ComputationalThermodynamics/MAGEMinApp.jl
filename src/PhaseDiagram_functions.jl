@@ -1,3 +1,14 @@
+#=~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#   Project      : MAGEMin_App
+#   License      : GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
+#   Developers   : Nicolas Riel, Boris Kaus
+#   Contributors : Dominguez, H., Moyen, J-F.
+#   Organization : Institute of Geosciences, Johannes-Gutenberg University, Mainz
+#   Contact      : nriel[at]uni-mainz.de
+#
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ =#
+
 import Contour as CTR
 
 mutable struct ss_infos
@@ -1000,7 +1011,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                                                                         Xrange,
                                                                                         Yrange)
 
-        get_phase_infos(Out_XY,data)                                                                                
+        phase_infos = get_phase_infos(Out_XY)                                                                                
 
         PT_infos = get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat,watsat_val)
 

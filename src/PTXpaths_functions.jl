@@ -1,3 +1,13 @@
+#=~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#   Project      : MAGEMin_App
+#   License      : GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
+#   Developers   : Nicolas Riel, Boris Kaus
+#   Contributors : Dominguez, H., Moyen, J-F.
+#   Organization : Institute of Geosciences, Johannes-Gutenberg University, Mainz
+#   Contact      : nriel[at]uni-mainz.de
+#
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ =#
 
 """
     Retrieve AFM diagram
@@ -1209,12 +1219,13 @@ function initialize_rm_layout()
             linewidth     = 1       # Set the thickness of the axis line
         ),
         yaxis       = attr(
+            autorange     = false,
             fixedrange    = true,
             showgrid      = false,  # Disable gridlines inside the plot
             zeroline      = true,   # Show the axis line
             linecolor     = "black", # Set the left axis line color
             linewidth     = 1,       # Set the thickness of the axis line
-            range         = [0.0, nothing]
+            range         = [0.0, 100.0]
         ),
     )
 
@@ -1254,12 +1265,13 @@ function initialize_layout(title,sysunit)
             linewidth     = 1       # Set the thickness of the axis line
         ),
         yaxis       = attr(
+            autorange     = false,
             fixedrange    = true,
             showgrid      = false,  # Disable gridlines inside the plot
             zeroline      = true,   # Show the axis line
             linecolor     = "black", # Set the left axis line color
             linewidth     = 1,       # Set the thickness of the axis line
-            range         = [0.0, nothing]
+            range         = [0.0, 100.0]
         ),
     )
 
@@ -1302,12 +1314,13 @@ function initialize_ext_layout(title,sysunit)
             linewidth     = 1       # Set the thickness of the axis line
         ),
         yaxis       = attr(
+            autorange     = false,
             fixedrange    = true,
             showgrid      = false,  # Disable gridlines inside the plot
             zeroline      = true,   # Show the axis line
             linecolor     = "black", # Set the left axis line color
             linewidth     = 1,       # Set the thickness of the axis line
-            range         = [0.0, nothing]
+            range         = [0.0, 100.0]
         ),
     )
 
@@ -1338,12 +1351,13 @@ function initialize_comp_layout(sysunit)
             linewidth     = 1       # Set the thickness of the axis line
         ),
         yaxis       = attr(
+            autorange     = false,
             fixedrange    = true,
             showgrid      = false,  # Disable gridlines inside the plot
             zeroline      = true,   # Show the axis line
             linecolor     = "black", # Set the left axis line color
             linewidth     = 1,       # Set the thickness of the axis line
-            range         = [0.0, nothing]
+            range         = [0.0, 100.0]
         ),
     )
 

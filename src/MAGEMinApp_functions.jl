@@ -1,3 +1,13 @@
+#=~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#   Project      : MAGEMin_App
+#   License      : GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
+#   Developers   : Nicolas Riel, Boris Kaus
+#   Contributors : Dominguez, H., Moyen, J-F.
+#   Organization : Institute of Geosciences, Johannes-Gutenberg University, Mainz
+#   Contact      : nriel[at]uni-mainz.de
+#
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ =#
 
 function sanitize_names(names::Vector{String})
     return [replace(replace(replace(replace(name, " " => "_"), "/" => "o"),"[" => ""),"]" => "") for name in names]
@@ -706,12 +716,9 @@ function restrict_colorMapRange(    colorMap    ::String,
     return colorm
 end
 
-function get_phase_infos(       Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}},
-                                data        ::MAGEMinApp.AMR_data )
+function get_phase_infos(       Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float64, Int64}})
 
-    global phase_infos
-
-    np          = length(data.points)
+    np          = length(Out_XY)
     
     # here we also get information about the phases that are stable accross the diagram and their potential solvus
     act_ss      = []
@@ -756,7 +763,7 @@ function get_phase_infos(       Out_XY      ::Vector{MAGEMin_C.gmin_struct{Float
                     reac_pp      = reac_pp,
                     reac_ss      = reac_ss,
                     act_sol      = act_sol  )
-    return nothing
+    return phase_infos
 end
 
 """
