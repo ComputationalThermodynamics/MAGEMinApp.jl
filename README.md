@@ -38,6 +38,15 @@ As for `MAGEMin`, you can choose among several thermodynamic dataset: Metapelite
 
 ### Installation
 
+Using Julia 1.12 and above, the recommended way is to install `MAGEMinApp` as an app from the package manager in your default Julia environment:
+
+```julia
+julia>]
+pkg> app add MAGEMinApp
+```
+
+If you are using a Julia version below 1.12, you have to install `MAGEMinApp` as a regular package:
+
 To install MAGEMinApp:
 ```julia
 julia>]         # opens package manager in Julia
@@ -48,7 +57,15 @@ pkg> add MAGEMinApp
 
 ### Update to newest version
 
-If you have a previous version of MAGEMinApp installed, the easiest way to update MAGEMinApp is the following:
+If you have a previous version of MAGEMinApp installed, the easiest way to update MAGEMinApp as an App is the following:
+
+```julia
+julia>]
+pkg> app remove MAGEMinApp   # First remove MAGEMinApp
+pkg> app add MAGEMinApp      # reinstall MAGEMinApp
+```
+
+If you are using MAGEMinApp as a regular package, you can update it using the following commands:
 
 ```julia
 julia>]
@@ -68,13 +85,24 @@ julia> ENV["JULIA_PKG_SERVER_REGISTRY_PREFERENCE"] = "eager"
 
 ### Running MAGEMinApp
 
+With Julia 1.12 and above, you can run MAGEMinApp directly from your terminal if you have installed it as an App, without starting a Julia session. Just type in your terminal:
+```bash
+MAGEMinApp
+[ Info: Listening on: 127.0.0.1:8050, thread id: 1
+```
+
+Next you can open [127.0.0.1:8050](127.0.0.1:8050) in your favorite browser, which will launch the App.
+
+If you are using Julia version below 1.12 or if you have installed MAGEMinApp as a regular package, you need to start a Julia session and type:
+
 And start it with:
 ```julia
 julia> using MAGEMinApp
 julia> App()
 [ Info: Listening on: 127.0.0.1:8050, thread id: 2
 ```
-Next you can open [127.0.0.1:8050](127.0.0.1:8050) in your favorite browser, which will launch the App.
+
+And then open the address in your favorite browser.
 
 ### How to load custom bulk-rock composition
 

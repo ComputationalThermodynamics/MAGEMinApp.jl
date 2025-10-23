@@ -69,4 +69,5 @@ TOML = "1.0.3"
 XLSX = "0.10.4"
 julia = "1.10"
 
-[apps.MAGEMinApp]
+[apps]
+MAGEMinApp = {julia_flags = ["--threads=auto"] }
