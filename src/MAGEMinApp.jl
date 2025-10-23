@@ -1,10 +1,19 @@
-# HELP:
+#=~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#   Project      : MAGEMin_App
+#   License      : GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
+#   Developers   : Nicolas Riel, Boris Kaus
+#   Contributors : Dominguez, H., Moyen, J-F.
+#   Organization : Institute of Geosciences, Johannes-Gutenberg University, Mainz
+#   Contact      : nriel[at]uni-mainz.de
+#
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ =#
 
 module MAGEMinApp
 
 using Dash
 using DashBootstrapComponents
-using PlotlyJS, JSON3, JSON, Printf, Statistics, DataFrames, CSV, XLSX, Dates, Base64
+using PlotlyJS, JSON3, JSON, Printf, Statistics, DataFrames, CSV, XLSX, Dates, Base64, Random
 using UUIDs, HTTP
 using JLD2, DelimitedFiles, Interpolations
 using ConcaveHull,PolygonOps
@@ -46,6 +55,8 @@ include(joinpath(pkg_dir,"src","Tab_isentropic_Callbacks.jl"))
 include(joinpath(pkg_dir,"src","IsentropicPaths_functions.jl"))
 include(joinpath(pkg_dir,"src","Tab_General_informations.jl"))
 include(joinpath(pkg_dir,"src","MAGEMinApp_functions.jl"))
+include(joinpath(pkg_dir,"src","Loading_functions.jl"))
+include(joinpath(pkg_dir,"src","Style_functions.jl"))
 
 # Set of functions to extract field boundaries and field centers (by Antom Popov, JGU)
 include(joinpath(pkg_dir,"src","Boundaries/center.jl"))
@@ -228,52 +239,10 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
 
 end
 
-
+# this is the main function that will be called when you run the app
 function main(ARGS)
 
-    # By default, start with --threads auto if no thread flag is provided
-    has_threads_flag = any(x -> x == "--threads" || x == "-t", ARGS)
-    if !has_threads_flag
-        n = Sys.CPU_THREADS
-        if Threads.nthreads() != n
-            println("Restarting with $n threads (auto)...")
-            cmd = `$(Base.julia_cmd()) -t $n -m MAGEMinApp $(ARGS...)`
-            run(cmd)
-            return 0
-        end
-    end
-
-    if length(ARGS) > 0
-
-        # Check for --threads or -t flag
-        i = 1
-        while i <= length(ARGS)
-            if (ARGS[i] == "--threads" || ARGS[i] == "-t") && i < length(ARGS)
-                nstr = ARGS[i+1]
-                if nstr == "auto"
-                    n = Sys.CPU_THREADS
-                else
-                    n = parse(Int, nstr)
-                end
-                if Threads.nthreads() != n
-                    println("Restarting with $n threads...")
-                    # Remove the thread flag and its value from ARGS for restart
-                    new_args = copy(ARGS)
-                    splice!(new_args, i:i+1)
-                    cmd = `$(Base.julia_cmd()) -t $n -m MAGEMinApp $(new_args...)`
-                    run(cmd)
-                    return 0
-                end
-            end
-            i += 1
-        end
-
-        x = popfirst!(ARGS)
-        if x == "run"
-            println("Running MAGEMinApp, wait a bit...")
-            App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
-        end
-    end
+    App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
 
     return 0
 end

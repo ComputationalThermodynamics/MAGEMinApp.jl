@@ -909,6 +909,63 @@ function Tab_PTXpaths()
                                                 multi       =  false    ),
                                             ]),
                                         ]),
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("Color options", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ], width=6),
+                                            dbc_col([ 
+                                                dbc_button("Modify color scheme",id="style-canvas-button", color="light",  n_clicks=0,
+                                                style       = Dict( "textAlign"     => "center",
+                                                                    "font-size"     => "100%",
+                                                                    "border"        =>"1px grey solid",
+                                                                    "width"         => "100%" )), 
+                                            ]),
+                                        ]),
+
+
+                                        dbc_row([    
+                                            dbc_offcanvas(
+                                                [
+                                                    dbc_col([ 
+                                                        dbc_row([
+                                                            dbc_button("Save colors/styles",id="save-color-style", color="light", className="me-2", n_clicks=0,
+                                                            style       = Dict( "textAlign"     => "center",
+                                                                                "font-size"     => "100%",
+                                                                                "background-color" => "#d3f2ce",
+                                                                                "border"        =>"1px grey solid")), 
+                                                            dbc_alert(
+                                                            "Successfully saved colors/styles",
+                                                            id      ="color-style-save",
+                                                            is_open =false,
+                                                            duration=4000,
+                                                        ),
+                                                        html_div("‎ "),
+                                                        ]),
+                                                    ], width=10),
+                                                    dbc_row([
+                                                        dbc_col([ 
+                                                            html_div(create_ph_names(AppData.mineral_style), id="ph-names-container")
+                                                        ], width=2),
+                                                        dbc_col([ 
+                                                            html_div(create_color_inputs(AppData.mineral_style), id="color-inputs-container")
+                                                        ], width=4),
+                                                        dbc_col([ 
+                                                            html_div(create_dropdown_inputs(AppData.mineral_style), id="dropdown-inputs-container")
+                                                        ], width=4),
+                                                        dbc_col([ 
+                                                            # html_div(create_dropdown_inputs(AppData.mineral_style), id="dropdown-inputs-container")
+                                                        ]),
+                                                    ])
+                                                ],
+            
+                                                id          = "style-canvas",
+                                                title       = "Color/style options",
+                                                is_open     = false,
+                                                placement   = "start",
+                                                style   = Dict( "width"             => "320px",
+                                                                "background-color"  => "rgba(255, 255, 255, 1.0)"),
+                                            ),
+                                        ]),
    
 
 
@@ -930,10 +987,7 @@ function Tab_PTXpaths()
 
                                         dbc_card(dbc_cardbody([
                                             dbc_row([
-                                                dbc_row([
-                                                    html_div("‎ "),
-                                                    html_hr(),
-                                                ]),
+
                                                 dbc_row([
                                                     dbc_col([
                                                         html_h1("Stable phase fraction", style = Dict("textAlign" => "center","font-size" => "200%", "marginTop" => 16)),
@@ -962,7 +1016,6 @@ function Tab_PTXpaths()
                                                 # html_div([                                                     
                                                     dbc_row([
                                                         html_div("‎ "),
-                                                        html_hr(),
                                                     ]),
                                                     dbc_row([
                                                         dbc_col([
@@ -1029,7 +1082,7 @@ function Tab_PTXpaths()
                                             ]),
                                             dbc_row([
                                                 html_div("‎ "),
-                                                html_hr(),
+                                                # html_hr(),
                                                 html_h1("Fractionated composition", style = Dict("textAlign" => "center","font-size" => "200%", "marginTop" => 8)),
                                                 html_hr(),
                                                 html_div("‎ "),
