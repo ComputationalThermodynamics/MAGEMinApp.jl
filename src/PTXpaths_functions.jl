@@ -769,7 +769,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
 
 end
 
-function get_data_plot(display_mode,sysunit)
+function get_data_plot(display_mode, sysunit, ph_colors)
 
     n_ph    = length(ph_names_ptx)
     n_tot   = length(Out_PTX)
@@ -779,11 +779,10 @@ function get_data_plot(display_mode,sysunit)
     Y       = zeros(Float64, n_ph, n_tot)
 
     colormap = get_jet_colormap(n_ph)
- 
+    
     for i=1:n_ph
 
         ph = ph_names_ptx[i]
-
         for k=1:n_tot
             
             x[k]    = string(round(Out_PTX[k].P_kbar,digits=1))*"; "*string(round(Out_PTX[k].T_C,digits=1))
@@ -812,28 +811,33 @@ function get_data_plot(display_mode,sysunit)
 
     if display_mode == "stacked"
         for i=1:n_ph
+            ph      = ph_names_ptx[i]
+            ph_id   = findfirst(collect(keys(AppData.mineral_style)) .== ph)
+
             data_plot_ptx[i] = scatter(;    x           =  x,
                                             y           =  Y[i,:],
                                             name        = ph_names_ptx[i],
                                             stackgroup  = "one",
                                             mode        = "lines",
                                             line        = attr(     width   =  0.5,
-                                                                    color   = colormap[i])  )
+                                                                    color   = ph_colors[ph_id] #=colormap[i]=#)  )
         end
     else 
         for i=1:n_ph
+            ph      = ph_names_ptx[i]
+            ph_id   = findfirst(collect(keys(AppData.mineral_style)) .== ph)
             data_plot_ptx[i] = scatter(;    x           =  x,
                                             y           =  Y[i,:],
                                             name        = ph_names_ptx[i],
                                             mode        = "markers+lines",
                                             marker = attr(
                                                 size    = 5.0,          # Set the size of the circle
-                                                color   = colormap[i],      # Set the color of the circle
+                                                color   = ph_colors[ph_id],      # Set the color of the circle
                                                 symbol  = "circle-open", # Use an open circle marker
                                                 opacity = 0.5           # Set the transparency (0.0 = fully transparent, 1.0 = fully opaque)
                                             ),
                                             line        = attr(     width   = 0.75,
-                                                                    color   = colormap[i])   )
+                                                                    color   = ph_colors[ph_id] #=colormap[i]=#)  )
          end
     end
      data_plot_ptx[n_ph+1] = scatter(   x               = x,
@@ -862,7 +866,7 @@ function get_data_plot(display_mode,sysunit)
 end
 
 
-function get_extracted_data_plot(ext_mode,sysunit,mode,nRes,nCon)
+function get_extracted_data_plot(ext_mode,sysunit,mode,nRes,nCon, ph_colors)
 
     n_ph    = length(ph_names_ptx)
     n_tot   = length(Out_PTX)
@@ -932,28 +936,36 @@ function get_extracted_data_plot(ext_mode,sysunit,mode,nRes,nCon)
 
     if ext_mode == "stacked"
         for i=1:n_ph_e
+
+            ph      = ph_names_ext_ptx[i]
+            ph_id   = findfirst(collect(keys(AppData.mineral_style)) .== ph)
+
             data_extracted_plot_ptx[i] = scatter(;  x           =  x,
                                                     y           =  Z[i,:],
                                                     name        = ph_names_ext_ptx[i],
                                                     stackgroup  = "one",
                                                     mode        = "lines",
                                                     line        = attr(     width   =  1.0,
-                                                                            color   = colormap[i])  )
+                                                                            color   = ph_colors[ph_id])  )
         end
     else 
         for i=1:n_ph_e
+
+            ph      = ph_names_ext_ptx[i]
+            ph_id   = findfirst(collect(keys(AppData.mineral_style)) .== ph)
+
             data_extracted_plot_ptx[i] = scatter(;  x           =  x,
                                                     y           =  Z[i,:],
                                                     name        = ph_names_ext_ptx[i],
                                                     mode        = "markers+lines",
                                                     marker = attr(
                                                         size    = 5.0,          # Set the size of the circle
-                                                        color   = colormap[i],      # Set the color of the circle
+                                                        color   = ph_colors[ph_id],      # Set the color of the circle
                                                         symbol  = "circle-open", # Use an open circle marker
                                                         opacity = 0.5           # Set the transparency (0.0 = fully transparent, 1.0 = fully opaque)
                                                     ),
                                                     line        = attr(     width   = 1.0,
-                                                                            color   = colormap[i])   )
+                                                                            color   = ph_colors[ph_id])   )
          end
     end
 

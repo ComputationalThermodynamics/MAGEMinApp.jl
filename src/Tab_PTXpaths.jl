@@ -914,7 +914,7 @@ function Tab_PTXpaths()
                                                 html_h1("Color options", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                             ], width=6),
                                             dbc_col([ 
-                                                dbc_button("change",id="style-canvas-button", color="light",  n_clicks=0,
+                                                dbc_button("Modify color scheme",id="style-canvas-button", color="light",  n_clicks=0,
                                                 style       = Dict( "textAlign"     => "center",
                                                                     "font-size"     => "100%",
                                                                     "border"        =>"1px grey solid",

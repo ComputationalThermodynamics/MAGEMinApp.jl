@@ -763,6 +763,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         State("connectivity-id",        "value"),
         State("residual-id",            "value"),
+        [State("colorpicker-$mineral",  "value") for mineral in keys(AppData.mineral_style)]...,
     
         prevent_initial_call = true,
 
@@ -771,7 +772,7 @@ function Tab_PTXpaths_Callbacks(app)
                 dtb,        dataset,    bufferType, solver,
                 verbose,    bulk,       bulk2,      bufferN,
                 cpx,        limOpx,     limOpxVal,  test,   sysunit,
-                nCon,       nRes  
+                nCon,       nRes,       ph_colors...
 
         bid                     = pushed_button( callback_context() )    # get which button has been pushed
         phase_selection         = remove_phases(string_vec_diff(phase_selection,pure_phase_selection,dtb),dtb)
@@ -796,8 +797,8 @@ function Tab_PTXpaths_Callbacks(app)
 
             layout_ptx                  = initialize_layout(title,sysunit)
             layout_extracted_ptx        = initialize_ext_layout(title,sysunit)
-            data_plot_ptx, phase_list   = get_data_plot(display_mode,sysunit)
-            data_extracted_plot_ptx, phase_list_ext   = get_extracted_data_plot(ext_display_mode,sysunit,mode,nRes,nCon)
+            data_plot_ptx, phase_list   = get_data_plot(display_mode, sysunit, ph_colors)
+            data_extracted_plot_ptx, phase_list_ext   = get_extracted_data_plot(ext_display_mode,sysunit,mode,nRes,nCon, ph_colors)
 
             figPTX                      = plot(data_plot_ptx,layout_ptx)
             figExtractedPTX             = plot(data_extracted_plot_ptx,layout_extracted_ptx)
@@ -813,8 +814,8 @@ function Tab_PTXpaths_Callbacks(app)
             figrmintPTX                 = plot(data_comp_rm_int_plot,layout_rm_int_ptx)
 
         elseif bid == "sys-unit-ptx" || bid == "ext-display-mode" || bid == "display-mode"
-            data_plot_ptx, phase_list   = get_data_plot(display_mode,sysunit)
-            data_extracted_plot_ptx, phase_list_ext   = get_extracted_data_plot(ext_display_mode,sysunit,mode,nRes,nCon)
+            data_plot_ptx, phase_list   = get_data_plot(display_mode,sysunit, ph_colors)
+            data_extracted_plot_ptx, phase_list_ext   = get_extracted_data_plot(ext_display_mode,sysunit,mode,nRes,nCon, ph_colors)
 
             layout_ptx[:yaxis_title]    = "Phase fraction ["*sysunit*"%]"
             layout_extracted_ptx[:yaxis_title]        = "Extracted phase fraction ["*sysunit*"%]"
