@@ -925,23 +925,44 @@ function Tab_PTXpaths()
 
                                         dbc_row([    
                                             dbc_offcanvas(
-                                            [
-                                                # dbc_row([                                                                                     
-                                                #     TAS_plot_pd()
-                                                # ]),
-                                                # dbc_row([                                                                                     
-                                                #     TAS_pluto_plot_pd()
-                                                # ]),
-                                                # dbc_row([                                                                                     
-                                                #     AFM_plot_pd()
-                                                # ]),
-                                            ],
+                                                [
+                                                    dbc_col([ 
+                                                        dbc_row([
+                                                            dbc_button("Save colors/styles",id="save-color-style", color="light", className="me-2", n_clicks=0,
+                                                            style       = Dict( "textAlign"     => "center",
+                                                                                "font-size"     => "100%",
+                                                                                "background-color" => "#d3f2ce",
+                                                                                "border"        =>"1px grey solid")), 
+                                                            dbc_alert(
+                                                            "Successfully saved colors/styles",
+                                                            id      ="color-style-save",
+                                                            is_open =false,
+                                                            duration=4000,
+                                                        ),
+                                                        html_div("‎ "),
+                                                        ]),
+                                                    ], width=10),
+                                                    dbc_row([
+                                                        dbc_col([ 
+                                                            html_div(create_ph_names(AppData.mineral_style), id="ph-names-container")
+                                                        ], width=2),
+                                                        dbc_col([ 
+                                                            html_div(create_color_inputs(AppData.mineral_style), id="color-inputs-container")
+                                                        ], width=4),
+                                                        dbc_col([ 
+                                                            html_div(create_dropdown_inputs(AppData.mineral_style), id="dropdown-inputs-container")
+                                                        ], width=4),
+                                                        dbc_col([ 
+                                                            # html_div(create_dropdown_inputs(AppData.mineral_style), id="dropdown-inputs-container")
+                                                        ]),
+                                                    ])
+                                                ],
             
-                                                id      = "style-canvas",
-                                                title   = "Color options",
-                                                is_open = false,
-                                                placement = "start",
-                                                style   = Dict( "width"             => "660px",
+                                                id          = "style-canvas",
+                                                title       = "Color/style options",
+                                                is_open     = false,
+                                                placement   = "start",
+                                                style   = Dict( "width"             => "320px",
                                                                 "background-color"  => "rgba(255, 255, 255, 1.0)"),
                                             ),
                                         ]),

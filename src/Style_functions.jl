@@ -113,13 +113,10 @@ function create_default_mineral_style(mineral_names::Vector{String})
     return mineral_style
 end
 
-function save_style(dict::Dict{String, Vector{Any}}, path::AbstractString=json_path)
-    dir = dirname(path)
-    isdir(dir) || mkpath(dir)
+function save_style(dict::Dict{String, Vector{Any}}; path::AbstractString= joinpath(pkg_dir,"src","./user_data/mineral_style.json"))
     open(path, "w") do io
         JSON3.write(io, dict; indent=2)
     end
-    return path
 end
 
 # try to load user overrides if present
@@ -136,14 +133,43 @@ function load_style(json_path)
     end
 end
 
+
+# Function to dynamically create dbc_input for each mineral
+function create_ph_names(style::Dict{String, Vector{Any}})
+    inputs = []
+    for mineral in sort(collect(keys(style)))
+        push!(inputs, dbc_row([
+            dbc_col(html_label(mineral, style=Dict("font-weight" => "bold")), width=12),
+        ], id="row-name-$mineral", style=Dict("margin-bottom" => "0px", "height" => "24px", "display" => "block")))
+    end
+    return inputs
+end
+
+
+# Function to dynamically create dbc_input for each mineral
+function create_color_inputs(style::Dict{String, Vector{Any}})
+    inputs = []
+    for mineral in sort(collect(keys(style)))
+        push!(inputs, dbc_row([
+            dbc_col(dbc_input(
+                type    = "color",
+                id      = "colorpicker-$mineral",
+                value   =  style[mineral][1],
+                style   =  Dict("height" => 16, "padding" => "0", "margin" => "0" )
+            ))
+        ], id="row-color-$mineral", style=Dict("margin-bottom" => "0px", "height" => "24px", "display" => "block")))
+    end
+    return inputs
+end
+
+
 # Function to dynamically create dbc_input for each mineral
 function create_dropdown_inputs(style::Dict{String, Vector{Any}})
     inputs = []
     for mineral in sort(collect(keys(style)))
         push!(inputs, dbc_row([
-            dbc_col(html_label(mineral, style=Dict("font-weight" => "bold")), width=1),
             dbc_col(dbc_select(
-                id="dropdown-$mineral",
+                id = "dropdown-$mineral",
                 options=[
                     Dict("label" => "Solid", "value" => "solid"),
                     Dict("label" => "Dashed", "value" => "dashed"),
@@ -151,27 +177,9 @@ function create_dropdown_inputs(style::Dict{String, Vector{Any}})
                     Dict("label" => "DashDot", "value" => "dashdot")
                 ],
                 value=style[mineral][2],  # Default linestyle
-                style=Dict("width" => "120px")
-            ), width=2)
-        ], style=Dict("margin-bottom" => "0px")))
+                style=Dict( "padding" => "0", "margin" => "0" )
+            ))
+        ], id="row-linestyle-$mineral", style=Dict("margin-bottom" => "0px", "height" => "24px", "display" => "block")))
     end
     return inputs
 end
-
-# Function to dynamically create dbc_input for each mineral
-function create_color_inputs(style::Dict{String, Vector{Any}})
-    inputs = []
-    for mineral in sort(collect(keys(style)))
-        push!(inputs, dbc_row([
-            dbc_col(html_label(mineral, style=Dict("font-weight" => "bold")), width=1),
-            dbc_col(dbc_input(
-                type    = "color",
-                id      = "colorpicker-$mineral",
-                value   =  style[mineral][1],
-                style   =  Dict("width" => 75, "height" => 16, "padding" => "0", "margin" => "0" )
-            ), width    =  2)
-        ], style=Dict("margin-bottom" => "0px")))
-    end
-    return inputs
-end
-

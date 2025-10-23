@@ -31,8 +31,8 @@ const MAGEMin_C_version = MAGEMin_C_v
 mineral_style           = load_style(joinpath(pkg_dir,"src","./user_data/mineral_style.json"));
 
 # Keep track of simulation progress - note that this should be added to a single global variable
-global CompProgress      =  ComputationalProgress()
-customWs                 =  DataFrame()
+global CompProgress     =  ComputationalProgress()
+customWs                =  DataFrame()
 
 # Here we fill a tupple with the KDs for the OL12 database
 file_path               = joinpath(pkg_dir,"src","./tools/OL12.jld2")
@@ -56,5 +56,6 @@ AppData = ( contribs            = contribs,
             dict_OL12_KDs_g52l63= dict_OL12_KDs_g52l63,
             GUI_version         = GUI_version,
             db_inf              = db_inf,
-            customWs            = customWs
+            customWs            = customWs,
+            mineral_style       = mineral_style,
             )   

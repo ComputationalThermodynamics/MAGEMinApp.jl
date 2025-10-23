@@ -659,6 +659,61 @@ function Tab_PTXpaths_Callbacks(app)
         return Tliq, Tsol
     end
 
+    # Callback to hide rows for phases not in phase_infos_PTX
+    callback!(app,
+        [Output("row-name-$mineral",        "style") for mineral in keys(AppData.mineral_style)]...,  # Outputs for each row
+        [Output("row-color-$mineral",       "style") for mineral in keys(AppData.mineral_style)]...,  # Outputs for each row
+        [Output("row-linestyle-$mineral",   "style") for mineral in keys(AppData.mineral_style)]...,  # Outputs for each row
+        Input("ptx-plot", "figure"),
+
+        prevent_initial_call = true,  # Input: selected phases from a dropdown or other component
+
+    ) do click
+        global phase_infos_PTX
+        phase_selection = vcat(phase_infos_PTX.act_ss, phase_infos_PTX.act_pp)
+
+        styles_name, styles_color, styles_linestyle = [], [], []
+        for mineral in keys(AppData.mineral_style)
+            if mineral in phase_selection
+                push!(styles_name,      Dict("margin-bottom" => "0px", "height" => "24px", "display" => "block"))
+                push!(styles_color,     Dict("margin-bottom" => "0px", "height" => "24px", "display" => "block"))
+                push!(styles_linestyle, Dict("margin-bottom" => "0px", "height" => "24px", "display" => "block"))
+            else
+                push!(styles_name,      Dict("margin-bottom" => "0px", "height" => "24px", "display" => "none"))
+                push!(styles_color,     Dict("margin-bottom" => "0px", "height" => "24px", "display" => "none"))
+                push!(styles_linestyle, Dict("margin-bottom" => "0px", "height" => "24px", "display" => "none"))
+            end
+        end
+
+        return styles_name..., styles_color..., styles_linestyle...
+    end
+
+    # Callback to save updated linestyles
+    callback!(app,  Output("color-style-save", "is_open"),
+                    Input("save-color-style", "n_clicks"),
+                    [State("colorpicker-$mineral",  "value") for mineral in keys(AppData.mineral_style)]...,  # Outputs for each row
+                    [State("dropdown-$mineral",     "value") for mineral in keys(AppData.mineral_style)]...,  # Outputs for each row
+                    prevent_initial_call = true ) do n_clicks, style...
+
+        if n_clicks == 0
+            return false
+        end
+
+        mineral_names   = collect(keys(AppData.mineral_style))            
+        np              = length(keys(AppData.mineral_style))
+        color           = style[1:np]
+        linestyle       = style[np+1:end]
+
+        mineral_style = Dict{String, Vector{Any}}()
+        for (i, ph) in enumerate(mineral_names)
+            mineral_style[ph] = [color[i], linestyle[i], 1.0]
+        end
+
+        # Save the updated dictionary to disk
+        save_style(mineral_style)
+
+        return "Success"
+    end
 
     """
         Callback to compute and display PTX path
@@ -675,7 +730,6 @@ function Tab_PTXpaths_Callbacks(app)
         Output("ptx-removed-int-plot",  "config"),
         Output("phase-selector-id",     "options"),
         Output("output-loading-id-ptx", "children"),
-        # Output("show-frac-id-ptx",      "style"),
 
         Input("compute-path-button",    "n_clicks"),
         Input("sys-unit-ptx",           "value"),
@@ -719,16 +773,14 @@ function Tab_PTXpaths_Callbacks(app)
                 cpx,        limOpx,     limOpxVal,  test,   sysunit,
                 nCon,       nRes  
 
-
         bid                     = pushed_button( callback_context() )    # get which button has been pushed
         phase_selection         = remove_phases(string_vec_diff(phase_selection,pure_phase_selection,dtb),dtb)
         title                   = db[(db.db .== dtb), :].title[test+1]
         loading                 = ""
-        # mode                    == "fc" ? disp_frac = Dict("display" => "block")    : disp_frac = Dict("display" => "none")    
-        
+
         if bid == "compute-path-button"
 
-            global Out_PTX, ph_names_ptx, layout_ptx, layout_extracted_ptx, data_plot_ptx, fracEvol, removedBulk, layout_rm_ptx, data_comp_rm_plot, layout_rm_int_ptx, data_comp_rm_int_plot
+            global Out_PTX, ph_names_ptx, phase_infos_PTX, layout_ptx, layout_extracted_ptx, data_plot_ptx, fracEvol, removedBulk, layout_rm_ptx, data_comp_rm_plot, layout_rm_int_ptx, data_comp_rm_int_plot
 
             bufferN                     = Float64(bufferN)               # convert buffer_n to float
             bulk_ini, bulk_assim, oxi   = get_bulkrock_prop(bulk, bulk2; sys_unit=sys_unit)  
@@ -740,6 +792,7 @@ function Tab_PTXpaths_Callbacks(app)
                                     nCon,       nRes                                  )
 
             phase_infos_PTX             = get_phase_infos(Out_PTX)
+
 
             layout_ptx                  = initialize_layout(title,sysunit)
             layout_extracted_ptx        = initialize_ext_layout(title,sysunit)
