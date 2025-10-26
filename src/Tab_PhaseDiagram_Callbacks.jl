@@ -1428,7 +1428,9 @@ function Tab_PhaseDiagram_Callbacks(app)
     callback!(app,
         Output("collapse", "is_open"),
         [Input("button-display-options", "n_clicks")],
-        [State("collapse", "is_open")], ) do  n, is_open
+        [State("collapse", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -1450,7 +1452,9 @@ function Tab_PhaseDiagram_Callbacks(app)
     callback!(app,
         Output("collapse-infos-phase-diagram", "is_open"),
         [Input("infos-phase-diagram", "n_clicks")],
-        [State("collapse-infos-phase-diagram", "is_open")], ) do  n, is_open
+        [State("collapse-infos-phase-diagram", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -1467,7 +1471,9 @@ function Tab_PhaseDiagram_Callbacks(app)
     callback!(app,
         Output("collapse-phase-label", "is_open"),
         [Input("phase-label", "n_clicks")],
-        [State("collapse-phase-label", "is_open")], ) do  n, is_open
+        [State("collapse-phase-label", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -1484,7 +1490,9 @@ function Tab_PhaseDiagram_Callbacks(app)
     callback!(app,
         Output("collapse-export-figure", "is_open"),
         [Input("export-figure", "n_clicks")],
-        [State("collapse-export-figure", "is_open")], ) do  n, is_open
+        [State("collapse-export-figure", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 

@@ -827,7 +827,9 @@ function Tab_TraceElement_Callbacks(app)
     callback!(app,
         Output("collapse-display-options-te", "is_open"),
         [Input("display-options-te-button", "n_clicks")],
-        [State("collapse-display-options-te", "is_open")], ) do  n, is_open
+        [State("collapse-display-options-te", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -844,7 +846,9 @@ function Tab_TraceElement_Callbacks(app)
     callback!(app,
         Output("collapse-spectrum", "is_open"),
         [Input("button-spectrum", "n_clicks")],
-        [State("collapse-spectrum", "is_open")], ) do  n, is_open
+        [State("collapse-spectrum", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -862,7 +866,9 @@ function Tab_TraceElement_Callbacks(app)
     callback!(app,
         Output("collapse-phase-label-te", "is_open"),
         [Input("phase-label-te", "n_clicks")],
-        [State("collapse-phase-label-te", "is_open")], ) do  n, is_open
+        [State("collapse-phase-label-te", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -879,7 +885,9 @@ function Tab_TraceElement_Callbacks(app)
     callback!(app,
         Output("collapse-export-figure-te", "is_open"),
         [Input("export-figure-te", "n_clicks")],
-        [State("collapse-export-figure-te", "is_open")], ) do  n, is_open
+        [State("collapse-export-figure-te", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 

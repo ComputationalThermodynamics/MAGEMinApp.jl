@@ -586,8 +586,8 @@ function Tab_PTXpaths()
                                             columns =[  Dict("name" => "P_kbar",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
                                                         Dict("name" => "T_°C",    "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")],
                                             data=[
-                                                Dict("col-1" => 5.0,    "col-2"   => 500.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0),
-                                                Dict("col-1" => 10.0,   "col-2"   => 800.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0),
+                                                Dict("col-1" => 10.0,    "col-2"   => 1200.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0),
+                                                Dict("col-1" => 2.0,   "col-2"   => 600.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0),
                                             ],
                                             style_cell      = (textAlign="center", fontSize="140%",),
                                             style_header    = (fontWeight="bold",),
@@ -941,20 +941,27 @@ function Tab_PTXpaths()
                                                         ),
                                                         html_div("‎ "),
                                                         ]),
-                                                    ], width=10),
+                                                    ], width=11),
+                                                    dbc_row([
+                                                        html_h1("Recompute PTX path to apply changes!", style=Dict("textAlign" => "center", "font-size" => "120%")),  # Add header here
+                                                    ]),
                                                     dbc_row([
                                                         dbc_col([ 
-                                                            html_div(create_ph_names(AppData.mineral_style), id="ph-names-container")
+                                                           html_div(create_color_table(AppData.mineral_style), id="ph-names-container")
+                                                        ], width=8),
+                                                        dbc_col([ 
+                                                           html_div(create_color_selec(AppData.mineral_style), id="ph-selec-container")
                                                         ], width=2),
+
                                                         dbc_col([ 
-                                                            html_div(create_color_inputs(AppData.mineral_style), id="color-inputs-container")
-                                                        ], width=4),
-                                                        dbc_col([ 
-                                                            html_div(create_dropdown_inputs(AppData.mineral_style), id="dropdown-inputs-container")
-                                                        ], width=4),
-                                                        dbc_col([ 
-                                                            # html_div(create_dropdown_inputs(AppData.mineral_style), id="dropdown-inputs-container")
-                                                        ]),
+                                                            dbc_input(
+                                                                type    = "color",
+                                                                id      = "colorpicker-mineral-id",
+                                                                value   =  "white",
+                                                                style   =  Dict("height" => "$((24 + 6) * (length(collect(keys(AppData.mineral_style)))+1))px", "padding" => "0", "margin" => "0" )
+                                                            )
+                                                        ], width=1),
+                        
                                                     ])
                                                 ],
             

@@ -540,6 +540,7 @@ function Tab_Simulation_Callbacks(app)
         
         Input("tepm-dropdown",      "value"),
         Input("kds-dropdown",       "value"),
+        prevent_initial_call = true,
     ) do tepm, kds
 
         if tepm == "false"
@@ -564,6 +565,8 @@ function Tab_Simulation_Callbacks(app)
         app,
         Output("switch-opx-id", "style"),
         Input("database-dropdown", "value"),
+
+        prevent_initial_call = true,
     ) do value
         # global db
         if value == "ig"
@@ -584,6 +587,8 @@ function Tab_Simulation_Callbacks(app)
         app,
         Output("switch-cpx-id", "style"),
         Input("database-dropdown", "value"),
+
+        prevent_initial_call = true,
     ) do value
         # global db
         if value == "mb" || value == "mbe"
@@ -599,6 +604,8 @@ function Tab_Simulation_Callbacks(app)
         app,
         Output("watsat-display-id", "style"),
         Input("watsat-dropdown", "value"),
+
+        prevent_initial_call = true,
     ) do value
         # global db
         if value == "true"
@@ -616,6 +623,8 @@ function Tab_Simulation_Callbacks(app)
         Input("reset-title-button", "n_clicks"),
         Input("test-dropdown", "value"),
         Input("database-dropdown","value"),
+
+        prevent_initial_call = true,
     ) do reset, test, dtb
     
             title = db[(db.db .== dtb), :].title[test+1]
@@ -628,6 +637,8 @@ function Tab_Simulation_Callbacks(app)
         Output("buffer-1-id", "style"),
         Output("buffer-2-id", "style"),
         Input("buffer-dropdown", "value"),
+
+        prevent_initial_call = true,
     ) do value
 
         if value != "none"
@@ -693,6 +704,8 @@ function Tab_Simulation_Callbacks(app)
         Output("display-refine-option-id", "style"),
         Output("display-refine-option-2-id", "style"),
         Input("diagram-dropdown", "value"),
+
+        prevent_initial_call = true,
     ) do value
 
         if value == "px"
@@ -900,7 +913,6 @@ function Tab_Simulation_Callbacks(app)
         Output("table-2-bulk-rock","data"),
         Output("test-2-dropdown","options"),
         Output("test-2-dropdown","value"),
-        # Input("output-data-uploadn", "is_open"),
         Input("test-2-dropdown","value"),
         Input("database-dropdown","value"),
 
@@ -981,7 +993,8 @@ function Tab_Simulation_Callbacks(app)
         Input("test-te-dropdown","value"),
         Input("output-te-uploadn", "is_open"),        # this listens for changes and updated the list
         Input(  "load-state-diagram-button","n_clicks"  ),
-        State(  "save-state-filename-id",   "value"     ),    prevent_initial_call=true,
+        State(  "save-state-filename-id",   "value"     ),
+        prevent_initial_call=true,
     ) do test, update,
         n_clicks_load, filename
 
@@ -1023,7 +1036,8 @@ function Tab_Simulation_Callbacks(app)
         Input("test-2-te-dropdown","value"),
         Input("output-te-uploadn", "is_open"),        # this listens for changes and updated the list
         Input(  "load-state-diagram-button","n_clicks"  ),
-        State(  "save-state-filename-id",   "value"     ),        prevent_initial_call=true,
+        State(  "save-state-filename-id",   "value"     ),
+        prevent_initial_call=true,
     ) do test, update,
         n_clicks_load, filename
         
@@ -1061,7 +1075,9 @@ function Tab_Simulation_Callbacks(app)
     callback!(app,
         Output("collapse-phase-selection", "is_open"),
         [Input("button-phase-selection", "n_clicks")],
-        [State("collapse-phase-selection", "is_open")], ) do  n, is_open
+        [State("collapse-phase-selection", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -1079,7 +1095,9 @@ function Tab_Simulation_Callbacks(app)
     callback!(app,
         Output("collapse-pure-phase-selection", "is_open"),
         [Input("button-pure-phase-selection", "n_clicks")],
-        [State("collapse-pure-phase-selection", "is_open")], ) do  n, is_open
+        [State("collapse-pure-phase-selection", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -1097,7 +1115,9 @@ function Tab_Simulation_Callbacks(app)
     callback!(app,
         Output("collapse-general-parameters", "is_open"),
         [Input("button-general-parameters", "n_clicks")],
-        [State("collapse-general-parameters", "is_open")], ) do  n, is_open
+        [State("collapse-general-parameters", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -1116,7 +1136,9 @@ function Tab_Simulation_Callbacks(app)
     callback!(app,
         Output("collapse-contributors", "is_open"),
         [Input("button-contributors", "n_clicks")],
-        [State("collapse-contributors", "is_open")], ) do  n, is_open
+        [State("collapse-contributors", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -1135,7 +1157,9 @@ function Tab_Simulation_Callbacks(app)
     callback!(app,
         Output("collapse-contact", "is_open"),
         [Input("button-contact", "n_clicks")],
-        [State("collapse-contact", "is_open")], ) do  n, is_open
+        [State("collapse-contact", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -1154,7 +1178,9 @@ function Tab_Simulation_Callbacks(app)
     callback!(app,
         Output("collapse-export-magemin_c", "is_open"),
         [Input("button-export-magemin_c", "n_clicks")],
-        [State("collapse-export-magemin_c", "is_open")], ) do  n, is_open
+        [State("collapse-export-magemin_c", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -1173,7 +1199,9 @@ function Tab_Simulation_Callbacks(app)
     callback!(app,
         Output("collapse-code-avail", "is_open"),
         [Input("button-code-avail", "n_clicks")],
-        [State("collapse-code-avail", "is_open")], ) do  n, is_open
+        [State("collapse-code-avail", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -1191,7 +1219,9 @@ function Tab_Simulation_Callbacks(app)
     callback!(app,
         Output("collapse-PT-conditions", "is_open"),
         [Input("button-PT-conditions", "n_clicks")],
-        [State("collapse-PT-conditions", "is_open")], ) do  n, is_open
+        [State("collapse-PT-conditions", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -1210,7 +1240,9 @@ function Tab_Simulation_Callbacks(app)
     callback!(app,
         Output("collapse-advanced", "is_open"),
         [Input("button-advanced", "n_clicks")],
-        [State("collapse-advanced", "is_open")], ) do  n, is_open
+        [State("collapse-advanced", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -1229,7 +1261,9 @@ function Tab_Simulation_Callbacks(app)
     callback!(app,
         Output("collapse-bulk", "is_open"),
         [Input("button-bulk", "n_clicks")],
-        [State("collapse-bulk", "is_open")], ) do  n, is_open
+        [State("collapse-bulk", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -1248,7 +1282,9 @@ function Tab_Simulation_Callbacks(app)
     callback!(app,
         Output("collapse-te", "is_open"),
         [Input("button-te", "n_clicks")],
-        [State("collapse-te", "is_open")], ) do  n, is_open
+        [State("collapse-te", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -1267,7 +1303,9 @@ function Tab_Simulation_Callbacks(app)
     callback!(app,
         Output("collapse-isopleths", "is_open"),
         [Input("button-isopleths", "n_clicks")],
-        [State("collapse-isopleths", "is_open")], ) do  n, is_open
+        [State("collapse-isopleths", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 

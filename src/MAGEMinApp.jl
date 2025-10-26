@@ -11,82 +11,83 @@
 
 module MAGEMinApp
 
-using Dash
-using DashBootstrapComponents
-using PlotlyJS, JSON3, JSON, Printf, Statistics, DataFrames, CSV, XLSX, Dates, Base64, Random
-using UUIDs, HTTP
-using JLD2, DelimitedFiles, Interpolations
-using ConcaveHull,PolygonOps
-using ProgressMeter
-using PCHIPInterpolation
-using Bibliography
+    using Dash
+    using DashBootstrapComponents
+    using PlotlyJS, JSON3, JSON, Printf, Statistics, DataFrames, CSV, XLSX, Dates, Base64, Random
+    using UUIDs, HTTP
+    using JLD2, DelimitedFiles, Interpolations
+    using ConcaveHull,PolygonOps
+    using ProgressMeter
+    using PCHIPInterpolation
+    using Bibliography
 
-using Images, PolygonInbounds, LazyGrids, Graphs
-using MAGEMin_C
+    using Images, PolygonInbounds, LazyGrids, Graphs
+    using MAGEMin_C
 
-import Contour as CTR
+    import Contour as CTR
 
-pkg_dir = Base.pkgdir(MAGEMinApp)
+    pkg_dir = Base.pkgdir(MAGEMinApp)
 
-export App
+    export App
 
-# include functions
-include(joinpath(pkg_dir,"src","fetch.jl"))
-include(joinpath(pkg_dir,"src","Progress.jl"))
-include(joinpath(pkg_dir,"src","Progress_Callbacks.jl"))
-include(joinpath(pkg_dir,"src","AMR/MAGEMin_utils.jl"))
-include(joinpath(pkg_dir,"src","AMR/AMR_utils.jl"))
-include(joinpath(pkg_dir,"src","PhaseDiagram_functions.jl"))
-include(joinpath(pkg_dir,"src","TraceElement_functions.jl"))
-include(joinpath(pkg_dir,"src","Tab_Simulation.jl"))
-include(joinpath(pkg_dir,"src","Tab_PhaseDiagram.jl"))
-include(joinpath(pkg_dir,"src","Tab_Classification.jl"))
-include(joinpath(pkg_dir,"src","Tab_TraceElement.jl"))
-include(joinpath(pkg_dir,"src","Tab_PTXpaths.jl"))
-include(joinpath(pkg_dir,"src","data_plot.jl"))
-include(joinpath(pkg_dir,"src","MAGEMinApp_Callbacks.jl"))   
-include(joinpath(pkg_dir,"src","Tab_Simulation_Callbacks.jl"))    
-include(joinpath(pkg_dir,"src","Tab_PhaseDiagram_Callbacks.jl"))
-include(joinpath(pkg_dir,"src","Tab_TraceElement_Callbacks.jl"))
-include(joinpath(pkg_dir,"src","PTXpaths_functions.jl"))   
-include(joinpath(pkg_dir,"src","Tab_PTXpaths_Callbacks.jl")) 
-include(joinpath(pkg_dir,"src","Tab_isentropic.jl"))
-include(joinpath(pkg_dir,"src","Tab_isentropic_Callbacks.jl"))
-include(joinpath(pkg_dir,"src","IsentropicPaths_functions.jl"))
-include(joinpath(pkg_dir,"src","Tab_General_informations.jl"))
-include(joinpath(pkg_dir,"src","MAGEMinApp_functions.jl"))
-include(joinpath(pkg_dir,"src","Loading_functions.jl"))
-include(joinpath(pkg_dir,"src","Style_functions.jl"))
+    # include functions
+    # include(joinpath(pkg_dir,"src","fetch.jl"))
+    include(joinpath(pkg_dir,"src","fetch.jl"))
+    include(joinpath(pkg_dir,"src","Progress.jl"))
+    include(joinpath(pkg_dir,"src","Progress_Callbacks.jl"))
+    include(joinpath(pkg_dir,"src","AMR/MAGEMin_utils.jl"))
+    include(joinpath(pkg_dir,"src","AMR/AMR_utils.jl"))
+    include(joinpath(pkg_dir,"src","PhaseDiagram_functions.jl"))
+    include(joinpath(pkg_dir,"src","TraceElement_functions.jl"))
+    include(joinpath(pkg_dir,"src","Tab_Simulation.jl"))
+    include(joinpath(pkg_dir,"src","Tab_PhaseDiagram.jl"))
+    include(joinpath(pkg_dir,"src","Tab_Classification.jl"))
+    include(joinpath(pkg_dir,"src","Tab_TraceElement.jl"))
+    include(joinpath(pkg_dir,"src","Tab_PTXpaths.jl"))
+    include(joinpath(pkg_dir,"src","data_plot.jl"))
+    include(joinpath(pkg_dir,"src","Tab_Simulation_Callbacks.jl"))    
+    include(joinpath(pkg_dir,"src","Tab_PhaseDiagram_Callbacks.jl"))
+    include(joinpath(pkg_dir,"src","Tab_TraceElement_Callbacks.jl"))
+    include(joinpath(pkg_dir,"src","PTXpaths_functions.jl"))   
+    include(joinpath(pkg_dir,"src","Tab_PTXpaths_Callbacks.jl")) 
+    include(joinpath(pkg_dir,"src","Tab_isentropic.jl"))
+    include(joinpath(pkg_dir,"src","Tab_isentropic_Callbacks.jl"))
+    include(joinpath(pkg_dir,"src","IsentropicPaths_functions.jl"))
+    include(joinpath(pkg_dir,"src","Tab_General_informations.jl"))
+    include(joinpath(pkg_dir,"src","MAGEMinApp_functions.jl"))
+    include(joinpath(pkg_dir,"src","Loading_functions.jl"))
+    include(joinpath(pkg_dir,"src","Style_functions.jl"))
 
-# Set of functions to extract field boundaries and field centers (by Antom Popov, JGU)
-include(joinpath(pkg_dir,"src","Boundaries/center.jl"))
-include(joinpath(pkg_dir,"src","Boundaries/poly.jl"))
-include(joinpath(pkg_dir,"src","Boundaries/purge.jl"))
-include(joinpath(pkg_dir,"src","Boundaries/utils.jl"))
-include(joinpath(pkg_dir,"src","appData.jl"))
-  
+    # Set of functions to extract field boundaries and field centers (by Antom Popov, JGU)
+    include(joinpath(pkg_dir,"src","Boundaries/center.jl"))
+    include(joinpath(pkg_dir,"src","Boundaries/poly.jl"))
+    include(joinpath(pkg_dir,"src","Boundaries/purge.jl"))
+    include(joinpath(pkg_dir,"src","Boundaries/utils.jl"))
+    include(joinpath(pkg_dir,"src","appData.jl"))
+    
 
-"""
-    App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
+    """
+        App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
 
-Starts the MAGEMin App.
-"""
-function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
+    Starts the MAGEMin App.
+    """
+    function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
+        println(" Loading messages...")
+        message     = fetch_message()
+        message2    = fetch_message2()
 
-    message     = fetch_message()
-    message2    = fetch_message2()
-
-    vApp = "Running MAGEMinApp@$(AppData.GUI_version) -> Last version @$(message2) - Julia 1.10+"
+        vApp = "Running MAGEMinApp@$(AppData.GUI_version) -> Last version @$(message2) - Julia 1.10+"
 
 
-    cur_dir     = pwd()                 # directory from where you started the GUI
-    pkg_dir     = pkgdir(MAGEMinApp)   # package dir
-    cd(pkg_dir)
+        cur_dir     = pwd()                 # directory from where you started the GUI
+        pkg_dir     = pkgdir(MAGEMinApp)   # package dir
+        cd(pkg_dir)
 
-    app         = dash(external_stylesheets = [dbc_themes.BOOTSTRAP], prevent_initial_callbacks=false)
-    app.title   = "MAGEMinApp"
-    app.layout  = html_div() do
- 
+        app         = dash(external_stylesheets = [dbc_themes.BOOTSTRAP], prevent_initial_callbacks=false)
+        app.title   = "MAGEMinApp"
+        app.layout  = html_div() do
+
+        println(" Loading interface...")
         dbc_container(fluid=false, [
             dbc_col([
             dbc_row([
@@ -201,56 +202,57 @@ function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debu
 
                     ], width=12),
 
-        dcc_store(id="session-id", data =  "")     # gives a unique number of our session
+        
+                    dcc_store(id="session-id", data =  "")     # gives a unique number of our session
         ])
 
+        end
+
+        # This creates an initial session id that is unique for this session
+        # it will run on first start 
+        
+        callback!(app, 
+            Dash.Output("session-id", "data"),
+            Dash.Output("label-id", "children"),
+            Input("session-id", "data")
+        ) do session_id
+
+            session_id = UUIDs.uuid4()
+
+            # determine how many cores you use and how many are available
+            num_available_cores = Sys.CPU_THREADS
+            nthreads = Threads.nthreads();
+
+            str = "id=$(session_id);   MAGEMinApp GUI v=$(GUI_version);   using $nthreads/$num_available_cores threads"
+            return String("$(session_id)"), str
+        end
+
+        println(" Loading callbacks...")
+        app = Tab_Simulation_Callbacks(app)
+        app = Tab_PhaseDiagram_Callbacks(app)
+        app = Tab_TraceElement_Callbacks(app)
+        app = Tab_PTXpaths_Callbacks(app) #SUPER SLOW!??
+        app = Tab_isoSpaths_Callbacks(app)
+        app = Progress_Callbacks(app)
+
+        run_server(app, host, port, debug=debug)
+
+        cd(cur_dir) # go back to directory
+
     end
 
-    # This creates an initial session id that is unique for this session
-    # it will run on first start 
-    
-    callback!(app, 
-        Dash.Output("session-id", "data"),
-        Dash.Output("label-id", "children"),
-        Input("session-id", "data")
-    ) do session_id
+    # this is the main function that will be called when you run the app
+    function main(ARGS)
 
-        session_id = UUIDs.uuid4()
+        App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
 
-        # determine how many cores you use and how many are available
-        num_available_cores = Sys.CPU_THREADS
-        nthreads = Threads.nthreads();
-
-        str = "id=$(session_id);   MAGEMinApp GUI v=$(GUI_version);   using $nthreads/$num_available_cores threads"
-        return String("$(session_id)"), str
+        return 0
     end
 
-    app = MAGEMinApp_Callbacks(app)
-    app = Tab_Simulation_Callbacks(app)
-    app = Tab_PhaseDiagram_Callbacks(app)
-    app = Tab_TraceElement_Callbacks(app)
-    app = Tab_PTXpaths_Callbacks(app)
-    app = Tab_isoSpaths_Callbacks(app)
-    app = Progress_Callbacks(app)
-
-    run_server(app, host, port, debug=debug)
-
-    cd(cur_dir) # go back to directory
-
-end
-
-# this is the main function that will be called when you run the app
-function main(ARGS)
-
-    App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
-
-    return 0
-end
-
-# added for compatibility with Julia 1.10 and 1.11
-@static if isdefined(Base, Symbol("@main"))
-    @main
-end
+    # added for compatibility with Julia 1.10 and 1.11
+    @static if isdefined(Base, Symbol("@main"))
+        @main
+    end
 
 end
 

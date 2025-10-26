@@ -16,6 +16,8 @@ function Tab_PTXpaths_Callbacks(app)
         Output("style-canvas", "is_open"),
         Input("style-canvas-button", "n_clicks"),
         State("style-canvas", "is_open"),
+
+        prevent_initial_call=true,
     ) do n1, is_open
         return n1 > 0 ? is_open == 0 : is_open
     end;
@@ -146,7 +148,7 @@ function Tab_PTXpaths_Callbacks(app)
                 melt    = zeros(Int64, n_tot)
                 Z       = Matrix{Union{Float64,Missing}}(undef, n_ph_e, n_tot) .= missing
                 Y       = zeros(Float64, n_ph_e, n_tot)
-# add a zero line first
+
                 for i=1:n_ph_e
                     
                     ph = ph_names_ext_ptx[i]
@@ -358,6 +360,8 @@ function Tab_PTXpaths_Callbacks(app)
         app,
         Output("path-plot", "figure"),
         Input("ptx-table", "data"),
+
+        prevent_initial_call = true,
         ) do data
 
         dataout = copy(data)
@@ -659,58 +663,87 @@ function Tab_PTXpaths_Callbacks(app)
         return Tliq, Tsol
     end
 
-    # Callback to hide rows for phases not in phase_infos_PTX
-    callback!(app,
-        [Output("row-name-$mineral",        "style") for mineral in keys(AppData.mineral_style)]...,  # Outputs for each row
-        [Output("row-color-$mineral",       "style") for mineral in keys(AppData.mineral_style)]...,  # Outputs for each row
-        [Output("row-linestyle-$mineral",   "style") for mineral in keys(AppData.mineral_style)]...,  # Outputs for each row
-        Input("ptx-plot", "figure"),
+    callback!(
+        app,
+        Output("colorpicker-mineral-id", "value"),  # Replace with your output
+        Input("color-table-change-id", "selected_cells"),
+        State("color-table-id", "data"),    
 
-        prevent_initial_call = true,  # Input: selected phases from a dropdown or other component
+        prevent_initial_call = true,
+    ) do selected, data
 
-    ) do click
-        global phase_infos_PTX
-        phase_selection = vcat(phase_infos_PTX.act_ss, phase_infos_PTX.act_pp)
+        row_index       =  selected[1]["row"] + 1
+        color           = data[row_index]["Color"]
 
-        styles_name, styles_color, styles_linestyle = [], [], []
-        for mineral in keys(AppData.mineral_style)
-            if mineral in phase_selection
-                push!(styles_name,      Dict("margin-bottom" => "0px", "height" => "24px", "display" => "block"))
-                push!(styles_color,     Dict("margin-bottom" => "0px", "height" => "24px", "display" => "block"))
-                push!(styles_linestyle, Dict("margin-bottom" => "0px", "height" => "24px", "display" => "block"))
-            else
-                push!(styles_name,      Dict("margin-bottom" => "0px", "height" => "24px", "display" => "none"))
-                push!(styles_color,     Dict("margin-bottom" => "0px", "height" => "24px", "display" => "none"))
-                push!(styles_linestyle, Dict("margin-bottom" => "0px", "height" => "24px", "display" => "none"))
-            end
+        return color
+    end
+
+    callback!(
+        app,
+        Output("color-table-id", "data"),    
+        Output("color-table-id", "style_data_conditional"), 
+        Output("color-table-change-id", "data"),
+        Output("colorpicker-mineral-id", "style"),
+        Input("ptx-plot",        "figure"),
+        Input("colorpicker-mineral-id", "value"),  # Replace with your output
+        State("color-table-change-id", "selected_cells"),
+        State("color-table-id", "data"),    
+        State("color-table-id", "style_data_conditional"), 
+        State("color-table-change-id", "data"),
+        State("colorpicker-mineral-id", "style"),  # Replace with your output
+        prevent_initial_call = true,
+    ) do clock, color, selected, data, style, data_select, picker_style
+        bid         = pushed_button( callback_context() )    # get which button has been pushed
+
+        if bid == "colorpicker-mineral-id"
+            dataout     = copy(data)
+            styleout    = copy(style)
+            np          = length(dataout)
+            row_index   =  selected[1]["row"] + 1
+            dataout[row_index][Symbol("Color")]             = color
+            styleout[row_index][Symbol("background-color")] = color
+
+            mineral                             = data[row_index]["Mineral"]
+            AppData.mineral_style[mineral][1]   = color
+        
+
+        elseif bid == "ptx-plot"
+            global phase_infos_PTX
+            phase_selection = vcat(phase_infos_PTX.act_ss, phase_infos_PTX.act_pp)
+
+            dataout = [
+                Dict("Mineral" => mineral, "Color" => AppData.mineral_style[mineral][1])
+                for mineral in phase_selection
+            ]
+            color_list = [AppData.mineral_style[mineral][1] for mineral in phase_selection]
+            styleout = [
+                Dict("if" => Dict("row_index" => i-1, "column_id" => "Color"), "background-color" => color_list[i])
+                for i in 1:length(color_list)
+            ]
+            data_select = [
+                Dict("Change" => " ")
+                for i in 1:length(color_list)
+            ]
+            picker_style   =  Dict("height" => "$((24 + 6) * (length(color_list)+1))px", "padding" => "0", "margin" => "0" )
+
         end
 
-        return styles_name..., styles_color..., styles_linestyle...
+
+        return dataout, styleout, data_select, picker_style
     end
+
 
     # Callback to save updated linestyles
     callback!(app,  Output("color-style-save", "is_open"),
                     Input("save-color-style", "n_clicks"),
-                    [State("colorpicker-$mineral",  "value") for mineral in keys(AppData.mineral_style)]...,  # Outputs for each row
-                    [State("dropdown-$mineral",     "value") for mineral in keys(AppData.mineral_style)]...,  # Outputs for each row
-                    prevent_initial_call = true ) do n_clicks, style...
+                    prevent_initial_call = true ) do n_clicks
 
         if n_clicks == 0
             return false
         end
 
-        mineral_names   = collect(keys(AppData.mineral_style))            
-        np              = length(keys(AppData.mineral_style))
-        color           = style[1:np]
-        linestyle       = style[np+1:end]
-
-        mineral_style = Dict{String, Vector{Any}}()
-        for (i, ph) in enumerate(mineral_names)
-            mineral_style[ph] = [color[i], linestyle[i], 1.0]
-        end
-
         # Save the updated dictionary to disk
-        save_style(mineral_style)
+        save_style(AppData.mineral_style)
 
         return "Success"
     end
@@ -763,8 +796,8 @@ function Tab_PTXpaths_Callbacks(app)
 
         State("connectivity-id",        "value"),
         State("residual-id",            "value"),
-        [State("colorpicker-$mineral",  "value") for mineral in keys(AppData.mineral_style)]...,
-    
+        State("color-table-id",         "data"),
+        
         prevent_initial_call = true,
 
         ) do    compute,    upsys,      display_mode,               ext_display_mode,    
@@ -772,17 +805,19 @@ function Tab_PTXpaths_Callbacks(app)
                 dtb,        dataset,    bufferType, solver,
                 verbose,    bulk,       bulk2,      bufferN,
                 cpx,        limOpx,     limOpxVal,  test,   sysunit,
-                nCon,       nRes,       ph_colors...
+                nCon,       nRes,       color_table
 
         bid                     = pushed_button( callback_context() )    # get which button has been pushed
         phase_selection         = remove_phases(string_vec_diff(phase_selection,pure_phase_selection,dtb),dtb)
         title                   = db[(db.db .== dtb), :].title[test+1]
         loading                 = ""
+        # ph_colors               = [color_table[i][Symbol("Color")] for i =1:length(color_table)]
+
 
         if bid == "compute-path-button"
 
             global Out_PTX, ph_names_ptx, phase_infos_PTX, layout_ptx, layout_extracted_ptx, data_plot_ptx, fracEvol, removedBulk, layout_rm_ptx, data_comp_rm_plot, layout_rm_int_ptx, data_comp_rm_int_plot
-
+            
             bufferN                     = Float64(bufferN)               # convert buffer_n to float
             bulk_ini, bulk_assim, oxi   = get_bulkrock_prop(bulk, bulk2; sys_unit=sys_unit)  
 
@@ -797,8 +832,8 @@ function Tab_PTXpaths_Callbacks(app)
 
             layout_ptx                  = initialize_layout(title,sysunit)
             layout_extracted_ptx        = initialize_ext_layout(title,sysunit)
-            data_plot_ptx, phase_list   = get_data_plot(display_mode, sysunit, ph_colors)
-            data_extracted_plot_ptx, phase_list_ext   = get_extracted_data_plot(ext_display_mode,sysunit,mode,nRes,nCon, ph_colors)
+            data_plot_ptx, phase_list   = get_data_plot(display_mode, sysunit)
+            data_extracted_plot_ptx, phase_list_ext   = get_extracted_data_plot(ext_display_mode,sysunit,mode,nRes,nCon)
 
             figPTX                      = plot(data_plot_ptx,layout_ptx)
             figExtractedPTX             = plot(data_extracted_plot_ptx,layout_extracted_ptx)
@@ -814,8 +849,8 @@ function Tab_PTXpaths_Callbacks(app)
             figrmintPTX                 = plot(data_comp_rm_int_plot,layout_rm_int_ptx)
 
         elseif bid == "sys-unit-ptx" || bid == "ext-display-mode" || bid == "display-mode"
-            data_plot_ptx, phase_list   = get_data_plot(display_mode,sysunit, ph_colors)
-            data_extracted_plot_ptx, phase_list_ext   = get_extracted_data_plot(ext_display_mode,sysunit,mode,nRes,nCon, ph_colors)
+            data_plot_ptx, phase_list   = get_data_plot(display_mode,sysunit)
+            data_extracted_plot_ptx, phase_list_ext   = get_extracted_data_plot(ext_display_mode,sysunit,mode,nRes,nCon)
 
             layout_ptx[:yaxis_title]    = "Phase fraction ["*sysunit*"%]"
             layout_extracted_ptx[:yaxis_title]        = "Extracted phase fraction ["*sysunit*"%]"
@@ -865,6 +900,8 @@ function Tab_PTXpaths_Callbacks(app)
         Output("switch-opx-id-ptx", "style"),
         Output("dataset-ptx-display-id", "style"),
         Input("database-dropdown-ptx", "value"),
+
+        prevent_initial_call = true,
     ) do value
         # global db
         if value == "ig"
@@ -892,6 +929,8 @@ function Tab_PTXpaths_Callbacks(app)
         app,
         Output("switch-cpx-id-ptx",     "style"),
         Input("database-dropdown-ptx",  "value"),
+
+        prevent_initial_call = true,
     ) do value
 
         if value == "mb" || value == "mbe"
@@ -906,6 +945,8 @@ function Tab_PTXpaths_Callbacks(app)
         app,
         Output("show-residual-id",      "style"),
         Input("mode-dropdown-ptx",      "value"),
+
+        prevent_initial_call = true,
     ) do value
 
         if value == "fc"
@@ -920,6 +961,8 @@ function Tab_PTXpaths_Callbacks(app)
         app,
         Output("show-connectivity-id",  "style"),
         Input("mode-dropdown-ptx",      "value"),
+
+        prevent_initial_call = true,
     ) do value
   
         if value == "fm"
@@ -939,6 +982,8 @@ function Tab_PTXpaths_Callbacks(app)
         Output("variable-buffer-ptx-id",        "value"),
 
         Input("buffer-dropdown-ptx", "value"),
+
+        prevent_initial_call = true,
     ) do value
 
         if value != "none"
@@ -977,7 +1022,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         State("table-bulk-rock-ptx","data"),
 
-        prevent_initial_call=false,
+        prevent_initial_call = false,
     ) do sys_unit, 
         test, dtb, update, tb_data
 
@@ -1049,7 +1094,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         State("table-2-bulk-rock-ptx","data"),
 
-        prevent_initial_call=true,
+        prevent_initial_call=false, #needs to be load for the remove list
     ) do sys_unit, 
         test, dtb, update, 
         tb_data
@@ -1096,7 +1141,9 @@ function Tab_PTXpaths_Callbacks(app)
     callback!(app,
         Output("collapse-disp-opt", "is_open"),
         [Input("button-disp-opt", "n_clicks")],
-        [State("collapse-disp-opt", "is_open")], ) do  n, is_open
+        [State("collapse-disp-opt", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -1113,7 +1160,9 @@ function Tab_PTXpaths_Callbacks(app)
     callback!(app,
         Output("collapse-path-opt", "is_open"),
         [Input("button-path-opt", "n_clicks")],
-        [State("collapse-path-opt", "is_open")], ) do  n, is_open
+        [State("collapse-path-opt", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -1130,7 +1179,9 @@ function Tab_PTXpaths_Callbacks(app)
     callback!(app,
         Output("collapse-pathdef", "is_open"),
         [Input("button-pathdef", "n_clicks")],
-        [State("collapse-pathdef", "is_open")], ) do  n, is_open
+        [State("collapse-pathdef", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -1147,7 +1198,9 @@ function Tab_PTXpaths_Callbacks(app)
     callback!(app,
         Output("collapse-path", "is_open"),
         [Input("button-path", "n_clicks")],
-        [State("collapse-path", "is_open")], ) do  n, is_open
+        [State("collapse-path", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -1164,7 +1217,9 @@ function Tab_PTXpaths_Callbacks(app)
     callback!(app,
         Output("collapse-path-preview", "is_open"),
         [Input("button-path-preview", "n_clicks")],
-        [State("collapse-path-preview", "is_open")], ) do  n, is_open
+        [State("collapse-path-preview", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
             
         if isnothing(n); n=0 end
 
@@ -1181,7 +1236,9 @@ function Tab_PTXpaths_Callbacks(app)
     callback!(app,
         Output("collapse-config", "is_open"),
         [Input("button-config", "n_clicks")],
-        [State("collapse-config", "is_open")], ) do  n, is_open
+        [State("collapse-config", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
             
         if isnothing(n); n=0 end
 
@@ -1198,7 +1255,9 @@ function Tab_PTXpaths_Callbacks(app)
     callback!(app,
         Output("collapse-bulk-ptx", "is_open"),
         [Input("button-bulk-ptx", "n_clicks")],
-        [State("collapse-bulk-ptx", "is_open")], ) do  n, is_open
+        [State("collapse-bulk-ptx", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
             
         if isnothing(n); n=0 end
 
@@ -1217,7 +1276,9 @@ function Tab_PTXpaths_Callbacks(app)
     callback!(app,
         Output("collapse-phase-selection-PTX", "is_open"),
         [Input("button-phase-selection-PTX", "n_clicks")],
-        [State("collapse-phase-selection-PTX", "is_open")], ) do  n, is_open
+        [State("collapse-phase-selection-PTX", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -1236,7 +1297,9 @@ function Tab_PTXpaths_Callbacks(app)
     callback!(app,
         Output("collapse-pure-phase-selection-PTX", "is_open"),
         [Input("button-pure-phase-selection-PTX", "n_clicks")],
-        [State("collapse-pure-phase-selection-PTX", "is_open")], ) do  n, is_open
+        [State("collapse-pure-phase-selection-PTX", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
