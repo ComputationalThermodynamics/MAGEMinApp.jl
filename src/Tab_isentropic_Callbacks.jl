@@ -257,7 +257,7 @@ function Tab_isoSpaths_Callbacks(app)
         Output("isoS-frac-plot",         "figure"),
         Output("isoS-frac-plot",         "config"),
         
-        Input("phase-selector-isoS-id",      "value"),
+        Input("phase-selector-isoS-id",  "value"),
 
         State("database-dropdown-isoS",  "value"),
         State("test-dropdown-isoS",      "value"),
@@ -298,7 +298,9 @@ function Tab_isoSpaths_Callbacks(app)
     callback!(app,
         Output("collapse-isoS-path", "is_open"),
         [Input("button-isoS-path", "n_clicks")],
-        [State("collapse-isoS-path", "is_open")], ) do  n, is_open
+        [State("collapse-isoS-path", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -315,7 +317,9 @@ function Tab_isoSpaths_Callbacks(app)
     callback!(app,
         Output("collapse-path-opt-isoS", "is_open"),
         [Input("button-path-opt-isoS", "n_clicks")],
-        [State("collapse-path-opt-isoS", "is_open")], ) do  n, is_open
+        [State("collapse-path-opt-isoS", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -332,7 +336,9 @@ function Tab_isoSpaths_Callbacks(app)
     callback!(app,
         Output("collapse-disp-opt-isoS", "is_open"),
         [Input("button-disp-opt-isoS", "n_clicks")],
-        [State("collapse-disp-opt-isoS", "is_open")], ) do  n, is_open
+        [State("collapse-disp-opt-isoS", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -349,7 +355,9 @@ function Tab_isoSpaths_Callbacks(app)
     callback!(app,
         Output("collapse-pathdef-isoS", "is_open"),
         [Input("button-pathdef-isoS", "n_clicks")],
-        [State("collapse-pathdef-isoS", "is_open")], ) do  n, is_open
+        [State("collapse-pathdef-isoS", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -366,7 +374,9 @@ function Tab_isoSpaths_Callbacks(app)
     callback!(app,
         Output("collapse-pathinformation-isoS", "is_open"),
         [Input("button-pathinformation-isoS", "n_clicks")],
-        [State("collapse-pathinformation-isoS", "is_open")], ) do  n, is_open
+        [State("collapse-pathinformation-isoS", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -523,7 +533,9 @@ function Tab_isoSpaths_Callbacks(app)
     callback!(app,
         Output("collapse-phase-selection-isoS", "is_open"),
         [Input("button-phase-selection-isoS", "n_clicks")],
-        [State("collapse-phase-selection-isoS", "is_open")], ) do  n, is_open
+        [State("collapse-phase-selection-isoS", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -542,7 +554,9 @@ function Tab_isoSpaths_Callbacks(app)
     callback!(app,
         Output("collapse-pure-phase-selection-isoS", "is_open"),
         [Input("button-pure-phase-selection-isoS", "n_clicks")],
-        [State("collapse-pure-phase-selection-isoS", "is_open")], ) do  n, is_open
+        [State("collapse-pure-phase-selection-isoS", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
         
         if isnothing(n); n=0 end
 
@@ -560,7 +574,9 @@ function Tab_isoSpaths_Callbacks(app)
     callback!(app,
         Output("collapse-config-isoS", "is_open"),
         [Input("button-config-isoS", "n_clicks")],
-        [State("collapse-config-isoS", "is_open")], ) do  n, is_open
+        [State("collapse-config-isoS", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
             
         if isnothing(n); n=0 end
 
@@ -577,7 +593,9 @@ function Tab_isoSpaths_Callbacks(app)
     callback!(app,
         Output("collapse-bulk-isoS", "is_open"),
         [Input("button-bulk-isoS", "n_clicks")],
-        [State("collapse-bulk-isoS", "is_open")], ) do  n, is_open
+        [State("collapse-bulk-isoS", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
             
         if isnothing(n); n=0 end
 

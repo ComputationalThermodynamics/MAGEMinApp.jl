@@ -145,21 +145,87 @@ function create_ph_names(style::Dict{String, Vector{Any}})
     return inputs
 end
 
+# # Function to create a dbc_table for mineral colors
+# function create_color_table(style::Dict{String, Vector{Any}})
+#     # Create table header
+#     # header = html_thead(html_tr([
+#     #     html_th("Mineral", style=Dict("width" => "30%")),
+#     #     html_th("Color", style=Dict("width" => "70%"))
+#     # ]))
+    
+#     # Create table body rows
+#     rows = []
+#     for mineral in sort(collect(keys(style)))
+#         push!(rows, html_tr([
+#             html_td(mineral,            style=Dict( "margin" => "0", "height" => "24px", "line-height" => "24px","background-color" => "white")),         
+#             html_td(style[mineral][1],  style=Dict( "margin" => "0", "height" => "24px", "line-height" => "24px","background-color" => style[mineral][1]))  # Set background color to the color value
+#         ],style=Dict("height" => "24px", "margin-bottom" => "0px")))
+#     end
+#     body = html_tbody(rows)
+    
+#     # Return the dbc_table
+#     return dbc_table([body], id="color-table", bordered=true, hover=true, striped=true, style=Dict("margin" => "0"))
+# end
 
-# Function to dynamically create dbc_input for each mineral
-function create_color_inputs(style::Dict{String, Vector{Any}})
-    inputs = []
-    for mineral in sort(collect(keys(style)))
-        push!(inputs, dbc_row([
-            dbc_col(dbc_input(
-                type    = "color",
-                id      = "colorpicker-$mineral",
-                value   =  style[mineral][1],
-                style   =  Dict("height" => 16, "padding" => "0", "margin" => "0" )
-            ))
-        ], id="row-color-$mineral", style=Dict("margin-bottom" => "0px", "height" => "24px", "display" => "block")))
-    end
-    return inputs
+
+function create_color_table(style::Dict{String, Vector{Any}})
+
+    data = [
+        Dict("Mineral" => mineral, "Color" => style[mineral][1])
+        for mineral in sort(collect(keys(style)))
+    ]
+    columns = [
+        Dict("name" => "Mineral",   "id" => "Mineral",  "width" => "30%"),
+        Dict("name" => "Color",     "id" => "Color",    "width" => "70%")
+    ]
+
+    color_list = [style[mineral][1] for mineral in sort(collect(keys(style)))]
+    row_conditionals = [
+        Dict("if" => Dict("row_index" => i-1, "column_id" => "Color"), "background-color" => color_list[i])
+        for i in 1:length(color_list)
+    ]
+
+    return dash_datatable(
+        id                          = "color-table-id",
+        data                        =  data,
+        columns                     =  columns,
+        style_table                 =  Dict("margin" => "0", "padding" => "0", "table-layout" => "fixed"),
+        style_cell                  =  Dict("margin" => "0", "padding" => "0", "height" => "24px", "line-height" => "24px", "text-align" => "center"),
+        style_data                  =  Dict("background-color" => "white"), 
+        style_data_conditional      =  row_conditionals,
+        editable                    =  false,  
+        row_deletable               =  false,
+        cell_selectable             =  false,
+        filter_action               = "none",
+        sort_action                 = "none",
+        page_action                 = "none"  
+    )
+end
+
+
+function create_color_selec(style::Dict{String, Vector{Any}})
+    data = [
+        Dict("Change" => " ")
+        for mineral in sort(collect(keys(style)))
+    ]
+    columns = [
+        Dict("name" => "Change", "id" => "Change")
+    ]
+
+    return dash_datatable(
+        id                          = "color-table-change-id",  
+        data                        =  data,
+        columns                     =  columns,
+        style_table                 =  Dict("margin" => "0", "padding" => "0", "table-layout" => "fixed"),
+        style_cell                  =  Dict("margin" => "0", "padding" => "0", "height" => "24px", "line-height" => "24px", "text-align" => "center"),
+        style_data                  =  Dict("background-color" => "white"),
+        editable                    =  false, 
+        row_deletable               =  false,
+        cell_selectable             =  true,
+        filter_action               = "none",
+        sort_action                 = "none",
+        page_action                 = "none"
+    )
 end
 
 
