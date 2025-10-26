@@ -113,7 +113,7 @@ function create_default_mineral_style(mineral_names::Vector{String})
     return mineral_style
 end
 
-function save_style(dict::Dict{String, Vector{Any}}; path::AbstractString= joinpath(pkg_dir,"src","./user_data/mineral_style.json"))
+function save_style(dict::Dict{String, Vector{Any}}; path::String="src/user_data/mineral_style.json")
     open(path, "w") do io
         JSON3.write(io, dict; indent=2)
     end
