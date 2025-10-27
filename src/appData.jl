@@ -8,6 +8,14 @@
 #   Contact      : nriel[at]uni-mainz.de
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ =#
+# load mineral style
+function load_mineral_style()
+    try
+        return load_style(joinpath(pkg_dir, "./user_data/mineral_style_user.json"))
+    catch
+        return load_style(joinpath(pkg_dir, "./user_data/mineral_style_default.json"))
+    end
+end
 
 global AppData
 
@@ -28,7 +36,7 @@ const MAGEMin_version   = MAGEMin_v
 const MAGEMin_C_version = MAGEMin_C_v
 
 # load mineral style
-mineral_style           = load_style(joinpath(pkg_dir,"src","./user_data/mineral_style.json"));
+mineral_style = load_mineral_style();
 
 # Keep track of simulation progress - note that this should be added to a single global variable
 global CompProgress     =  ComputationalProgress()
@@ -39,7 +47,6 @@ file_path               = joinpath(pkg_dir,"src","./tools/OL12.jld2")
 @load file_path OL12
 
 KDs                     = [(OL12[2],OL12[3],OL12[4],"OL","Laurent, O. 2012",OL12[1])]
-
 
 HTTP.Connections.closeall()
 AppData = ( contribs            = contribs,
