@@ -361,7 +361,7 @@ function Tab_PTXpaths_Callbacks(app)
         Output("path-plot", "figure"),
         Input("ptx-table", "data"),
 
-        prevent_initial_call = true,
+        prevent_initial_call = false,
         ) do data
 
         dataout = copy(data)
@@ -704,7 +704,7 @@ function Tab_PTXpaths_Callbacks(app)
             styleout[row_index][Symbol("background-color")] = color
 
             mineral                             = data[row_index]["Mineral"]
-            AppData.mineral_style[mineral][1]   = color
+            AppData.mineral_style[1][mineral][1]   = color
         
 
         elseif bid == "ptx-plot"
@@ -712,10 +712,10 @@ function Tab_PTXpaths_Callbacks(app)
             phase_selection = vcat(phase_infos_PTX.act_ss, phase_infos_PTX.act_pp)
 
             dataout = [
-                Dict("Mineral" => mineral, "Color" => AppData.mineral_style[mineral][1])
+                Dict("Mineral" => mineral, "Color" => AppData.mineral_style[1][mineral][1])
                 for mineral in phase_selection
             ]
-            color_list = [AppData.mineral_style[mineral][1] for mineral in phase_selection]
+            color_list = [AppData.mineral_style[1][mineral][1] for mineral in phase_selection]
             styleout = [
                 Dict("if" => Dict("row_index" => i-1, "column_id" => "Color"), "background-color" => color_list[i])
                 for i in 1:length(color_list)
@@ -743,7 +743,7 @@ function Tab_PTXpaths_Callbacks(app)
         end
 
         # Save the updated dictionary to disk
-        save_style(AppData.mineral_style)
+        save_style(AppData.mineral_style[1])
 
         return "Success"
     end
@@ -811,8 +811,6 @@ function Tab_PTXpaths_Callbacks(app)
         phase_selection         = remove_phases(string_vec_diff(phase_selection,pure_phase_selection,dtb),dtb)
         title                   = db[(db.db .== dtb), :].title[test+1]
         loading                 = ""
-        # ph_colors               = [color_table[i][Symbol("Color")] for i =1:length(color_table)]
-
 
         if bid == "compute-path-button"
 

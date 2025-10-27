@@ -72,7 +72,8 @@ module MAGEMinApp
     Starts the MAGEMin App.
     """
     function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
-        println(" 1/3 Loading messages...")
+
+        println(" 1/4 Loading messages...")
         message     = fetch_message()
         message2    = fetch_message2()
 
@@ -87,7 +88,7 @@ module MAGEMinApp
         app.title   = "MAGEMinApp"
         app.layout  = html_div() do
 
-        println(" 2/3 Loading interface...")
+        println(" 2/4 Loading interface...")
         dbc_container(fluid=false, [
             dbc_col([
             dbc_row([
@@ -227,13 +228,16 @@ module MAGEMinApp
             return String("$(session_id)"), str
         end
 
-        println(" 3/3 Loading callbacks...")
+        println(" 3/4 Loading callbacks...")
         app = Tab_Simulation_Callbacks(app)
         app = Tab_PhaseDiagram_Callbacks(app)
         app = Tab_TraceElement_Callbacks(app)
         app = Tab_PTXpaths_Callbacks(app) #SUPER SLOW!??
         app = Tab_isoSpaths_Callbacks(app)
         app = Progress_Callbacks(app)
+
+        println(" 4/4 Loading user data...")
+        AppData.mineral_style[1] = load_mineral_style();
 
         run_server(app, host, port, debug=debug)
 

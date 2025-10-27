@@ -98,26 +98,22 @@ function create_ph_style()
 end
 
 
-# Function to generate a random color in hexadecimal format
-function random_color()
-    return "#" * join(rand(0:255, 3) .|> x -> string(x, base=16, pad=2))
-end
-
-# Function to create DEFAULT_MINERAL_STYLE with random colors
-function create_default_mineral_style(mineral_names::Vector{String})
-    mineral_style = Dict{String, Vector{Any}}()
-    for mineral in mineral_names
-        # Generate a random color and add the mineral to the dictionary
-        mineral_style[mineral] = [random_color(), "solid", 1.0]
-    end
-    return mineral_style
-end
-
-function save_style(dict::Dict{String, Vector{Any}}; path::String="src/user_data/mineral_style.json")
+function save_style(dict::Dict{String, Vector{Any}}; path::String="./user_data/mineral_style_user.json")
     open(path, "w") do io
         JSON3.write(io, dict; indent=2)
     end
 end
+
+# load mineral style
+function load_mineral_style()
+    try
+        return load_style(joinpath(pkg_dir, "./user_data/mineral_style_user.json"))
+        println("loading user-defined mineral style")
+    catch
+        return load_style(joinpath(pkg_dir, "./user_data/mineral_style_default.json"))
+    end
+end
+
 
 # try to load user overrides if present
 function load_style(json_path)
@@ -144,29 +140,6 @@ function create_ph_names(style::Dict{String, Vector{Any}})
     end
     return inputs
 end
-
-# # Function to create a dbc_table for mineral colors
-# function create_color_table(style::Dict{String, Vector{Any}})
-#     # Create table header
-#     # header = html_thead(html_tr([
-#     #     html_th("Mineral", style=Dict("width" => "30%")),
-#     #     html_th("Color", style=Dict("width" => "70%"))
-#     # ]))
-    
-#     # Create table body rows
-#     rows = []
-#     for mineral in sort(collect(keys(style)))
-#         push!(rows, html_tr([
-#             html_td(mineral,            style=Dict( "margin" => "0", "height" => "24px", "line-height" => "24px","background-color" => "white")),         
-#             html_td(style[mineral][1],  style=Dict( "margin" => "0", "height" => "24px", "line-height" => "24px","background-color" => style[mineral][1]))  # Set background color to the color value
-#         ],style=Dict("height" => "24px", "margin-bottom" => "0px")))
-#     end
-#     body = html_tbody(rows)
-    
-#     # Return the dbc_table
-#     return dbc_table([body], id="color-table", bordered=true, hover=true, striped=true, style=Dict("margin" => "0"))
-# end
-
 
 function create_color_table(style::Dict{String, Vector{Any}})
 
