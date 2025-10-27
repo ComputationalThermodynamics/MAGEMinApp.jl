@@ -627,10 +627,9 @@ function Tab_PTXpaths()
                                         path_plot(),
                                     ]),
                                     
-
                                 ])),
-                                id="collapse-path",
-                                is_open=true,
+                                    id="collapse-path",
+                                    is_open=true,
                                 ),
                                                                                 
                             ])
@@ -947,10 +946,10 @@ function Tab_PTXpaths()
                                                     ]),
                                                     dbc_row([
                                                         dbc_col([ 
-                                                           html_div(create_color_table(AppData.mineral_style), id="ph-names-container")
+                                                           html_div(create_color_table(AppData.mineral_style[1]), id="ph-names-container")
                                                         ], width=8),
                                                         dbc_col([ 
-                                                           html_div(create_color_selec(AppData.mineral_style), id="ph-selec-container")
+                                                           html_div(create_color_selec(AppData.mineral_style[1]), id="ph-selec-container")
                                                         ], width=2),
 
                                                         dbc_col([ 
@@ -958,7 +957,7 @@ function Tab_PTXpaths()
                                                                 type    = "color",
                                                                 id      = "colorpicker-mineral-id",
                                                                 value   =  "white",
-                                                                style   =  Dict("height" => "$((24 + 6) * (length(collect(keys(AppData.mineral_style)))+1))px", "padding" => "0", "margin" => "0" )
+                                                                style   =  Dict("height" => "$((24 + 6) * (length(collect(keys(AppData.mineral_style[1])))+1))px", "padding" => "0", "margin" => "0" )
                                                             )
                                                         ], width=1),
                         

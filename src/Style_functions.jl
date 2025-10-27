@@ -98,26 +98,22 @@ function create_ph_style()
 end
 
 
-# Function to generate a random color in hexadecimal format
-function random_color()
-    return "#" * join(rand(0:255, 3) .|> x -> string(x, base=16, pad=2))
-end
-
-# Function to create DEFAULT_MINERAL_STYLE with random colors
-function create_default_mineral_style(mineral_names::Vector{String})
-    mineral_style = Dict{String, Vector{Any}}()
-    for mineral in mineral_names
-        # Generate a random color and add the mineral to the dictionary
-        mineral_style[mineral] = [random_color(), "solid", 1.0]
-    end
-    return mineral_style
-end
-
-function save_style(dict::Dict{String, Vector{Any}}; path::String="./user_data/mineral_style_used.json")
+function save_style(dict::Dict{String, Vector{Any}}; path::String="./user_data/mineral_style_user.json")
     open(path, "w") do io
         JSON3.write(io, dict; indent=2)
     end
 end
+
+# load mineral style
+function load_mineral_style()
+    try
+        return load_style(joinpath(pkg_dir, "./user_data/mineral_style_user.json"))
+        println("loading user-defined mineral style")
+    catch
+        return load_style(joinpath(pkg_dir, "./user_data/mineral_style_default.json"))
+    end
+end
+
 
 # try to load user overrides if present
 function load_style(json_path)
