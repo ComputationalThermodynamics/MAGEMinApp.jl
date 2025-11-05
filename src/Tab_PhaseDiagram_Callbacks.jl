@@ -748,15 +748,15 @@ function Tab_PhaseDiagram_Callbacks(app)
     ) do other, val
     
         if other == "calc_ox" || other == "oxComp"
-            options        = [  (label = "mol",    value = "mol"),
-                                (label = "wt",     value = "wt")]
+            options        = [  (label = "mol fraction",    value = "mol"),
+                                (label = "wt fraction",     value = "wt")]
             if val == "vol"
                 val = "mol"
             end
         else
-            options        = [  (label = "mol",    value = "mol"),
-                                (label = "wt",     value = "wt"),
-                                (label = "vol",    value = "vol")]
+            options        = [  (label = "mol fraction",    value = "mol"),
+                                (label = "wt fraction",     value = "wt"),
+                                (label = "vol fraction",    value = "vol")]
         end
 
         return options, val
