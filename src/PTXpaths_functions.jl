@@ -644,7 +644,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             end
 
             # initialize single thread MAGEMin 
-            GC.gc() 
+            # GC.gc() 
             gv, z_b, DB, splx_data = init_MAGEMin(  dtb;        
                                                     verbose     = verbose,
                                                     dataset     = dataset,

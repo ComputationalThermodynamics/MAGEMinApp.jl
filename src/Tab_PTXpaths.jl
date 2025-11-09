@@ -2,7 +2,7 @@ function Tab_PTXpaths()
     html_div([
         html_div("‎ "),
         dbc_row([ 
-
+                #= configuration column =#
                 dbc_col([  
 
                     dbc_row([
@@ -471,9 +471,282 @@ function Tab_PTXpaths()
 
                     dbc_row([ 
                         dbc_col([  
-                        ]), #, width=1
+                        ]),
 
+                        #= path options =# 
+                        dbc_col([ 
 
+                            dbc_row([
+
+                                dbc_button("Path options",id="button-path-opt"),
+                                dbc_collapse(
+                                    dbc_card(dbc_cardbody([
+                                        # resolution is number of computational steps between two points
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("Resolution", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ], width=6),
+                                            dbc_col([ 
+                                                    dbc_input(
+                                                    id      = "n-steps-id-ptx",
+                                                    type    = "number", 
+                                                    min     = 1, 
+                                                    max     = 1024, 
+                                                    value   = 32  ),
+                                            ]),
+                                        ]),                               
+                                        # PTX mode
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("P-T-X Mode", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ], width=6),
+                                            dbc_col([ 
+                                                dcc_dropdown(   id      = "mode-dropdown-ptx",
+                                                options = [
+                                                    (label = "Equilibrium",                 value = "eq"),
+                                                    (label = "Fractional melting",          value = "fm"),
+                                                    (label = "Fractional crystallization",  value = "fc"), 
+                                                ],
+                                                value       = "eq",
+                                                clearable   =  false,
+                                                multi       =  false    ),
+                                            ]),
+                                        ]),
+                                        # PTX mode
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("Assimilation", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ], width=6),
+                                            dbc_col([ 
+                                                dcc_dropdown(   id      = "assimilation-dropdown-ptx",
+                                                options = [
+                                                    (label = "true",           value = "true"),
+                                                    (label = "false",          value = "false"),
+                                                ],
+                                                value       = "false",
+                                                clearable   =  false,
+                                                multi       =  false    ),
+                                            ]),
+                                        ]),
+
+                                        # connectivity threshold for fracitonal melting
+                                        html_div([
+                                            dbc_row([
+                                                dbc_col([ 
+                                                    html_h1("Connectivity threshold [%]", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                ], width=6),
+                                                dbc_col([ 
+                                                        dbc_input(
+                                                        id      = "connectivity-id",
+                                                        type    = "number", 
+                                                        min     = 0, 
+                                                        max     = 100.0, 
+                                                        value   = 7.0   ),
+                                                ]),
+                                            ]), 
+                                        ], style = Dict("display" => "none"), id      = "show-connectivity-id"), #none, block
+
+                                        # residual fraction for fractional crystallization
+                                        html_div([
+                                            dbc_row([
+                                                dbc_col([ 
+                                                    html_h1("Residual rock fraction [%]", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                ], width=6),
+                                                dbc_col([ 
+                                                        dbc_input(
+                                                        id      = "residual-id",
+                                                        type    = "number", 
+                                                        min     = 0, 
+                                                        max     = 100.0, 
+                                                        value   = 0.0   ),
+                                                ]),
+                                            ]), 
+                                        ], style = Dict("display" => "none"), id      = "show-residual-id"), #none, block
+
+                                        html_div([
+                                            dbc_row([
+                                                dbc_col([ 
+                                                    html_h1("Isentropic", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                ], width=6),
+                                                dbc_col([ 
+                                                    dcc_dropdown(   id      = "isentropic-dropdown-ptx",
+                                                    options = [
+                                                        (label = "true",           value = "true"),
+                                                        (label = "false",          value = "false"),
+                                                    ],
+                                                    value       = "false",
+                                                    clearable   =  false,
+                                                    multi       =  false    ),
+                                                ]),
+                                            ]),
+                                        ], style = Dict("display" => "block"), id      = "show-isentropic-id"), #none, block
+
+                                        html_div("‎ "),
+                                        dbc_row([
+                                            dbc_button("Compute path",id="compute-path-button", color="light", className="me-2", n_clicks=0,
+                                            style       = Dict( "textAlign"     => "center",
+                                                                "font-size"     => "100%",
+                                                                "background-color" => "#d3f2ce",
+                                                                "border"        =>"1px grey solid")), 
+                                        ]),
+                                        html_div("‎ "),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Save path", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),    
+                                            ], width=4),
+                                            dbc_col([ 
+                                                dbc_input(
+                                                    id      = "Filename-all-ptx-id",
+                                                    type    = "text", 
+                                                    style   = Dict("textAlign" => "center") ,
+                                                    value   = "filename"   ),     
+                                            ], width=4),
+                                            # dbc_col([    
+                                            #     dbc_button("Table", id="save-all-table-ptx-button", color="light",  n_clicks=0,
+                                            #     style       = Dict( "textAlign"     => "center",
+                                            #                         "font-size"     => "100%",
+                                            #                         "border"        =>"1px grey solid")), 
+                                            #     dcc_download(id="download-all-table-ptx-text"),  
+                                            # ], style=Dict("padding"=>"0px", "margin"=>"0px", "width"=>"auto")),
+                                            dbc_col([    
+                                                dbc_button("csv", id="save-all-csv-ptx-button", color="light",  n_clicks=0,
+                                                style       = Dict( "textAlign"     => "center",
+                                                                    "font-size"     => "100%",
+                                                                    "border"        =>"1px grey solid")), 
+                                                dcc_download(id="download-all-csv-ptx-text"),  
+
+                                                dbc_button("csv line", id="save-all-csv-inlined-ptx-button", color="light",  n_clicks=0,
+                                                style       = Dict( "textAlign"     => "center",
+                                                                    "font-size"     => "100%",
+                                                                    "border"        =>"1px grey solid")), 
+                                                dcc_download(id="download-all-csv-inlined-ptx-text"),  
+                                            ]),
+                                        ]),
+                                        dbc_row([
+                                            dbc_alert(
+                                                "Successfully saved all data points information",
+                                                id      ="data-all-table-ptx-save",
+                                                is_open =false,
+                                                duration=4000,
+                                            ),
+                                            dbc_alert(
+                                                "Provide a valid filename (without extension)",
+                                                color="danger",
+                                                id      ="data-all-save-table-ptx-failed",
+                                                is_open =false,
+                                                duration=4000,
+                                            ),
+                                            dbc_alert(
+                                                "Successfully saved all data points information",
+                                                id      ="data-all-csv-ptx-save",
+                                                is_open =false,
+                                                duration=4000,
+                                            ),
+                                            dbc_alert(
+                                                "Provide a valid filename (without extension)",
+                                                color="danger",
+                                                id      ="data-all-save-csv-ptx-failed",
+                                                is_open =false,
+                                                duration=4000,
+                                            ),
+                                            dbc_alert(
+                                                "Successfully saved all data points information",
+                                                id      ="data-all-csv-inlined-ptx-save",
+                                                is_open =false,
+                                                duration=4000,
+                                            ),
+                                            dbc_alert(
+                                                "Provide a valid filename (without extension)",
+                                                color="danger",
+                                                id      ="data-all-save-csv-inlined-ptx-failed",
+                                                is_open =false,
+                                                duration=4000,
+                                            ),
+                                        ]),
+                                        # html_div("‎ "),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Save cummulate", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),    
+                                            ], width=4),
+                                            dbc_col([ 
+                                                dbc_input(
+                                                    id      = "export-removed-id-ptx",
+                                                    type    = "text", 
+                                                    style   = Dict("textAlign" => "center") ,
+                                                    value   = "filename"   ),     
+                                            ], width=4),
+                                            dbc_col([    
+                                                dbc_button("csv file", id="export-removed-button-ptx", color="light",  n_clicks=0,
+                                                style       = Dict( "textAlign"     => "center",
+                                                                    "font-size"     => "100%",
+                                                                    "border"        =>"1px grey solid")), 
+                                            ]),
+                                        ]),
+                                        dbc_row([
+                                            dbc_alert(
+                                                "Successfully saved removed composition information",
+                                                id      ="export-removed-save-ptx",
+                                                is_open =false,
+                                                duration=4000,
+                                            ),
+                                            dbc_alert(
+                                                "Provide a valid filename (without extension)",
+                                                color="danger",
+                                                id      ="export-removed-failed-ptx",
+                                                is_open =false,
+                                                duration=4000,
+                                            ),
+                                        ]),
+                                        # html_div("‎ "),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Export references", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),    
+                                            ], width=4),
+                                            dbc_col([ 
+                                                dbc_input(
+                                                    id      = "export-citation-id-ptx",
+                                                    type    = "text", 
+                                                    style   = Dict("textAlign" => "center") ,
+                                                    value   = "filename"   ),     
+                                            ], width=4),
+                                            dbc_col([    
+                                                dbc_button("bibtex file", id="export-citation-button-ptx", color="light",  n_clicks=0,
+                                                style       = Dict( "textAlign"     => "center",
+                                                                    "font-size"     => "100%",
+                                                                    "border"        =>"1px grey solid")), 
+                                                dbc_tooltip([
+                                                    html_div("Saving list of citation for the computed phase diagram"),
+                                                    html_div("Output path and progress are displayed in the Julia terminal")],target="export-citation-button"),
+                                            ]),
+                                        ]),
+    
+                                        dbc_row([
+                                            dbc_alert(
+                                                "Successfully saved all data points information",
+                                                id      ="export-citation-save-ptx",
+                                                is_open =false,
+                                                duration=4000,
+                                            ),
+                                            dbc_alert(
+                                                "Provide a valid filename (without extension)",
+                                                color="danger",
+                                                id      ="export-citation-failed-ptx",
+                                                is_open =false,
+                                                duration=4000,
+                                            ),
+                                        ]),
+                                    ])),
+                                    id="collapse-path-opt",
+                                    is_open=true,
+                                ),                                  
+                            ]),
+                            html_div("‎ ")
+
+                        ], width=4),
+                        dbc_col([  
+                        ]),
+
+                        #= path definition =#
                         dbc_col([ 
                         
                             dbc_row([
@@ -611,10 +884,10 @@ function Tab_PTXpaths()
                             ])
 
                         ], width=3),
-
                         dbc_col([  
-                        ]), #, width=1
+                        ]),
 
+                        #= path preview and display options =#                                                                            
                         dbc_col([ 
                         
                             dbc_row([
@@ -630,264 +903,9 @@ function Tab_PTXpaths()
                                 ])),
                                     id="collapse-path",
                                     is_open=true,
-                                ),
-                                                                                
-                            ])
-
-                        ], width=4),
-
-                        dbc_col([  
-                        ]), #, width=1
-
-                        dbc_col([ 
-
+                                ),                                                
+                            ]),
                             dbc_row([
-
-                                dbc_button("Path options",id="button-path-opt"),
-                                dbc_collapse(
-                                    dbc_card(dbc_cardbody([
-                                        # resolution is number of computational steps between two points
-                                        dbc_row([
-                                            dbc_col([ 
-                                                html_h1("Resolution", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                            ], width=6),
-                                            dbc_col([ 
-                                                    dbc_input(
-                                                    id      = "n-steps-id-ptx",
-                                                    type    = "number", 
-                                                    min     = 1, 
-                                                    max     = 1024, 
-                                                    value   = 32  ),
-                                            ]),
-                                        ]),                               
-                                        # PTX mode
-                                        dbc_row([
-                                            dbc_col([ 
-                                                html_h1("P-T-X Mode", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                            ], width=6),
-                                            dbc_col([ 
-                                                dcc_dropdown(   id      = "mode-dropdown-ptx",
-                                                options = [
-                                                    (label = "Equilibrium",                 value = "eq"),
-                                                    (label = "Fractional melting",          value = "fm"),
-                                                    (label = "Fractional crystallization",  value = "fc"), 
-                                                ],
-                                                value       = "eq",
-                                                clearable   =  false,
-                                                multi       =  false    ),
-                                            ]),
-                                        ]),
-                                        # PTX mode
-                                        dbc_row([
-                                            dbc_col([ 
-                                                html_h1("Assimilation", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                            ], width=6),
-                                            dbc_col([ 
-                                                dcc_dropdown(   id      = "assimilation-dropdown-ptx",
-                                                options = [
-                                                    (label = "true",           value = "true"),
-                                                    (label = "false",          value = "false"),
-                                                ],
-                                                value       = "false",
-                                                clearable   =  false,
-                                                multi       =  false    ),
-                                            ]),
-                                        ]),
-
-                                        # connectivity threshold for fracitonal melting
-                                        html_div([
-                                            dbc_row([
-                                                dbc_col([ 
-                                                    html_h1("Connectivity threshold [%]", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                                ], width=6),
-                                                dbc_col([ 
-                                                        dbc_input(
-                                                        id      = "connectivity-id",
-                                                        type    = "number", 
-                                                        min     = 0, 
-                                                        max     = 100.0, 
-                                                        value   = 7.0   ),
-                                                ]),
-                                            ]), 
-                                        ], style = Dict("display" => "none"), id      = "show-connectivity-id"), #none, block
-
-                                        # residual fraction for fractional crystallization
-                                        html_div([
-                                            dbc_row([
-                                                dbc_col([ 
-                                                    html_h1("Residual rock fraction [%]", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                                ], width=6),
-                                                dbc_col([ 
-                                                        dbc_input(
-                                                        id      = "residual-id",
-                                                        type    = "number", 
-                                                        min     = 0, 
-                                                        max     = 100.0, 
-                                                        value   = 0.0   ),
-                                                ]),
-                                            ]), 
-                                        ], style = Dict("display" => "none"), id      = "show-residual-id"), #none, block
-
-                                        html_div("‎ "),
-                                        dbc_row([
-                                            dbc_button("Compute path",id="compute-path-button", color="light", className="me-2", n_clicks=0,
-                                            style       = Dict( "textAlign"     => "center",
-                                                                "font-size"     => "100%",
-                                                                "background-color" => "#d3f2ce",
-                                                                "border"        =>"1px grey solid")), 
-                                        ]),
-                                        html_div("‎ "),
-                                        dbc_row([
-                                            dbc_col([
-                                                html_h1("Save path", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),    
-                                            ], width=3),
-                                            dbc_col([ 
-                                                dbc_input(
-                                                    id      = "Filename-all-ptx-id",
-                                                    type    = "text", 
-                                                    style   = Dict("textAlign" => "center") ,
-                                                    value   = "filename"   ),     
-                                            ], width=4),
-                                            dbc_col([    
-                                                dbc_button("Table", id="save-all-table-ptx-button", color="light",  n_clicks=0,
-                                                style       = Dict( "textAlign"     => "center",
-                                                                    "font-size"     => "100%",
-                                                                    "border"        =>"1px grey solid")), 
-                                                dcc_download(id="download-all-table-ptx-text"),  
-                                            ], style=Dict("padding"=>"0px", "margin"=>"0px", "width"=>"auto")),
-                                            dbc_col([    
-                                                dbc_button("csv", id="save-all-csv-ptx-button", color="light",  n_clicks=0,
-                                                style       = Dict( "textAlign"     => "center",
-                                                                    "font-size"     => "100%",
-                                                                    "border"        =>"1px grey solid")), 
-                                                dcc_download(id="download-all-csv-ptx-text"),  
-                                            ], style=Dict("padding"=>"0px", "margin"=>"0px", "width"=>"auto")),
-                                            dbc_col([    
-                                                dbc_button("csv inlined", id="save-all-csv-inlined-ptx-button", color="light",  n_clicks=0,
-                                                style       = Dict( "textAlign"     => "center",
-                                                                    "font-size"     => "100%",
-                                                                    "border"        =>"1px grey solid")), 
-                                                dcc_download(id="download-all-csv-inlined-ptx-text"),  
-                                            ], style=Dict("padding"=>"0px", "margin"=>"0px", "width"=>"auto")),
-                                        ]),
-                                        dbc_row([
-                                            dbc_alert(
-                                                "Successfully saved all data points information",
-                                                id      ="data-all-table-ptx-save",
-                                                is_open =false,
-                                                duration=4000,
-                                            ),
-                                            dbc_alert(
-                                                "Provide a valid filename (without extension)",
-                                                color="danger",
-                                                id      ="data-all-save-table-ptx-failed",
-                                                is_open =false,
-                                                duration=4000,
-                                            ),
-                                            dbc_alert(
-                                                "Successfully saved all data points information",
-                                                id      ="data-all-csv-ptx-save",
-                                                is_open =false,
-                                                duration=4000,
-                                            ),
-                                            dbc_alert(
-                                                "Provide a valid filename (without extension)",
-                                                color="danger",
-                                                id      ="data-all-save-csv-ptx-failed",
-                                                is_open =false,
-                                                duration=4000,
-                                            ),
-                                            dbc_alert(
-                                                "Successfully saved all data points information",
-                                                id      ="data-all-csv-inlined-ptx-save",
-                                                is_open =false,
-                                                duration=4000,
-                                            ),
-                                            dbc_alert(
-                                                "Provide a valid filename (without extension)",
-                                                color="danger",
-                                                id      ="data-all-save-csv-inlined-ptx-failed",
-                                                is_open =false,
-                                                duration=4000,
-                                            ),
-                                        ]),
-                                        html_div("‎ "),
-                                        dbc_row([
-                                            dbc_col([
-                                                html_h1("Save fractionated material", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 0)),    
-                                            ], width=3),
-                                            dbc_col([ 
-                                                dbc_input(
-                                                    id      = "export-removed-id-ptx",
-                                                    type    = "text", 
-                                                    style   = Dict("textAlign" => "center") ,
-                                                    value   = "filename"   ),     
-                                            ], width=4),
-                                            dbc_col([    
-                                                dbc_button("csv file", id="export-removed-button-ptx", color="light",  n_clicks=0,
-                                                style       = Dict( "textAlign"     => "center",
-                                                                    "font-size"     => "100%",
-                                                                    "border"        =>"1px grey solid")), 
-                                            ]),
-                                        ]),
-                                        dbc_row([
-                                            dbc_alert(
-                                                "Successfully saved removed composition information",
-                                                id      ="export-removed-save-ptx",
-                                                is_open =false,
-                                                duration=4000,
-                                            ),
-                                            dbc_alert(
-                                                "Provide a valid filename (without extension)",
-                                                color="danger",
-                                                id      ="export-removed-failed-ptx",
-                                                is_open =false,
-                                                duration=4000,
-                                            ),
-                                        ]),
-                                        html_div("‎ "),
-                                        dbc_row([
-                                            dbc_col([
-                                                html_h1("Export references", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 0)),    
-                                            ], width=3),
-                                            dbc_col([ 
-                                                dbc_input(
-                                                    id      = "export-citation-id-ptx",
-                                                    type    = "text", 
-                                                    style   = Dict("textAlign" => "center") ,
-                                                    value   = "filename"   ),     
-                                            ], width=4),
-                                            dbc_col([    
-                                                dbc_button("bibtex file", id="export-citation-button-ptx", color="light",  n_clicks=0,
-                                                style       = Dict( "textAlign"     => "center",
-                                                                    "font-size"     => "100%",
-                                                                    "border"        =>"1px grey solid")), 
-                                                dbc_tooltip([
-                                                    html_div("Saving list of citation for the computed phase diagram"),
-                                                    html_div("Output path and progress are displayed in the Julia terminal")],target="export-citation-button"),
-                                            ]),
-                                        ]),
-    
-                                        dbc_row([
-                                            dbc_alert(
-                                                "Successfully saved all data points information",
-                                                id      ="export-citation-save-ptx",
-                                                is_open =false,
-                                                duration=4000,
-                                            ),
-                                            dbc_alert(
-                                                "Provide a valid filename (without extension)",
-                                                color="danger",
-                                                id      ="export-citation-failed-ptx",
-                                                is_open =false,
-                                                duration=4000,
-                                            ),
-                                        ]),
-                                    ])),
-                                    id="collapse-path-opt",
-                                    is_open=true,
-                                ),
-                                                                                
                                 dbc_button("Display options",id="button-disp-opt"),
                                 dbc_collapse(
                                     dbc_card(dbc_cardbody([
@@ -972,16 +990,11 @@ function Tab_PTXpaths()
                                                                 "background-color"  => "rgba(255, 255, 255, 1.0)"),
                                             ),
                                         ]),
-   
-
-
                                     ])),
                                     id="collapse-disp-opt",
                                     is_open=true,
-                                ),
-                                                                                
-                            ])
-
+                                )
+                             ]),                                                                           
                         ], width=4),
                     ]),
                     # html_div("‎ "),

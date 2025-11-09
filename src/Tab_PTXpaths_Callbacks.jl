@@ -971,6 +971,21 @@ function Tab_PTXpaths_Callbacks(app)
         return style
     end
 
+    callback!(
+        app,
+        Output("show-isentropic-id",    "style"),
+        Input("mode-dropdown-ptx",      "value"),
+
+        prevent_initial_call = true,
+    ) do value
+
+        if value == "fc" || value == "eq"
+            style  = Dict("display" => "block")
+        else 
+            style  = Dict("display" => "none")
+        end
+        return style
+    end
 
     # callback function to display to right set of variables as function of the diagram type
     callback!(
