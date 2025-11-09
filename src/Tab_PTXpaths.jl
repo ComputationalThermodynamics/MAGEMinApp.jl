@@ -997,17 +997,18 @@ function Tab_PTXpaths()
                                                 dbc_row([
                                                     dbc_col([
                                                         html_h1("Stable phase fraction", style = Dict("textAlign" => "center","font-size" => "200%", "marginTop" => 16)),
-                                                    ],width=11),
+                                                    ],width=10),
                                                     dbc_col([ 
                                                         dcc_dropdown(   id      = "display-mode",
                                                                         options = [
-                                                                            (label = "stacked",  value = "stacked"),
+                                                                            (label = "stacked bars",   value = "bars"),
+                                                                            (label = "stacked lines",  value = "stacked"),
                                                                             (label = "lines",    value = "lines"),
                                                                         ],
                                                                         value=     "stacked" ,
                                                                         clearable   = false,
                                                                         multi       = false),
-                                                    ],width=1),
+                                                    ],width=2),
                                                 ]),
                                                 dbc_row([
                                                     html_hr(),
@@ -1026,17 +1027,18 @@ function Tab_PTXpaths()
                                                     dbc_row([
                                                         dbc_col([
                                                             html_h1("Fractionated phase fraction (integrated)", style = Dict("textAlign" => "center","font-size" => "200%", "marginTop" => 16)),
-                                                        ],width=11),
+                                                        ],width=10),
                                                         dbc_col([ 
                                                             dcc_dropdown(   id      = "ext-display-mode",
                                                                             options = [
-                                                                                (label = "stacked",  value = "stacked"),
+                                                                                (label = "stacked bars",    value = "bars"),
+                                                                                (label = "stacked lines",  value = "stacked"),
                                                                                 (label = "lines",    value = "lines"),
                                                                             ],
-                                                                            value=     "stacked" ,
+                                                                            value       = "bars" ,
                                                                             clearable   = false,
                                                                             multi       = false),
-                                                        ],width=1),
+                                                        ],width=2),
                                                     ]),
                                                     dbc_row([
                                                         html_hr(),
@@ -1045,7 +1047,7 @@ function Tab_PTXpaths()
                                                     dbc_row([
                                                         PTX_extracted_plot()
                                                     ]),
-                                                # ], style = Dict("display" => "none"), id  = "show-frac-id-ptx"), #none, block
+
                                             ]),                                                        
                                         ])),
 

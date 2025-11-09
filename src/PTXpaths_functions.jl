@@ -821,6 +821,19 @@ function get_data_plot(display_mode, sysunit)
                                             line        = attr(     width   =  0.5,
                                                                     color   = AppData.mineral_style[1][ph][1])  )
         end
+    elseif display_mode == "bars"
+        for i=1:n_ph
+
+            ph      = ph_names_ptx[i]
+
+            data_plot_ptx[i] = bar(         x           =  x,
+                                            y           =  Y[i,:],
+                                            name        = ph_names_ptx[i],
+                                            marker      = attr( color   = AppData.mineral_style[1][ph][1],
+                                                                line    = attr(width=0.0, color="black"),
+                                                                opacity = 0.6) # black outline
+                                            )
+         end
     else 
         for i=1:n_ph
             ph      = ph_names_ptx[i]
@@ -839,6 +852,7 @@ function get_data_plot(display_mode, sysunit)
                                                                     color   = AppData.mineral_style[1][ph][1])  )
          end
     end
+
      data_plot_ptx[n_ph+1] = scatter(   x               = x,
                                     name            = "removed %",
                                     y               = fracEvol[:,2].*100.0, 
@@ -946,7 +960,20 @@ function get_extracted_data_plot(ext_mode,sysunit,mode,nRes,nCon)
                                                     line        = attr(     width   =  1.0,
                                                                             color   = AppData.mineral_style[1][ph][1])  )
         end
-    else 
+    elseif ext_mode == "bars"
+        for i=1:n_ph_e
+
+            ph      = ph_names_ext_ptx[i]
+
+            data_extracted_plot_ptx[i] = bar(   x           =  x,
+                                                y           =  Z[i,:],
+                                                name        = ph_names_ext_ptx[i],
+                                                marker      = attr( color   = AppData.mineral_style[1][ph][1],
+                                                                    line    = attr(width=0.0, color="black"),
+                                                                    opacity = 0.6) # black outline
+                                            )
+         end
+    else
         for i=1:n_ph_e
 
             ph      = ph_names_ext_ptx[i]
@@ -954,12 +981,12 @@ function get_extracted_data_plot(ext_mode,sysunit,mode,nRes,nCon)
             data_extracted_plot_ptx[i] = scatter(;  x           =  x,
                                                     y           =  Z[i,:],
                                                     name        = ph_names_ext_ptx[i],
-                                                    mode        = "markers+lines",
+                                                    mode        = "lines",
                                                     marker = attr(
                                                         size    = 5.0,          # Set the size of the circle
                                                         color   = AppData.mineral_style[1][ph][1],      # Set the color of the circle
                                                         symbol  = "circle-open", # Use an open circle marker
-                                                        opacity = 0.5           # Set the transparency (0.0 = fully transparent, 1.0 = fully opaque)
+                                                        opacity = 0.6           # Set the transparency (0.0 = fully transparent, 1.0 = fully opaque)
                                                     ),
                                                     line        = attr(     width   = 1.0,
                                                                             color   = AppData.mineral_style[1][ph][1])   )
@@ -1245,7 +1272,9 @@ end
 function initialize_layout(title,sysunit)
     ytitle               = "Phase fraction ["*sysunit*"%]"
     layout_ptx  = Layout(
-
+        barmode     = "stack",
+        bargap      = 0,        # No gap between bars
+        bargroupgap = 0,        # No gap between bar groups
         title= attr(
             text    = title,
             x       = 0.5,
@@ -1292,8 +1321,11 @@ end
 
 function initialize_ext_layout(title,sysunit)
     ytitle               = "Fractionated phase fraction ["*sysunit*"%]"
+    
     layout_ext_ptx  = Layout(
-
+        barmode     = "stack",
+        bargap      = 0,        # No gap between bars
+        bargroupgap = 0,        # No gap between bar groups
         title= attr(
             text    = title,
             x       = 0.5,

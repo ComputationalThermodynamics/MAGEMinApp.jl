@@ -435,7 +435,7 @@ function save_rho_for_GeoModel(     dtb         ::String,
 
     # convert values
     T      .= T .+ 273.15            # --> to K
-    P      .= P .* 1e3               # --> to bar
+    P      .= P .* 1e3 .* 1e5        # --> to Pa
 
     nT      =  length(x)
     nP      =  length(y)
@@ -459,7 +459,7 @@ function save_rho_for_GeoModel(     dtb         ::String,
     file       *= @sprintf("8\n")
     file       *= @sprintf("\n\n")
     file       *= @sprintf("       1               2                     3                4        5             6       7        8\n");
-    file       *= @sprintf("rho_melt[kg/m3]   melt_fraction[wt]   rho_solid[kg/m3]    Vp[km/s]  Vs[km/s]  s_cp[J/kg/K]  T[K]   P[bar]  \n");
+    file       *= @sprintf("rho_melt[kg/m3]   melt_fraction[wt]   rho_solid[kg/m3]    Vp[km/s]  Vs[km/s]  s_cp[J/kg/K]  T[K]   P[Pa]  \n");
     file       *= @sprintf("1-49:  Comments\n");
     file       *= @sprintf("50:    Lowest T [K]\n");
     file       *= @sprintf("51:    T increment\n");
