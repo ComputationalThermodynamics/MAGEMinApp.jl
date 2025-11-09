@@ -173,7 +173,7 @@ function Tab_PTXpaths()
                                             ],width=3),
 
                                         ]),
-                                    ], style = Dict("display" => "block"), id      = "switch-opx-id-ptx"), #none, block
+                                    ], style = Dict("display" => "none"), id      = "switch-opx-id-ptx"), #none, block
 
                                     # buffer
                                     dbc_row([
@@ -770,7 +770,9 @@ function Tab_PTXpaths()
                                                                     "font-size"     => "100%",
                                                                     "border"        =>"1px lightgray solid")), 
                                             ]),
-                                        ]),
+                                        ],width=6),
+                                        dbc_col([ 
+                                        ],width=1),
                                         dbc_col([ 
                                             dbc_row([
                                                 dbc_input(
@@ -817,7 +819,9 @@ function Tab_PTXpaths()
                                                                     "font-size"     => "100%",
                                                                     "border"        =>"1px lightgray solid")), 
                                             ]),
-                                        ]),
+                                        ],width=6),
+                                        dbc_col([ 
+                                        ],width=1),
                                         dbc_col([ 
                                             dbc_row([
                                                 dbc_input(
