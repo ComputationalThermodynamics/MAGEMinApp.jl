@@ -571,10 +571,10 @@ function Tab_PTXpaths()
                                                 dbc_col([ 
                                                     dcc_dropdown(   id      = "isentropic-dropdown-ptx",
                                                     options = [
-                                                        (label = "true",           value = "true"),
-                                                        (label = "false",          value = "false"),
+                                                        (label = "true",           value = true),
+                                                        (label = "false",          value = false),
                                                     ],
-                                                    value       = "false",
+                                                    value       = false,
                                                     clearable   =  false,
                                                     multi       =  false    ),
                                                 ]),
@@ -807,12 +807,12 @@ function Tab_PTXpaths()
 
                                     dbc_row([
                                         dbc_col([ 
-                                            dbc_row([
-                                                html_h1("Pressure [kbar]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
-                                            ]),
-                                            dbc_row([
-                                                html_h1("Tolerance [K]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
-                                            ]),
+                                            # dbc_row([
+                                            #     html_h1("Pressure [kbar]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
+                                            # ]),
+                                            # dbc_row([
+                                            #     html_h1("Tolerance [K]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
+                                            # ]),
                                             dbc_row([
                                                 dbc_button("Find liquidus",id="find-liquidus-button", color="light", className="me-2", n_clicks=0,
                                                 style       = Dict( "textAlign"     => "center",
@@ -823,22 +823,22 @@ function Tab_PTXpaths()
                                         dbc_col([ 
                                         ],width=1),
                                         dbc_col([ 
-                                            dbc_row([
-                                                dbc_input(
-                                                id      = "liquidus-pressure-val-id",
-                                                type    = "number", 
-                                                min     = 0.001, 
-                                                max     = 100.01, 
-                                                value   = 10.0   ),
-                                            ]),
-                                            dbc_row([
-                                                dbc_input(
-                                                id      = "liquidus-tolerance-val-id",
-                                                type    = "number", 
-                                                min     = 1e-8, 
-                                                max     = 1.0, 
-                                                value   = 1e-2   ),
-                                            ]),
+                                            # dbc_row([
+                                            #     dbc_input(
+                                            #     id      = "liquidus-pressure-val-id",
+                                            #     type    = "number", 
+                                            #     min     = 0.001, 
+                                            #     max     = 100.01, 
+                                            #     value   = 10.0   ),
+                                            # ]),
+                                            # dbc_row([
+                                            #     dbc_input(
+                                            #     id      = "liquidus-tolerance-val-id",
+                                            #     type    = "number", 
+                                            #     min     = 1e-8, 
+                                            #     max     = 1.0, 
+                                            #     value   = 1e-2   ),
+                                            # ]),
                                             dbc_row([
                                                 dcc_textarea(
                                                     id="display-liquidus-textarea",
@@ -855,31 +855,75 @@ function Tab_PTXpaths()
                                     ]),
   
                                     html_div("‎ "), 
-                                    html_h1("Define P-T points", style = Dict("textAlign" => "center","font-size" => "120%")),
-                                    dbc_row([
+                                    html_h1("Define path", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
+                                    html_hr(),
+                                    html_div([
+                                        dbc_row([
 
-                                        dash_datatable(
-                                            id      = "ptx-table",
-                                            columns =[  Dict("name" => "P_kbar",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
-                                                        Dict("name" => "T_°C",    "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")],
-                                            data=[
-                                                Dict("col-1" => 10.0,    "col-2"   => 1200.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0),
-                                                Dict("col-1" => 2.0,   "col-2"   => 600.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0),
-                                            ],
-                                            style_cell      = (textAlign="center", fontSize="140%",),
-                                            style_header    = (fontWeight="bold",),
-                                            editable        = true,
-                                            row_deletable   = true
-                                        ),
+                                            dash_datatable(
+                                                id      = "ptx-table",
+                                                columns =[  Dict("name" => "P_kbar",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                                                            Dict("name" => "T_°C",    "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")],
+                                                data=[
+                                                    Dict("col-1" => 10.0,    "col-2"   => 1200.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0),
+                                                    Dict("col-1" => 2.0,   "col-2"   => 600.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0),
+                                                ],
+                                                style_cell      = (textAlign="center", fontSize="140%",),
+                                                style_header    = (fontWeight="bold",),
+                                                editable        = true,
+                                                row_deletable   = true
+                                            ),
 
-                                    ]),
-                                    dbc_row([
-                                        dbc_button("Add new point",id="add-row-button", color="light", className="me-2", n_clicks=0,
-                                        style       = Dict( "textAlign"     => "center",
-                                                            "font-size"     => "100%",
-                                                            "border"        =>"1px lightgray solid")), 
-                                    ]),
-
+                                        ]),
+                                        dbc_row([
+                                            dbc_button("Add new point",id="add-row-button", color="light", className="me-2", n_clicks=0,
+                                            style       = Dict( "textAlign"     => "center",
+                                                                "font-size"     => "100%",
+                                                                "border"        =>"1px lightgray solid")), 
+                                        ]),
+                                    ], style = Dict("display" => "block"), id      = "show-pathdef-id"), #none, block                                                                    
+                                    html_div([
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("Starting pressure [kbar]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
+                                            ]),
+                                            dbc_col([ 
+                                                dbc_input(
+                                                id      = "starting-pressure-isoS-id",
+                                                type    = "number", 
+                                                min     = 0.001, 
+                                                max     = 1500.01, 
+                                                value   = 30.0   ),
+                                            ]),
+                                        ]),
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("Starting temperature [°C]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
+                                            ]),
+                                            dbc_col([ 
+                                                dbc_input(
+                                                id      = "starting-temperature-isoS-id",
+                                                type    = "number", 
+                                                min     = 1.0, 
+                                                max     = 3000.0, 
+                                                value   = 1500.0   ),
+                                            ]),
+                                        ]),
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("Ending pressure [kbar]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
+                                            ]),
+                                            dbc_col([ 
+                                                dbc_input(
+                                                id      = "ending-pressure-isoS-id",
+                                                type    = "number", 
+                                                min     = 0.001, 
+                                                max     = 1500.01, 
+                                                value   = 1.0   ),
+                                            ]),
+                                        ]),
+                                    ], style = Dict("display" => "none"), id      = "show-isopathdef-id"), #none, block    
+                                    
                                 ])),
                                 id="collapse-pathdef",
                                 is_open=true,
@@ -899,11 +943,31 @@ function Tab_PTXpaths()
                                 dbc_button("Path preview",id="button-path"),
                                 dbc_collapse(
                                 dbc_card(dbc_cardbody([
-
-                                    dbc_row([
-                                        path_plot(),
-                                    ]),
-                                    
+                                    html_div([
+                                        dbc_row([
+                                            path_plot(),
+                                        ]),
+                                    ], style = Dict("display" => "block"), id      = "show-pathpreview-id"), #none, block    
+                                    html_div([
+                                        dbc_row([
+                                            path_isoS_plot(),
+                                        ]),
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("Entropy [J/K]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
+                                            ]),
+                                            dbc_col([ 
+                                                dcc_textarea(
+                                                    id="display-entropy-textarea",
+                                                    value       = "",
+                                                    readOnly    = true,
+                                                    disabled    = true,
+                                                    draggable   = false,
+                                                    style       = Dict("textAlign" => "center","font-size" => "100%", "width"=> "100%", "height" => 24, "resize"=> "none")
+                                                ),
+                                            ]),
+                                        ]),
+                                    ], style = Dict("display" => "none"), id      = "show-isopathpreview-id"), #none, block    
                                 ])),
                                     id="collapse-path",
                                     is_open=true,

@@ -609,9 +609,10 @@ function Tab_PTXpaths_Callbacks(app)
         Output("display-solidus-textarea",     "value"),
         Input("find-liquidus-button",          "n_clicks"),
         Input("find-solidus-button",           "n_clicks"),
+
         State("phase-selection-PTX",            "value"),
-        State("liquidus-pressure-val-id",       "value"),
-        State("liquidus-tolerance-val-id",      "value"),
+        # State("liquidus-pressure-val-id",       "value"),
+        # State("liquidus-tolerance-val-id",      "value"),
         State("solidus-pressure-val-id",       "value"),
         State("solidus-tolerance-val-id",      "value"),
 
@@ -634,7 +635,8 @@ function Tab_PTXpaths_Callbacks(app)
 
         prevent_initial_call = true,
 
-        ) do    compute,    compute_sol,     phase_selection,   pressure,   tolerance, sol_pressure, sol_tolerance,
+        ) do    compute,    compute_sol,     
+                phase_selection,   pressure,   tolerance,
                 Tliq,       Tsol,
                 dtb,        dataset,        bufferType,     solver,
                 verbose,    bulk,           bufferN,
@@ -654,7 +656,7 @@ function Tab_PTXpaths_Callbacks(app)
             bufferN                 = Float64(bufferN)               # convert buffer_n to float
             bulk_ini, bulk_ini, oxi = get_bulkrock_prop(bulk, bulk)  
 
-            Tsol = compute_Tsol(    sysunit,    sol_pressure,   sol_tolerance,  bulk_ini,   oxi,    phase_selection,
+            Tsol = compute_Tsol(    sysunit,    pressure,   tolerance,  bulk_ini,   oxi,    phase_selection,
                                     dtb,        dataset,    bufferType, solver,
                                     verbose,    bulk,       bufferN,
                                     cpx,        limOpx,     limOpxVal  )
@@ -985,6 +987,31 @@ function Tab_PTXpaths_Callbacks(app)
             style  = Dict("display" => "none")
         end
         return style
+    end
+
+
+
+    callback!(
+        app,
+        Output("show-pathdef-id",           "style"),
+        Output("show-isopathdef-id",        "style"),
+
+        Output("show-pathpreview-id",       "style"),
+        Output("show-isopathpreview-id",    "style"),
+
+        Input("isentropic-dropdown-ptx",    "value"),
+
+        prevent_initial_call = true,
+    ) do value
+
+        if value == true
+            style  = Dict("display" => "none")
+            style2  = Dict("display" => "block")
+        else 
+            style  = Dict("display" => "block")
+            style2  = Dict("display" => "none")
+        end
+        return style, style2, style, style2
     end
 
     # callback function to display to right set of variables as function of the diagram type
