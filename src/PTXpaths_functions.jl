@@ -830,7 +830,7 @@ function get_data_plot(display_mode, sysunit)
                                             y           =  Y[i,:],
                                             name        = ph_names_ptx[i],
                                             marker      = attr( color   = AppData.mineral_style[1][ph][1],
-                                                                line    = attr(width=0.5, color="black"),
+                                                                line    = attr(width=0.0, color="black"),
                                                                 opacity = 0.6) # black outline
                                             )
          end
@@ -852,6 +852,7 @@ function get_data_plot(display_mode, sysunit)
                                                                     color   = AppData.mineral_style[1][ph][1])  )
          end
     end
+
      data_plot_ptx[n_ph+1] = scatter(   x               = x,
                                     name            = "removed %",
                                     y               = fracEvol[:,2].*100.0, 
@@ -968,7 +969,7 @@ function get_extracted_data_plot(ext_mode,sysunit,mode,nRes,nCon)
                                                 y           =  Z[i,:],
                                                 name        = ph_names_ext_ptx[i],
                                                 marker      = attr( color   = AppData.mineral_style[1][ph][1],
-                                                                    line    = attr(width=0.5, color="black"),
+                                                                    line    = attr(width=0.0, color="black"),
                                                                     opacity = 0.6) # black outline
                                             )
          end
