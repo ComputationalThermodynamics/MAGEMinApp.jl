@@ -625,7 +625,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                 verbose,    bufferN,
                                 cpx,        limOpx,     limOpxVal,
                                 nCon,       nRes,
-                                P_start,    T_start,    P_end,      isentropic_mode                                  )
+                                T_start,    isentropic_mode                                  )
 
         global Out_PTX, ph_names_ptx, fracEvol, compo_matrix, removedBulk
 
@@ -664,8 +664,9 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                     Temp[i] = data[i][Symbol("col-2")]
                 end
             else isentropic_mode == true
-                Pres[1] = P_start
-                Pres[2] = P_end
+                for i=1:np
+                    Pres[i] = data[i][Symbol("col-1")]
+                end
                 Temp[1] = T_start
             end
             
@@ -721,11 +722,11 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             # retrieve reference entropy of the system
             if isentropic_mode == true
                 out         = MAGEMin_C.gmin_struct{Float64, Int64};
-                Out_PTX[1]  = deepcopy( point_wise_minimization(P_start,T_start, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
+                Out_PTX[1]  = deepcopy( point_wise_minimization(Pres[1],T_start, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
                 Sref        = Out_PTX[1].entropy[1];
                 n_max       = 32
                 tolerance   = 0.001
-                delta_T     = (P_start-P_end)/(nsteps+1)*(16.0);
+                delta_T     = (Pres[1]-Pres[np])/(nsteps+1)*(16.0);
             end
 
 
@@ -753,7 +754,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                     gv      =  define_bulk_rock(gv, bulk, oxi, sys_in, dtb);
 
                     if isentropic_mode == true && k > 1
-                        P = P_start + (j-1)*( (P_end - P_start)/ (nsteps+1) )
+                        P = Pres[i] + (j-1)*( (Pres[i+1] - Pres[i])/ (nsteps+1) )
 
                         a           = Out_PTX[j-1].T_C - 2.0*delta_T
                         b           = Out_PTX[j-1].T_C
@@ -1017,7 +1018,7 @@ function get_data_plot(display_mode, sysunit)
 end
 
 
-function get_extracted_data_plot(ext_mode,sysunit,mode,nRes,nCon)
+function get_extracted_data_plot(ext_mode,sysunit,mode,nRes,nCon,isentropic_mode)
 
     n_ph    = length(ph_names_ptx)
     n_tot   = length(Out_PTX)
@@ -1099,18 +1100,46 @@ function get_extracted_data_plot(ext_mode,sysunit,mode,nRes,nCon)
                                                                             color   = AppData.mineral_style[1][ph][1])  )
         end
     elseif ext_mode == "bars"
-        for i=1:n_ph_e
 
-            ph      = ph_names_ext_ptx[i]
+        if isentropic_mode == true
 
-            data_extracted_plot_ptx[i] = bar(   x           =  x,
-                                                y           =  Z[i,:],
-                                                name        = ph_names_ext_ptx[i],
-                                                marker      = attr( color   = AppData.mineral_style[1][ph][1],
-                                                                    line    = attr(width=0.0, color="black"),
-                                                                    opacity = 0.6) # black outline
-                                            )
-         end
+            if n_tot > 128
+                k = ceil(Int, n_tot / 128)  # Step size to reduce to ~128 points
+                indices = 1:k:n_tot
+                x_sampled = x[indices]
+                Z_sampled = Z[:, indices]
+                println(" WARNING: large number of steps for isentropic paths leads to improper bar plots... (PlotlyJS unsolved issue)" )
+                println(" Downsampling bar plot from $n_tot to $(length(indices)) points... (csv output remains correct)" )
+            else
+                x_sampled = x
+                Z_sampled = Z
+            end
+            
+            for i=1:n_ph_e
+                ph = ph_names_ext_ptx[i]
+                data_extracted_plot_ptx[i] = bar(   x           =  x_sampled,
+                                                    y           =  Z_sampled[i,:],
+                                                    name        = ph_names_ext_ptx[i],
+                                                    marker      = attr( color   = AppData.mineral_style[1][ph][1],
+                                                                        line    = attr(width=0.0, color="black"),
+                                                                        opacity = 0.6) # black outline
+                                                )
+            end
+
+        else
+            for i=1:n_ph_e
+
+                ph      = ph_names_ext_ptx[i]
+
+                data_extracted_plot_ptx[i] = bar(   x           =  x,
+                                                    y           =  Z[i,:],
+                                                    name        = ph_names_ext_ptx[i],
+                                                    marker      = attr( color   = AppData.mineral_style[1][ph][1],
+                                                                        line    = attr(width=0.0, color="black"),
+                                                                        opacity = 0.6) # black outline
+                                                )
+            end
+        end
     else
         for i=1:n_ph_e
 
@@ -1499,7 +1528,7 @@ function initialize_ext_layout(title,sysunit)
             zeroline      = true,   # Show the axis line
             linecolor     = "black", # Set the left axis line color
             linewidth     = 1,       # Set the thickness of the axis line
-            range         = [0.0, 100.0]
+            range         = [0.0, 100]
         ),
     )
 
@@ -1536,7 +1565,7 @@ function initialize_comp_layout(sysunit)
             zeroline      = true,   # Show the axis line
             linecolor     = "black", # Set the left axis line color
             linewidth     = 1,       # Set the thickness of the axis line
-            range         = [0.0, 100.0]
+            range         = [0.0, 100]
         ),
     )
 

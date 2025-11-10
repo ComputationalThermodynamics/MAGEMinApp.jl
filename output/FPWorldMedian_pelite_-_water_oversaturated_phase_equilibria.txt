@@ -1,0 +1,27 @@
+1) pl cd ilm afs mt q H2O
+2) cd ilm liq mt pl H2O
+3) cd mt g liq ilm H2O
+4) g cd liq mt ilm sill H2O
+5) liq g bi ilm q sill
+6) liq g ilm bi q ky ru
+7) liq hem bi g q ky ru
+8) liq hem g mu q ky ru
+9) mu hem g liq q ky ru H2O
+10) liq mt g ilm cd sill
+11) ilm liq cd g sill
+12) ilm liq g q sill ru
+13) liq g cd ilm sp mt
+14) liq mt ilm cd
+15) liq g ilm cd sp
+16) sa ilm liq g
+17) ilm g liq sill ru
+18) cd ilm liq mt g
+19) ilm liq cd g
+20) liq cd ilm g H2O
+21) liq g hem ky ru
+22) liq cd ilm H2O
+23) liq ilm opx H2O
+24) g ilm liq q sill
+25) sp ilm liq mt cd
+26) liq g ilm cd sa
+27) g liq ilm sa sill

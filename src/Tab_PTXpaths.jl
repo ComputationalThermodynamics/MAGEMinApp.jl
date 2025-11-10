@@ -837,6 +837,22 @@ function Tab_PTXpaths()
                                     html_hr(),
                                     html_div([
                                         dbc_row([
+                                            dbc_col([ 
+                                                html_h1("Starting Temp. [°C]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
+                                            ],width=7),
+                                            dbc_col([ 
+                                                dbc_input(
+                                                id      = "starting-temperature-isoS-id",
+                                                type    = "number", 
+                                                min     = 1.0, 
+                                                max     = 3000.0, 
+                                                value   = 800.0   ),
+                                            ]),
+                                        ]),
+                                    ], style = Dict("display" => "none"), id      = "show-isopathdef-id"), #none, block    
+                                    
+                                    html_div([
+                                        dbc_row([
 
                                             dash_datatable(
                                                 id      = "ptx-table",
@@ -860,48 +876,7 @@ function Tab_PTXpaths()
                                                                 "border"        =>"1px lightgray solid")), 
                                         ]),
                                     ], style = Dict("display" => "block"), id      = "show-pathdef-id"), #none, block                                                                    
-                                    html_div([
-                                        dbc_row([
-                                            dbc_col([ 
-                                                html_h1("Starting Pressure [kbar]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
-                                            ],width=7),
-                                            dbc_col([ 
-                                                dbc_input(
-                                                id      = "starting-pressure-isoS-id",
-                                                type    = "number", 
-                                                min     = 0.001, 
-                                                max     = 1500.01, 
-                                                value   = 16.0   ),
-                                            ]),
-                                        ]),
-                                        dbc_row([
-                                            dbc_col([ 
-                                                html_h1("Starting Temp. [°C]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
-                                            ],width=7),
-                                            dbc_col([ 
-                                                dbc_input(
-                                                id      = "starting-temperature-isoS-id",
-                                                type    = "number", 
-                                                min     = 1.0, 
-                                                max     = 3000.0, 
-                                                value   = 800.0   ),
-                                            ]),
-                                        ]),
-                                        dbc_row([
-                                            dbc_col([ 
-                                                html_h1("Ending Pressure [kbar]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
-                                            ],width=7),
-                                            dbc_col([ 
-                                                dbc_input(
-                                                id      = "ending-pressure-isoS-id",
-                                                type    = "number", 
-                                                min     = 0.001, 
-                                                max     = 1500.01, 
-                                                value   = 1.0   ),
-                                            ]),
-                                        ]),
-                                    ], style = Dict("display" => "none"), id      = "show-isopathdef-id"), #none, block    
-                                    
+
                                 ])),
                                 id="collapse-pathdef",
                                 is_open=true,
@@ -1079,7 +1054,7 @@ function Tab_PTXpaths()
                                             ]),
 
                                             dbc_row([
-                                                # html_div([                                                     
+                                                html_div([                                                     
                                                     dbc_row([
                                                         html_div("‎ "),
                                                     ]),
@@ -1106,7 +1081,7 @@ function Tab_PTXpaths()
                                                     dbc_row([
                                                         PTX_extracted_plot()
                                                     ]),
-
+                                                ], style = Dict("display" => "none"), id      = "show-fracphases-id"), #none, block   
                                             ]),                                                        
                                         ])),
 
