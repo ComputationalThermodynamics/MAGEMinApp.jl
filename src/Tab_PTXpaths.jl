@@ -22,7 +22,7 @@ function Tab_PTXpaths()
                                                         #                 for i=1:size(dba,1)
                                                         # ],
                                                         options     = dtb_dict,
-                                                        value       ="ig" ,
+                                                        value       ="mp" ,
                                                         clearable   = false,
                                                         multi       = false),
                                         ]),
@@ -807,12 +807,6 @@ function Tab_PTXpaths()
 
                                     dbc_row([
                                         dbc_col([ 
-                                            # dbc_row([
-                                            #     html_h1("Pressure [kbar]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
-                                            # ]),
-                                            # dbc_row([
-                                            #     html_h1("Tolerance [K]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
-                                            # ]),
                                             dbc_row([
                                                 dbc_button("Find liquidus",id="find-liquidus-button", color="light", className="me-2", n_clicks=0,
                                                 style       = Dict( "textAlign"     => "center",
@@ -823,22 +817,6 @@ function Tab_PTXpaths()
                                         dbc_col([ 
                                         ],width=1),
                                         dbc_col([ 
-                                            # dbc_row([
-                                            #     dbc_input(
-                                            #     id      = "liquidus-pressure-val-id",
-                                            #     type    = "number", 
-                                            #     min     = 0.001, 
-                                            #     max     = 100.01, 
-                                            #     value   = 10.0   ),
-                                            # ]),
-                                            # dbc_row([
-                                            #     dbc_input(
-                                            #     id      = "liquidus-tolerance-val-id",
-                                            #     type    = "number", 
-                                            #     min     = 1e-8, 
-                                            #     max     = 1.0, 
-                                            #     value   = 1e-2   ),
-                                            # ]),
                                             dbc_row([
                                                 dcc_textarea(
                                                     id="display-liquidus-textarea",
@@ -885,34 +863,34 @@ function Tab_PTXpaths()
                                     html_div([
                                         dbc_row([
                                             dbc_col([ 
-                                                html_h1("Starting pressure [kbar]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
-                                            ]),
+                                                html_h1("Starting Pressure [kbar]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
+                                            ],width=7),
                                             dbc_col([ 
                                                 dbc_input(
                                                 id      = "starting-pressure-isoS-id",
                                                 type    = "number", 
                                                 min     = 0.001, 
                                                 max     = 1500.01, 
-                                                value   = 30.0   ),
+                                                value   = 16.0   ),
                                             ]),
                                         ]),
                                         dbc_row([
                                             dbc_col([ 
-                                                html_h1("Starting temperature [°C]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
-                                            ]),
+                                                html_h1("Starting Temp. [°C]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
+                                            ],width=7),
                                             dbc_col([ 
                                                 dbc_input(
                                                 id      = "starting-temperature-isoS-id",
                                                 type    = "number", 
                                                 min     = 1.0, 
                                                 max     = 3000.0, 
-                                                value   = 1500.0   ),
+                                                value   = 800.0   ),
                                             ]),
                                         ]),
                                         dbc_row([
                                             dbc_col([ 
-                                                html_h1("Ending pressure [kbar]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
-                                            ]),
+                                                html_h1("Ending Pressure [kbar]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
+                                            ],width=7),
                                             dbc_col([ 
                                                 dbc_input(
                                                 id      = "ending-pressure-isoS-id",
@@ -999,7 +977,7 @@ function Tab_PTXpaths()
                                                 html_h1("Color options", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                             ], width=6),
                                             dbc_col([ 
-                                                dbc_button("Modify color scheme",id="style-canvas-button", color="light",  n_clicks=0,
+                                                dbc_button("Modify phase colors",id="style-canvas-button", color="light",  n_clicks=0,
                                                 style       = Dict( "textAlign"     => "center",
                                                                     "font-size"     => "100%",
                                                                     "border"        =>"1px grey solid",

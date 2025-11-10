@@ -755,6 +755,9 @@ function Tab_PTXpaths_Callbacks(app)
     """
     callback!(
         app,
+        Output("display-entropy-textarea",  "value"),
+        Output("path-isoS-plot",        "figure"),
+        Output("path-isoS-plot",        "config"),
         Output("ptx-plot",              "figure"),
         Output("ptx-plot",              "config"),
         Output("ptx-extracted-plot",    "figure"),
@@ -799,6 +802,13 @@ function Tab_PTXpaths_Callbacks(app)
         State("connectivity-id",        "value"),
         State("residual-id",            "value"),
         State("color-table-id",         "data"),
+
+
+        State("starting-pressure-isoS-id",      "value"),
+        State("starting-temperature-isoS-id",   "value"),
+        State("ending-pressure-isoS-id",        "value"),
+        State("isentropic-dropdown-ptx",        "value"),
+        State("display-entropy-textarea",       "value"),
         
         prevent_initial_call = true,
 
@@ -807,7 +817,8 @@ function Tab_PTXpaths_Callbacks(app)
                 dtb,        dataset,    bufferType, solver,
                 verbose,    bulk,       bulk2,      bufferN,
                 cpx,        limOpx,     limOpxVal,  test,   sysunit,
-                nCon,       nRes,       color_table
+                nCon,       nRes,       color_table,
+                P_start,    T_start,    P_end,      isentropic_mode, entropy
 
         bid                     = pushed_button( callback_context() )    # get which button has been pushed
         phase_selection         = remove_phases(string_vec_diff(phase_selection,pure_phase_selection,dtb),dtb)
@@ -817,6 +828,7 @@ function Tab_PTXpaths_Callbacks(app)
         if bid == "compute-path-button"
 
             global Out_PTX, ph_names_ptx, phase_infos_PTX, layout_ptx, layout_extracted_ptx, data_plot_ptx, fracEvol, removedBulk, layout_rm_ptx, data_comp_rm_plot, layout_rm_int_ptx, data_comp_rm_int_plot
+            global layout_path, figIsoSPath
             
             bufferN                     = Float64(bufferN)               # convert buffer_n to float
             bulk_ini, bulk_assim, oxi   = get_bulkrock_prop(bulk, bulk2; sys_unit=sys_unit)  
@@ -825,7 +837,16 @@ function Tab_PTXpaths_Callbacks(app)
                                     dtb,        dataset,    bufferType, solver,
                                     verbose,    bufferN,
                                     cpx,        limOpx,     limOpxVal,
-                                    nCon,       nRes                                  )
+                                    nCon,       nRes,
+                                    P_start,    T_start,    P_end,      isentropic_mode                                  )
+
+            if isentropic_mode == true
+                entropy                 = string(round(Out_PTX[1].entropy[1],digits=3))
+
+                layout_path             = initialize_layout_isoS_path(Float64(P_start), Float64(T_start), Float64(P_end))
+                df_path_plot            = get_data_plot_isoS_path()
+                figIsoSPath             = plot(df_path_plot, x=:x, y=:y, layout_path)
+            end
 
             phase_infos_PTX             = get_phase_infos(Out_PTX)
 
@@ -890,7 +911,18 @@ function Tab_PTXpaths_Callbacks(app)
                                     width    =  960,
                                     scale    =  2.0,       ).fields)
 
-        return figPTX, configPTX, figExtractedPTX, configExtractedPTX, figrmPTX, configrmPTX, figrmintPTX, configrmintPTX, phase_list, loading#, disp_frac
+        configPathIsoS   = PlotConfig(  toImageButtonOptions  = attr(     name     = "Download as svg",
+                                    format   = "svg",
+                                    filename =  "PTX_path_isentropic_"*replace(title, " " => "_"),
+                                    height   =  640,
+                                    width    =  640,
+                                    scale    =  2.0,       ).fields)
+        if isentropic_mode == true
+            return entropy, figIsoSPath, configPathIsoS,figPTX, configPTX, figExtractedPTX, configExtractedPTX, figrmPTX, configrmPTX, figrmintPTX, configrmintPTX, phase_list, loading
+        else
+            return entropy, no_update(), no_update(),figPTX, configPTX, figExtractedPTX, configExtractedPTX, figrmPTX, configrmPTX, figrmintPTX, configrmintPTX, phase_list, loading
+        end                            
+        
     end
 
 
@@ -975,18 +1007,22 @@ function Tab_PTXpaths_Callbacks(app)
 
     callback!(
         app,
-        Output("show-isentropic-id",    "style"),
-        Input("mode-dropdown-ptx",      "value"),
+        Output("show-isentropic-id",        "style"),
+        Output("isentropic-dropdown-ptx",   "value"),
+    
+        Input("mode-dropdown-ptx",          "value"),
+        State("isentropic-dropdown-ptx",    "value"),
 
         prevent_initial_call = true,
-    ) do value
+    ) do value, isentropic_value
 
         if value == "fc" || value == "eq"
             style  = Dict("display" => "block")
         else 
-            style  = Dict("display" => "none")
+            style               = Dict("display" => "none")
+            isentropic_value    = false
         end
-        return style
+        return style, isentropic_value
     end
 
 
