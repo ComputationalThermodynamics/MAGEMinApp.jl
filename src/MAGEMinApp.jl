@@ -31,7 +31,6 @@ module MAGEMinApp
     export App
 
     # include functions
-    # include(joinpath(pkg_dir,"src","fetch.jl"))
     include(joinpath(pkg_dir,"src","fetch.jl"))
     include(joinpath(pkg_dir,"src","Progress.jl"))
     include(joinpath(pkg_dir,"src","Progress_Callbacks.jl"))
@@ -50,9 +49,6 @@ module MAGEMinApp
     include(joinpath(pkg_dir,"src","Tab_TraceElement_Callbacks.jl"))
     include(joinpath(pkg_dir,"src","PTXpaths_functions.jl"))   
     include(joinpath(pkg_dir,"src","Tab_PTXpaths_Callbacks.jl")) 
-    include(joinpath(pkg_dir,"src","Tab_isentropic.jl"))
-    include(joinpath(pkg_dir,"src","Tab_isentropic_Callbacks.jl"))
-    include(joinpath(pkg_dir,"src","IsentropicPaths_functions.jl"))
     include(joinpath(pkg_dir,"src","Tab_General_informations.jl"))
     include(joinpath(pkg_dir,"src","MAGEMinApp_functions.jl"))
     include(joinpath(pkg_dir,"src","Loading_functions.jl"))
@@ -188,10 +184,6 @@ module MAGEMinApp
                                         label       = "PTX path",
                                         children    = [Tab_PTXpaths()]
                                     ),
-                            dbc_tab(    tab_id      = "tab-isentropic-path",
-                                        label       = "Isentropic path",
-                                        children    = [Tab_IsentropicPaths()]
-                                    ),
                             dbc_tab(    tab_id      = "tab-general-info",
                                         label       = "General information",
                                         children    = [Tab_General_informations()]
@@ -232,8 +224,7 @@ module MAGEMinApp
         app = Tab_Simulation_Callbacks(app)
         app = Tab_PhaseDiagram_Callbacks(app)
         app = Tab_TraceElement_Callbacks(app)
-        app = Tab_PTXpaths_Callbacks(app) #SUPER SLOW!??
-        app = Tab_isoSpaths_Callbacks(app)
+        app = Tab_PTXpaths_Callbacks(app)
         app = Progress_Callbacks(app)
 
         println(" 4/4 Loading user data...")

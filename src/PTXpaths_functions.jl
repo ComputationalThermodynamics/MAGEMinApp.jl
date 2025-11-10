@@ -579,13 +579,53 @@ function compute_Tsol(          sysunit,    pressure,   tolerance,  bulk_ini,   
 end
 
 
+function initialize_layout_isoS_path(   Pini :: Float64,
+                                        Tini :: Float64,
+                                        Pfinal :: Float64   )
+
+    layout_isoS  = Layout(   font        = attr(size = 10),
+                        height      = 240,
+                        margin      = attr(autoexpand = false, l=16, r=16, b=16, t=16),
+                        autosize    = false,
+                        xaxis_title = "Temperature [°C]",
+                        yaxis_title = "Pressure [kbar]",
+                        xaxis_range = [Tini-300,Tini+100], 
+                        yaxis_range = [0.0,Pini+5.0],
+                        showlegend  = false,
+                        xaxis       = attr(     fixedrange    = true,
+                                            ),
+                         yaxis       = attr(     fixedrange    = true,
+                                            ),
+    )
+
+    return layout_isoS
+end
+
+function get_data_plot_isoS_path()
+
+    n_tot   = length(Out_PTX)
+
+    x       = Vector{Float64}(undef, n_tot)
+    y       = Vector{Float64}(undef, n_tot)
+
+    for i=1:n_tot
+        x[i] = Out_PTX[i].T_C
+        y[i] = Out_PTX[i].P_kbar
+    end
+
+    df_path_plot = DataFrame(   x=x,
+                                y=y     )
+
+    return df_path_plot
+end
 
 
 function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   bulk_assim, oxi,    phase_selection,    assim, var_buffer,
                                 dtb,        dataset,    bufferType, solver,
                                 verbose,    bufferN,
                                 cpx,        limOpx,     limOpxVal,
-                                nCon,       nRes                                  )
+                                nCon,       nRes,
+                                T_start,    isentropic_mode                                  )
 
         global Out_PTX, ph_names_ptx, fracEvol, compo_matrix, removedBulk
 
@@ -597,7 +637,11 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
 
         # retrieve PTX path
         data    = copy(PTdata)
-        np      = length(data)
+        if isentropic_mode   == true
+            np      = 2
+        elseif isentropic_mode == false
+            np      = length(data)
+        end
 
         if np <= 1
             print("Cannot compute a path if at least 2 points are not defined! \n")
@@ -614,9 +658,16 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             Add         = zeros(Float64,np)
             Buff        = zeros(Float64,np)
 
-            for i=1:np
-                Pres[i] = data[i][Symbol("col-1")]
-                Temp[i] = data[i][Symbol("col-2")]
+            if isentropic_mode == false
+                for i=1:np
+                    Pres[i] = data[i][Symbol("col-1")]
+                    Temp[i] = data[i][Symbol("col-2")]
+                end
+            else isentropic_mode == true
+                for i=1:np
+                    Pres[i] = data[i][Symbol("col-1")]
+                end
+                Temp[1] = T_start
             end
             
             if var_buffer == true
@@ -644,7 +695,6 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             end
 
             # initialize single thread MAGEMin 
-            GC.gc() 
             gv, z_b, DB, splx_data = init_MAGEMin(  dtb;        
                                                     verbose     = verbose,
                                                     dataset     = dataset,
@@ -667,8 +717,22 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             fracEvol[1,1]            = 1.0;          # starting material fraction is always one as we want to measure the relative change here
             fracEvol[1,2]            = 0.0; 
             removedBulk[1,:]        .= zeros(length(bulk_ini))
+
+
+            # retrieve reference entropy of the system
+            if isentropic_mode == true
+                out         = MAGEMin_C.gmin_struct{Float64, Int64};
+                Out_PTX[1]  = deepcopy( point_wise_minimization(Pres[1],T_start, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
+                Sref        = Out_PTX[1].entropy[1];
+                n_max       = 32
+                tolerance   = 0.001
+                delta_T     = (Pres[1]-Pres[np])/(nsteps+1)*(16.0);
+            end
+
+
+
             k = 1
-            @showprogress for i = 1:np-1
+            for i = 1:np-1
                 # if we assimilate a second bulk then we compute the assimilated fraction per step
                 if assim == "true"
                     A       = Add[i+1]
@@ -676,7 +740,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                     step    = val/(nsteps+1)
                 end
 
-                for j = 1:nsteps+1
+                @showprogress "Computing PTX path: point $i to $np" for j = 1:nsteps+1
                     P = Pres[i] + (j-1)*( (Pres[i+1] - Pres[i])/ (nsteps+1) )
                     T = Temp[i] + (j-1)*( (Temp[i+1] - Temp[i])/ (nsteps+1) )
 
@@ -687,9 +751,47 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                     if assim == "true"
                         bulk   .= (1.0 .- step ./ (1.0 .+ step .* j)) .* bulk .+ (step ./ (1.0 .+ step .* j)) .* bulk_assim
                     end
-                        gv      =  define_bulk_rock(gv, bulk, oxi, sys_in, dtb);
+                    gv      =  define_bulk_rock(gv, bulk, oxi, sys_in, dtb);
 
-                    Out_PTX[k] = deepcopy( point_wise_minimization(P,T, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
+                    if isentropic_mode == true && k > 1
+                        P = Pres[i] + (j-1)*( (Pres[i+1] - Pres[i])/ (nsteps+1) )
+
+                        a           = Out_PTX[j-1].T_C - 2.0*delta_T
+                        b           = Out_PTX[j-1].T_C
+                        n           = 1
+                        conv        = 0
+                        n           = 0
+                        sign_a      = -1
+                
+                        while n < n_max && conv == 0
+                            c       = (a+b)/2.0
+                            out     = deepcopy( point_wise_minimization(P, c , gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
+                            result  = out.entropy[1] - Sref
+
+                            sign_c  = sign(result)
+                
+                            if abs(b-a) < tolerance
+                                conv = 1
+                            else
+                                if  sign_c == sign_a
+                                    a = c
+                                    sign_a = sign_c
+                                else
+                                    b = c
+                                end
+                                
+                            end
+                            n += 1
+                        end
+                        if conv == 0
+                            print(" WARNING: isentropic path did not converge at P = $P kbar between T = $a °C and T = $b °C\n")
+                        end
+                        Out_PTX[k]    = deepcopy(out)
+
+                    elseif isentropic_mode == false
+                        Out_PTX[k] = deepcopy( point_wise_minimization(P,T, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
+                    end
+
 
                     if mode == "fm"
                         if Out_PTX[k].frac_S > 0.0
@@ -752,8 +854,45 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             fracEvol[fracEvol .< 0.0] .= 0.0
 
             
-            Out_PTX[k] = deepcopy( point_wise_minimization(Pres[np],Temp[np], gv, z_b, DB, splx_data, sys_in; buffer_n=Buff[np], rm_list=phase_selection, name_solvus=true) )
-  
+            if isentropic_mode == true
+                P           = Pres[np]
+                a           = Out_PTX[k-1].T_C - 2.0*delta_T
+                b           = Out_PTX[k-1].T_C
+                n           = 1
+                conv        = 0
+                n           = 0
+                sign_a      = -1
+        
+                while n < n_max && conv == 0
+                    c       = (a+b)/2.0
+                    out     = deepcopy( point_wise_minimization(P, c , gv, z_b, DB, splx_data, sys_in; buffer_n=Buff[np], rm_list=phase_selection, name_solvus=true) )
+                    result  = out.entropy[1] - Sref
+
+                    sign_c  = sign(result)
+        
+                    if abs(b-a) < tolerance
+                        conv = 1
+                    else
+                        if  sign_c == sign_a
+                            a = c
+                            sign_a = sign_c
+                        else
+                            b = c
+                        end
+                        
+                    end
+                    n += 1
+                end
+
+                Out_PTX[k]    = deepcopy(out)
+
+            elseif isentropic_mode == false
+                 Out_PTX[k] = deepcopy( point_wise_minimization(Pres[np],Temp[np], gv, z_b, DB, splx_data, sys_in; buffer_n=Buff[np], rm_list=phase_selection, name_solvus=true) )
+            end
+
+
+            
+
             for k = 1:n_tot
                 for l=1:length(Out_PTX[k].ph)
                     if ~(Out_PTX[k].ph[l] in ph_names_ptx)
@@ -879,7 +1018,7 @@ function get_data_plot(display_mode, sysunit)
 end
 
 
-function get_extracted_data_plot(ext_mode,sysunit,mode,nRes,nCon)
+function get_extracted_data_plot(ext_mode,sysunit,mode,nRes,nCon,isentropic_mode)
 
     n_ph    = length(ph_names_ptx)
     n_tot   = length(Out_PTX)
@@ -961,18 +1100,46 @@ function get_extracted_data_plot(ext_mode,sysunit,mode,nRes,nCon)
                                                                             color   = AppData.mineral_style[1][ph][1])  )
         end
     elseif ext_mode == "bars"
-        for i=1:n_ph_e
 
-            ph      = ph_names_ext_ptx[i]
+        if isentropic_mode == true
 
-            data_extracted_plot_ptx[i] = bar(   x           =  x,
-                                                y           =  Z[i,:],
-                                                name        = ph_names_ext_ptx[i],
-                                                marker      = attr( color   = AppData.mineral_style[1][ph][1],
-                                                                    line    = attr(width=0.0, color="black"),
-                                                                    opacity = 0.6) # black outline
-                                            )
-         end
+            if n_tot > 128
+                k = ceil(Int, n_tot / 128)  # Step size to reduce to ~128 points
+                indices = 1:k:n_tot
+                x_sampled = x[indices]
+                Z_sampled = Z[:, indices]
+                println(" WARNING: large number of steps for isentropic paths leads to improper bar plots... (PlotlyJS unsolved issue)" )
+                println(" Downsampling bar plot from $n_tot to $(length(indices)) points... (csv output remains correct)" )
+            else
+                x_sampled = x
+                Z_sampled = Z
+            end
+            
+            for i=1:n_ph_e
+                ph = ph_names_ext_ptx[i]
+                data_extracted_plot_ptx[i] = bar(   x           =  x_sampled,
+                                                    y           =  Z_sampled[i,:],
+                                                    name        = ph_names_ext_ptx[i],
+                                                    marker      = attr( color   = AppData.mineral_style[1][ph][1],
+                                                                        line    = attr(width=0.0, color="black"),
+                                                                        opacity = 0.6) # black outline
+                                                )
+            end
+
+        else
+            for i=1:n_ph_e
+
+                ph      = ph_names_ext_ptx[i]
+
+                data_extracted_plot_ptx[i] = bar(   x           =  x,
+                                                    y           =  Z[i,:],
+                                                    name        = ph_names_ext_ptx[i],
+                                                    marker      = attr( color   = AppData.mineral_style[1][ph][1],
+                                                                        line    = attr(width=0.0, color="black"),
+                                                                        opacity = 0.6) # black outline
+                                                )
+            end
+        end
     else
         for i=1:n_ph_e
 
@@ -1361,7 +1528,7 @@ function initialize_ext_layout(title,sysunit)
             zeroline      = true,   # Show the axis line
             linecolor     = "black", # Set the left axis line color
             linewidth     = 1,       # Set the thickness of the axis line
-            range         = [0.0, 100.0]
+            range         = [0.0, 100]
         ),
     )
 
@@ -1398,7 +1565,7 @@ function initialize_comp_layout(sysunit)
             zeroline      = true,   # Show the axis line
             linecolor     = "black", # Set the left axis line color
             linewidth     = 1,       # Set the thickness of the axis line
-            range         = [0.0, 100.0]
+            range         = [0.0, 100]
         ),
     )
 

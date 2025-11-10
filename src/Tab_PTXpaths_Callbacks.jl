@@ -609,9 +609,10 @@ function Tab_PTXpaths_Callbacks(app)
         Output("display-solidus-textarea",     "value"),
         Input("find-liquidus-button",          "n_clicks"),
         Input("find-solidus-button",           "n_clicks"),
+
         State("phase-selection-PTX",            "value"),
-        State("liquidus-pressure-val-id",       "value"),
-        State("liquidus-tolerance-val-id",      "value"),
+        # State("liquidus-pressure-val-id",       "value"),
+        # State("liquidus-tolerance-val-id",      "value"),
         State("solidus-pressure-val-id",       "value"),
         State("solidus-tolerance-val-id",      "value"),
 
@@ -634,7 +635,8 @@ function Tab_PTXpaths_Callbacks(app)
 
         prevent_initial_call = true,
 
-        ) do    compute,    compute_sol,     phase_selection,   pressure,   tolerance, sol_pressure, sol_tolerance,
+        ) do    compute,    compute_sol,     
+                phase_selection,   pressure,   tolerance,
                 Tliq,       Tsol,
                 dtb,        dataset,        bufferType,     solver,
                 verbose,    bulk,           bufferN,
@@ -654,7 +656,7 @@ function Tab_PTXpaths_Callbacks(app)
             bufferN                 = Float64(bufferN)               # convert buffer_n to float
             bulk_ini, bulk_ini, oxi = get_bulkrock_prop(bulk, bulk)  
 
-            Tsol = compute_Tsol(    sysunit,    sol_pressure,   sol_tolerance,  bulk_ini,   oxi,    phase_selection,
+            Tsol = compute_Tsol(    sysunit,    pressure,   tolerance,  bulk_ini,   oxi,    phase_selection,
                                     dtb,        dataset,    bufferType, solver,
                                     verbose,    bulk,       bufferN,
                                     cpx,        limOpx,     limOpxVal  )
@@ -753,6 +755,9 @@ function Tab_PTXpaths_Callbacks(app)
     """
     callback!(
         app,
+        Output("display-entropy-textarea",  "value"),
+        Output("path-isoS-plot",        "figure"),
+        Output("path-isoS-plot",        "config"),
         Output("ptx-plot",              "figure"),
         Output("ptx-plot",              "config"),
         Output("ptx-extracted-plot",    "figure"),
@@ -797,6 +802,10 @@ function Tab_PTXpaths_Callbacks(app)
         State("connectivity-id",        "value"),
         State("residual-id",            "value"),
         State("color-table-id",         "data"),
+
+        State("starting-temperature-isoS-id",   "value"),
+        State("isentropic-dropdown-ptx",        "value"),
+        State("display-entropy-textarea",       "value"),
         
         prevent_initial_call = true,
 
@@ -805,7 +814,8 @@ function Tab_PTXpaths_Callbacks(app)
                 dtb,        dataset,    bufferType, solver,
                 verbose,    bulk,       bulk2,      bufferN,
                 cpx,        limOpx,     limOpxVal,  test,   sysunit,
-                nCon,       nRes,       color_table
+                nCon,       nRes,       color_table,
+                T_start,    isentropic_mode, entropy
 
         bid                     = pushed_button( callback_context() )    # get which button has been pushed
         phase_selection         = remove_phases(string_vec_diff(phase_selection,pure_phase_selection,dtb),dtb)
@@ -815,6 +825,7 @@ function Tab_PTXpaths_Callbacks(app)
         if bid == "compute-path-button"
 
             global Out_PTX, ph_names_ptx, phase_infos_PTX, layout_ptx, layout_extracted_ptx, data_plot_ptx, fracEvol, removedBulk, layout_rm_ptx, data_comp_rm_plot, layout_rm_int_ptx, data_comp_rm_int_plot
+            global layout_path, figIsoSPath
             
             bufferN                     = Float64(bufferN)               # convert buffer_n to float
             bulk_ini, bulk_assim, oxi   = get_bulkrock_prop(bulk, bulk2; sys_unit=sys_unit)  
@@ -823,7 +834,16 @@ function Tab_PTXpaths_Callbacks(app)
                                     dtb,        dataset,    bufferType, solver,
                                     verbose,    bufferN,
                                     cpx,        limOpx,     limOpxVal,
-                                    nCon,       nRes                                  )
+                                    nCon,       nRes,
+                                    T_start,    isentropic_mode                                  )
+
+            if isentropic_mode == true
+                entropy                 = string(round(Out_PTX[1].entropy[1],digits=3))
+
+                layout_path             = initialize_layout_isoS_path(Float64(Out_PTX[1].P_kbar), Float64(T_start), Float64(Out_PTX[end].P_kbar))
+                df_path_plot            = get_data_plot_isoS_path()
+                figIsoSPath             = plot(df_path_plot, x=:x, y=:y, layout_path)
+            end
 
             phase_infos_PTX             = get_phase_infos(Out_PTX)
 
@@ -831,7 +851,7 @@ function Tab_PTXpaths_Callbacks(app)
             layout_ptx                  = initialize_layout(title,sysunit)
             layout_extracted_ptx        = initialize_ext_layout(title,sysunit)
             data_plot_ptx, phase_list   = get_data_plot(display_mode, sysunit)
-            data_extracted_plot_ptx, phase_list_ext   = get_extracted_data_plot(ext_display_mode,sysunit,mode,nRes,nCon)
+            data_extracted_plot_ptx, phase_list_ext   = get_extracted_data_plot(ext_display_mode,sysunit,mode,nRes,nCon,isentropic_mode)
 
             figPTX                      = plot(data_plot_ptx,layout_ptx)
             figExtractedPTX             = plot(data_extracted_plot_ptx,layout_extracted_ptx)
@@ -848,7 +868,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         elseif bid == "sys-unit-ptx" || bid == "ext-display-mode" || bid == "display-mode"
             data_plot_ptx, phase_list   = get_data_plot(display_mode,sysunit)
-            data_extracted_plot_ptx, phase_list_ext   = get_extracted_data_plot(ext_display_mode,sysunit,mode,nRes,nCon)
+            data_extracted_plot_ptx, phase_list_ext   = get_extracted_data_plot(ext_display_mode,sysunit,mode,nRes,nCon,isentropic_mode)
 
             layout_ptx[:yaxis_title]    = "Phase fraction ["*sysunit*"%]"
             layout_extracted_ptx[:yaxis_title]        = "Extracted phase fraction ["*sysunit*"%]"
@@ -888,7 +908,18 @@ function Tab_PTXpaths_Callbacks(app)
                                     width    =  960,
                                     scale    =  2.0,       ).fields)
 
-        return figPTX, configPTX, figExtractedPTX, configExtractedPTX, figrmPTX, configrmPTX, figrmintPTX, configrmintPTX, phase_list, loading#, disp_frac
+        configPathIsoS   = PlotConfig(  toImageButtonOptions  = attr(     name     = "Download as svg",
+                                    format   = "svg",
+                                    filename =  "PTX_path_isentropic_"*replace(title, " " => "_"),
+                                    height   =  640,
+                                    width    =  640,
+                                    scale    =  2.0,       ).fields)
+        if isentropic_mode == true
+            return entropy, figIsoSPath, configPathIsoS,figPTX, configPTX, figExtractedPTX, configExtractedPTX, figrmPTX, configrmPTX, figrmintPTX, configrmintPTX, phase_list, loading
+        else
+            return entropy, no_update(), no_update(),figPTX, configPTX, figExtractedPTX, configExtractedPTX, figrmPTX, configrmPTX, figrmintPTX, configrmintPTX, phase_list, loading
+        end                            
+        
     end
 
 
@@ -971,6 +1002,58 @@ function Tab_PTXpaths_Callbacks(app)
         return style
     end
 
+    callback!(
+        app,
+        Output("show-isentropic-id",        "style"),
+        Output("isentropic-dropdown-ptx",   "value"),
+        Output("show-fracphases-id",        "style"),
+        
+        Input("mode-dropdown-ptx",          "value"),
+        State("isentropic-dropdown-ptx",    "value"),
+
+        prevent_initial_call = true,
+    ) do value, isentropic_value
+
+        if value == "fc" || value == "eq"
+            style  = Dict("display" => "block")
+        else 
+            style               = Dict("display" => "none")
+            isentropic_value    = false
+        end
+
+        if value == "fc"
+            style2  = Dict("display" => "block")
+        else 
+            style2  = Dict("display" => "none")
+        end
+
+        return style, isentropic_value, style2
+    end
+
+
+
+    callback!(
+        app,
+        # Output("show-pathdef-id",           "style"),
+        Output("show-isopathdef-id",        "style"),
+
+        Output("show-pathpreview-id",       "style"),
+        Output("show-isopathpreview-id",    "style"),
+
+        Input("isentropic-dropdown-ptx",    "value"),
+
+        prevent_initial_call = true,
+    ) do value
+
+        if value == true
+            style  = Dict("display" => "none")
+            style2  = Dict("display" => "block")
+        else 
+            style  = Dict("display" => "block")
+            style2  = Dict("display" => "none")
+        end
+        return #=style, =#style2, style, style2
+    end
 
     # callback function to display to right set of variables as function of the diagram type
     callback!(
@@ -1323,6 +1406,7 @@ function Tab_PTXpaths_Callbacks(app)
         Input("assimilation-dropdown-ptx",  "value"     ),
         Input("add-row-button",             "n_clicks"  ),
         Input("variable-buffer-ptx-id",     "value"     ),
+        Input("isentropic-dropdown-ptx",     "value"    ),
 
         State("assimilation-dropdown-ptx",  "value"     ),
         State("ptx-table",                  "data"      ),
@@ -1330,7 +1414,8 @@ function Tab_PTXpaths_Callbacks(app)
 
         prevent_initial_call = true,
 
-        ) do value, n_clicks, var_buffer, assim, data, colout
+        ) do value, n_clicks, var_buffer, isentropic_value,
+                assim, data, colout
 
         bid                     = pushed_button( callback_context() )    # get which button has been pushed
 
@@ -1344,46 +1429,66 @@ function Tab_PTXpaths_Callbacks(app)
         end
 
         if assim == "true"
-            if var_buffer == false
+            if isentropic_value == false
+                if var_buffer == false
+                    colout = [  Dict("name" => "P [kbar]",  "id"    => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                                Dict("name" => "T [°C]",    "id"    => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                                Dict("name" => "Add [mol%]", "id"   => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric")]
+
+                    if n_clicks > 0 && bid == "add-row-button"
+                        add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0, Symbol("col-3") => 0.0)
+                        push!(dataout,add)
+                    end
+                elseif var_buffer == true
+                    colout = [  Dict("name" => "P [kbar]",  "id"        => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                                Dict("name" => "T [°C]",    "id"        => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                                Dict("name" => "Add [mol%]", "id"       => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                                Dict("name" => "Buffer",     "id"       => "col-4", "deletable" => false, "renamable" => false, "type" => "numeric")]
+
+                    if n_clicks > 0 && bid == "add-row-button"
+                        add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0)
+                        push!(dataout,add)
+                    end
+                end
+            else
                 colout = [  Dict("name" => "P [kbar]",  "id"    => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
-                            Dict("name" => "T [°C]",    "id"    => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric"),
                             Dict("name" => "Add [mol%]", "id"   => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric")]
 
                 if n_clicks > 0 && bid == "add-row-button"
-                    add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0, Symbol("col-3") => 0.0)
-                    push!(dataout,add)
-                end
-            elseif var_buffer == true
-                colout = [  Dict("name" => "P [kbar]",  "id"        => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
-                            Dict("name" => "T [°C]",    "id"        => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric"),
-                            Dict("name" => "Add [mol%]", "id"       => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric"),
-                            Dict("name" => "Buffer",     "id"       => "col-4", "deletable" => false, "renamable" => false, "type" => "numeric")]
-
-                if n_clicks > 0 && bid == "add-row-button"
-                    add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0)
+                    add = Dict(Symbol("col-1") => 7.5, Symbol("col-3") => 0.0)
                     push!(dataout,add)
                 end
             end
 
         else
-            if var_buffer == false
-                colout = [  Dict("name" => "P [kbar]",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
-                            Dict("name" => "T [°C]",    "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")]
+            if isentropic_value == false
+                if var_buffer == false
+                    colout = [  Dict("name" => "P [kbar]",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                                Dict("name" => "T [°C]",    "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")]
 
-                if n_clicks > 0 && bid == "add-row-button"
-                    add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0)
-                    push!(dataout,add)
+                    if n_clicks > 0 && bid == "add-row-button"
+                        add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0)
+                        push!(dataout,add)
+                    end
+                elseif var_buffer == true
+                    colout = [  Dict("name" => "P [kbar]",  "id"        => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                                Dict("name" => "T [°C]",    "id"        => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                                Dict("name" => "Buffer",    "id"        => "col-4", "deletable" => false, "renamable" => false, "type" => "numeric")]
+
+                    if n_clicks > 0 && bid == "add-row-button"
+                        add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0, Symbol("col-4") => 0.0)
+                        push!(dataout,add)
+                    end
                 end
-            elseif var_buffer == true
-                colout = [  Dict("name" => "P [kbar]",  "id"        => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
-                            Dict("name" => "T [°C]",    "id"        => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric"),
-                            Dict("name" => "Buffer",    "id"        => "col-4", "deletable" => false, "renamable" => false, "type" => "numeric")]
-
+            else
+                colout = [  Dict("name" => "P [kbar]",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric")
+                            ]
                 if n_clicks > 0 && bid == "add-row-button"
-                    add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0, Symbol("col-4") => 0.0)
+                    add = Dict(Symbol("col-1") => 7.5)
                     push!(dataout,add)
                 end
             end
+
         end
 
         return dataout, colout, table2, test2

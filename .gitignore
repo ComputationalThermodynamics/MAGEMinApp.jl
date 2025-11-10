@@ -8,4 +8,5 @@ src/.DS_Store
 *.csv*
 **/.DS_Store
 /output/*.svg
+/output/*.txt
 /user_data/*mineral_style_user.json*
