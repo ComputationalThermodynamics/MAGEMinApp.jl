@@ -314,11 +314,10 @@ function Tab_TraceElement()
                                     dbc_col([
                                         dcc_dropdown(   id      = "fields-dropdown-zr",
                                                         options = [
-                                                            (label = "Sat_zr_liq",              value = "Sat_zr_liq"    ),
-                                                            (label = "Cliq_Zr",                 value = "Cliq_Zr"       ),
+                                                            (label = "Sat_Zr_liq",              value = "Sat_Zr_liq"    ),
                                                             (label = "zrc_wt",                  value = "zrc_wt"        ),
                                                         ],
-                                                        value="Sat_zr_liq" ,
+                                                        value="Sat_Zr_liq" ,
                                                         clearable   = false,
                                                         multi       = false),
                                     ]), 
@@ -537,11 +536,10 @@ function Tab_TraceElement()
                                                 dbc_col([
                                                     dcc_dropdown(   id      = "fields-dropdown-zr-te",
                                                                     options = [
-                                                                        (label = "Sat_zr_liq",              value = "Sat_zr_liq"    ),
-                                                                        (label = "Cliq_Zr",                 value = "Cliq_Zr"       ),
+                                                                        (label = "Sat_Zr_liq",              value = "Sat_Zr_liq"    ),
                                                                         (label = "zrc_wt",                  value = "zrc_wt"        ),
                                                                     ],
-                                                                    value       = "Sat_zr_liq" ,
+                                                                    value       = "Sat_Zr_liq" ,
                                                                     clearable   =  false,
                                                                     multi       =  false ),
                                                 ]), 
