@@ -780,8 +780,19 @@ function Tab_TraceElement_Callbacks(app)
         prevent_initial_call=true,
     ) do n_clicks, fname, dtb, kds, zrsat, ssat, P2O5sat
 
+        sat_ext = ""
+        if zrsat != "none"
+            sat_ext *= "_$zrsat"
+        end
+        if ssat != "none"
+            sat_ext *= "_$ssat"
+        end
+        if P2O5sat != "none"
+            sat_ext *= "_$P2O5sat"
+        end
+
         if fname != "filename"
-            datab   = "_"*dtb*"_"*kds*"_"*zrsat*"_"*ssat*"_"*P2O5sat
+            datab   = "_"*dtb*"_"*kds*sat_ext
             fileout = fname*datab
 
             MAGEMin_dataTE2dataframe(Out_XY,Out_TE_XY,dtb,fileout)
@@ -809,10 +820,21 @@ function Tab_TraceElement_Callbacks(app)
         prevent_initial_call=true,
     ) do n_clicks, fname, dtb, kds, zrsat, ssat, P2O5sat
 
+        sat_ext = ""
+        if zrsat != "none"
+            sat_ext *= "_$zrsat"
+        end
+        if ssat != "none"
+            sat_ext *= "_$ssat"
+        end
+        if P2O5sat != "none"
+            sat_ext *= "_$P2O5sat"
+        end
+
         if fname != "filename"
             P       = "_Pkbar_"*string(Out_XY[point_id_te].P_kbar)
             T       = "_TC_"*string(Out_XY[point_id_te].T_C)
-            datab   = "_"*dtb*P*T*"_"*kds*"_"*zrsat*"_"*ssat*"_"*P2O5sat
+            datab   = "_"*dtb*P*T*"_"*kds*sat_ext
             fileout = fname*datab
 
             MAGEMin_dataTE2dataframe(Out_XY[point_id_te],Out_TE_XY[point_id_te],dtb,fileout)
