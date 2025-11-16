@@ -69,6 +69,8 @@ function Tab_TraceElement_Callbacks(app)
     callback!(
         app,
         Output("show-zircon-id",            "style"),
+        Output("show-sulfide-id",           "style"),
+        Output("show-fluorapatite-id",      "style"),
         Output("show-trace-element-id",     "style"),
         Output("phase-te-info-id",          "children"), 
         Input("field-type-dropdown-te",     "value"),
@@ -82,14 +84,18 @@ function Tab_TraceElement_Callbacks(app)
             phase_te_list = " "
         end
 
-        if value == "zr"
-            style   = Dict("display" => "block")
-            style2  = Dict("display" => "none")
+        none   = Dict("display" => "none")
+        block  = Dict("display" => "block")
+        if      value == "zrc"
+            return block, none, none, none, phase_te_list
+        elseif  value == "sulf"
+            return none, block, none, none, phase_te_list
+        elseif  value == "fapt"
+            return none, none, block, none, phase_te_list
         else 
-            style   = Dict("display" => "none")
-            style2  = Dict("display" => "block")
+            return none, none, none, block, phase_te_list
         end
-        return style, style2, phase_te_list
+
     end
 
 
@@ -99,7 +105,7 @@ function Tab_TraceElement_Callbacks(app)
     callback!(
         app,
         Output("calc-1-id-te",              "style"   ),
-        Output("fields-dropdown-zr-id-te",  "style"   ),
+        Output("fields-dropdown-zrc-id-te",  "style"   ),
         Input("field-type-te-dropdown", "value"   ),
 
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
@@ -202,7 +208,7 @@ function Tab_TraceElement_Callbacks(app)
         State("hidden-isopleth-dropdown-te",      "options"),
         State("hidden-isopleth-dropdown-te",      "value"),
         State("field-type-te-dropdown", "value"         ),
-        State("fields-dropdown-zr-te",   "value"        ),
+        State("fields-dropdown-zrc-te",   "value"        ),
         State("input-calc-id-te",       "value"         ),
         State("input-cust-id-te",       "value"         ),
 
@@ -247,7 +253,7 @@ function Tab_TraceElement_Callbacks(app)
 
         if @isdefined(Out_TE_XY) && length(Out_XY) == length(Out_TE_XY)
             if bid == "load-button-te"
-                fieldType = "zr"
+                fieldType = "zrc"
                 global gridded_te, gridded_info_te, gridded_fields_te, X_te, Y_te, npoints_te, meant_te
                 global layout_te, n_lbl, addedRefinementLvl
                 global data_plot_te,  data_reaction_te, data_grid_te, PT_infos_te, data_isopleth_te, data_isopleth_out_te, data_isopleth_out_export_te
@@ -257,7 +263,7 @@ function Tab_TraceElement_Callbacks(app)
                 data_isopleth_te = initialize_g_isopleth_te(; n_iso_max = 32)
 
                 gridded_te, gridded_info_te, gridded_fields_te, X_te, Y_te, npoints_te, meant_te = get_gridded_map(    fieldname,
-                                                                                                    "zr",
+                                                                                                    "zrc",
                                                                                                     oxi,
                                                                                                     Out_XY,
                                                                                                     Out_TE_XY,
@@ -420,7 +426,7 @@ function Tab_TraceElement_Callbacks(app)
 
             elseif bid == "fields-dropdown-zr"
 
-                data_plot_te, layout_te, heat_map_export_te =  update_displayed_field_phaseDiagram_te(   xtitle,     ytitle,     "zr",                  varBuilder, norm,
+                data_plot_te, layout_te, heat_map_export_te =  update_displayed_field_phaseDiagram_te(   xtitle,     ytitle,     "zrc",                  varBuilder, norm,
                                                                                     Xrange,     Yrange,     fieldname,
                                                                                     dtb,        oxi,
                                                                                     sub,        refLvl,

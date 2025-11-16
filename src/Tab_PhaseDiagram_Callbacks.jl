@@ -602,7 +602,7 @@ function Tab_PhaseDiagram_Callbacks(app)
     ) do stop, start
 
         bid  = pushed_button( callback_context() )
-        # println("bid: $bid")
+
         if bid == "stop-trigger"
             return true
         elseif bid == "start-trigger"
@@ -634,7 +634,6 @@ function Tab_PhaseDiagram_Callbacks(app)
     ) do compute_raw, uni_refine_raw, refine_raw, compute, uni_refine, refine
 
         bid  = pushed_button( callback_context() )
-
         if bid == "compute-button-raw"
             return compute*-1, no_update(), no_update(), 1
         elseif bid == "uni-refine-pb-button-raw"

@@ -1135,7 +1135,7 @@ function get_gridded_map(   fieldname   ::String,
     meant      /= npoints
     meant       = round(meant; digits = 3)
 
-    if type == "zr"
+    if type == "zrc"
         for i=1:np
             field[i] = get_property(Out_TE_XY[i], fieldname);
         end
@@ -1438,7 +1438,7 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
     end
     meant      /= npoints
     meant       = round(meant; digits = 3)
-    if type == "zr"
+    if type == "zrc"
         for i=1:np
             field[i] = get_property(Out_TE_XY[i], fieldname);
         end
