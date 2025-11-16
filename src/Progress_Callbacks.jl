@@ -18,20 +18,17 @@ function Progress_Callbacks(app)
         app,
         Output( "pd-progress-bar",               "figure"       ),
         Input(  "interval-simulation_progress",  "n_intervals"  ),
-        Input(  "interval-simulation_progress",  "disabled"     ),
-        Input(  "compute-path-button-isoS",      "n_clicks"     ),
         Input(  "compute-path-button",           "n_clicks"     ),
         
         prevent_initial_call = true,         # don't run at startup
-    ) do n_intervals, disabled, but1, but2
+    ) do n_intervals, but2
 
         bid     = pushed_button( callback_context() ) 
 
-        if bid == "compute-path-button-isoS" || bid == "compute-path-button"
+        if  bid == "compute-path-button"
             return progress_bar_fig()
         else
             global CompProgress
-            
             
             lev     = CompProgress.refinement_level
             nlev    = CompProgress.total_levels
