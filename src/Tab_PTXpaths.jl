@@ -907,7 +907,7 @@ function Tab_PTXpaths()
                                         ]),
                                         dbc_row([
                                             dbc_col([ 
-                                                html_h1("Entropy [J/K]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
+                                                html_h1("Entropy [kJ/K]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
                                             ]),
                                             dbc_col([ 
                                                 dcc_textarea(

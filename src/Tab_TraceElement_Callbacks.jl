@@ -69,10 +69,17 @@ function Tab_TraceElement_Callbacks(app)
     callback!(
         app,
         Output("show-zircon-id",            "style"),
+        Output("show-sulfide-id",           "style"),
+        Output("show-fluorapatite-id",      "style"),
         Output("show-trace-element-id",     "style"),
         Output("phase-te-info-id",          "children"), 
+        Output("update-accessory-fields",   "value"), 
         Input("field-type-dropdown-te",     "value"),
-    ) do value
+        State("update-accessory-fields",   "value"),
+        
+        prevent_initial_call = true,
+
+    ) do value, update_accessory_fields
     
         if @isdefined(all_TE_ph)
              tmp = join(all_TE_ph, " ")
@@ -82,14 +89,18 @@ function Tab_TraceElement_Callbacks(app)
             phase_te_list = " "
         end
 
-        if value == "zr"
-            style   = Dict("display" => "block")
-            style2  = Dict("display" => "none")
+        none   = Dict("display" => "none")
+        block  = Dict("display" => "block")
+        if      value == "zrc"
+            return block, none, none, none, phase_te_list, update_accessory_fields*-1
+        elseif  value == "sulf"
+            return none, block, none, none, phase_te_list, update_accessory_fields*-1
+        elseif  value == "fapt"
+            return none, none, block, none, phase_te_list, update_accessory_fields*-1
         else 
-            style   = Dict("display" => "none")
-            style2  = Dict("display" => "block")
+            return none, none, none, block, phase_te_list, update_accessory_fields*-1
         end
-        return style, style2, phase_te_list
+
     end
 
 
@@ -98,23 +109,27 @@ function Tab_TraceElement_Callbacks(app)
     # update the dictionary of the solution phases and end-members for isopleths
     callback!(
         app,
-        Output("calc-1-id-te",              "style"   ),
-        Output("fields-dropdown-zr-id-te",  "style"   ),
-        Input("field-type-te-dropdown", "value"   ),
+        Output("calc-1-id-te",                  "style"   ),
+        Output("fields-dropdown-zrc-id-te",     "style"   ),
+        Output("fields-dropdown-sulf-id-te",    "style"   ),
+        Output("fields-dropdown-fapt-id-te",    "style"   ),
+        Input("field-type-te-dropdown",         "value"   ),
 
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
     ) do field
-        bid         = pushed_button( callback_context() ) 
+        none        = Dict("display" => "none")
+        block       = Dict("display" => "block")
 
         if field == "te"
-            style_te    = Dict("display" => "block")
-            style_zr    = Dict("display" => "none")
-        else
-            style_te    = Dict("display" => "none")
-            style_zr    = Dict("display" => "block")
+            return block, none, none, none
+        elseif field == "zrc"
+            return none, block, none, none
+        elseif field == "sulf"
+            return none, none, block, none
+        elseif field == "fapt"
+            return none, none, none, block
         end
 
-        return style_te, style_zr
     end
 
 
@@ -131,17 +146,20 @@ function Tab_TraceElement_Callbacks(app)
         Output("max-color-id-te",           "value"     ),
         Output("isopleth-dropdown-te",      "options"   ),
         Output("hidden-isopleth-dropdown-te",     "options"),
-        Output("stable-assemblage-id-te",   "children"),   
-        Output("show-text-list-id-te",         "style"),
-        Output("output-loading-id-te",         "children"),
+        Output("stable-assemblage-id-te",   "children"  ),   
+        Output("show-text-list-id-te",        "style"   ),
+        Output("output-loading-id-te",        "children"),
 
-        Input("load-button-te",             "n_clicks"  ),
-        Input("compute-display-te",         "n_clicks"  ),
-        Input("fields-dropdown-zr",         "value"     ),
+        Input("load-button-te",             "n_clicks"   ),
+        Input("compute-display-te",         "n_clicks"   ),
+        Input("update-accessory-fields",      "value"    ),
+        Input("fields-dropdown-zrc",          "value"    ),
+        Input("fields-dropdown-sulf",         "value"    ),
+        Input("fields-dropdown-fapt",         "value"    ),
 
-        Input("show-grid-te",               "value"     ), 
-        Input("show-full-grid-te",          "value"     ), 
-        Input("show-lbl-id-te",             "value"     ),
+        Input("show-grid-te",               "value"      ), 
+        Input("show-full-grid-te",          "value"      ), 
+        Input("show-lbl-id-te",                "value"   ),
 
         Input("button-add-isopleth-te",        "n_clicks"),
         Input("button-remove-isopleth-te",     "n_clicks"),
@@ -202,22 +220,24 @@ function Tab_TraceElement_Callbacks(app)
         State("hidden-isopleth-dropdown-te",      "options"),
         State("hidden-isopleth-dropdown-te",      "value"),
         State("field-type-te-dropdown", "value"         ),
-        State("fields-dropdown-zr-te",   "value"        ),
+        State("fields-dropdown-zrc-te",  "value"        ),
+        State("fields-dropdown-sulf-te",  "value"        ),
+        State("fields-dropdown-fapt-te",  "value"        ),
         State("input-calc-id-te",       "value"         ),
         State("input-cust-id-te",       "value"         ),
 
-        State("line-style-dropdown-te",    "value"),
-        State("iso-line-width-id-te",      "value"),
-        State("colorpicker_isoL-te",       "value"),
-        State("iso-text-size-id-te",       "value"),
-        State("iso-min-id-te",             "value"),
-        State("iso-step-id-te",            "value"),
-        State("iso-max-id-te",             "value"),
-        State("stable-assemblage-id-te",   "children"), 
+        State("line-style-dropdown-te",    "value"      ),
+        State("iso-line-width-id-te",      "value"      ),
+        State("colorpicker_isoL-te",       "value"      ),
+        State("iso-text-size-id-te",       "value"      ),
+        State("iso-min-id-te",             "value"      ),
+        State("iso-step-id-te",            "value"      ),
+        State("iso-max-id-te",             "value"      ),
+        State("stable-assemblage-id-te",   "children"   ), 
 
         prevent_initial_call = true,
 
-        ) do    n,          n2,         fieldname,  
+        ) do    n,          n2,         update_accessory_fields, fieldname_zrc,  fieldname_sulf,  fieldname_fapt,  
                 grid,       full_grid,  lbl, 
 
                 addIso,     removeIso,  removeAllIso,           isoShow,    isoHide, isoShowAll,    isoHideAll,
@@ -229,7 +249,7 @@ function Tab_TraceElement_Callbacks(app)
                 bulk1,      bulk2,
                 sub,        refType,    refLvl,
                 fixT,       fixP,       solver,     bufferType, bufferN1,   bufferN2,   PTpath,
-                isopleths_te,  isoplethsID_te, isoplethsHid_te,  isoplethsHidID_te, field, field_zr, calc, cust,
+                isopleths_te,  isoplethsID_te, isoplethsHid_te,  isoplethsHidID_te, field, field_zrc, field_sulf, field_fapt, calc, cust,
 
                 isoLineStyle, isoLineWidth, isoColorLine, isoLabelSize,   
                 minIso,     stepIso,    maxIso, txt_list
@@ -243,11 +263,11 @@ function Tab_TraceElement_Callbacks(app)
         field2plot                      = zeros(Int64,4)
         fieldType                       = type
         loading                         = ""
-        field2plot[1]    = 1
+        field2plot[1]                   = 1
 
         if @isdefined(Out_TE_XY) && length(Out_XY) == length(Out_TE_XY)
             if bid == "load-button-te"
-                fieldType = "zr"
+                fieldType = "zrc"
                 global gridded_te, gridded_info_te, gridded_fields_te, X_te, Y_te, npoints_te, meant_te
                 global layout_te, n_lbl, addedRefinementLvl
                 global data_plot_te,  data_reaction_te, data_grid_te, PT_infos_te, data_isopleth_te, data_isopleth_out_te, data_isopleth_out_export_te
@@ -256,8 +276,8 @@ function Tab_TraceElement_Callbacks(app)
                 global iso_show_te             = 1;
                 data_isopleth_te = initialize_g_isopleth_te(; n_iso_max = 32)
 
-                gridded_te, gridded_info_te, gridded_fields_te, X_te, Y_te, npoints_te, meant_te = get_gridded_map(    fieldname,
-                                                                                                    "zr",
+                gridded_te, gridded_info_te, gridded_fields_te, X_te, Y_te, npoints_te, meant_te = get_gridded_map(    fieldname_zrc,
+                                                                                                    "zrc",
                                                                                                     oxi,
                                                                                                     Out_XY,
                                                                                                     Out_TE_XY,
@@ -340,7 +360,7 @@ function Tab_TraceElement_Callbacks(app)
                                     type            = "heatmap",
                                     colorscale      =  colorm,
                                     reversescale    =  reverseColorMap,
-                                    # colorbar_title  =  fieldname,
+                                    # colorbar_title  =  fieldname_zrc,
                                     hoverinfo       = "skip",
                                     showlegend      =  false,
                                     colorbar        =  attr(    lenmode         = "fraction",
@@ -349,7 +369,7 @@ function Tab_TraceElement_Callbacks(app)
                                                                 tickness        =  0.5,
                                                                 x               =  1.005,
                                                                 y               =  0.5,
-                                                                title = attr(   text = fieldname,
+                                                                title = attr(   text = fieldname_zrc,
                                                                                 side = "right")
                                                             ),)
 
@@ -378,7 +398,7 @@ function Tab_TraceElement_Callbacks(app)
                                                                             tickness        =  0.5,
                                                                             x               =  1.005,
                                                                             y               =  0.5,
-                                                                title = attr(   text = fieldname,
+                                                                title = attr(   text = fieldname_zrc,
                                                                                 side = "right")         ),)
 
                 hover_lbl = heatmap(    x               = X_te,
@@ -402,7 +422,7 @@ function Tab_TraceElement_Callbacks(app)
             elseif bid == "set-min-white-te" || bid == "min-color-id-te" || bid == "max-color-id-te" || bid == "colormaps_cross-te" || bid == "smooth-colormap-te" || bid == "range-slider-color-te" || bid == "reverse-colormap-te"
 
                 data_plot_te, layout_te, heat_map_export_te =  update_colormap_phaseDiagram_te(     xtitle,     ytitle,     type,               varBuilder,   
-                                                                                Xrange,     Yrange,     fieldname,
+                                                                                Xrange,     Yrange,     fieldname_zrc,
                                                                                 dtb,        diagType,
                                                                                 sub,        refLvl,
                                                                                 minColor,   maxColor,
@@ -410,7 +430,7 @@ function Tab_TraceElement_Callbacks(app)
             elseif bid == "compute-display-te"
 
                 data_plot_te, layout_te, heat_map_export_te =  update_displayed_field_phaseDiagram_te(  xtitle,     ytitle,     "te",                  varBuilder, norm,
-                                                                                    Xrange,     Yrange,     fieldname,
+                                                                                    Xrange,     Yrange,     fieldname_zrc,
                                                                                     dtb,        oxi,
                                                                                     sub,        refLvl,
                                                                                     smooth,     colorm,     reverseColorMap, set_white,       refType                                 )
@@ -418,10 +438,29 @@ function Tab_TraceElement_Callbacks(app)
                 minColor     = round(minimum(skipmissing(gridded_te)),digits=2); 
                 maxColor     = round(maximum(skipmissing(gridded_te)),digits=2);  
 
-            elseif bid == "fields-dropdown-zr"
+            elseif bid == "fields-dropdown-zrc" || (bid == "update-accessory-fields" && type == "zrc")
 
-                data_plot_te, layout_te, heat_map_export_te =  update_displayed_field_phaseDiagram_te(   xtitle,     ytitle,     "zr",                  varBuilder, norm,
-                                                                                    Xrange,     Yrange,     fieldname,
+                data_plot_te, layout_te, heat_map_export_te =  update_displayed_field_phaseDiagram_te(   xtitle,     ytitle,     "zrc",                  varBuilder, norm,
+                                                                                    Xrange,     Yrange,     fieldname_zrc,
+                                                                                    dtb,        oxi,
+                                                                                    sub,        refLvl,
+                                                                                    smooth,     colorm,     reverseColorMap, set_white,       refType                                 )
+                minColor     = round(minimum(skipmissing(gridded_te)),digits=2); 
+                maxColor     = round(maximum(skipmissing(gridded_te)),digits=2);  
+
+            elseif bid == "fields-dropdown-fapt" || (bid == "update-accessory-fields" && type == "fapt")
+
+                data_plot_te, layout_te, heat_map_export_te =  update_displayed_field_phaseDiagram_te(   xtitle,     ytitle,     "fapt",                  varBuilder, norm,
+                                                                                    Xrange,     Yrange,     fieldname_fapt,
+                                                                                    dtb,        oxi,
+                                                                                    sub,        refLvl,
+                                                                                    smooth,     colorm,     reverseColorMap, set_white,       refType                                 )
+                minColor     = round(minimum(skipmissing(gridded_te)),digits=2); 
+                maxColor     = round(maximum(skipmissing(gridded_te)),digits=2);  
+            elseif bid == "fields-dropdown-sulf" || (bid == "update-accessory-fields" && type == "sulf")
+
+                data_plot_te, layout_te, heat_map_export_te =  update_displayed_field_phaseDiagram_te(   xtitle,     ytitle,     "sulf",                  varBuilder, norm,
+                                                                                    Xrange,     Yrange,     fieldname_sulf,
                                                                                     dtb,        oxi,
                                                                                     sub,        refLvl,
                                                                                     smooth,     colorm,     reverseColorMap, set_white,       refType                                 )
@@ -444,7 +483,7 @@ function Tab_TraceElement_Callbacks(app)
                 data_isopleth_te, isopleths_te = add_isopleth_phaseDiagram_te(  Xrange,         Yrange,
                                                                                 sub,            refLvl,
                                                                                 dtb,            oxi,
-                                                                                isopleths_te,   field, field_zr, calc, cust, norm_te,
+                                                                                isopleths_te,   field, field_zrc, field_sulf, field_fapt, calc, cust, norm_te,
                                                                                 isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,   
                                                                                 minIso,     stepIso,    maxIso                      )
                 data_isopleth_out_te = data_isopleth_te.isoP[data_isopleth_te.active]
@@ -487,7 +526,7 @@ function Tab_TraceElement_Callbacks(app)
                         data_isopleth_out_export_te = data_isopleth_te.isoPexp[data_isopleth_te.active]
                         field2plot[4] = 1
                     else
-                        data_isopleth_te, isopleths_te, data_plot_te = remove_all_isopleth_phaseDiagram_te()
+                        data_isopleth_te, isopleths_te, isoplethsHid_te, data_plot_te = remove_all_isopleth_phaseDiagram_te()
                     end
 
                 else
@@ -549,7 +588,7 @@ function Tab_TraceElement_Callbacks(app)
     
             # Fetch the fields to display
             if sum(field2plot) == 0
-                fig = plot()
+                fig_te = plot()
             else
                 data_all = eval(Symbol(fieldNames[1]))
                 np       = length(field2plot)
@@ -735,12 +774,25 @@ function Tab_TraceElement_Callbacks(app)
         State("database-dropdown","value"),
         State("kds-dropdown","value"),
         State("zrsat-dropdown","value"),
-    
+        State("ssat-dropdown","value"),
+        State("P2O5sat-dropdown","value"),
+
         prevent_initial_call=true,
-    ) do n_clicks, fname, dtb, kds, zrsat
+    ) do n_clicks, fname, dtb, kds, zrsat, ssat, P2O5sat
+
+        sat_ext = ""
+        if zrsat != "none"
+            sat_ext *= "_$zrsat"
+        end
+        if ssat != "none"
+            sat_ext *= "_$ssat"
+        end
+        if P2O5sat != "none"
+            sat_ext *= "_$P2O5sat"
+        end
 
         if fname != "filename"
-            datab   = "_"*dtb*"_"*kds*"_"*zrsat
+            datab   = "_"*dtb*"_"*kds*sat_ext
             fileout = fname*datab
 
             MAGEMin_dataTE2dataframe(Out_XY,Out_TE_XY,dtb,fileout)
@@ -762,14 +814,27 @@ function Tab_TraceElement_Callbacks(app)
         State("database-dropdown","value"),
         State("kds-dropdown","value"),
         State("zrsat-dropdown","value"),
+        State("ssat-dropdown","value"),
+        State("P2O5sat-dropdown","value"),
     
         prevent_initial_call=true,
-    ) do n_clicks, fname, dtb, kds, zrsat
+    ) do n_clicks, fname, dtb, kds, zrsat, ssat, P2O5sat
+
+        sat_ext = ""
+        if zrsat != "none"
+            sat_ext *= "_$zrsat"
+        end
+        if ssat != "none"
+            sat_ext *= "_$ssat"
+        end
+        if P2O5sat != "none"
+            sat_ext *= "_$P2O5sat"
+        end
 
         if fname != "filename"
             P       = "_Pkbar_"*string(Out_XY[point_id_te].P_kbar)
             T       = "_TC_"*string(Out_XY[point_id_te].T_C)
-            datab   = "_"*dtb*P*T*"_"*kds*"_"*zrsat
+            datab   = "_"*dtb*P*T*"_"*kds*sat_ext
             fileout = fname*datab
 
             MAGEMin_dataTE2dataframe(Out_XY[point_id_te],Out_TE_XY[point_id_te],dtb,fileout)
@@ -788,10 +853,12 @@ function Tab_TraceElement_Callbacks(app)
         State("export-citation-id-te", "value"),
         State("kds-dropdown","value"),
         State("zrsat-dropdown","value"),
+        State("ssat-dropdown","value"),
+        State("P2O5sat-dropdown","value"),
 
         prevent_initial_call=true,
 
-    ) do n_clicks, fname, kds, zrc
+    ) do n_clicks, fname, kds, zrc, sulf, fapt
 
         if fname != "filename"
             output_bib      = "_"*kds*".bib"
@@ -806,13 +873,17 @@ function Tab_TraceElement_Callbacks(app)
 
             selection       = String[]
 
-            id_zrc          = findfirst(bib[bib.keys[i]].fields["info"] .== zrc for i=1:n_ref)
-            id_kds          = findfirst(bib[bib.keys[i]].fields["info"] .== kds for i=1:n_ref)
+            id_zrc          = findfirst(bib[bib.keys[i]].fields["info"] .== zrc     for i=1:n_ref)
+            id_sulf         = findfirst(bib[bib.keys[i]].fields["info"] .== sulf    for i=1:n_ref)
+            id_fapt         = findfirst(bib[bib.keys[i]].fields["info"] .== fapt    for i=1:n_ref)
+            id_kds          = findfirst(bib[bib.keys[i]].fields["info"] .== kds     for i=1:n_ref)
             id_magemin      = findfirst(bib[bib.keys[i]].fields["info"] .== magemin for i=1:n_ref)
             
-            push!(selection, String(bib.keys[id_kds]))
-            push!(selection, String(bib.keys[id_zrc]))
-            push!(selection, String(bib.keys[id_magemin]))
+            if !isnothing(id_zrc);      push!(selection, String(bib.keys[id_zrc]))      end
+            if !isnothing(id_sulf);     push!(selection, String(bib.keys[id_sulf]))     end
+            if !isnothing(id_fapt);     push!(selection, String(bib.keys[id_fapt]))     end
+            if !isnothing(id_kds);      push!(selection, String(bib.keys[id_kds]))      end
+            if !isnothing(id_magemin);  push!(selection, String(bib.keys[id_magemin]))  end
 
             selected_bib    = Bibliography.select(bib, selection)
             

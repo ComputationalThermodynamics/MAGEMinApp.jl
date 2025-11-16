@@ -839,6 +839,8 @@ function tepm_function( diagType    :: String,
                         dtb         :: String,
                         kds_mod     :: String,
                         zrsat_mod   :: String,
+                        ssat_mod    :: String,
+                        P2O5sat_mod :: String,
                         bulkte_L    :: Vector{Float64},
                         bulkte_R    :: Vector{Float64},
                         elem_TE     :: Vector{String})
@@ -848,15 +850,10 @@ function tepm_function( diagType    :: String,
     Out_TE_XY   = Vector{MAGEMin_C.out_tepm}(undef,np)
     TEvec       = Vector{Float64};
     all_TE_ph   = []
-    option      = 1
 
-    # if AppData.KDs[4] != "OL"
-        TE_models   = [AppData.KDs[i][4] for i in 1:length(AppData.KDs)]
-        id_TE_model = findfirst(TE_models .== kds_mod)
-        KDs_dtb     = MAGEMin_C.create_custom_KDs_database(AppData.KDs[id_TE_model][1], AppData.KDs[id_TE_model][2], AppData.KDs[id_TE_model][3]; info = AppData.KDs[id_TE_model][6])
-    # else
-    #     KDs_dtb     = MAGEMin_C.create_custom_KDs_database(AppData.KDs[1], AppData.KDs[2], AppData.KDs[3]; info = AppData.KDs[6])
-    # end
+    TE_models   = [AppData.KDs[i][4] for i in 1:length(AppData.KDs)]
+    id_TE_model = findfirst(TE_models .== kds_mod)
+    KDs_dtb     = MAGEMin_C.create_custom_KDs_database(AppData.KDs[id_TE_model][1], AppData.KDs[id_TE_model][2], AppData.KDs[id_TE_model][3]; info = AppData.KDs[id_TE_model][6])
 
     bulkte_L      = MAGEMin_C.adjust_chemical_system( KDs_dtb, bulkte_L, elem_TE );
     bulkte_R      = MAGEMin_C.adjust_chemical_system( KDs_dtb, bulkte_R, elem_TE );
@@ -869,7 +866,10 @@ function tepm_function( diagType    :: String,
             TEvec = bulkte_L
         end
 
-        Out_TE_XY[i]  = TE_prediction(Out_XY[i], TEvec, KDs_dtb, dtb; ZrSat_model = "CB")
+        Out_TE_XY[i]  = TE_prediction(Out_XY[i], TEvec, KDs_dtb, dtb;
+                                      ZrSat_model   = zrsat_mod,
+                                      SSat_model    = ssat_mod,
+                                      P2O5Sat_model = P2O5sat_mod)
 
         if ~isnothing(Out_TE_XY[i].ph_TE)
             for j in Out_TE_XY[i].ph_TE

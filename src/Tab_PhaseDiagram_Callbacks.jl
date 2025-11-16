@@ -602,7 +602,7 @@ function Tab_PhaseDiagram_Callbacks(app)
     ) do stop, start
 
         bid  = pushed_button( callback_context() )
-        # println("bid: $bid")
+
         if bid == "stop-trigger"
             return true
         elseif bid == "start-trigger"
@@ -634,7 +634,6 @@ function Tab_PhaseDiagram_Callbacks(app)
     ) do compute_raw, uni_refine_raw, refine_raw, compute, uni_refine, refine
 
         bid  = pushed_button( callback_context() )
-
         if bid == "compute-button-raw"
             return compute*-1, no_update(), no_update(), 1
         elseif bid == "uni-refine-pb-button-raw"
@@ -871,8 +870,8 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("verbose-dropdown",       "value"),           # none,light,full -> -1,0,1
         State("scp-dropdown",           "value"),           # none,light,full -> -1,0,1
 
-        State("table-bulk-rock",        "data"),            # bulk-rock 1
-        State("table-2-bulk-rock",      "data"),            # bulk-rock 2
+        State("table-bulk-rock",        "data" ),            # bulk-rock 1
+        State("table-2-bulk-rock",      "data" ),            # bulk-rock 2
         State("select-bulk-unit",       "value"),
         State("buffer-1-mul-id",        "value"),           # buffer n 1
         State("buffer-2-mul-id",        "value"),           # buffer n 2
@@ -880,8 +879,10 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("tepm-dropdown",          "value"),
         State("kds-dropdown",           "value"),
         State("zrsat-dropdown",         "value"),
-        State("table-te-rock",          "data"),            # bulk-rock 1
-        State("table-te-2-rock",        "data"),  
+        State("ssat-dropdown",          "value"),
+        State("P2O5sat-dropdown",       "value"),
+        State("table-te-rock",          "data" ),            # bulk-rock 1
+        State("table-te-2-rock",        "data" ),  
 
         State("test-dropdown",          "value"),           # test number
 
@@ -928,7 +929,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             bufferType, solver,     boost,      verbose,    scp,
             bulk1,      bulk2,      sys_unit,   
             bufferN1,   bufferN2,
-            tepm,       kds_mod,    zrsat_mod,  bulkte1,    bulkte2,
+            tepm,       kds_mod,    zrsat_mod,  ssat_mod,   P2O5sat_mod,    bulkte1,    bulkte2,
             test,
             isopleths,  isoplethsID,isoplethsHid,  isoplethsHidID,  phase,      ss,         em,     ox,    of,     ot, sys, rmf, calc, cust, calc_sf, calc_ox, cust_sf, cust_ox,
             isoLineStyle, isoLineWidth, isoColorLine,           isoLabelSize,   
@@ -992,7 +993,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             if tepm == "true"
                 if dtb != "um" && dtb != "ume" && dtb != "mtl"
                     t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
-                                                                        kds_mod, zrsat_mod, bulkte_L, bulkte_R, elem)
+                                                                        kds_mod, zrsat_mod, ssat_mod, P2O5sat_mod,
+                                                                        bulkte_L, bulkte_R, elem)
 
                     println("Computed trace element partitioning in $t s")
                 else
@@ -1044,7 +1046,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             if tepm == "true"
                 if dtb != "um" && dtb != "ume" && dtb != "mtl"
                     t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
-                                                                        kds_mod, zrsat_mod, bulkte_L, bulkte_R, elem)
+                                                                        kds_mod, zrsat_mod, ssat_mod, P2O5sat_mod,
+                                                                        bulkte_L, bulkte_R, elem)
 
                     println("Computed trace element partitioning in $t s")
                 else

@@ -315,15 +315,49 @@ function Tab_Simulation()
                                                 dbc_col([ 
                                                     dcc_dropdown(   id      = "zrsat-dropdown",
                                                     options = [
+                                                        (label = "none",                        value = "none"),
                                                         (label = "Watson & Harrison (1983)",    value = "WH"),
                                                         (label = "Boehnke et al. (2013)",       value = "B"),
                                                         (label = "Crisp and Berry (2022)",      value = "CB"),
                                                     ],
-                                                    value       = "CB" ,
+                                                    value       = "none" ,
                                                     clearable   =  false,
                                                     multi       =  false),
                                                 ]),
                                             ]),
+                                            dbc_row([
+                                                dbc_col([ 
+                                                    html_h1("P2O5 saturation", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                                ]),
+                                                dbc_col([ 
+                                                    dcc_dropdown(   id      = "P2O5sat-dropdown",
+                                                    options = [
+                                                        (label = "none",                            value = "none"),
+                                                        (label = "Tollari et al., 2006",            value = "Tollari06"),
+                                                        (label = "Bea et al., 1992 (after HW84)",   value = "HWBea92"),
+                                                    ],
+                                                    value       = "none" ,
+                                                    clearable   =  false,
+                                                    multi       =  false),
+                                                ]),
+                                            ]),
+                                            dbc_row([
+                                                dbc_col([ 
+                                                    html_h1("S saturation", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                                ]),
+                                                dbc_col([ 
+                                                    dcc_dropdown(   id      = "ssat-dropdown",
+                                                    options = [
+                                                        (label = "none",                    value = "none"),
+                                                        (label = "Liu et al., 2007",        value = "Liu07"),
+                                                        (label = "O'Neill, 2021",           value = "Oneill21"),
+                                                    ],
+                                                    value       = "none" ,
+                                                    clearable   =  false,
+                                                    multi       =  false),
+                                                ]),
+                                            ]),
+
                                         ], style = Dict("display" => "none"), id  = "zr-options-id"), #none, block
                                         html_div([
                                             dbc_row([
@@ -441,16 +475,6 @@ function Tab_Simulation()
                                     ], style = Dict("display" => "block"), id      = "pressure-id"), #none, block
 
                                     html_div([
-                                        dbc_row([
-                                            dbc_col([ 
-                                            ], width=6),
-                                            dbc_col([ 
-                                                html_h1("min", style = Dict("textAlign" => "center","font-size" => "100%")),
-                                            ]),
-                                            dbc_col([ 
-                                                html_h1("max", style = Dict("textAlign" => "center","font-size" => "100%")),
-                                            ]),
-                                        ]),
                                     #temperature                                                        
                                     dbc_row([
                                         dbc_col([ 
@@ -878,8 +902,8 @@ function Tab_Simulation()
                                         dbc_col([ 
                                             dcc_dropdown(   id      = "scp-dropdown",
                                             options = [
-                                                (label = "G0",        value =  0),
-                                                (label = "G_system",  value =  1),
+                                                (label = "G0 (no latent heat)",         value =  0),
+                                                (label = "G_system (with latent heat)", value =  1),
                                             ],
                                             value       = 0,
                                             clearable   = false,

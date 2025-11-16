@@ -464,7 +464,7 @@ function save_rho_for_GeoModel(     dtb         ::String,
     file       *= @sprintf("50:    Lowest T [K]\n");
     file       *= @sprintf("51:    T increment\n");
     file       *= @sprintf("52:    # of T values\n");
-    file       *= @sprintf("53:    Lowest P [bar]\n");
+    file       *= @sprintf("53:    Lowest P [Pa]\n");
     file       *= @sprintf("54:    P increment\n");
     file       *= @sprintf("55:    # of P values\n");
 
@@ -482,7 +482,7 @@ function save_rho_for_GeoModel(     dtb         ::String,
     for i=1:19
         file   *= @sprintf("\n")
     end
-    file       *= @sprintf("[meltRho, rho, kg/m^3] [meltFrac, wtPercent, NoUnits] [rockRho, rho, kg/m^3] [Vp, vp, km/s] [Vs, vs, km/s] [SpecificCp, scp, J/kg/K] [Temperature, T, K] [Pressure, P, bar]   \n");
+    file       *= @sprintf("[meltRho, rho, kg/m^3] [meltFrac, wtPercent, NoUnits] [rockRho, rho, kg/m^3] [Vp, vp, km/s] [Vs, vs, km/s] [SpecificCp, scp, J/kg/K] [Temperature, T, K] [Pressure, P, Pa]   \n");
     file       *= @sprintf("%5.10f\n",minimum(T));
     file       *= @sprintf("%5.10f\n",dT);
     file       *= @sprintf("%d\n",nT);
@@ -554,7 +554,7 @@ function save_equilibrium_to_file(  out::MAGEMin_C.gmin_struct{Float64, Int64}, 
     file *= @sprintf("\n")  
 
     file *= @sprintf("Stable mineral assemblage:\n")    
-    file *= @sprintf("%6s%15s %13s %17s %17s %12s %12s %12s %12s %12s %12s %12s %12s %12s\n","phase","fraction[wt]","G[kJ]" ,"V_molar[cm3/mol]","V_partial[cm3]" ,"Cp[kJ/K]","Rho[kg/m3]","Alpha[1/K]","Entropy[J/K]","Enthalpy[J]","BulkMod[GPa]","ShearMod[GPa]","Vp[km/s]","Vs[km/s]")
+    file *= @sprintf("%6s%15s %13s %17s %17s %12s %12s %12s %12s %12s %12s %12s %12s %12s\n","phase","fraction[wt]","G[kJ]" ,"V_molar[cm3/mol]","V_partial[cm3]" ,"Cp[kJ/K]","Rho[kg/m3]","Alpha[1/K]","Entropy[kJ/K]","Enthalpy[kJ/mol]","BulkMod[GPa]","ShearMod[GPa]","Vp[km/s]","Vs[km/s]")
    
     for i=1:out.n_SS
         file *= @sprintf("%6s",out.ph[i])
@@ -1135,11 +1135,20 @@ function get_gridded_map(   fieldname   ::String,
     meant      /= npoints
     meant       = round(meant; digits = 3)
 
-    if type == "zr"
+    if type == "zrc"
         for i=1:np
             field[i] = get_property(Out_TE_XY[i], fieldname);
         end
-
+        field[isnan.(field)] .= 0.0
+    elseif type == "sulf"
+        for i=1:np
+            field[i] = get_property(Out_TE_XY[i], fieldname);
+        end
+        field[isnan.(field)] .= 0.0
+    elseif type == "fapt"
+        for i=1:np
+            field[i] = get_property(Out_TE_XY[i], fieldname);
+        end
         field[isnan.(field)] .= 0.0
     else
         if fieldname == "#Phases"
@@ -1438,7 +1447,17 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
     end
     meant      /= npoints
     meant       = round(meant; digits = 3)
-    if type == "zr"
+    if type == "zrc"
+        for i=1:np
+            field[i] = get_property(Out_TE_XY[i], fieldname);
+        end
+        field[isnan.(field)] .= 0.0
+    elseif type == "fapt"
+        for i=1:np
+            field[i] = get_property(Out_TE_XY[i], fieldname);
+        end
+        field[isnan.(field)] .= 0.0
+    elseif type == "sulf"
         for i=1:np
             field[i] = get_property(Out_TE_XY[i], fieldname);
         end
@@ -1878,7 +1897,7 @@ end
 """
 function get_isopleth_map_te(   mod         ::String, 
                                 field       ::String, 
-                                field_zr    ::String,
+                                acces_name  ::String,
                                 calc        ::String,
                                 norm_te     ::String,
                                 oxi         ::Vector{String},
@@ -1902,10 +1921,19 @@ function get_isopleth_map_te(   mod         ::String,
         field[isnan.(field)] .= 0.0
     elseif mod == "zrc"
         for i=1:np
-            field[i] = get_property(Out_TE_XY[i], field_zr);
+            field[i] = get_property(Out_TE_XY[i], acces_name);
         end
         field[isnan.(field)] .= 0.0
-
+    elseif mod == "fapt"
+        for i=1:np
+            field[i] = get_property(Out_TE_XY[i], acces_name);
+        end
+        field[isnan.(field)] .= 0.0
+    elseif mod == "sulf"
+        for i=1:np
+            field[i] = get_property(Out_TE_XY[i], acces_name);
+        end
+        field[isnan.(field)] .= 0.0
     end
 
     n   = 2^(sub + refLvl)+1

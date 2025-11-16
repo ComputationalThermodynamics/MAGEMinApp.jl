@@ -105,9 +105,11 @@ module MAGEMinApp
                         ], width="auto" ),
 
                         dbc_col([
-                            dbc_cardimg(    id      = "magemin-img",
-                                            src     = "assets/static/images/MAGEMin_light.jpg",
-                                            style   = Dict("height" => 70, "width" => 190)),
+                            html_a(href="https://computationalthermodynamics.github.io/MAGEMin_C.jl/dev/", target="_blank", [
+                                dbc_cardimg(    id      = "magemin-img",
+                                                src     = "assets/static/images/MAGEMin_light.jpg",
+                                                style   = Dict("height" => 70, "width" => 190)),
+                            ]),
                                 ], width="auto" ),
 
                         dbc_col([

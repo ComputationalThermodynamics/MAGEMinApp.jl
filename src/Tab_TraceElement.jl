@@ -298,10 +298,12 @@ function Tab_TraceElement()
                                     dbc_col([
                                         dcc_dropdown(   id      = "field-type-dropdown-te",
                                                         options = [
-                                                            (label = "Zircon",              value = "zr"     ),
-                                                            (label = "Trace element",       value = "te"     ),
+                                                            (label = "Zircon",              value = "zrc"      ),
+                                                            (label = "Sulfide",             value = "sulf"     ),
+                                                            (label = "Fluorapatite",        value = "fapt"     ),
+                                                            (label = "Trace element",       value = "te"       ),
                                                         ],
-                                                        value="zr" ,
+                                                        value="zrc" ,
                                                         clearable   = false,
                                                         multi       = false),
                                     ]), 
@@ -312,18 +314,67 @@ function Tab_TraceElement()
                                         html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                     ], width=5),
                                     dbc_col([
-                                        dcc_dropdown(   id      = "fields-dropdown-zr",
+                                        dcc_dropdown(   id      = "fields-dropdown-zrc",
                                                         options = [
-                                                            (label = "Sat_zr_liq",              value = "Sat_zr_liq"    ),
-                                                            (label = "Cliq_Zr",                 value = "Cliq_Zr"       ),
+                                                            (label = "Sat_Zr_liq",              value = "Sat_Zr_liq"    ),
                                                             (label = "zrc_wt",                  value = "zrc_wt"        ),
                                                         ],
-                                                        value="Sat_zr_liq" ,
+                                                        value="Sat_Zr_liq" ,
                                                         clearable   = false,
                                                         multi       = false),
                                     ]), 
                                 ]),
                                 ], style = Dict("display" => "block"), id      = "show-zircon-id"), #none, bloc
+
+                                html_div([
+                                dbc_row([
+                                    dbc_col([ 
+                                        html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                    ], width=5),
+                                    dbc_col([
+                                        dcc_dropdown(   id      = "fields-dropdown-sulf",
+                                                        options = [
+                                                            (label = "Sat_S_liq",              value = "Sat_S_liq"    ),
+                                                            (label = "sulf_wt",                  value = "sulf_wt"        ),
+                                                        ],
+                                                        value="Sat_S_liq" ,
+                                                        clearable   = false,
+                                                        multi       = false),
+                                    ]), 
+                                ]),
+                                ], style = Dict("display" => "block"), id      = "show-sulfide-id"), #none, bloc
+
+
+                                html_div([
+                                dbc_row([
+                                    dbc_col([ 
+                                        html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                    ], width=5),
+                                    dbc_col([
+                                        dcc_dropdown(   id      = "fields-dropdown-fapt",
+                                                        options = [
+                                                            (label = "Sat_P2O5_liq",              value = "Sat_P2O5_liq"    ),
+                                                            (label = "fapt_wt",                  value = "fapt_wt"        ),
+                                                        ],
+                                                        value="Sat_P2O5_liq" ,
+                                                        clearable   = false,
+                                                        multi       = false),
+                                    ]), 
+                                ]),
+                                ], style = Dict("display" => "block"), id      = "show-fluorapatite-id"), #none, bloc
+
+                                html_div([
+                                dbc_row([
+                                        dcc_dropdown(   id      = "update-accessory-fields",
+                                                        options = [
+                                                            (label = "true",              value =  1    ),
+                                                            (label = "false",             value = -1   ),
+                                                        ],
+                                                        value= 0,
+                                                        clearable   = false,
+                                                        multi       = false),
+                                ]),
+                                ], style = Dict("display" => "none"), id      = "show-update-accessory-fields-id"), #none, bloc
 
                                 html_div([
 
@@ -516,12 +567,14 @@ function Tab_TraceElement()
                                             dbc_row([
                                                 dbc_col([
                                                     html_h1("Field type", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
-                                                ]),
+                                                ], width=6),
                                                 dbc_col([
                                                     dcc_dropdown(   id      = "field-type-te-dropdown",
                                                     options = [
-                                                        (label = "Zircon",              value = "zrc"),
-                                                        (label = "Trace element",       value = "te"),
+                                                        (label = "Zircon",              value = "zrc"       ),
+                                                        (label = "Sulfide",             value = "sulf"      ),
+                                                        (label = "Fluorapatite",        value = "fapt"      ),
+                                                        (label = "Trace element",       value = "te"        ),
                                                         ],
                                                     value       = "zrc",
                                                     clearable   = false,
@@ -533,20 +586,58 @@ function Tab_TraceElement()
                                             dbc_row([
                                                 dbc_col([ 
                                                     html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                                ], width=5),
+                                                ], width=6),
                                                 dbc_col([
-                                                    dcc_dropdown(   id      = "fields-dropdown-zr-te",
+                                                    dcc_dropdown(   id      = "fields-dropdown-zrc-te",
                                                                     options = [
-                                                                        (label = "Sat_zr_liq",              value = "Sat_zr_liq"    ),
-                                                                        (label = "Cliq_Zr",                 value = "Cliq_Zr"       ),
+                                                                        (label = "Sat_Zr_liq",              value = "Sat_Zr_liq"    ),
                                                                         (label = "zrc_wt",                  value = "zrc_wt"        ),
                                                                     ],
-                                                                    value       = "Sat_zr_liq" ,
+                                                                    value       = "Sat_Zr_liq" ,
                                                                     clearable   =  false,
                                                                     multi       =  false ),
                                                 ]), 
                                             ]),
-                                        ], style = Dict("display" => "none"), id      = "fields-dropdown-zr-id-te"),
+                                        ], style = Dict("display" => "none"), id      = "fields-dropdown-zrc-id-te"),
+
+
+                                        html_div([
+                                            dbc_row([
+                                                dbc_col([ 
+                                                    html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                ], width=6),
+                                                dbc_col([
+                                                    dcc_dropdown(   id      = "fields-dropdown-sulf-te",
+                                                                    options = [
+                                                                        (label = "Sat_S_liq",              value = "Sat_S_liq"    ),
+                                                                        (label = "sulf_wt",                  value = "sulf_wt"        ),
+                                                                    ],
+                                                                    value       = "Sat_S_liq" ,
+                                                                    clearable   =  false,
+                                                                    multi       =  false ),
+                                                ]), 
+                                            ]),
+                                        ], style = Dict("display" => "none"), id      = "fields-dropdown-sulf-id-te"),
+
+
+                                        html_div([
+                                            dbc_row([
+                                                dbc_col([ 
+                                                    html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                ], width=6),
+                                                dbc_col([
+                                                    dcc_dropdown(   id      = "fields-dropdown-fapt-te",
+                                                                    options = [
+                                                                        (label = "Sat_P2O5_liq",              value = "Sat_P2O5_liq"    ),
+                                                                        (label = "fapt_wt",                  value = "fapt_wt"        ),
+                                                                    ],
+                                                                    value       = "Sat_P2O5_liq" ,
+                                                                    clearable   =  false,
+                                                                    multi       =  false ),
+                                                ]), 
+                                            ]),
+                                        ], style = Dict("display" => "none"), id      = "fields-dropdown-fapt-id-te"),
+
                                         html_div([
                                             dbc_row([
                                                 dbc_col([ 
