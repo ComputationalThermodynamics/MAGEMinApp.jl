@@ -1443,6 +1443,16 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
             field[i] = get_property(Out_TE_XY[i], fieldname);
         end
         field[isnan.(field)] .= 0.0
+    elseif type == "fapt"
+        for i=1:np
+            field[i] = get_property(Out_TE_XY[i], fieldname);
+        end
+        field[isnan.(field)] .= 0.0
+    elseif type == "sulf"
+        for i=1:np
+            field[i] = get_property(Out_TE_XY[i], fieldname);
+        end
+        field[isnan.(field)] .= 0.0
     elseif type == "te"
         global i
         for i=1:np
@@ -1878,7 +1888,7 @@ end
 """
 function get_isopleth_map_te(   mod         ::String, 
                                 field       ::String, 
-                                field_zr    ::String,
+                                acces_name  ::String,
                                 calc        ::String,
                                 norm_te     ::String,
                                 oxi         ::Vector{String},
@@ -1902,10 +1912,19 @@ function get_isopleth_map_te(   mod         ::String,
         field[isnan.(field)] .= 0.0
     elseif mod == "zrc"
         for i=1:np
-            field[i] = get_property(Out_TE_XY[i], field_zr);
+            field[i] = get_property(Out_TE_XY[i], acces_name);
         end
         field[isnan.(field)] .= 0.0
-
+    elseif mod == "fapt"
+        for i=1:np
+            field[i] = get_property(Out_TE_XY[i], acces_name);
+        end
+        field[isnan.(field)] .= 0.0
+    elseif mod == "sulf"
+        for i=1:np
+            field[i] = get_property(Out_TE_XY[i], acces_name);
+        end
+        field[isnan.(field)] .= 0.0
     end
 
     n   = 2^(sub + refLvl)+1

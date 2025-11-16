@@ -83,9 +83,8 @@ function Tab_Simulation_Callbacks(app)
         State(  "tepm-dropdown",                    "value"       ),
         State(  "kds-dropdown",                     "value"       ),
         State(  "zrsat-dropdown",                   "value"       ),
-
-        State("ssat-dropdown",                      "value"       ),
-        State("P2O5sat-dropdown",                   "value"       ),
+        State(  "ssat-dropdown",                    "value"       ),
+        State(  "P2O5sat-dropdown",                 "value"       ),
 
         State(  "pt-x-table",                       "data"        ),
         State(  "pmin-id",                          "value"       ),
@@ -182,8 +181,8 @@ function Tab_Simulation_Callbacks(app)
         Output(  "tepm-dropdown",                    "value"       ),
         Output(  "kds-dropdown-trigger",             "value"       ),
         Output(  "zrsat-dropdown",                   "value"       ),
-        Output(   "ssat-dropdown",                    "value"       ),
-        Output(   "P2O5sat-dropdown",                 "value"       ),
+        Output(  "ssat-dropdown",                    "value"       ),
+        Output(  "P2O5sat-dropdown",                 "value"       ),
 
         Output(  "pmin-id",                          "value"       ),
         Output(  "pmax-id",                          "value"       ),

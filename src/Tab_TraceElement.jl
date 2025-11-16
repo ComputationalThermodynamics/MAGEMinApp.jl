@@ -314,7 +314,7 @@ function Tab_TraceElement()
                                         html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                     ], width=5),
                                     dbc_col([
-                                        dcc_dropdown(   id      = "fields-dropdown-zr",
+                                        dcc_dropdown(   id      = "fields-dropdown-zrc",
                                                         options = [
                                                             (label = "Sat_Zr_liq",              value = "Sat_Zr_liq"    ),
                                                             (label = "zrc_wt",                  value = "zrc_wt"        ),
@@ -362,6 +362,19 @@ function Tab_TraceElement()
                                     ]), 
                                 ]),
                                 ], style = Dict("display" => "block"), id      = "show-fluorapatite-id"), #none, bloc
+
+                                html_div([
+                                dbc_row([
+                                        dcc_dropdown(   id      = "update-accessory-fields",
+                                                        options = [
+                                                            (label = "true",              value =  1    ),
+                                                            (label = "false",             value = -1   ),
+                                                        ],
+                                                        value= 0,
+                                                        clearable   = false,
+                                                        multi       = false),
+                                ]),
+                                ], style = Dict("display" => "none"), id      = "show-update-accessory-fields-id"), #none, bloc
 
                                 html_div([
 
@@ -554,7 +567,7 @@ function Tab_TraceElement()
                                             dbc_row([
                                                 dbc_col([
                                                     html_h1("Field type", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
-                                                ]),
+                                                ], width=6),
                                                 dbc_col([
                                                     dcc_dropdown(   id      = "field-type-te-dropdown",
                                                     options = [
@@ -573,7 +586,7 @@ function Tab_TraceElement()
                                             dbc_row([
                                                 dbc_col([ 
                                                     html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                                ], width=5),
+                                                ], width=6),
                                                 dbc_col([
                                                     dcc_dropdown(   id      = "fields-dropdown-zrc-te",
                                                                     options = [
@@ -592,7 +605,7 @@ function Tab_TraceElement()
                                             dbc_row([
                                                 dbc_col([ 
                                                     html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                                ], width=5),
+                                                ], width=6),
                                                 dbc_col([
                                                     dcc_dropdown(   id      = "fields-dropdown-sulf-te",
                                                                     options = [
@@ -611,7 +624,7 @@ function Tab_TraceElement()
                                             dbc_row([
                                                 dbc_col([ 
                                                     html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                                ], width=5),
+                                                ], width=6),
                                                 dbc_col([
                                                     dcc_dropdown(   id      = "fields-dropdown-fapt-te",
                                                                     options = [
