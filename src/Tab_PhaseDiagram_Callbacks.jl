@@ -880,6 +880,8 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("tepm-dropdown",          "value"),
         State("kds-dropdown",           "value"),
         State("zrsat-dropdown",         "value"),
+        State("ssat-dropdown",         "value"),
+        State("P2O5sat-dropdown",         "value"),
         State("table-te-rock",          "data"),            # bulk-rock 1
         State("table-te-2-rock",        "data"),  
 
@@ -928,7 +930,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             bufferType, solver,     boost,      verbose,    scp,
             bulk1,      bulk2,      sys_unit,   
             bufferN1,   bufferN2,
-            tepm,       kds_mod,    zrsat_mod,  bulkte1,    bulkte2,
+            tepm,       kds_mod,    zrsat_mod,  ssat_mod,   P2O5sat_mod,    bulkte1,    bulkte2,
             test,
             isopleths,  isoplethsID,isoplethsHid,  isoplethsHidID,  phase,      ss,         em,     ox,    of,     ot, sys, rmf, calc, cust, calc_sf, calc_ox, cust_sf, cust_ox,
             isoLineStyle, isoLineWidth, isoColorLine,           isoLabelSize,   
@@ -992,7 +994,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             if tepm == "true"
                 if dtb != "um" && dtb != "ume" && dtb != "mtl"
                     t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
-                                                                        kds_mod, zrsat_mod, bulkte_L, bulkte_R, elem)
+                                                                        kds_mod, zrsat_mod, ssat_mod,   P2O5sat_mod,
+                                                                        bulkte_L, bulkte_R, elem)
 
                     println("Computed trace element partitioning in $t s")
                 else
@@ -1044,7 +1047,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             if tepm == "true"
                 if dtb != "um" && dtb != "ume" && dtb != "mtl"
                     t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
-                                                                        kds_mod, zrsat_mod, bulkte_L, bulkte_R, elem)
+                                                                        kds_mod, zrsat_mod, ssat_mod, P2O5sat_mod,
+                                                                        bulkte_L, bulkte_R, elem)
 
                     println("Computed trace element partitioning in $t s")
                 else

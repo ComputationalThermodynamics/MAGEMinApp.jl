@@ -788,10 +788,12 @@ function Tab_TraceElement_Callbacks(app)
         State("export-citation-id-te", "value"),
         State("kds-dropdown","value"),
         State("zrsat-dropdown","value"),
+        State("ssat-dropdown","value"),
+        State("P2O5sat-dropdown","value"),
 
         prevent_initial_call=true,
 
-    ) do n_clicks, fname, kds, zrc
+    ) do n_clicks, fname, kds, zrc, sulf, fapt
 
         if fname != "filename"
             output_bib      = "_"*kds*".bib"
@@ -806,13 +808,17 @@ function Tab_TraceElement_Callbacks(app)
 
             selection       = String[]
 
-            id_zrc          = findfirst(bib[bib.keys[i]].fields["info"] .== zrc for i=1:n_ref)
-            id_kds          = findfirst(bib[bib.keys[i]].fields["info"] .== kds for i=1:n_ref)
+            id_zrc          = findfirst(bib[bib.keys[i]].fields["info"] .== zrc     for i=1:n_ref)
+            id_sulf         = findfirst(bib[bib.keys[i]].fields["info"] .== sulf    for i=1:n_ref)
+            id_fapt         = findfirst(bib[bib.keys[i]].fields["info"] .== fapt    for i=1:n_ref)
+            id_kds          = findfirst(bib[bib.keys[i]].fields["info"] .== kds     for i=1:n_ref)
             id_magemin      = findfirst(bib[bib.keys[i]].fields["info"] .== magemin for i=1:n_ref)
             
-            push!(selection, String(bib.keys[id_kds]))
-            push!(selection, String(bib.keys[id_zrc]))
-            push!(selection, String(bib.keys[id_magemin]))
+            if !isnothing(id_zrc);      push!(selection, String(bib.keys[id_zrc]))      end
+            if !isnothing(id_sulf);     push!(selection, String(bib.keys[id_sulf]))     end
+            if !isnothing(id_fapt);     push!(selection, String(bib.keys[id_fapt]))     end
+            if !isnothing(id_kds);      push!(selection, String(bib.keys[id_kds]))      end
+            if !isnothing(id_magemin);  push!(selection, String(bib.keys[id_magemin]))  end
 
             selected_bib    = Bibliography.select(bib, selection)
             

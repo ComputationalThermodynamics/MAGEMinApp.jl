@@ -26,6 +26,7 @@ function get_contributors()
     debug   *= "Joshua Laughton\n"
     debug   *= "Jun Ren\n"
     debug   *= "Lorenzo Candioti\n"
+    debug   *= "Nickolas Bardi Moccetti\n"
     debug   *= "Owen Weller\n"
     debug   *= "Paul Tackley\n"
     debug   *= "Peter Luffi\n"

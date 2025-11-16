@@ -34,7 +34,7 @@ global CompProgress     =  ComputationalProgress()
 customWs                =  DataFrame()
 
 # Here we fill a tupple with the KDs for the OL12 database
-file_path               = joinpath(pkg_dir,"src","./tools/OL12_.jld2")
+file_path               = joinpath(pkg_dir,"src","./tools/OL12.jld2")
 @load file_path OL12
 
 KDs                     = [(OL12[2],OL12[3],OL12[4],"OL","Laurent, O. 2012",OL12[1])]
