@@ -1139,7 +1139,16 @@ function get_gridded_map(   fieldname   ::String,
         for i=1:np
             field[i] = get_property(Out_TE_XY[i], fieldname);
         end
-
+        field[isnan.(field)] .= 0.0
+    elseif type == "sulf"
+        for i=1:np
+            field[i] = get_property(Out_TE_XY[i], fieldname);
+        end
+        field[isnan.(field)] .= 0.0
+    elseif type == "fapt"
+        for i=1:np
+            field[i] = get_property(Out_TE_XY[i], fieldname);
+        end
         field[isnan.(field)] .= 0.0
     else
         if fieldname == "#Phases"
