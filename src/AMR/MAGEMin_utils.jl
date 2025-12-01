@@ -455,9 +455,12 @@ function refine_MAGEMin(dtb,data,
                                                                     rm_list=phase_selection, name_solvus=true, W=new_Ws)   
             
                         Out_col_1[i] = deepcopy(out)
+                        Out_col_1[i].X .= npoints[i][2]
                     else
                         Out_col_1[i] = deepcopy(out)
+                        Out_col_1[i].X .= npoints[i][2]
                     end
+                    
                 end
 
                 Out_rows    = Vector{Vector{MAGEMin_C.gmin_struct{Float64, Int64}}}(undef, n);
@@ -468,6 +471,7 @@ function refine_MAGEMin(dtb,data,
                     P_          = fixP
                     T_          = collect(range(data.Xrange[1], stop=data.Xrange[2], length=n))
                     bulk_       = deepcopy(Out_col_1[i].bulk)
+                    X           = Out_col_1[i].X[1]
 
                     gv, z_b, DB, splx_data = get_data_thread(MAGEMin_data)
                     gv          = define_bulk_rock(gv, bulk_, oxi, "mol",unsafe_string(gv.db))
@@ -499,8 +503,10 @@ function refine_MAGEMin(dtb,data,
                                                                 buffer_n=bufferN1, name_solvus=true, scp=scp, rm_list=phase_selection, W=new_Ws)
 
                             Out_PT[j] = deepcopy(out)
+                            Out_PT[j].X .= X
                         else
                             Out_PT[j] = deepcopy(out)
+                            Out_PT[j].X .= X
                         end
                     end
                     Out_rows[i] = Out_PT
@@ -515,7 +521,12 @@ function refine_MAGEMin(dtb,data,
                 end
 
             else #refinement of the TT diagram
+                X = zeros(Float64,n_new_points)
+
                 for i = 1:n_new_points
+                    tmp     = [Out_XY[data.npoints_ig[i][j]].X[1] for j=1:length(data.npoints_ig[i])]
+                    X[i]    = mean(tmp)   
+
                     Tvec[i] = npoints[i][1];
                     Pvec[i] = fixP;
                     Bvec[i] = bufferN1;
@@ -537,6 +548,10 @@ function refine_MAGEMin(dtb,data,
                                                             X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol", G=Gvec, scp=scp, 
                                                             rm_list=phase_selection, name_solvus=true, iguess=boost, callback_fn = update_progress, W=new_Ws); 
 
+                for i=1:n_new_points
+                    Out_XY_new[i].X .= X[i] 
+                end
+                
             end
         end
 
