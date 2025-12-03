@@ -64,7 +64,7 @@ function create_ph_style()
     pp_list = String[]
     ss_list = String[]
 
-    dbs     = ["mp","mb","mbe","ig","igad","um","ume","mtl","mpe","sb11","sb21"]
+    dbs     = ["mp","mb","mbe","ig","igad","um","ume","mtl","mpe","sb11","sb21","sb24"]
 
     for db in dbs
         ph = retrieve_solution_phase_information(db)
