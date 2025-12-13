@@ -943,7 +943,7 @@ function Tab_PTXpaths_Callbacks(app)
             style  = Dict("display" => "none")
         end
 
-        if value == "sb11" || value == "sb21"
+        if value == "sb11" || value == "sb21" || value == "sb24"
             style_dataset = Dict("display" => "none")
         else
             style_dataset = Dict("display" => "block")

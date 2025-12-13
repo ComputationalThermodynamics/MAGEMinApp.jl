@@ -267,7 +267,7 @@ function Tab_Simulation_Callbacks(app)
     ) do dtb
     
 
-        if dtb == "sb11" || dtb == "sb21"
+        if dtb == "sb11" || dtb == "sb21" || dtb == "sb24"
             style  = Dict("display" => "none")
         else
             style   = Dict("display" => "block")

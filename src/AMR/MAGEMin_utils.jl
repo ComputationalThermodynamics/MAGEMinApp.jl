@@ -409,7 +409,7 @@ function refine_MAGEMin(dtb,data,
                     end
                 end
             end
-            if diagType == "pt" && dtb != "sb11" && dtb != "sb21" && isnothing(pChip_wat) == true
+            if diagType == "pt" && dtb != "sb11" && dtb != "sb21"  && dtb != "sb24" && isnothing(pChip_wat) == true
                 fixed_bulk = true
             else
                 fixed_bulk = false
@@ -521,11 +521,8 @@ function refine_MAGEMin(dtb,data,
                 end
 
             else #refinement of the TT diagram
-                X = zeros(Float64,n_new_points)
-
                 for i = 1:n_new_points
                     tmp     = [Out_XY[data.npoints_ig[i][j]].X[1] for j=1:length(data.npoints_ig[i])]
-                    X[i]    = mean(tmp)   
 
                     Tvec[i] = npoints[i][1];
                     Pvec[i] = fixP;
@@ -549,12 +546,11 @@ function refine_MAGEMin(dtb,data,
                                                             rm_list=phase_selection, name_solvus=true, iguess=boost, callback_fn = update_progress, W=new_Ws); 
 
                 for i=1:n_new_points
-                    Out_XY_new[i].X .= X[i] 
+                    Out_XY_new[i].X .= data.npoints[i][2]  
                 end
                 
             end
         end
-
     else
         println("There is no new point to compute...")
     end

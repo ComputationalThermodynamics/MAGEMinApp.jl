@@ -496,8 +496,8 @@ function Tab_PhaseDiagram_Callbacks(app)
         phase_selection                 = remove_phases(string_vec_diff(ph_selection,pure_ph_selection,dtb),dtb)
         global point_id
 
-        all_ox  = ["CO2","Cl","MnO","Na2O","CaO","K2O","FeO","MgO","Al2O3","SiO2","H2O","TiO2","O","S"];
-        all_acr = ["CO2","Cl","Mn","N","C","K","F","M","A","S","H","T","O","S"];
+        all_ox  = ["CO2","Cl","MnO","Na2O","CaO","K2O","FeO","MgO","Al2O3","SiO2","H2O","TiO2","O","S","F","Cr2O3"];
+        all_acr = ["CO2","Cl","Mn","N","C","K","F","M","A","S","H","T","O","S","Fe","Cr"];
 
         sp  = click_info[:points][][:text]
         tmp = match(r"#([^# ]+)#", sp)
