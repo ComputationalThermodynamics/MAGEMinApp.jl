@@ -551,7 +551,6 @@ function refine_MAGEMin(dtb,data,
                 
             end
         end
-
     else
         println("There is no new point to compute...")
     end
