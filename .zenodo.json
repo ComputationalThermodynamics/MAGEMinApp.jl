@@ -1,0 +1,62 @@
+{
+  "title": "MAGEMinApp.jl: A Graphical User Interface for MAGEMin",
+  "description": "MAGEMinApp.jl provides a Julia-based Graphical User Interface for MAGEMin, the Mineral Assemblage Gibbs Energy Minimization package",
+  "creators": [
+    {
+      "name": "Riel, Nicolas",
+      "affiliation": "Johannes Gutenberg University Mainz, Germany",
+      "orcid": "https://orcid.org/0000-0002-5037-5519"
+    },
+    {
+      "name": "Kaus, Boris J.P.",
+      "affiliation": "Johannes Gutenberg University Mainz, Germany",
+      "orcid": "https://orcid.org/0000-0002-0247-8660"
+    },
+    {
+      "name": "Dominguez, Hugo",
+      "affiliation": "Johannes Gutenberg University Mainz, Germany",
+      "orcid": "https://orcid.org/0009-0001-8425-0503"
+    },
+    {
+      "name": "Ranocha, Hendrik",
+      "affiliation": "Johannes Gutenberg University Mainz, Germany",
+      "orcid": "https://orcid.org/0000-0002-3456-2277"
+    }
+  ],
+  "keywords": [
+    "Gibbs energy minimisation",
+    "computational thermodynamics",
+    "volcanology",
+    "petrology",
+    "metamorphic processes",
+    "geochemistry",
+    "graphical user interface",
+    "Julia"
+  ],
+    "grants": [
+    {
+      "id": "771143",
+      "title": "MAGMA - Melting And Geodynamic Models of Ascent",
+      "funder": {
+        "name": "European Commission"
+      }
+    }, 
+    {
+      "id": "521637679",
+      "title": "Modelling of CHROMium Enrichment in the mantle and the crust",
+      "funder": {
+        "name": "German Research Foundation (DFG)"
+      }
+    }, 
+  ],
+  "license": {
+    "id": "MIT"
+  },
+  "upload_type": "software",
+  "access_right": "open",
+  "communities": [
+    {
+      "identifier": "juliapackage"
+    }
+  ]
+}
