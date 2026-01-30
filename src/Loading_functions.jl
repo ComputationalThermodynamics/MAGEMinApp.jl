@@ -683,7 +683,7 @@ function get_dtbulk_list()
                             :db         => "sb11",
                             :test       => 1,
                             :sysUnit    => "mol",
-                            :oxide      => ["SiO2","Al2O3","CaO","FeO","MgO","Na2O"],
+                            :oxide      => ["SiO2","CaO","Al2O3","FeO","MgO","Na2O"],
                             :frac       => [38.89,2.2,3.1,5.8,50.0,0.01],
                             :frac2      => [38.89,2.2,3.1,5.8,50.0,0.01],
                             ), cols=:union)  
@@ -694,7 +694,7 @@ function get_dtbulk_list()
                             :db         => "sb11",
                             :test       => 2,
                             :sysUnit    => "mol",
-                            :oxide      => ["SiO2","Al2O3","CaO","FeO","MgO","Na2O"],
+                            :oxide      => ["SiO2","CaO","Al2O3","FeO","MgO","Na2O"],
                             :frac       => [36.39,0.7,0.9,5.4,56.6,0.01],
                             :frac2      => [36.39,0.7,0.9,5.4,56.6,0.01],
                             ), cols=:union)  
@@ -705,11 +705,9 @@ function get_dtbulk_list()
                             :db         => "sb11",
                             :test       => 3,
                             :sysUnit    => "mol",
-                            :oxide      => ["SiO2","Al2O3","CaO","FeO","MgO","Na2O"],
+                            :oxide      => ["SiO2","CaO","Al2O3","FeO","MgO","Na2O"],
                             :frac       => [38.82533751228409, 2.0365437262790334, 2.949115292540495, 5.939734393438787, 50.13984011481426, 0.10942896064333986],
                             :frac2      => [38.82533751228409, 2.0365437262790334, 2.949115292540495, 5.939734393438787, 50.13984011481426, 0.10942896064333986],
-                            # :frac       => [44.71,3.98,3.17,8.18,38.73,0.13],
-                            # :frac2      => [44.71,3.98,3.17,8.18,38.73,0.13],
                             ), cols=:union) 
 
     push!(db,Dict(          :bulk       => "predefined",
@@ -718,9 +716,9 @@ function get_dtbulk_list()
                             :db         => "sb11",
                             :test       => 4,
                             :sysUnit    => "mol",
-                            :oxide      => ["SiO2","Al2O3","CaO","FeO","MgO","Na2O"],
-                            :frac       => [ 50.72,	9.16,15.21, 7.06, 16.25, 1.47],
-                            :frac2      => [ 50.72,	9.16,15.21, 7.06, 16.25, 1.47],
+                            :oxide      => ["SiO2","CaO","Al2O3","FeO","MgO","Na2O"],
+                            :frac       => [ 50.72,	15.21,9.16, 7.06, 16.25, 1.47],
+                            :frac2      => [ 50.72,	15.21, 9.16,7.06, 16.25, 1.47],
                             ), cols=:union) 
                             
     #MANTLE DATABASE STIXRUDE 2021
@@ -741,7 +739,7 @@ function get_dtbulk_list()
                             :db         => "sb21",
                             :test       => 1,
                             :sysUnit    => "mol",
-                            :oxide      => ["SiO2","Al2O3","CaO","FeO","MgO","Na2O"],
+                            :oxide      => ["SiO2","CaO","Al2O3","FeO","MgO","Na2O"],
                             :frac       => [38.89,2.2,3.1,5.8,50.0,0.01],
                             :frac2      => [38.89,2.2,3.1,5.8,50.0,0.01],
                             ), cols=:union)  
@@ -752,7 +750,7 @@ function get_dtbulk_list()
                             :db         => "sb21",
                             :test       => 2,
                             :sysUnit    => "mol",
-                            :oxide      => ["SiO2","Al2O3","CaO","FeO","MgO","Na2O"],
+                            :oxide      => ["SiO2","CaO","Al2O3","FeO","MgO","Na2O"],
                             :frac       => [36.39,0.7,0.9,5.4,56.6,0.01],
                             :frac2      => [36.39,0.7,0.9,5.4,56.6,0.01],
                             ), cols=:union)  
@@ -763,12 +761,10 @@ function get_dtbulk_list()
                             :db         => "sb21",
                             :test       => 3,
                             :sysUnit    => "mol",
-                            :oxide      => ["SiO2","Al2O3","CaO","FeO","MgO","Na2O"],
+                            :oxide      => ["SiO2","CaO","Al2O3","FeO","MgO","Na2O"],
                             :frac       => [38.82533751228409, 2.0365437262790334, 2.949115292540495, 5.939734393438787, 50.13984011481426, 0.10942896064333986],
                             :frac2      => [38.82533751228409, 2.0365437262790334, 2.949115292540495, 5.939734393438787, 50.13984011481426, 0.10942896064333986],
-                            # :frac       => [44.71,3.98,3.17,8.18,38.73,0.13],
-                            # :frac2      => [44.71,3.98,3.17,8.18,38.73,0.13],
-                            ), cols=:union)  
+                            ), cols=:union) 
 
     push!(db,Dict(          :bulk       => "predefined",
                             :title      => "RE46 - Icelandic basalt",
@@ -776,10 +772,11 @@ function get_dtbulk_list()
                             :db         => "sb21",
                             :test       => 4,
                             :sysUnit    => "mol",
-                            :oxide      => ["SiO2","Al2O3","CaO","FeO","MgO","Na2O"],
-                            :frac       => [ 50.72,	9.16,15.21, 7.06, 16.25, 1.47],
-                            :frac2      => [ 50.72,	9.16,15.21, 7.06, 16.25, 1.47],
+                            :oxide      => ["SiO2","CaO","Al2O3","FeO","MgO","Na2O"],
+                            :frac       => [ 50.72,	15.21,9.16, 7.06, 16.25, 1.47],
+                            :frac2      => [ 50.72,	15.21, 9.16,7.06, 16.25, 1.47],
                             ), cols=:union) 
+                    
                         
                         
     # #MANTLE DATABASE STIXRUDE 2021
