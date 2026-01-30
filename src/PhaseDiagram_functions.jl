@@ -581,7 +581,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         if bufferType != "none"
             PD_infos[1] *= "Buffer factor <br>"
         end        
-        PD_infos[1] *= "X2 comp [mol] <br>"
+        PD_infos[1] *= "X1 comp [mol] <br>"
         if bufferType != "none"
             PD_infos[1] *= "Buffer factor <br>"
         end        

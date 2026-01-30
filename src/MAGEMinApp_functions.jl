@@ -1179,6 +1179,11 @@ function get_gridded_map(   fieldname   ::String,
             for i=1:np
                 field[i] = Out_XY[i].alpha[1];
             end
+        elseif fieldname == "eta_M"
+            for i=1:np
+                field[i] = log10(Out_XY[i].eta_M);
+            end
+            field[isnan.(field) .|| isinf.(field)] .= 0.0
         elseif fieldname == "Vp/Vs"
             for i=1:np
                 field[i] = Out_XY[i].Vp / Out_XY[i].Vs;
@@ -1202,6 +1207,7 @@ function get_gridded_map(   fieldname   ::String,
             end
 
             field[isnan.(field)] .= 0.0
+            field[isinf.(field)] .= 0.0
             if fieldname == "frac_M" || fieldname == "rho_M" || fieldname == "rho_S" || fieldname == "Delta_rho"
                 field[isless.(field, 1e-8)] .= 0.0              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
             end
@@ -1498,6 +1504,11 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
             for i=1:np
                 field[i] = Out_XY[i].alpha[1];
             end
+        elseif fieldname == "eta_M"
+            for i=1:np
+                field[i] = log10(Out_XY[i].eta_M);
+            end
+            field[isnan.(field) .|| isinf.(field)] .= 0.0
         elseif fieldname == "Vp/Vs"
             for i=1:np
                 field[i] = Out_XY[i].Vp / Out_XY[i].Vs;
@@ -1521,6 +1532,7 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
             end
 
             field[isnan.(field)] .= 0.0
+            field[isinf.(field)] .= 0.0
             if fieldname == "frac_M" || fieldname == "rho_M" || fieldname == "rho_S"
                 field[isless.(field, 1e-8)] .= 0.0              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
             end
@@ -1740,46 +1752,46 @@ function get_isopleth_map(  mod         ::String,
                 field[i] = 0.0
             end
         end  
-    elseif mod == "em_frac"
-        for i=1:np
-            id       = findall(Out_XY[i].ph .== ss)
-            if ~isempty(id)  
-                idem     = findall(Out_XY[i].SS_vec[id[1]].emNames .== em)
-                field[i] = Out_XY[i].SS_vec[id[1]].emFrac[idem[1]]
-            else
-                field[i] = 0.0
-            end
-        end 
-    elseif mod == "em_frac_wt"
-        for i=1:np
-            id       = findall(Out_XY[i].ph .== ss)
-            if ~isempty(id)  
-                idem     = findall(Out_XY[i].SS_vec[id[1]].emNames .== em)
-                field[i] = Out_XY[i].SS_vec[id[1]].emFrac_wt[idem[1]]
-            else
-                field[i] = 0.0
-            end
-        end 
-    elseif mod == "ox_comp"
-        for i=1:np
-            id       = findall(Out_XY[i].ph .== ss)
-            ox_id    = findfirst(Out_XY[i].oxides .== ox)
-            if ~isempty(id)  
-                field[i] = Out_XY[i].SS_vec[id[1]].Comp[ox_id]
-            else
-                field[i] = 0.0
-            end
-        end 
-    elseif mod == "ox_comp_wt"
-        for i=1:np
-            id       = findall(Out_XY[i].ph .== ss)
-            ox_id    = findfirst(Out_XY[i].oxides .== ox)
-            if ~isempty(id)  
-                field[i] = Out_XY[i].SS_vec[id[1]].Comp_wt[ox_id]
-            else
-                field[i] = 0.0
-            end
-        end 
+        elseif mod == "em_frac"
+            for i=1:np
+                id       = findall(Out_XY[i].ph .== ss)
+                if ~isempty(id)  
+                    idem     = findall(Out_XY[i].SS_vec[id[1]].emNames .== em)
+                    field[i] = Out_XY[i].SS_vec[id[1]].emFrac[idem[1]]
+                else
+                    field[i] = 0.0
+                end
+            end 
+        elseif mod == "em_frac_wt"
+            for i=1:np
+                id       = findall(Out_XY[i].ph .== ss)
+                if ~isempty(id)  
+                    idem     = findall(Out_XY[i].SS_vec[id[1]].emNames .== em)
+                    field[i] = Out_XY[i].SS_vec[id[1]].emFrac_wt[idem[1]]
+                else
+                    field[i] = 0.0
+                end
+            end 
+        elseif mod == "ox_comp"
+            for i=1:np
+                id       = findall(Out_XY[i].ph .== ss)
+                ox_id    = findfirst(Out_XY[i].oxides .== ox)
+                if ~isempty(id)  
+                    field[i] = Out_XY[i].SS_vec[id[1]].Comp[ox_id]
+                else
+                    field[i] = 0.0
+                end
+            end 
+        elseif mod == "ox_comp_wt"
+            for i=1:np
+                id       = findall(Out_XY[i].ph .== ss)
+                ox_id    = findfirst(Out_XY[i].oxides .== ox)
+                if ~isempty(id)  
+                    field[i] = Out_XY[i].SS_vec[id[1]].Comp_wt[ox_id]
+                else
+                    field[i] = 0.0
+                end
+            end 
         elseif mod == "of_mod"
             if of == "s_cp"
                 for i=1:np
@@ -1796,6 +1808,10 @@ function get_isopleth_map(  mod         ::String,
             elseif of == "alpha"
                 for i=1:np
                     field[i] = Out_XY[i].alpha[1];
+                end
+            elseif of == "eta_M"
+                for i=1:np
+                    field[i] = log10(Out_XY[i].eta_M);
                 end
             elseif of == "Vp/Vs"
                 for i=1:np
@@ -1819,6 +1835,7 @@ function get_isopleth_map(  mod         ::String,
         end
 
         field[isnan.(field)] .= missing
+        field[isinf.(field)] .= missing
         if of == "frac_M" || of == "rho_M" || of == "rho_S"
             field[isless.(field, 1e-8)] .= 0.0              #here we use isless instead of .<= as 'isless' considers 'missing' as a big number -> this avoids "unable to check bounds" error
         end 
