@@ -1813,6 +1813,7 @@ function get_isopleth_map(  mod         ::String,
                 for i=1:np
                     field[i] = log10(Out_XY[i].eta_M);
                 end
+                field[isnan.(field) .|| isinf.(field)] .= 0.0
             elseif of == "Vp/Vs"
                 for i=1:np
                     field[i] = Out_XY[i].Vp / Out_XY[i].Vs;
