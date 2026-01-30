@@ -5,22 +5,22 @@
     {
       "name": "Riel, Nicolas",
       "affiliation": "Johannes Gutenberg University Mainz, Germany",
-      "orcid": "0000-0002-5037-5519"
+      "orcid": "https://orcid.org/0000-0002-5037-5519"
     },
     {
       "name": "Kaus, Boris J.P.",
       "affiliation": "Johannes Gutenberg University Mainz, Germany",
-      "orcid": "0000-0002-0247-8660"
+      "orcid": "https://orcid.org/0000-0002-0247-8660"
     },
     {
       "name": "Dominguez, Hugo",
       "affiliation": "Johannes Gutenberg University Mainz, Germany",
-      "orcid": "0009-0001-8425-0503"
+      "orcid": "https://orcid.org/0009-0001-8425-0503"
     },
     {
       "name": "Ranocha, Hendrik",
       "affiliation": "Johannes Gutenberg University Mainz, Germany",
-      "orcid": "0000-0002-3456-2277"
+      "orcid": "https://orcid.org/0000-0002-3456-2277"
     }
   ],
   "keywords": [
@@ -44,7 +44,7 @@
     }
   ],
   "license": {
-    "id": "GPL-3.0-or-later"
+    "id": "GPL3"
   },
   "upload_type": "software",
   "access_right": "open",
