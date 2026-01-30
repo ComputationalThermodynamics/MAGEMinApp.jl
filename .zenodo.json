@@ -34,8 +34,7 @@
     "Julia"
   ],
   "grants": [
-    {"id": "10.13039/501100000780::771143"},
-    {"id": "10.13039/501100001659::521637679"}
+    {"id": "10.13039/501100000780::771143"}
   ],
   "license": {
     "id": "GPL3"
@@ -46,5 +45,6 @@
     {
       "identifier": "juliapackage"
     }
-  ]
+  ],
+  "notes": "This work was supported by the German Research Foundation (DFG) #521637679"
 }
