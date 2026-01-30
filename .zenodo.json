@@ -33,21 +33,9 @@
     "graphical user interface",
     "Julia"
   ],
-    "grants": [
-    {
-      "id": "771143",
-      "title": "MAGMA - Melting And Geodynamic Models of Ascent",
-      "funder": {
-        "name": "European Commission"
-      }
-    }, 
-    {
-      "id": "521637679",
-      "title": "Modelling of CHROMium Enrichment in the mantle and the crust",
-      "funder": {
-        "name": "German Research Foundation (DFG)"
-      }
-    }, 
+  "grants": [
+    {"id": "10.13039/501100000780::771143"},
+    {"id": "10.13039/501100001659::521637679"}
   ],
   "license": {
     "id": "MIT"
