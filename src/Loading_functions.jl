@@ -534,9 +534,9 @@ function get_dtbulk_list()
                             :db         => "ume",
                             :test       => 0,
                             :sysUnit    => "mol",
-                            :oxide      => ["SiO2","Al2O3","MgO","FeO","O","H2O","S","CaO","Na2O"],
-                            :frac       => [38.51, 2.25, 29.03, 4.65, 0.5, 16.0, 0.0, 6.92, 0.25],
-                            :frac2      => [38.51, 2.25, 29.03, 4.65, 0.5, 16.0, 0.0, 6.92, 0.25],
+                            :oxide      => ["SiO2","Al2O3","MgO","FeO","O","H2O","S","CaO","Na2O","Cr2O3"],
+                            :frac       => [38.51, 2.25, 29.03, 4.65, 0.5, 16.0, 0.0, 6.92, 0.25, 0.0],
+                            :frac2      => [38.51, 2.25, 29.03, 4.65, 0.5, 16.0, 0.0, 6.92, 0.25, 0.0],
                             ), cols=:union)
 
     push!(db,Dict(          :bulk       => "predefined",
@@ -545,9 +545,9 @@ function get_dtbulk_list()
                             :db         => "ume",
                             :test       => 1,
                             :sysUnit    => "mol",
-                            :oxide      => ["SiO2","Al2O3","MgO","FeO","O","H2O","S","CaO","Na2O"],
-                            :frac       => [20.044,  0.6256, 29.24, 3.149, 0.7324, 46.755, 0.3,2.0,0.15],
-                            :frac2      => [20.044,  0.6256, 29.24, 3.149, 0.7324, 46.755, 0.3,2.0,0.15],
+                            :oxide      => ["SiO2","Al2O3","MgO","FeO","O","H2O","S","CaO","Na2O","Cr2O3"],
+                            :frac       => [20.044,  0.6256, 29.24, 3.149, 0.7324, 46.755, 0.3,2.0,0.15, 0.0],
+                            :frac2      => [20.044,  0.6256, 29.24, 3.149, 0.7324, 46.755, 0.3,2.0,0.15, 0.0],
                             ), cols=:union)
         
     push!(db,Dict(          :bulk       => "predefined",
@@ -556,11 +556,21 @@ function get_dtbulk_list()
                             :db         => "ume",
                             :test       => 2,
                             :sysUnit    => "mol",
-                            :oxide      => ["SiO2","Al2O3","MgO","FeO","O","H2O","S","CaO","Na2O"],
-                            :frac       => [20.044,  0.6256, 29.24, 3.149, 0.1324, 46.755, 0.3,2.0,0.15],
-                            :frac2      => [20.044,  0.6256, 29.24, 3.149, 0.1324, 46.755, 0.3,2.0,0.15],
+                            :oxide      => ["SiO2","Al2O3","MgO","FeO","O","H2O","S","CaO","Na2O","Cr2O3"],
+                            :frac       => [20.044,  0.6256, 29.24, 3.149, 0.1324, 46.755, 0.3,2.0,0.15, 0.0],
+                            :frac2      => [20.044,  0.6256, 29.24, 3.149, 0.1324, 46.755, 0.3,2.0,0.15, 0.0],
                             ), cols=:union)
 
+    push!(db,Dict(          :bulk       => "predefined",
+                            :title      => "Cr-Serpentine reduced",
+                            :comments   => "Evans & Forst, 2021",
+                            :db         => "ume",
+                            :test       => 3,
+                            :sysUnit    => "mol",
+                            :oxide      => ["SiO2","Al2O3","MgO","FeO","O","H2O","S","CaO","Na2O","Cr2O3"],
+                            :frac       => [20.044,  0.6256, 29.24, 3.149, 0.1324, 46.755, 0.3,2.0,0.15, 0.1],
+                            :frac2      => [20.044,  0.6256, 29.24, 3.149, 0.1324, 46.755, 0.3,2.0,0.15, 0.1],
+                            ), cols=:union)
     
     # METAPELITE EXTENDED DATABASE, accounting for CO2 and S
     push!(db,Dict(          :bulk       => "predefined",
