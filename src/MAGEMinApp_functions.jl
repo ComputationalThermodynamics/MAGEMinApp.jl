@@ -2045,7 +2045,7 @@ function get_oxide_list(dbin::String)
     elseif dbin == "um"
         MAGEMin_ox      = ["SiO2"; "Al2O3"; "MgO" ;"FeO"; "O"; "H2O"; "S"];
     elseif dbin == "ume"
-        MAGEMin_ox      = ["SiO2"; "Al2O3"; "MgO" ;"FeO"; "O"; "H2O"; "S"; "CaO"; "Na2O"];        
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "MgO" ;"FeO"; "O"; "H2O"; "S"; "CaO"; "Na2O";"Cr2O3"];        
     elseif dbin == "mp"
         MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "MnO"; "H2O"];
     elseif dbin == "mtl"
