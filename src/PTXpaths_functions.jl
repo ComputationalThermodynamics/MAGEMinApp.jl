@@ -1487,7 +1487,7 @@ end
 
 
 function initialize_ext_layout(title,sysunit)
-    ytitle               = "Fractionated phase fraction ["*sysunit*"%]"
+    ytitle               = "Exrtacted phase fraction ["*sysunit*"%]"
     
     layout_ext_ptx  = Layout(
         barmode     = "stack",
