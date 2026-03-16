@@ -64,7 +64,8 @@ function get_contributors()
     app     *= "Pierre Lanari\n"
     app     *= "Renee Tamblyn\n"
     app     *= "Simon Schorn\n"
-    app     *= "Yishen Zhang"
+    app     *= "Yishen Zhang\n"
+    app     *= "Zeling Wang"
 
     contact  = "**Links**\n"
     contact *= "[Tutorials](https://computationalthermodynamics.github.io/MAGEMin_C.jl/dev/)\n"
@@ -122,7 +123,7 @@ function get_dtbulk_list()
         Dict("label" => "Igneous (Green et al., 2025, after H18)", "value" => "ig"),
         Dict("label" => "Igneous alkaline dry (Weller et al., 2024)", "value" => "igad"),
         Dict("label" => "Ultramafic (Evans & Frost., 2021)", "value" => "um"),
-        Dict("label" => "Calc-shist (Stuck et al., 2026)", "value" => "cs"),
+        # Dict("label" => "Calc-shist (Stuck et al., 2026)", "value" => "cs"),
         Dict("label" => "- MANTLE DATABASE -", "value" => "separator", "disabled" => true),  # Simulate a horizontal line
         Dict("label" => "Mantle (Holland et al., 2013)", "value" => "mtl"),
         Dict("label" => "Stixrude & Lithgow-Bertelloni (2011)", "value" => "sb11"),
@@ -173,10 +174,9 @@ function get_dtbulk_list()
                             :acronym     => "sb24",
                             ), cols=:union)
 
-    push!(dba,Dict(         :database    => "Calc-shist (Stuck et al., 2026)",
-                            :acronym     => "cs",
-                            ), cols=:union)
-
+    # push!(dba,Dict(         :database    => "Calc-shist (Stuck et al., 2026)",
+    #                         :acronym     => "cs",
+    #                         ), cols=:union)
 
     push!(dba,Dict(         :database    => "Ultramafic extended (Evans & Frost., 2021) + pl, hb and aug from Green et al., 2016",
                             :acronym     => "ume",
@@ -541,9 +541,9 @@ function get_dtbulk_list()
                             :db         => "ume",
                             :test       => 0,
                             :sysUnit    => "mol",
-                            :oxide      => ["SiO2","Al2O3","MgO","FeO","O","H2O","S","CaO","Na2O","Cr2O3"],
-                            :frac       => [38.51, 2.25, 29.03, 4.65, 0.5, 16.0, 0.0, 6.92, 0.25, 0.0],
-                            :frac2      => [38.51, 2.25, 29.03, 4.65, 0.5, 16.0, 0.0, 6.92, 0.25, 0.0],
+                            :oxide      => ["SiO2","Al2O3","MgO","FeO","O","H2O","S","CaO","Na2O","Cr2O3","CO2"],
+                            :frac       => [38.51, 2.25, 29.03, 4.65, 0.5, 16.0, 0.0, 6.92, 0.25, 0.0, 0.0],
+                            :frac2      => [38.51, 2.25, 29.03, 4.65, 0.5, 16.0, 0.0, 6.92, 0.25, 0.0, 0.0],
                             ), cols=:union)
 
     push!(db,Dict(          :bulk       => "predefined",
@@ -552,9 +552,9 @@ function get_dtbulk_list()
                             :db         => "ume",
                             :test       => 1,
                             :sysUnit    => "mol",
-                            :oxide      => ["SiO2","Al2O3","MgO","FeO","O","H2O","S","CaO","Na2O","Cr2O3"],
-                            :frac       => [20.044,  0.6256, 29.24, 3.149, 0.7324, 46.755, 0.3,2.0,0.15, 0.0],
-                            :frac2      => [20.044,  0.6256, 29.24, 3.149, 0.7324, 46.755, 0.3,2.0,0.15, 0.0],
+                            :oxide      => ["SiO2","Al2O3","MgO","FeO","O","H2O","S","CaO","Na2O","Cr2O3","CO2"],
+                            :frac       => [20.044,  0.6256, 29.24, 3.149, 0.7324, 46.755, 0.3,2.0,0.15, 0.0, 0.0],
+                            :frac2      => [20.044,  0.6256, 29.24, 3.149, 0.7324, 46.755, 0.3,2.0,0.15, 0.0, 0.0],
                             ), cols=:union)
         
     push!(db,Dict(          :bulk       => "predefined",
@@ -563,9 +563,9 @@ function get_dtbulk_list()
                             :db         => "ume",
                             :test       => 2,
                             :sysUnit    => "mol",
-                            :oxide      => ["SiO2","Al2O3","MgO","FeO","O","H2O","S","CaO","Na2O","Cr2O3"],
-                            :frac       => [20.044,  0.6256, 29.24, 3.149, 0.1324, 46.755, 0.3,2.0,0.15, 0.0],
-                            :frac2      => [20.044,  0.6256, 29.24, 3.149, 0.1324, 46.755, 0.3,2.0,0.15, 0.0],
+                            :oxide      => ["SiO2","Al2O3","MgO","FeO","O","H2O","S","CaO","Na2O","Cr2O3","CO2"],
+                            :frac       => [20.044,  0.6256, 29.24, 3.149, 0.1324, 46.755, 0.3,2.0,0.15, 0.0, 0.0],
+                            :frac2      => [20.044,  0.6256, 29.24, 3.149, 0.1324, 46.755, 0.3,2.0,0.15, 0.0, 0.0],
                             ), cols=:union)
 
     push!(db,Dict(          :bulk       => "predefined",
@@ -574,9 +574,9 @@ function get_dtbulk_list()
                             :db         => "ume",
                             :test       => 3,
                             :sysUnit    => "mol",
-                            :oxide      => ["SiO2","Al2O3","MgO","FeO","O","H2O","S","CaO","Na2O","Cr2O3"],
-                            :frac       => [20.044,  0.6256, 29.24, 3.149, 0.1324, 46.755, 0.3,2.0,0.15, 0.1],
-                            :frac2      => [20.044,  0.6256, 29.24, 3.149, 0.1324, 46.755, 0.3,2.0,0.15, 0.1],
+                            :oxide      => ["SiO2","Al2O3","MgO","FeO","O","H2O","S","CaO","Na2O","Cr2O3","CO2"],
+                            :frac       => [20.044,  0.6256, 29.24, 3.149, 0.1324, 46.755, 0.3,2.0,0.15, 0.1, 0.0],
+                            :frac2      => [20.044,  0.6256, 29.24, 3.149, 0.1324, 46.755, 0.3,2.0,0.15, 0.1, 0.0],
                             ), cols=:union)
     
     # METAPELITE EXTENDED DATABASE, accounting for CO2 and S
@@ -899,16 +899,16 @@ function get_dtbulk_list()
                             ), cols=:union)
 
 
-    push!(db,Dict(          :bulk       => "predefined",
-                            :title      => "WM pelite",
-                            :comments   => "Forshaw et al., 2023",
-                            :db         => "cs",
-                            :test       => 0,
-                            :sysUnit    => "mol",
-                            :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3","H2O","CO2"],
-                            :frac       => [61,  13.0,  0.8, 4, 6.3,  2.7,  1.4,  0.17,  0.7,  0.109, 5.0, 20.0],
-                            :frac2      => [61,  13.0,  0.8, 4, 6.3,  2.7,  1.4,  0.17,  0.7,  0.109, 5.0, 20.0],
-                            ), cols=:union)
+    # push!(db,Dict(          :bulk       => "predefined",
+    #                         :title      => "WM pelite",
+    #                         :comments   => "Forshaw et al., 2023",
+    #                         :db         => "cs",
+    #                         :test       => 0,
+    #                         :sysUnit    => "mol",
+    #                         :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3","H2O","CO2"],
+    #                         :frac       => [61,  13.0,  0.8, 4, 6.3,  2.7,  1.4,  0.17,  0.7,  0.109, 5.0, 20.0],
+    #                         :frac2      => [61,  13.0,  0.8, 4, 6.3,  2.7,  1.4,  0.17,  0.7,  0.109, 5.0, 20.0],
+    #                         ), cols=:union)
 
     dbte = DataFrame(       composition = String[],
                             title       = String[],
