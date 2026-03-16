@@ -38,7 +38,7 @@ function Tab_PTXpaths_Callbacks(app)
     ) do n_clicks, fname, dtb, sysunit, mode, nRes
 
         if fname != "filename"
-            output  = "_fractionated_bulk_"*dtb
+            output  = "_extracted_bulk_"*dtb
             fileout = fname*output
 
             n_ox    = length(Out_PTX[1].oxides)
@@ -119,7 +119,7 @@ function Tab_PTXpaths_Callbacks(app)
         
 
             if mode == "fc"
-                output  = "_fractionated_phases_"*dtb
+                output  = "_extracted_phases_"*dtb
                 fileout = fname*output
 
                 n_ox    = length(Out_PTX[1].oxides)
@@ -1014,7 +1014,7 @@ function Tab_PTXpaths_Callbacks(app)
         prevent_initial_call = true,
     ) do value, isentropic_value
 
-        if value == "fc" || value == "eq"
+        if value == "fc" || value == "eq" || value == "fm"
             style  = Dict("display" => "block")
         else 
             style               = Dict("display" => "none")

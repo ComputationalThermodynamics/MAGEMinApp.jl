@@ -1060,7 +1060,7 @@ function Tab_PTXpaths()
                                                     ]),
                                                     dbc_row([
                                                         dbc_col([
-                                                            html_h1("Fractionated phase fraction (integrated)", style = Dict("textAlign" => "center","font-size" => "200%", "marginTop" => 16)),
+                                                            html_h1("Extracted phase fraction (integrated)", style = Dict("textAlign" => "center","font-size" => "200%", "marginTop" => 16)),
                                                         ],width=10),
                                                         dbc_col([ 
                                                             dcc_dropdown(   id      = "ext-display-mode",
@@ -1125,7 +1125,7 @@ function Tab_PTXpaths()
                                             dbc_row([
                                                 html_div("‎ "),
                                                 # html_hr(),
-                                                html_h1("Fractionated composition", style = Dict("textAlign" => "center","font-size" => "200%", "marginTop" => 8)),
+                                                html_h1("Extracted composition", style = Dict("textAlign" => "center","font-size" => "200%", "marginTop" => 8)),
                                                 html_hr(),
                                                 html_div("‎ "),
                                             ]),
