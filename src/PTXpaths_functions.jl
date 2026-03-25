@@ -861,7 +861,6 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                         gv      = define_bulk_rock(gv, bulk, oxi, sys_in, dtb);
                         out     = deepcopy( point_wise_minimization(P_kbar,T_C, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
                         Sref    = out.entropy[1]
-                        # println("isentropic path: T = $T_C °C, P = $P_kbar kbar, S = $Sref J/K/mol")
                     end
 
                     k += 1
