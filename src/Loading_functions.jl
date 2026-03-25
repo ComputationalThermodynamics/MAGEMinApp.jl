@@ -61,6 +61,7 @@ function get_contributors()
     app     *= "Owen Weller\n"
     app     *= "Pascal Aellig\n"
     app     *= "Paul Tackley\n"
+    app     *= "Peter Luffi\n"
     app     *= "Pierre Lanari\n"
     app     *= "Renee Tamblyn\n"
     app     *= "Simon Schorn\n"

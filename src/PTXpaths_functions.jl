@@ -847,13 +847,20 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                         fracEvol[k+1,2]      = 1.0 - fracEvol[k+1,1] 
                     end
 
+                    if bufferType != "none"
+                        id_O = findfirst(oxi .== "O")
+                        if ~isempty(id_O)
+                            bulk[id_O] = 0.1
+                        end
+                    end
+
+
                     if isentropic_mode == true && (mode == "fm" || mode == "fc")
                         T_C     = Out_PTX[k].T_C
                         P_kbar  = Out_PTX[k].P_kbar
                         gv      = define_bulk_rock(gv, bulk, oxi, sys_in, dtb);
                         out     = deepcopy( point_wise_minimization(P_kbar,T_C, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
                         Sref    = out.entropy[1]
-                        # println("isentropic path: T = $T_C °C, P = $P_kbar kbar, S = $Sref J/K/mol")
                     end
 
                     k += 1
