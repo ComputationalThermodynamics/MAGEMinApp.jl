@@ -847,6 +847,14 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                         fracEvol[k+1,2]      = 1.0 - fracEvol[k+1,1] 
                     end
 
+                    if bufferType != "none"
+                        id_O = findfirst(oxi .== "O")
+                        if ~isempty(id_O)
+                            bulk[id_O] = 0.1
+                        end
+                    end
+
+
                     if isentropic_mode == true && (mode == "fm" || mode == "fc")
                         T_C     = Out_PTX[k].T_C
                         P_kbar  = Out_PTX[k].P_kbar
