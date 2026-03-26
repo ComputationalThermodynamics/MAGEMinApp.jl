@@ -848,9 +848,36 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                     end
 
                     if bufferType != "none"
-                        id_O = findfirst(oxi .== "O")
-                        if ~isempty(id_O)
-                            bulk[id_O] = 0.1
+                        if bufferType == "aH2O"
+                            id_H2O = findfirst(oxi .== "H2O")
+                            if ~isempty(id_H2O)
+                                bulk[id_H2O] = 0.6
+                            end
+                        elseif bufferType == "aTiO2"
+                            id_TiO2 = findfirst(oxi .== "TiO2")
+                            if ~isempty(id_TiO2)
+                                bulk[id_TiO2] = 0.5
+                            end
+                        elseif bufferType == "aAl2O3"
+                            id_Al2O3 = findfirst(oxi .== "Al2O3")
+                            if ~isempty(id_Al2O3)
+                                bulk[id_Al2O3] = 0.8
+                            end
+                        elseif bufferType == "aFeO"
+                            id_FeO = findfirst(oxi .== "FeO")
+                            if ~isempty(id_FeO)
+                                bulk[id_FeO] = 0.8
+                            end
+                        elseif bufferType == "aMgO"
+                            id_MgO = findfirst(oxi .== "MgO")
+                            if ~isempty(id_MgO)
+                                bulk[id_MgO] = 0.8
+                            end
+                        else
+                            id_O = findfirst(oxi .== "O")
+                            if ~isempty(id_O)
+                                bulk[id_O] = 0.3
+                            end
                         end
                     end
 

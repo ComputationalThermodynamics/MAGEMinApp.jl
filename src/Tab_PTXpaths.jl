@@ -205,6 +205,7 @@ function Tab_PTXpaths()
                                     ]),
 
                                     # buffer
+
                                     html_div([
                                         dbc_row([
                                             dbc_col([ 
@@ -222,6 +223,7 @@ function Tab_PTXpaths()
                                             ]),
                                         ]),
                                     ], style = Dict("display" => "none"), id  = "variable-buffer-display-id"), #none, block
+
 
                                     #solver
                                     dbc_row([
@@ -383,6 +385,7 @@ function Tab_PTXpaths()
 
                                                                 # buffer offset
                                                                 html_div([
+                                                                html_div([
                                                                 html_div("‎ "),
                                                                 dbc_row([
                                                                     dbc_col([ 
@@ -397,7 +400,9 @@ function Tab_PTXpaths()
                                                                             value   = 0.0   ),
                                                                     ]),
                                                                 ]),
-                                                                ], style = Dict("display" => "none"), id      = "buffer-1-id-ptx"), #none, block
+                                                                ], style = Dict("display" => "none"), id  = "buffer-1-id-ptx"), #none, block
+                                                                ], style = Dict("display" => "none"), id  = "variable-buffer-display-id2"), #none, block
+
 
                                                             ], style = Dict("display" => "block"), id      = "table-1-id-ptx"), #none, block
 
