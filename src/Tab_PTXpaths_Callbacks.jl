@@ -1068,7 +1068,7 @@ function Tab_PTXpaths_Callbacks(app)
     ) do value
 
         if value != "none"
-            b1              = Dict("display" => "block")
+            b1              = Dict("display" => "none")
             buffer_display  = Dict("display" => "block")
             var_buff        = true
         else
