@@ -6,6 +6,7 @@ Manifest.toml
 saved_states/*
 src/.DS_Store
 *.csv*
+*.txt*
 **/.DS_Store
 /output/*.svg
 /output/*.txt
