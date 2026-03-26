@@ -1068,9 +1068,9 @@ function Tab_PTXpaths_Callbacks(app)
     ) do value
 
         if value != "none"
-            b1              = Dict("display" => "none")
+            b1              = Dict("display" => "block")
             buffer_display  = Dict("display" => "block")
-            var_buff        = true
+            var_buff        = false
         else
             b1              = Dict("display" => "none")
             buffer_display  = Dict("display" => "none")
@@ -1402,6 +1402,7 @@ function Tab_PTXpaths_Callbacks(app)
         Output("ptx-table",                 "columns"   ),
         Output("table-2-id-ptx",            "style"     ),
         Output("test-2-id-ptx",             "style"     ),
+        Output("variable-buffer-display-id2","style"     ),
 
         Input("assimilation-dropdown-ptx",  "value"     ),
         Input("add-row-button",             "n_clicks"  ),
@@ -1491,7 +1492,13 @@ function Tab_PTXpaths_Callbacks(app)
 
         end
 
-        return dataout, colout, table2, test2
+        if var_buffer == false
+            var_buff_disp = Dict("display" => "block") 
+        else
+            var_buff_disp = Dict("display" => "none")
+        end
+
+        return dataout, colout, table2, test2, var_buff_disp
     end
 
     return app
