@@ -76,6 +76,51 @@ heatCapacity = """
 When having correct heat budget is important it is therefore recommanded to employ the second approach.*
 """
 
+bulk_csv_example = """
+MAGEMinApp  bulk-rock input in CSV format. The CSV file should have columns for each oxide and relevant metadata. Below is an example of the expected format:
+
+| title         | comments      | db   | sysUnit | SiO2   | Al2O3  | CaO    | MgO    | FeO    | Fe2O3  | K2O   | Na2O  | TiO2  | O     | MnO   | H2O   | P2O5  | SiO2_frac2 |
+|--------------|--------------|-------|---------|--------|--------|--------|--------|--------|--------|-------|-------|-------|-------|-------|-------|-------|------------|
+| Basalt_Xu08  | bulk test    | sb21  | mol     | 0.5175 | 0.1019 | 0.1388 | 0.1494 | 0.0706 |        |       |0.0218 |       |       |       |       |       | 55         |
+| Basalt_Xu08l | testy        | sb21  | mol     | 0.5175 | 0.1019 | 0.1388 | 0.1494 | 0.0706 |        |       |0.0218 |       |       |       |       |       | 55         |
+| title1       | comment,2l   | um    | wt      | 35.66  | 6.51   | 5.12   | 26.62  |        |        |14.56  |0.08   |0.04   |3.78   |0.52   |0.47   |       | 32         |
+| Renato_2     | test2        | mb    | wt      | 50.91  | 10.1   | 11.56  | 13.89  | 11.02  |        |0.09   |1.4    |0.77   |0.06   |0.19   |0      |       | 45         |
+
+**Column descriptions:**
+- `title`: Sample name or identifier
+- `comments`: Any comments or notes
+- `db`: Thermodynamic database acronym (see above)
+- `sysUnit`: Unit system (e.g., `mol`, `wt`)
+- Oxide columns (e.g., `SiO2`, `Al2O3`, ...): Content of each oxide in the specified unit
+- Additional columns (e.g., `SiO2_frac2`): Optional. Columns ending with `_frac2` are used to specify a second bulk-rock composition for P-X, T-X, or PT-X diagrams. When provided, the value in an `_frac2` column will override the corresponding oxide value from the main composition for that specific diagram calculation. This allows you to easily define compositional variations between two endmembers in a single file.
+
+**Notes:**
+- The CSV file must have a header row with column names.
+- Missing values can be left empty; they will be treated as zero.
+- You can add or remove oxide columns as needed, but the header must match the data.
+
+!!! note
+    - If one oxide included in the thermodynamic database is not provided in the bulk-rock input file, the content of the oxide will be automatically be set to 0.0.
+    - Either `FeO` and `O` **or** `FeO` and `Fe2O3` can be provided. In the first case `FeO` = `FeOt`.
+    - To provide two bulk-rock composition for `P-X` or `T-X` diagrams, simply paste a second array of oxdes content as show for bulk-rock composition `Test 2`.
+    - If you want to use different thermodynamic database for the same bulk rock, copy and paste the line and change the database acronym
+
+!!! tip
+    Thermodynamic dataset acronym are the following:
+    - `mtl` -> mantle (Holland et al., 2013)
+    - `mp` -> metapelite (White et al., 2014)
+    - `mb` -> metabasite (Green et al., 2016)
+    - `ig` -> igneous (Green et al., 2025 updated from and replacing Holland et al., 2018)
+    - `igad` -> igneous alkaline dry (Weller et al., 2024)
+    - `um` -> ultramafic (Evans & Frost, 2021)
+    - `sb11` -> Stixrude & Lithgow-Bertelloni (2011)
+    - `sb21` -> Stixrude & Lithgow-Bertelloni (2021)
+    - `sb24` -> Stixrude & Lithgow-Bertelloni (2024)
+    - `ume` -> ultramafic extended (Green et al., 2016 + Evans & Frost, 2021)
+    - `mpe` -> extended metapelite (White et al., 2014 + Green et al., 2016 + Franzolin et al., 2011 + Diener et al., 2007)
+    - `mbe` -> extended metabasite (Green et al., 2016 + Diener et al., 2007 + Rebay et al., 2022)
+"""
+
 function Tab_General_informations()
     html_div([
         html_div("‎ "),
@@ -127,6 +172,8 @@ function Tab_General_informations()
                 ),
                 html_div("‎ "),
             ]),
+
+            
             dbc_row([
 
                 html_h1("Trace-Elements partitioning coefficients (O. Laurent, 2012)", style = Dict("textAlign" => "center","font-size" => "130%", "marginTop" => 4)),
