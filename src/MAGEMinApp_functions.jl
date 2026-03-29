@@ -2143,6 +2143,108 @@ function bulk_file_to_db(datain)
 end
 
 
+"""
+    function to parse bulk-rock composition CSV file
+
+    CSV format:
+        title,comments,db,sysUnit,SiO2,CaO,Al2O3,FeO,MgO,Na2O
+        Basalt_Xu08,c,sb21,mol,0.5175,0.1388,0.1019,0.0706,0.1494,0.0218
+
+    For frac2, add columns with _frac2 suffix:
+        title,comments,db,sysUnit,SiO2,CaO,...,SiO2_frac2,CaO_frac2,...
+"""
+function bulk_csv_to_db(datain)
+
+    global db;
+
+    db = db[(db.bulk .== "predefined"), :];
+
+    headers = strip.(datain[1, :])
+
+    # Find standard column indices
+    idx_title    = findfirst(headers .== "title")
+    idx_comments = findfirst(headers .== "comments")
+    idx_db       = findfirst(headers .== "db")
+    idx_sysUnit  = findfirst(headers .== "sysUnit")
+
+    # Separate oxide columns from frac2 columns (suffix _frac2)
+    standard_cols = Set(["title", "comments", "db", "sysUnit"])
+    oxide_indices = Int[]
+    frac2_map     = Dict{String,Int}()
+
+    for j in 1:length(headers)
+        h = headers[j]
+        if h in standard_cols || isempty(h)
+            continue
+        elseif endswith(h, "_frac2")
+            ox_name = replace(h, "_frac2" => "")
+            frac2_map[ox_name] = j
+        else
+            push!(oxide_indices, j)
+        end
+    end
+
+    has_frac2_cols = !isempty(frac2_map)
+
+    for i = 2:size(datain, 1)
+        bulk     = "custom"
+        title    = string(datain[i, idx_title])
+        comments = string(datain[i, idx_comments])
+        dbin     = lowercase(string(datain[i, idx_db]))
+        test     = length(db[(db.db .== dbin), :].test)
+        sysUnit  = lowercase(string(datain[i, idx_sysUnit]))
+
+        # Extract oxide names and frac values from oxide columns
+        oxide = String[]
+        frac  = Float64[]
+        for j in oxide_indices
+            val_str = strip(string(datain[i, j]))
+            if !isempty(val_str) && val_str != ""
+                push!(oxide, string(headers[j]))
+                push!(frac, parse(Float64, val_str))
+            end
+        end
+
+        bulkrock, MAGEMin_ox = convertBulk4MAGEMin(frac, oxide, sysUnit, dbin)
+        bulkrock .= round.(bulkrock; digits = 4)
+
+        frac2 = copy(frac)
+        if has_frac2_cols
+            up_oxides = string.(keys(frac2_map))
+            for j in up_oxides
+                if j in oxide
+                    idx_oxide = findfirst(oxide .== j)
+                    val_str = strip(string(datain[i, frac2_map[j]]))
+                    if !isempty(val_str) && val_str != ""
+                        frac2[idx_oxide] = parse(Float64, val_str)
+                    end
+                end
+            
+            end
+        end
+        bulkrock2, _ = convertBulk4MAGEMin(frac2, oxide, sysUnit, dbin)
+        bulkrock2   .= round.(bulkrock2; digits = 4)
+
+        oxide        = get_oxide_list(dbin)
+
+        bulkrock_wt  = round.(mol2wt(bulkrock, oxide), digits=6)
+        bulkrock2_wt = round.(mol2wt(bulkrock2, oxide), digits=6)
+
+        push!(db, Dict( :bulk       => bulk,
+                        :title      => title,
+                        :comments   => comments,
+                        :db         => dbin,
+                        :test       => test,
+                        :sysUnit    => sysUnit,
+                        :oxide      => oxide,
+                        :frac       => bulkrock,
+                        :frac2      => bulkrock2,
+                        :frac_wt    => bulkrock_wt,
+                        :frac2_wt   => bulkrock2_wt,
+                    ), cols=:union)
+    end
+
+end
 
 
 function parse_bulk_rock(contents, filename)
@@ -2150,9 +2252,14 @@ function parse_bulk_rock(contents, filename)
         content_type, content_string = split(contents, ',');
         decoded = base64decode(content_string);
         input   = String(decoded) ;
-        datain  = strip.(string.(readdlm(IOBuffer(input), ';', comments=true, comment_char='#')));
 
-        bulk_file_to_db(datain);
+        if endswith(lowercase(filename), ".csv")
+            datain  = strip.(string.(readdlm(IOBuffer(input), ',', comments=true, comment_char='#')));
+            bulk_csv_to_db(datain);
+        else
+            datain  = strip.(string.(readdlm(IOBuffer(input), ';', comments=true, comment_char='#')));
+            bulk_file_to_db(datain);
+        end
 
         return 1
     catch e
