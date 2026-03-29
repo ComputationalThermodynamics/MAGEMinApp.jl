@@ -2161,6 +2161,14 @@ function bulk_csv_to_db(datain)
 
     headers = strip.(datain[1, :])
 
+    # Check required headers
+    for req in ("title","comments","db","sysUnit")
+        if isnothing(findfirst(headers .== req))
+            error("Missing required column '$req' in CSV header. " *
+                  "Expected columns: title, comments, db, sysUnit, <oxide columns>")
+        end
+    end
+
     # Find standard column indices
     idx_title    = findfirst(headers .== "title")
     idx_comments = findfirst(headers .== "comments")
@@ -2190,19 +2198,40 @@ function bulk_csv_to_db(datain)
         bulk     = "custom"
         title    = string(datain[i, idx_title])
         comments = string(datain[i, idx_comments])
-        dbin     = lowercase(string(datain[i, idx_db]))
+        dbin     = lowercase(strip(string(datain[i, idx_db])))
+        sysUnit  = lowercase(strip(string(datain[i, idx_sysUnit])))
+
+        valid_db      = ("ig","igad","mb","mbe","um","ume","mp","mtl","mpe","cs","sb11","sb21","sb24")
+        valid_sysunit = ("mol","wt")
+
+        if dbin ∉ valid_db
+            error("Row $i ('$title'): unknown database '$dbin'. " *
+                  "Valid acronyms: $(join(valid_db, ", "))")
+        end
+        if sysUnit ∉ valid_sysunit
+            error("Row $i ('$title'): invalid sysUnit '$sysUnit'. Must be 'mol' or 'wt'")
+        end
+
         test     = length(db[(db.db .== dbin), :].test)
-        sysUnit  = lowercase(string(datain[i, idx_sysUnit]))
 
         # Extract oxide names and frac values from oxide columns
         oxide = String[]
         frac  = Float64[]
         for j in oxide_indices
             val_str = strip(string(datain[i, j]))
-            if !isempty(val_str) && val_str != ""
+            if !isempty(val_str)
+                val = tryparse(Float64, val_str)
+                if isnothing(val)
+                    error("Row $i ('$title'), column '$(headers[j])': " *
+                          "cannot parse '$val_str' as a number")
+                end
                 push!(oxide, string(headers[j]))
-                push!(frac, parse(Float64, val_str))
+                push!(frac, val)
             end
+        end
+
+        if isempty(oxide)
+            error("Row $i ('$title'): no oxide values found. At least one oxide column must be non-empty")
         end
 
         bulkrock, MAGEMin_ox = convertBulk4MAGEMin(frac, oxide, sysUnit, dbin)
@@ -2215,8 +2244,13 @@ function bulk_csv_to_db(datain)
                 if j in oxide
                     idx_oxide = findfirst(oxide .== j)
                     val_str = strip(string(datain[i, frac2_map[j]]))
-                    if !isempty(val_str) && val_str != ""
-                        frac2[idx_oxide] = parse(Float64, val_str)
+                    if !isempty(val_str)
+                        val = tryparse(Float64, val_str)
+                        if isnothing(val)
+                            error("Row $i ('$title'), column '$(j)_frac2': " *
+                                  "cannot parse '$val_str' as a number")
+                        end
+                        frac2[idx_oxide] = val
                     end
                 end
             
@@ -2261,9 +2295,9 @@ function parse_bulk_rock(contents, filename)
             bulk_file_to_db(datain);
         end
 
-        return 1
+        return 1, ""
     catch e
-        return 0
+        return 0, sprint(showerror, e)
     end
 
 end

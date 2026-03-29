@@ -422,8 +422,9 @@ function Tab_PTXpaths_Callbacks(app)
 
     callback!(
         app,
-        Output("output-data-uploadn-ptx",           "is_open"   ),
-        Output("output-data-uploadn-failed-ptx",    "is_open"   ),
+        Output("output-data-uploadn-ptx",           "is_open"    ),
+        Output("output-data-uploadn-failed-ptx",    "is_open"    ),
+        Output("output-data-uploadn-failed-ptx",    "children"   ),
 
         Input("transfer-bulk-button",               "n_clicks"  ),
         Input("upload-bulk-ptx",                    "contents"  ),
@@ -439,11 +440,11 @@ function Tab_PTXpaths_Callbacks(app)
         
         if bid == "upload-bulk-ptx"
             if !(contents isa Nothing)
-                status = parse_bulk_rock(contents, filename)
+                status, msg = parse_bulk_rock(contents, filename)
                 if status == 1
-                    return "success", ""
+                    return "success", false, ""
                 else
-                    return "", "failed"
+                    return false, true, msg
                 end
             end
         elseif bid == "transfer-bulk-button"
@@ -462,7 +463,7 @@ function Tab_PTXpaths_Callbacks(app)
             end
 
             if sum(bulkrock) == 0.0
-                return "", "failed"
+                return false, true, "No bulk-rock composition available for the selected point"
             else
                 bulkrock2       = copy(bulkrock)
                 bulkrock_wt     = round.(mol2wt(bulkrock, oxides),  digits = 6)
@@ -482,7 +483,7 @@ function Tab_PTXpaths_Callbacks(app)
                                 :frac2_wt   => bulkrock2_wt,
                             ), cols=:union)
 
-                return "success", ""
+                return "success", false, ""
             end
         end
 

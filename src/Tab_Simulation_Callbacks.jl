@@ -829,19 +829,20 @@ function Tab_Simulation_Callbacks(app)
 
     callback!(
         app,
-        Output("output-data-uploadn", "is_open"),
-        Output("output-data-uploadn-failed", "is_open"),
+        Output("output-data-uploadn",        "is_open" ),
+        Output("output-data-uploadn-failed", "is_open" ),
+        Output("output-data-uploadn-failed", "children"),
         Input("upload-bulk", "contents"),
         State("upload-bulk", "filename"),
         prevent_initial_call=true,
     ) do contents, filename
 
         if !(contents isa Nothing)
-            status = parse_bulk_rock(contents, filename)
+            status, msg = parse_bulk_rock(contents, filename)
             if status == 1
-                return "success", ""
+                return "success", false, ""
             else
-                return "", "failed"
+                return false, true, msg
             end
         end
     end
