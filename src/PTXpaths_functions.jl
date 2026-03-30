@@ -627,7 +627,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                 nCon,       nRes,
                                 T_start,    isentropic_mode                                  )
 
-        global Out_PTX, ph_names_ptx, fracEvol, compo_matrix, removedBulk
+        global Out_PTX, ph_names_ptx, fracEvol, compo_matrix, removedBulk, assimFrac
 
 
         nsteps = Int64(nsteps)
@@ -651,6 +651,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             n_tot       = np + (np-1)*nsteps
             fracEvol    = Matrix{Float64}(undef,n_tot,2)
             removedBulk = Matrix{Float64}(undef,n_tot,length(bulk_ini))
+            assimFrac   = zeros(Float64, n_tot)
             Out_PTX     = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,n_tot)
 
             Pres        = zeros(Float64,np)
@@ -890,6 +891,11 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                         Sref    = out.entropy[1]
                     end
 
+                    if assim == "true"
+                        alpha           = step / (1.0 + step * j)
+                        assimFrac[k]    = k == 1 ? alpha : (1.0 - alpha) * assimFrac[k-1] + alpha
+                    end
+
                     k += 1
                 end
             end
@@ -933,6 +939,10 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                  Out_PTX[k] = deepcopy( point_wise_minimization(Pres[np],Temp[np], gv, z_b, DB, splx_data, sys_in; buffer_n=Buff[np], rm_list=phase_selection, name_solvus=true) )
             end
 
+            if assim == "true" && k > 1
+                assimFrac[k] = assimFrac[k-1]
+            end
+
 
             
 
@@ -950,6 +960,356 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
         end
 
 end
+
+function get_pt_path_te_plot(step_id :: Int64)
+    global Out_PTX
+
+    np   = length(Out_PTX)
+    T_v  = [Out_PTX[k].T_C    for k = 1:np]
+    P_v  = [Out_PTX[k].P_kbar for k = 1:np]
+    text = ["#$(k)#"          for k = 1:np]
+
+    hover = ["T: $(round(T_v[k];digits=1)) °C | P: $(round(P_v[k];digits=2)) kbar | step: $k" for k = 1:np]
+
+    trace_path = scatter(;
+        x              = T_v,
+        y              = P_v,
+        mode           = "lines+markers",
+        line           = attr(color = "lightgray", width = 1),
+        marker         = attr(size = 6, color = collect(1:np),
+                              colorscale = "Jet", showscale = false),
+        text           = text,
+        hovertext      = hover,
+        hovertemplate  = "%{hovertext}<extra></extra>",
+        showlegend     = false,
+    )
+
+    trace_sel = scatter(;
+        x              = [T_v[step_id]],
+        y              = [P_v[step_id]],
+        mode           = "markers",
+        marker         = attr(size = 12, color = "white",
+                              line = attr(color = "black", width = 2)),
+        text           = ["#$(step_id)#"],
+        hoverinfo      = "skip",
+        showlegend     = false,
+    )
+
+    layout = Layout(
+        font       = attr(size = 10),
+        height     = 160,
+        margin     = attr(autoexpand = false, l = 40, r = 12, b = 30, t = 10),
+        autosize   = false,
+        xaxis_title = "T [°C]",
+        yaxis_title = "P [kbar]",
+        xaxis      = attr(fixedrange = true),
+        yaxis      = attr(fixedrange = true, autorange = "reversed"),
+        showlegend = false,
+        dragmode   = false,
+    )
+
+    return [trace_path, trace_sel], layout
+end
+
+
+function get_layout_ree_ptx(norm :: String, show_type :: String)
+    if show_type == "ree"
+        xaxis_title = "Rare Earth Elements"
+    else
+        xaxis_title = "Trace Elements"
+    end
+    yaxis_title = "C/" * norm * " log10[μg/g]"
+
+    layout_ree = Layout(
+        font        = attr(size = 10),
+        height      = 280,
+        margin      = attr(autoexpand = false, l=12, r=12, b=8, t=32),
+        autosize    = false,
+        xaxis_title = xaxis_title,
+        yaxis_title = yaxis_title,
+        yaxis_type  = "log",
+        showlegend  = true,
+        dragmode    = false,
+        xaxis       = attr(fixedrange = true),
+        yaxis       = attr(fixedrange = true),
+    )
+    return layout_ree
+end
+
+
+function _ptx_tick_labels(np::Int)
+    max_ticks = 10
+    tick_step = max(1, div(np - 1, max_ticks - 1))
+    tick_idx  = sort(unique(vcat(1:tick_step:np, np)))
+    tick_vals = tick_idx
+    tick_text = ["P=$(round(Out_PTX[k].P_kbar; digits=1))\nT=$(round(Out_PTX[k].T_C; digits=0))°C"
+                 for k in tick_idx]
+    return tick_vals, tick_text
+end
+
+
+function get_parsed_command_ptx(step_id :: Int64;
+                                 varBuilder :: String = "[M_Dy] / [M_Yb]",
+                                 norm       :: String = "none")
+    global Out_TE_PTX
+
+    te_chondrite  = ["Rb","Ba","Th","U","Nb","Ta","La","Ce","Pb","Pr","Sr","Nd","Zr","Hf",
+                     "Sm","Eu","Gd","Tb","Dy","Y","Ho","Er","Tm","Yb","Lu","V","Sc"]
+    ppm_chondrite = [2.3, 2.41, 0.029, 0.0074, 0.24, 0.0136, 0.237, 0.613, 2.47, 0.0928,
+                     7.25, 0.457, 3.82, 0.103, 0.148, 0.0563, 0.199, 0.0361, 0.246, 1.57,
+                     0.0546, 0.160, 0.0247, 0.161, 0.0246, 56, 5.92]
+
+    res = Out_TE_PTX[step_id]
+
+    if all(isnan, res.Cliq)
+        return Meta.parse("NaN")
+    end
+    if all(isnan, res.Csol) && occursin("S_", varBuilder)
+        return Meta.parse("NaN")
+    end
+
+    pattern        = r"\[([^\]]+)\]"
+    terms          = [m.captures[1] for m in eachmatch(pattern, varBuilder)]
+    ref            = "Out_TE_PTX[" * string(step_id) * "]"
+    varBuilder_out = varBuilder
+
+    for term in terms
+        st = String.(split(term, "_"))
+        if length(st) != 2
+            varBuilder_out = "NaN"; break
+        end
+        id_el = findfirst(isequal(st[2]), string.(res.elements))
+        if isnothing(id_el)
+            varBuilder_out = "NaN"; break
+        end
+
+        if norm == "bulk"
+            nrm = string(res.C0[id_el])
+        elseif norm == "chondrite"
+            id_ch = findfirst(isequal(st[2]), te_chondrite)
+            nrm   = isnothing(id_ch) ? "1.0" : string(ppm_chondrite[id_ch])
+        else
+            nrm = "1.0"
+        end
+
+        if st[1] == "M"
+            part1 = ref * ".Cliq"; part2 = "[" * string(id_el) * "]"
+        elseif st[1] == "S"
+            part1 = ref * ".Csol"; part2 = "[" * string(id_el) * "]"
+        elseif st[1] == "C0"
+            part1 = ref * ".C0";   part2 = "[" * string(id_el) * "]"
+        else
+            id_ph = isnothing(res.ph_TE) ? nothing :
+                    findfirst(isequal(st[1]), string.(res.ph_TE))
+            if isnothing(id_ph)
+                varBuilder_out = "NaN"; break
+            end
+            part1 = ref * ".Cmin"
+            part2 = "[" * string(id_ph) * "," * string(id_el) * "]"
+        end
+
+        varBuilder_out = replace(varBuilder_out,
+                                 "[" * term * "]" => "((" * part1 * part2 * ")/" * nrm * ")")
+    end
+
+    return Meta.parse(varBuilder_out)
+end
+
+
+function get_te_fieldbuilder_plot(varBuilder::String, norm::String)
+    global Out_PTX, Out_TE_PTX
+
+    np       = length(Out_TE_PTX)
+    x_vals   = collect(1:np)
+    hover_pt = ["P: $(round(Out_PTX[k].P_kbar; digits=2)) kbar | T: $(round(Out_PTX[k].T_C; digits=1)) °C | step: $k"
+                for k = 1:np]
+
+    tick_vals, tick_text = _ptx_tick_labels(np)
+
+    y_vals = Vector{Union{Float64,Missing}}(undef, np)
+    for k = 1:np
+        cmd    = get_parsed_command_ptx(k; varBuilder=varBuilder, norm=norm)
+        val    = try eval(cmd) catch; NaN end
+        y_vals[k] = (val isa Number && isfinite(Float64(val))) ? Float64(val) : missing
+    end
+
+    ytitle = norm == "none" ? varBuilder : varBuilder * " / " * norm
+    traces = [scatter(; x=x_vals, y=y_vals,
+                       mode="markers+lines",
+                       name=varBuilder,
+                       hovertext=hover_pt,
+                       hovertemplate="%{hovertext}<extra></extra>",
+                       marker=attr(size=5, color="steelblue"),
+                       line=attr(color="steelblue", width=1.5),
+                       connectgaps=false)]
+
+    layout = Layout(
+        font     = attr(size=10),
+        margin   = attr(autoexpand=false, l=55, r=12, b=60, t=20),
+        autosize = false,
+        xaxis    = attr(tickmode="array", tickvals=tick_vals, ticktext=tick_text, tickangle=-45),
+        yaxis_title = ytitle,
+        showlegend  = false,
+    )
+
+    return traces, layout
+end
+
+
+function get_te_evolution_plot(element::String, phases::Vector{String})
+    global Out_PTX, Out_TE_PTX
+
+    np       = length(Out_TE_PTX)
+    elem_idx = findfirst(isequal(element), Out_TE_PTX[1].elements)
+    if isnothing(elem_idx)
+        return GenericTrace[], Layout()
+    end
+
+    x_vals             = collect(1:np)
+    hover_pt           = ["P: $(round(Out_PTX[k].P_kbar; digits=2)) kbar | T: $(round(Out_PTX[k].T_C; digits=1)) °C | step: $k" for k = 1:np]
+    tick_vals, tick_text = _ptx_tick_labels(np)
+
+    colormap   = get_lines_colormap()
+    traces     = GenericTrace[]
+    min_ci     = 1
+
+    for phase in phases
+        y_vals = Vector{Union{Float64,Missing}}(undef, np)
+
+        if phase == "Cliq"
+            for k = 1:np
+                res = Out_TE_PTX[k]
+                y_vals[k] = (!all(isnan, res.Cliq) && !isnan(res.Cliq[elem_idx])) ? res.Cliq[elem_idx] : missing
+            end
+            color = "RGB(176,0,0)"
+
+        elseif phase == "Csol"
+            for k = 1:np
+                res = Out_TE_PTX[k]
+                y_vals[k] = (!all(isnan, res.Csol) && !isnan(res.Csol[elem_idx])) ? res.Csol[elem_idx] : missing
+            end
+            color = "black"
+
+        else   # mineral phase
+            color = colormap[mod1(min_ci, length(colormap))]
+            min_ci += 1
+            for k = 1:np
+                res = Out_TE_PTX[k]
+                if !isnothing(res.ph_TE)
+                    ph_idx = findfirst(isequal(phase), string.(res.ph_TE))
+                    if !isnothing(ph_idx) && !isnan(res.Cmin[ph_idx, elem_idx])
+                        y_vals[k] = res.Cmin[ph_idx, elem_idx]
+                    else
+                        y_vals[k] = missing
+                    end
+                else
+                    y_vals[k] = missing
+                end
+            end
+        end
+
+        push!(traces, scatter(; x=x_vals, y=y_vals,
+                               mode="markers+lines",
+                               name=phase,
+                               hovertext=hover_pt,
+                               hovertemplate="%{hovertext}<extra>$phase</extra>",
+                               marker=attr(size=5, color=color),
+                               line=attr(color=color, width=1.5),
+                               connectgaps=false))
+    end
+
+    layout = Layout(
+        font   = attr(size=10),
+        margin = attr(autoexpand=false, l=55, r=12, b=60, t=20),
+        autosize = false,
+        xaxis  = attr(tickmode="array", tickvals=tick_vals, ticktext=tick_text, tickangle=-45),
+        yaxis_title = "$element [μg/g]",
+        showlegend  = true,
+        legend      = attr(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+    )
+
+    return traces, layout
+end
+
+
+function get_data_ree_plot_ptx(step_id, norm, show_type)
+
+    ree           = ["La", "Ce", "Pr", "Nd", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu"]
+    te_chondrite  = ["Rb", "Ba", "Th", "U", "Nb", "Ta", "La", "Ce", "Pb", "Pr", "Sr", "Nd", "Zr", "Hf", "Sm", "Eu", "Gd", "Tb", "Dy", "Y", "Ho", "Er", "Tm", "Yb", "Lu", "V", "Sc"]
+    ppm_chondrite = [2.3, 2.41, 0.029, 0.0074, 0.24, 0.0136, 0.237, 0.613, 2.47, 0.0928, 7.25, 0.457, 3.82, 0.103, 0.148, 0.0563, 0.199, 0.0361, 0.246, 1.57, 0.0546, 0.160, 0.0247, 0.161, 0.0246, 56, 5.92]
+
+    res = Out_TE_PTX[step_id]
+
+    if show_type == "ree"
+        te      = ree
+        te_idx  = [findfirst(isequal(x), res.elements) for x in ree]
+    else
+        te      = te_chondrite
+        te_idx  = [findfirst(isequal(x), res.elements) for x in te_chondrite]
+    end
+
+    n_ree    = length(te_idx)
+    n_traces = 0
+    Cph, C0, Csol, Cliq = 0, 0, 0, 0
+
+    if !isnothing(res.ph_TE)
+        n_ph_TE  = length(res.ph_TE)
+        n_traces += n_ph_TE
+        Cph       = 1
+    end
+    if all(!isnan, res.C0);   n_traces += 1; C0   = 1; end
+    if all(!isnan, res.Cliq); n_traces += 1; Cliq = 1; end
+    if all(!isnan, res.Csol); n_traces += 1; Csol = 1; end
+
+    data_ree_plot  = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_traces)
+    compo_mat      = Matrix{Union{Float64,Missing}}(undef, n_traces, n_ree) .= missing
+    colormap       = get_lines_colormap()
+
+    if norm == "chondrite"
+        C_norm = ppm_chondrite[te_idx]
+    elseif norm == "bulk"
+        C_norm = res.C0[te_idx]
+    else
+        C_norm = ones(n_ree)
+    end
+
+    k = 1
+    if Cph == 1
+        for i = 1:n_ph_TE
+            compo_mat[k, :] = res.Cmin[i, te_idx]
+            data_ree_plot[k] = scatter(; x = te, y = compo_mat[k, :] ./ C_norm,
+                                         name = res.ph_TE[i], mode = "markers+lines",
+                                         marker = attr(size = 4.0, color = colormap[k]),
+                                         line   = attr(width = 1.0, color = colormap[k]))
+            k += 1
+        end
+    end
+    if C0 == 1
+        compo_mat[k, :] = res.C0[te_idx]
+        data_ree_plot[k] = scatter(; x = te, y = compo_mat[k, :] ./ C_norm,
+                                     name = "C0", mode = "lines",
+                                     line = attr(dash = "dash", color = "black", width = 2.0))
+        k += 1
+    end
+    if Cliq == 1
+        compo_mat[k, :] = res.Cliq[te_idx]
+        data_ree_plot[k] = scatter(; x = te, y = compo_mat[k, :] ./ C_norm,
+                                     name = "Cliq", mode = "markers+lines",
+                                     marker = attr(size = 6.0, color = "RGB(176,0,0)"),
+                                     line   = attr(color = "RGB(176,0,0)", width = 2.0))
+        k += 1
+    end
+    if Csol == 1
+        compo_mat[k, :] = res.Csol[te_idx]
+        data_ree_plot[k] = scatter(; x = te, y = compo_mat[k, :] ./ C_norm,
+                                     name = "Csol", mode = "markers+lines",
+                                     marker = attr(size = 6.0, color = "black"),
+                                     line   = attr(color = "black", width = 2.0))
+    end
+
+    return data_ree_plot
+end
+
 
 function get_data_plot(display_mode, sysunit)
 

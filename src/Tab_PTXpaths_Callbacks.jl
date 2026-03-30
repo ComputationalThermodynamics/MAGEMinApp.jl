@@ -1502,5 +1502,269 @@ function Tab_PTXpaths_Callbacks(app)
         return dataout, colout, table2, test2, var_buff_disp
     end
 
+    # Show/hide TE section + enable/disable TE tab based on tepm dropdown
+    callback!(
+        app,
+        Output("tepm-section-ptx", "style"),
+        Output("te-tab-ptx",       "disabled"),
+        Input("tepm-dropdown-ptx", "value"),
+        prevent_initial_call = true,
+    ) do tepm
+        if tepm == "true"
+            return Dict("display" => "block"), false
+        else
+            return Dict("display" => "none"), true
+        end
+    end
+
+    # Show/hide assimilant TE section based on assimilation dropdown
+    callback!(
+        app,
+        Output("collapse-assim-te-ptx", "is_open"),
+        Input("assimilation-dropdown-ptx", "value"),
+        prevent_initial_call = true,
+    ) do assim
+        return assim == "true" ? 1 : 0
+    end
+
+    # Toggle TE section
+    callback!(
+        app,
+        Output("collapse-te-ptx",      "is_open"),
+        [Input("button-te-ptx",        "n_clicks")],
+        [State("collapse-te-ptx",      "is_open")],
+        prevent_initial_call = true,
+    ) do n, is_open
+        if isnothing(n); n = 0 end
+        if n > 0
+            if is_open == 1
+                is_open = 0
+            elseif is_open == 0
+                is_open = 1
+            end
+        end
+        return is_open
+    end
+
+    # Update initial TE bulk table when preset dropdown changes
+    callback!(
+        app,
+        Output("table-te-rock-ptx",    "data"),
+        Input("test-te-dropdown-ptx",  "value"),
+        prevent_initial_call = true,
+    ) do test_id
+        return [Dict("elements" => AppData.dbte.elements[test_id+1][i],
+                     "μg_g"     => AppData.dbte.μg_g[test_id+1][i])
+                for i = 1:length(AppData.dbte.elements[test_id+1])]
+    end
+
+    # Update assimilant TE bulk table when preset dropdown changes
+    callback!(
+        app,
+        Output("table-te-2-rock-ptx",      "data"),
+        Input("test-te-2-dropdown-ptx",    "value"),
+        prevent_initial_call = true,
+    ) do test_id
+        return [Dict("elements" => AppData.dbte.elements[test_id+1][i],
+                     "μg_g"     => AppData.dbte.μg_g2[test_id+1][i])
+                for i = 1:length(AppData.dbte.elements[test_id+1])]
+    end
+
+    # Compute TE along PTX path — writes result into store to avoid duplicate outputs
+    callback!(
+        app,
+        Output("te-ptx-success",           "is_open"),
+        Output("te-ptx-failed",            "is_open"),
+        Output("te-ptx-computed-store",    "data"   ),
+        Input("compute-te-ptx-button",     "n_clicks"),
+        State("database-dropdown-ptx",     "value"   ),
+        State("mode-dropdown-ptx",         "value"   ),
+        State("assimilation-dropdown-ptx", "value"   ),
+        State("kds-dropdown-ptx",          "value"   ),
+        State("zrsat-dropdown-ptx",        "value"   ),
+        State("ssat-dropdown-ptx",         "value"   ),
+        State("P2O5sat-dropdown-ptx",      "value"   ),
+        State("table-te-rock-ptx",         "data"    ),
+        State("table-te-2-rock-ptx",       "data"    ),
+        State("connectivity-id",           "value"   ),
+        State("residual-id",               "value"   ),
+        prevent_initial_call = true,
+    ) do _, dtb, mode, assim, kds_mod, zrsat_mod, ssat_mod, P2O5sat_mod, bulkte1, bulkte2, nCon, nRes
+
+        global Out_TE_PTX, all_TE_ph_ptx
+
+        if !@isdefined(Out_PTX) || isempty(Out_PTX)
+            return false, true, false
+        end
+        if dtb == "um" || dtb == "ume" || dtb == "mtl"
+            return false, true, false
+        end
+
+        nCon = isnothing(nCon) ? 0.0 : Float64(nCon)
+        nRes = isnothing(nRes) ? 0.0 : Float64(nRes)
+
+        bulkte_ini, bulkte_ass, elem = get_terock_prop(bulkte1, bulkte2)
+
+        t = @elapsed Out_TE_PTX, all_TE_ph_ptx = tepm_function_ptx(
+                        mode, dtb, kds_mod, zrsat_mod, ssat_mod, P2O5sat_mod,
+                        bulkte_ini, bulkte_ass, assim, elem, nCon, nRes)
+        println("Computed PTX trace elements in $t s")
+
+        return true, false, true
+    end
+
+    # Extract step from PT path click or reset to 1 on new computation
+    callback!(
+        app,
+        Output("te-ptx-step-id",       "value"   ),
+        Input("te-ptx-computed-store", "data"    ),
+        Input("pt-path-te-ptx",        "clickData"),
+        prevent_initial_call = true,
+    ) do _, click_data
+        bid = pushed_button(callback_context())
+        if bid == "te-ptx-computed-store"
+            return 1
+        end
+        if isnothing(click_data)
+            return 1
+        end
+        sp  = click_data[:points][][:text]
+        tmp = match(r"#([0-9]+)#", sp)
+        if tmp !== nothing
+            return parse(Int64, tmp.captures[1])
+        end
+        return 1
+    end
+
+    # Update PT path plot + REE spectrum when step or display options change
+    callback!(
+        app,
+        Output("pt-path-te-ptx",   "figure"  ),
+        Output("pt-path-te-ptx",   "config"  ),
+        Output("ree-spectrum-ptx",  "figure"  ),
+        Output("ree-spectrum-ptx",  "config"  ),
+        Output("te-ptx-step-info",  "children"),
+        Input("te-ptx-step-id",         "value"),
+        Input("normalization-te-ptx",   "value"),
+        Input("show-spectrum-te-ptx",   "value"),
+        prevent_initial_call = true,
+    ) do step_id, norm, show_type
+
+        empty_pt  = plot(GenericTrace[], Layout())
+        empty_ree = plot(GenericTrace[], Layout())
+
+        if !@isdefined(Out_TE_PTX) || isempty(Out_TE_PTX)
+            return empty_pt, PlotConfig(), empty_ree, PlotConfig(), ""
+        end
+
+        step_id = clamp(Int(step_id), 1, length(Out_TE_PTX))
+
+        # PT path figure
+        data_pt, layout_pt = get_pt_path_te_plot(step_id)
+        fig_pt   = plot(data_pt, layout_pt)
+        config_pt = PlotConfig(displayModeBar = false)
+
+        # REE spectrum figure
+        layout_ree = get_layout_ree_ptx(norm, show_type)
+        data_ree   = get_data_ree_plot_ptx(step_id, norm, show_type)
+        fig_ree    = plot(data_ree, layout_ree)
+        config_ree = PlotConfig(toImageButtonOptions = attr(
+                        name = "Download as svg", format = "svg",
+                        filename = "ptx_te_spectrum_step$(step_id)",
+                        height = 280, width = 900, scale = 2.0).fields)
+
+        out  = Out_PTX[step_id]
+        info = "\n| Variable | Value | Unit |\n|---|---|---|\n"
+        info *= "| P |" * string(round(out.P_kbar; digits=3)) * "| kbar |\n"
+        info *= "| T |" * string(round(out.T_C;   digits=3)) * "| °C |\n"
+
+        return fig_pt, config_pt, fig_ree, config_ree, info
+    end
+
+    # Populate element + phase dropdowns when TE computation finishes
+    callback!(
+        app,
+        Output("te-evol-element-ptx", "options"),
+        Output("te-evol-element-ptx", "value"  ),
+        Output("te-evol-phase-ptx",   "options"),
+        Output("te-evol-phase-ptx",   "value"  ),
+        Input("te-ptx-computed-store", "data"  ),
+        prevent_initial_call = true,
+    ) do computed
+        if !computed || !@isdefined(Out_TE_PTX) || isempty(Out_TE_PTX)
+            return [], nothing, [], nothing
+        end
+
+        elem_opts  = [Dict("label" => e, "value" => e) for e in Out_TE_PTX[1].elements]
+        elem_val   = Out_TE_PTX[1].elements[1]
+
+        phase_opts = [Dict("label" => "Cliq", "value" => "Cliq"),
+                      Dict("label" => "Csol", "value" => "Csol")]
+        if @isdefined(all_TE_ph_ptx)
+            for ph in all_TE_ph_ptx
+                push!(phase_opts, Dict("label" => string(ph), "value" => string(ph)))
+            end
+        end
+        phase_val = ["Cliq", "Csol"]
+
+        return elem_opts, elem_val, phase_opts, phase_val
+    end
+
+    # Render TE evolution plot when element or phase selection changes
+    callback!(
+        app,
+        Output("te-evol-ptx", "figure"),
+        Output("te-evol-ptx", "config"),
+        Input("te-evol-element-ptx", "value"),
+        Input("te-evol-phase-ptx",   "value"),
+        prevent_initial_call = true,
+    ) do element, phases
+        empty_fig = plot(GenericTrace[], Layout())
+        if !@isdefined(Out_TE_PTX) || isempty(Out_TE_PTX)
+            return empty_fig, PlotConfig()
+        end
+        if isnothing(element) || isnothing(phases) || isempty(phases)
+            return empty_fig, PlotConfig()
+        end
+
+        phases_vec = phases isa AbstractString ? [String(phases)] : [String(p) for p in phases]
+        data_evol, layout_evol = get_te_evolution_plot(String(element), phases_vec)
+        fig_evol  = plot(data_evol, layout_evol)
+        config_evol = PlotConfig(toImageButtonOptions = attr(
+                        name = "Download as svg", format = "svg",
+                        filename = "ptx_te_evolution_$(element)",
+                        height = 280, width = 900, scale = 2.0).fields)
+
+        return fig_evol, config_evol
+    end
+
+    # Field builder: compute custom formula along PTX path
+    callback!(
+        app,
+        Output("te-fieldbuilder-ptx", "figure"),
+        Output("te-fieldbuilder-ptx", "config"),
+        Input("te-fieldbuilder-button-ptx",  "n_clicks"),
+        State("te-fieldbuilder-formula-ptx", "value"   ),
+        State("te-fieldbuilder-norm-ptx",    "value"   ),
+        prevent_initial_call = true,
+    ) do _, varBuilder, norm
+        empty_fig = plot(GenericTrace[], Layout())
+        if !@isdefined(Out_TE_PTX) || isempty(Out_TE_PTX)
+            return empty_fig, PlotConfig()
+        end
+        if isnothing(varBuilder) || strip(varBuilder) == ""
+            return empty_fig, PlotConfig()
+        end
+
+        data_fb, layout_fb = get_te_fieldbuilder_plot(String(varBuilder), String(norm))
+        fig_fb    = plot(data_fb, layout_fb)
+        config_fb = PlotConfig(toImageButtonOptions = attr(
+                        name = "Download as svg", format = "svg",
+                        filename = "ptx_te_fieldbuilder",
+                        height = 280, width = 900, scale = 2.0).fields)
+
+        return fig_fb, config_fb
+    end
+
     return app
 end

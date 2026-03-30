@@ -1329,26 +1329,66 @@ function Tab_Simulation()
                                             html_h1("Save/Load Diagram", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                             html_hr(),
                                             dbc_row([
-                                                dbc_col([ 
-                                                    dbc_input(
-                                                        id      = "save-state-filename-id",
-                                                        type    = "text", 
-                                                        style   = Dict("textAlign" => "center") ,
-                                                        value   = "filename"   ),     
+                                                dbc_col([
+                                                    dbc_button("Save state", id="open-save-modal-button", color="light", n_clicks=0,
+                                                        style=Dict("textAlign"=>"center","font-size"=>"100%",
+                                                                   "border"=>"1px grey solid","width"=>"100%")),
                                                 ], width=6),
-                                                dbc_col([    
-                                                    dbc_button("Save state", id="save-state-diagram-button", color="light",  n_clicks=0,
-                                                    style       = Dict( "textAlign"     => "center",
-                                                                        "font-size"     => "100%",
-                                                                        "border"        =>"1px grey solid")), 
-                                                ]),
-                                                dbc_col([    
-                                                    dbc_button("Load state", id="load-state-diagram-button", color="light",  n_clicks=0,
-                                                    style       = Dict( "textAlign"     => "center",
-                                                                        "font-size"     => "100%",
-                                                                        "border"        =>"1px grey solid")), 
-                                                ]),
+                                                dbc_col([
+                                                    dbc_button("Load state", id="open-load-modal-button", color="light", n_clicks=0,
+                                                        style=Dict("textAlign"=>"center","font-size"=>"100%",
+                                                                   "border"=>"1px grey solid","width"=>"100%")),
+                                                ], width=6),
                                             ]),
+
+                                            # ── Save modal ──────────────────────────────────────────
+                                            dbc_modal([
+                                                dbc_modalheader(dbc_modaltitle("Save phase diagram")),
+                                                dbc_modalbody([
+                                                    dbc_row([
+                                                        dbc_col([html_label("File name:")], width=3),
+                                                        dbc_col([
+                                                            dbc_input(id="save-state-filename-id", type="text",
+                                                                value="my_diagram",
+                                                                placeholder="e.g. my_diagram",
+                                                                style=Dict("width"=>"100%")),
+                                                        ]),
+                                                    ]),
+                                                    html_div("‎ "),
+                                                    html_small("Or pick an existing save to overwrite:", style=Dict("color"=>"grey")),
+                                                    dcc_dropdown(id="save-modal-existing-dropdown",
+                                                        options=[], value=nothing,
+                                                        placeholder="Select existing save…",
+                                                        clearable=true, multi=false,
+                                                        style=Dict("marginTop"=>"4px")),
+                                                ]),
+                                                dbc_modalfooter([
+                                                    dbc_button("Save", id="save-state-diagram-button", color="primary", n_clicks=0),
+                                                    dbc_button("Cancel", id="close-save-modal-button", color="secondary", n_clicks=0, className="ms-2"),
+                                                ]),
+                                            ], id="save-state-modal", is_open=false),
+
+                                            # ── Load modal ──────────────────────────────────────────
+                                            dbc_modal([
+                                                dbc_modalheader(dbc_modaltitle("Load phase diagram")),
+                                                dbc_modalbody([
+                                                    html_small("Select a save:", style=Dict("color"=>"grey")),
+                                                    dcc_dropdown(id="load-modal-file-dropdown",
+                                                        options=[], value=nothing,
+                                                        placeholder="Select a saved diagram…",
+                                                        clearable=false, multi=false,
+                                                        style=Dict("marginTop"=>"4px")),
+                                                    html_div("‎ "),
+                                                    html_small("Or type a name manually:", style=Dict("color"=>"grey")),
+                                                    dbc_input(id="load-state-filename-id", type="text",
+                                                        placeholder="file name (without extension)",
+                                                        style=Dict("marginTop"=>"4px","width"=>"100%")),
+                                                ]),
+                                                dbc_modalfooter([
+                                                    dbc_button("Load", id="load-state-diagram-button", color="primary", n_clicks=0),
+                                                    dbc_button("Cancel", id="close-load-modal-button", color="secondary", n_clicks=0, className="ms-2"),
+                                                ]),
+                                            ], id="load-state-modal", is_open=false),
                                             dbc_alert(
                                                 "Saved phase diagram state successfully",
                                                 id      = "save-options-diagram-success",

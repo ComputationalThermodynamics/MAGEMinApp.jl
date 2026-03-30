@@ -1,5 +1,6 @@
 function Tab_PTXpaths()
     html_div([
+        dcc_store(id="te-ptx-computed-store", data=false),
         html_div("‎ "),
         dbc_row([ 
                 #= configuration column =#
@@ -468,8 +469,155 @@ function Tab_PTXpaths()
 
                         ])
 
+                dbc_row([dbc_button("Trace Elements",id="button-te-ptx"),
+                dbc_collapse(
+                    dbc_card(dbc_cardbody([
 
- 
+                        dbc_row([
+                            dbc_col([
+                                html_h1("KD model", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
+                            ],width=6),
+                            dbc_col([
+                                dcc_dropdown(   id      = "kds-dropdown-ptx",
+                                                options = [Dict("label" => "OL", "value" => "OL")],
+                                                value   = "OL",
+                                                clearable = false,
+                                                multi   = false),
+                            ]),
+                        ]),
+
+                        dbc_row([
+                            dbc_col([
+                                html_h1("Zr saturation", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
+                            ],width=6),
+                            dbc_col([
+                                dcc_dropdown(   id      = "zrsat-dropdown-ptx",
+                                                options = [
+                                                    (label = "none",        value = "none"),
+                                                    (label = "Watson 1979", value = "Watson1979"),
+                                                    (label = "Blundy 2022", value = "Blundy2022"),
+                                                ],
+                                                value   = "none",
+                                                clearable = false,
+                                                multi   = false),
+                            ]),
+                        ]),
+
+                        dbc_row([
+                            dbc_col([
+                                html_h1("S saturation", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
+                            ],width=6),
+                            dbc_col([
+                                dcc_dropdown(   id      = "ssat-dropdown-ptx",
+                                                options = [
+                                                    (label = "none",        value = "none"),
+                                                    (label = "Liu 2021",    value = "Liu2021"),
+                                                ],
+                                                value   = "none",
+                                                clearable = false,
+                                                multi   = false),
+                            ]),
+                        ]),
+
+                        dbc_row([
+                            dbc_col([
+                                html_h1("P₂O₅ saturation", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
+                            ],width=6),
+                            dbc_col([
+                                dcc_dropdown(   id      = "P2O5sat-dropdown-ptx",
+                                                options = [
+                                                    (label = "none",            value = "none"),
+                                                    (label = "Tollari 2006",    value = "Tollari2006"),
+                                                ],
+                                                value   = "none",
+                                                clearable = false,
+                                                multi   = false),
+                            ]),
+                        ]),
+
+                        html_div("‎ "),
+                        html_h1("Initial TE bulk composition [μg/g]", style = Dict("textAlign" => "center","font-size" => "110%")),
+                        dbc_row([
+                            dbc_col([
+                                dcc_dropdown(   id      = "test-te-dropdown-ptx",
+                                                options = [
+                                                    Dict("label" => AppData.dbte.title[i], "value" => AppData.dbte.test[i])
+                                                    for i = 1:size(AppData.dbte, 1)
+                                                ],
+                                                value       = 0,
+                                                clearable   = false,
+                                                multi       = false),
+                            ]),
+                        ]),
+                        dbc_row([
+                            dash_datatable(
+                                id          = "table-te-rock-ptx",
+                                columns     = [
+                                    Dict("id" => "elements", "name" => "element",  "editable" => false),
+                                    Dict("id" => "μg_g",     "name" => "μg/g",     "editable" => true ),
+                                ],
+                                data        = [Dict("elements" => AppData.dbte.elements[1][i],
+                                                    "μg_g"     => AppData.dbte.μg_g[1][i])
+                                               for i = 1:length(AppData.dbte.elements[1])],
+                                style_cell  = (textAlign="center", fontSize="120%",),
+                                style_header= (fontWeight="bold",),
+                                editable    = true,
+                                page_size   = 10,
+                            ),
+                        ]),
+
+                        dbc_collapse([
+                            html_div("‎ "),
+                            html_h1("Assimilant TE bulk composition [μg/g]", style = Dict("textAlign" => "center","font-size" => "110%")),
+                            dbc_row([
+                                dcc_dropdown(   id      = "test-te-2-dropdown-ptx",
+                                                options = [
+                                                    Dict("label" => AppData.dbte.title[i], "value" => AppData.dbte.test[i])
+                                                    for i = 1:size(AppData.dbte, 1)
+                                                ],
+                                                value       = 0,
+                                                clearable   = false,
+                                                multi       = false),
+                            ]),
+                            dbc_row([
+                                dash_datatable(
+                                    id          = "table-te-2-rock-ptx",
+                                    columns     = [
+                                        Dict("id" => "elements", "name" => "element",  "editable" => false),
+                                        Dict("id" => "μg_g",     "name" => "μg/g",     "editable" => true ),
+                                    ],
+                                    data        = [Dict("elements" => AppData.dbte.elements[1][i],
+                                                        "μg_g"     => AppData.dbte.μg_g2[1][i])
+                                                   for i = 1:length(AppData.dbte.elements[1])],
+                                    style_cell  = (textAlign="center", fontSize="120%",),
+                                    style_header= (fontWeight="bold",),
+                                    editable    = true,
+                                    page_size   = 10,
+                                ),
+                            ]),
+                        ], id="collapse-assim-te-ptx", is_open=false),
+
+                        html_div("‎ "),
+                        dbc_row([
+                            dbc_button("Compute TE", id="compute-te-ptx-button", color="light", n_clicks=0,
+                                style = Dict("textAlign" => "center", "font-size" => "100%",
+                                             "background-color" => "#cce5ff", "border" => "1px grey solid")),
+                        ]),
+                        dbc_row([
+                            dbc_alert("Trace elements computed successfully",
+                                id="te-ptx-success", is_open=false, duration=4000),
+                            dbc_alert("Cannot compute TE: run PTX path first, or database not supported",
+                                color="danger", id="te-ptx-failed", is_open=false, duration=6000),
+                        ]),
+
+                    ])),
+                    id="collapse-te-ptx",
+                    is_open=true,
+                ),
+                ], style = Dict("display" => "none"), id = "tepm-section-ptx")
+
+
+
                 ], width=3),
 
                 dbc_col([  
@@ -519,10 +667,10 @@ function Tab_PTXpaths()
                                         ]),
                                         # PTX mode
                                         dbc_row([
-                                            dbc_col([ 
+                                            dbc_col([
                                                 html_h1("Assimilation", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                             ], width=6),
-                                            dbc_col([ 
+                                            dbc_col([
                                                 dcc_dropdown(   id      = "assimilation-dropdown-ptx",
                                                 options = [
                                                     (label = "true",           value = "true"),
@@ -531,6 +679,22 @@ function Tab_PTXpaths()
                                                 value       = "false",
                                                 clearable   =  false,
                                                 multi       =  false    ),
+                                            ]),
+                                        ]),
+
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("TE predictive model", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ], width=6),
+                                            dbc_col([
+                                                dcc_dropdown(   id      = "tepm-dropdown-ptx",
+                                                options = [
+                                                    (label = "true",         value = "true"),
+                                                    (label = "false",        value = "false"),
+                                                ],
+                                                value       = "false",
+                                                clearable   = false,
+                                                multi       = false),
                                             ]),
                                         ]),
 
@@ -1173,7 +1337,7 @@ function Tab_PTXpaths()
 
                         # ]),
 
-                        dbc_tab(label="Classification diagrams", children=[                                                                               
+                        dbc_tab(label="Classification diagrams", children=[
                             dbc_col([
                                 dbc_card(dbc_cardbody([
                                     dbc_row([
@@ -1191,6 +1355,127 @@ function Tab_PTXpaths()
                                         AFM_plot()
                                     ]),
                                 ])),
+                            ]),
+                        ]),
+                        dbc_tab(label="Trace Elements", id="te-tab-ptx", disabled=true, children=[
+                            dbc_row([
+                                dbc_col([
+                                    dbc_card(dbc_cardbody([
+                                        dbc_row([
+                                            html_h1("Trace Element Spectrum", style = Dict("textAlign" => "center","font-size" => "200%", "marginTop" => 8)),
+                                            html_hr(),
+                                        ]),
+                                        dbc_row([
+                                            dbc_col([
+                                                dbc_row([
+                                                    dbc_col([
+                                                        dcc_dropdown(id="show-spectrum-te-ptx",
+                                                            options = ["ree","all"],
+                                                            value   = "ree",
+                                                            clearable = false, multi = false),
+                                                    ], width=3),
+                                                    dbc_col([
+                                                        dcc_dropdown(id="normalization-te-ptx",
+                                                            options = ["bulk","chondrite"],
+                                                            value   = "chondrite",
+                                                            clearable = false, multi = false),
+                                                    ], width=3),
+                                                ]),
+                                                dbc_input(id="te-ptx-step-id", type="number", min=1, max=10000, value=1,
+                                                          style = Dict("display" => "none")),
+                                                dbc_row([
+                                                    dcc_graph(
+                                                        id     = "pt-path-te-ptx",
+                                                        figure = plot(GenericTrace[], Layout()),
+                                                        config = PlotConfig(displayModeBar=false),
+                                                        style  = Dict("height" => "160px"),
+                                                    ),
+                                                ]),
+                                                dbc_row([
+                                                    dcc_graph(
+                                                        id     = "ree-spectrum-ptx",
+                                                        figure = plot(GenericTrace[], Layout()),
+                                                        config = PlotConfig(displayModeBar=false),
+                                                        style  = Dict("height" => "280px"),
+                                                    ),
+                                                ]),
+                                                dbc_row([
+                                                    dbc_card([
+                                                        dcc_markdown(id="te-ptx-step-info", children="", style=Dict("white-space" => "pre")),
+                                                    ]),
+                                                ]),
+                                                dbc_row([
+                                                    html_h1("TE evolution along path", style = Dict("textAlign" => "center","font-size" => "160%", "marginTop" => 12)),
+                                                    html_hr(),
+                                                ]),
+                                                dbc_row([
+                                                    dbc_col([
+                                                        dcc_dropdown(id="te-evol-element-ptx",
+                                                            options=[], value=nothing,
+                                                            placeholder="Select element...",
+                                                            clearable=false, multi=false),
+                                                    ], width=4),
+                                                    dbc_col([
+                                                        dcc_dropdown(id="te-evol-phase-ptx",
+                                                            options=[], value=nothing,
+                                                            placeholder="Select phase/concentration...",
+                                                            clearable=false, multi=true),
+                                                    ], width=8),
+                                                ]),
+                                                dbc_row([
+                                                    dcc_graph(
+                                                        id     = "te-evol-ptx",
+                                                        figure = plot(GenericTrace[], Layout()),
+                                                        config = PlotConfig(displayModeBar=false),
+                                                        style  = Dict("height" => "280px"),
+                                                    ),
+                                                ]),
+                                                dbc_row([
+                                                    html_h1("Field builder", style = Dict("textAlign" => "center","font-size" => "160%", "marginTop" => 12)),
+                                                    html_hr(),
+                                                ]),
+                                                dbc_row([
+                                                    dbc_col([
+                                                        dbc_input(id="te-fieldbuilder-formula-ptx", type="text",
+                                                            value="[M_Dy] / [M_Yb]",
+                                                            placeholder="e.g. [M_Dy] / [M_Yb]"),
+                                                    ], width=5),
+                                                    dbc_col([
+                                                        dcc_dropdown(id="te-fieldbuilder-norm-ptx",
+                                                            options=["none","bulk","chondrite"],
+                                                            value="none", clearable=false, multi=false),
+                                                    ], width=3),
+                                                    dbc_col([
+                                                        dbc_button("Compute and display",
+                                                            id="te-fieldbuilder-button-ptx",
+                                                            color="light", className="me-2", n_clicks=0,
+                                                            style=Dict("font-size"=>"100%","border"=>"1px grey solid")),
+                                                    ], width=4),
+                                                ]),
+                                                dbc_row([
+                                                    dbc_col([
+                                                        dcc_markdown(children="""
+**Syntax** — wrap each term in `[ ]` with prefix `_` element:
+- `[M_La]` → Cliq (melt)  |  `[S_La]` → Csol (solid)  |  `[C0_La]` → bulk
+- `[opx_La]` → mineral phase (use phase name from dropdown above)
+
+*Examples:* `[M_Dy] / [M_Yb]`  ·  `log([M_La] / [M_Lu])`  ·  `[M_Eu] / sqrt([M_Sm] * [M_Gd])`
+                                                        """,
+                                                        style=Dict("font-size"=>"100%","color"=>"grey")),
+                                                    ]),
+                                                ]),
+                                                dbc_row([
+                                                    dcc_graph(
+                                                        id     = "te-fieldbuilder-ptx",
+                                                        figure = plot(GenericTrace[], Layout()),
+                                                        config = PlotConfig(displayModeBar=false),
+                                                        style  = Dict("height" => "280px"),
+                                                    ),
+                                                ]),
+                                            ], width=12),
+                                        ]),
+                                    ])),
+                                ], width=12),
                             ]),
                         ]),
                     ]),
