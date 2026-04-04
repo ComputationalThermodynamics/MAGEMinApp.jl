@@ -2308,13 +2308,129 @@ function parse_bulk_te(contents, filename, kdsDB)
         content_type, content_string = split(contents, ',');
         decoded = base64decode(content_string);
         input   = String(decoded) ;
-        datain  = strip.(string.(readdlm(IOBuffer(input), ';', comments=true, comment_char='#')));
 
-        te_bulk_file_to_db(datain, kdsDB);
+        if endswith(lowercase(filename), ".csv")
+            datain = strip.(string.(readdlm(IOBuffer(input), ',', comments=true, comment_char='#')));
+            te_bulk_csv_to_db(datain, kdsDB);
+        else
+            datain = strip.(string.(readdlm(IOBuffer(input), ';', comments=true, comment_char='#')));
+            te_bulk_file_to_db(datain, kdsDB);
+        end
 
         return 1
     catch e
         return 0
+    end
+
+end
+
+"""
+    function to parse trace-element bulk composition CSV file
+
+    CSV format:
+        title,comments,Li,Be,B,Sc,...
+        Basalt,comment,29.14,0.43,29.69,38.24,...
+
+    For frac2, add columns with _frac2 suffix to override specific elements:
+        title,comments,Li,Be,...,Li_frac2,Be_frac2,...
+    Missing _frac2 values default to the frac value.
+"""
+function te_bulk_csv_to_db(datain, kds_mod)
+
+    global dbte;
+
+    dbte = dbte[(dbte.composition .== "predefined"), :];
+
+    TE_models   = [AppData.KDs[i][4] for i in 1:length(AppData.KDs)]
+    id_TE_model = findfirst(TE_models .== kds_mod)
+    KDs_dtb     = MAGEMin_C.create_custom_KDs_database(AppData.KDs[id_TE_model][1], AppData.KDs[id_TE_model][2], AppData.KDs[id_TE_model][3]; info = AppData.KDs[id_TE_model][6])
+
+    headers = strip.(datain[1, :])
+
+    for req in ("title", "comments")
+        if isnothing(findfirst(headers .== req))
+            error("Missing required column '$req' in CSV header.")
+        end
+    end
+
+    idx_title    = findfirst(headers .== "title")
+    idx_comments = findfirst(headers .== "comments")
+
+    standard_cols  = Set(["title", "comments"])
+    elem_indices   = Int[]
+    frac2_map      = Dict{String,Int}()
+
+    for j in 1:length(headers)
+        h = headers[j]
+        if h in standard_cols || isempty(h)
+            continue
+        elseif endswith(h, "_frac2")
+            el_name = replace(h, "_frac2" => "")
+            frac2_map[el_name] = j
+        else
+            push!(elem_indices, j)
+        end
+    end
+
+    has_frac2_cols = !isempty(frac2_map)
+
+    for i = 2:size(datain, 1)
+        composition = "custom"
+        test        = length(dbte.test)
+        title       = string(datain[i, idx_title])
+        comments    = string(datain[i, idx_comments])
+
+        elements = String[]
+        frac     = Float64[]
+        for j in elem_indices
+            val_str = strip(string(datain[i, j]))
+            if !isempty(val_str)
+                val = tryparse(Float64, val_str)
+                if isnothing(val)
+                    error("Row $i ('$title'), column '$(headers[j])': cannot parse '$val_str' as a number")
+                end
+                push!(elements, string(headers[j]))
+                push!(frac, val)
+            end
+        end
+
+        if isempty(elements)
+            error("Row $i ('$title'): no element values found.")
+        end
+
+        bulkte  = MAGEMin_C.adjust_chemical_system(KDs_dtb, frac, elements)
+        bulkte .= round.(bulkte; digits = 4)
+
+        frac2 = copy(frac)
+        if has_frac2_cols
+            for el in keys(frac2_map)
+                idx_el = findfirst(elements .== el)
+                if !isnothing(idx_el)
+                    val_str = strip(string(datain[i, frac2_map[el]]))
+                    if !isempty(val_str)
+                        val = tryparse(Float64, val_str)
+                        if isnothing(val)
+                            error("Row $i ('$title'), column '$(el)_frac2': cannot parse '$val_str' as a number")
+                        end
+                        frac2[idx_el] = val
+                    end
+                end
+            end
+        end
+
+        bulkte2  = MAGEMin_C.adjust_chemical_system(KDs_dtb, frac2, elements)
+        bulkte2 .= round.(bulkte2; digits = 4)
+
+        elements = KDs_dtb.element_name
+
+        push!(dbte, Dict(   :composition    => composition,
+                            :title          => title,
+                            :comments       => comments,
+                            :test           => test,
+                            :elements       => elements,
+                            :μg_g           => bulkte,
+                            :μg_g2          => bulkte2,
+                    ), cols=:union)
     end
 
 end

@@ -1546,28 +1546,66 @@ function Tab_PTXpaths_Callbacks(app)
         return is_open
     end
 
-    # Update initial TE bulk table when preset dropdown changes
+    # Parse and store uploaded TE bulk composition file for PTX paths
     callback!(
         app,
-        Output("table-te-rock-ptx",    "data"),
-        Input("test-te-dropdown-ptx",  "value"),
-        prevent_initial_call = true,
-    ) do test_id
-        return [Dict("elements" => AppData.dbte.elements[test_id+1][i],
-                     "μg_g"     => AppData.dbte.μg_g[test_id+1][i])
-                for i = 1:length(AppData.dbte.elements[test_id+1])]
+        Output("output-te-uploadn-ptx",         "is_open"),
+        Output("output-te-uploadn-ptx-failed",  "is_open"),
+        Input("upload-te-ptx",                  "contents"),
+        State("upload-te-ptx",                  "filename"),
+        State("kds-dropdown-ptx",               "value"),
+        prevent_initial_call=true,
+    ) do contents, filename, kdsDB
+        if !(contents isa Nothing)
+            status = parse_bulk_te(contents, filename, kdsDB)
+            if status == 1
+                return "success", nothing
+            else
+                return nothing, "failed"
+            end
+        end
     end
 
-    # Update assimilant TE bulk table when preset dropdown changes
+    # Update initial TE bulk table and dropdown options when preset changes or file is uploaded
     callback!(
         app,
-        Output("table-te-2-rock-ptx",      "data"),
-        Input("test-te-2-dropdown-ptx",    "value"),
+        Output("table-te-rock-ptx",    "data"   ),
+        Output("test-te-dropdown-ptx", "options"),
+        Output("test-te-dropdown-ptx", "value"  ),
+        Input("test-te-dropdown-ptx",  "value"  ),
+        Input("output-te-uploadn-ptx", "is_open"),
         prevent_initial_call = true,
-    ) do test_id
-        return [Dict("elements" => AppData.dbte.elements[test_id+1][i],
-                     "μg_g"     => AppData.dbte.μg_g2[test_id+1][i])
-                for i = 1:length(AppData.dbte.elements[test_id+1])]
+    ) do test_id, _
+        if test_id > size(dbte, 1) - 1
+            test_id = 0
+        end
+        data = [Dict("elements" => dbte.elements[test_id+1][i],
+                     "μg_g"     => dbte.μg_g[test_id+1][i])
+                for i = 1:length(dbte.elements[test_id+1])]
+        opts = [Dict("label" => dbte.title[i], "value" => dbte.test[i])
+                for i = 1:size(dbte, 1)]
+        return data, opts, test_id
+    end
+
+    # Update assimilant TE bulk table and dropdown options when preset changes or file is uploaded
+    callback!(
+        app,
+        Output("table-te-2-rock-ptx",      "data"   ),
+        Output("test-te-2-dropdown-ptx",   "options"),
+        Output("test-te-2-dropdown-ptx",   "value"  ),
+        Input("test-te-2-dropdown-ptx",    "value"  ),
+        Input("output-te-uploadn-ptx",     "is_open"),
+        prevent_initial_call = true,
+    ) do test_id, _
+        if test_id > size(dbte, 1) - 1
+            test_id = 0
+        end
+        data = [Dict("elements" => dbte.elements[test_id+1][i],
+                     "μg_g"     => dbte.μg_g2[test_id+1][i])
+                for i = 1:length(dbte.elements[test_id+1])]
+        opts = [Dict("label" => dbte.title[i], "value" => dbte.test[i])
+                for i = 1:size(dbte, 1)]
+        return data, opts, test_id
     end
 
     # Compute TE along PTX path — writes result into store to avoid duplicate outputs

@@ -474,6 +474,14 @@ function Tab_PTXpaths()
                     dbc_card(dbc_cardbody([
 
                         dbc_row([
+                            dbc_button("Load/Reload trace-elements", id="compute-te-ptx-button", color="light", n_clicks=0,
+                                        style       = Dict( "textAlign"     => "center",
+                                                            "font-size"     => "100%",
+                                                            "background-color" => "#d3f2ce",
+                                                            "border"        =>"1px grey solid")), 
+                        ]),
+                        html_div("‎ "),
+                        dbc_row([
                             dbc_col([
                                 html_h1("KD model", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
                             ],width=6),
@@ -536,6 +544,36 @@ function Tab_PTXpaths()
                         ]),
 
                         html_div("‎ "),
+                        dcc_upload(
+                            id="upload-te-ptx",
+                            children=html_div([
+                                "Drag and drop or select trace-element file",
+                            ]),
+                            style=Dict(
+                                "width"         => "100%",
+                                "height"        => "60px",
+                                "lineHeight"    => "60px",
+                                "borderWidth"   => "1px",
+                                "borderStyle"   => "dashed",
+                                "borderRadius"  => "5px",
+                                "textAlign"     => "center"
+                            ),
+                            multiple=false
+                        ),
+                        dbc_alert(
+                            "Trace-element composition(s) successfully loaded",
+                            id      = "output-te-uploadn-ptx",
+                            is_open = false,
+                            duration= 4000,
+                        ),
+                        dbc_alert(
+                            "Trace-element composition(s) failed to load, check input file format",
+                            color   = "danger",
+                            id      = "output-te-uploadn-ptx-failed",
+                            is_open = false,
+                            duration= 4000,
+                        ),
+                        html_div("‎ "),
                         html_h1("Initial TE bulk composition [μg/g]", style = Dict("textAlign" => "center","font-size" => "110%")),
                         dbc_row([
                             dbc_col([
@@ -597,12 +635,7 @@ function Tab_PTXpaths()
                             ]),
                         ], id="collapse-assim-te-ptx", is_open=false),
 
-                        html_div("‎ "),
-                        dbc_row([
-                            dbc_button("Compute TE", id="compute-te-ptx-button", color="light", n_clicks=0,
-                                style = Dict("textAlign" => "center", "font-size" => "100%",
-                                             "background-color" => "#cce5ff", "border" => "1px grey solid")),
-                        ]),
+
                         dbc_row([
                             dbc_alert("Trace elements computed successfully",
                                 id="te-ptx-success", is_open=false, duration=4000),
