@@ -327,6 +327,49 @@ function Tab_PTXpaths_Callbacks(app)
         end
     end
 
+    #save trace-element data along PTX path to CSV file
+    callback!(
+        app,
+        Output("data-te-csv-ptx-save",          "is_open"),
+        Output("data-te-save-csv-ptx-failed",   "is_open"),
+        Output("data-te-save-csv-ptx-not-computed", "is_open"),
+        Input("save-te-csv-ptx-button",         "n_clicks"),
+        State("Filename-te-ptx-id",             "value"),
+        State("database-dropdown-ptx",          "value"),
+        State("kds-dropdown-ptx",               "value"),
+        State("zrsat-dropdown-ptx",             "value"),
+        State("ssat-dropdown-ptx",              "value"),
+        State("P2O5sat-dropdown-ptx",           "value"),
+        prevent_initial_call=true,
+    ) do n_clicks, fname, dtb, kds, zrsat, ssat, P2O5sat
+
+        if !@isdefined(Out_TE_PTX) || isempty(Out_TE_PTX)
+            return false, false, true
+        end
+
+        if fname == "filename"
+            return false, true, false
+        end
+
+        sat_ext = ""
+        if zrsat != "none"
+            sat_ext *= "_$zrsat"
+        end
+        if ssat != "none"
+            sat_ext *= "_$ssat"
+        end
+        if P2O5sat != "none"
+            sat_ext *= "_$P2O5sat"
+        end
+
+        datab   = "_"*dtb*"_"*kds*sat_ext
+        fileout = fname*datab
+
+        MAGEMin_dataTE2dataframe(Out_PTX, Out_TE_PTX, dtb, fileout)
+        return true, false, false
+    end
+
+
     #save all table to file
     callback!(
         app,
