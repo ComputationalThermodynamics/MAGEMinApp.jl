@@ -2143,6 +2143,142 @@ function bulk_file_to_db(datain)
 end
 
 
+"""
+    function to parse bulk-rock composition CSV file
+
+    CSV format:
+        title,comments,db,sysUnit,SiO2,CaO,Al2O3,FeO,MgO,Na2O
+        Basalt_Xu08,c,sb21,mol,0.5175,0.1388,0.1019,0.0706,0.1494,0.0218
+
+    For frac2, add columns with _frac2 suffix:
+        title,comments,db,sysUnit,SiO2,CaO,...,SiO2_frac2,CaO_frac2,...
+"""
+function bulk_csv_to_db(datain)
+
+    global db;
+
+    db = db[(db.bulk .== "predefined"), :];
+
+    headers = strip.(datain[1, :])
+
+    # Check required headers
+    for req in ("title","comments","db","sysUnit")
+        if isnothing(findfirst(headers .== req))
+            error("Missing required column '$req' in CSV header. " *
+                  "Expected columns: title, comments, db, sysUnit, <oxide columns>")
+        end
+    end
+
+    # Find standard column indices
+    idx_title    = findfirst(headers .== "title")
+    idx_comments = findfirst(headers .== "comments")
+    idx_db       = findfirst(headers .== "db")
+    idx_sysUnit  = findfirst(headers .== "sysUnit")
+
+    # Separate oxide columns from frac2 columns (suffix _frac2)
+    standard_cols = Set(["title", "comments", "db", "sysUnit"])
+    oxide_indices = Int[]
+    frac2_map     = Dict{String,Int}()
+
+    for j in 1:length(headers)
+        h = headers[j]
+        if h in standard_cols || isempty(h)
+            continue
+        elseif endswith(h, "_frac2")
+            ox_name = replace(h, "_frac2" => "")
+            frac2_map[ox_name] = j
+        else
+            push!(oxide_indices, j)
+        end
+    end
+
+    has_frac2_cols = !isempty(frac2_map)
+
+    for i = 2:size(datain, 1)
+        bulk     = "custom"
+        title    = string(datain[i, idx_title])
+        comments = string(datain[i, idx_comments])
+        dbin     = lowercase(strip(string(datain[i, idx_db])))
+        sysUnit  = lowercase(strip(string(datain[i, idx_sysUnit])))
+
+        valid_db      = ("ig","igad","mb","mbe","um","ume","mp","mtl","mpe","cs","sb11","sb21","sb24")
+        valid_sysunit = ("mol","wt")
+
+        if dbin ∉ valid_db
+            error("Row $i ('$title'): unknown database '$dbin'. " *
+                  "Valid acronyms: $(join(valid_db, ", "))")
+        end
+        if sysUnit ∉ valid_sysunit
+            error("Row $i ('$title'): invalid sysUnit '$sysUnit'. Must be 'mol' or 'wt'")
+        end
+
+        test     = length(db[(db.db .== dbin), :].test)
+
+        # Extract oxide names and frac values from oxide columns
+        oxide = String[]
+        frac  = Float64[]
+        for j in oxide_indices
+            val_str = strip(string(datain[i, j]))
+            if !isempty(val_str)
+                val = tryparse(Float64, val_str)
+                if isnothing(val)
+                    error("Row $i ('$title'), column '$(headers[j])': " *
+                          "cannot parse '$val_str' as a number")
+                end
+                push!(oxide, string(headers[j]))
+                push!(frac, val)
+            end
+        end
+
+        if isempty(oxide)
+            error("Row $i ('$title'): no oxide values found. At least one oxide column must be non-empty")
+        end
+
+        bulkrock, MAGEMin_ox = convertBulk4MAGEMin(frac, oxide, sysUnit, dbin)
+        bulkrock .= round.(bulkrock; digits = 4)
+
+        frac2 = copy(frac)
+        if has_frac2_cols
+            up_oxides = string.(keys(frac2_map))
+            for j in up_oxides
+                if j in oxide
+                    idx_oxide = findfirst(oxide .== j)
+                    val_str = strip(string(datain[i, frac2_map[j]]))
+                    if !isempty(val_str)
+                        val = tryparse(Float64, val_str)
+                        if isnothing(val)
+                            error("Row $i ('$title'), column '$(j)_frac2': " *
+                                  "cannot parse '$val_str' as a number")
+                        end
+                        frac2[idx_oxide] = val
+                    end
+                end
+            
+            end
+        end
+        bulkrock2, _ = convertBulk4MAGEMin(frac2, oxide, sysUnit, dbin)
+        bulkrock2   .= round.(bulkrock2; digits = 4)
+
+        oxide        = get_oxide_list(dbin)
+
+        bulkrock_wt  = round.(mol2wt(bulkrock, oxide), digits=6)
+        bulkrock2_wt = round.(mol2wt(bulkrock2, oxide), digits=6)
+
+        push!(db, Dict( :bulk       => bulk,
+                        :title      => title,
+                        :comments   => comments,
+                        :db         => dbin,
+                        :test       => test,
+                        :sysUnit    => sysUnit,
+                        :oxide      => oxide,
+                        :frac       => bulkrock,
+                        :frac2      => bulkrock2,
+                        :frac_wt    => bulkrock_wt,
+                        :frac2_wt   => bulkrock2_wt,
+                    ), cols=:union)
+    end
+
+end
 
 
 function parse_bulk_rock(contents, filename)
@@ -2150,13 +2286,18 @@ function parse_bulk_rock(contents, filename)
         content_type, content_string = split(contents, ',');
         decoded = base64decode(content_string);
         input   = String(decoded) ;
-        datain  = strip.(string.(readdlm(IOBuffer(input), ';', comments=true, comment_char='#')));
 
-        bulk_file_to_db(datain);
+        if endswith(lowercase(filename), ".csv")
+            datain  = strip.(string.(readdlm(IOBuffer(input), ',', comments=true, comment_char='#')));
+            bulk_csv_to_db(datain);
+        else
+            datain  = strip.(string.(readdlm(IOBuffer(input), ';', comments=true, comment_char='#')));
+            bulk_file_to_db(datain);
+        end
 
-        return 1
+        return 1, ""
     catch e
-        return 0
+        return 0, sprint(showerror, e)
     end
 
 end
@@ -2167,13 +2308,129 @@ function parse_bulk_te(contents, filename, kdsDB)
         content_type, content_string = split(contents, ',');
         decoded = base64decode(content_string);
         input   = String(decoded) ;
-        datain  = strip.(string.(readdlm(IOBuffer(input), ';', comments=true, comment_char='#')));
 
-        te_bulk_file_to_db(datain, kdsDB);
+        if endswith(lowercase(filename), ".csv")
+            datain = strip.(string.(readdlm(IOBuffer(input), ',', comments=true, comment_char='#')));
+            te_bulk_csv_to_db(datain, kdsDB);
+        else
+            datain = strip.(string.(readdlm(IOBuffer(input), ';', comments=true, comment_char='#')));
+            te_bulk_file_to_db(datain, kdsDB);
+        end
 
         return 1
     catch e
         return 0
+    end
+
+end
+
+"""
+    function to parse trace-element bulk composition CSV file
+
+    CSV format:
+        title,comments,Li,Be,B,Sc,...
+        Basalt,comment,29.14,0.43,29.69,38.24,...
+
+    For frac2, add columns with _frac2 suffix to override specific elements:
+        title,comments,Li,Be,...,Li_frac2,Be_frac2,...
+    Missing _frac2 values default to the frac value.
+"""
+function te_bulk_csv_to_db(datain, kds_mod)
+
+    global dbte;
+
+    dbte = dbte[(dbte.composition .== "predefined"), :];
+
+    TE_models   = [AppData.KDs[i][4] for i in 1:length(AppData.KDs)]
+    id_TE_model = findfirst(TE_models .== kds_mod)
+    KDs_dtb     = MAGEMin_C.create_custom_KDs_database(AppData.KDs[id_TE_model][1], AppData.KDs[id_TE_model][2], AppData.KDs[id_TE_model][3]; info = AppData.KDs[id_TE_model][6])
+
+    headers = strip.(datain[1, :])
+
+    for req in ("title", "comments")
+        if isnothing(findfirst(headers .== req))
+            error("Missing required column '$req' in CSV header.")
+        end
+    end
+
+    idx_title    = findfirst(headers .== "title")
+    idx_comments = findfirst(headers .== "comments")
+
+    standard_cols  = Set(["title", "comments"])
+    elem_indices   = Int[]
+    frac2_map      = Dict{String,Int}()
+
+    for j in 1:length(headers)
+        h = headers[j]
+        if h in standard_cols || isempty(h)
+            continue
+        elseif endswith(h, "_frac2")
+            el_name = replace(h, "_frac2" => "")
+            frac2_map[el_name] = j
+        else
+            push!(elem_indices, j)
+        end
+    end
+
+    has_frac2_cols = !isempty(frac2_map)
+
+    for i = 2:size(datain, 1)
+        composition = "custom"
+        test        = length(dbte.test)
+        title       = string(datain[i, idx_title])
+        comments    = string(datain[i, idx_comments])
+
+        elements = String[]
+        frac     = Float64[]
+        for j in elem_indices
+            val_str = strip(string(datain[i, j]))
+            if !isempty(val_str)
+                val = tryparse(Float64, val_str)
+                if isnothing(val)
+                    error("Row $i ('$title'), column '$(headers[j])': cannot parse '$val_str' as a number")
+                end
+                push!(elements, string(headers[j]))
+                push!(frac, val)
+            end
+        end
+
+        if isempty(elements)
+            error("Row $i ('$title'): no element values found.")
+        end
+
+        bulkte  = MAGEMin_C.adjust_chemical_system(KDs_dtb, frac, elements)
+        bulkte .= round.(bulkte; digits = 4)
+
+        frac2 = copy(frac)
+        if has_frac2_cols
+            for el in keys(frac2_map)
+                idx_el = findfirst(elements .== el)
+                if !isnothing(idx_el)
+                    val_str = strip(string(datain[i, frac2_map[el]]))
+                    if !isempty(val_str)
+                        val = tryparse(Float64, val_str)
+                        if isnothing(val)
+                            error("Row $i ('$title'), column '$(el)_frac2': cannot parse '$val_str' as a number")
+                        end
+                        frac2[idx_el] = val
+                    end
+                end
+            end
+        end
+
+        bulkte2  = MAGEMin_C.adjust_chemical_system(KDs_dtb, frac2, elements)
+        bulkte2 .= round.(bulkte2; digits = 4)
+
+        elements = KDs_dtb.element_name
+
+        push!(dbte, Dict(   :composition    => composition,
+                            :title          => title,
+                            :comments       => comments,
+                            :test           => test,
+                            :elements       => elements,
+                            :μg_g           => bulkte,
+                            :μg_g2          => bulkte2,
+                    ), cols=:union)
     end
 
 end

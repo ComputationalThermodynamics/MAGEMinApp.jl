@@ -66,6 +66,71 @@ function Tab_Simulation_Callbacks(app)
         return KDs_options, KDs_value
     end
 
+    # ── helper: list existing saves ────────────────────────────────────────────
+    function _list_saves()
+        dir = joinpath(pwd(), "saved_states")
+        isdir(dir) || return String[]
+        files = readdir(dir)
+        names = [replace(f, r"_options\.jld2$" => "") for f in files if endswith(f, "_options.jld2")]
+        return sort(names)
+    end
+
+    # Open/close save modal + populate existing saves dropdown
+    callback!(app,
+        Output("save-state-modal",             "is_open"),
+        Output("save-modal-existing-dropdown", "options"),
+        Input("open-save-modal-button",        "n_clicks"),
+        Input("close-save-modal-button",       "n_clicks"),
+        Input("save-state-diagram-button",     "n_clicks"),
+        prevent_initial_call=true,
+    ) do _, _, _
+        bid = pushed_button(callback_context())
+        if bid == "open-save-modal-button"
+            names = _list_saves()
+            opts  = [Dict("label"=>n, "value"=>n) for n in names]
+            return true, opts
+        end
+        return false, no_update()
+    end
+
+    # Existing save selected → fill filename input
+    callback!(app,
+        Output("save-state-filename-id",       "value"),
+        Input("save-modal-existing-dropdown",  "value"),
+        prevent_initial_call=true,
+    ) do selected
+        isnothing(selected) && return no_update()
+        return selected
+    end
+
+    # Open/close load modal + populate file dropdown
+    callback!(app,
+        Output("load-state-modal",        "is_open"),
+        Output("load-modal-file-dropdown","options"),
+        Input("open-load-modal-button",   "n_clicks"),
+        Input("close-load-modal-button",  "n_clicks"),
+        Input("load-state-diagram-button","n_clicks"),
+        prevent_initial_call=true,
+    ) do _, _, _
+        bid = pushed_button(callback_context())
+        if bid == "open-load-modal-button"
+            names = _list_saves()
+            opts  = [Dict("label"=>n, "value"=>n) for n in names]
+            return true, opts
+        end
+        return false, no_update()
+    end
+
+    # File selected in load dropdown → fill manual input
+    callback!(app,
+        Output("load-state-filename-id",  "value"),
+        Input("load-modal-file-dropdown", "value"),
+        prevent_initial_call=true,
+    ) do selected
+        isnothing(selected) && return no_update()
+        return selected
+    end
+
     # update the dictionary of the solution phases and end-members for isopleths
     callback!(
         app,
@@ -120,7 +185,7 @@ function Tab_Simulation_Callbacks(app)
 
         database, diagram_type, mb_cpx, limit_ca_opx, ca_opx_val,
         tepm, kds_dtb, zrsat_dtb, ssat_dtb, P2O5sat_dtb,
-        ptx_table, 
+        ptx_table,
         pmin, pmax, tmin, tmax, pfix, tfix,
         grid_sub, refinement, refinement_level,
         buffer, solver, boost, verbose, scp,
@@ -133,9 +198,13 @@ function Tab_Simulation_Callbacks(app)
 
         global infos, layout, data, data_plot, data_reaction, iso_show, n_lbl, data_isopleth, data_isopleth_out, Out_XY, Hash_XY, Out_TE_XY, all_TE_ph, n_phase_XY, addedRefinementLvl, pChip_wat, pChip_T;
 
-        global file_pd  = "saved_states/"*String(filename)*"_phase_diagram.jld2"
-        file_pd_data    = "saved_states/"*String(filename)*"_phase_diagram_data.jld2"
-        file            = "saved_states/"*String(filename)*"_options.jld2"
+        saved_states_dir = joinpath(pwd(), "saved_states")
+        mkpath(saved_states_dir)
+        base_path       = joinpath(saved_states_dir, String(filename))
+
+        global file_pd  = base_path * "_phase_diagram.jld2"
+        file_pd_data    = base_path * "_phase_diagram_data.jld2"
+        file            = base_path * "_options.jld2"
 
         println("Saving phase diagram options..."); t0 = time()
         @save file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ssat_dtb P2O5sat_dtb ptx_table pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver boost verbose scp test test2 buffer1 buffer2 te_test te_test2 watsat watsat_val
@@ -207,9 +276,9 @@ function Tab_Simulation_Callbacks(app)
         Output(  "watsat-val-id",                    "value"       ),
         Output(  "load-state-id",                    "value"       ),
         Input(   "load-state-diagram-button",        "n_clicks"    ),
-        State(   "save-state-filename-id",           "value"       ),
+        State(   "load-state-filename-id",           "value"       ),
         State(   "load-state-id",                    "value"       ),
-        
+
         prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
     ) do click, filename, state_id
 
@@ -218,9 +287,12 @@ function Tab_Simulation_Callbacks(app)
         # load the phase diagram if saved
         global infos, layout, data, data_plot, data_reaction, iso_show, n_lbl, data_isopleth, data_isopleth_out, Out_XY, Hash_XY, Out_TE_XY, all_TE_ph, n_phase_XY, addedRefinementLvl, pChip_wat, pChip_T;
 
-        file_pd_data    = "saved_states/"*String(filename)*"_phase_diagram_data.jld2"
-        global file_pdr = "saved_states/"*String(filename)*"_phase_diagram.jld2"
-        load_cmd        = "@load file_pdr" 
+        saved_states_dir = joinpath(pwd(), "saved_states")
+        base_path        = joinpath(saved_states_dir, String(filename))
+
+        file_pd_data    = base_path * "_phase_diagram_data.jld2"
+        global file_pdr = base_path * "_phase_diagram.jld2"
+        load_cmd        = "@load file_pdr"
         try
             field_list = []
             @load file_pd_data field_list
@@ -230,16 +302,16 @@ function Tab_Simulation_Callbacks(app)
             if !isempty(field_list)
                 println("Loading phase diagram..."); t0 = time()
                 eval(Meta.parse(load_cmd))
-                println("Loaded phase diagram in $(round(time()-t0, digits=3)) seconds"); 
+                println("Loaded phase diagram in $(round(time()-t0, digits=3)) seconds")
             end
         catch
             println("failed to load the phase diagram data")
         end
-        
+
         # load option of the phase diagram tab
         global db, dbte
-        file = "saved_states/"*String(filename)*"_options.jld2"
-        try 
+        file = base_path * "_options.jld2"
+        try
             @load file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ssat_dtb P2O5sat_dtb pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer boost verbose scp buffer1 buffer2 watsat watsat_val
 
             success, failed = "success", ""
@@ -829,19 +901,20 @@ function Tab_Simulation_Callbacks(app)
 
     callback!(
         app,
-        Output("output-data-uploadn", "is_open"),
-        Output("output-data-uploadn-failed", "is_open"),
+        Output("output-data-uploadn",        "is_open" ),
+        Output("output-data-uploadn-failed", "is_open" ),
+        Output("output-data-uploadn-failed", "children"),
         Input("upload-bulk", "contents"),
         State("upload-bulk", "filename"),
         prevent_initial_call=true,
     ) do contents, filename
 
         if !(contents isa Nothing)
-            status = parse_bulk_rock(contents, filename)
+            status, msg = parse_bulk_rock(contents, filename)
             if status == 1
-                return "success", ""
+                return "success", false, ""
             else
-                return "", "failed"
+                return false, true, msg
             end
         end
     end

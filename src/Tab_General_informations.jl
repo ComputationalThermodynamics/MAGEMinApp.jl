@@ -59,6 +59,49 @@ water_saturation = """
 
 """
 
+csvBulkRockFormat = """
+**MAGEMinApp bulk-rock input in CSV format**
+
+The CSV file should have columns for each oxide and relevant metadata. The table below shows an example of the expected format.
+
+#### Column descriptions:
+
+- **title**: Sample name or identifier
+- **comments**: Any comments or notes
+- **db**: Thermodynamic database acronym (see below)
+- **sysUnit**: Unit system (e.g., `mol`, `wt`)
+- **Oxide columns** (e.g., SiO2, Al2O3, ...): Content of each oxide in the specified unit
+- **Additional columns** (e.g., SiO2_frac2): Optional. Columns ending with `_frac2` are used to specify a second bulk-rock composition for P-X, T-X, or PT-X diagrams. When provided, the value in a `_frac2` column will override the corresponding oxide value from the main composition for that specific diagram calculation. This allows you to easily define compositional variations between two endmembers in a single file.
+
+#### Notes:
+
+- The CSV file must have a header row with column names.
+- Missing values can be left empty; they will be treated as zero.
+- You can add or remove oxide columns as needed, but the header must match the data.
+- If one oxide included in the thermodynamic database is not provided in the bulk-rock input file, the content of the oxide will automatically be set to 0.0.
+- Either `FeO` and `O` or `FeO` and `Fe2O3` can be provided. In the first case FeO = FeOt.
+- To provide two bulk-rock compositions for P-X or T-X diagrams, simply add `_frac2` columns as shown above.
+- If you want to use a different thermodynamic database for the same bulk rock, copy and paste the line and change the database acronym.
+
+#### Thermodynamic dataset acronyms:
+
+| Acronym | Description |
+|---|---|
+| mtl | mantle (Holland et al., 2013) |
+| mp | metapelite (White et al., 2014) |
+| mb | metabasite (Green et al., 2016) |
+| ig | igneous (Green et al., 2025) |
+| igad | igneous alkaline dry (Weller et al., 2024) |
+| um | ultramafic (Evans & Frost, 2021) |
+| sb11 | Stixrude & Lithgow-Bertelloni (2011) |
+| sb21 | Stixrude & Lithgow-Bertelloni (2021) |
+| sb24 | Stixrude & Lithgow-Bertelloni (2024) |
+| ume | ultramafic extended (Green et al., 2016 + Evans & Frost, 2021) |
+| mpe | extended metapelite (White et al., 2014 + Green et al., 2016 + ...) |
+| mbe | extended metabasite (Green et al., 2016 + Diener et al., 2007 + ...) |
+
+"""
+
 heatCapacity = """
 **Specific heat capacity**
 
@@ -126,6 +169,42 @@ function Tab_General_informations()
                     filter_action="native"
                 ),
                 html_div("‎ "),
+            ]),
+            dbc_row([
+                html_div("‎ "),
+                html_h1("CSV bulk-rock input format — example", style = Dict("textAlign" => "center","font-size" => "130%", "marginTop" => 4)),
+                dash_datatable(
+                    id          = "table-csv-bulk-format",
+                    columns     = [ Dict("id" => c, "name" => c, "editable" => false)
+                                    for c in ["title","comments","db","sysUnit","SiO2","Al2O3","CaO","MgO","FeO","Fe2O3","K2O","Na2O","TiO2","O","MnO","H2O","P2O5","SiO2_frac2"] ],
+                    data        = [
+                        Dict("title"=>"Basalt_Xu08",  "comments"=>"bulk test", "db"=>"sb21", "sysUnit"=>"mol",
+                             "SiO2"=>0.5175, "Al2O3"=>0.1019, "CaO"=>0.1388, "MgO"=>0.1494, "FeO"=>0.0706, "Fe2O3"=>0.0218,
+                             "K2O"=>"", "Na2O"=>"", "TiO2"=>"", "O"=>"", "MnO"=>"", "H2O"=>"", "P2O5"=>"", "SiO2_frac2"=>55),
+                        Dict("title"=>"Basalt_Xu08l", "comments"=>"testy",     "db"=>"sb21", "sysUnit"=>"mol",
+                             "SiO2"=>0.5175, "Al2O3"=>0.1019, "CaO"=>0.1388, "MgO"=>0.1494, "FeO"=>0.0706, "Fe2O3"=>0.0218,
+                             "K2O"=>"", "Na2O"=>"", "TiO2"=>"", "O"=>"", "MnO"=>"", "H2O"=>"", "P2O5"=>"", "SiO2_frac2"=>55),
+                        Dict("title"=>"title1",       "comments"=>"comment,2l", "db"=>"um",   "sysUnit"=>"wt",
+                             "SiO2"=>35.66, "Al2O3"=>6.51, "CaO"=>5.12, "MgO"=>26.62, "FeO"=>14.56, "Fe2O3"=>0.08,
+                             "K2O"=>0.04, "Na2O"=>3.78, "TiO2"=>0.52, "O"=>"", "MnO"=>0.47, "H2O"=>"", "P2O5"=>"", "SiO2_frac2"=>32),
+                        Dict("title"=>"Renato_2",     "comments"=>"test2",     "db"=>"mb",   "sysUnit"=>"wt",
+                             "SiO2"=>50.91, "Al2O3"=>10.1, "CaO"=>11.56, "MgO"=>13.89, "FeO"=>11.02, "Fe2O3"=>0.09,
+                             "K2O"=>1.4, "Na2O"=>0.77, "TiO2"=>0.06, "O"=>0.19, "MnO"=>0, "H2O"=>"", "P2O5"=>"", "SiO2_frac2"=>45),
+                    ],
+                    style_cell  = Dict("textAlign" => "center", "fontSize" => "110%", "userSelect" => "text"),
+                    style_header= (fontWeight="bold",),
+                    style_data_conditional = [
+                        Dict("if" => Dict("column_id" => "title"),    "fontWeight" => "bold"),
+                        Dict("if" => Dict("column_id" => "SiO2_frac2"), "backgroundColor" => "#f0f4ff"),
+                    ],
+                    editable    = false,
+                    page_size   = 10,
+                ),
+                html_div("\u200E "),
+                dbc_card([
+                    dcc_markdown(csvBulkRockFormat; mathjax=true, style = Dict("font-size" => "130%")),
+                ]),
+                html_div("\u200E "),
             ]),
             dbc_row([
 
@@ -208,6 +287,7 @@ function Tab_General_informations()
                 ]),
 
             ]),
+
         ]),
 
         ],width=6),
