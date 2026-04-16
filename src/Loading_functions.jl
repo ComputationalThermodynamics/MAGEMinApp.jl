@@ -31,6 +31,7 @@ function get_contributors()
     debug   *= "Owen Weller\n"
     debug   *= "Paul Tackley\n"
     debug   *= "Peter Luffi\n"
+    debug   *= "Philip Hartmeier\n"
     debug   *= "Pierre Lanari\n"
     debug   *= "Renato Moraes\n"
     debug   *= "Richard Palin\n"
