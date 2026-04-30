@@ -625,7 +625,8 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                 verbose,    bufferN,
                                 cpx,        limOpx,     limOpxVal,
                                 nCon,       nRes,
-                                T_start,    isentropic_mode                                  )
+                                T_start,    isentropic_mode,
+                                watsat      = "false",  watsat_val  = 0.0        )
 
         global Out_PTX, ph_names_ptx, fracEvol, compo_matrix, removedBulk, assimFrac
 
@@ -695,8 +696,20 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                 Add ./= 100.0;
             end
 
-            # initialize single thread MAGEMin 
-            gv, z_b, DB, splx_data = init_MAGEMin(  dtb;        
+            # precompute water-saturation interpolators if requested
+            pChip_wat, pChip_T = nothing, nothing
+            id_h2o_ptx         = findfirst(oxi .== "H2O")
+            id_dry_ptx         = findall(oxi .!= "H2O")
+            if watsat == "true" && !isnothing(id_h2o_ptx)
+                Yrange             = [minimum(Pres), maximum(Pres)]
+                pChip_wat, pChip_T = get_wat_sat_function(  Yrange,     bulk_ini,   oxi,    phase_selection,
+                                                            dtb,        bufferType, solver,
+                                                            verbose,    bufferN,
+                                                            cpx,        limOpx,     limOpxVal, Float64(watsat_val))
+            end
+
+            # initialize single thread MAGEMin
+            gv, z_b, DB, splx_data = init_MAGEMin(  dtb;
                                                     verbose     = verbose,
                                                     dataset     = dataset,
                                                     mbCpx       = mbCpx,
@@ -752,7 +765,22 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                     if assim == "true"
                         bulk   .= (1.0 .- step ./ (1.0 .+ step .* j)) .* bulk .+ (step ./ (1.0 .+ step .* j)) .* bulk_assim
                     end
-                    gv      =  define_bulk_rock(gv, bulk, oxi, sys_in, dtb);
+
+                    if ~isnothing(pChip_wat) && isentropic_mode == false
+                        TsatSol  = pChip_T(P)
+                        waterSat = pChip_wat(P)
+                        if T > TsatSol
+                            tmp_bulk              = deepcopy(bulk)
+                            tmp_bulk            ./= sum(tmp_bulk[id_dry_ptx])
+                            tmp_bulk[id_h2o_ptx]  = waterSat
+                            tmp_bulk            ./= sum(tmp_bulk)
+                            gv = define_bulk_rock(gv, tmp_bulk, oxi, sys_in, dtb)
+                        else
+                            gv = define_bulk_rock(gv, bulk, oxi, sys_in, dtb)
+                        end
+                    else
+                        gv = define_bulk_rock(gv, bulk, oxi, sys_in, dtb)
+                    end
 
                     if isentropic_mode == true && k > 1
                         P = Pres[i] + (j-1)*( (Pres[i+1] - Pres[i])/ (nsteps+1) )
