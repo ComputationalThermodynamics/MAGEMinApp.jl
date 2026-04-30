@@ -850,16 +850,20 @@ function Tab_PTXpaths_Callbacks(app)
         State("starting-temperature-isoS-id",   "value"),
         State("isentropic-dropdown-ptx",        "value"),
         State("display-entropy-textarea",       "value"),
-        
+
+        State("ptx-watsat-dropdown",            "value"),
+        State("ptx-watsat-val-id",              "value"),
+
         prevent_initial_call = true,
 
-        ) do    compute,    upsys,      display_mode,               ext_display_mode,    
+        ) do    compute,    upsys,      display_mode,               ext_display_mode,
                 sys_unit,   phase_selection, pure_phase_selection,  phase_list, nsteps,     PTdata,     mode,   assim,  var_buffer,
                 dtb,        dataset,    bufferType, solver,
                 verbose,    bulk,       bulk2,      bufferN,
                 cpx,        limOpx,     limOpxVal,  test,   sysunit,
                 nCon,       nRes,       color_table,
-                T_start,    isentropic_mode, entropy
+                T_start,    isentropic_mode, entropy,
+                watsat,     watsat_val
 
         bid                     = pushed_button( callback_context() )    # get which button has been pushed
         phase_selection         = remove_phases(string_vec_diff(phase_selection,pure_phase_selection,dtb),dtb)
@@ -879,7 +883,8 @@ function Tab_PTXpaths_Callbacks(app)
                                     verbose,    bufferN,
                                     cpx,        limOpx,     limOpxVal,
                                     nCon,       nRes,
-                                    T_start,    isentropic_mode                                  )
+                                    T_start,    isentropic_mode,
+                                    watsat,     watsat_val                                        )
 
             if isentropic_mode == true
                 entropy                 = string(round(Out_PTX[1].entropy[1],digits=3))
@@ -1010,6 +1015,21 @@ function Tab_PTXpaths_Callbacks(app)
             style  = Dict("display" => "block")
         else 
             style  = Dict("display" => "none")
+        end
+        return style
+    end
+
+    callback!(
+        app,
+        Output("ptx-watsat-display-id", "style"),
+        Input("ptx-watsat-dropdown",    "value"),
+
+        prevent_initial_call = true,
+    ) do value
+        if value == "true"
+            style = Dict("display" => "block")
+        else
+            style = Dict("display" => "none")
         end
         return style
     end

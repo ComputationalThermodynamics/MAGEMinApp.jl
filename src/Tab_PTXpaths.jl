@@ -785,6 +785,40 @@ function Tab_PTXpaths()
 
                                         html_div("‎ "),
                                         dbc_row([
+                                            dbc_col([
+                                                html_h1("Solidus H₂O-saturated", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ], width=6),
+                                            dbc_col([
+                                                dcc_dropdown(   id      = "ptx-watsat-dropdown",
+                                                options = [
+                                                    (label = "true",         value = "true"),
+                                                    (label = "false",        value = "false"),
+                                                ],
+                                                value       = "false" ,
+                                                clearable   =  false,
+                                                multi       =  false),
+                                            ]),
+                                        ]),
+
+                                        html_div([
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("Additional H₂O [mol%]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                                ], width=6),
+                                                dbc_col([
+                                                    dbc_input(
+                                                        id      = "ptx-watsat-val-id",
+                                                        type    = "number",
+                                                        min     =  0.0,
+                                                        max     =  100.0,
+                                                        value   =  0.0  ),
+                                                ]),
+                                            ]),
+
+                                        ], style = Dict("display" => "none"), id  = "ptx-watsat-display-id"), #none, block
+
+                                        html_div("‎ "),
+                                        dbc_row([
                                             dbc_button("Compute path",id="compute-path-button", color="light", className="me-2", n_clicks=0,
                                             style       = Dict( "textAlign"     => "center",
                                                                 "font-size"     => "100%",
