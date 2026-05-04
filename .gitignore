@@ -10,4 +10,5 @@ src/.DS_Store
 **/.DS_Store
 /output/*.svg
 /output/*.txt
+/output/*
 /user_data/*mineral_style_user.json*
