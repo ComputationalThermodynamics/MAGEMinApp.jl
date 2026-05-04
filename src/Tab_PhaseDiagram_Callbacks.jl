@@ -232,8 +232,9 @@ function Tab_PhaseDiagram_Callbacks(app)
     ) do n_clicks, fname, dtb
 
         if fname != "filename"
+            mkpath("./output")
             datab   = "_"*dtb
-            fileout = fname*datab
+            fileout = "./output/"*fname*datab
             MAGEMin_data2dataframe(Out_XY[point_id],dtb,fileout)
 
             return  "success", ""
@@ -280,8 +281,9 @@ function Tab_PhaseDiagram_Callbacks(app)
     ) do n_clicks, fname, dtb
 
         if fname != "filename"
+            mkpath("./output")
             datab   = "_"*dtb
-            fileout = fname*datab
+            fileout = "./output/"*fname*datab
 
             MAGEMin_data2dataframe(Out_XY,dtb,fileout)
             return "success", ""
@@ -303,8 +305,9 @@ function Tab_PhaseDiagram_Callbacks(app)
     ) do n_clicks, fname, dtb
 
         if fname != "filename"
+            mkpath("./output")
             output_bib      = "_"*dtb*".bib"
-            fileout         = fname*output_bib
+            fileout         = "./output/"*fname*output_bib
             magemin         = "MAGEMin"
             bib             = import_bibtex("./references/references.bib")
 
