@@ -792,8 +792,9 @@ function Tab_TraceElement_Callbacks(app)
         end
 
         if fname != "filename"
+            mkpath("./output")
             datab   = "_"*dtb*"_"*kds*sat_ext
-            fileout = fname*datab
+            fileout = "./output/"*fname*datab
 
             MAGEMin_dataTE2dataframe(Out_XY,Out_TE_XY,dtb,fileout)
             return "success", ""
@@ -832,10 +833,11 @@ function Tab_TraceElement_Callbacks(app)
         end
 
         if fname != "filename"
+            mkpath("./output")
             P       = "_Pkbar_"*string(Out_XY[point_id_te].P_kbar)
             T       = "_TC_"*string(Out_XY[point_id_te].T_C)
             datab   = "_"*dtb*P*T*"_"*kds*sat_ext
-            fileout = fname*datab
+            fileout = "./output/"*fname*datab
 
             MAGEMin_dataTE2dataframe(Out_XY[point_id_te],Out_TE_XY[point_id_te],dtb,fileout)
             return "success", ""
@@ -861,8 +863,9 @@ function Tab_TraceElement_Callbacks(app)
     ) do n_clicks, fname, kds, zrc, sulf, fapt
 
         if fname != "filename"
+            mkpath("./output")
             output_bib      = "_"*kds*".bib"
-            fileout         = fname*output_bib
+            fileout         = "./output/"*fname*output_bib
             magemin         = "MAGEMin"
             bib             = import_bibtex("./references/references.bib")
             

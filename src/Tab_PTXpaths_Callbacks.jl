@@ -38,8 +38,9 @@ function Tab_PTXpaths_Callbacks(app)
     ) do n_clicks, fname, dtb, sysunit, mode, nRes
 
         if fname != "filename"
+            mkpath("./output")
             output  = "_extracted_bulk_"*dtb
-            fileout = fname*output
+            fileout = "./output/"*fname*output
 
             n_ox    = length(Out_PTX[1].oxides)
             oxides  = Out_PTX[1].oxides
@@ -120,7 +121,7 @@ function Tab_PTXpaths_Callbacks(app)
 
             if mode == "fc"
                 output  = "_extracted_phases_"*dtb
-                fileout = fname*output
+                fileout = "./output/"*fname*output
 
                 n_ox    = length(Out_PTX[1].oxides)
                 oxides  = Out_PTX[1].oxides
@@ -240,11 +241,12 @@ function Tab_PTXpaths_Callbacks(app)
     ) do n_clicks, fname, dtb
 
         if fname != "filename"
+            mkpath("./output")
             output_bib      = "_"*dtb*".bib"
-            fileout         = fname*output_bib
+            fileout         = "./output/"*fname*output_bib
             magemin         = "MAGEMin"
             bib             = import_bibtex("./references/references.bib")
-            
+
             print("\nSaving references for computed PTX path\n")
             print("output path: $(pwd())\n")
 
@@ -294,8 +296,9 @@ function Tab_PTXpaths_Callbacks(app)
     ) do n_clicks, fname, dtb
 
         if fname != "filename"
+            mkpath("./output")
             datab   = "_"*dtb
-            fileout = fname*datab
+            fileout = "./output/"*fname*datab
 
             MAGEMin_data2dataframe(Out_PTX,dtb,fileout)
             return "success", ""
@@ -317,8 +320,9 @@ function Tab_PTXpaths_Callbacks(app)
     ) do n_clicks, fname, dtb
 
         if fname != "filename"
+            mkpath("./output")
             datab   = "_inlined_"*dtb
-            fileout = fname*datab
+            fileout = "./output/"*fname*datab
 
             MAGEMin_data2dataframe_inlined(Out_PTX,dtb,fileout)
             return "success", ""
@@ -362,10 +366,120 @@ function Tab_PTXpaths_Callbacks(app)
             sat_ext *= "_$P2O5sat"
         end
 
+        mkpath("./output")
         datab   = "_"*dtb*"_"*kds*sat_ext
-        fileout = fname*datab
+        fileout = "./output/"*fname*datab
 
         MAGEMin_dataTE2dataframe(Out_PTX, Out_TE_PTX, dtb, fileout)
+        return true, false, false
+    end
+
+
+    #save integrated cumulate trace-element composition to CSV
+    callback!(
+        app,
+        Output("data-te-cumulate-csv-ptx-save",             "is_open"),
+        Output("data-te-cumulate-save-csv-ptx-failed",      "is_open"),
+        Output("data-te-cumulate-save-csv-ptx-not-computed","is_open"),
+        Input("save-te-cumulate-csv-ptx-button",            "n_clicks"),
+        State("Filename-te-cumulate-ptx-id",                "value"),
+        State("database-dropdown-ptx",                      "value"),
+        State("kds-dropdown-ptx",                           "value"),
+        State("zrsat-dropdown-ptx",                         "value"),
+        State("ssat-dropdown-ptx",                          "value"),
+        State("P2O5sat-dropdown-ptx",                       "value"),
+        prevent_initial_call=true,
+    ) do n_clicks, fname, dtb, kds, zrsat, ssat, P2O5sat
+
+        if !@isdefined(Out_TE_PTX) || isempty(Out_TE_PTX)
+            return false, false, true
+        end
+
+        if fname == "filename"
+            return false, true, false
+        end
+
+        sat_ext = ""
+        if zrsat != "none"
+            sat_ext *= "_$zrsat"
+        end
+        if ssat != "none"
+            sat_ext *= "_$ssat"
+        end
+        if P2O5sat != "none"
+            sat_ext *= "_$P2O5sat"
+        end
+
+        mkpath("./output")
+        datab   = "_cumulate_te_"*dtb*"_"*kds*sat_ext
+        fileout = "./output/"*fname*datab*".csv"
+
+        n_tot   = length(Out_PTX)
+        n_te    = length(Out_TE_PTX[1].elements)
+        elements = Out_TE_PTX[1].elements
+
+        P = [Out_PTX[k].P_kbar for k in 1:n_tot]
+        T = [Out_PTX[k].T_C    for k in 1:n_tot]
+
+        # stepwise solid TE and mass fractions removed at each step
+        Csol_step = Matrix{Union{Float64,Missing}}(undef, n_tot, n_te) .= missing
+        for k in 1:n_tot
+            if !all(isnan, Out_TE_PTX[k].Csol)
+                Csol_step[k, :] .= Out_TE_PTX[k].Csol
+            end
+        end
+
+        cumfrac  = accumulate(+, fracEvol[:, 2])
+        start_id = findfirst(k -> !all(isnan, Out_TE_PTX[k].Csol), 1:n_tot)
+
+        # integrated cumulate TE: mass-weighted running average of extracted solid
+        Csol_int = Matrix{Union{Float64,Missing}}(undef, n_tot, n_te) .= missing
+        if !isnothing(start_id)
+            if !all(isnan, Out_TE_PTX[start_id].Csol)
+                Csol_int[start_id, :] .= Out_TE_PTX[start_id].Csol
+            end
+            for i in start_id+1:n_tot
+                if !all(isnan, Out_TE_PTX[i].Csol) && !ismissing(Csol_int[i-1, 1])
+                    wt_new = fracEvol[i, 2]
+                    wt_old = cumfrac[i-1]
+                    denom  = wt_new + wt_old
+                    if denom > 0.0
+                        Csol_int[i, :] .= (Out_TE_PTX[i].Csol .* wt_new .+ collect(skipmissing(Csol_int[i-1, :])) .* wt_old) ./ denom
+                    end
+                elseif !ismissing(Csol_int[i-1, 1])
+                    Csol_int[i, :] .= Csol_int[i-1, :]
+                end
+            end
+        end
+
+        MAGEMin_db = DataFrame(
+            Symbol("point[#]")              => Int64[],
+            Symbol("P[kbar]")               => Float64[],
+            Symbol("T[°C]")                 => Float64[],
+            Symbol("Removed%")              => Float64[],
+            Symbol("Cumulative removed%")   => Float64[],
+        )
+        for e in elements
+            MAGEMin_db[!, e*"_step[μg/g]"] = Union{Float64,Missing}[]
+        end
+        for e in elements
+            MAGEMin_db[!, e*"_int[μg/g]"] = Union{Float64,Missing}[]
+        end
+
+        for k in 1:n_tot
+            part_1 = Dict(
+                "point[#]"              => k,
+                "P[kbar]"               => P[k],
+                "T[°C]"                 => T[k],
+                "Removed%"              => fracEvol[k, 2] * 100.0,
+                "Cumulative removed%"   => cumfrac[k] * 100.0,
+            )
+            part_2 = Dict((elements[j]*"_step[μg/g]" => Csol_step[k, j]) for j in eachindex(elements))
+            part_3 = Dict((elements[j]*"_int[μg/g]"  => Csol_int[k, j])  for j in eachindex(elements))
+            push!(MAGEMin_db, merge(part_1, part_2, part_3), cols=:union)
+        end
+
+        CSV.write(fileout, MAGEMin_db)
         return true, false, false
     end
 
@@ -1568,15 +1682,16 @@ function Tab_PTXpaths_Callbacks(app)
     # Show/hide TE section + enable/disable TE tab based on tepm dropdown
     callback!(
         app,
-        Output("tepm-section-ptx", "style"),
-        Output("te-tab-ptx",       "disabled"),
-        Input("tepm-dropdown-ptx", "value"),
+        Output("tepm-section-ptx",      "style"),
+        Output("te-tab-ptx",            "disabled"),
+        Output("te-export-buttons-ptx", "style"),
+        Input("tepm-dropdown-ptx",      "value"),
         prevent_initial_call = true,
     ) do tepm
         if tepm == "true"
-            return Dict("display" => "block"), false
+            return Dict("display" => "block"), false, Dict("display" => "block")
         else
-            return Dict("display" => "none"), true
+            return Dict("display" => "none"), true, Dict("display" => "none")
         end
     end
 
