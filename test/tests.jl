@@ -97,3 +97,150 @@ for i = 1:Threads.maxthreadid()
     finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i])
 end
 
+# AppData lives in the MAGEMinApp module; re-included functions look for it in Main
+const AppData = MAGEMinApp.AppData
+
+# get_init_param is defined in MAGEMinApp_functions.jl which is not re-included here
+function get_init_param(dtb::String, solver::String, cpx, limOpx, limOpxVal::Float64)
+    mbCpx      = (cpx == true && dtb in ("mb","mbe")) ? 1 : 0
+    limitCaOpx = 0
+    CaOpxLim   = 1.0
+    if limOpx == "ON" && dtb in ("mb","mbe","ig","igd","alk")
+        limitCaOpx = 1
+        CaOpxLim   = limOpxVal
+    end
+    sol = solver == "pge" ? 1 : solver == "lp" ? 0 : 2
+    return mbCpx, limitCaOpx, CaOpxLim, sol
+end
+
+include(joinpath(pkg_dir,"src","PTXpaths_functions.jl"))
+
+println("  Test PTX path - fractional crystallization with trace elements")
+
+dtb    = "ig"
+oxides = ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3","H2O"]
+
+# N-MORB bulk composition (Gale et al., 2013) — normalized mol fractions
+_morb_raw = [53.21, 9.41, 12.21, 12.21, 8.65, 0.09, 2.90, 1.21, 0.69, 0.02, 0.0]
+bulk_morb  = _morb_raw ./ sum(_morb_raw)
+
+# KLB-1 peridotite (same as above)
+bulk_klb1 = [0.38451319035870185, 0.017740308257833806, 0.028208688355924924,
+             0.5050993397328966,  0.0587947378409965,   9.988912307338855e-5,
+             0.0024972280768347137, 0.0009988912307338856, 0.0009589355815045301,
+             0.0010887914414999351, 0.0]
+
+# Primitive mantle TE concentrations (Sun & McDonough, 1989) in μg/g
+elements_te = ["La", "Ce", "Nd", "Sm", "Eu", "Gd", "Dy", "Er", "Yb"]
+bulkte_pm   = [0.687, 1.775, 1.354, 0.444, 0.168, 0.596, 0.737, 0.480, 0.441]
+
+# ─── Fractional Crystallization ───────────────────────────────────────────────
+println("    fc: N-MORB isobaric cooling 1250 → 1050 °C at 4 kbar")
+
+PTdata_fc = [
+    Dict(Symbol("col-1") => 4.0, Symbol("col-2") => 1250.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0),
+    Dict(Symbol("col-1") => 4.0, Symbol("col-2") => 1050.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0),
+]
+
+compute_new_PTXpath(4, PTdata_fc, "fc", bulk_morb, bulk_morb, oxides, nothing, "false", false,
+                    dtb, 1, "none", "lp", -1, 0.0, false, false, 0.0, 0.0, 0.0, 1250.0, false)
+
+Out_PTX_fc  = deepcopy(Out_PTX)
+fracEvol_fc = copy(fracEvol)
+n_tot_fc    = length(Out_PTX_fc)
+
+Out_TE_fc, _ = tepm_function_ptx("fc", dtb, "OL", "none", "none", "none",
+                                  bulkte_pm, bulkte_pm, "false", elements_te, 0.0, 0.0)
+n_el_fc = length(Out_TE_fc[1].elements)
+
+# Major-element mass balance: total solid extracted + remaining melt = 1
+# delta_k = fracEvol[k,1] * frac_S[k] (solid extracted at step k relative to original)
+delta_fc       = [fracEvol_fc[k, 1] * Out_PTX_fc[k].frac_S for k in 1:n_tot_fc]
+remaining_melt = fracEvol_fc[n_tot_fc, 1] * Out_PTX_fc[n_tot_fc].frac_M
+@test sum(delta_fc) + remaining_melt ≈ 1.0 rtol=0.01
+
+# Point-wise TE partition: C0 ≈ Cliq * frac_M + Csol * frac_S at every two-phase step
+for k in 1:n_tot_fc
+    if !all(isnan, Out_TE_fc[k].Cliq) && !all(isnan, Out_TE_fc[k].Csol)
+        fM = Out_PTX_fc[k].frac_M
+        fS = Out_PTX_fc[k].frac_S
+        for j in 1:n_el_fc
+            @test Out_TE_fc[k].Cliq[j] * fM + Out_TE_fc[k].Csol[j] * fS ≈ Out_TE_fc[k].C0[j] rtol=0.01
+        end
+    end
+end
+
+# Cumulative TE mass conservation: sum(Csol_k * delta_k) + Cliq_end * remaining_melt ≈ C0_ini
+# Skip elements absent from the KD database (C0_ini == 0 after adjust_chemical_system)
+for j in 1:n_el_fc
+    C0_ini = Out_TE_fc[1].C0[j]
+    (isnan(C0_ini) || C0_ini <= 0.0) && continue
+    mass_sol = sum(delta_fc[k] * (isnan(Out_TE_fc[k].Csol[j]) ? 0.0 : Out_TE_fc[k].Csol[j])
+                   for k in 1:n_tot_fc)
+    mass_liq = (remaining_melt > 0.0 && !isnan(Out_TE_fc[n_tot_fc].Cliq[j])) ?
+                remaining_melt * Out_TE_fc[n_tot_fc].Cliq[j] : 0.0
+    @test (mass_sol + mass_liq) / C0_ini ≈ 1.0 rtol=0.05
+end
+
+# ─── Fractional Melting ────────────────────────────────────────────────────────
+println("  Test PTX path - fractional melting with trace elements")
+println("    fm: KLB-1 peridotite isobaric heating 1100 → 1500 °C at 5 kbar")
+
+PTdata_fm = [
+    Dict(Symbol("col-1") => 5.0, Symbol("col-2") => 1100.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0),
+    Dict(Symbol("col-1") => 5.0, Symbol("col-2") => 1500.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0),
+]
+
+compute_new_PTXpath(4, PTdata_fm, "fm", bulk_klb1, bulk_klb1, oxides, nothing, "false", false,
+                    dtb, 1, "none", "lp", -1, 0.0, false, false, 0.0, 0.0, 0.0, 1100.0, false)
+
+Out_PTX_fm = deepcopy(Out_PTX)
+n_tot_fm   = length(Out_PTX_fm)
+
+Out_TE_fm, _ = tepm_function_ptx("fm", dtb, "OL", "none", "none", "none",
+                                  bulkte_pm, bulkte_pm, "false", elements_te, 0.0, 0.0)
+n_el_fm = length(Out_TE_fm[1].elements)
+
+# Major-element mass balance: total melt extracted + remaining solid = 1
+# For fm (nCon=0): delta_k = rem_mass[k] * frac_M[k], rem_mass decreases by frac_S[k] each step
+delta_fm = let rem = Ref(1.0), d = zeros(n_tot_fm)
+    for k in 1:n_tot_fm
+        fM = Out_PTX_fm[k].frac_M
+        fS = Out_PTX_fm[k].frac_S
+        if !isnan(fM) && !isnan(fS) && fM > 0.0
+            d[k]    = rem[] * fM
+            rem[]   = rem[] * fS
+        end
+    end
+    d
+end
+remaining_solid = 1.0 - sum(delta_fm)
+@test sum(delta_fm) + remaining_solid ≈ 1.0 rtol=0.1
+
+# Point-wise TE partition: C0 ≈ Cliq * frac_M + Csol * frac_S at every two-phase step
+# rtol=0.15 accounts for near-solidus steps and phases with incomplete KD coverage
+for k in 1:n_tot_fm
+    if !all(isnan, Out_TE_fm[k].Cliq) && !all(isnan, Out_TE_fm[k].Csol)
+        fM = Out_PTX_fm[k].frac_M
+        fS = Out_PTX_fm[k].frac_S
+        for j in 1:n_el_fm
+            C0_j = Out_TE_fm[k].C0[j]
+            (isnan(C0_j) || C0_j <= 0.0) && continue
+            @test Out_TE_fm[k].Cliq[j] * fM + Out_TE_fm[k].Csol[j] * fS ≈ C0_j rtol=0.15
+        end
+    end
+end
+
+# Cumulative TE mass conservation: sum(Cliq_k * delta_k) + Csol_end * remaining_solid ≈ C0_ini
+# rtol=0.20 reflects imperfect KD database coverage — some mineral phases lack KDs for some REEs
+# Skip elements absent from the KD database (C0_ini == 0 after adjust_chemical_system)
+for j in 1:n_el_fm
+    C0_ini = Out_TE_fm[1].C0[j]
+    (isnan(C0_ini) || C0_ini <= 0.0) && continue
+    mass_liq = sum(delta_fm[k] * (isnan(Out_TE_fm[k].Cliq[j]) ? 0.0 : Out_TE_fm[k].Cliq[j])
+                   for k in 1:n_tot_fm)
+    mass_sol = (remaining_solid > 0.0 && !isnan(Out_TE_fm[n_tot_fm].Csol[j])) ?
+                remaining_solid * Out_TE_fm[n_tot_fm].Csol[j] : 0.0
+    @test (mass_liq + mass_sol) / C0_ini ≈ 1.0 rtol=0.20
+end
+

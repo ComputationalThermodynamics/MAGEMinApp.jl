@@ -388,8 +388,9 @@ function Tab_PTXpaths_Callbacks(app)
         State("zrsat-dropdown-ptx",                         "value"),
         State("ssat-dropdown-ptx",                          "value"),
         State("P2O5sat-dropdown-ptx",                       "value"),
+        State("mode-dropdown-ptx",                          "value"),
         prevent_initial_call=true,
-    ) do n_clicks, fname, dtb, kds, zrsat, ssat, P2O5sat
+    ) do n_clicks, fname, dtb, kds, zrsat, ssat, P2O5sat, mode
 
         if !@isdefined(Out_TE_PTX) || isempty(Out_TE_PTX)
             return false, false, true
@@ -421,30 +422,53 @@ function Tab_PTXpaths_Callbacks(app)
         P = [Out_PTX[k].P_kbar for k in 1:n_tot]
         T = [Out_PTX[k].T_C    for k in 1:n_tot]
 
-        # stepwise solid TE and mass fractions removed at each step
+        # for fc: extracted material is solid (Csol); for fm: extracted material is melt (Cliq)
+        C_ext(k) = mode == "fm" ? Out_TE_PTX[k].Cliq : Out_TE_PTX[k].Csol
+
+        # stepwise extracted TE at each step
         Csol_step = Matrix{Union{Float64,Missing}}(undef, n_tot, n_te) .= missing
         for k in 1:n_tot
-            if !all(isnan, Out_TE_PTX[k].Csol)
-                Csol_step[k, :] .= Out_TE_PTX[k].Csol
+            if !all(isnan, C_ext(k))
+                Csol_step[k, :] .= C_ext(k)
             end
         end
 
-        cumfrac  = accumulate(+, fracEvol[:, 2])
-        start_id = findfirst(k -> !all(isnan, Out_TE_PTX[k].Csol), 1:n_tot)
+        # compute per-step incremental extraction weights
+        # fracEvol[:,2] = 1 - fracEvol[:,1] is cumulative; we need the increment at each step
+        # for fm with nCon=0, fracEvol[:,1] never changes so fracEvol[:,2]=0 — use frac_M instead
+        delta_frac = if mode == "fm"
+            rem = 1.0
+            d   = zeros(n_tot)
+            for k in 1:n_tot
+                fm = Out_PTX[k].frac_M
+                fs = Out_PTX[k].frac_S
+                if !isnan(fm) && !isnan(fs) && fm > 0.0
+                    d[k] = rem * fm
+                    rem  = rem * fs
+                end
+            end
+            d
+        else
+            diff([0.0; fracEvol[:, 2]])
+        end
+        cumfrac  = accumulate(+, delta_frac)
+        start_id = findfirst(k -> !all(isnan, C_ext(k)), 1:n_tot)
 
-        # integrated cumulate TE: mass-weighted running average of extracted solid
+        # integrated cumulate TE: mass-weighted running average of extracted material
         Csol_int = Matrix{Union{Float64,Missing}}(undef, n_tot, n_te) .= missing
         if !isnothing(start_id)
-            if !all(isnan, Out_TE_PTX[start_id].Csol)
-                Csol_int[start_id, :] .= Out_TE_PTX[start_id].Csol
+            if !all(isnan, C_ext(start_id))
+                Csol_int[start_id, :] .= C_ext(start_id)
             end
             for i in start_id+1:n_tot
-                if !all(isnan, Out_TE_PTX[i].Csol) && !ismissing(Csol_int[i-1, 1])
-                    wt_new = fracEvol[i, 2]
+                if !all(isnan, C_ext(i)) && !ismissing(Csol_int[i-1, 1])
+                    wt_new = delta_frac[i]
                     wt_old = cumfrac[i-1]
                     denom  = wt_new + wt_old
                     if denom > 0.0
-                        Csol_int[i, :] .= (Out_TE_PTX[i].Csol .* wt_new .+ collect(skipmissing(Csol_int[i-1, :])) .* wt_old) ./ denom
+                        Csol_int[i, :] .= (C_ext(i) .* wt_new .+ collect(skipmissing(Csol_int[i-1, :])) .* wt_old) ./ denom
+                    else
+                        Csol_int[i, :] .= Csol_int[i-1, :]
                     end
                 elseif !ismissing(Csol_int[i-1, 1])
                     Csol_int[i, :] .= Csol_int[i-1, :]
@@ -471,7 +495,7 @@ function Tab_PTXpaths_Callbacks(app)
                 "point[#]"              => k,
                 "P[kbar]"               => P[k],
                 "T[°C]"                 => T[k],
-                "Removed%"              => fracEvol[k, 2] * 100.0,
+                "Removed%"              => delta_frac[k] * 100.0,
                 "Cumulative removed%"   => cumfrac[k] * 100.0,
             )
             part_2 = Dict((elements[j]*"_step[μg/g]" => Csol_step[k, j]) for j in eachindex(elements))
