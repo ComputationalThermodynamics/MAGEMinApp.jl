@@ -754,7 +754,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                     step    = val/(nsteps+1)
                 end
 
-                @showprogress "Computing PTX path: point $i to $np" for j = 1:nsteps+1
+                @showprogress desc="Computing PTX path: point $i to $np " for j = 1:nsteps+1
                     P = Pres[i] + (j-1)*( (Pres[i+1] - Pres[i])/ (nsteps+1) )
                     T = Temp[i] + (j-1)*( (Temp[i+1] - Temp[i])/ (nsteps+1) )
 
@@ -827,7 +827,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                             if nCon > 0.0
                                 if Out_PTX[k].frac_M > nCon/100.0
                                     bulk                .= Out_PTX[k].bulk_S .*((100.0-nCon)/100.0) .+ Out_PTX[k].bulk_M .*(nCon/100.0)
-                                    removedBulk[k+1,:]  .= Out_PTX[k].bulk_S .*(nCon/100.0) .+ Out_PTX[k].bulk_M .*((100.0-nCon)/100.0)
+                                    removedBulk[k+1,:]  .= Out_PTX[k].bulk_M
                                     fracEvol[k+1,1]      = fracEvol[k,1] * (Out_PTX[k].frac_S + Out_PTX[k].frac_F + nCon/100.0) 
                                     fracEvol[k+1,2]      = 1.0 - fracEvol[k+1,1] 
                                 else
@@ -856,8 +856,10 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                     fracEvol[k+1,1]      = fracEvol[k,1] * (Out_PTX[k].frac_M - nRes/100.0)     #removed
                                     fracEvol[k+1,2]      = 1.0 - fracEvol[k+1,1]                                #remained
                                 else
-                                    fracEvol[k+1,1]      = fracEvol[k,1] * (Out_PTX[k].frac_M - Out_PTX[k].frac_S) 
-                                    fracEvol[k+1,2]      = 1.0 - fracEvol[k+1,1] 
+                                    bulk               .= Out_PTX[k].bulk_M
+                                    removedBulk[k+1,:] .= Out_PTX[k].bulk_S
+                                    fracEvol[k+1,1]      = fracEvol[k,1] * (Out_PTX[k].frac_M - Out_PTX[k].frac_S)
+                                    fracEvol[k+1,2]      = 1.0 - fracEvol[k+1,1]
                                 end
                             else
                                 bulk                .= Out_PTX[k].bulk_M
