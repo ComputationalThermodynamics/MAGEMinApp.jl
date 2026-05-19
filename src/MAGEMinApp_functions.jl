@@ -2290,7 +2290,9 @@ function parse_bulk_rock(contents, filename)
         input   = String(decoded) ;
 
         if endswith(lowercase(filename), ".csv")
-            datain  = strip.(string.(readdlm(IOBuffer(input), ',', comments=true, comment_char='#')));
+            first_line = split(input, '\n')[findfirst(l -> !startswith(strip(l), '#') && !isempty(strip(l)), split(input, '\n'))]
+            delim = occursin(';', first_line) ? ';' : ','
+            datain  = strip.(string.(readdlm(IOBuffer(input), delim, comments=true, comment_char='#')));
             bulk_csv_to_db(datain);
         else
             datain  = strip.(string.(readdlm(IOBuffer(input), ';', comments=true, comment_char='#')));
