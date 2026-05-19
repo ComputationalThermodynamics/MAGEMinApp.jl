@@ -1,0 +1,5 @@
+title,comments,db,sysUnit,SiO2,Al2O3,CaO,MgO,FeO,Fe2O3,K2O,Na2O,TiO2,O,MnO,H2O,P2O5,SiO2_frac2
+Basalt_Xu08,bulk test,sb21,mol,0.5175,0.1019,0.1388,0.1494,0.0706,,,0.0218,,,,,,55
+Basalt_Xu08l,testy,sb21,mol,0.5175,0.1019,0.1388,0.1494,0.0706,,,0.0218,,,,,,55
+title1,"comment,2l",um,wt,35.66,6.51,5.12,26.62,,,14.56,0.08,0.04,3.78,0.52,0.47,,32
+Renato_2,test2,mb,wt,50.91,10.1,11.56,13.89,11.02,,0.09,1.4,0.77,0.06,0.19,0,,45
