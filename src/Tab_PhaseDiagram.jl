@@ -1404,7 +1404,7 @@ function Tab_PhaseDiagram()
                                 ),
                             ]),
                             dbc_tab(label="Classifications", children=[
-                                dbc_row([
+ dbc_row([
 
                                 # dbc_button("Phase diagram information",id="infos-phase-diagram"),
                                 dbc_collapse(

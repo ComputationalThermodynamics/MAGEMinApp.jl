@@ -422,8 +422,8 @@ function Tab_PTXpaths_Callbacks(app)
         P = [Out_PTX[k].P_kbar for k in 1:n_tot]
         T = [Out_PTX[k].T_C    for k in 1:n_tot]
 
-        # for fc: extracted material is solid (Csol); for fm: extracted material is melt (Cliq)
-        C_ext(k) = mode == "fm" ? Out_TE_PTX[k].Cliq : Out_TE_PTX[k].Csol
+        # extracted TE at each step: pre-computed in tepm_function_ptx, accounting for nRes/nCon mixing
+        C_ext(k) = C_ext_TE_PTX[k]
 
         # stepwise extracted TE at each step
         Csol_step = Matrix{Union{Float64,Missing}}(undef, n_tot, n_te) .= missing
@@ -1831,7 +1831,7 @@ function Tab_PTXpaths_Callbacks(app)
         prevent_initial_call = true,
     ) do _, dtb, mode, assim, kds_mod, zrsat_mod, ssat_mod, P2O5sat_mod, bulkte1, bulkte2, nCon, nRes
 
-        global Out_TE_PTX, all_TE_ph_ptx
+        global Out_TE_PTX, all_TE_ph_ptx, C_ext_TE_PTX
 
         if !@isdefined(Out_PTX) || isempty(Out_PTX)
             return false, true, false
@@ -1845,7 +1845,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         bulkte_ini, bulkte_ass, elem = get_terock_prop(bulkte1, bulkte2)
 
-        t = @elapsed Out_TE_PTX, all_TE_ph_ptx = tepm_function_ptx(
+        t = @elapsed Out_TE_PTX, all_TE_ph_ptx, C_ext_TE_PTX = tepm_function_ptx(
                         mode, dtb, kds_mod, zrsat_mod, ssat_mod, P2O5sat_mod,
                         bulkte_ini, bulkte_ass, assim, elem, nCon, nRes)
         println("Computed PTX trace elements in $t s")

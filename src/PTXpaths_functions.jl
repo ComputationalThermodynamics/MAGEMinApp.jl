@@ -620,6 +620,85 @@ function get_data_plot_isoS_path()
 end
 
 
+function tepm_function_ptx( mode        :: String,
+                             dtb         :: String,
+                             kds_mod     :: String,
+                             zrsat_mod   :: String,
+                             ssat_mod    :: String,
+                             P2O5sat_mod :: String,
+                             bulkte_ini  :: Vector{Float64},
+                             bulkte_ass  :: Vector{Float64},
+                             assim       :: String,
+                             elem_TE     :: Vector{String},
+                             nCon        :: Float64 = 0.0,
+                             nRes        :: Float64 = 0.0)
+
+    global Out_PTX, assimFrac
+
+    np               = length(Out_PTX)
+    Out_TE_PTX       = Vector{MAGEMin_C.out_tepm}(undef, np)
+    all_TE_ph        = []
+
+    TE_models    = [AppData.KDs[i][4] for i in 1:length(AppData.KDs)]
+    id_TE_model  = findfirst(TE_models .== kds_mod)
+    KDs_dtb      = MAGEMin_C.create_custom_KDs_database(AppData.KDs[id_TE_model][1], AppData.KDs[id_TE_model][2], AppData.KDs[id_TE_model][3]; info = AppData.KDs[id_TE_model][6])
+
+    bulkte_ini   = MAGEMin_C.adjust_chemical_system(KDs_dtb, bulkte_ini, elem_TE)
+    bulkte_ass   = MAGEMin_C.adjust_chemical_system(KDs_dtb, bulkte_ass, elem_TE)
+    bulkte_cur   = copy(bulkte_ini)
+
+    n_te             = length(bulkte_ini)
+    C_extracted_TE   = [fill(NaN, n_te) for _ in 1:np]
+
+    for k = 1:np
+
+        if assim == "true"
+            f_ass = assimFrac[k]
+            TEvec = (1.0 - f_ass) .* bulkte_cur .+ f_ass .* bulkte_ass
+        else
+            TEvec = bulkte_cur
+        end
+
+        Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb;
+                                       ZrSat_model   = zrsat_mod,
+                                       SSat_model    = ssat_mod,
+                                       P2O5Sat_model = P2O5sat_mod)
+
+        # Update evolving bulk TE for next step, mirroring major-element removal logic
+        if mode == "fc" && !all(isnan, Out_TE_PTX[k].Cliq)
+            if nRes > 0.0 && !all(isnan, Out_TE_PTX[k].Csol) && Out_PTX[k].frac_S > nRes/100.0
+                bulkte_cur          = Out_TE_PTX[k].Cliq .* (1.0 - nRes/100.0) .+ Out_TE_PTX[k].Csol .* (nRes/100.0)
+                # extracted = crystals + trapped interstitial melt (mirrors removedBulk in major-element fc)
+                C_extracted_TE[k]   = Out_TE_PTX[k].Cliq .* (nRes/100.0) .+ Out_TE_PTX[k].Csol .* (1.0 - nRes/100.0)
+            elseif !all(isnan, Out_TE_PTX[k].Csol)
+                bulkte_cur          = copy(Out_TE_PTX[k].Cliq)
+                C_extracted_TE[k]   = copy(Out_TE_PTX[k].Csol)
+            end
+        elseif mode == "fm" && !all(isnan, Out_TE_PTX[k].Csol)
+            if nCon > 0.0 && !all(isnan, Out_TE_PTX[k].Cliq) && Out_PTX[k].frac_M > nCon/100.0
+                bulkte_cur          = Out_TE_PTX[k].Csol .* (1.0 - nCon/100.0) .+ Out_TE_PTX[k].Cliq .* (nCon/100.0)
+            else
+                bulkte_cur          = copy(Out_TE_PTX[k].Csol)
+            end
+            # extracted melt is always pure Cliq (nCon only affects how much is retained, not what leaves)
+            if !all(isnan, Out_TE_PTX[k].Cliq)
+                C_extracted_TE[k]   = copy(Out_TE_PTX[k].Cliq)
+            end
+        end
+
+        if !isnothing(Out_TE_PTX[k].ph_TE)
+            for j in Out_TE_PTX[k].ph_TE
+                if !(j in all_TE_ph)
+                    push!(all_TE_ph, string(j))
+                end
+            end
+        end
+    end
+
+    return Out_TE_PTX, all_TE_ph, C_extracted_TE
+end
+
+
 function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   bulk_assim, oxi,    phase_selection,    assim, var_buffer,
                                 dtb,        dataset,    bufferType, solver,
                                 verbose,    bufferN,
