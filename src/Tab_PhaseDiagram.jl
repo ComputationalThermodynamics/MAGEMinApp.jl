@@ -229,7 +229,7 @@ function Tab_PhaseDiagram()
                     ], width=9),
                     dbc_col([
                         
-                        dbc_tabs([
+                        dbc_tabs(id="pd-sidebar-tabs", [
                             dbc_tab(label="Informations", children=[
                                 dbc_row([
 
@@ -1451,7 +1451,7 @@ function Tab_PhaseDiagram()
                                                             dbc_col([
                                                                 draw_path_diagram_plot(),
                                                             ], width=8),
-                                                        ]),
+                                                        ], justify="center"),
                                                     ],
                                                     id        = "draw-path-canvas",
                                                     title     = "Phase fractions along path",

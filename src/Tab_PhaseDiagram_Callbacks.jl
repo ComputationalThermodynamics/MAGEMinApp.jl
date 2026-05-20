@@ -1508,6 +1508,16 @@ function Tab_PhaseDiagram_Callbacks(app)
         return is_open    
     end
 
+    # Draw path — disable record switch when leaving the Draw path tab
+    callback!(
+        app,
+        Output("draw-path-record-switch", "value"),
+        Input("pd-sidebar-tabs",          "active_tab"),
+        prevent_initial_call = true,
+    ) do active_tab
+        return active_tab == "tab-3" ? no_update() : false
+    end
+
     # Draw path — record clicks and clear
     callback!(
         app,
@@ -1565,8 +1575,10 @@ function Tab_PhaseDiagram_Callbacks(app)
             height      = 360,
             margin      = attr(autoexpand=false, l=55, r=12, b=50, t=10),
             autosize    = true,
-            xaxis_title = "P [kbar]; T [°C]",
-            yaxis       = attr(title="Phase fraction [$(sysunit)%]", autorange=true),
+            paper_bgcolor = "white",
+            plot_bgcolor  = "white",
+            xaxis       = attr(title="P [kbar]; T [°C]", showgrid=false, zeroline=false),
+            yaxis       = attr(title="Phase fraction [$(sysunit)%]", autorange=true, showgrid=false, zeroline=false),
             showlegend  = true,
         )
 
@@ -1577,7 +1589,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                 format   = "svg",
                 filename = "draw_path_phase_fractions",
                 width    = 800,
-                height   = 400,
+                height   = 300,
                 scale    = 2.0,
             ).fields
         )
