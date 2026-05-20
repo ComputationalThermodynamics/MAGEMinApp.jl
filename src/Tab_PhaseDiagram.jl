@@ -1403,6 +1403,61 @@ function Tab_PhaseDiagram()
                                         is_open=true,
                                 ),
                             ]),
+                            dbc_tab(label="Draw path", children=[
+                                dbc_row([
+                                    dbc_collapse(
+                                        dbc_card(dbc_cardbody([
+                                            html_h1("Path recording", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            html_hr(),
+                                            dbc_row([
+                                                dbc_col([
+                                                    dbc_switch(label="Record", id="draw-path-record-switch", value=false),
+                                                ], width=7),
+                                                dbc_col([
+                                                    html_div(id="draw-path-point-count", children="0 point(s)",
+                                                        style = Dict("textAlign" => "center", "font-size" => "100%", "marginTop" => 6)),
+                                                ], width=5),
+                                            ]),
+                                            html_div("‎ "),
+                                            dbc_row([
+                                                dbc_col([
+                                                    dbc_button("Clear", id="draw-path-clear-button", color="light", n_clicks=0,
+                                                        style = Dict("textAlign" => "center", "font-size" => "100%",
+                                                                     "border" => "1px grey solid", "width" => "100%")),
+                                                ], width=4),
+                                                dbc_col([
+                                                    dcc_dropdown(
+                                                        id      = "draw-path-sysunit",
+                                                        options = [
+                                                            (label = "mol%", value = "mol"),
+                                                            (label = "wt%",  value = "wt"),
+                                                            (label = "vol%", value = "vol"),
+                                                        ],
+                                                        value     = "mol",
+                                                        clearable = false,
+                                                        style     = Dict("border" => "none"),
+                                                    ),
+                                                ], width=4),
+                                                dbc_col([
+                                                    dbc_button("Generate", id="draw-path-generate-button", color="light", n_clicks=0,
+                                                        style = Dict("textAlign" => "center", "font-size" => "100%",
+                                                                     "border" => "1px grey solid", "width" => "100%")),
+                                                ], width=4),
+                                            ]),
+                                            html_div("‎ "),
+                                            dbc_collapse(
+                                                dbc_card(dbc_cardbody([
+                                                    draw_path_diagram_plot(),
+                                                ])),
+                                                id      = "collapse-draw-path-diagram",
+                                                is_open = false,
+                                            ),
+                                        ])),
+                                        id      = "collapse-draw-path",
+                                        is_open = true,
+                                    ),
+                                ]),
+                            ]),
                             dbc_tab(label="Classifications", children=[
  dbc_row([
 

@@ -1951,6 +1951,66 @@ function remove_all_isopleth_phaseDiagram()
 end
 
 
+function get_draw_path_plot(sysunit, path_ids)
+    global Out_XY
+
+    n_tot = length(path_ids)
+    if n_tot == 0
+        return GenericTrace[], []
+    end
+
+    ph_names = Vector{String}()
+    for id in path_ids
+        for ph in Out_XY[id].ph
+            if !(ph in ph_names)
+                push!(ph_names, ph)
+            end
+        end
+    end
+    ph_names = sort(ph_names)
+    n_ph     = length(ph_names)
+
+    x = Vector{String}(undef, n_tot)
+    Y = zeros(Float64, n_ph, n_tot)
+
+    for (k, id) in enumerate(path_ids)
+        x[k] = string(round(Out_XY[id].P_kbar, digits=1)) * "; " * string(round(Out_XY[id].T_C, digits=1))
+        for (i, ph) in enumerate(ph_names)
+            idx = findall(Out_XY[id].ph .== ph)
+            if sysunit == "mol"
+                if ~isempty(idx); Y[i,k] = sum(Out_XY[id].ph_frac[idx])     * 100.0; end
+            elseif sysunit == "wt"
+                if ~isempty(idx); Y[i,k] = sum(Out_XY[id].ph_frac_wt[idx])  * 100.0; end
+            elseif sysunit == "vol"
+                if ~isempty(idx); Y[i,k] = sum(Out_XY[id].ph_frac_vol[idx]) * 100.0; end
+            end
+        end
+    end
+
+    for k in 1:n_tot
+        s = sum(Y[:, k])
+        if s > 0.0; Y[:, k] ./= s / 100.0; end
+    end
+
+    traces = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_ph)
+    for (i, ph) in enumerate(ph_names)
+        color = haskey(AppData.mineral_style[1], ph) ? AppData.mineral_style[1][ph][1] : "grey"
+        traces[i] = scatter(;
+            x          = x,
+            y          = Y[i,:],
+            name       = ph,
+            stackgroup = "one",
+            mode       = "lines",
+            line       = attr(width=0.5, color=color)
+        )
+    end
+
+    phase_list = [Dict("label" => "  "*ph_names[i], "value" => ph_names[i]) for i in 1:n_ph]
+
+    return traces, phase_list
+end
+
+
 function export_contours_to_txt(cont, name, filename)
     open(filename, "w") do io
         println(io, "isocontour: $name")

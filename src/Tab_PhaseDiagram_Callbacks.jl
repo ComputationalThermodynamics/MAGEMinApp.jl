@@ -1508,5 +1508,82 @@ function Tab_PhaseDiagram_Callbacks(app)
         return is_open    
     end
 
+    # Draw path — record clicks and clear
+    callback!(
+        app,
+        Output("draw-path-point-count", "children"),
+        Input("phase-diagram",          "clickData"),
+        Input("draw-path-clear-button", "n_clicks"),
+        State("draw-path-record-switch","value"),
+        prevent_initial_call = true,
+    ) do click_info, _n_clear, is_recording
+
+        global draw_path_ids
+
+        if !@isdefined(draw_path_ids)
+            draw_path_ids = Vector{Int64}()
+        end
+
+        bid = pushed_button( callback_context() )
+
+        if bid == "draw-path-clear-button"
+            draw_path_ids = Vector{Int64}()
+        elseif bid == "phase-diagram" && is_recording && !isnothing(click_info)
+            sp  = click_info[:points][][:text]
+            tmp = match(r"#([^# ]+)#", sp)
+            if tmp !== nothing
+                pid = parse(Int64, replace(tmp.match, r"#" => ""))
+                push!(draw_path_ids, pid)
+            end
+        end
+
+        n = length(draw_path_ids)
+        return "$(n) point(s)"
+    end
+
+    # Draw path — generate stacked area diagram
+    callback!(
+        app,
+        Output("draw-path-diagram",          "figure" ),
+        Output("draw-path-diagram",          "config" ),
+        Output("collapse-draw-path-diagram", "is_open"),
+        Input("draw-path-generate-button",   "n_clicks"),
+        State("draw-path-sysunit",           "value"  ),
+        prevent_initial_call = true,
+    ) do _n, sysunit
+
+        global draw_path_ids
+
+        if !@isdefined(draw_path_ids) || isempty(draw_path_ids)
+            return plot(Layout(height=360)), PlotConfig(), false
+        end
+
+        traces, _phase_list = get_draw_path_plot(sysunit, draw_path_ids)
+
+        layout = Layout(
+            font        = attr(size=10),
+            height      = 360,
+            margin      = attr(autoexpand=false, l=55, r=12, b=60, t=20),
+            autosize    = false,
+            xaxis_title = "P [kbar]; T [°C]",
+            yaxis       = attr(title="Phase fraction [$(sysunit)%]", range=[0.0, 100.0]),
+            showlegend  = true,
+        )
+
+        fig    = plot(traces, layout)
+        config = PlotConfig(
+            toImageButtonOptions = attr(
+                name     = "Download as svg",
+                format   = "svg",
+                filename = "draw_path_phase_fractions",
+                width    = 800,
+                height   = 400,
+                scale    = 2.0,
+            ).fields
+        )
+
+        return fig, config, true
+    end
+
     return app
 end

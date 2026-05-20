@@ -319,6 +319,16 @@ function path_isoS_plot()
             )
 end
 
+function draw_path_diagram_plot()
+
+    fig = plot( Layout( height= 360 ))
+
+    dcc_graph(
+                id          = "draw-path-diagram",
+                figure      = fig,
+            )
+end
+
 """
     plot_diagram(data_plot,layout)
 
