@@ -1544,9 +1544,9 @@ function Tab_PhaseDiagram_Callbacks(app)
     # Draw path — generate stacked area diagram
     callback!(
         app,
-        Output("draw-path-diagram",          "figure" ),
-        Output("draw-path-diagram",          "config" ),
-        Output("collapse-draw-path-diagram", "is_open"),
+        Output("draw-path-diagram", "figure" ),
+        Output("draw-path-diagram", "config" ),
+        Output("draw-path-canvas",  "is_open"),
         Input("draw-path-generate-button",   "n_clicks"),
         State("draw-path-sysunit",           "value"  ),
         prevent_initial_call = true,
@@ -1563,10 +1563,10 @@ function Tab_PhaseDiagram_Callbacks(app)
         layout = Layout(
             font        = attr(size=10),
             height      = 360,
-            margin      = attr(autoexpand=false, l=55, r=12, b=60, t=20),
-            autosize    = false,
+            margin      = attr(autoexpand=false, l=55, r=12, b=50, t=10),
+            autosize    = true,
             xaxis_title = "P [kbar]; T [°C]",
-            yaxis       = attr(title="Phase fraction [$(sysunit)%]", range=[0.0, 100.0]),
+            yaxis       = attr(title="Phase fraction [$(sysunit)%]", autorange=true),
             showlegend  = true,
         )
 

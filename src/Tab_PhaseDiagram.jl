@@ -1444,14 +1444,23 @@ function Tab_PhaseDiagram()
                                                                      "border" => "1px grey solid", "width" => "100%")),
                                                 ], width=4),
                                             ]),
-                                            html_div("‎ "),
-                                            dbc_collapse(
-                                                dbc_card(dbc_cardbody([
-                                                    draw_path_diagram_plot(),
-                                                ])),
-                                                id      = "collapse-draw-path-diagram",
-                                                is_open = false,
-                                            ),
+                                            dbc_row([
+                                                dbc_offcanvas(
+                                                    [
+                                                        dbc_row([
+                                                            dbc_col([
+                                                                draw_path_diagram_plot(),
+                                                            ], width=8),
+                                                        ]),
+                                                    ],
+                                                    id        = "draw-path-canvas",
+                                                    title     = "Phase fractions along path",
+                                                    is_open   = false,
+                                                    placement = "bottom",
+                                                    style     = Dict( "height"           => "460px",
+                                                                      "background-color" => "rgba(255, 255, 255, 1.0)"),
+                                                ),
+                                            ]),
                                         ])),
                                         id      = "collapse-draw-path",
                                         is_open = true,
