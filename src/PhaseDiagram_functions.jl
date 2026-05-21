@@ -2054,6 +2054,238 @@ function get_draw_path_plot(diagType, sysunit, path_ids)
 end
 
 
+# ─── Thermobarometric intersection helpers ────────────────────────────────────
+
+function _eval_thermobar_formula(formula_str, oxide_names, oxide_vals)
+    pairs = sort(collect(zip(oxide_names, oxide_vals)), by = x -> -length(x[1]))
+    expr  = formula_str
+    for (name, val) in pairs
+        expr = replace(expr, name => string(val))
+    end
+    try
+        return Float64(eval(Meta.parse(expr)))
+    catch
+        return NaN
+    end
+end
+
+function _get_thermobar_gridded(ph, formula_str, comp_unit, sub, refLvl)
+    global Out_XY, data, addedRefinementLvl
+
+    np    = length(data.points)
+    field = Vector{Union{Float64,Missing}}(missing, np)
+
+    for i in 1:np
+        ph_list = Out_XY[i].ph
+        idx     = findfirst(ph_list .== ph)
+        if isnothing(idx)
+            field[i] = missing
+            continue
+        end
+        n_SS = Out_XY[i].n_SS
+        if idx <= n_SS
+            if comp_unit == "mol"
+                comp = Out_XY[i].SS_vec[idx].Comp
+            elseif comp_unit == "apfu"
+                comp = Out_XY[i].SS_vec[idx].Comp_apfu
+            else
+                comp = Out_XY[i].SS_vec[idx].Comp_wt
+            end
+        else
+            pp_idx = idx - n_SS
+            if comp_unit == "mol"
+                comp = Out_XY[i].PP_vec[pp_idx].Comp
+            elseif comp_unit == "apfu"
+                comp = Out_XY[i].PP_vec[pp_idx].Comp_apfu
+            else
+                comp = Out_XY[i].PP_vec[pp_idx].Comp_wt
+            end
+        end
+        val     = _eval_thermobar_formula(formula_str, Out_XY[i].oxides, comp)
+        field[i] = isnan(val) ? missing : val
+    end
+
+    Xrange = data.Xrange
+    Yrange = data.Yrange
+    n      = 2^(sub + refLvl + addedRefinementLvl) + 1
+    dx     = (Xrange[2] - Xrange[1]) / (n - 1)
+    dy     = (Yrange[2] - Yrange[1]) / (n - 1)
+    x      = range(Xrange[1], stop = Xrange[2], length = n)
+    y      = range(Yrange[1], stop = Yrange[2], length = n)
+    X      = repeat(x,  n)[:]
+    Y      = repeat(y', n)[:]
+
+    gridded = Matrix{Union{Float64,Missing}}(missing, n, n)
+
+    for k in 1:np
+        ii = compute_index(data.points[k][1], Xrange[1], dx)
+        jj = compute_index(data.points[k][2], Yrange[1], dy)
+        gridded[ii, jj] = field[k]
+    end
+
+    for i in 1:length(data.cells)
+        cell = data.cells[i]
+
+        ii_min = compute_index(data.points[cell[2]][1], Xrange[1], dx)
+        ii_max = compute_index(data.points[cell[3]][1], Xrange[1], dx)
+        jj_ix  = compute_index(data.points[cell[2]][2], Yrange[1], dy)
+        for ii in ii_min+1:ii_max-1
+            f = (ii - ii_min) / (ii_max - ii_min)
+            gridded[ii, jj_ix] = field[cell[2]] * (1.0 - f) + field[cell[3]] * f
+        end
+
+        jj_min = compute_index(data.points[cell[1]][2], Yrange[1], dy)
+        jj_max = compute_index(data.points[cell[2]][2], Yrange[1], dy)
+        ii_ix  = compute_index(data.points[cell[1]][1], Xrange[1], dx)
+        for jj in jj_min+1:jj_max-1
+            f = (jj - jj_min) / (jj_max - jj_min)
+            gridded[ii_ix, jj] = field[cell[1]] * (1.0 - f) + field[cell[2]] * f
+        end
+
+        jj_min = compute_index(data.points[cell[4]][2], Yrange[1], dy)
+        jj_max = compute_index(data.points[cell[3]][2], Yrange[1], dy)
+        ii_ix  = compute_index(data.points[cell[4]][1], Xrange[1], dx)
+        for jj in jj_min+1:jj_max-1
+            f = (jj - jj_min) / (jj_max - jj_min)
+            gridded[ii_ix, jj] = field[cell[4]] * (1.0 - f) + field[cell[3]] * f
+        end
+
+        ii_min = compute_index(data.points[data.cells[i][1]][1], Xrange[1], dx)
+        ii_max = compute_index(data.points[data.cells[i][4]][1], Xrange[1], dx)
+        jj_ix  = compute_index(data.points[data.cells[i][1]][2], Yrange[1], dy)
+        for ii in ii_min+1:ii_max-1
+            f   = (ii - ii_min) / (ii_max - ii_min)
+            bot = field[cell[1]] * (1.0 - f) + field[cell[4]] * f
+            top = field[cell[2]] * (1.0 - f) + field[cell[3]] * f
+            gridded[ii, jj_ix] = bot
+            for jj in jj_min+1:jj_max-1
+                g = (jj - jj_min) / (jj_max - jj_min)
+                gridded[ii, jj] = bot * (1.0 - g) + top * g
+            end
+        end
+    end
+
+    return gridded, X, Y
+end
+
+function get_thermobar_contour_plot(formula_store, color_store, comp_unit, csv_data, sub, refLvl)
+    global Out_XY, data, AppData
+
+    traces = GenericTrace{Dict{Symbol,Any}}[]
+    stats  = Vector{Dict{String,Any}}()
+
+    if !@isdefined(Out_XY) || isempty(Out_XY) || !@isdefined(data)
+        return traces, stats
+    end
+
+    diag_oxides = Out_XY[1].oxides
+
+    # Normalise JSON3 types to plain Julia so Dict key lookups and string comparisons work correctly
+    fs = isnothing(formula_store) ? Vector{Dict{String,Any}}() :
+         [Dict{String,Any}(String(k) => String(v) for (k,v) in pairs(d)) for d in formula_store]
+    csv = isnothing(csv_data) ? Vector{Dict{String,Any}}() :
+          [Dict{String,Any}(String(k) => v for (k,v) in pairs(d)) for d in csv_data]
+
+    # Build once-per-(phase+formula) gridded fields
+    seen_fields = Dict{Tuple{String,String}, Tuple}()
+
+    added_legend = Set{String}()
+
+    dash_cycle   = ["solid", "dash", "dot", "dashdot", "longdash"]
+    phase_fi     = Dict{String,Int}()   # per-phase formula counter
+
+    for (fi, fdict) in enumerate(fs)
+        ph      = fdict["phase"]
+        formula = fdict["formula"]
+        label   = fdict["label"]
+        key     = (ph, formula)
+        color   = get(color_store, ph, haskey(AppData.mineral_style[1], ph) ? AppData.mineral_style[1][ph][1] : "#808080")
+        # first formula for this phase → solid; subsequent → cycle dashed styles
+        phase_fi[ph] = get(phase_fi, ph, 0) + 1
+        dash = dash_cycle[mod1(phase_fi[ph], length(dash_cycle))]
+
+        if !haskey(seen_fields, key)
+            try
+                gridded, X, Y = _get_thermobar_gridded(ph, formula, comp_unit, sub, refLvl)
+                seen_fields[key] = (gridded, X, Y)
+            catch
+                continue
+            end
+        end
+        gridded, X, Y = seen_fields[key]
+        g_float = Float64.(coalesce.(gridded, NaN))
+
+        target_vals = Float64[]
+
+        for (si, sample) in enumerate(csv)
+            sample_ph = get(sample, "mineral_name", "")
+            if sample_ph != ph
+                continue
+            end
+            ox_vals = [begin v = get(sample, ox, NaN); (v isa Number && isfinite(Float64(v))) ? Float64(v) : NaN end for ox in diag_oxides]
+            target  = _eval_thermobar_formula(formula, diag_oxides, ox_vals)
+            if isnan(target) || ismissing(target)
+                continue
+            end
+            push!(target_vals, target)
+
+            local cont
+            try
+                cont = CTR.contours(X[1:size(gridded,1)], Y[1:size(gridded,1):end], g_float, [target])
+            catch
+                continue
+            end
+            if isempty(cont.contours) || isempty(cont.contours[1].lines)
+                continue
+            end
+
+            legend_key = "$(ph): $(label)"
+            show_leg   = !(legend_key in added_legend)
+
+            for (li, line) in enumerate(cont.contours[1].lines)
+                lx_raw = [v[1] for v in line.vertices]
+                ly_raw = [v[2] for v in line.vertices]
+                lx = Union{Float64,Nothing}[isnan(v) ? nothing : v for v in lx_raw]
+                ly = Union{Float64,Nothing}[isnan(v) ? nothing : v for v in ly_raw]
+                push!(lx, nothing)
+                push!(ly, nothing)
+                push!(traces, scatter(
+                    x           = lx,
+                    y           = ly,
+                    mode        = "lines",
+                    line        = attr(color=color, width=1.5, dash=dash),
+                    name        = legend_key,
+                    legendgroup = legend_key,
+                    showlegend  = show_leg,
+                    uid         = "tb-$(fi)-$(ph)-$(si)-$(li)",
+                    hovertext   = "$(ph) | $(label) = $(round(target, digits=4))",
+                    hoverinfo   = "text",
+                ))
+                show_leg && push!(added_legend, legend_key)
+                show_leg = false
+            end
+        end
+
+        # Accumulate stats per (phase, formula)
+        if !isempty(target_vals)
+            n   = length(target_vals)
+            μ   = sum(target_vals) / n
+            σ   = n > 1 ? sqrt(sum((target_vals .- μ).^2) / (n - 1)) : 0.0
+            push!(stats, Dict(
+                "phase"   => ph,
+                "formula" => label,
+                "n"       => n,
+                "mean"    => round(μ, digits=4),
+                "std"     => round(σ, digits=4),
+            ))
+        end
+    end
+
+    return traces, stats
+end
+
+# ─────────────────────────────────────────────────────────────────────────────
+
 function export_contours_to_txt(cont, name, filename)
     open(filename, "w") do io
         println(io, "isocontour: $name")

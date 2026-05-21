@@ -329,6 +329,16 @@ function draw_path_diagram_plot()
             )
 end
 
+function thermobar_canvas_plot()
+
+    fig = plot( Layout( height= 600 ))
+
+    dcc_graph(
+                id          = "tb-canvas-plot",
+                figure      = fig,
+            )
+end
+
 """
     plot_diagram(data_plot,layout)
 

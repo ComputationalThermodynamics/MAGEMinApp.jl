@@ -1609,5 +1609,254 @@ function Tab_PhaseDiagram_Callbacks(app)
         return fig, config, true
     end
 
+    # ── Thermobarometric intersection callbacks ───────────────────────────────
+
+    # Populate phase dropdown when tab becomes active or refresh button is clicked
+    callback!(app,
+        Output("tb-phase-dropdown",       "options"),
+        Input("pd-sidebar-tabs",          "active_tab"),
+        Input("tb-refresh-phases-button", "n_clicks"),
+        prevent_initial_call = true,
+    ) do active_tab, _n_refresh
+        bid = pushed_button(callback_context())
+        if bid == "pd-sidebar-tabs" && active_tab != "tab-4"
+            return no_update()
+        end
+        global Out_XY
+        if !@isdefined(Out_XY) || isempty(Out_XY)
+            return []
+        end
+        ph_all = unique(vcat([Out_XY[i].ph for i in 1:length(Out_XY)]...))
+        sort!(ph_all)
+        return [Dict("label" => p, "value" => p) for p in ph_all]
+    end
+
+    # CSV upload → csv-store + info message
+    # Filters oxides to those present in the database and renormalises to 100.
+    callback!(app,
+        Output("tb-csv-store", "data"),
+        Output("tb-csv-info",  "children"),
+        Input("tb-csv-upload", "contents"),
+        State("tb-csv-upload", "filename"),
+        prevent_initial_call = true,
+    ) do contents, filename
+        if isnothing(contents)
+            return [], "No file loaded"
+        end
+        try
+            _, content_string = split(contents, ',')
+            decoded    = base64decode(content_string)
+            input      = String(decoded)
+            first_line = split(input, '\n')[findfirst(l -> !isempty(strip(l)) && !startswith(strip(l), '#'), split(input, '\n'))]
+            delim = occursin(';', first_line) ? ';' : ','
+            raw   = strip.(string.(readdlm(IOBuffer(input), delim, comments=true, comment_char='#')))
+            if size(raw, 1) < 2
+                return [], "File has no data rows"
+            end
+            headers = String.(raw[1, :])
+
+            # Identify which header columns are oxides present in the database
+            global Out_XY
+            diag_ox = (@isdefined(Out_XY) && !isempty(Out_XY)) ? Out_XY[1].oxides : String[]
+            ox_idx  = [j for j in eachindex(headers) if headers[j] in diag_ox]
+
+            rows = Vector{Dict{String,Any}}()
+            for i in axes(raw, 1)[2:end]
+                row = Dict{String,Any}()
+                row["mineral_name"] = raw[i, findfirst(==("mineral_name"), headers)]
+                row["comments"]     = findfirst(==("comments"), headers) !== nothing ? raw[i, findfirst(==("comments"), headers)] : ""
+
+                # Parse and filter oxide values, defaulting missing/non-numeric to 0
+                ox_vals = Dict{String,Float64}()
+                for j in ox_idx
+                    v = tryparse(Float64, raw[i, j])
+                    ox_vals[headers[j]] = (v === nothing || isnan(v)) ? 0.0 : v
+                end
+
+                # Renormalise to 100 over the database oxides
+                total = sum(values(ox_vals))
+                if total > 0.0
+                    for (k, v) in ox_vals
+                        ox_vals[k] = v / total * 100.0
+                    end
+                end
+
+                for (k, v) in ox_vals
+                    row[k] = v
+                end
+                push!(rows, row)
+            end
+
+            n = length(rows)
+            ox_kept = isempty(diag_ox) ? "all columns kept (no diagram loaded)" :
+                      "kept $(length(ox_idx)) of $(length(diag_ox)) database oxides"
+            return rows, "$(n) sample(s) from $(filename) — $(ox_kept)"
+        catch e
+            return [], "Error: $(sprint(showerror, e))"
+        end
+    end
+
+    # Phase selection → color picker (read default from color-store or mineral_style)
+    callback!(app,
+        Output("tb-color-picker", "value"),
+        Input("tb-phase-dropdown", "value"),
+        State("tb-color-store",    "data"),
+        prevent_initial_call = true,
+    ) do ph, color_store
+        if isnothing(ph)
+            return "#808080"
+        end
+        cs = isnothing(color_store) ? Dict{String,Any}() : Dict{String,Any}(String(k) => v for (k,v) in pairs(color_store))
+        if haskey(cs, ph)
+            return String(cs[ph])
+        end
+        return haskey(AppData.mineral_style[1], ph) ? AppData.mineral_style[1][ph][1] : "#808080"
+    end
+
+    # Color picker change → update color-store
+    callback!(app,
+        Output("tb-color-store",   "data"),
+        Input("tb-color-picker",   "value"),
+        State("tb-phase-dropdown", "value"),
+        State("tb-color-store",    "data"),
+        prevent_initial_call = true,
+    ) do color, ph, color_store
+        if isnothing(ph) || isnothing(color)
+            return isnothing(color_store) ? Dict{String,Any}() : Dict{String,Any}(String(k) => v for (k,v) in pairs(color_store))
+        end
+        cs = isnothing(color_store) ? Dict{String,Any}() : Dict{String,Any}(String(k) => v for (k,v) in pairs(color_store))
+        cs[ph] = color
+        return cs
+    end
+
+    # Add / Remove / Remove-all formula → formula-store + formula-table
+    callback!(app,
+        Output("tb-formula-store", "data"),
+        Output("tb-formula-table", "data"),
+        Input("tb-add-formula-button",        "n_clicks"),
+        Input("tb-remove-formula-button",     "n_clicks"),
+        Input("tb-remove-all-formula-button", "n_clicks"),
+        State("tb-phase-dropdown",   "value"),
+        State("tb-formula-input",    "value"),
+        State("tb-formula-store",    "data"),
+        prevent_initial_call = true,
+    ) do _n_add, _n_remove, _, ph, formula, formula_store
+        bid = pushed_button(callback_context())
+        # Always convert to a plain mutable Vector{Dict{String,Any}} to avoid
+        # JSON3.Array element-type coercion errors on push!
+        store = Vector{Dict{String,Any}}(
+            isnothing(formula_store) ? [] :
+            [Dict{String,Any}(String(k) => string(v) for (k,v) in pairs(d)) for d in formula_store]
+        )
+
+        if bid == "tb-add-formula-button"
+            if !isnothing(ph) && !isnothing(formula) && !isempty(strip(formula))
+                push!(store, Dict{String,Any}("phase" => ph, "formula" => strip(formula), "label" => strip(formula)))
+            end
+        elseif bid == "tb-remove-formula-button"
+            if !isempty(store)
+                pop!(store)
+            end
+        elseif bid == "tb-remove-all-formula-button"
+            empty!(store)
+        end
+
+        rows = [Dict{String,Any}("#" => k, "phase" => d["phase"], "formula" => d["formula"]) for (k,d) in enumerate(store)]
+        return store, rows
+    end
+
+    # Generate → thermobar canvas figure + open canvas + stats table
+    callback!(app,
+        Output("tb-canvas-plot",  "figure"),
+        Output("tb-canvas-plot",  "config"),
+        Output("tb-canvas",       "is_open"),
+        Output("tb-stats-table",  "data"),
+        Input("tb-generate-button", "n_clicks"),
+        State("tb-formula-store",   "data"),
+        State("tb-color-store",     "data"),
+        State("tb-compunit-dropdown", "value"),
+        State("tb-csv-store",       "data"),
+        State("gsub-id",            "value"),
+        State("refinement-levels",  "value"),
+        State("diagram-dropdown",   "value"),
+        prevent_initial_call = true,
+    ) do _n, formula_store, color_store, comp_unit, csv_data, sub, refLvl, diagType
+
+        if isnothing(formula_store) || isempty(formula_store) ||
+           isnothing(csv_data)      || isempty(csv_data)
+            return plot(Layout(height=600)), PlotConfig(), false, []
+        end
+
+        cs = isnothing(color_store) ? Dict{String,Any}() : Dict{String,Any}(String(k) => v for (k,v) in pairs(color_store))
+        tb_traces, stats = get_thermobar_contour_plot(formula_store, cs, comp_unit, csv_data, sub, refLvl)
+
+        global data, data_reaction, layout
+        Xrange = @isdefined(data) ? data.Xrange : (0.0, 1000.0)
+        Yrange = @isdefined(data) ? data.Yrange : (0.0,  100.0)
+
+        # Reaction lines first, thermobar isopleths on top
+        reaction_traces = (@isdefined(data_reaction) && !isempty(data_reaction)) ? data_reaction : GenericTrace[]
+        traces = vcat(reaction_traces, tb_traces)
+
+        if diagType == "pt"
+            xtitle = "Temperature [°C]";  ytitle = "Pressure [kbar]"
+        elseif diagType == "px"
+            xtitle = "Composition [X]";   ytitle = "Pressure [kbar]"
+        elseif diagType == "tx"
+            xtitle = "Composition [X]";   ytitle = "Temperature [°C]"
+        elseif diagType == "tt"
+            xtitle = "Event 2 T [°C]";    ytitle = "Event 1 T [°C]"
+        else
+            xtitle = "X";                 ytitle = "Y"
+        end
+
+        # Carry over phase-label annotations from the main diagram layout
+        ann = (@isdefined(layout) && haskey(layout.fields, :annotations)) ?
+              layout[:annotations] : []
+
+        ticks = 4
+        frame = get_plot_frame(Xrange, Yrange, ticks)
+
+        canvas_layout = Layout(
+            images        = frame,
+            font          = attr(size=10),
+            height        = 700,
+            margin        = attr(autoexpand=false, l=60, r=12, b=55, t=80),
+            autosize      = true,
+            paper_bgcolor = "white",
+            plot_bgcolor  = "white",
+            xaxis         = attr(title    = xtitle,
+                                 range    = [Xrange[1], Xrange[2]],
+                                 tickmode = "linear",
+                                 tick0    = Xrange[1],
+                                 dtick    = (Xrange[2] - Xrange[1]) / (ticks + 1),
+                                 showgrid = false,
+                                 zeroline = false),
+            yaxis         = attr(title    = ytitle,
+                                 range    = [Yrange[1], Yrange[2]],
+                                 tickmode = "linear",
+                                 tick0    = Yrange[1],
+                                 dtick    = (Yrange[2] - Yrange[1]) / (ticks + 1),
+                                 showgrid = false,
+                                 zeroline = false),
+            annotations   = ann,
+            showlegend    = true,
+        )
+
+        fig    = plot(traces, canvas_layout)
+        config = PlotConfig(
+            toImageButtonOptions = attr(
+                name     = "Download as svg",
+                format   = "svg",
+                filename = "thermobarometric_intersection",
+                width    = 700,
+                height   = 700,
+                scale    = 2.0,
+            ).fields
+        )
+
+        return fig, config, true, stats
+    end
+
     return app
 end
