@@ -422,8 +422,8 @@ function Tab_PTXpaths_Callbacks(app)
         P = [Out_PTX[k].P_kbar for k in 1:n_tot]
         T = [Out_PTX[k].T_C    for k in 1:n_tot]
 
-        # for fc: extracted material is solid (Csol); for fm: extracted material is melt (Cliq)
-        C_ext(k) = mode == "fm" ? Out_TE_PTX[k].Cliq : Out_TE_PTX[k].Csol
+        # extracted TE at each step: pre-computed in tepm_function_ptx, accounting for nRes/nCon mixing
+        C_ext(k) = C_ext_TE_PTX[k]
 
         # stepwise extracted TE at each step
         Csol_step = Matrix{Union{Float64,Missing}}(undef, n_tot, n_te) .= missing
@@ -1831,7 +1831,7 @@ function Tab_PTXpaths_Callbacks(app)
         prevent_initial_call = true,
     ) do _, dtb, mode, assim, kds_mod, zrsat_mod, ssat_mod, P2O5sat_mod, bulkte1, bulkte2, nCon, nRes
 
-        global Out_TE_PTX, all_TE_ph_ptx
+        global Out_TE_PTX, all_TE_ph_ptx, C_ext_TE_PTX
 
         if !@isdefined(Out_PTX) || isempty(Out_PTX)
             return false, true, false
@@ -1845,7 +1845,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         bulkte_ini, bulkte_ass, elem = get_terock_prop(bulkte1, bulkte2)
 
-        t = @elapsed Out_TE_PTX, all_TE_ph_ptx = tepm_function_ptx(
+        t = @elapsed Out_TE_PTX, all_TE_ph_ptx, C_ext_TE_PTX = tepm_function_ptx(
                         mode, dtb, kds_mod, zrsat_mod, ssat_mod, P2O5sat_mod,
                         bulkte_ini, bulkte_ass, assim, elem, nCon, nRes)
         println("Computed PTX trace elements in $t s")
@@ -2004,6 +2004,35 @@ function Tab_PTXpaths_Callbacks(app)
                         height = 280, width = 900, scale = 2.0).fields)
 
         return fig_fb, config_fb
+    end
+
+    # Hide buffers unsupported by sb24
+    callback!(
+        app,
+        Output("buffer-dropdown-ptx", "options"),
+        Input("database-dropdown-ptx", "value" ),
+        prevent_initial_call = true,
+    ) do dtb
+
+        all_opts = [
+            (label = "no buffer", value = "none"   ),
+            (label = "QFM",       value = "qfm"    ),
+            (label = "MW",        value = "mw"     ),
+            (label = "IW",        value = "iw"     ),
+            (label = "QIF",       value = "qif"    ),
+            (label = "CCO",       value = "cco"    ),
+            (label = "HM",        value = "hm"     ),
+            (label = "NNO",       value = "nno"    ),
+            (label = "aH2O",      value = "aH2O"   ),
+            (label = "aO2",       value = "aO2"    ),
+            (label = "aFeO",      value = "aFeO"   ),
+            (label = "aMgO",      value = "aMgO"   ),
+            (label = "aAl2O3",    value = "aAl2O3" ),
+            (label = "aTiO2",     value = "aTiO2"  ),
+        ]
+
+        hidden = ["cco", "nno", "aTiO2", "aH2O"]
+        return dtb == "sb24" ? filter(o -> !(o.value in hidden), all_opts) : all_opts
     end
 
     return app

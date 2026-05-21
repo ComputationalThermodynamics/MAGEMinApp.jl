@@ -885,74 +885,6 @@ function tepm_function( diagType    :: String,
 end
 
 
-function tepm_function_ptx( mode        :: String,
-                             dtb         :: String,
-                             kds_mod     :: String,
-                             zrsat_mod   :: String,
-                             ssat_mod    :: String,
-                             P2O5sat_mod :: String,
-                             bulkte_ini  :: Vector{Float64},
-                             bulkte_ass  :: Vector{Float64},
-                             assim       :: String,
-                             elem_TE     :: Vector{String},
-                             nCon        :: Float64 = 0.0,
-                             nRes        :: Float64 = 0.0)
-
-    global Out_PTX, assimFrac
-
-    np          = length(Out_PTX)
-    Out_TE_PTX  = Vector{MAGEMin_C.out_tepm}(undef, np)
-    all_TE_ph   = []
-
-    TE_models    = [AppData.KDs[i][4] for i in 1:length(AppData.KDs)]
-    id_TE_model  = findfirst(TE_models .== kds_mod)
-    KDs_dtb      = MAGEMin_C.create_custom_KDs_database(AppData.KDs[id_TE_model][1], AppData.KDs[id_TE_model][2], AppData.KDs[id_TE_model][3]; info = AppData.KDs[id_TE_model][6])
-
-    bulkte_ini   = MAGEMin_C.adjust_chemical_system(KDs_dtb, bulkte_ini, elem_TE)
-    bulkte_ass   = MAGEMin_C.adjust_chemical_system(KDs_dtb, bulkte_ass, elem_TE)
-    bulkte_cur   = copy(bulkte_ini)
-
-    for k = 1:np
-
-        if assim == "true"
-            f_ass = assimFrac[k]
-            TEvec = (1.0 - f_ass) .* bulkte_cur .+ f_ass .* bulkte_ass
-        else
-            TEvec = bulkte_cur
-        end
-
-        Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb;
-                                       ZrSat_model   = zrsat_mod,
-                                       SSat_model    = ssat_mod,
-                                       P2O5Sat_model = P2O5sat_mod)
-
-        # Update evolving bulk TE for next step, mirroring major-element removal logic
-        if mode == "fc" && !all(isnan, Out_TE_PTX[k].Cliq)
-            if nRes > 0.0 && !all(isnan, Out_TE_PTX[k].Csol) && Out_PTX[k].frac_S > nRes/100.0
-                bulkte_cur = Out_TE_PTX[k].Cliq .* (1.0 - nRes/100.0) .+ Out_TE_PTX[k].Csol .* (nRes/100.0)
-            else
-                bulkte_cur = copy(Out_TE_PTX[k].Cliq)
-            end
-        elseif mode == "fm" && !all(isnan, Out_TE_PTX[k].Csol)
-            if nCon > 0.0 && !all(isnan, Out_TE_PTX[k].Cliq) && Out_PTX[k].frac_M > nCon/100.0
-                bulkte_cur = Out_TE_PTX[k].Csol .* (1.0 - nCon/100.0) .+ Out_TE_PTX[k].Cliq .* (nCon/100.0)
-            else
-                bulkte_cur = copy(Out_TE_PTX[k].Csol)
-            end
-        end
-
-        if !isnothing(Out_TE_PTX[k].ph_TE)
-            for j in Out_TE_PTX[k].ph_TE
-                if !(j in all_TE_ph)
-                    push!(all_TE_ph, string(j))
-                end
-            end
-        end
-    end
-
-    return Out_TE_PTX, all_TE_ph
-end
-
 
 """
     compute_new_phaseDiagram(   xtitle,     ytitle,     
@@ -2018,6 +1950,341 @@ function remove_all_isopleth_phaseDiagram()
     return data_isopleth, isopleths, isoplethsHid, data_plot
 end
 
+
+function _draw_path_point_label(diagType, id)
+    global Out_XY, data
+    P = round(Out_XY[id].P_kbar, digits=2)
+    T = round(Out_XY[id].T_C,    digits=2)
+    if (diagType == "px" || diagType == "tx") && @isdefined(data) && id <= length(data.points)
+        X = round(data.points[id][1], digits=4)
+        return diagType == "px" ? "X=$(X); P=$(P)" : "X=$(X); T=$(T)"
+    else
+        return "T=$(T); P=$(P)"
+    end
+end
+
+function draw_path_table_data(diagType, path_ids)
+    global Out_XY, data
+
+    if isempty(path_ids)
+        if diagType == "px"
+            cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"X","name"=>"X"), Dict("id"=>"P[kbar]","name"=>"P[kbar]")]
+        elseif diagType == "tx"
+            cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"X","name"=>"X"), Dict("id"=>"T[°C]","name"=>"T[°C]")]
+        else
+            cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"P[kbar]","name"=>"P[kbar]"), Dict("id"=>"T[°C]","name"=>"T[°C]")]
+        end
+        return cols, []
+    end
+
+    if diagType == "px"
+        cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"X","name"=>"X"), Dict("id"=>"P[kbar]","name"=>"P[kbar]")]
+        rows = [Dict("#"=>k, "X"=>(@isdefined(data) && id<=length(data.points) ? round(data.points[id][1],digits=4) : "—"),
+                     "P[kbar]"=>round(Out_XY[id].P_kbar, digits=3)) for (k,id) in enumerate(path_ids)]
+    elseif diagType == "tx"
+        cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"X","name"=>"X"), Dict("id"=>"T[°C]","name"=>"T[°C]")]
+        rows = [Dict("#"=>k, "X"=>(@isdefined(data) && id<=length(data.points) ? round(data.points[id][1],digits=4) : "—"),
+                     "T[°C]"=>round(Out_XY[id].T_C, digits=3)) for (k,id) in enumerate(path_ids)]
+    else
+        cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"P[kbar]","name"=>"P[kbar]"), Dict("id"=>"T[°C]","name"=>"T[°C]")]
+        rows = [Dict("#"=>k, "P[kbar]"=>round(Out_XY[id].P_kbar, digits=3),
+                     "T[°C]"=>round(Out_XY[id].T_C, digits=3)) for (k,id) in enumerate(path_ids)]
+    end
+
+    return cols, rows
+end
+
+function get_draw_path_plot(diagType, sysunit, path_ids)
+    global Out_XY
+
+    n_tot = length(path_ids)
+    if n_tot == 0
+        return GenericTrace[], []
+    end
+
+    ph_names = Vector{String}()
+    for id in path_ids
+        for ph in Out_XY[id].ph
+            if !(ph in ph_names)
+                push!(ph_names, ph)
+            end
+        end
+    end
+    ph_names = sort(ph_names)
+    n_ph     = length(ph_names)
+
+    x = Vector{String}(undef, n_tot)
+    Y = zeros(Float64, n_ph, n_tot)
+
+    for (k, id) in enumerate(path_ids)
+        x[k] = _draw_path_point_label(diagType, id)
+        for (i, ph) in enumerate(ph_names)
+            idx = findall(Out_XY[id].ph .== ph)
+            if sysunit == "mol"
+                if ~isempty(idx); Y[i,k] = sum(Out_XY[id].ph_frac[idx])     * 100.0; end
+            elseif sysunit == "wt"
+                if ~isempty(idx); Y[i,k] = sum(Out_XY[id].ph_frac_wt[idx])  * 100.0; end
+            elseif sysunit == "vol"
+                if ~isempty(idx); Y[i,k] = sum(Out_XY[id].ph_frac_vol[idx]) * 100.0; end
+            end
+        end
+    end
+
+    for k in 1:n_tot
+        s = sum(Y[:, k])
+        if s > 0.0; Y[:, k] ./= s / 100.0; end
+    end
+
+    traces = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_ph)
+    for (i, ph) in enumerate(ph_names)
+        color = haskey(AppData.mineral_style[1], ph) ? AppData.mineral_style[1][ph][1] : "grey"
+        traces[i] = scatter(;
+            x          = x,
+            y          = Y[i,:],
+            name       = ph,
+            stackgroup = "one",
+            mode       = "lines",
+            line       = attr(width=0.5, color=color)
+        )
+    end
+
+    phase_list = [Dict("label" => "  "*ph_names[i], "value" => ph_names[i]) for i in 1:n_ph]
+
+    return traces, phase_list
+end
+
+
+# ─── Thermobarometric intersection helpers ────────────────────────────────────
+
+function _eval_thermobar_formula(formula_str, oxide_names, oxide_vals)
+    pairs = sort(collect(zip(oxide_names, oxide_vals)), by = x -> -length(x[1]))
+    expr  = formula_str
+    for (name, val) in pairs
+        expr = replace(expr, name => string(val))
+    end
+    try
+        return Float64(eval(Meta.parse(expr)))
+    catch
+        return NaN
+    end
+end
+
+function _get_thermobar_gridded(ph, formula_str, comp_unit, sub, refLvl)
+    global Out_XY, data, addedRefinementLvl
+
+    np    = length(data.points)
+    field = Vector{Union{Float64,Missing}}(missing, np)
+
+    for i in 1:np
+        ph_list = Out_XY[i].ph
+        idx     = findfirst(ph_list .== ph)
+        if isnothing(idx)
+            field[i] = missing
+            continue
+        end
+        n_SS = Out_XY[i].n_SS
+        if idx <= n_SS
+            if comp_unit == "mol"
+                comp = Out_XY[i].SS_vec[idx].Comp
+            elseif comp_unit == "apfu"
+                comp = Out_XY[i].SS_vec[idx].Comp_apfu
+            else
+                comp = Out_XY[i].SS_vec[idx].Comp_wt
+            end
+        else
+            pp_idx = idx - n_SS
+            if comp_unit == "mol"
+                comp = Out_XY[i].PP_vec[pp_idx].Comp
+            elseif comp_unit == "apfu"
+                comp = Out_XY[i].PP_vec[pp_idx].Comp_apfu
+            else
+                comp = Out_XY[i].PP_vec[pp_idx].Comp_wt
+            end
+        end
+        val     = _eval_thermobar_formula(formula_str, Out_XY[i].oxides, comp)
+        field[i] = isnan(val) ? missing : val
+    end
+
+    Xrange = data.Xrange
+    Yrange = data.Yrange
+    n      = 2^(sub + refLvl + addedRefinementLvl) + 1
+    dx     = (Xrange[2] - Xrange[1]) / (n - 1)
+    dy     = (Yrange[2] - Yrange[1]) / (n - 1)
+    x      = range(Xrange[1], stop = Xrange[2], length = n)
+    y      = range(Yrange[1], stop = Yrange[2], length = n)
+    X      = repeat(x,  n)[:]
+    Y      = repeat(y', n)[:]
+
+    gridded = Matrix{Union{Float64,Missing}}(missing, n, n)
+
+    for k in 1:np
+        ii = compute_index(data.points[k][1], Xrange[1], dx)
+        jj = compute_index(data.points[k][2], Yrange[1], dy)
+        gridded[ii, jj] = field[k]
+    end
+
+    for i in 1:length(data.cells)
+        cell = data.cells[i]
+
+        ii_min = compute_index(data.points[cell[2]][1], Xrange[1], dx)
+        ii_max = compute_index(data.points[cell[3]][1], Xrange[1], dx)
+        jj_ix  = compute_index(data.points[cell[2]][2], Yrange[1], dy)
+        for ii in ii_min+1:ii_max-1
+            f = (ii - ii_min) / (ii_max - ii_min)
+            gridded[ii, jj_ix] = field[cell[2]] * (1.0 - f) + field[cell[3]] * f
+        end
+
+        jj_min = compute_index(data.points[cell[1]][2], Yrange[1], dy)
+        jj_max = compute_index(data.points[cell[2]][2], Yrange[1], dy)
+        ii_ix  = compute_index(data.points[cell[1]][1], Xrange[1], dx)
+        for jj in jj_min+1:jj_max-1
+            f = (jj - jj_min) / (jj_max - jj_min)
+            gridded[ii_ix, jj] = field[cell[1]] * (1.0 - f) + field[cell[2]] * f
+        end
+
+        jj_min = compute_index(data.points[cell[4]][2], Yrange[1], dy)
+        jj_max = compute_index(data.points[cell[3]][2], Yrange[1], dy)
+        ii_ix  = compute_index(data.points[cell[4]][1], Xrange[1], dx)
+        for jj in jj_min+1:jj_max-1
+            f = (jj - jj_min) / (jj_max - jj_min)
+            gridded[ii_ix, jj] = field[cell[4]] * (1.0 - f) + field[cell[3]] * f
+        end
+
+        ii_min = compute_index(data.points[data.cells[i][1]][1], Xrange[1], dx)
+        ii_max = compute_index(data.points[data.cells[i][4]][1], Xrange[1], dx)
+        jj_ix  = compute_index(data.points[data.cells[i][1]][2], Yrange[1], dy)
+        for ii in ii_min+1:ii_max-1
+            f   = (ii - ii_min) / (ii_max - ii_min)
+            bot = field[cell[1]] * (1.0 - f) + field[cell[4]] * f
+            top = field[cell[2]] * (1.0 - f) + field[cell[3]] * f
+            gridded[ii, jj_ix] = bot
+            for jj in jj_min+1:jj_max-1
+                g = (jj - jj_min) / (jj_max - jj_min)
+                gridded[ii, jj] = bot * (1.0 - g) + top * g
+            end
+        end
+    end
+
+    return gridded, X, Y
+end
+
+function get_thermobar_contour_plot(formula_store, color_store, comp_unit, csv_data, sub, refLvl)
+    global Out_XY, data, AppData
+
+    traces = GenericTrace{Dict{Symbol,Any}}[]
+    stats  = Vector{Dict{String,Any}}()
+
+    if !@isdefined(Out_XY) || isempty(Out_XY) || !@isdefined(data)
+        return traces, stats
+    end
+
+    diag_oxides = Out_XY[1].oxides
+
+    # Normalise JSON3 types to plain Julia so Dict key lookups and string comparisons work correctly
+    fs = isnothing(formula_store) ? Vector{Dict{String,Any}}() :
+         [Dict{String,Any}(String(k) => String(v) for (k,v) in pairs(d)) for d in formula_store]
+    csv = isnothing(csv_data) ? Vector{Dict{String,Any}}() :
+          [Dict{String,Any}(String(k) => v for (k,v) in pairs(d)) for d in csv_data]
+
+    # Build once-per-(phase+formula) gridded fields
+    seen_fields = Dict{Tuple{String,String}, Tuple}()
+
+    added_legend = Set{String}()
+
+    dash_cycle   = ["solid", "dash", "dot", "dashdot", "longdash"]
+    phase_fi     = Dict{String,Int}()   # per-phase formula counter
+
+    for (fi, fdict) in enumerate(fs)
+        ph      = fdict["phase"]
+        formula = fdict["formula"]
+        label   = fdict["label"]
+        key     = (ph, formula)
+        color   = get(color_store, ph, haskey(AppData.mineral_style[1], ph) ? AppData.mineral_style[1][ph][1] : "#808080")
+        # first formula for this phase → solid; subsequent → cycle dashed styles
+        phase_fi[ph] = get(phase_fi, ph, 0) + 1
+        dash = dash_cycle[mod1(phase_fi[ph], length(dash_cycle))]
+
+        if !haskey(seen_fields, key)
+            try
+                gridded, X, Y = _get_thermobar_gridded(ph, formula, comp_unit, sub, refLvl)
+                seen_fields[key] = (gridded, X, Y)
+            catch
+                continue
+            end
+        end
+        gridded, X, Y = seen_fields[key]
+        g_float = Float64.(coalesce.(gridded, NaN))
+
+        target_vals = Float64[]
+
+        for (si, sample) in enumerate(csv)
+            sample_ph = get(sample, "mineral_name", "")
+            if sample_ph != ph
+                continue
+            end
+            ox_vals = [begin v = get(sample, ox, NaN); (v isa Number && isfinite(Float64(v))) ? Float64(v) : NaN end for ox in diag_oxides]
+            target  = _eval_thermobar_formula(formula, diag_oxides, ox_vals)
+            if isnan(target) || ismissing(target)
+                continue
+            end
+            push!(target_vals, target)
+
+            local cont
+            try
+                cont = CTR.contours(X[1:size(gridded,1)], Y[1:size(gridded,1):end], g_float, [target])
+            catch
+                continue
+            end
+            if isempty(cont.contours) || isempty(cont.contours[1].lines)
+                continue
+            end
+
+            legend_key = "$(ph): $(label)"
+            show_leg   = !(legend_key in added_legend)
+
+            for (li, line) in enumerate(cont.contours[1].lines)
+                lx_raw = [v[1] for v in line.vertices]
+                ly_raw = [v[2] for v in line.vertices]
+                lx = Union{Float64,Nothing}[isnan(v) ? nothing : v for v in lx_raw]
+                ly = Union{Float64,Nothing}[isnan(v) ? nothing : v for v in ly_raw]
+                push!(lx, nothing)
+                push!(ly, nothing)
+                push!(traces, scatter(
+                    x           = lx,
+                    y           = ly,
+                    mode        = "lines",
+                    line        = attr(color=color, width=1.5, dash=dash),
+                    name        = legend_key,
+                    legendgroup = legend_key,
+                    showlegend  = show_leg,
+                    uid         = "tb-$(fi)-$(ph)-$(si)-$(li)",
+                    hovertext   = "$(ph) | $(label) = $(round(target, digits=4))",
+                    hoverinfo   = "text",
+                ))
+                show_leg && push!(added_legend, legend_key)
+                show_leg = false
+            end
+        end
+
+        # Accumulate stats per (phase, formula)
+        if !isempty(target_vals)
+            n   = length(target_vals)
+            μ   = sum(target_vals) / n
+            σ   = n > 1 ? sqrt(sum((target_vals .- μ).^2) / (n - 1)) : 0.0
+            push!(stats, Dict(
+                "phase"   => ph,
+                "formula" => label,
+                "n"       => n,
+                "mean"    => round(μ, digits=4),
+                "std"     => round(σ, digits=4),
+            ))
+        end
+    end
+
+    return traces, stats
+end
+
+# ─────────────────────────────────────────────────────────────────────────────
 
 function export_contours_to_txt(cont, name, filename)
     open(filename, "w") do io
