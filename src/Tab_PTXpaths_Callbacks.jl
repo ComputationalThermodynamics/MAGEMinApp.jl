@@ -2006,5 +2006,34 @@ function Tab_PTXpaths_Callbacks(app)
         return fig_fb, config_fb
     end
 
+    # Hide buffers unsupported by sb24
+    callback!(
+        app,
+        Output("buffer-dropdown-ptx", "options"),
+        Input("database-dropdown-ptx", "value" ),
+        prevent_initial_call = true,
+    ) do dtb
+
+        all_opts = [
+            (label = "no buffer", value = "none"   ),
+            (label = "QFM",       value = "qfm"    ),
+            (label = "MW",        value = "mw"     ),
+            (label = "IW",        value = "iw"     ),
+            (label = "QIF",       value = "qif"    ),
+            (label = "CCO",       value = "cco"    ),
+            (label = "HM",        value = "hm"     ),
+            (label = "NNO",       value = "nno"    ),
+            (label = "aH2O",      value = "aH2O"   ),
+            (label = "aO2",       value = "aO2"    ),
+            (label = "aFeO",      value = "aFeO"   ),
+            (label = "aMgO",      value = "aMgO"   ),
+            (label = "aAl2O3",    value = "aAl2O3" ),
+            (label = "aTiO2",     value = "aTiO2"  ),
+        ]
+
+        hidden = ["cco", "nno", "aTiO2", "aH2O"]
+        return dtb == "sb24" ? filter(o -> !(o.value in hidden), all_opts) : all_opts
+    end
+
     return app
 end
