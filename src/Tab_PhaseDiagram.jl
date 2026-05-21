@@ -1444,6 +1444,29 @@ function Tab_PhaseDiagram()
                                                                      "border" => "1px grey solid", "width" => "100%")),
                                                 ], width=4),
                                             ]),
+                                            html_div("‎ "),
+                                            dbc_row([
+                                                dash_datatable(
+                                                    id          = "draw-path-table",
+                                                    columns     = [
+                                                        Dict("id" => "#",       "name" => "#"      ),
+                                                        Dict("id" => "P[kbar]", "name" => "P[kbar]"),
+                                                        Dict("id" => "T[°C]",   "name" => "T[°C]" ),
+                                                    ],
+                                                    data        = [],
+                                                    style_cell  = (textAlign="center", fontSize="100%"),
+                                                    style_header= (fontWeight="bold",),
+                                                    page_size   = 16,
+                                                ),
+                                            ]),
+                                            html_div("‎ "),
+                                            dbc_row([
+                                                dbc_col([
+                                                    dbc_button("Remove last", id="draw-path-remove-button", color="light", n_clicks=0,
+                                                        style = Dict("textAlign" => "center", "font-size" => "100%",
+                                                                     "border" => "1px grey solid", "width" => "100%")),
+                                                ], width=6),
+                                            ]),
                                             dbc_row([
                                                 dbc_offcanvas(
                                                     [

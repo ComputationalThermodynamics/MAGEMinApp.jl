@@ -1951,7 +1951,50 @@ function remove_all_isopleth_phaseDiagram()
 end
 
 
-function get_draw_path_plot(sysunit, path_ids)
+function _draw_path_point_label(diagType, id)
+    global Out_XY, data
+    P = round(Out_XY[id].P_kbar, digits=2)
+    T = round(Out_XY[id].T_C,    digits=2)
+    if (diagType == "px" || diagType == "tx") && @isdefined(data) && id <= length(data.points)
+        X = round(data.points[id][1], digits=4)
+        return diagType == "px" ? "X=$(X); P=$(P)" : "X=$(X); T=$(T)"
+    else
+        return "T=$(T); P=$(P)"
+    end
+end
+
+function draw_path_table_data(diagType, path_ids)
+    global Out_XY, data
+
+    if isempty(path_ids)
+        if diagType == "px"
+            cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"X","name"=>"X"), Dict("id"=>"P[kbar]","name"=>"P[kbar]")]
+        elseif diagType == "tx"
+            cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"X","name"=>"X"), Dict("id"=>"T[°C]","name"=>"T[°C]")]
+        else
+            cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"P[kbar]","name"=>"P[kbar]"), Dict("id"=>"T[°C]","name"=>"T[°C]")]
+        end
+        return cols, []
+    end
+
+    if diagType == "px"
+        cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"X","name"=>"X"), Dict("id"=>"P[kbar]","name"=>"P[kbar]")]
+        rows = [Dict("#"=>k, "X"=>(@isdefined(data) && id<=length(data.points) ? round(data.points[id][1],digits=4) : "—"),
+                     "P[kbar]"=>round(Out_XY[id].P_kbar, digits=3)) for (k,id) in enumerate(path_ids)]
+    elseif diagType == "tx"
+        cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"X","name"=>"X"), Dict("id"=>"T[°C]","name"=>"T[°C]")]
+        rows = [Dict("#"=>k, "X"=>(@isdefined(data) && id<=length(data.points) ? round(data.points[id][1],digits=4) : "—"),
+                     "T[°C]"=>round(Out_XY[id].T_C, digits=3)) for (k,id) in enumerate(path_ids)]
+    else
+        cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"P[kbar]","name"=>"P[kbar]"), Dict("id"=>"T[°C]","name"=>"T[°C]")]
+        rows = [Dict("#"=>k, "P[kbar]"=>round(Out_XY[id].P_kbar, digits=3),
+                     "T[°C]"=>round(Out_XY[id].T_C, digits=3)) for (k,id) in enumerate(path_ids)]
+    end
+
+    return cols, rows
+end
+
+function get_draw_path_plot(diagType, sysunit, path_ids)
     global Out_XY
 
     n_tot = length(path_ids)
@@ -1974,7 +2017,7 @@ function get_draw_path_plot(sysunit, path_ids)
     Y = zeros(Float64, n_ph, n_tot)
 
     for (k, id) in enumerate(path_ids)
-        x[k] = string(round(Out_XY[id].P_kbar, digits=1)) * "; " * string(round(Out_XY[id].T_C, digits=1))
+        x[k] = _draw_path_point_label(diagType, id)
         for (i, ph) in enumerate(ph_names)
             idx = findall(Out_XY[id].ph .== ph)
             if sysunit == "mol"

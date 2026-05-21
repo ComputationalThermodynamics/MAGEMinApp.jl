@@ -1518,15 +1518,19 @@ function Tab_PhaseDiagram_Callbacks(app)
         return active_tab == "tab-3" ? no_update() : false
     end
 
-    # Draw path — record clicks and clear
+    # Draw path — record clicks and clear; also updates coordinate table
     callback!(
         app,
-        Output("draw-path-point-count", "children"),
-        Input("phase-diagram",          "clickData"),
-        Input("draw-path-clear-button", "n_clicks"),
-        State("draw-path-record-switch","value"),
+        Output("draw-path-point-count",  "children"  ),
+        Output("draw-path-table",        "columns"   ),
+        Output("draw-path-table",        "data"      ),
+        Input("phase-diagram",           "clickData" ),
+        Input("draw-path-clear-button",  "n_clicks"  ),
+        Input("draw-path-remove-button", "n_clicks"  ),
+        State("draw-path-record-switch", "value"     ),
+        State("diagram-dropdown",        "value"     ),
         prevent_initial_call = true,
-    ) do click_info, _n_clear, is_recording
+    ) do click_info, _n_clear, _n_remove, is_recording, diagType  # _n_clear/_n_remove trigger via callback_context
 
         global draw_path_ids
 
@@ -1538,6 +1542,10 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         if bid == "draw-path-clear-button"
             draw_path_ids = Vector{Int64}()
+        elseif bid == "draw-path-remove-button"
+            if !isempty(draw_path_ids)
+                pop!(draw_path_ids)
+            end
         elseif bid == "phase-diagram" && is_recording && !isnothing(click_info)
             sp  = click_info[:points][][:text]
             tmp = match(r"#([^# ]+)#", sp)
@@ -1547,8 +1555,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             end
         end
 
-        n = length(draw_path_ids)
-        return "$(n) point(s)"
+        cols, rows = draw_path_table_data(diagType, draw_path_ids)
+        return "$(length(draw_path_ids)) point(s)", cols, rows
     end
 
     # Draw path — generate stacked area diagram
@@ -1557,10 +1565,11 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("draw-path-diagram", "figure" ),
         Output("draw-path-diagram", "config" ),
         Output("draw-path-canvas",  "is_open"),
-        Input("draw-path-generate-button",   "n_clicks"),
-        State("draw-path-sysunit",           "value"  ),
+        Input("draw-path-generate-button", "n_clicks"),
+        State("draw-path-sysunit",         "value"   ),
+        State("diagram-dropdown",          "value"   ),
         prevent_initial_call = true,
-    ) do _n, sysunit
+    ) do _n, sysunit, diagType
 
         global draw_path_ids
 
@@ -1568,7 +1577,10 @@ function Tab_PhaseDiagram_Callbacks(app)
             return plot(Layout(height=360)), PlotConfig(), false
         end
 
-        traces, _phase_list = get_draw_path_plot(sysunit, draw_path_ids)
+        traces, _phase_list = get_draw_path_plot(diagType, sysunit, draw_path_ids)
+
+        xtitle = diagType == "px" ? "X; P [kbar]" :
+                 diagType == "tx" ? "X; T [°C]"   : "T [°C]; P [kbar]"
 
         layout = Layout(
             font        = attr(size=10),
@@ -1577,7 +1589,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             autosize    = true,
             paper_bgcolor = "white",
             plot_bgcolor  = "white",
-            xaxis       = attr(title="P [kbar]; T [°C]", showgrid=false, zeroline=false),
+            xaxis       = attr(title=xtitle, showgrid=false, zeroline=false),
             yaxis       = attr(title="Phase fraction [$(sysunit)%]", autorange=true, showgrid=false, zeroline=false),
             showlegend  = true,
         )
