@@ -474,14 +474,6 @@ function Tab_PTXpaths()
                     dbc_card(dbc_cardbody([
 
                         dbc_row([
-                            dbc_button("Load/Reload trace-elements", id="compute-te-ptx-button", color="light", n_clicks=0,
-                                        style       = Dict( "textAlign"     => "center",
-                                                            "font-size"     => "100%",
-                                                            "background-color" => "#d3f2ce",
-                                                            "border"        =>"1px grey solid")), 
-                        ]),
-                        html_div("‎ "),
-                        dbc_row([
                             dbc_col([
                                 html_h1("KD model", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
                             ],width=6),
@@ -635,13 +627,6 @@ function Tab_PTXpaths()
                             ]),
                         ], id="collapse-assim-te-ptx", is_open=false),
 
-
-                        dbc_row([
-                            dbc_alert("Trace elements computed successfully",
-                                id="te-ptx-success", is_open=false, duration=4000),
-                            dbc_alert("Cannot compute TE: run PTX path first, or database not supported",
-                                color="danger", id="te-ptx-failed", is_open=false, duration=6000),
-                        ]),
 
                     ])),
                     id="collapse-te-ptx",

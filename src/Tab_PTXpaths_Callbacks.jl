@@ -367,7 +367,7 @@ function Tab_PTXpaths_Callbacks(app)
         end
 
         mkpath("./output")
-        datab   = "_"*dtb*"_"*kds*sat_ext
+        datab   = "_te_"*dtb*"_"*kds*sat_ext
         fileout = "./output/"*fname*datab
 
         MAGEMin_dataTE2dataframe(Out_PTX, Out_TE_PTX, dtb, fileout)
@@ -388,9 +388,8 @@ function Tab_PTXpaths_Callbacks(app)
         State("zrsat-dropdown-ptx",                         "value"),
         State("ssat-dropdown-ptx",                          "value"),
         State("P2O5sat-dropdown-ptx",                       "value"),
-        State("mode-dropdown-ptx",                          "value"),
         prevent_initial_call=true,
-    ) do n_clicks, fname, dtb, kds, zrsat, ssat, P2O5sat, mode
+    ) do n_clicks, fname, dtb, kds, zrsat, ssat, P2O5sat
 
         if !@isdefined(Out_TE_PTX) || isempty(Out_TE_PTX)
             return false, false, true
@@ -412,7 +411,7 @@ function Tab_PTXpaths_Callbacks(app)
         end
 
         mkpath("./output")
-        datab   = "_cumulate_te_"*dtb*"_"*kds*sat_ext
+        datab   = "_extracted_te_"*dtb*"_"*kds*sat_ext
         fileout = "./output/"*fname*datab*".csv"
 
         n_tot   = length(Out_PTX)
@@ -422,7 +421,7 @@ function Tab_PTXpaths_Callbacks(app)
         P = [Out_PTX[k].P_kbar for k in 1:n_tot]
         T = [Out_PTX[k].T_C    for k in 1:n_tot]
 
-        # extracted TE at each step: pre-computed in tepm_function_ptx, accounting for nRes/nCon mixing
+        # extracted TE at each step: computed inline in compute_new_PTXpath, accounting for nRes/nCon mixing
         C_ext(k) = C_ext_TE_PTX[k]
 
         # stepwise extracted TE at each step
@@ -433,24 +432,9 @@ function Tab_PTXpaths_Callbacks(app)
             end
         end
 
-        # compute per-step incremental extraction weights
-        # fracEvol[:,2] = 1 - fracEvol[:,1] is cumulative; we need the increment at each step
-        # for fm with nCon=0, fracEvol[:,1] never changes so fracEvol[:,2]=0 — use frac_M instead
-        delta_frac = if mode == "fm"
-            rem = 1.0
-            d   = zeros(n_tot)
-            for k in 1:n_tot
-                fm = Out_PTX[k].frac_M
-                fs = Out_PTX[k].frac_S
-                if !isnan(fm) && !isnan(fs) && fm > 0.0
-                    d[k] = rem * fm
-                    rem  = rem * fs
-                end
-            end
-            d
-        else
-            diff([0.0; fracEvol[:, 2]])
-        end
+        # per-step incremental extracted fraction — fracEvol[:,2] encodes the correct
+        # connectivity/residual logic for both fc and fm, so diff gives consistent weights
+        delta_frac = diff([0.0; fracEvol[:, 2]])
         cumfrac  = accumulate(+, delta_frac)
         start_id = findfirst(k -> !all(isnan, C_ext(k)), 1:n_tot)
 
@@ -495,8 +479,8 @@ function Tab_PTXpaths_Callbacks(app)
                 "point[#]"              => k,
                 "P[kbar]"               => P[k],
                 "T[°C]"                 => T[k],
-                "Removed%"              => delta_frac[k] * 100.0,
-                "Cumulative removed%"   => cumfrac[k] * 100.0,
+                "Removed%"              => delta_frac[k],
+                "Cumulative removed%"   => cumfrac[k],
             )
             part_2 = Dict((elements[j]*"_step[μg/g]" => Csol_step[k, j]) for j in eachindex(elements))
             part_3 = Dict((elements[j]*"_int[μg/g]"  => Csol_int[k, j])  for j in eachindex(elements))
@@ -950,6 +934,7 @@ function Tab_PTXpaths_Callbacks(app)
         Output("ptx-removed-int-plot",  "config"),
         Output("phase-selector-id",     "options"),
         Output("output-loading-id-ptx", "children"),
+        Output("te-ptx-computed-store", "data"    ),
 
         Input("compute-path-button",    "n_clicks"),
         Input("sys-unit-ptx",           "value"),
@@ -992,6 +977,14 @@ function Tab_PTXpaths_Callbacks(app)
         State("ptx-watsat-dropdown",            "value"),
         State("ptx-watsat-val-id",              "value"),
 
+        State("tepm-dropdown-ptx",              "value"),
+        State("kds-dropdown-ptx",               "value"),
+        State("zrsat-dropdown-ptx",             "value"),
+        State("ssat-dropdown-ptx",              "value"),
+        State("P2O5sat-dropdown-ptx",           "value"),
+        State("table-te-rock-ptx",              "data"  ),
+        State("table-te-2-rock-ptx",            "data"  ),
+
         prevent_initial_call = true,
 
         ) do    compute,    upsys,      display_mode,               ext_display_mode,
@@ -1001,7 +994,8 @@ function Tab_PTXpaths_Callbacks(app)
                 cpx,        limOpx,     limOpxVal,  test,   sysunit,
                 nCon,       nRes,       color_table,
                 T_start,    isentropic_mode, entropy,
-                watsat,     watsat_val
+                watsat,     watsat_val,
+                te_model,   kds_mod,    zrsat_mod,  ssat_mod,   P2O5sat_mod,    bulkte1,    bulkte2
 
         bid                     = pushed_button( callback_context() )    # get which button has been pushed
         phase_selection         = remove_phases(string_vec_diff(phase_selection,pure_phase_selection,dtb),dtb)
@@ -1012,9 +1006,14 @@ function Tab_PTXpaths_Callbacks(app)
 
             global Out_PTX, ph_names_ptx, phase_infos_PTX, layout_ptx, layout_extracted_ptx, data_plot_ptx, fracEvol, removedBulk, layout_rm_ptx, data_comp_rm_plot, layout_rm_int_ptx, data_comp_rm_int_plot
             global layout_path, figIsoSPath
-            
+            global Out_TE_PTX, all_TE_ph_ptx, C_ext_TE_PTX
+
             bufferN                     = Float64(bufferN)               # convert buffer_n to float
-            bulk_ini, bulk_assim, oxi   = get_bulkrock_prop(bulk, bulk2; sys_unit=sys_unit)  
+            bulk_ini, bulk_assim, oxi   = get_bulkrock_prop(bulk, bulk2; sys_unit=sys_unit)
+
+            bulkte_ini_te, bulkte_ass_te, elem_te = te_model == "true" ?
+                                                    get_terock_prop(bulkte1, bulkte2) :
+                                                    (Float64[], Float64[], String[])
 
             compute_new_PTXpath(    nsteps,     PTdata,     mode,       bulk_ini,  bulk_assim,  oxi,    phase_selection,    assim, var_buffer,
                                     dtb,        dataset,    bufferType, solver,
@@ -1022,7 +1021,9 @@ function Tab_PTXpaths_Callbacks(app)
                                     cpx,        limOpx,     limOpxVal,
                                     nCon,       nRes,
                                     T_start,    isentropic_mode,
-                                    watsat,     watsat_val                                        )
+                                    watsat,     watsat_val,
+                                    te_model,   kds_mod,    zrsat_mod,  ssat_mod,   P2O5sat_mod,
+                                    bulkte_ini_te, bulkte_ass_te, elem_te             )
 
             if isentropic_mode == true
                 entropy                 = string(round(Out_PTX[1].entropy[1],digits=3))
@@ -1101,10 +1102,11 @@ function Tab_PTXpaths_Callbacks(app)
                                     height   =  640,
                                     width    =  640,
                                     scale    =  2.0,       ).fields)
+        te_computed = bid == "compute-path-button" && te_model == "true"
         if isentropic_mode == true
-            return entropy, figIsoSPath, configPathIsoS,figPTX, configPTX, figExtractedPTX, configExtractedPTX, figrmPTX, configrmPTX, figrmintPTX, configrmintPTX, phase_list, loading
+            return entropy, figIsoSPath, configPathIsoS, figPTX, configPTX, figExtractedPTX, configExtractedPTX, figrmPTX, configrmPTX, figrmintPTX, configrmintPTX, phase_list, loading, te_computed
         else
-            return entropy, no_update(), no_update(),figPTX, configPTX, figExtractedPTX, configExtractedPTX, figrmPTX, configrmPTX, figrmintPTX, configrmintPTX, phase_list, loading
+            return entropy, no_update(), no_update(), figPTX, configPTX, figExtractedPTX, configExtractedPTX, figrmPTX, configrmPTX, figrmintPTX, configrmintPTX, phase_list, loading, te_computed
         end                            
         
     end
@@ -1808,49 +1810,6 @@ function Tab_PTXpaths_Callbacks(app)
         opts = [Dict("label" => dbte.title[i], "value" => dbte.test[i])
                 for i = 1:size(dbte, 1)]
         return data, opts, test_id
-    end
-
-    # Compute TE along PTX path — writes result into store to avoid duplicate outputs
-    callback!(
-        app,
-        Output("te-ptx-success",           "is_open"),
-        Output("te-ptx-failed",            "is_open"),
-        Output("te-ptx-computed-store",    "data"   ),
-        Input("compute-te-ptx-button",     "n_clicks"),
-        State("database-dropdown-ptx",     "value"   ),
-        State("mode-dropdown-ptx",         "value"   ),
-        State("assimilation-dropdown-ptx", "value"   ),
-        State("kds-dropdown-ptx",          "value"   ),
-        State("zrsat-dropdown-ptx",        "value"   ),
-        State("ssat-dropdown-ptx",         "value"   ),
-        State("P2O5sat-dropdown-ptx",      "value"   ),
-        State("table-te-rock-ptx",         "data"    ),
-        State("table-te-2-rock-ptx",       "data"    ),
-        State("connectivity-id",           "value"   ),
-        State("residual-id",               "value"   ),
-        prevent_initial_call = true,
-    ) do _, dtb, mode, assim, kds_mod, zrsat_mod, ssat_mod, P2O5sat_mod, bulkte1, bulkte2, nCon, nRes
-
-        global Out_TE_PTX, all_TE_ph_ptx, C_ext_TE_PTX
-
-        if !@isdefined(Out_PTX) || isempty(Out_PTX)
-            return false, true, false
-        end
-        if dtb == "um" || dtb == "ume" || dtb == "mtl"
-            return false, true, false
-        end
-
-        nCon = isnothing(nCon) ? 0.0 : Float64(nCon)
-        nRes = isnothing(nRes) ? 0.0 : Float64(nRes)
-
-        bulkte_ini, bulkte_ass, elem = get_terock_prop(bulkte1, bulkte2)
-
-        t = @elapsed Out_TE_PTX, all_TE_ph_ptx, C_ext_TE_PTX = tepm_function_ptx(
-                        mode, dtb, kds_mod, zrsat_mod, ssat_mod, P2O5sat_mod,
-                        bulkte_ini, bulkte_ass, assim, elem, nCon, nRes)
-        println("Computed PTX trace elements in $t s")
-
-        return true, false, true
     end
 
     # Extract step from PT path click or reset to 1 on new computation
