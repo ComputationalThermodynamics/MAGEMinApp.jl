@@ -143,14 +143,13 @@ PTdata_fc = [
 ]
 
 compute_new_PTXpath(4, PTdata_fc, "fc", bulk_morb, bulk_morb, oxides, nothing, "false", false,
-                    dtb, 1, "none", "lp", -1, 0.0, false, false, 0.0, 0.0, 0.0, 1250.0, false)
+                    dtb, 1, "none", "lp", -1, 0.0, false, false, 0.0, 0.0, 0.0, 1250.0, false,
+                    "false", 0.0, "true", "OL", "none", "none", "none", bulkte_pm, bulkte_pm, elements_te)
 
 Out_PTX_fc  = deepcopy(Out_PTX)
 fracEvol_fc = copy(fracEvol)
 n_tot_fc    = length(Out_PTX_fc)
-
-Out_TE_fc, _ = tepm_function_ptx("fc", dtb, "OL", "none", "none", "none",
-                                  bulkte_pm, bulkte_pm, "false", elements_te, 0.0, 0.0)
+Out_TE_fc   = deepcopy(Out_TE_PTX)
 n_el_fc = length(Out_TE_fc[1].elements)
 
 # Major-element mass balance: total solid extracted + remaining melt = 1
@@ -192,13 +191,12 @@ PTdata_fm = [
 ]
 
 compute_new_PTXpath(4, PTdata_fm, "fm", bulk_klb1, bulk_klb1, oxides, nothing, "false", false,
-                    dtb, 1, "none", "lp", -1, 0.0, false, false, 0.0, 0.0, 0.0, 1100.0, false)
+                    dtb, 1, "none", "lp", -1, 0.0, false, false, 0.0, 0.0, 0.0, 1100.0, false,
+                    "false", 0.0, "true", "OL", "none", "none", "none", bulkte_pm, bulkte_pm, elements_te)
 
 Out_PTX_fm = deepcopy(Out_PTX)
 n_tot_fm   = length(Out_PTX_fm)
-
-Out_TE_fm, _ = tepm_function_ptx("fm", dtb, "OL", "none", "none", "none",
-                                  bulkte_pm, bulkte_pm, "false", elements_te, 0.0, 0.0)
+Out_TE_fm  = deepcopy(Out_TE_PTX)
 n_el_fm = length(Out_TE_fm[1].elements)
 
 # Major-element mass balance: total melt extracted + remaining solid = 1
