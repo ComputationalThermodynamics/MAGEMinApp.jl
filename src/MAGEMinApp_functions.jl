@@ -156,6 +156,19 @@ function string_vec_diff_ss(phase_selection,dtb)
     return phase_selection
 end
 
+function build_kds_database(kds_mod::String)
+    if kds_mod == "CO"
+        return MAGEMin_C.get_CO_KDs_database()
+    else
+        TE_models   = [AppData.KDs[i][4] for i in 1:length(AppData.KDs)]
+        id_TE_model = findfirst(TE_models .== kds_mod)
+        if isnothing(id_TE_model)
+            error("Unknown KDs model: $kds_mod")
+        end
+        return MAGEMin_C.create_custom_KDs_database(AppData.KDs[id_TE_model][1], AppData.KDs[id_TE_model][2], AppData.KDs[id_TE_model][3]; info = AppData.KDs[id_TE_model][6])
+    end
+end
+
 """
     Function to retrieve active set of pure phases
 """
@@ -2345,9 +2358,7 @@ function te_bulk_csv_to_db(datain, kds_mod)
 
     dbte = dbte[(dbte.composition .== "predefined"), :];
 
-    TE_models   = [AppData.KDs[i][4] for i in 1:length(AppData.KDs)]
-    id_TE_model = findfirst(TE_models .== kds_mod)
-    KDs_dtb     = MAGEMin_C.create_custom_KDs_database(AppData.KDs[id_TE_model][1], AppData.KDs[id_TE_model][2], AppData.KDs[id_TE_model][3]; info = AppData.KDs[id_TE_model][6])
+    KDs_dtb = build_kds_database(kds_mod)
 
     headers = strip.(datain[1, :])
 
@@ -2448,9 +2459,7 @@ function te_bulk_file_to_db(datain, kds_mod)
 
     dbte = dbte[(dbte.composition .== "predefined"), :];
 
-    TE_models   = [AppData.KDs[i][4] for i in 1:length(AppData.KDs)]
-    id_TE_model = findfirst(TE_models .== kds_mod)
-    KDs_dtb     = MAGEMin_C.create_custom_KDs_database(AppData.KDs[id_TE_model][1], AppData.KDs[id_TE_model][2], AppData.KDs[id_TE_model][3]; info = AppData.KDs[id_TE_model][6])
+    KDs_dtb = build_kds_database(kds_mod)
 
     id_title 		= findfirst(datain[1,:] .== "title")
     id_comments		= findfirst(datain[1,:] .== "comments")

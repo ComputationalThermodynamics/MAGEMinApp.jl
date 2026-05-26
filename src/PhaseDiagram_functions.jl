@@ -851,9 +851,7 @@ function tepm_function( diagType    :: String,
     TEvec       = Vector{Float64};
     all_TE_ph   = []
 
-    TE_models   = [AppData.KDs[i][4] for i in 1:length(AppData.KDs)]
-    id_TE_model = findfirst(TE_models .== kds_mod)
-    KDs_dtb     = MAGEMin_C.create_custom_KDs_database(AppData.KDs[id_TE_model][1], AppData.KDs[id_TE_model][2], AppData.KDs[id_TE_model][3]; info = AppData.KDs[id_TE_model][6])
+    KDs_dtb = build_kds_database(kds_mod)
 
     bulkte_L      = MAGEMin_C.adjust_chemical_system( KDs_dtb, bulkte_L, elem_TE );
     bulkte_R      = MAGEMin_C.adjust_chemical_system( KDs_dtb, bulkte_R, elem_TE );

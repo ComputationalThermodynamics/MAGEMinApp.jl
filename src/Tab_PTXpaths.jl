@@ -479,7 +479,8 @@ function Tab_PTXpaths()
                             ],width=6),
                             dbc_col([
                                 dcc_dropdown(   id      = "kds-dropdown-ptx",
-                                                options = [Dict("label" => "OL", "value" => "OL")],
+                                                options = [Dict("label" => "OL", "value" => "OL"),
+                                                           Dict("label" => "CO", "value" => "CO")],
                                                 value   = "OL",
                                                 clearable = false,
                                                 multi   = false),

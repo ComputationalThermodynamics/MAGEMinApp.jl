@@ -80,40 +80,62 @@ function Tab_PTXpaths_Callbacks(app)
             end
             
             # Here we create the dataframe's header:
-            MAGEMin_db = DataFrame(         Symbol("point[#]")          => Int64[],
-                                            Symbol("P[kbar]")           => Float64[],
-                                            Symbol("T[°C]")             => Float64[],
-                                            Symbol("Removed $(sysunit)%")     => Float64[],
-                                            Symbol("Remaining $(sysunit)%")     => Float64[])
+            MAGEMin_db = DataFrame(         Symbol("point[#]")                  => Int64[],
+                                            Symbol("P[kbar]")                   => Float64[],
+                                            Symbol("T[°C]")                     => Float64[],
+                                            Symbol("Step removed $(sysunit)%")       => Float64[])
 
             for i in oxides
                 col = i*"_step"
                 MAGEMin_db[!, col] = Float64[] 
             end
-            MAGEMin_db[!, "Integrated $(sysunit)%"] = Float64[] 
+            MAGEMin_db[!, "Accumulated removed $(sysunit)%"] = Float64[] 
+            MAGEMin_db[!, "Accumulated remaining $(sysunit)%"] = Float64[] 
             for i in oxides
-                col = i*"_int"
+                col = i*"_acc"
                 MAGEMin_db[!, col] = Float64[] 
             end
 
+            # for k=1:n_tot
+            #     part_1 = Dict(  "point[#]"                  => k,
+            #                     "P[kbar]"                   => P[k],
+            #                     "T[°C]"                     => T[k],
+            #                     "Removed    $(sysunit)%"    => fracEvol[k,2],
+            #                     "Remaining  $(sysunit)%"    => fracEvol[k,1])
+
+            #     part_2 = Dict(  (oxides[j]*"_step" => rmB[k,j].*100.0)
+            #                     for j in eachindex(oxides))
+
+            #     part_3 = Dict(  "Integrated $(sysunit)%" => cumfrac[k])
+
+            #     part_4 = Dict(  (oxides[j]*"_int" => rmB2[k,j].*100.0)
+            #                     for j in eachindex(oxides))
+
+            #     row    = merge(part_1,part_2,part_3,part_4)   
+            #     push!(MAGEMin_db, row, cols=:union)        
+            # end
+
+            step_rm = zeros(Float64, n_tot)
+            step_rm[2:end] = fracEvol[2:end,2] - fracEvol[1:end-1,2]
             for k=1:n_tot
-                part_1 = Dict(  "point[#]"      => k,
-                                "P[kbar]"       => P[k],
-                                "T[°C]"         => T[k],
-                                "Removed $(sysunit)%" => fracEvol[k,2],
-                                "Remaining $(sysunit)%" => fracEvol[k,1])
+                part_1 = Dict(  "point[#]"                  => k,
+                                "P[kbar]"                   => P[k],
+                                "T[°C]"                     => T[k],
+                                "Step removed $(sysunit)%"  => step_rm[k])
 
                 part_2 = Dict(  (oxides[j]*"_step" => rmB[k,j].*100.0)
                                 for j in eachindex(oxides))
 
-                part_3 = Dict(  "Integrated $(sysunit)%" => cumfrac[k])
+                part_3 = Dict(  "Accumulated removed $(sysunit)%"     => fracEvol[k,2],
+                                "Accumulated remaining $(sysunit)%"   => fracEvol[k,1])
 
-                part_4 = Dict(  (oxides[j]*"_int" => rmB2[k,j].*100.0)
+                part_4 = Dict(  (oxides[j]*"_acc" => rmB2[k,j].*100.0)
                                 for j in eachindex(oxides))
 
                 row    = merge(part_1,part_2,part_3,part_4)   
                 push!(MAGEMin_db, row, cols=:union)        
             end
+
 
             filename = fileout*".csv"
             CSV.write(filename, MAGEMin_db)
@@ -195,8 +217,7 @@ function Tab_PTXpaths_Callbacks(app)
                 MAGEMin_db = DataFrame(         Symbol("point[#]")              => Int64[],
                                                 Symbol("P[kbar]")               => Float64[],
                                                 Symbol("T[°C]")                 => Float64[],
-                                                Symbol("Removed $(sysunit)%")   => Float64[],
-                                                Symbol("Remaining $(sysunit)%") => Float64[])
+                                                Symbol("Step removed $(sysunit)%")   => Float64[])
 
 
                 for i in ph_names_ext_ptx
@@ -204,13 +225,28 @@ function Tab_PTXpaths_Callbacks(app)
                     MAGEMin_db[!, col] = Float64[] 
                 end
                 
+                # Z = hcat(zeros(length(ph_names_ext_ptx)),Z)
+                # for k=1:n_tot
+                #     part_1 = Dict(  "point[#]"              => k,
+                #                     "P[kbar]"               => P[k],
+                #                     "T[°C]"                 => T[k],
+                #                     "Removed $(sysunit)%"   => fracEvol[k,2],
+                #                     "Remaining $(sysunit)%" => fracEvol[k,1])
+
+                #     part_2 = Dict(  (ph_names_ext_ptx[j]*"_$(sysunit)%" => Z[j,k])
+                #                     for j in eachindex(ph_names_ext_ptx))
+
+                #     row    = merge(part_1,part_2)   
+                #     push!(MAGEMin_db, row, cols=:union)        
+                # end
                 Z = hcat(zeros(length(ph_names_ext_ptx)),Z)
+                step_rm = zeros(Float64, n_tot)
+                step_rm[2:end] = fracEvol[2:end,2] - fracEvol[1:end-1,2]
                 for k=1:n_tot
-                    part_1 = Dict(  "point[#]"              => k,
-                                    "P[kbar]"               => P[k],
-                                    "T[°C]"                 => T[k],
-                                    "Removed $(sysunit)%"   => fracEvol[k,2],
-                                    "Remaining $(sysunit)%" => fracEvol[k,1])
+                    part_1 = Dict(  "point[#]"                  => k,
+                                    "P[kbar]"                   => P[k],
+                                    "T[°C]"                     => T[k],
+                                    "Step removed $(sysunit)%"     => step_rm[k])
 
                     part_2 = Dict(  (ph_names_ext_ptx[j]*"_$(sysunit)%" => Z[j,k])
                                     for j in eachindex(ph_names_ext_ptx))
