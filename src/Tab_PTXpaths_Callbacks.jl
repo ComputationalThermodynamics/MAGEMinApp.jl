@@ -89,6 +89,8 @@ function Tab_PTXpaths_Callbacks(app)
                 col = i*"_step"
                 MAGEMin_db[!, col] = Float64[] 
             end
+
+            MAGEMin_db[!, "Instantaneous removed $(sysunit)%"] = Float64[] 
             MAGEMin_db[!, "Accumulated removed $(sysunit)%"] = Float64[] 
             MAGEMin_db[!, "Accumulated remaining $(sysunit)%"] = Float64[] 
             for i in oxides
@@ -126,7 +128,8 @@ function Tab_PTXpaths_Callbacks(app)
                 part_2 = Dict(  (oxides[j]*"_step" => rmB[k,j].*100.0)
                                 for j in eachindex(oxides))
 
-                part_3 = Dict(  "Accumulated removed $(sysunit)%"     => fracEvol[k,2],
+                part_3 = Dict(  "Instantaneous removed $(sysunit)%"   => fracEvol[k,3],
+                                "Accumulated removed $(sysunit)%"     => fracEvol[k,2],
                                 "Accumulated remaining $(sysunit)%"   => fracEvol[k,1])
 
                 part_4 = Dict(  (oxides[j]*"_acc" => rmB2[k,j].*100.0)
@@ -470,8 +473,8 @@ function Tab_PTXpaths_Callbacks(app)
 
         # per-step incremental extracted fraction — fracEvol[:,2] encodes the correct
         # connectivity/residual logic for both fc and fm, so diff gives consistent weights
-        delta_frac = diff([0.0; fracEvol[:, 2]])
-        cumfrac  = accumulate(+, delta_frac)
+        step_rm = zeros(Float64, n_tot)
+        step_rm[2:end] = fracEvol[2:end,2] - fracEvol[1:end-1,2]
         start_id = findfirst(k -> !all(isnan, C_ext(k)), 1:n_tot)
 
         # integrated cumulate TE: mass-weighted running average of extracted material
@@ -482,8 +485,8 @@ function Tab_PTXpaths_Callbacks(app)
             end
             for i in start_id+1:n_tot
                 if !all(isnan, C_ext(i)) && !ismissing(Csol_int[i-1, 1])
-                    wt_new = delta_frac[i]
-                    wt_old = cumfrac[i-1]
+                    wt_new = step_rm[i-1]
+                    wt_old = fracEvol[i-1,2]
                     denom  = wt_new + wt_old
                     if denom > 0.0
                         Csol_int[i, :] .= (C_ext(i) .* wt_new .+ collect(skipmissing(Csol_int[i-1, :])) .* wt_old) ./ denom
@@ -500,8 +503,9 @@ function Tab_PTXpaths_Callbacks(app)
             Symbol("point[#]")              => Int64[],
             Symbol("P[kbar]")               => Float64[],
             Symbol("T[°C]")                 => Float64[],
-            Symbol("Removed%")              => Float64[],
-            Symbol("Cumulative removed%")   => Float64[],
+            Symbol("Step removed%")         => Float64[],
+            Symbol("Instantaneous removed%") => Float64[],
+            Symbol("Accumulated removed%")  => Float64[],
         )
         for e in elements
             MAGEMin_db[!, e*"_step[μg/g]"] = Union{Float64,Missing}[]
@@ -515,8 +519,9 @@ function Tab_PTXpaths_Callbacks(app)
                 "point[#]"              => k,
                 "P[kbar]"               => P[k],
                 "T[°C]"                 => T[k],
-                "Removed%"              => delta_frac[k],
-                "Cumulative removed%"   => cumfrac[k],
+                "Step removed%"         => step_rm[k],
+                "Instantaneous removed%" => fracEvol[k,3],
+                "Accumulated removed%"  => fracEvol[k,2],
             )
             part_2 = Dict((elements[j]*"_step[μg/g]" => Csol_step[k, j]) for j in eachindex(elements))
             part_3 = Dict((elements[j]*"_int[μg/g]"  => Csol_int[k, j])  for j in eachindex(elements))
