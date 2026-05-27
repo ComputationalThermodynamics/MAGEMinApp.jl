@@ -654,7 +654,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             ph_names_ptx= Vector{String}()
 
             n_tot       = np + (np-1)*nsteps
-            fracEvol    = Matrix{Float64}(undef,n_tot,2)
+            fracEvol    = Matrix{Float64}(undef,n_tot,3)
             removedBulk = Matrix{Float64}(undef,n_tot,length(bulk_ini))
             assimFrac   = zeros(Float64, n_tot)
             Out_PTX     = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,n_tot)
@@ -664,9 +664,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             te_enabled  = te_model == "true" && !isempty(bulkte_ini) && !isempty(kds_mod) &&
                           !(dtb in ["um", "ume", "mtl"])
             if te_enabled
-                TE_models    = [AppData.KDs[i][4] for i in 1:length(AppData.KDs)]
-                id_TE_model  = findfirst(TE_models .== kds_mod)
-                KDs_dtb      = MAGEMin_C.create_custom_KDs_database(AppData.KDs[id_TE_model][1], AppData.KDs[id_TE_model][2], AppData.KDs[id_TE_model][3]; info = AppData.KDs[id_TE_model][6])
+                KDs_dtb      = build_kds_database(kds_mod)
                 bulkte_ini_a = MAGEMin_C.adjust_chemical_system(KDs_dtb, bulkte_ini, elem_TE)
                 bulkte_ass_a = assim == "true" && !isempty(bulkte_ass) ?
                                MAGEMin_C.adjust_chemical_system(KDs_dtb, bulkte_ass, elem_TE) :
@@ -752,6 +750,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
 
             fracEvol[1,1]            = 1.0;          # starting material fraction is always one as we want to measure the relative change here
             fracEvol[1,2]            = 0.0; 
+            fracEvol[1,3]            = 0.0; 
             removedBulk[1,:]        .= zeros(length(bulk_ini))
 
             # retrieve reference entropy of the system
@@ -861,6 +860,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                     removedBulk[k+1,:] .= Out_PTX[k].bulk_M
                                     fracEvol[k+1,1]     = fracEvol[k,1] * (Out_PTX[k].frac_S + Out_PTX[k].frac_F + nCon/100.0)
                                     fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
+                                    fracEvol[k+1,3]     = 1.0 - (Out_PTX[k].frac_S + Out_PTX[k].frac_F + nCon/100.0)
                                     if te_enabled
                                         Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb; ZrSat_model=zrsat_mod, SSat_model=ssat_mod, P2O5Sat_model=P2O5sat_mod)
                                         if !all(isnan, Out_TE_PTX[k].Csol) && !all(isnan, Out_TE_PTX[k].Cliq)
@@ -872,6 +872,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                     removedBulk[k+1,:] .= zeros(length(bulk_ini))
                                     fracEvol[k+1,1]     = fracEvol[k,1]
                                     fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
+                                    fracEvol[k+1,3]     = 0.0
                                     if te_enabled
                                         Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb; ZrSat_model=zrsat_mod, SSat_model=ssat_mod, P2O5Sat_model=P2O5sat_mod)
                                         # below connectivity: no bulk update, no extraction
@@ -882,6 +883,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                 removedBulk[k+1,:] .= zeros(length(bulk_ini))
                                 fracEvol[k+1,1]     = fracEvol[k,1]
                                 fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
+                                fracEvol[k+1,3]     = 0.0
                                 if te_enabled
                                     Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb; ZrSat_model=zrsat_mod, SSat_model=ssat_mod, P2O5Sat_model=P2O5sat_mod)
                                     if !all(isnan, Out_TE_PTX[k].Csol)
@@ -894,6 +896,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                             removedBulk[k+1,:] .= zeros(length(bulk_ini))
                             fracEvol[k+1,1]     = fracEvol[k,1]
                             fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
+                            fracEvol[k+1,3]     = 0.0
                             if te_enabled
                                 Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb; ZrSat_model=zrsat_mod, SSat_model=ssat_mod, P2O5Sat_model=P2O5sat_mod)
                                 # no solid: no bulk update
@@ -907,6 +910,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                     removedBulk[k+1,:] .= Out_PTX[k].bulk_M .*(nRes/100.0) .+ Out_PTX[k].bulk_S .*((100.0-nRes)/100.0)
                                     fracEvol[k+1,1]     = fracEvol[k,1] * (Out_PTX[k].frac_M - nRes/100.0)
                                     fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
+                                    fracEvol[k+1,3]     = 1.0 - Out_PTX[k].frac_M - nRes/100.0
                                     if te_enabled
                                         Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb; ZrSat_model=zrsat_mod, SSat_model=ssat_mod, P2O5Sat_model=P2O5sat_mod)
                                         if !all(isnan, Out_TE_PTX[k].Cliq) && !all(isnan, Out_TE_PTX[k].Csol)
@@ -919,6 +923,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                     removedBulk[k+1,:] .= Out_PTX[k].bulk_S
                                     fracEvol[k+1,1]     = fracEvol[k,1] * (Out_PTX[k].frac_M - Out_PTX[k].frac_S)
                                     fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
+                                    fracEvol[k+1,3]     = 1.0 - (Out_PTX[k].frac_M - Out_PTX[k].frac_S)
                                     if te_enabled
                                         Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb; ZrSat_model=zrsat_mod, SSat_model=ssat_mod, P2O5Sat_model=P2O5sat_mod)
                                         if !all(isnan, Out_TE_PTX[k].Cliq) && !all(isnan, Out_TE_PTX[k].Csol)
@@ -932,6 +937,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                 removedBulk[k+1,:] .= Out_PTX[k].bulk_S
                                 fracEvol[k+1,1]     = fracEvol[k,1] * Out_PTX[k].frac_M
                                 fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
+                                fracEvol[k+1,3]     = 1.0 - Out_PTX[k].frac_M
                                 if te_enabled
                                     Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb; ZrSat_model=zrsat_mod, SSat_model=ssat_mod, P2O5Sat_model=P2O5sat_mod)
                                     if !all(isnan, Out_TE_PTX[k].Cliq) && !all(isnan, Out_TE_PTX[k].Csol)
@@ -944,6 +950,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                             removedBulk[k+1,:] .= zeros(length(bulk_ini))
                             fracEvol[k+1,1]     = fracEvol[k,1]
                             fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
+                            fracEvol[k+1,3]     = 0.0
                             if te_enabled
                                 Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb; ZrSat_model=zrsat_mod, SSat_model=ssat_mod, P2O5Sat_model=P2O5sat_mod)
                                 # no melt: no bulk update
@@ -953,6 +960,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                         removedBulk[k+1,:] .= zeros(length(bulk_ini))
                         fracEvol[k+1,1]     = fracEvol[k,1]
                         fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
+                        fracEvol[k+1,3]     = 0.0
                         if te_enabled
                             Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb; ZrSat_model=zrsat_mod, SSat_model=ssat_mod, P2O5Sat_model=P2O5sat_mod)
                             # not fc/fm: no bulk update
@@ -1368,8 +1376,8 @@ end
 function get_data_ree_plot_ptx(step_id, norm, show_type)
 
     ree           = ["La", "Ce", "Pr", "Nd", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu"]
-    te_chondrite  = ["Rb", "Ba", "Th", "U", "Nb", "Ta", "La", "Ce", "Pb", "Pr", "Sr", "Nd", "Zr", "Hf", "Sm", "Eu", "Gd", "Tb", "Dy", "Y", "Ho", "Er", "Tm", "Yb", "Lu", "V", "Sc"]
-    ppm_chondrite = [2.3, 2.41, 0.029, 0.0074, 0.24, 0.0136, 0.237, 0.613, 2.47, 0.0928, 7.25, 0.457, 3.82, 0.103, 0.148, 0.0563, 0.199, 0.0361, 0.246, 1.57, 0.0546, 0.160, 0.0247, 0.161, 0.0246, 56, 5.92]
+    te_chondrite  = ["Rb", "Ba", "Th", "U", "Nb", "Ta", "La", "Ce", "Pb", "Pr", "Sr", "Nd", "Zr", "Hf", "Sm", "Eu", "Gd", "Tb", "Dy", "Y", "Ho", "Er", "Tm", "Yb", "Lu", "V", "Sc", "Cs", "K", "Ti"]
+    ppm_chondrite = [2.3, 2.41, 0.029, 0.0074, 0.24, 0.0136, 0.237, 0.613, 2.47, 0.0928, 7.25, 0.457, 3.82, 0.103, 0.148, 0.0563, 0.199, 0.0361, 0.246, 1.57, 0.0546, 0.160, 0.0247, 0.161, 0.0246, 56, 5.92, 0.188, 558.0, 436.0]
 
     res = Out_TE_PTX[step_id]
 
@@ -1377,9 +1385,12 @@ function get_data_ree_plot_ptx(step_id, norm, show_type)
         te      = ree
         te_idx  = [findfirst(isequal(x), res.elements) for x in ree]
     else
-        te      = te_chondrite
-        te_idx  = [findfirst(isequal(x), res.elements) for x in te_chondrite]
+        mask    = [!isnothing(findfirst(isequal(x), res.elements)) for x in te_chondrite]
+        te      = te_chondrite[mask]
+        te_idx  = [findfirst(isequal(x), res.elements) for x in te]
     end
+
+    chon_idx = [findfirst(isequal(x), te_chondrite) for x in te]
 
     n_ree    = length(te_idx)
     n_traces = 0
@@ -1399,7 +1410,7 @@ function get_data_ree_plot_ptx(step_id, norm, show_type)
     colormap       = get_lines_colormap()
 
     if norm == "chondrite"
-        C_norm = ppm_chondrite[te_idx]
+        C_norm = ppm_chondrite[chon_idx]
     elseif norm == "bulk"
         C_norm = res.C0[te_idx]
     else

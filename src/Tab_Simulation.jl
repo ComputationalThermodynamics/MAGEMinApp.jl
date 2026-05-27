@@ -268,7 +268,8 @@ function Tab_Simulation()
                                             html_div([
                                                 dcc_dropdown(   id      = "kds-dropdown-trigger",
                                                 options = [
-                                                    (label = "O. Laurent (2012)",               value = "OL"),
+                                                    (label = "O. Laurent (2012)", value = "OL"),
+                                                    (label = "J. Cornet (2019)",  value = "CO"),
                                                 ],
                                                 value       = "OL" ,
                                                 clearable   =  false,
@@ -300,7 +301,8 @@ function Tab_Simulation()
                                             dbc_col([ 
                                                 dcc_dropdown(   id      = "kds-dropdown",
                                                 options = [
-                                                    (label = "O. Laurent (2012)",               value = "OL"),
+                                                    (label = "O. Laurent (2012)", value = "OL"),
+                                                    (label = "J. Cornet (2019)",  value = "CO"),
                                                 ],
                                                 value       = "OL" ,
                                                 clearable   =  false,

@@ -16,7 +16,7 @@ function get_layout_ree(norm        :: String,
                         show_type   :: String,
                         kds_db      :: String)
 
-    if kds_db == "OL"                 
+    if kds_db == "OL" || kds_db == "CO"                
         if show_type == "ree"
             xaxis_title = "Rare Earth Elements"
         elseif show_type == "all"
@@ -52,16 +52,17 @@ end
 function get_data_ree_plot(point_id_te, norm, show_type, kds_db)
 
     ree             = ["La", "Ce", "Pr", "Nd", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu"]
-    te_chondrite    = ["Rb", "Ba", "Th", "U", "Nb", "Ta", "La", "Ce", "Pb", "Pr", "Sr", "Nd", "Zr", "Hf", "Sm", "Eu", "Gd", "Tb", "Dy", "Y", "Ho", "Er", "Tm", "Yb", "Lu", "V", "Sc"]
-    ppm_chondrite   = [2.3, 2.41,0.029,0.0074,0.24,0.0136,0.237,0.613,2.47,0.0928,7.25,0.457,3.82,0.103,0.148,0.0563,0.199,0.0361,0.246,1.57,0.0546,0.160,0.0247,0.161,0.0246,56,5.92]
+    te_chondrite    = ["Rb", "Ba", "Th", "U", "Nb", "Ta", "La", "Ce", "Pb", "Pr", "Sr", "Nd", "Zr", "Hf", "Sm", "Eu", "Gd", "Tb", "Dy", "Y", "Ho", "Er", "Tm", "Yb", "Lu", "V", "Sc", "Cs", "K", "Ti"]
+    ppm_chondrite   = [2.3, 2.41,0.029,0.0074,0.24,0.0136,0.237,0.613,2.47,0.0928,7.25,0.457,3.82,0.103,0.148,0.0563,0.199,0.0361,0.246,1.57,0.0546,0.160,0.0247,0.161,0.0246,56,5.92,0.188,558.0,436.0]
 
-    if kds_db == "OL"
+    if kds_db == "OL" || kds_db == "CO"
         if show_type == "ree"
             te      = ree
             te_idx  = [findfirst(isequal(x), Out_TE_XY[point_id_te].elements) for x in ree];
         elseif show_type == "all"
-            te      = Out_TE_XY[point_id_te].elements
-            te_idx  = [findfirst(isequal(x), Out_TE_XY[point_id_te].elements) for x in te_chondrite];
+            mask    = [!isnothing(findfirst(isequal(x), Out_TE_XY[point_id_te].elements)) for x in te_chondrite]
+            te      = te_chondrite[mask]
+            te_idx  = [findfirst(isequal(x), Out_TE_XY[point_id_te].elements) for x in te]
         end
     else#if kds_db == "EODC"
         te      = Out_TE_XY[point_id_te].elements
@@ -102,16 +103,17 @@ function get_data_ree_plot(point_id_te, norm, show_type, kds_db)
 
     # te_idx   = [findfirst(isequal(x), Out_TE_XY[point_id_te].elements) for x in ree];
     k = 1
-    if kds_db == "OL"
+    if kds_db == "OL" || kds_db == "CO"
+        chon_idx = [findfirst(isequal(x), te_chondrite) for x in te]
         if show_type == "ree"
             if norm == "chondrite"
-                C_norm = copy(ppm_chondrite[te_idx])
+                C_norm = copy(ppm_chondrite[chon_idx])
             elseif norm == "bulk"
                 C_norm = copy(Out_TE_XY[point_id_te].C0[te_idx])
             end
         elseif show_type == "all"
             if norm == "chondrite"
-                C_norm = copy(ppm_chondrite[te_idx])
+                C_norm = copy(ppm_chondrite[chon_idx])
             elseif norm == "bulk"
                 C_norm = copy(Out_TE_XY[point_id_te].C0[te_idx])
             end
