@@ -100,6 +100,9 @@ end
 # AppData lives in the MAGEMinApp module; re-included functions look for it in Main
 const AppData = MAGEMinApp.AppData
 
+# build_kds_database is defined in MAGEMinApp_functions.jl which is not re-included here
+const build_kds_database = MAGEMinApp.build_kds_database
+
 # get_init_param is defined in MAGEMinApp_functions.jl which is not re-included here
 function get_init_param(dtb::String, solver::String, cpx, limOpx, limOpxVal::Float64)
     mbCpx      = (cpx == true && dtb in ("mb","mbe")) ? 1 : 0
