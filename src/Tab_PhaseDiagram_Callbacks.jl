@@ -868,6 +868,8 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("boost-mode-dropdown",    "value"),           # false,true
         State("verbose-dropdown",       "value"),           # none,light,full -> -1,0,1
         State("scp-dropdown",           "value"),           # none,light,full -> -1,0,1
+        State("sas-dropdown",           "value"),           # seismic averaging scheme: 0=VRH, 1=HS
+        State("wf-id",                  "value"),           # seismic weight factor [0,1]
 
         State("table-bulk-rock",        "data" ),            # bulk-rock 1
         State("table-2-bulk-rock",      "data" ),            # bulk-rock 2
@@ -879,6 +881,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("kds-dropdown",           "value"),
         State("zrsat-dropdown",         "value"),
         State("ssat-dropdown",          "value"),
+        State("co2sat-dropdown",        "value"),
         State("P2O5sat-dropdown",       "value"),
         State("table-te-rock",          "data" ),            # bulk-rock 1
         State("table-te-2-rock",        "data" ),  
@@ -925,10 +928,10 @@ function Tab_PhaseDiagram_Callbacks(app)
             tmin,       tmax,       pmin,       pmax,       e1_tmin,    e1_tmax,    e2_tmin,    e2_tmax,    e1_liq,     e2_liq,  e1_remain_wat,     e2_remain_wat,e1_remain,     e2_remain,      
             fixT,       fixP,
             sub,        refType,    refLvl,
-            bufferType, solver,     boost,      verbose,    scp,
+            bufferType, solver,     boost,      verbose,    scp,        sas,        wf,
             bulk1,      bulk2,      sys_unit,   
             bufferN1,   bufferN2,
-            tepm,       kds_mod,    zrsat_mod,  ssat_mod,   P2O5sat_mod,    bulkte1,    bulkte2,
+            tepm,       kds_mod,    zrsat_mod,  ssat_mod,   co2sat_mod, P2O5sat_mod,    bulkte1,    bulkte2,
             test,
             isopleths,  isoplethsID,isoplethsHid,  isoplethsHidID,  phase,      ss,         em,     ox,    of,     ot, sys, rmf, calc, cust, calc_sf, calc_ox, cust_sf, cust_ox,
             isoLineStyle, isoLineWidth, isoColorLine,           isoLabelSize,   
@@ -938,6 +941,8 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         phase_selection                 = remove_phases(string_vec_diff(ph_selection,pure_ph_selection,dtb),dtb)
         smooth                          = smooth
+        seismicScheme                   = sas == 0 ? "VRH" : "HS"
+        seismicWeightFactor             = Float64(wf)
         xtitle, ytitle, Xrange, Yrange  = diagram_type(diagType, tmin, tmax, pmin, pmax, e1_tmin, e1_tmax, e2_tmin, e2_tmax)                # get axis information
         bufferN1, bufferN2, fixT, fixP, e1_liq, e2_liq,  e1_remain_wat,  e2_remain_wat,  e1_remain,  e2_remain,  = convert2Float64(bufferN1, bufferN2, fixT, fixP, e1_liq, e2_liq,  e1_remain_wat,  e2_remain_wat,     e1_remain,  e2_remain,)               # convert buffer_n to float
         bid                             = pushed_button( callback_context() )                           # get the ID of the last pushed button
@@ -988,11 +993,12 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                                                         bufferType, bufferN1,   bufferN2,
                                                                                                         minColor,   maxColor,
                                                                                                         smooth,     colorm,     reverseColorMap, set_white,
-                                                                                                        test,       refType                           )
+                                                                                                        test,       refType,
+                                                                                                        seismicScheme, seismicWeightFactor        )
             if tepm == "true"
                 if dtb != "um" && dtb != "ume" && dtb != "mtl"
                     t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
-                                                                        kds_mod, zrsat_mod, ssat_mod, P2O5sat_mod,
+                                                                        kds_mod, zrsat_mod, ssat_mod, co2sat_mod, P2O5sat_mod,
                                                                         bulkte_L, bulkte_R, elem)
 
                     println("Computed trace element partitioning in $t s")
@@ -1040,14 +1046,14 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                                     bufferType, bufferN1,   bufferN2,
                                                                                     minColor,   maxColor,
                                                                                     smooth,     colorm,     reverseColorMap, set_white,
-                                                                                    test,       refType,    bid                             )
+                                                                                    test,       refType,    bid,
+                                                                                    seismicScheme, seismicWeightFactor     )
 
             if tepm == "true"
                 if dtb != "um" && dtb != "ume" && dtb != "mtl"
                     t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
-                                                                        kds_mod, zrsat_mod, ssat_mod, P2O5sat_mod,
+                                                                        kds_mod, zrsat_mod, ssat_mod, co2sat_mod, P2O5sat_mod,
                                                                         bulkte_L, bulkte_R, elem)
-
                     println("Computed trace element partitioning in $t s")
                 else
                     println("Cannot compute trace-element partitioning for $dtb database as it does not include a melt model\n")

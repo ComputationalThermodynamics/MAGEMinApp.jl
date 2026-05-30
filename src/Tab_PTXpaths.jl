@@ -536,6 +536,22 @@ function Tab_PTXpaths()
                             ]),
                         ]),
 
+                        dbc_row([
+                            dbc_col([
+                                html_h1("CO₂ saturation", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
+                            ],width=6),
+                            dbc_col([
+                                dcc_dropdown(   id      = "co2sat-dropdown-ptx",
+                                                options = [
+                                                    (label = "none",    value = "none"),
+                                                    (label = "SY26",    value = "SY26"),
+                                                ],
+                                                value   = "none",
+                                                clearable = false,
+                                                multi   = false),
+                            ]),
+                        ]),
+
                         html_div("‎ "),
                         dcc_upload(
                             id="upload-te-ptx",

@@ -360,6 +360,21 @@ function Tab_Simulation()
                                                     multi       =  false),
                                                 ]),
                                             ]),
+                                            dbc_row([
+                                                dbc_col([ 
+                                                    html_h1("CO2 saturation", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                                ]),
+                                                dbc_col([ 
+                                                    dcc_dropdown(   id      = "co2sat-dropdown",
+                                                    options = [
+                                                        (label = "none",                    value = "none"),
+                                                        (label = "Sun & Yao, 2026",         value = "SY26"),
+                                                    ],
+                                                    value       = "none" ,
+                                                    clearable   =  false,
+                                                    multi       =  false),
+                                                ]),
+                                            ]),
 
                                         ], style = Dict("display" => "none"), id  = "zr-options-id"), #none, block
                                         html_div([
@@ -897,7 +912,38 @@ function Tab_Simulation()
                                             multi       = false),
                                         ]),
                                     ]),
-                                    #Specific cp from G_system
+                                    dbc_row([
+                                        dbc_col([ 
+                                            html_h1("Seismic averaging scheme", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                        ]),
+                                        dbc_col([ 
+                                            dcc_dropdown(   id      = "sas-dropdown",
+                                            options = [
+                                                (label = "VRH",         value =  0),
+                                                (label = "HS",          value =  1),
+                                            ],
+                                            value       = 0,
+                                            clearable   = false,
+                                            multi       = false),
+                                        ]),
+                                    ]),
+                                    dbc_row([
+                                        dbc_col([ 
+                                            html_h1("Weight factor", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                        ]),
+                                        dbc_col([ 
+                                            dbc_row([
+                                            dbc_col([ 
+                                                    dbc_input(
+                                                        id      ="wf-id",
+                                                        type    ="number", 
+                                                        min     = 0.0, 
+                                                        max     = 1.0, 
+                                                        value   = 0.5   ),
+                                                ]),
+                                            ]),
+                                        ]),
+                                    ]),
                                     dbc_row([
                                         dbc_col([ 
                                             html_h1("Specific Cp", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),

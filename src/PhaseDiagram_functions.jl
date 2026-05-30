@@ -840,6 +840,7 @@ function tepm_function( diagType    :: String,
                         kds_mod     :: String,
                         zrsat_mod   :: String,
                         ssat_mod    :: String,
+                        co2sat_mod  :: String,
                         P2O5sat_mod :: String,
                         bulkte_L    :: Vector{Float64},
                         bulkte_R    :: Vector{Float64},
@@ -848,25 +849,27 @@ function tepm_function( diagType    :: String,
     np          = length(Out_XY)
     
     Out_TE_XY   = Vector{MAGEMin_C.out_tepm}(undef,np)
-    TEvec       = Vector{Float64};
+
     all_TE_ph   = []
 
     KDs_dtb = build_kds_database(kds_mod)
+    global KDs_TE_elements = KDs_dtb.element_name
 
     bulkte_L      = MAGEMin_C.adjust_chemical_system( KDs_dtb, bulkte_L, elem_TE );
     bulkte_R      = MAGEMin_C.adjust_chemical_system( KDs_dtb, bulkte_R, elem_TE );
-
+    TEvec         = Vector{Float64}(undef, length(bulkte_L));
     for i = 1:np
 
         if diagType != "pt"
-            TEvec = bulkte_L*(1.0 - Out_XY[i].X[1]) + bulkte_R*Out_XY[i].X[1];
+            TEvec .= bulkte_L*(1.0 - Out_XY[i].X[1]) + bulkte_R*Out_XY[i].X[1];
         else
-            TEvec = bulkte_L
+            TEvec .= bulkte_L
         end
 
         Out_TE_XY[i]  = TE_prediction(Out_XY[i], TEvec, KDs_dtb, dtb;
                                       ZrSat_model   = zrsat_mod,
                                       SSat_model    = ssat_mod,
+                                      CO2Sat_model  = co2sat_mod,
                                       P2O5Sat_model = P2O5sat_mod)
 
         if ~isnothing(Out_TE_XY[i].ph_TE)
@@ -898,7 +901,7 @@ end
 
     Compute a new phase diagram from scratch
 """
-function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_size, 
+function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_size,
                                     Xrange,     Yrange,     fieldname,  customTitle,
                                     dtb,        dataset,    custW,      diagType,   verbose,    scp,    solver,    boost,  phase_selection,
                                     fixT,       fixP,
@@ -909,7 +912,8 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                     bufferType, bufferN1,   bufferN2,
                                     minColor,   maxColor,
                                     smooth,     colorm,     reverseColorMap, set_white,
-                                    test,       refType                                  )
+                                    test,       refType,
+                                    seismicScheme = "VRH", seismicWeightFactor = 0.5        )
         global CompProgress
 
         #________________________________________________________________________________________#
@@ -940,15 +944,17 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                     
         CompProgress.stage = "Initialize MAGEMin"
         MAGEMin_data    =   Initialize_MAGEMin( dtb;
-                                                verbose     = false,
-                                                dataset     = dataset,
-                                                limitCaOpx  = limitCaOpx,
-                                                CaOpxLim    = CaOpxLim,
-                                                mbCpx       = mbCpx,
-                                                buffer      = bufferType,
-                                                solver      = sol    );
+                                                verbose             = false,
+                                                dataset             = dataset,
+                                                limitCaOpx          = limitCaOpx,
+                                                CaOpxLim            = CaOpxLim,
+                                                mbCpx               = mbCpx,
+                                                buffer              = bufferType,
+                                                solver              = sol,
+                                                seismicScheme       = seismicScheme,
+                                                seismicWeightFactor = seismicWeightFactor    );
 
-        #________________________________________________________________________________________#                      
+        #________________________________________________________________________________________#
         # initial optimization on regular grid
         CompProgress.stage = "Compute initial grid "
         CompProgress.refinement_level = 0
@@ -1148,7 +1154,7 @@ end
 """
 function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                 Xrange,     Yrange,     fieldname,  customTitle,
-                                dtb,        dataset,    custW,  diagType,   watsat,  watsat_val,   
+                                dtb,        dataset,    custW,  diagType,   watsat,  watsat_val,
                                 verbose,    scp,        solver, boost, phase_selection,
                                 fixT,       fixP,
                                 e1_liq,     e2_liq,     e1_remain_wat,  e2_remain_wat,     e1_remain,  e2_remain,
@@ -1158,7 +1164,8 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                 bufferType, bufferN1,   bufferN2,
                                 minColor,   maxColor,
                                 smooth,     colorm,     reverseColorMap, set_white,
-                                test,       refType, bid                                 )
+                                test,       refType, bid,
+                                seismicScheme = "VRH", seismicWeightFactor = 0.5       )
 
     global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, gridded_fields, phase_infos, X, Y, addedRefinementLvl, layout, n_lbl, pChip_wat, pChip_T
 
@@ -1166,17 +1173,19 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                                     cpx,        limOpx,     limOpxVal ) 
 
     MAGEMin_data    =   Initialize_MAGEMin( dtb;
-                                            verbose     = false,
-                                            dataset     = dataset,
-                                            limitCaOpx  = limitCaOpx,
-                                            CaOpxLim    = CaOpxLim,
-                                            mbCpx       = mbCpx,
-                                            buffer      = bufferType,
-                                            solver      = sol    );
+                                            verbose             = false,
+                                            dataset             = dataset,
+                                            limitCaOpx          = limitCaOpx,
+                                            CaOpxLim            = CaOpxLim,
+                                            mbCpx               = mbCpx,
+                                            buffer              = bufferType,
+                                            solver              = sol,
+                                            seismicScheme       = seismicScheme,
+                                            seismicWeightFactor = seismicWeightFactor    );
 
     data    = select_cells_to_split_and_keep(data; bid = bid)
     data    = perform_AMR(data)
-    t = @elapsed Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin( dtb, data,       MAGEMin_data, custW,  diagType, PTpath,
+    t = @elapsed Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin( dtb, data,  MAGEMin_data, custW,  diagType, PTpath,
                                                                             phase_selection, fixT, fixP,
                                                                             e1_liq,     e2_liq,     e1_remain_wat,  e2_remain_wat,     e1_remain,  e2_remain,
                                                                             oxi, bulk_L, bulk_R,
