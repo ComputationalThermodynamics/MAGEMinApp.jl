@@ -301,6 +301,7 @@ function Tab_TraceElement()
                                                             (label = "Zircon",              value = "zrc"      ),
                                                             (label = "Sulfide",             value = "sulf"     ),
                                                             (label = "Fluorapatite",        value = "fapt"     ),
+                                                            (label = "CO2 saturation",      value = "co2sat"   ),
                                                             (label = "Trace element",       value = "te"       ),
                                                         ],
                                                         value="zrc" ,
@@ -334,8 +335,8 @@ function Tab_TraceElement()
                                     dbc_col([
                                         dcc_dropdown(   id      = "fields-dropdown-sulf",
                                                         options = [
-                                                            (label = "Sat_S_liq",              value = "Sat_S_liq"    ),
-                                                            (label = "sulf_wt",                  value = "sulf_wt"        ),
+                                                            (label = "Sat_S_liq",               value = "Sat_S_liq"    ),
+                                                            (label = "sulf_wt",                 value = "sulf_wt"      ),
                                                         ],
                                                         value="Sat_S_liq" ,
                                                         clearable   = false,
@@ -353,8 +354,8 @@ function Tab_TraceElement()
                                     dbc_col([
                                         dcc_dropdown(   id      = "fields-dropdown-fapt",
                                                         options = [
-                                                            (label = "Sat_P2O5_liq",              value = "Sat_P2O5_liq"    ),
-                                                            (label = "fapt_wt",                  value = "fapt_wt"        ),
+                                                            (label = "Sat_P2O5_liq",            value = "Sat_P2O5_liq" ),
+                                                            (label = "fapt_wt",                 value = "fapt_wt"      ),
                                                         ],
                                                         value="Sat_P2O5_liq" ,
                                                         clearable   = false,
@@ -362,6 +363,25 @@ function Tab_TraceElement()
                                     ]), 
                                 ]),
                                 ], style = Dict("display" => "block"), id      = "show-fluorapatite-id"), #none, bloc
+
+
+                                html_div([
+                                dbc_row([
+                                    dbc_col([
+                                        html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                    ], width=5),
+                                    dbc_col([
+                                        dcc_dropdown(   id      = "fields-dropdown-co2sat",
+                                                        options = [
+                                                            (label = "Sat_CO2_liq",             value = "Sat_CO2_liq"  ),
+                                                            (label = "fl_CO2_wt",               value = "fl_CO2_wt"    )
+                                                        ],
+                                                        value="Sat_CO2_liq" ,
+                                                        clearable   = false,
+                                                        multi       = false),
+                                    ]),
+                                ]),
+                                ], style = Dict("display" => "none"), id      = "show-co2sat-id"), #none, bloc
 
                                 html_div([
                                 dbc_row([
@@ -574,6 +594,7 @@ function Tab_TraceElement()
                                                         (label = "Zircon",              value = "zrc"       ),
                                                         (label = "Sulfide",             value = "sulf"      ),
                                                         (label = "Fluorapatite",        value = "fapt"      ),
+                                                        (label = "CO2 saturation",      value = "co2sat"    ),
                                                         (label = "Trace element",       value = "te"        ),
                                                         ],
                                                     value       = "zrc",
@@ -588,7 +609,7 @@ function Tab_TraceElement()
                                                     html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                                 ], width=6),
                                                 dbc_col([
-                                                    dcc_dropdown(   id      = "fields-dropdown-zrc-te",
+                                                                    dcc_dropdown(   id      = "fields-dropdown-zrc-te",
                                                                     options = [
                                                                         (label = "Sat_Zr_liq",              value = "Sat_Zr_liq"    ),
                                                                         (label = "zrc_wt",                  value = "zrc_wt"        ),
@@ -607,10 +628,10 @@ function Tab_TraceElement()
                                                     html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                                 ], width=6),
                                                 dbc_col([
-                                                    dcc_dropdown(   id      = "fields-dropdown-sulf-te",
+                                                                    dcc_dropdown(   id      = "fields-dropdown-sulf-te",
                                                                     options = [
-                                                                        (label = "Sat_S_liq",              value = "Sat_S_liq"    ),
-                                                                        (label = "sulf_wt",                  value = "sulf_wt"        ),
+                                                                        (label = "Sat_S_liq",               value = "Sat_S_liq"    ),
+                                                                        (label = "sulf_wt",                 value = "sulf_wt"      ),
                                                                     ],
                                                                     value       = "Sat_S_liq" ,
                                                                     clearable   =  false,
@@ -626,10 +647,10 @@ function Tab_TraceElement()
                                                     html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                                 ], width=6),
                                                 dbc_col([
-                                                    dcc_dropdown(   id      = "fields-dropdown-fapt-te",
+                                                                    dcc_dropdown(   id      = "fields-dropdown-fapt-te",
                                                                     options = [
-                                                                        (label = "Sat_P2O5_liq",              value = "Sat_P2O5_liq"    ),
-                                                                        (label = "fapt_wt",                  value = "fapt_wt"        ),
+                                                                        (label = "Sat_P2O5_liq",            value = "Sat_P2O5_liq" ),
+                                                                        (label = "fapt_wt",                 value = "fapt_wt"      ),
                                                                     ],
                                                                     value       = "Sat_P2O5_liq" ,
                                                                     clearable   =  false,
@@ -638,9 +659,28 @@ function Tab_TraceElement()
                                             ]),
                                         ], style = Dict("display" => "none"), id      = "fields-dropdown-fapt-id-te"),
 
+
                                         html_div([
                                             dbc_row([
-                                                dbc_col([ 
+                                                dbc_col([
+                                                    html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                ], width=6),
+                                                dbc_col([
+                                                    dcc_dropdown(   id      = "fields-dropdown-co2sat-te",
+                                                                    options = [
+                                                                        (label = "Sat_CO2_liq",             value = "Sat_CO2_liq"  ),
+                                                                        (label = "fl_CO2_wt",               value = "fl_CO2_wt"    ),
+                                                                    ],
+                                                                    value       = "Sat_CO2_liq" ,
+                                                                    clearable   =  false,
+                                                                    multi       =  false ),
+                                                ]),
+                                            ]),
+                                        ], style = Dict("display" => "none"), id      = "fields-dropdown-co2sat-id-te"),
+
+                                        html_div([
+                                            dbc_row([
+                                                dbc_col([
                                                     html_h1("Calculator", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                                 ]),
                                                 dbc_col([

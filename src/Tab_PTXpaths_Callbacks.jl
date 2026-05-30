@@ -383,8 +383,9 @@ function Tab_PTXpaths_Callbacks(app)
         State("zrsat-dropdown-ptx",             "value"),
         State("ssat-dropdown-ptx",              "value"),
         State("P2O5sat-dropdown-ptx",           "value"),
+        State("co2sat-dropdown-ptx",            "value"),
         prevent_initial_call=true,
-    ) do n_clicks, fname, dtb, kds, zrsat, ssat, P2O5sat
+    ) do n_clicks, fname, dtb, kds, zrsat, ssat, P2O5sat, co2sat
 
         if !@isdefined(Out_TE_PTX) || isempty(Out_TE_PTX)
             return false, false, true
@@ -403,6 +404,9 @@ function Tab_PTXpaths_Callbacks(app)
         end
         if P2O5sat != "none"
             sat_ext *= "_$P2O5sat"
+        end
+        if co2sat != "none"
+            sat_ext *= "_$co2sat"
         end
 
         mkpath("./output")
@@ -427,8 +431,9 @@ function Tab_PTXpaths_Callbacks(app)
         State("zrsat-dropdown-ptx",                         "value"),
         State("ssat-dropdown-ptx",                          "value"),
         State("P2O5sat-dropdown-ptx",                       "value"),
+        State("co2sat-dropdown-ptx",                        "value"),
         prevent_initial_call=true,
-    ) do n_clicks, fname, dtb, kds, zrsat, ssat, P2O5sat
+    ) do n_clicks, fname, dtb, kds, zrsat, ssat, P2O5sat, co2sat
 
         if !@isdefined(Out_TE_PTX) || isempty(Out_TE_PTX)
             return false, false, true
@@ -447,6 +452,9 @@ function Tab_PTXpaths_Callbacks(app)
         end
         if P2O5sat != "none"
             sat_ext *= "_$P2O5sat"
+        end
+        if co2sat != "none"
+            sat_ext *= "_$co2sat"
         end
 
         mkpath("./output")
@@ -1023,6 +1031,7 @@ function Tab_PTXpaths_Callbacks(app)
         State("zrsat-dropdown-ptx",             "value"),
         State("ssat-dropdown-ptx",              "value"),
         State("P2O5sat-dropdown-ptx",           "value"),
+        State("co2sat-dropdown-ptx",            "value"),
         State("table-te-rock-ptx",              "data"  ),
         State("table-te-2-rock-ptx",            "data"  ),
 
@@ -1036,7 +1045,7 @@ function Tab_PTXpaths_Callbacks(app)
                 nCon,       nRes,       color_table,
                 T_start,    isentropic_mode, entropy,
                 watsat,     watsat_val,
-                te_model,   kds_mod,    zrsat_mod,  ssat_mod,   P2O5sat_mod,    bulkte1,    bulkte2
+                te_model,   kds_mod,    zrsat_mod,  ssat_mod,   P2O5sat_mod,    co2sat_mod, bulkte1,    bulkte2
 
         bid                     = pushed_button( callback_context() )    # get which button has been pushed
         phase_selection         = remove_phases(string_vec_diff(phase_selection,pure_phase_selection,dtb),dtb)
@@ -1063,7 +1072,7 @@ function Tab_PTXpaths_Callbacks(app)
                                     nCon,       nRes,
                                     T_start,    isentropic_mode,
                                     watsat,     watsat_val,
-                                    te_model,   kds_mod,    zrsat_mod,  ssat_mod,   P2O5sat_mod,
+                                    te_model,   kds_mod,    zrsat_mod,  ssat_mod,   P2O5sat_mod,    co2sat_mod,
                                     bulkte_ini_te, bulkte_ass_te, elem_te             )
 
             if isentropic_mode == true

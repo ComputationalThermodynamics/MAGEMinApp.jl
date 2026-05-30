@@ -1163,6 +1163,11 @@ function get_gridded_map(   fieldname   ::String,
             field[i] = get_property(Out_TE_XY[i], fieldname);
         end
         field[isnan.(field)] .= 0.0
+    elseif type == "co2sat"
+        for i=1:np
+            field[i] = get_property(Out_TE_XY[i], fieldname);
+        end
+        field[isnan.(field)] .= 0.0
     else
         if fieldname == "#Phases"
             for i=1:np
@@ -1477,6 +1482,11 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
         end
         field[isnan.(field)] .= 0.0
     elseif type == "sulf"
+        for i=1:np
+            field[i] = get_property(Out_TE_XY[i], fieldname);
+        end
+        field[isnan.(field)] .= 0.0
+    elseif type == "co2sat"
         for i=1:np
             field[i] = get_property(Out_TE_XY[i], fieldname);
         end
@@ -1961,6 +1971,11 @@ function get_isopleth_map_te(   mod         ::String,
         end
         field[isnan.(field)] .= 0.0
     elseif mod == "sulf"
+        for i=1:np
+            field[i] = get_property(Out_TE_XY[i], acces_name);
+        end
+        field[isnan.(field)] .= 0.0
+    elseif mod == "co2sat"
         for i=1:np
             field[i] = get_property(Out_TE_XY[i], acces_name);
         end

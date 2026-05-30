@@ -360,7 +360,7 @@ end
 function add_isopleth_phaseDiagram_te(      Xrange,     Yrange, 
                                             sub,        refLvl,
                                             dtb,        oxi,
-                                            isopleths_te,  field,  field_zrc, field_sulf, field_fapt, calc, cust, norm_tes,
+                                            isopleths_te,  field,  field_zrc, field_sulf, field_fapt, field_co2sat, calc, cust, norm_tes,
                                             isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,       
                                             minIso,     stepIso,    maxIso      )
 
@@ -382,6 +382,9 @@ function add_isopleth_phaseDiagram_te(      Xrange,     Yrange,
     elseif (field == "fapt")
         mod     = "fapt"
         name    = field_fapt
+    elseif (field == "co2sat")
+        mod     = "co2sat"
+        name    = field_co2sat
     else
         println("Wrong combination, needs debugging...")
     end

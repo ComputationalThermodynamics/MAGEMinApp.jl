@@ -71,6 +71,7 @@ function Tab_TraceElement_Callbacks(app)
         Output("show-zircon-id",            "style"),
         Output("show-sulfide-id",           "style"),
         Output("show-fluorapatite-id",      "style"),
+        Output("show-co2sat-id",            "style"),
         Output("show-trace-element-id",     "style"),
         Output("phase-te-info-id",          "children"), 
         Output("update-accessory-fields",   "value"), 
@@ -92,13 +93,15 @@ function Tab_TraceElement_Callbacks(app)
         none   = Dict("display" => "none")
         block  = Dict("display" => "block")
         if      value == "zrc"
-            return block, none, none, none, phase_te_list, update_accessory_fields*-1
+            return block, none, none, none, none, phase_te_list, update_accessory_fields*-1
         elseif  value == "sulf"
-            return none, block, none, none, phase_te_list, update_accessory_fields*-1
+            return none, block, none, none, none, phase_te_list, update_accessory_fields*-1
         elseif  value == "fapt"
-            return none, none, block, none, phase_te_list, update_accessory_fields*-1
-        else 
-            return none, none, none, block, phase_te_list, update_accessory_fields*-1
+            return none, none, block, none, none, phase_te_list, update_accessory_fields*-1
+        elseif  value == "co2sat"
+            return none, none, none, block, none, phase_te_list, update_accessory_fields*-1
+        else
+            return none, none, none, none, block, phase_te_list, update_accessory_fields*-1
         end
 
     end
@@ -113,6 +116,7 @@ function Tab_TraceElement_Callbacks(app)
         Output("fields-dropdown-zrc-id-te",     "style"   ),
         Output("fields-dropdown-sulf-id-te",    "style"   ),
         Output("fields-dropdown-fapt-id-te",    "style"   ),
+        Output("fields-dropdown-co2sat-id-te",  "style"   ),
         Input("field-type-te-dropdown",         "value"   ),
 
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
@@ -121,13 +125,15 @@ function Tab_TraceElement_Callbacks(app)
         block       = Dict("display" => "block")
 
         if field == "te"
-            return block, none, none, none
+            return block, none, none, none, none
         elseif field == "zrc"
-            return none, block, none, none
+            return none, block, none, none, none
         elseif field == "sulf"
-            return none, none, block, none
+            return none, none, block, none, none
         elseif field == "fapt"
-            return none, none, none, block
+            return none, none, none, block, none
+        elseif field == "co2sat"
+            return none, none, none, none, block
         end
 
     end
@@ -156,6 +162,7 @@ function Tab_TraceElement_Callbacks(app)
         Input("fields-dropdown-zrc",          "value"    ),
         Input("fields-dropdown-sulf",         "value"    ),
         Input("fields-dropdown-fapt",         "value"    ),
+        Input("fields-dropdown-co2sat",       "value"    ),
 
         Input("show-grid-te",               "value"      ), 
         Input("show-full-grid-te",          "value"      ), 
@@ -220,9 +227,10 @@ function Tab_TraceElement_Callbacks(app)
         State("hidden-isopleth-dropdown-te",      "options"),
         State("hidden-isopleth-dropdown-te",      "value"),
         State("field-type-te-dropdown", "value"         ),
-        State("fields-dropdown-zrc-te",  "value"        ),
-        State("fields-dropdown-sulf-te",  "value"        ),
-        State("fields-dropdown-fapt-te",  "value"        ),
+        State("fields-dropdown-zrc-te",     "value"        ),
+        State("fields-dropdown-sulf-te",    "value"        ),
+        State("fields-dropdown-fapt-te",    "value"        ),
+        State("fields-dropdown-co2sat-te",  "value"        ),
         State("input-calc-id-te",       "value"         ),
         State("input-cust-id-te",       "value"         ),
 
@@ -237,7 +245,7 @@ function Tab_TraceElement_Callbacks(app)
 
         prevent_initial_call = true,
 
-        ) do    n,          n2,         update_accessory_fields, fieldname_zrc,  fieldname_sulf,  fieldname_fapt,  
+        ) do    n,          n2,         update_accessory_fields, fieldname_zrc,  fieldname_sulf,  fieldname_fapt,  fieldname_co2sat,
                 grid,       full_grid,  lbl, 
 
                 addIso,     removeIso,  removeAllIso,           isoShow,    isoHide, isoShowAll,    isoHideAll,
@@ -249,7 +257,7 @@ function Tab_TraceElement_Callbacks(app)
                 bulk1,      bulk2,
                 sub,        refType,    refLvl,
                 fixT,       fixP,       solver,     bufferType, bufferN1,   bufferN2,   PTpath,
-                isopleths_te,  isoplethsID_te, isoplethsHid_te,  isoplethsHidID_te, field, field_zrc, field_sulf, field_fapt, calc, cust,
+                isopleths_te,  isoplethsID_te, isoplethsHid_te,  isoplethsHidID_te, field, field_zrc, field_sulf, field_fapt, field_co2sat, calc, cust,
 
                 isoLineStyle, isoLineWidth, isoColorLine, isoLabelSize,   
                 minIso,     stepIso,    maxIso, txt_list
@@ -455,8 +463,19 @@ function Tab_TraceElement_Callbacks(app)
                                                                                     dtb,        oxi,
                                                                                     sub,        refLvl,
                                                                                     smooth,     colorm,     reverseColorMap, set_white,       refType                                 )
-                minColor     = round(minimum(skipmissing(gridded_te)),digits=2); 
-                maxColor     = round(maximum(skipmissing(gridded_te)),digits=2);  
+                minColor     = round(minimum(skipmissing(gridded_te)),digits=2);
+                maxColor     = round(maximum(skipmissing(gridded_te)),digits=2);
+
+            elseif bid == "fields-dropdown-co2sat" || (bid == "update-accessory-fields" && type == "co2sat")
+
+                data_plot_te, layout_te, heat_map_export_te =  update_displayed_field_phaseDiagram_te(   xtitle,     ytitle,     "co2sat",                varBuilder, norm,
+                                                                                    Xrange,     Yrange,     fieldname_co2sat,
+                                                                                    dtb,        oxi,
+                                                                                    sub,        refLvl,
+                                                                                    smooth,     colorm,     reverseColorMap, set_white,       refType                                 )
+                minColor     = round(minimum(skipmissing(gridded_te)),digits=2);
+                maxColor     = round(maximum(skipmissing(gridded_te)),digits=2);
+
             elseif bid == "fields-dropdown-sulf" || (bid == "update-accessory-fields" && type == "sulf")
 
                 data_plot_te, layout_te, heat_map_export_te =  update_displayed_field_phaseDiagram_te(   xtitle,     ytitle,     "sulf",                  varBuilder, norm,
@@ -483,7 +502,7 @@ function Tab_TraceElement_Callbacks(app)
                 data_isopleth_te, isopleths_te = add_isopleth_phaseDiagram_te(  Xrange,         Yrange,
                                                                                 sub,            refLvl,
                                                                                 dtb,            oxi,
-                                                                                isopleths_te,   field, field_zrc, field_sulf, field_fapt, calc, cust, norm_te,
+                                                                                isopleths_te,   field, field_zrc, field_sulf, field_fapt, field_co2sat, calc, cust, norm_te,
                                                                                 isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,   
                                                                                 minIso,     stepIso,    maxIso                      )
                 data_isopleth_out_te = data_isopleth_te.isoP[data_isopleth_te.active]
