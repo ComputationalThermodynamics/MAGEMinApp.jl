@@ -821,7 +821,7 @@ function Tab_TraceElement_Callbacks(app)
             datab   = "_"*dtb*"_"*kds*sat_ext
             fileout = "./output/"*fname*datab
 
-            MAGEMin_dataTE2dataframe(Out_XY,Out_TE_XY,dtb,fileout; use_Warr2021=use_warr_names[1])
+            MAGEMin_dataTE2dataframe(Out_XY,Out_TE_XY,dtb,fileout; use_Warr2021=use_warr_names[1], use_GPA=use_GPa[1])
             return "success", ""
         else
             return  "", "failed"
@@ -864,7 +864,7 @@ function Tab_TraceElement_Callbacks(app)
             datab   = "_"*dtb*P*T*"_"*kds*sat_ext
             fileout = "./output/"*fname*datab
 
-            MAGEMin_dataTE2dataframe(Out_XY[point_id_te],Out_TE_XY[point_id_te],dtb,fileout; use_Warr2021=use_warr_names[1])
+            MAGEMin_dataTE2dataframe(Out_XY[point_id_te],Out_TE_XY[point_id_te],dtb,fileout; use_Warr2021=use_warr_names[1], use_GPA=use_GPa[1])
             return "success", ""
         else
             return  "", "failed"

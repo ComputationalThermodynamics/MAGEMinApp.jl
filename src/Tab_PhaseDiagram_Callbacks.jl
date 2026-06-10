@@ -235,7 +235,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             mkpath("./output")
             datab   = "_"*dtb
             fileout = "./output/"*fname*datab
-            MAGEMin_data2dataframe(Out_XY[point_id],dtb,fileout; use_Warr2021=use_warr_names[1])
+            MAGEMin_data2dataframe(Out_XY[point_id],dtb,fileout; use_Warr2021=use_warr_names[1], use_GPA=use_GPa[1])
 
             return  "success", ""
         else
@@ -285,7 +285,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             datab   = "_"*dtb
             fileout = "./output/"*fname*datab
 
-            MAGEMin_data2dataframe(Out_XY,dtb,fileout; use_Warr2021=use_warr_names[1])
+            MAGEMin_data2dataframe(Out_XY,dtb,fileout; use_Warr2021=use_warr_names[1], use_GPA=use_GPa[1])
             return "success", ""
         else
             return  "", "failed"
@@ -363,7 +363,7 @@ function Tab_PhaseDiagram_Callbacks(app)
     ) do n_clicks, fname, dtb, mbCpx
 
         if fname != "filename"
-            P       = "_Pkbar_"*string(Out_XY[point_id].P_kbar)
+            P       = "_P$(pressure_unit_label())_"*string(round(display_pressure(Out_XY[point_id].P_kbar); digits=3))
             T       = "_TC_"*string(Out_XY[point_id].T_C)
             datab   = "_"*dtb
             fileout = fname*datab*P*T*".txt"

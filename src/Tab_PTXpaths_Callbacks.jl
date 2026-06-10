@@ -339,7 +339,7 @@ function Tab_PTXpaths_Callbacks(app)
             datab   = "_"*dtb
             fileout = "./output/"*fname*datab
 
-            MAGEMin_data2dataframe(Out_PTX,dtb,fileout; use_Warr2021=use_warr_names[1])
+            MAGEMin_data2dataframe(Out_PTX,dtb,fileout; use_Warr2021=use_warr_names[1], use_GPA=use_GPa[1])
             return "success", ""
         else
             return  "", "failed"
@@ -363,7 +363,7 @@ function Tab_PTXpaths_Callbacks(app)
             datab   = "_inlined_"*dtb
             fileout = "./output/"*fname*datab
 
-            MAGEMin_data2dataframe_inlined(Out_PTX,dtb,fileout; use_Warr2021=use_warr_names[1])
+            MAGEMin_data2dataframe_inlined(Out_PTX,dtb,fileout; use_Warr2021=use_warr_names[1], use_GPA=use_GPa[1])
             return "success", ""
         else
             return  "", "failed"
@@ -413,7 +413,7 @@ function Tab_PTXpaths_Callbacks(app)
         datab   = "_te_"*dtb*"_"*kds*sat_ext
         fileout = "./output/"*fname*datab
 
-        MAGEMin_dataTE2dataframe(Out_PTX, Out_TE_PTX, dtb, fileout; use_Warr2021=use_warr_names[1])
+        MAGEMin_dataTE2dataframe(Out_PTX, Out_TE_PTX, dtb, fileout; use_Warr2021=use_warr_names[1], use_GPA=use_GPa[1])
         return true, false, false
     end
 

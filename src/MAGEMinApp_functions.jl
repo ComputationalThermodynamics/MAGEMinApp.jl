@@ -572,7 +572,7 @@ function save_equilibrium_to_file(  out::MAGEMin_C.gmin_struct{Float64, Int64}, 
     for i=1:length(out.ph)
         file *= @sprintf(" %4s ",display_ph_name(out.ph[i]))
     end
-    file *= @sprintf(" {%.4f %.4f} kbar/°C\n\n",out.P_kbar,out.T_C)
+    file *= @sprintf(" {%.4f %.4f} %s/°C\n\n",display_pressure(out.P_kbar),out.T_C,pressure_unit_label())
 
     file *= @sprintf("End-members fractions[wt fr]:\n")
     for i=1:out.n_SS
