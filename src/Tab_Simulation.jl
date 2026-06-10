@@ -1361,25 +1361,6 @@ function Tab_Simulation()
                                             ]),
                                             html_div("‎ "),
                                             dbc_row([
-                                                dbc_col([
-                                                    html_h1("Mineral names", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                                ], width=4),
-                                                dbc_col([
-                                                    dcc_dropdown(
-                                                        id        = "mineral-naming-dropdown",
-                                                        options   = [
-                                                            Dict("label" => "Legacy",      "value" => "legacy"),
-                                                            Dict("label" => "Warr (2021)", "value" => "warr"),
-                                                        ],
-                                                        value     = "legacy",
-                                                        clearable = false,
-                                                        multi     = false,
-                                                    ),
-                                                ]),
-                                            ]),
-                                            html_div(id="warr-naming-dummy", style=Dict("display"=>"none")),
-                                            html_div("‎ "),
-                                            dbc_row([
                                                 # html_div([
                                                     dbc_button(
                                                         "Compute phase diagram", id="compute-button-raw", color="light", className="me-2", n_clicks=0,
@@ -1545,54 +1526,6 @@ function Tab_Simulation()
                                     ])),
                                     id="collapse-general-parameters",
                                     is_open=true,
-                            ),
-                        ]),
-
-
-                        dbc_row([   
-                            dbc_button("Help and contact",id="button-contact",color="primary"),
-                            dbc_collapse(
-                                dbc_card(dbc_cardbody([
-                                    dbc_row([ 
-            
-                                        dbc_col([   
-                                            dcc_markdown(       id          = "contact-info-id", 
-                                                                children    = AppData.contribs[3],
-                                                                style       = Dict("white-space" => "pre"))
-                                            ], width=4),
-                                            dbc_col([  
-                                                dcc_markdown(       id          = "description-info-id", 
-                                                                    children    = AppData.contribs[4],
-                                                                    style       = Dict("white-space" => "pre"))
-                                            ], width=8),
-                                    ]), 
-                                   
-                                ])),
-                                id="collapse-contact",
-                                is_open=true,
-                            ),
-                        ]),
-                        # html_div("‎ "),
-                        dbc_row([   
-                            dbc_button("Contributors",id="button-contributors",color="primary"),
-                            dbc_collapse(
-                                dbc_card(dbc_cardbody([
-
-                                    dbc_row([ 
-                                        dbc_col([                                                          
-                                            dcc_markdown(       id          = "debug-info-id", 
-                                                                children    = AppData.contribs[1],
-                                                                style       = Dict("white-space" => "pre"))
-                                        ], width=6),
-                                        dbc_col([                                                          
-                                            dcc_markdown(       id          = "app-info-id", 
-                                                                children    = AppData.contribs[2],
-                                                                style       = Dict("white-space" => "pre"))
-                                        ], width=6),
-                                    ]),
-                                ])),
-                                id      =   "collapse-contributors",
-                                is_open =    false,
                             ),
                         ]),
 

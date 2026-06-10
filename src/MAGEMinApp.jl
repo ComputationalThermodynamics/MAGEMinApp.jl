@@ -39,6 +39,7 @@ module MAGEMinApp
     include(joinpath(pkg_dir,"src","PhaseDiagram_functions.jl"))
     include(joinpath(pkg_dir,"src","TraceElement_functions.jl"))
     include(joinpath(pkg_dir,"src","Tab_Simulation.jl"))
+    include(joinpath(pkg_dir,"src","Tab_GeneralSetup.jl"))
     include(joinpath(pkg_dir,"src","Tab_PhaseDiagram.jl"))
     include(joinpath(pkg_dir,"src","Tab_Classification.jl"))
     include(joinpath(pkg_dir,"src","Tab_TraceElement.jl"))
@@ -162,6 +163,11 @@ module MAGEMinApp
                     ], justify="between"),
 
                     dbc_tabs([
+
+                            dbc_tab(    tab_id      = "tab-general-setup",
+                                        label       = "General setup",
+                                        children    = [Tab_GeneralSetup()]
+                                    ),
 
                             dbc_tab(    tab_id      = "phase-diagrams",
                                         label       = "Phase diagrams",
