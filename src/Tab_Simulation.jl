@@ -467,7 +467,7 @@ function Tab_Simulation()
                                     #pressure
                                     dbc_row([
                                         dbc_col([ 
-                                            html_h1("Pressure [kbar]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            html_h1("Pressure [kbar]", id = "pressure-range-label-id", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
                                         ], width=6),
                                         dbc_col([ 
                                             dbc_row([
@@ -527,7 +527,7 @@ function Tab_Simulation()
                                     html_div([
                                     dbc_row([
                                         dbc_col([ 
-                                            html_h1("Fixed pressure", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            html_h1("Fixed pressure [kbar]", id = "fixed-pressure-label-id", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
                                         ]),
                                         dbc_col([ 
                                                 dbc_input(

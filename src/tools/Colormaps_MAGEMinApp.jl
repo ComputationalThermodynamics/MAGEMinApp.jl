@@ -1,3 +1,14 @@
+#=~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#   Project      : MAGEMin_App
+#   License      : GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
+#   Developers   : Nicolas Riel, Boris Kaus
+#   Contributors : Dominguez, H., Moyen, J-F.
+#   Organization : Institute of Geosciences, Johannes-Gutenberg University, Mainz
+#   Contact      : nriel[at]uni-mainz.de
+#
+#   Jun2026      : Colormaps for MAGEMinApp provided by Renée Jade Tamblyn (Unil, Switzerland)
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ =#
 
 function get_pink_colormap(n)
 
@@ -14,7 +25,6 @@ pink256 = ["RGB(255,255,255)", "RGB(255,255,255)", "RGB(255,254,254)", "RGB(255,
     return pink256[1:step:end]
 
 end
-
 
 
 
@@ -106,3 +116,59 @@ end
 
 
 
+
+
+const custom_colormaps = Dict{String, Function}(
+    "Pink"             => get_pink_colormap,
+    "Sunset"           => get_sunset_colormap,
+    "Dawn"             => get_dawn_colormap,
+    "Almeria"          => get_almeria_colormap,
+    "Almeria Extended" => get_almeria_extended_colormap,
+    "Almeria Red"      => get_almeria_red_colormap,
+    "Almeria Blue"     => get_almeria_blue_colormap,
+)
+
+
+"""
+    get_custom_colorscale(colorMap, rangeColor)
+
+Build a Plotly-style colorscale (`[[position, "rgb(r,g,b)"], ...]`, 10 stops)
+from one of the custom colormaps in `custom_colormaps`, restricted to the
+sub-range of the palette indicated by `rangeColor` (1-9, same convention as
+`restrict_colorMapRange`).
+"""
+function get_custom_colorscale(colorMap::String, rangeColor)
+
+    cmap_fun = custom_colormaps[colorMap]
+    rgb256   = cmap_fun(256)
+    m        = length(rgb256)
+
+    rin = zeros(m); gin = zeros(m); bin = zeros(m); xin = zeros(m)
+    for i = 1:m
+        vals   = parse.(Int, split(replace(rgb256[i], "RGB("=>"", ")"=>""), ","))
+        rin[i] = vals[1]/255
+        gin[i] = vals[2]/255
+        bin[i] = vals[3]/255
+        xin[i] = (i-1)/(m-1)
+    end
+
+    r_interp = linear_interpolation(xin, rin)
+    g_interp = linear_interpolation(xin, gin)
+    b_interp = linear_interpolation(xin, bin)
+
+    lo   = (rangeColor[1]-1)/8.0
+    hi   = (rangeColor[2]-1)/8.0
+    xmid = range(lo, hi, length=10)
+
+    colorm = Vector{Vector{Any}}(undef, 10)
+    for i = 1:10
+        ix        = 1.0/9.0 * Float64(i) - 1.0/9.0
+        r         = r_interp(xmid[i])
+        g         = g_interp(xmid[i])
+        b         = b_interp(xmid[i])
+        clr       = "rgb("*string(Int64(round(r*255)))*","*string(Int64(round(g*255)))*","*string(Int64(round(b*255)))*")"
+        colorm[i] = [ix, clr]
+    end
+
+    return colorm
+end

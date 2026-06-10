@@ -492,7 +492,7 @@ function Tab_TraceElement()
                                         ], width=5),
                                         dbc_col([
                                             dcc_dropdown(   id          = "colormaps_cross-te",
-                                                            options     = ["blackbody","Blues","cividis","Greens","Greys","hot","jet","RdBu","Reds","viridis","YlGnBu","YlOrRd"],
+                                                            options     = ["blackbody","Blues","cividis","Greens","Greys","hot","jet","RdBu","Reds","viridis","YlGnBu","YlOrRd","Pink","Sunset","Dawn","Almeria","Almeria Extended","Almeria Red","Almeria Blue"],
                                                             value       = "RdBu",
                                                             clearable   = false,
                                                             placeholder = "Colormap")

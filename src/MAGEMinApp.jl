@@ -52,6 +52,7 @@ module MAGEMinApp
     include(joinpath(pkg_dir,"src","Tab_PTXpaths_Callbacks.jl")) 
     include(joinpath(pkg_dir,"src","Tab_General_informations.jl"))
     include(joinpath(pkg_dir,"src","MAGEMinApp_functions.jl"))
+    include(joinpath(pkg_dir,"src","tools","Colormaps_MAGEMinApp.jl"))
     include(joinpath(pkg_dir,"src","Loading_functions.jl"))
     include(joinpath(pkg_dir,"src","Style_functions.jl"))
 
@@ -198,7 +199,7 @@ module MAGEMinApp
                                     ),
 
                         ],
-                        active_tab="phase-diagrams",
+                        active_tab="tab-general-setup",
                     ),
 
                     ], width=12),

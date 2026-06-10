@@ -157,7 +157,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         if dtype == "pt"
             Xrange          = (Float64(tmin),Float64(tmax))
-            Yrange          = (Float64(pmin),Float64(pmax))
+            Yrange          = (to_kbar_pressure(Float64(pmin)),to_kbar_pressure(Float64(pmax)))
 
             testName = replace(db[(db.db .== dtb), :].title[t+1], " " => "_")
             fileout = testName*".in";
@@ -201,7 +201,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         if dtype == "pt"
             Xrange          = (Float64(tmin),Float64(tmax))
-            Yrange          = (Float64(pmin),Float64(pmax))
+            Yrange          = (to_kbar_pressure(Float64(pmin)),to_kbar_pressure(Float64(pmax)))
 
             testName = replace(db[(db.db .== dtb), :].title[t+1], " " => "_")
             fileout = testName*".in";
@@ -831,6 +831,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("load-state-id",          "value"),
         Input("export-layers",          "n_clicks"),
         Input("mineral-naming-dropdown","value"),
+        Input("pressure-unit-dropdown", "value"),
 
         # STATES
         State("field-size-id",          "value"),
@@ -932,7 +933,7 @@ function Tab_PhaseDiagram_Callbacks(app)
     ) do    reac_up,    grid,       full_grid,  lbl,     addIso,     removeIso,  removeAllIso,    isoShow,   isoHide,   isoShowAll,    isoHideAll,    
             n_clicks_mesh, n_clicks_refine, uni_n_clicks_refine, 
             minColor,   maxColor,
-            colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  updateTitle,     loadstateid,       exportFig,  warr_naming,
+            colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  updateTitle,     loadstateid,       exportFig,  warr_naming, pressure_unit,
             # STATES
             field_size, customTitle, txt_list,
             custW,      diagType,   dtb,        dataset,    watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  ph_selection, pure_ph_selection, PTpath,
@@ -950,12 +951,16 @@ function Tab_PhaseDiagram_Callbacks(app)
             active_tab
 
 
+        global use_GPa
+        use_GPa[1]                      = (pressure_unit == "gpa")                                                                          # keep in sync with the dropdown for this callback's invocation
         phase_selection                 = remove_phases(string_vec_diff(to_str_vec(ph_selection),to_str_vec(pure_ph_selection),dtb),dtb)
         smooth                          = smooth
         seismicScheme                   = sas == 0 ? "VRH" : "HS"
         seismicWeightFactor             = Float64(wf)
+        pmin, pmax                      = to_kbar_pressure(Float64(pmin)), to_kbar_pressure(Float64(pmax))                                  # convert displayed pressure unit to kbar
         xtitle, ytitle, Xrange, Yrange  = diagram_type(diagType, tmin, tmax, pmin, pmax, e1_tmin, e1_tmax, e2_tmin, e2_tmax)                # get axis information
         bufferN1, bufferN2, fixT, fixP, e1_liq, e2_liq,  e1_remain_wat,  e2_remain_wat,  e1_remain,  e2_remain,  = convert2Float64(bufferN1, bufferN2, fixT, fixP, e1_liq, e2_liq,  e1_remain_wat,  e2_remain_wat,     e1_remain,  e2_remain,)               # convert buffer_n to float
+        fixP                            = to_kbar_pressure(fixP)                                                                            # convert displayed pressure unit to kbar
         global use_warr_names
         use_warr_names[1]               = (warr_naming == "warr")
         bid                             = pushed_button( callback_context() )                           # get the ID of the last pushed button
@@ -1216,6 +1221,12 @@ function Tab_PhaseDiagram_Callbacks(app)
                 Out_XY, Hash_XY, refType, data, PT_infos; field_size = field_size)
             layout[:annotations] = annotations
 
+        elseif bid == "pressure-unit-dropdown"
+            if !@isdefined(data_plot) || !@isdefined(layout)
+                return no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update()
+            end
+            # redraw only: data_plot/layout stay in kbar, apply_pressure_display() rescales for display below
+
         else
             fig = plot()
         end
@@ -1257,7 +1268,8 @@ function Tab_PhaseDiagram_Callbacks(app)
                 end
             end
 
-            fig = plot_diagram(data_all,layout)
+            data_all_disp, layout_disp = apply_pressure_display(data_all, layout, diagType)
+            fig = plot_diagram(data_all_disp,layout_disp)
 
         end
 
@@ -1562,12 +1574,14 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("phase-diagram",           "clickData" ),
         Input("draw-path-clear-button",  "n_clicks"  ),
         Input("draw-path-remove-button", "n_clicks"  ),
+        Input("pressure-unit-dropdown",  "value"     ),
         State("draw-path-record-switch", "value"     ),
         State("diagram-dropdown",        "value"     ),
         prevent_initial_call = true,
-    ) do click_info, _n_clear, _n_remove, is_recording, diagType  # _n_clear/_n_remove trigger via callback_context
+    ) do click_info, _n_clear, _n_remove, pressure_unit, is_recording, diagType  # _n_clear/_n_remove trigger via callback_context
 
-        global draw_path_ids
+        global draw_path_ids, use_GPa
+        use_GPa[1] = (pressure_unit == "gpa")
 
         if !@isdefined(draw_path_ids)
             draw_path_ids = Vector{Int64}()
@@ -1611,14 +1625,16 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         global draw_path_ids
 
+        bid = pushed_button( callback_context() )
+
         if !@isdefined(draw_path_ids) || isempty(draw_path_ids)
-            return plot(Layout(height=360)), PlotConfig(), false
+            return plot(Layout(height=360)), PlotConfig(), (bid == "mineral-naming-dropdown" ? no_update() : false)
         end
 
         traces, _phase_list = get_draw_path_plot(diagType, sysunit, draw_path_ids)
 
-        xtitle = diagType == "px" ? "X; P [kbar]" :
-                 diagType == "tx" ? "X; T [°C]"   : "T [°C]; P [kbar]"
+        xtitle = diagType == "px" ? "X; P [$(pressure_unit_label())]" :
+                 diagType == "tx" ? "X; T [°C]"   : "T [°C]; P [$(pressure_unit_label())]"
 
         layout = Layout(
             font        = attr(size=10),
@@ -1644,7 +1660,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             ).fields
         )
 
-        return fig, config, true
+        return fig, config, (bid == "mineral-naming-dropdown" ? no_update() : true)
     end
 
     # ── Thermobarometric intersection callbacks ───────────────────────────────

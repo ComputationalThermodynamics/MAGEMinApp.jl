@@ -39,6 +39,28 @@ function Tab_GeneralSetup()
                             html_div("‎ "),
                             dbc_row([
                                 dbc_col([
+                                    html_h1("Pressure unit", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                ], width=4),
+                                dbc_col([
+                                    dcc_dropdown(
+                                        id        = "pressure-unit-dropdown",
+                                        options   = [
+                                            Dict("label" => "kbar", "value" => "kbar"),
+                                            Dict("label" => "GPa",  "value" => "gpa"),
+                                        ],
+                                        value     = "kbar",
+                                        clearable = false,
+                                        multi     = false,
+                                    ),
+                                ]),
+                            ]),
+                            html_div(id="pressure-unit-dummy", style=Dict("display"=>"none")),
+                            html_div(id="pressure-unit-prev", children="kbar", style=Dict("display"=>"none")),
+                            html_div(id="pressure-unit-prev-ptx", children="kbar", style=Dict("display"=>"none")),
+                            html_div(id="pressure-unit-prev-ptx-solidus", children="kbar", style=Dict("display"=>"none")),
+                            html_div("‎ "),
+                            dbc_row([
+                                dbc_col([
                                     html_h1("Output directory", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                 ], width=4),
                                 dbc_col([

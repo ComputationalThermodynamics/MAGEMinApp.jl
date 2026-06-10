@@ -32,6 +32,7 @@ mineral_style           = load_style(joinpath(pkg_dir, "./user_data/mineral_styl
 # Keep track of simulation progress - note that this should be added to a single global variable
 global CompProgress     =  ComputationalProgress()
 global use_warr_names   = [false]
+global use_GPa          = [false]
 customWs                =  DataFrame()
 
 # Here we fill a tupple with the KDs for the OL12 database

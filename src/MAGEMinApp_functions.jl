@@ -9,6 +9,26 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ =#
 
+function pressure_unit_label()
+    return use_GPa[1] ? "GPa" : "kbar"
+end
+
+# convert a pressure value from kbar (internal/MAGEMin unit) to the display unit
+function display_pressure(P_kbar::Number)
+    return use_GPa[1] ? round(P_kbar / 10.0, digits=10) : P_kbar
+end
+function display_pressure(P_kbar::AbstractArray)
+    return use_GPa[1] ? [v isa Number ? round(v / 10.0, digits=10) : v for v in P_kbar] : P_kbar
+end
+
+# convert a pressure value from the display unit back to kbar (internal/MAGEMin unit)
+function to_kbar_pressure(P_display::Number)
+    return use_GPa[1] ? P_display * 10.0 : P_display
+end
+function to_kbar_pressure(P_display::AbstractArray)
+    return use_GPa[1] ? P_display .* 10.0 : P_display
+end
+
 function display_ph_name(name::String)
     return use_warr_names[1] ? MAGEMin_C.get_Warr_name(name) : name
 end

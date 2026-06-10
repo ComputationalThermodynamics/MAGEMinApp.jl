@@ -275,12 +275,45 @@ function Tab_Simulation_Callbacks(app)
         Output(  "watsat-dropdown",                  "value"       ),
         Output(  "watsat-val-id",                    "value"       ),
         Output(  "load-state-id",                    "value"       ),
+
+        Output(  "pressure-range-label-id",          "children"    ),
+        Output(  "fixed-pressure-label-id",          "children"    ),
+
         Input(   "load-state-diagram-button",        "n_clicks"    ),
+        Input(   "pressure-unit-dropdown",           "value"       ),
         State(   "load-state-filename-id",           "value"       ),
         State(   "load-state-id",                    "value"       ),
+        State(   "pmin-id",                          "value"       ),
+        State(   "pmax-id",                          "value"       ),
+        State(   "fixed-pressure-val-id",            "value"       ),
+        State(   "pressure-unit-prev",               "children"    ),
 
         prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
-    ) do click, filename, state_id
+    ) do click, pressure_unit, filename, state_id, pmin_cur, pmax_cur, fixp_cur, pressure_unit_prev
+
+        bid = pushed_button( callback_context() )
+
+        if bid == "pressure-unit-dropdown"
+            # rescale the pressure-related input fields when the display unit toggles, leaving
+            # everything else (and the underlying kbar values used for computation) untouched
+            global use_GPa
+            was_gpa     = (pressure_unit_prev == "gpa")
+            use_GPa[1]  = (pressure_unit == "gpa")
+
+            out = Any[no_update() for _ = 1:32]
+            if was_gpa != use_GPa[1]
+                factor   = use_GPa[1] ? (1.0/10.0) : 10.0
+                out[13]  = round(pmin_cur  * factor, digits=10)
+                out[14]  = round(pmax_cur  * factor, digits=10)
+                out[17]  = round(fixp_cur  * factor, digits=10)
+            end
+
+            unit    = pressure_unit_label()
+            out[31] = "Pressure [$unit]"
+            out[32] = "Fixed pressure [$unit]"
+
+            return Tuple(out)
+        end
 
         state_id *=  -1.0
 
@@ -315,10 +348,10 @@ function Tab_Simulation_Callbacks(app)
             @load file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ssat_dtb P2O5sat_dtb pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer boost verbose scp buffer1 buffer2 watsat watsat_val
 
             success, failed = "success", ""
-            return success, failed, database, diagram_type, mb_cpx, limit_ca_opx, ca_opx_val, tepm, kds_dtb, zrsat_dtb, ssat_dtb, P2O5sat_dtb, pmin, pmax, tmin, tmax, pfix, tfix, grid_sub, refinement, refinement_level, buffer, boost, verbose, scp, buffer1, buffer2, watsat, watsat_val, state_id
+            return success, failed, database, diagram_type, mb_cpx, limit_ca_opx, ca_opx_val, tepm, kds_dtb, zrsat_dtb, ssat_dtb, P2O5sat_dtb, display_pressure(Float64(pmin)), display_pressure(Float64(pmax)), tmin, tmax, display_pressure(Float64(pfix)), tfix, grid_sub, refinement, refinement_level, buffer, boost, verbose, scp, buffer1, buffer2, watsat, watsat_val, state_id, no_update(), no_update()
         catch e
             success, failed = "", "failed"
-            return success, failed, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, state_id
+            return success, failed, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, state_id, no_update(), no_update()
         end
     end
 
@@ -746,17 +779,22 @@ function Tab_Simulation_Callbacks(app)
     # add new entry to the PT-X path definition
     callback!(app,
         Output( "pt-x-table",               "data"      ),
+        Output( "pt-x-table",               "columns"   ),
+        Output( "pressure-unit-dummy",      "children"  ),
+        Output( "pressure-unit-prev",       "children"  ),
         Input(  "add-ptx-row-button",       "n_clicks"  ),
         Input(  "load-state-diagram-button","n_clicks"  ),
+        Input(  "pressure-unit-dropdown",   "value"     ),
         State(  "save-state-filename-id",   "value"     ),
         State(  "pt-x-table",               "data"      ),
         State(  "pt-x-table",               "columns"   ),
+        State(  "pressure-unit-prev",       "children"  ),
 
         prevent_initial_call = true,
 
-        ) do n_clicks, n_clicks_load, filename, data, columns
+        ) do n_clicks, n_clicks_load, pressure_unit, filename, data, columns, pressure_unit_prev
 
-        bid  = pushed_button( callback_context() )     
+        bid  = pushed_button( callback_context() )
 
         if bid == "add-ptx-row-button"
             dataout = copy(data)
@@ -766,14 +804,33 @@ function Tab_Simulation_Callbacks(app)
                 push!(dataout,add)
             end
 
-            return dataout
+            return dataout, no_update(), no_update(), no_update()
 
         elseif bid ==  "load-state-diagram-button"
             file = "saved_states/"*String(filename)*"_options.jld2"
 
             @load file ptx_table
 
-            return ptx_table
+            return ptx_table, no_update(), no_update(), no_update()
+
+        elseif bid == "pressure-unit-dropdown"
+            global use_GPa
+            was_gpa    = (pressure_unit_prev == "gpa")
+            use_GPa[1] = (pressure_unit == "gpa")
+
+            dataout    = copy(data)
+            colsout    = copy(columns)
+
+            if was_gpa != use_GPa[1]
+                factor = use_GPa[1] ? (1.0/10.0) : 10.0
+                for row in dataout
+                    row[Symbol("col-1")] = round(row[Symbol("col-1")] * factor, digits=10)
+                end
+            end
+
+            colsout[1][:name] = "P [$(pressure_unit_label())]"
+
+            return dataout, colsout, pressure_unit, pressure_unit
         end
     end
 
@@ -1255,6 +1312,7 @@ function Tab_Simulation_Callbacks(app)
         use_warr_names[1] = (val == "warr")
         return val
     end
+
 
     # open/close Curve interpretation box
     callback!(app,

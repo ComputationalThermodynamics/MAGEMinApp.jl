@@ -617,7 +617,7 @@ function Tab_PTXpaths_Callbacks(app)
             margin      = attr(autoexpand = false, l=16, r=16, b=16, t=16),
             autosize    = false,
             xaxis_title = "Temperature [°C]",
-            yaxis_title = "Pressure [kbar]",
+            yaxis_title = "Pressure [$(pressure_unit_label())]",
             xaxis_range = [Xmin,Xmax], 
             yaxis_range = [Ymin,Ymax],
             annotations = annotations,
@@ -859,6 +859,8 @@ function Tab_PTXpaths_Callbacks(app)
 
         bid             = pushed_button( callback_context() )    # get which button has been pushed
 
+        pressure        = to_kbar_pressure(Float64(pressure))    # convert displayed pressure unit to kbar
+
         if bid == "find-liquidus-button"
             bufferN                 = Float64(bufferN)               # convert buffer_n to float
             bulk_ini, bulk_ini, oxi = get_bulkrock_prop(bulk, bulk)  
@@ -878,6 +880,35 @@ function Tab_PTXpaths_Callbacks(app)
         end
 
         return Tliq, Tsol
+    end
+
+    # update the "Find solidus/liquidus" pressure label & value when the pressure unit is toggled
+    callback!(app,
+        Output("solidus-pressure-label-id",      "children"),
+        Output("solidus-pressure-val-id",        "value"),
+        Output("pressure-unit-prev-ptx-solidus", "children"),
+
+        Input("pressure-unit-dropdown",          "value"),
+
+        State("solidus-pressure-val-id",         "value"),
+        State("pressure-unit-prev-ptx-solidus",  "children"),
+
+        prevent_initial_call = true,
+
+        ) do pressure_unit, pressure_val, pressure_unit_prev
+
+        global use_GPa
+        was_gpa    = (pressure_unit_prev == "gpa")
+        use_GPa[1] = (pressure_unit == "gpa")
+
+        if was_gpa != use_GPa[1]
+            factor       = use_GPa[1] ? (1.0/10.0) : 10.0
+            pressure_val = round(pressure_val * factor, digits=10)
+        end
+
+        label = "Pressure [$(pressure_unit_label())]"
+
+        return label, pressure_val, pressure_unit
     end
 
     callback!(
@@ -1664,22 +1695,45 @@ function Tab_PTXpaths_Callbacks(app)
         Output("table-2-id-ptx",            "style"     ),
         Output("test-2-id-ptx",             "style"     ),
         Output("variable-buffer-display-id2","style"     ),
+        Output("pressure-unit-prev-ptx",    "children"  ),
 
         Input("assimilation-dropdown-ptx",  "value"     ),
         Input("add-row-button",             "n_clicks"  ),
         Input("variable-buffer-ptx-id",     "value"     ),
         Input("isentropic-dropdown-ptx",     "value"    ),
+        Input("pressure-unit-dropdown",     "value"     ),
 
         State("assimilation-dropdown-ptx",  "value"     ),
         State("ptx-table",                  "data"      ),
         State("ptx-table",                  "columns"   ),
+        State("pressure-unit-prev-ptx",     "children"  ),
 
         prevent_initial_call = true,
 
-        ) do value, n_clicks, var_buffer, isentropic_value,
-                assim, data, colout
+        ) do value, n_clicks, var_buffer, isentropic_value, pressure_unit,
+                assim, data, colout, pressure_unit_prev
 
         bid                     = pushed_button( callback_context() )    # get which button has been pushed
+
+        if bid == "pressure-unit-dropdown"
+            global use_GPa
+            was_gpa    = (pressure_unit_prev == "gpa")
+            use_GPa[1] = (pressure_unit == "gpa")
+
+            dataout    = copy(data)
+            colsout    = copy(colout)
+
+            if was_gpa != use_GPa[1]
+                factor = use_GPa[1] ? (1.0/10.0) : 10.0
+                for row in dataout
+                    row[Symbol("col-1")] = round(row[Symbol("col-1")] * factor, digits=10)
+                end
+            end
+
+            colsout[1][:name] = "P [$(pressure_unit_label())]"
+
+            return dataout, colsout, no_update(), no_update(), no_update(), pressure_unit
+        end
 
         dataout = copy(data)
         if value == "true"
@@ -1693,31 +1747,31 @@ function Tab_PTXpaths_Callbacks(app)
         if assim == "true"
             if isentropic_value == false
                 if var_buffer == false
-                    colout = [  Dict("name" => "P [kbar]",  "id"    => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                    colout = [  Dict("name" => "P [$(pressure_unit_label())]",  "id"    => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
                                 Dict("name" => "T [°C]",    "id"    => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric"),
                                 Dict("name" => "Add [mol%]", "id"   => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric")]
 
                     if n_clicks > 0 && bid == "add-row-button"
-                        add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0, Symbol("col-3") => 0.0)
+                        add = Dict(Symbol("col-1") => display_pressure(7.5), Symbol("col-2") => 1000.0, Symbol("col-3") => 0.0)
                         push!(dataout,add)
                     end
                 elseif var_buffer == true
-                    colout = [  Dict("name" => "P [kbar]",  "id"        => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                    colout = [  Dict("name" => "P [$(pressure_unit_label())]",  "id"        => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
                                 Dict("name" => "T [°C]",    "id"        => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric"),
                                 Dict("name" => "Add [mol%]", "id"       => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric"),
                                 Dict("name" => "Buffer",     "id"       => "col-4", "deletable" => false, "renamable" => false, "type" => "numeric")]
 
                     if n_clicks > 0 && bid == "add-row-button"
-                        add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0)
+                        add = Dict(Symbol("col-1") => display_pressure(7.5), Symbol("col-2") => 1000.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0)
                         push!(dataout,add)
                     end
                 end
             else
-                colout = [  Dict("name" => "P [kbar]",  "id"    => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                colout = [  Dict("name" => "P [$(pressure_unit_label())]",  "id"    => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
                             Dict("name" => "Add [mol%]", "id"   => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric")]
 
                 if n_clicks > 0 && bid == "add-row-button"
-                    add = Dict(Symbol("col-1") => 7.5, Symbol("col-3") => 0.0)
+                    add = Dict(Symbol("col-1") => display_pressure(7.5), Symbol("col-3") => 0.0)
                     push!(dataout,add)
                 end
             end
@@ -1725,28 +1779,28 @@ function Tab_PTXpaths_Callbacks(app)
         else
             if isentropic_value == false
                 if var_buffer == false
-                    colout = [  Dict("name" => "P [kbar]",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                    colout = [  Dict("name" => "P [$(pressure_unit_label())]",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
                                 Dict("name" => "T [°C]",    "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")]
 
                     if n_clicks > 0 && bid == "add-row-button"
-                        add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0)
+                        add = Dict(Symbol("col-1") => display_pressure(7.5), Symbol("col-2") => 1000.0)
                         push!(dataout,add)
                     end
                 elseif var_buffer == true
-                    colout = [  Dict("name" => "P [kbar]",  "id"        => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                    colout = [  Dict("name" => "P [$(pressure_unit_label())]",  "id"        => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
                                 Dict("name" => "T [°C]",    "id"        => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric"),
                                 Dict("name" => "Buffer",    "id"        => "col-4", "deletable" => false, "renamable" => false, "type" => "numeric")]
 
                     if n_clicks > 0 && bid == "add-row-button"
-                        add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0, Symbol("col-4") => 0.0)
+                        add = Dict(Symbol("col-1") => display_pressure(7.5), Symbol("col-2") => 1000.0, Symbol("col-4") => 0.0)
                         push!(dataout,add)
                     end
                 end
             else
-                colout = [  Dict("name" => "P [kbar]",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric")
+                colout = [  Dict("name" => "P [$(pressure_unit_label())]",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric")
                             ]
                 if n_clicks > 0 && bid == "add-row-button"
-                    add = Dict(Symbol("col-1") => 7.5)
+                    add = Dict(Symbol("col-1") => display_pressure(7.5))
                     push!(dataout,add)
                 end
             end
@@ -1759,7 +1813,7 @@ function Tab_PTXpaths_Callbacks(app)
             var_buff_disp = Dict("display" => "none")
         end
 
-        return dataout, colout, table2, test2, var_buff_disp
+        return dataout, colout, table2, test2, var_buff_disp, no_update()
     end
 
     # Show/hide TE section + enable/disable TE tab based on tepm dropdown
@@ -1931,7 +1985,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         out  = Out_PTX[step_id]
         info = "\n| Variable | Value | Unit |\n|---|---|---|\n"
-        info *= "| P |" * string(round(out.P_kbar; digits=3)) * "| kbar |\n"
+        info *= "| P |" * string(round(display_pressure(out.P_kbar); digits=3)) * "| $(pressure_unit_label()) |\n"
         info *= "| T |" * string(round(out.T_C;   digits=3)) * "| °C |\n"
 
         return fig_pt, config_pt, fig_ree, config_ree, info

@@ -54,7 +54,7 @@ function Tab_TraceElement_Callbacks(app)
             infos = "\n"
             infos *= "| Variable &nbsp;|Value &nbsp; &nbsp; &nbsp; &nbsp;| Unit &nbsp; &nbsp; &nbsp; &nbsp;|\n"
             infos *= "|----------|-------|------|\n"
-            infos *= "| P |"*string(round(Out_XY[point_id_te].P_kbar; digits = 3))*"| kbar |\n"
+            infos *= "| P |"*string(round(display_pressure(Out_XY[point_id_te].P_kbar); digits = 3))*"| $(pressure_unit_label()) |\n"
             infos *= "| T |"*string(round(Out_XY[point_id_te].T_C; digits = 3))*"| °C |\n"
             infos *= "| X |"*string(round(Out_XY[point_id_te].X[1]; digits = 3))*"| -  |\n"
             infos *= "| G |"*string(round(Out_XY[point_id_te].G_system; digits = 3))*"| kJ |\n"
@@ -266,7 +266,8 @@ function Tab_TraceElement_Callbacks(app)
                 isoLineStyle, isoLineWidth, isoColorLine, isoLabelSize,   
                 minIso,     stepIso,    maxIso, txt_list
 
-        xtitle, ytitle, Xrange, Yrange  = diagram_type(diagType, tmin, tmax, pmin, pmax, e1_tmin, e1_tmax, e2_tmin, e2_tmax) 
+        pmin, pmax                      = to_kbar_pressure(Float64(pmin)), to_kbar_pressure(Float64(pmax))                                  # convert displayed pressure unit to kbar
+        xtitle, ytitle, Xrange, Yrange  = diagram_type(diagType, tmin, tmax, pmin, pmax, e1_tmin, e1_tmax, e2_tmin, e2_tmax)
         bulk_L, bulk_R, oxi             = get_bulkrock_prop(bulk1, bulk2) 
         colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)              # get colormap information
         bid                             = pushed_button( callback_context() )                           # get the ID of the last pushed button
@@ -622,7 +623,8 @@ function Tab_TraceElement_Callbacks(app)
                     end
                 end
     
-                fig_te = plot_diagram(data_all,layout_te)
+                data_all_disp, layout_te_disp = apply_pressure_display(data_all, layout_te, diagType)
+                fig_te = plot_diagram(data_all_disp,layout_te_disp)
             end
     
     

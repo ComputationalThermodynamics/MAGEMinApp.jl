@@ -588,9 +588,9 @@ function initialize_layout_isoS_path(   Pini :: Float64,
                         margin      = attr(autoexpand = false, l=16, r=16, b=16, t=16),
                         autosize    = false,
                         xaxis_title = "Temperature [°C]",
-                        yaxis_title = "Pressure [kbar]",
-                        xaxis_range = [Tini-300,Tini+100], 
-                        yaxis_range = [0.0,Pini+5.0],
+                        yaxis_title = "Pressure [$(pressure_unit_label())]",
+                        xaxis_range = [Tini-300,Tini+100],
+                        yaxis_range = [display_pressure(0.0),display_pressure(Pini+5.0)],
                         showlegend  = false,
                         xaxis       = attr(     fixedrange    = true,
                                             ),
@@ -610,7 +610,7 @@ function get_data_plot_isoS_path()
 
     for i=1:n_tot
         x[i] = Out_PTX[i].T_C
-        y[i] = Out_PTX[i].P_kbar
+        y[i] = display_pressure(Out_PTX[i].P_kbar)
     end
 
     df_path_plot = DataFrame(   x=x,
@@ -682,12 +682,12 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
 
             if isentropic_mode == false
                 for i=1:np
-                    Pres[i] = data[i][Symbol("col-1")]
+                    Pres[i] = to_kbar_pressure(Float64(data[i][Symbol("col-1")]))
                     Temp[i] = data[i][Symbol("col-2")]
                 end
             else isentropic_mode == true
                 for i=1:np
-                    Pres[i] = data[i][Symbol("col-1")]
+                    Pres[i] = to_kbar_pressure(Float64(data[i][Symbol("col-1")]))
                 end
                 Temp[1] = T_start
             end
@@ -1108,10 +1108,11 @@ function get_pt_path_te_plot(step_id :: Int64)
 
     np   = length(Out_PTX)
     T_v  = [Out_PTX[k].T_C    for k = 1:np]
-    P_v  = [Out_PTX[k].P_kbar for k = 1:np]
+    P_v  = [display_pressure(Out_PTX[k].P_kbar) for k = 1:np]
     text = ["#$(k)#"          for k = 1:np]
 
-    hover = ["T: $(round(T_v[k];digits=1)) °C | P: $(round(P_v[k];digits=2)) kbar | step: $k" for k = 1:np]
+    punit = pressure_unit_label()
+    hover = ["T: $(round(T_v[k];digits=1)) °C | P: $(round(P_v[k];digits=2)) $punit | step: $k" for k = 1:np]
 
     trace_path = scatter(;
         x              = T_v,
@@ -1143,7 +1144,7 @@ function get_pt_path_te_plot(step_id :: Int64)
         margin     = attr(autoexpand = false, l = 40, r = 12, b = 30, t = 10),
         autosize   = false,
         xaxis_title = "T [°C]",
-        yaxis_title = "P [kbar]",
+        yaxis_title = "P [$(pressure_unit_label())]",
         xaxis      = attr(fixedrange = true),
         yaxis      = attr(fixedrange = true, autorange = "reversed"),
         showlegend = false,
@@ -1184,7 +1185,7 @@ function _ptx_tick_labels(np::Int)
     tick_step = max(1, div(np - 1, max_ticks - 1))
     tick_idx  = sort(unique(vcat(1:tick_step:np, np)))
     tick_vals = tick_idx
-    tick_text = ["P=$(round(Out_PTX[k].P_kbar; digits=1))\nT=$(round(Out_PTX[k].T_C; digits=0))°C"
+    tick_text = ["P=$(round(display_pressure(Out_PTX[k].P_kbar); digits=1))\nT=$(round(Out_PTX[k].T_C; digits=0))°C"
                  for k in tick_idx]
     return tick_vals, tick_text
 end
@@ -1270,7 +1271,7 @@ function get_te_fieldbuilder_plot(varBuilder::String, norm::String)
 
     np       = length(Out_TE_PTX)
     x_vals   = collect(1:np)
-    hover_pt = ["P: $(round(Out_PTX[k].P_kbar; digits=2)) kbar | T: $(round(Out_PTX[k].T_C; digits=1)) °C | step: $k"
+    hover_pt = ["P: $(round(display_pressure(Out_PTX[k].P_kbar); digits=2)) $(pressure_unit_label()) | T: $(round(Out_PTX[k].T_C; digits=1)) °C | step: $k"
                 for k = 1:np]
 
     tick_vals, tick_text = _ptx_tick_labels(np)
@@ -1315,7 +1316,7 @@ function get_te_evolution_plot(element::String, phases::Vector{String})
     end
 
     x_vals             = collect(1:np)
-    hover_pt           = ["P: $(round(Out_PTX[k].P_kbar; digits=2)) kbar | T: $(round(Out_PTX[k].T_C; digits=1)) °C | step: $k" for k = 1:np]
+    hover_pt           = ["P: $(round(display_pressure(Out_PTX[k].P_kbar); digits=2)) $(pressure_unit_label()) | T: $(round(Out_PTX[k].T_C; digits=1)) °C | step: $k" for k = 1:np]
     tick_vals, tick_text = _ptx_tick_labels(np)
 
     colormap   = get_lines_colormap()
@@ -1480,7 +1481,7 @@ function get_data_plot(display_mode, sysunit)
         ph = ph_names_ptx[i]
         for k=1:n_tot
             
-            x[k]    = string(round(Out_PTX[k].P_kbar,digits=1))*"; "*string(round(Out_PTX[k].T_C,digits=1))
+            x[k]    = string(round(display_pressure(Out_PTX[k].P_kbar),digits=1))*"; "*string(round(Out_PTX[k].T_C,digits=1))
             id      = findall(Out_PTX[k].ph .== ph)
 
             if sysunit == "mol"
@@ -1602,7 +1603,7 @@ function get_extracted_data_plot(ext_mode,sysunit,mode,nRes,nCon,isentropic_mode
 
         for k=1:n_tot
             
-            x[k]    = string(round(Out_PTX[k].P_kbar, digits=1))*"; "*string(round(Out_PTX[k].T_C, digits=1))
+            x[k]    = string(round(display_pressure(Out_PTX[k].P_kbar), digits=1))*"; "*string(round(Out_PTX[k].T_C, digits=1))
             id      = findall(Out_PTX[k].ph .== ph )
             if "liq" in Out_PTX[k].ph 
                 melt[k] = 1
@@ -1744,7 +1745,7 @@ function get_data_comp_plot(sysunit,phases)
         ph      = phases[i]
         for j=1:n_tot
             
-            x[k]    = string(round(Out_PTX[j].P_kbar,digits=1))*"; "*string(round(Out_PTX[j].T_C,digits=1))
+            x[k]    = string(round(display_pressure(Out_PTX[j].P_kbar),digits=1))*"; "*string(round(Out_PTX[j].T_C,digits=1))
             id      = findall(Out_PTX[j].ph .== ph)
             if ~isempty(id)
                 n_solvi = length(id)
@@ -1835,7 +1836,7 @@ function get_data_comp_rm_plot()
     colormap            = get_jet_colormap(n_ox)
  
     for k=1:n_tot
-        x[k]    = string(round(Out_PTX[k].P_kbar,digits=1))*"; "*string(round(Out_PTX[k].T_C,digits=1))
+        x[k]    = string(round(display_pressure(Out_PTX[k].P_kbar),digits=1))*"; "*string(round(Out_PTX[k].T_C,digits=1))
     end
 
     rmB      = Matrix{Union{Float64,Missing}}(undef, n_tot, n_ox) .= 0.0
@@ -1891,7 +1892,7 @@ function get_data_comp_rm_int_plot()
     colormap            = get_jet_colormap(n_ox)
  
     for k=1:n_tot
-        x[k]    = string(round(Out_PTX[k].P_kbar,digits=1))*"; "*string(round(Out_PTX[k].T_C,digits=1))
+        x[k]    = string(round(display_pressure(Out_PTX[k].P_kbar),digits=1))*"; "*string(round(Out_PTX[k].T_C,digits=1))
     end
 
     rmB      = Matrix{Union{Float64,Missing}}(undef, n_tot, n_ox) .= 0.0
@@ -1967,7 +1968,7 @@ function initialize_rm_layout()
         ),
         plot_bgcolor = "#FFF",
         paper_bgcolor = "#FFF",
-        xaxis_title = "P-T conditions [kbar, °C]",
+        xaxis_title = "P-T conditions [$(pressure_unit_label()), °C]",
         yaxis_title = ytitle,
         height      = 360,
         xaxis       = attr(
@@ -2015,7 +2016,7 @@ function initialize_layout(title,sysunit)
         ),
         plot_bgcolor = "#FFF",
         paper_bgcolor = "#FFF",
-        xaxis_title = "P-T conditions [kbar, °C]",
+        xaxis_title = "P-T conditions [$(pressure_unit_label()), °C]",
         yaxis_title = ytitle,
         height      = 360,
         xaxis       = attr(
@@ -2066,7 +2067,7 @@ function initialize_ext_layout(title,sysunit)
         ),
         plot_bgcolor = "#FFF",
         paper_bgcolor = "#FFF",
-        xaxis_title = "P-T conditions [kbar, °C]",
+        xaxis_title = "P-T conditions [$(pressure_unit_label()), °C]",
         yaxis_title = ytitle,
 
         height      = 360,
@@ -2103,7 +2104,7 @@ function initialize_comp_layout(sysunit)
         ),
         plot_bgcolor = "#FFF",
         paper_bgcolor = "#FFF",
-        xaxis_title = "P-T conditions [kbar, °C]",
+        xaxis_title = "P-T conditions [$(pressure_unit_label()), °C]",
         yaxis_title = ytitle,
 
         height      = 360,
