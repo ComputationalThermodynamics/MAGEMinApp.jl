@@ -1361,6 +1361,25 @@ function Tab_Simulation()
                                             ]),
                                             html_div("‎ "),
                                             dbc_row([
+                                                dbc_col([
+                                                    html_h1("Mineral names", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                ], width=4),
+                                                dbc_col([
+                                                    dcc_dropdown(
+                                                        id        = "mineral-naming-dropdown",
+                                                        options   = [
+                                                            Dict("label" => "Legacy",      "value" => "legacy"),
+                                                            Dict("label" => "Warr (2021)", "value" => "warr"),
+                                                        ],
+                                                        value     = "legacy",
+                                                        clearable = false,
+                                                        multi     = false,
+                                                    ),
+                                                ]),
+                                            ]),
+                                            html_div(id="warr-naming-dummy", style=Dict("display"=>"none")),
+                                            html_div("‎ "),
+                                            dbc_row([
                                                 # html_div([
                                                     dbc_button(
                                                         "Compute phase diagram", id="compute-button-raw", color="light", className="me-2", n_clicks=0,

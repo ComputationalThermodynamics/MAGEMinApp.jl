@@ -123,9 +123,9 @@ function get_data_ree_plot(point_id_te, norm, show_type, kds_db)
     end
 
 
-    if Cph == 1 
+    if Cph == 1
         for i=1:n_ph_TE
-            names[i]            = Out_TE_XY[point_id_te].ph_TE[i]
+            names[i]            = display_ph_name(Out_TE_XY[point_id_te].ph_TE[i])
             compo_matrix[i,:]   = Out_TE_XY[point_id_te].Cmin[i,te_idx]
 
             data_ree_plot[k] =  scatter(;   x           = te,

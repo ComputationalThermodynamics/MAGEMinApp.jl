@@ -2048,14 +2048,14 @@ function get_draw_path_plot(diagType, sysunit, path_ids)
         traces[i] = scatter(;
             x          = x,
             y          = Y[i,:],
-            name       = ph,
+            name       = display_ph_name(ph),
             stackgroup = "one",
             mode       = "lines",
             line       = attr(width=0.5, color=color)
         )
     end
 
-    phase_list = [Dict("label" => "  "*ph_names[i], "value" => ph_names[i]) for i in 1:n_ph]
+    phase_list = [Dict("label" => "  "*display_ph_name(ph_names[i]), "value" => ph_names[i]) for i in 1:n_ph]
 
     return traces, phase_list
 end

@@ -1241,8 +1241,15 @@ function get_parsed_command_ptx(step_id :: Int64;
         elseif st[1] == "C0"
             part1 = ref * ".C0";   part2 = "[" * string(id_el) * "]"
         else
-            id_ph = isnothing(res.ph_TE) ? nothing :
-                    findfirst(isequal(st[1]), string.(res.ph_TE))
+            ph_te = res.ph_TE
+            if isnothing(ph_te)
+                id_ph = nothing
+            else
+                id_ph = findfirst(isequal(st[1]), string.(ph_te))
+                if isnothing(id_ph) && use_warr_names[1]
+                    id_ph = findfirst(ph -> MAGEMin_C.get_Warr_name(ph) == st[1], ph_te)
+                end
+            end
             if isnothing(id_ph)
                 varBuilder_out = "NaN"; break
             end
@@ -1350,11 +1357,12 @@ function get_te_evolution_plot(element::String, phases::Vector{String})
             end
         end
 
+        ph_label = display_ph_name(phase)
         push!(traces, scatter(; x=x_vals, y=y_vals,
                                mode="markers+lines",
-                               name=phase,
+                               name=ph_label,
                                hovertext=hover_pt,
-                               hovertemplate="%{hovertext}<extra>$phase</extra>",
+                               hovertemplate="%{hovertext}<extra>$ph_label</extra>",
                                marker=attr(size=5, color=color),
                                line=attr(color=color, width=1.5),
                                connectgaps=false))
@@ -1423,7 +1431,7 @@ function get_data_ree_plot_ptx(step_id, norm, show_type)
         for i = 1:n_ph_TE
             compo_mat[k, :] = res.Cmin[i, te_idx]
             data_ree_plot[k] = scatter(; x = te, y = compo_mat[k, :] ./ C_norm,
-                                         name = res.ph_TE[i], mode = "markers+lines",
+                                         name = display_ph_name(res.ph_TE[i]), mode = "markers+lines",
                                          marker = attr(size = 4.0, color = colormap[k]),
                                          line   = attr(width = 1.0, color = colormap[k]))
             k += 1
@@ -1502,7 +1510,7 @@ function get_data_plot(display_mode, sysunit)
 
             data_plot_ptx[i] = scatter(;    x           =  x,
                                             y           =  Y[i,:],
-                                            name        = ph_names_ptx[i],
+                                            name        = display_ph_name(ph_names_ptx[i]),
                                             stackgroup  = "one",
                                             mode        = "lines",
                                             line        = attr(     width   =  0.5,
@@ -1515,19 +1523,19 @@ function get_data_plot(display_mode, sysunit)
 
             data_plot_ptx[i] = bar(         x           =  x,
                                             y           =  Y[i,:],
-                                            name        = ph_names_ptx[i],
+                                            name        = display_ph_name(ph_names_ptx[i]),
                                             marker      = attr( color   = AppData.mineral_style[1][ph][1],
                                                                 line    = attr(width=0.0, color="black"),
                                                                 opacity = 0.6) # black outline
                                             )
          end
-    else 
+    else
         for i=1:n_ph
             ph      = ph_names_ptx[i]
 
             data_plot_ptx[i] = scatter(;    x           =  x,
                                             y           =  Y[i,:],
-                                            name        = ph_names_ptx[i],
+                                            name        = display_ph_name(ph_names_ptx[i]),
                                             mode        = "markers+lines",
                                             marker = attr(
                                                 size    = 5.0,          # Set the size of the circle
@@ -1559,7 +1567,7 @@ function get_data_plot(display_mode, sysunit)
 
 
     # build phase list:
-    phase_list = [Dict("label" => "  "*ph_names_ptx[i], "value" => ph_names_ptx[i]) for i=1:n_ph]
+    phase_list = [Dict("label" => "  "*display_ph_name(ph_names_ptx[i]), "value" => ph_names_ptx[i]) for i=1:n_ph]
 
 
     return data_plot_ptx, phase_list
@@ -1641,7 +1649,7 @@ function get_extracted_data_plot(ext_mode,sysunit,mode,nRes,nCon,isentropic_mode
 
             data_extracted_plot_ptx[i] = scatter(;  x           =  x,
                                                     y           =  Z[i,:],
-                                                    name        = ph_names_ext_ptx[i],
+                                                    name        = display_ph_name(ph_names_ext_ptx[i]),
                                                     stackgroup  = "one",
                                                     mode        = "lines",
                                                     line        = attr(     width   =  1.0,
@@ -1662,12 +1670,12 @@ function get_extracted_data_plot(ext_mode,sysunit,mode,nRes,nCon,isentropic_mode
                 x_sampled = x
                 Z_sampled = Z
             end
-            
+
             for i=1:n_ph_e
                 ph = ph_names_ext_ptx[i]
                 data_extracted_plot_ptx[i] = bar(   x           =  x_sampled,
                                                     y           =  Z_sampled[i,:],
-                                                    name        = ph_names_ext_ptx[i],
+                                                    name        = display_ph_name(ph_names_ext_ptx[i]),
                                                     marker      = attr( color   = AppData.mineral_style[1][ph][1],
                                                                         line    = attr(width=0.0, color="black"),
                                                                         opacity = 0.6) # black outline
@@ -1681,7 +1689,7 @@ function get_extracted_data_plot(ext_mode,sysunit,mode,nRes,nCon,isentropic_mode
 
                 data_extracted_plot_ptx[i] = bar(   x           =  x,
                                                     y           =  Z[i,:],
-                                                    name        = ph_names_ext_ptx[i],
+                                                    name        = display_ph_name(ph_names_ext_ptx[i]),
                                                     marker      = attr( color   = AppData.mineral_style[1][ph][1],
                                                                         line    = attr(width=0.0, color="black"),
                                                                         opacity = 0.6) # black outline
@@ -1695,7 +1703,7 @@ function get_extracted_data_plot(ext_mode,sysunit,mode,nRes,nCon,isentropic_mode
 
             data_extracted_plot_ptx[i] = scatter(;  x           =  x,
                                                     y           =  Z[i,:],
-                                                    name        = ph_names_ext_ptx[i],
+                                                    name        = display_ph_name(ph_names_ext_ptx[i]),
                                                     mode        = "lines",
                                                     marker = attr(
                                                         size    = 5.0,          # Set the size of the circle
@@ -1709,7 +1717,7 @@ function get_extracted_data_plot(ext_mode,sysunit,mode,nRes,nCon,isentropic_mode
     end
 
     # build phase list:
-    phase_list_ext = [Dict("label" => "  "*ph_names_ext_ptx[i], "value" => ph_names_ext_ptx[i]) for i=1:n_ph_e]
+    phase_list_ext = [Dict("label" => "  "*display_ph_name(ph_names_ext_ptx[i]), "value" => ph_names_ext_ptx[i]) for i=1:n_ph_e]
 
     return data_extracted_plot_ptx, phase_list_ext
 end

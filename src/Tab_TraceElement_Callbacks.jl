@@ -73,17 +73,21 @@ function Tab_TraceElement_Callbacks(app)
         Output("show-fluorapatite-id",      "style"),
         Output("show-co2sat-id",            "style"),
         Output("show-trace-element-id",     "style"),
-        Output("phase-te-info-id",          "children"), 
-        Output("update-accessory-fields",   "value"), 
+        Output("phase-te-info-id",          "children"),
+        Output("update-accessory-fields",   "value"),
         Input("field-type-dropdown-te",     "value"),
+        Input("mineral-naming-dropdown",    "value"),
         State("update-accessory-fields",   "value"),
-        
+
         prevent_initial_call = true,
 
-    ) do value, update_accessory_fields
-    
+    ) do value, warr_naming, update_accessory_fields
+
+        global use_warr_names
+        use_warr_names[1] = (warr_naming == "warr")
+
         if @isdefined(all_TE_ph)
-             tmp = join(all_TE_ph, " ")
+             tmp = join(display_ph_names(to_str_vec(all_TE_ph)), " ")
 
              phase_te_list = "**"*"C0 M S "*tmp*"**"
         else
@@ -815,7 +819,7 @@ function Tab_TraceElement_Callbacks(app)
             datab   = "_"*dtb*"_"*kds*sat_ext
             fileout = "./output/"*fname*datab
 
-            MAGEMin_dataTE2dataframe(Out_XY,Out_TE_XY,dtb,fileout)
+            MAGEMin_dataTE2dataframe(Out_XY,Out_TE_XY,dtb,fileout; use_Warr2021=use_warr_names[1])
             return "success", ""
         else
             return  "", "failed"
@@ -858,7 +862,7 @@ function Tab_TraceElement_Callbacks(app)
             datab   = "_"*dtb*P*T*"_"*kds*sat_ext
             fileout = "./output/"*fname*datab
 
-            MAGEMin_dataTE2dataframe(Out_XY[point_id_te],Out_TE_XY[point_id_te],dtb,fileout)
+            MAGEMin_dataTE2dataframe(Out_XY[point_id_te],Out_TE_XY[point_id_te],dtb,fileout; use_Warr2021=use_warr_names[1])
             return "success", ""
         else
             return  "", "failed"

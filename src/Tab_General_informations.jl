@@ -132,11 +132,13 @@ function Tab_General_informations()
                     id="table-solution-phases",
                     columns=(  [    Dict("id" =>  "ss",         "name" =>  "solution name",     "editable" => false),
                                     Dict("id" =>  "ss_abrev",   "name" =>  "abbreviation",      "editable" => false),
-                                    Dict("id" =>  "solvus",     "name" =>  "solvus",            "editable" => false)     
+                                    Dict("id" =>  "warr",       "name" =>  "Warr (2021)",        "editable" => false),
+                                    Dict("id" =>  "solvus",     "name" =>  "solvus",            "editable" => false)
                                 ]
                     ),
                     data        =   [Dict(  "ss"         => AppData.dict_ss[i][1],
                                             "ss_abrev"   => i,
+                                            "warr"       => (w = MAGEMin_C.get_Warr_name(i); endswith(w, "*") ? "-" : w),
                                             "solvus"     => join(map((x, y) -> "$x, $y", AppData.dict_ss[i][2][2], AppData.dict_ss[i][2][1]), "; ") )
                                                 for i in keys(AppData.dict_ss) ],
 
@@ -154,11 +156,13 @@ function Tab_General_informations()
                     id="table-endmember-phases",
                     columns=(  [    Dict("id" =>  "em",         "name" =>  "end-member name",   "editable" => false),
                                     Dict("id" =>  "em_abrev",   "name" =>  "abbreviation",      "editable" => false),
-                                    Dict("id" =>  "compo",      "name" =>  join(vcat(AppData.dict_em["_header_"][3]...),", "),       "editable" => false)     
+                                    Dict("id" =>  "warr",       "name" =>  "Warr (2021)",        "editable" => false),
+                                    Dict("id" =>  "compo",      "name" =>  join(vcat(AppData.dict_em["_header_"][3]...),", "),       "editable" => false)
                                 ]
                     ),
                     data        =   [Dict(  "em"         => AppData.dict_em[i][2],
                                             "em_abrev"   => i,
+                                            "warr"       => (w = MAGEMin_C.get_Warr_name(i); endswith(w, "*") ? "-" : w),
                                             "compo"      => join(vcat(AppData.dict_em[i][3]...),", ") )
                                                 for i in keys(AppData.dict_em) if i != "_header-"],
 
@@ -290,7 +294,7 @@ function Tab_General_informations()
 
         ]),
 
-        ],width=6),
+        ],width=7),
 
             dbc_col([ 
 
@@ -318,7 +322,7 @@ function Tab_General_informations()
                     ]),
                 ]),
 
-            ],width=6),
+            ],width=5),
 
 
 

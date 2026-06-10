@@ -224,8 +224,8 @@ function Tab_PTXpaths_Callbacks(app)
 
 
                 for i in ph_names_ext_ptx
-                    col = i*"_$(sysunit)%"
-                    MAGEMin_db[!, col] = Float64[] 
+                    col = display_ph_name(i)*"_$(sysunit)%"
+                    MAGEMin_db[!, col] = Float64[]
                 end
                 
                 # Z = hcat(zeros(length(ph_names_ext_ptx)),Z)
@@ -251,7 +251,7 @@ function Tab_PTXpaths_Callbacks(app)
                                     "T[°C]"                     => T[k],
                                     "Step removed $(sysunit)%"     => step_rm[k])
 
-                    part_2 = Dict(  (ph_names_ext_ptx[j]*"_$(sysunit)%" => Z[j,k])
+                    part_2 = Dict(  (display_ph_name(ph_names_ext_ptx[j])*"_$(sysunit)%" => Z[j,k])
                                     for j in eachindex(ph_names_ext_ptx))
 
                     row    = merge(part_1,part_2)   
@@ -339,7 +339,7 @@ function Tab_PTXpaths_Callbacks(app)
             datab   = "_"*dtb
             fileout = "./output/"*fname*datab
 
-            MAGEMin_data2dataframe(Out_PTX,dtb,fileout)
+            MAGEMin_data2dataframe(Out_PTX,dtb,fileout; use_Warr2021=use_warr_names[1])
             return "success", ""
         else
             return  "", "failed"
@@ -363,7 +363,7 @@ function Tab_PTXpaths_Callbacks(app)
             datab   = "_inlined_"*dtb
             fileout = "./output/"*fname*datab
 
-            MAGEMin_data2dataframe_inlined(Out_PTX,dtb,fileout)
+            MAGEMin_data2dataframe_inlined(Out_PTX,dtb,fileout; use_Warr2021=use_warr_names[1])
             return "success", ""
         else
             return  "", "failed"
@@ -413,7 +413,7 @@ function Tab_PTXpaths_Callbacks(app)
         datab   = "_te_"*dtb*"_"*kds*sat_ext
         fileout = "./output/"*fname*datab
 
-        MAGEMin_dataTE2dataframe(Out_PTX, Out_TE_PTX, dtb, fileout)
+        MAGEMin_dataTE2dataframe(Out_PTX, Out_TE_PTX, dtb, fileout; use_Warr2021=use_warr_names[1])
         return true, false, false
     end
 
@@ -920,16 +920,19 @@ function Tab_PTXpaths_Callbacks(app)
             dataout[row_index][Symbol("Color")]             = color
             styleout[row_index][Symbol("background-color")] = color
 
-            mineral                             = data[row_index]["Mineral"]
+            mineral = haskey(data[row_index], "LegacyMineral") ? data[row_index]["LegacyMineral"] : data[row_index]["Mineral"]
             AppData.mineral_style[1][mineral][1]   = color
         
 
         elseif bid == "ptx-plot"
             global phase_infos_PTX
+            if !@isdefined(phase_infos_PTX)
+                return data, style, data_select, picker_style
+            end
             phase_selection = vcat(phase_infos_PTX.act_ss, phase_infos_PTX.act_pp)
 
             dataout = [
-                Dict("Mineral" => mineral, "Color" => AppData.mineral_style[1][mineral][1])
+                Dict("Mineral" => display_ph_name(mineral), "LegacyMineral" => mineral, "Color" => AppData.mineral_style[1][mineral][1])
                 for mineral in phase_selection
             ]
             color_list = [AppData.mineral_style[1][mineral][1] for mineral in phase_selection]
@@ -989,6 +992,7 @@ function Tab_PTXpaths_Callbacks(app)
         Input("sys-unit-ptx",           "value"),
         Input("display-mode",           "value"),
         Input("ext-display-mode",       "value"),
+        Input("mineral-naming-dropdown","value"),
 
         State("select-bulk-unit-ptx",   "value"),
         State("phase-selection-PTX",    "value"),
@@ -1037,7 +1041,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         prevent_initial_call = true,
 
-        ) do    compute,    upsys,      display_mode,               ext_display_mode,
+        ) do    compute,    upsys,      display_mode,               ext_display_mode,   warr_naming,
                 sys_unit,   phase_selection, pure_phase_selection,  phase_list, nsteps,     PTdata,     mode,   assim,  var_buffer,
                 dtb,        dataset,    bufferType, solver,
                 verbose,    bulk,       bulk2,      bufferN,
@@ -1047,8 +1051,10 @@ function Tab_PTXpaths_Callbacks(app)
                 watsat,     watsat_val,
                 te_model,   kds_mod,    zrsat_mod,  ssat_mod,   P2O5sat_mod,    co2sat_mod, bulkte1,    bulkte2
 
+        global use_warr_names
+        use_warr_names[1]       = (warr_naming == "warr")
         bid                     = pushed_button( callback_context() )    # get which button has been pushed
-        phase_selection         = remove_phases(string_vec_diff(phase_selection,pure_phase_selection,dtb),dtb)
+        phase_selection         = remove_phases(string_vec_diff(to_str_vec(phase_selection),to_str_vec(pure_phase_selection),dtb),dtb)
         title                   = db[(db.db .== dtb), :].title[test+1]
         loading                 = ""
 
@@ -1104,7 +1110,8 @@ function Tab_PTXpaths_Callbacks(app)
 
             figrmintPTX                 = plot(data_comp_rm_int_plot,layout_rm_int_ptx)
 
-        elseif bid == "sys-unit-ptx" || bid == "ext-display-mode" || bid == "display-mode"
+        elseif (bid == "sys-unit-ptx" || bid == "ext-display-mode" || bid == "display-mode" || bid == "mineral-naming-dropdown") &&
+               @isdefined(Out_PTX) && !isempty(Out_PTX) && @isdefined(ph_names_ptx)
             data_plot_ptx, phase_list   = get_data_plot(display_mode,sysunit)
             data_extracted_plot_ptx, phase_list_ext   = get_extracted_data_plot(ext_display_mode,sysunit,mode,nRes,nCon,isentropic_mode)
 
@@ -1390,7 +1397,7 @@ function Tab_PTXpaths_Callbacks(app)
         db_in       = retrieve_solution_phase_information(dtb)
 
         # this is the phase selection part for the database when compute a diagram
-        phase_selection_options = [Dict(    "label"     => " "*i,
+        phase_selection_options = [Dict(    "label"     => " "*display_ph_name(i),
                                             "value"     => i )
                                                 for i in db_in.ss_name ]
         phase_selection_value   = db_in.ss_name
@@ -1400,7 +1407,7 @@ function Tab_PTXpaths_Callbacks(app)
         pp_all  = db_in.data_pp
         pp_disp = setdiff(pp_all, AppData.hidden_pp)
 
-        pure_phase_selection_options = [Dict(    "label"     => " "*i,
+        pure_phase_selection_options = [Dict(    "label"     => " "*display_ph_name(i),
                                                  "value"     => i )
                                                 for i in pp_disp ]
         pure_phase_selection_value   = pp_disp
@@ -1937,26 +1944,44 @@ function Tab_PTXpaths_Callbacks(app)
         Output("te-evol-element-ptx", "value"  ),
         Output("te-evol-phase-ptx",   "options"),
         Output("te-evol-phase-ptx",   "value"  ),
-        Input("te-ptx-computed-store", "data"  ),
+        Input("te-ptx-computed-store",   "data" ),
+        Input("mineral-naming-dropdown", "value"),
         prevent_initial_call = true,
-    ) do computed
+    ) do computed, warr_naming
+
+        global use_warr_names
+        use_warr_names[1] = (warr_naming == "warr")
+
+        bid = pushed_button(callback_context())
+
+        # helper: build phase options with display labels and legacy values
+        function build_phase_opts()
+            opts = [Dict("label" => "Cliq", "value" => "Cliq"),
+                    Dict("label" => "Csol", "value" => "Csol")]
+            if @isdefined(all_TE_ph_ptx)
+                for ph in all_TE_ph_ptx
+                    push!(opts, Dict("label" => display_ph_name(string(ph)), "value" => string(ph)))
+                end
+            end
+            return opts
+        end
+
+        if bid == "mineral-naming-dropdown"
+            if !@isdefined(Out_TE_PTX) || isempty(Out_TE_PTX)
+                return no_update(), no_update(), no_update(), no_update()
+            end
+            return no_update(), no_update(), build_phase_opts(), no_update()
+        end
+
         if !computed || !@isdefined(Out_TE_PTX) || isempty(Out_TE_PTX)
             return [], nothing, [], nothing
         end
 
-        elem_opts  = [Dict("label" => e, "value" => e) for e in Out_TE_PTX[1].elements]
-        elem_val   = Out_TE_PTX[1].elements[1]
-
-        phase_opts = [Dict("label" => "Cliq", "value" => "Cliq"),
-                      Dict("label" => "Csol", "value" => "Csol")]
-        if @isdefined(all_TE_ph_ptx)
-            for ph in all_TE_ph_ptx
-                push!(phase_opts, Dict("label" => string(ph), "value" => string(ph)))
-            end
-        end
+        elem_opts = [Dict("label" => e, "value" => e) for e in Out_TE_PTX[1].elements]
+        elem_val  = Out_TE_PTX[1].elements[1]
         phase_val = ["Cliq", "Csol"]
 
-        return elem_opts, elem_val, phase_opts, phase_val
+        return elem_opts, elem_val, build_phase_opts(), phase_val
     end
 
     # Render TE evolution plot when element or phase selection changes

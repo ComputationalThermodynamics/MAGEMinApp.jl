@@ -9,6 +9,35 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ =#
 
+function display_ph_name(name::String)
+    return use_warr_names[1] ? MAGEMin_C.get_Warr_name(name) : name
+end
+
+function display_ph_names(names::Vector{String})
+    return use_warr_names[1] ? MAGEMin_C.get_Warr_names(names) : names
+end
+
+function to_str_vec(v::AbstractVector)
+    return convert(Vector{String}, collect(v))
+end
+function to_str_vec(s::String)
+    return String[s]
+end
+function to_str_vec(::Nothing)
+    return String[]
+end
+
+function display_iso_label(label::String)
+    !use_warr_names[1] && return label
+    idx = findfirst('_', label)
+    isnothing(idx) && return display_ph_name(label)
+    phase = label[1:idx-1]
+    suffix = label[idx:end]
+    converted = MAGEMin_C.get_Warr_name(phase)
+    endswith(converted, "*") && return label
+    return converted * suffix
+end
+
 function sanitize_names(names::Vector{String})
     return [replace(replace(replace(replace(name, " " => "_"), "/" => "o"),"[" => ""),"]" => "") for name in names]
 end
@@ -521,14 +550,14 @@ function save_equilibrium_to_file(  out::MAGEMin_C.gmin_struct{Float64, Int64}, 
     file = ""
     file *= @sprintf("============================================================\n")
     for i=1:length(out.ph)
-        file *= @sprintf(" %4s ",out.ph[i])
+        file *= @sprintf(" %4s ",display_ph_name(out.ph[i]))
     end
     file *= @sprintf(" {%.4f %.4f} kbar/°C\n\n",out.P_kbar,out.T_C)
 
     file *= @sprintf("End-members fractions[wt fr]:\n")
     for i=1:out.n_SS
         for j=1:length(out.SS_vec[i].emNames)
-            file *= @sprintf(" %8s",out.SS_vec[i].emNames[j])
+            file *= @sprintf(" %8s",display_ph_name(out.SS_vec[i].emNames[j]))
         end
         file *= @sprintf("\n")
         for j=1:length(out.SS_vec[i].emFrac_wt)
@@ -551,26 +580,26 @@ function save_equilibrium_to_file(  out::MAGEMin_C.gmin_struct{Float64, Int64}, 
     end
     file *= @sprintf("\n")  
     for i=1:out.n_SS
-        file *= @sprintf(" %8s",out.ph[i])
+        file *= @sprintf(" %8s",display_ph_name(out.ph[i]))
         for j=1:length(out.SS_vec[i].Comp_wt)
             file *= @sprintf(" %8f",out.SS_vec[i].Comp_wt[j])
         end
-        file *= @sprintf("\n")  
+        file *= @sprintf("\n")
     end
     for i=1:out.n_PP
-        file *= @sprintf(" %8s",out.ph[i+out.n_SS])
+        file *= @sprintf(" %8s",display_ph_name(out.ph[i+out.n_SS]))
         for j=1:length(out.PP_vec[i].Comp_wt)
             file *= @sprintf(" %8f",out.PP_vec[i].Comp_wt[j])
         end
-        file *= @sprintf("\n")  
+        file *= @sprintf("\n")
     end
-    file *= @sprintf("\n")  
+    file *= @sprintf("\n")
 
     file *= @sprintf("Stable mineral assemblage:\n")    
     file *= @sprintf("%6s%15s %13s %17s %17s %12s %12s %12s %12s %12s %12s %12s %12s %12s\n","phase","fraction[wt]","G[kJ]" ,"V_molar[cm3/mol]","V_partial[cm3]" ,"Cp[kJ/K]","Rho[kg/m3]","Alpha[1/K]","Entropy[kJ/K]","Enthalpy[kJ/mol]","BulkMod[GPa]","ShearMod[GPa]","Vp[km/s]","Vs[km/s]")
    
     for i=1:out.n_SS
-        file *= @sprintf("%6s",out.ph[i])
+        file *= @sprintf("%6s",display_ph_name(out.ph[i]))
         file *= @sprintf("%+15.5f %+13.5f %+17.5f %+17.5f %+12.5f %+12.5f %+12.8f %+12.6f %+12.4f %+12.2f %+12.2f %+13.2f %+12.2f",
                         out.ph_frac_wt[i],
                         out.SS_vec[i].G,
@@ -589,7 +618,7 @@ function save_equilibrium_to_file(  out::MAGEMin_C.gmin_struct{Float64, Int64}, 
     end
 
     for i=1:out.n_PP
-        file *= @sprintf("%6s",out.ph[i+out.n_SS])
+        file *= @sprintf("%6s",display_ph_name(out.ph[i+out.n_SS]))
         file *= @sprintf("%+15.5f %+13.5f %+17.5f %+17.5f %+12.5f %+12.5f %+12.8f %+12.6f %+12.4f %+12.2f %+12.2f %+13.2f %+12.2f",
                         out.ph_frac_wt[i],
                         out.PP_vec[i].G,
@@ -635,9 +664,9 @@ function save_equilibrium_to_file(  out::MAGEMin_C.gmin_struct{Float64, Int64}, 
     file *= @sprintf(" %6s %g\n","dQFM",out.dQFM)  
     file *= @sprintf("\n\n") 
 
-    file *= @sprintf("G-hyperplane distance[J]:\n")  
+    file *= @sprintf("G-hyperplane distance[J]:\n")
     for i=1:out.n_SS
-        file *= @sprintf(" %6s %12.8f\n",out.ph[i],out.SS_vec[i].deltaG)  
+        file *= @sprintf(" %6s %12.8f\n",display_ph_name(out.ph[i]),out.SS_vec[i].deltaG)
     end
     file *= @sprintf("\n\n") 
 
@@ -801,12 +830,12 @@ function get_diagram_labels(    Out_XY      :: Vector{MAGEMin_C.gmin_struct{Floa
         for i = 1:np
             phd[i]      = ""
             for k=1:length(Out_XY[i].ph)
-                phd[i] *= Out_XY[i].ph[k]*" "
+                phd[i] *= display_ph_name(Out_XY[i].ph[k])*" "
                 if k % 3 == 0
-                    phd[i] *= "<br>" 
+                    phd[i] *= "<br>"
                 end
             end
-            ph[i]       = join(Out_XY[i].ph," ")
+            ph[i]       = join(display_ph_names(Out_XY[i].ph)," ")
         end
 
     elseif refType == "em"
@@ -816,12 +845,12 @@ function get_diagram_labels(    Out_XY      :: Vector{MAGEMin_C.gmin_struct{Floa
                                         Out_XY[i].SS_vec)
             phd[i]      = ""
             for k=1:length(ph_em)
-                phd[i] *= ph_em[k]*" "
+                phd[i] *= display_ph_name(ph_em[k])*" "
                 if k % 3 == 0
-                    phd[i] *= "<br>" 
+                    phd[i] *= "<br>"
                 end
             end
-            ph[i]       = join(ph_em," ")  
+            ph[i]       = join(display_ph_names(ph_em)," ")
         end
     end
 
@@ -1250,14 +1279,14 @@ function get_gridded_map(   fieldname   ::String,
         jj              = compute_index(data.points[k][2], data.Yrange[1], dy)
         gridded[ii,jj]  = field[k] 
 
-        tmp                 = replace(string(Out_XY[k].ph), "\""=>"", "]"=>"", "["=>"", ","=>"")
+        tmp                 = replace(string(display_ph_names(Out_XY[k].ph)), "\""=>"", "]"=>"", "["=>"", ","=>"")
         gridded_info[ii,jj] = "#"*string(k)*"# "*tmp
 
     end
 
     for i=1:length(data.cells)
         cell   = data.cells[i]
-        tmp    = "#"*string(cell[1])*"# "*replace(string(Out_XY[cell[1]].ph), "\""=>"", "]"=>"", "["=>"", ","=>"")
+        tmp    = "#"*string(cell[1])*"# "*replace(string(display_ph_names(Out_XY[cell[1]].ph)), "\""=>"", "]"=>"", "["=>"", ","=>"")
 
         ii_min = compute_index(data.points[cell[2]][1], Xrange[1], dx)
         ii_max = compute_index(data.points[cell[3]][1], Xrange[1], dx)
@@ -1404,7 +1433,15 @@ function get_parsed_command(    point       :: Int64;
                             part1 = ref*".C0"
                             part2 = "["*string(id_el)*"]"
                         else
-                            id_ph = findfirst(Out_TE_XY[point].ph_TE .== st[1])
+                            ph_te = Out_TE_XY[point].ph_TE
+                            if isnothing(ph_te)
+                                id_ph = nothing
+                            else
+                                id_ph = findfirst(ph_te .== st[1])
+                                if isnothing(id_ph) && use_warr_names[1]
+                                    id_ph = findfirst(ph -> MAGEMin_C.get_Warr_name(ph) == st[1], ph_te)
+                                end
+                            end
                             if isnothing(id_ph)
                                 part1, part2 = "break", "break"
                                 # print("wrong phase name!\n")

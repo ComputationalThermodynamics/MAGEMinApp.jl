@@ -334,10 +334,12 @@ function Tab_Simulation_Callbacks(app)
         Output("dataset-display-id", "style"),
 
         Input("database-dropdown","value"),
+        Input("mineral-naming-dropdown","value"),
 
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
-    ) do dtb
-    
+    ) do dtb, warr_naming
+        global use_warr_names
+        use_warr_names[1] = (warr_naming == "warr")
 
         if dtb == "sb11" || dtb == "sb21" || dtb == "sb24"
             style  = Dict("display" => "none")
@@ -347,7 +349,7 @@ function Tab_Simulation_Callbacks(app)
         db_in       = retrieve_solution_phase_information(dtb)
 
         # this is the phase selection part for the database when compute a diagram
-        phase_selection_options = [Dict(    "label"     => " "*i,
+        phase_selection_options = [Dict(    "label"     => " "*display_ph_name(i),
                                             "value"     => i )
                                                 for i in db_in.ss_name ]
         phase_selection_value   = db_in.ss_name
@@ -357,7 +359,7 @@ function Tab_Simulation_Callbacks(app)
         pp_all  = db_in.data_pp
         pp_disp = setdiff(pp_all, AppData.hidden_pp)
 
-        pure_phase_selection_options = [Dict(    "label"     => " "*i,
+        pure_phase_selection_options = [Dict(    "label"     => " "*display_ph_name(i),
                                                  "value"     => i )
                                                 for i in pp_disp ]
         pure_phase_selection_value   = pp_disp
@@ -429,16 +431,23 @@ function Tab_Simulation_Callbacks(app)
         Output("sys-unit-isopleth-id","style"),
         Output("rm-exfluid-isopleth-id","style"),
 
-        Input("trigger-update-ss-list","value"),
-        Input("phase-dropdown",     "value"),
-        Input("other-dropdown",     "value"),
-        State("ss-dropdown",        "value"),
-        State("database-dropdown",  "value"),
+        Input("trigger-update-ss-list",    "value"),
+        Input("phase-dropdown",            "value"),
+        Input("other-dropdown",            "value"),
+        Input("mineral-naming-dropdown",   "value"),
+        State("ss-dropdown",               "value"),
+        State("database-dropdown",         "value"),
 
         prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
-    ) do pd_update, phase, other, ph, dtb
-    
-        bid         = pushed_button( callback_context() ) 
+    ) do pd_update, phase, other, warr_naming, ph, dtb
+        global use_warr_names
+        use_warr_names[1] = (warr_naming == "warr")
+
+        if !@isdefined(phase_infos)
+            return no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update()
+        end
+
+        bid         = pushed_button( callback_context() )
 
         pp          = phase_infos.act_pp
         ss          = phase_infos.act_ss
@@ -460,7 +469,7 @@ function Tab_Simulation_Callbacks(app)
             val         = nothing
         elseif phase == "ss"
             
-            opts_ph     =  [Dict(   "label" => ss[i],
+            opts_ph     =  [Dict(   "label" => display_ph_name(ss[i]),
                                     "value" => ss[i] )
                                         for i=1:n_ss ]
             style_ot    = Dict("display" => "block")
@@ -521,7 +530,7 @@ function Tab_Simulation_Callbacks(app)
 
         else
 
-            opts_ph     =  [Dict(   "label" => pp[i],
+            opts_ph     =  [Dict(   "label" => display_ph_name(pp[i]),
                                     "value" => pp[i]  )
                                         for i=1:n_pp ]
 
@@ -560,11 +569,14 @@ function Tab_Simulation_Callbacks(app)
        
         Input("database-dropdown","value"),
         Input("ss-dropdown","value"),
+        Input("mineral-naming-dropdown","value"),
         State("phase-dropdown","value"),
         State("mb-cpx-switch","value"),
 
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
-    ) do dtb, ph_name, ph, mbCpx
+    ) do dtb, ph_name, warr_naming, ph, mbCpx
+        global use_warr_names
+        use_warr_names[1] = (warr_naming == "warr")
         bid  = pushed_button( callback_context() ) 
         if mbCpx == true
             aug = 1
@@ -577,6 +589,9 @@ function Tab_Simulation_Callbacks(app)
             ph_name         = get_ss_from_mineral(dtb, ph_name, aug)
             db_in           = retrieve_solution_phase_information(dtb)
             ph_id           = findfirst(db_in.ss_name .== ph_name)
+            if isnothing(ph_id)
+                return "", "none", "", "SiO2", ""
+            end
             sf_names        = join(db_in.data_ss[ph_id].ss_sf[2:end], " ")
 
             if ph_name in db_in.ss_name
@@ -589,7 +604,7 @@ function Tab_Simulation_Callbacks(app)
             n_em        = length(db_in.data_ss[ssid].ss_em)
 
             val         = "none"
-            opts_em     =  [Dict(   "label" => db_in.data_ss[ssid].ss_em[i],
+            opts_em     =  [Dict(   "label" => display_ph_name(db_in.data_ss[ssid].ss_em[i]),
                                     "value" => db_in.data_ss[ssid].ss_em[i] )
                                         for i=1:n_em ]
 
@@ -1207,6 +1222,17 @@ function Tab_Simulation_Callbacks(app)
         end
         return is_open 
             
+    end
+
+    # set global Warr naming flag when the mineral-naming dropdown changes
+    callback!(app,
+        Output("warr-naming-dummy", "children"),
+        Input("mineral-naming-dropdown", "value"),
+        prevent_initial_call = true,
+    ) do val
+        global use_warr_names
+        use_warr_names[1] = (val == "warr")
+        return val
     end
 
     # open/close Curve interpretation box
