@@ -775,7 +775,11 @@ function Tab_PhaseDiagram()
                                                 ], width=5),
                                                 dbc_col([
                                                     dcc_dropdown(   id          = "colormaps_cross",
-                                                                    options     = ["blackbody","Blues","cividis","Greens","Greys","hot","jet","RdBu","Reds","viridis","YlGnBu","YlOrRd","Pink","Sunset","Dawn","Almeria","Almeria Extended","Almeria Red","Almeria Blue"],
+                                                                    options     = vcat(
+                                                                                    [Dict("label" => name, "value" => name) for name in ["blackbody","Blues","cividis","Greens","Greys","hot","jet","RdBu","Reds","viridis","YlGnBu","YlOrRd"]],
+                                                                                    [Dict("label" => "- R.J. Tamblyn colormaps -", "value" => "separator", "disabled" => true)],
+                                                                                    [Dict("label" => name, "value" => name) for name in ["Pink","Sunset","Dawn","Almeria","Almeria Extended","Almeria Red","Almeria Blue"]],
+                                                                                ),
                                                                     value       = "Blues",
                                                                     clearable   = false,
                                                                     placeholder = "Colormap")
