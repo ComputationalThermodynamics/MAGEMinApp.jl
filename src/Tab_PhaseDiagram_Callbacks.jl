@@ -521,7 +521,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                 sys     = "vol%"
             end
 
-            title = "P: $(round(Out_XY[point_id].P_kbar; digits = 3)) T: $(round(Out_XY[point_id].T_C; digits = 3)) Mode [$(sys)]"
+            title = "P: $(round(display_pressure(Out_XY[point_id].P_kbar); digits = 3)) $(pressure_unit_label()) T: $(round(Out_XY[point_id].T_C; digits = 3)) Mode [$(sys)]"
             layout = Layout(    font        = attr(size = 10),
                                 height      = 220,
                                 margin      = attr(autoexpand = false, l=8, r=8, b=8, t=24),
