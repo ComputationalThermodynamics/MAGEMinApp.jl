@@ -904,7 +904,7 @@ function Tab_PTXpaths()
                                         # html_div("‎ "),
                                         dbc_row([
                                             dbc_col([
-                                                html_h1("Save cummulate", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
+                                                html_h1("Save cumulate", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
                                             ], width=4),
                                             dbc_col([ 
                                                 dbc_input(

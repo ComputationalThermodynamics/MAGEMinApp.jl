@@ -50,7 +50,7 @@ function Tab_PTXpaths_Callbacks(app)
             T       = Vector{Float64}(undef, n_tot)
 
             for k=1:n_tot
-                P[k]    = Out_PTX[k].P_kbar
+                P[k]    = display_pressure(Out_PTX[k].P_kbar)
                 T[k]    = Out_PTX[k].T_C
             end
 
@@ -81,7 +81,7 @@ function Tab_PTXpaths_Callbacks(app)
             
             # Here we create the dataframe's header:
             MAGEMin_db = DataFrame(         Symbol("point[#]")                  => Int64[],
-                                            Symbol("P[kbar]")                   => Float64[],
+                                            Symbol("P[$(pressure_unit_label())]")  => Float64[],
                                             Symbol("T[°C]")                     => Float64[],
                                             Symbol("Step removed $(sysunit)%")       => Float64[])
 
@@ -121,7 +121,7 @@ function Tab_PTXpaths_Callbacks(app)
             step_rm[2:end] = fracEvol[2:end,2] - fracEvol[1:end-1,2]
             for k=1:n_tot
                 part_1 = Dict(  "point[#]"                  => k,
-                                "P[kbar]"                   => P[k],
+                                "P[$(pressure_unit_label())]" => P[k],
                                 "T[°C]"                     => T[k],
                                 "Step removed $(sysunit)%"  => step_rm[k])
 
@@ -465,7 +465,7 @@ function Tab_PTXpaths_Callbacks(app)
         n_te    = length(Out_TE_PTX[1].elements)
         elements = Out_TE_PTX[1].elements
 
-        P = [Out_PTX[k].P_kbar for k in 1:n_tot]
+        P = [display_pressure(Out_PTX[k].P_kbar) for k in 1:n_tot]
         T = [Out_PTX[k].T_C    for k in 1:n_tot]
 
         # extracted TE at each step: computed inline in compute_new_PTXpath, accounting for nRes/nCon mixing
@@ -509,7 +509,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         MAGEMin_db = DataFrame(
             Symbol("point[#]")              => Int64[],
-            Symbol("P[kbar]")               => Float64[],
+            Symbol("P[$(pressure_unit_label())]") => Float64[],
             Symbol("T[°C]")                 => Float64[],
             Symbol("Step removed%")         => Float64[],
             Symbol("Instantaneous removed%") => Float64[],
@@ -525,7 +525,7 @@ function Tab_PTXpaths_Callbacks(app)
         for k in 1:n_tot
             part_1 = Dict(
                 "point[#]"              => k,
-                "P[kbar]"               => P[k],
+                "P[$(pressure_unit_label())]" => P[k],
                 "T[°C]"                 => T[k],
                 "Step removed%"         => step_rm[k],
                 "Instantaneous removed%" => fracEvol[k,3],
