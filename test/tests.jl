@@ -1,8 +1,21 @@
+#=~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#   Project      : MAGEMin_App
+#   License      : GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
+#   Developers   : Nicolas Riel, Boris Kaus
+#   Contributors : Dominguez, H., Moyen, J-F.
+#   Organization : Institute of Geosciences, Johannes-Gutenberg University, Mainz
+#   Contact      : nriel[at]uni-mainz.de
+#
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ =#
+
 using Test
 using ProgressMeter
 using MAGEMin_C
 using MAGEMinApp
 using PlotlyJS
+using Printf
+using JSON3
 
 pkg_dir = Base.pkgdir(MAGEMinApp)
 
@@ -10,6 +23,7 @@ include(joinpath(pkg_dir,"src","AMR/AMR_utils.jl"))
 include(joinpath(pkg_dir,"src","Progress.jl"))
 include(joinpath(pkg_dir,"src","AMR/MAGEMin_utils.jl"))
 include(joinpath(pkg_dir,"src","PhaseDiagram_functions.jl"))
+include(joinpath(pkg_dir,"src","MAGEMinApp_functions.jl"))
 global CompProgress = ComputationalProgress()
 
 level           = 2
@@ -99,6 +113,11 @@ end
 
 # AppData lives in the MAGEMinApp module; re-included functions look for it in Main
 const AppData = MAGEMinApp.AppData
+
+# use_GPa / use_warr_names are globals defined in appData.jl; re-included functions
+# (to_kbar_pressure, display_pressure, pressure_unit_label, ...) look for them in Main
+global use_GPa        = [false]
+global use_warr_names = [false]
 
 # build_kds_database is defined in MAGEMinApp_functions.jl which is not re-included here
 const build_kds_database = MAGEMinApp.build_kds_database
