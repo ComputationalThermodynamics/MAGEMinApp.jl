@@ -66,7 +66,7 @@ function Tab_GeneralSetup()
                                 dbc_col([
                                     dcc_textarea(
                                         id          ="state-directory2",
-                                        value       = "$(pwd())",
+                                        value       = "$(pwd())/output/",
                                         readOnly    = true,
                                         disabled    = true,
                                         draggable   = false,

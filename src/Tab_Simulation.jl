@@ -895,23 +895,24 @@ function Tab_Simulation()
                                             multi       = false),
                                         ]),
                                     ]),
-                                    #verbose
+
                                     dbc_row([
                                         dbc_col([ 
-                                            html_h1("Verbose", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            html_h1("Specific Cp", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
                                         ]),
                                         dbc_col([ 
-                                            dcc_dropdown(   id      = "verbose-dropdown",
+                                            dcc_dropdown(   id      = "scp-dropdown",
                                             options = [
-                                                (label = "none",        value = -1),
-                                                (label = "light",       value =  0),
-                                                (label = "full",        value =  1),
+                                                (label = "G0 (no latent heat)",         value =  0),
+                                                (label = "G_system (with latent heat)", value =  1),
                                             ],
-                                            value       = -1,
+                                            value       = 0,
                                             clearable   = false,
                                             multi       = false),
                                         ]),
                                     ]),
+
+                                    html_hr(),
                                     dbc_row([
                                         dbc_col([ 
                                             html_h1("Seismic averaging scheme", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
@@ -928,33 +929,122 @@ function Tab_Simulation()
                                         ]),
                                     ]),
                                     dbc_row([
-                                        dbc_col([ 
+                                        dbc_col([
                                             html_h1("Weight factor", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
                                         ]),
-                                        dbc_col([ 
+                                        dbc_col([
                                             dbc_row([
-                                            dbc_col([ 
+                                            dbc_col([
                                                     dbc_input(
                                                         id      ="wf-id",
-                                                        type    ="number", 
-                                                        min     = 0.0, 
-                                                        max     = 1.0, 
+                                                        type    ="number",
+                                                        min     = 0.0,
+                                                        max     = 1.0,
                                                         value   = 0.5   ),
                                                 ]),
                                             ]),
                                         ]),
                                     ]),
                                     dbc_row([
+                                        dbc_col([
+                                            html_h1("Seismic correction", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                        ]),
+                                        dbc_col([
+                                            dcc_dropdown(   id      = "seismic-cor-dropdown",
+                                            options = [
+                                                (label = "true",         value = true),
+                                                (label = "false",        value = false),
+                                            ],
+                                            value       = false,
+                                            clearable   =  false,
+                                            multi       =  false),
+                                        ]),
+                                    ]),
+                                    html_div([
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Aspect ratio", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ]),
+                                            dbc_col([
+                                                dbc_row([
+                                                dbc_col([
+                                                        dbc_input(
+                                                            id      ="aspect-ratio-id",
+                                                            type    ="number",
+                                                            min     = 0.0,
+                                                            max     = 1.0,
+                                                            value   = 0.3   ),
+                                                    ]),
+                                                ]),
+                                            ]),
+                                        ]),
+                                    ], style = Dict("display" => "none"), id      = "aspect-ratio-row-id"), #none, block
+                                    html_div([
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Anelastic correction", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ]),
+                                            dbc_col([
+                                                dcc_dropdown(   id      = "anelastic-cor-dropdown",
+                                                options = [
+                                                    (label = "true",         value = true),
+                                                    (label = "false",        value = false),
+                                                ],
+                                                value       = false,
+                                                clearable   =  false,
+                                                multi       =  false),
+                                            ]),
+                                        ]),
+                                    ], style = Dict("display" => "none"), id      = "anelastic-toggle-row-id"), #none, block
+                                    html_div([
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Anelastic model", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ]),
+                                            dbc_col([
+                                                dcc_dropdown(   id      = "seismic-water-dropdown",
+                                                options = [
+                                                    (label = "Dry mantle",             value =  0),
+                                                    (label = "Damp mantle",            value =  1),
+                                                    (label = "Wet mantle (saturated)", value =  2),
+                                                ],
+                                                value       = 0,
+                                                clearable   =  false,
+                                                multi       =  false),
+                                            ]),
+                                        ]),
+                                    ], style = Dict("display" => "none"), id      = "anelastic-cor-row-id"), #none, block
+                                    html_div([
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Shallow correction", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ]),
+                                            dbc_col([
+                                                dcc_dropdown(   id      = "shallow-cor-dropdown",
+                                                options = [
+                                                    (label = "true",         value = true),
+                                                    (label = "false",        value = false),
+                                                ],
+                                                value       = false,
+                                                clearable   =  false,
+                                                multi       =  false),
+                                            ]),
+                                        ]),
+                                    ], style = Dict("display" => "none"), id      = "shallow-cor-row-id"), #none, block
+                                    html_hr(),
+                                    #verbose
+                                    dbc_row([
                                         dbc_col([ 
-                                            html_h1("Specific Cp", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            html_h1("Verbose", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
                                         ]),
                                         dbc_col([ 
-                                            dcc_dropdown(   id      = "scp-dropdown",
+                                            dcc_dropdown(   id      = "verbose-dropdown",
                                             options = [
-                                                (label = "G0 (no latent heat)",         value =  0),
-                                                (label = "G_system (with latent heat)", value =  1),
+                                                (label = "none",        value = -1),
+                                                (label = "light",       value =  0),
+                                                (label = "full",        value =  1),
                                             ],
-                                            value       = 0,
+                                            value       = -1,
                                             clearable   = false,
                                             multi       = false),
                                         ]),

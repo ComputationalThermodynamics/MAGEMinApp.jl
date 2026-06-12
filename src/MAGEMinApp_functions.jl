@@ -1347,7 +1347,8 @@ function get_gridded_map(   fieldname   ::String,
 
     # test Anton functions
     f           = unique(Hash_XY)
-    int_vector  = [findfirst(x -> x == h, f) for h in Hash_XY] 
+    f_id        = Dict(h => i for (i,h) in enumerate(f))
+    int_vector  = [f_id[h] for h in Hash_XY]
     gridded_fields = Matrix{Int64}(undef,n,n);
 
     for k=1:np
@@ -1755,52 +1756,56 @@ function get_isopleth_map(  mod         ::String,
         end
 
         n_el        = length(el)
-        global i, j, id
+
+        # build and compile the formula once (it does not depend on the point index),
+        # then evaluate it per point on Comp_apfu via a fast compiled call
+        cmd2eval    = calc
+        for j = 1:n_el
+            if occursin(el[j], calc)
+                cmd2eval = replace(cmd2eval, el[j] => "x[$j]")
+            end
+        end
+        calc_fn = eval(:( (x) -> $(Meta.parse(cmd2eval)) ))
+
         for i=1:np
             id       = findall(Out_XY[i].ph .== ss)
-            if ~isempty(id)  
-                cmd2eval    = calc
-                id          = id[1]
-
-                for j = 1:n_el
-                    if occursin(el[j], calc)
-                        cmd2eval = replace(cmd2eval, el[j] => "Out_XY[$i].SS_vec[$id].Comp_apfu[$j]")
-                    end
-                end
-                command  = Meta.parse(cmd2eval)
-                field[i] = eval(command)
-
+            if ~isempty(id)
+                field[i] = Base.invokelatest(calc_fn, Out_XY[i].SS_vec[id[1]].Comp_apfu)
             else
                 field[i] = 0.0
             end
-        end  
+        end
     elseif mod == "ss_calc_sf"
 
-        global i, j, id
+        # build and compile the formula once, using the site fraction names of the
+        # first point where the phase is present (ordering is constant for a given phase)
+        calc_fn = nothing
         for i=1:np
             id       = findall(Out_XY[i].ph .== ss)
 
-            if ~isempty(id)  
+            if ~isempty(id)
 
                 id          = id[1]
-                sf        = Out_XY[i].SS_vec[id].siteFractionsNames
-                n_sf        = length(sf)
 
-                cmd2eval    = calc_sf
-                
+                if calc_fn === nothing
+                    sf       = Out_XY[i].SS_vec[id].siteFractionsNames
+                    n_sf     = length(sf)
 
-                for j = 1:n_sf
-                    if occursin(sf[j], calc_sf)
-                        cmd2eval = replace(cmd2eval, sf[j] => "Out_XY[$i].SS_vec[$id].siteFractions[$j]")
+                    cmd2eval = calc_sf
+                    for j = 1:n_sf
+                        if occursin(sf[j], calc_sf)
+                            cmd2eval = replace(cmd2eval, sf[j] => "x[$j]")
+                        end
                     end
+                    calc_fn = eval(:( (x) -> $(Meta.parse(cmd2eval)) ))
                 end
-                command  = Meta.parse(cmd2eval)
-                field[i] = eval(command)
+
+                field[i] = Base.invokelatest(calc_fn, Out_XY[i].SS_vec[id].siteFractions)
 
             else
                 field[i] = 0.0
             end
-        end 
+        end
     elseif mod == "ss_calc_ox_mol" || mod == "ss_calc_ox_wt"
         el          = Out_XY[1].oxides
         n_el        = length(el)
@@ -1810,24 +1815,22 @@ function get_isopleth_map(  mod         ::String,
             el[O_id]    = "o"   # put to lower case to avoid issue when evaluating the command
         end
 
-        global i, j, id
+        # build and compile the formula once (it does not depend on the point index),
+        # then evaluate it per point on Comp/Comp_wt via a fast compiled call
+        cmd2eval = calc_ox
+        for j = 1:n_el
+            if occursin(el[j], calc_ox)
+                cmd2eval = replace(cmd2eval, el[j] => "x[$j]")
+            end
+        end
+        calc_fn = eval(:( (x) -> $(Meta.parse(cmd2eval)) ))
+
         for i=1:np
             id       = findall(Out_XY[i].ph .== ss)
-            if ~isempty(id)  
-                cmd2eval    = calc_ox
-                id          = id[1]
-
-                for j = 1:n_el
-                    if occursin(el[j], calc_ox)
-                        if mod == "ss_calc_ox_mol" 
-                            cmd2eval = replace(cmd2eval, el[j] => "Out_XY[$i].SS_vec[$id].Comp[$j]")
-                        elseif mod == "ss_calc_ox_wt" 
-                            cmd2eval = replace(cmd2eval, el[j] => "Out_XY[$i].SS_vec[$id].Comp_wt[$j]")
-                        end
-                    end
-                end
-                command  = Meta.parse(cmd2eval)
-                field[i] = eval(command)
+            if ~isempty(id)
+                id  = id[1]
+                x   = mod == "ss_calc_ox_mol" ? Out_XY[i].SS_vec[id].Comp : Out_XY[i].SS_vec[id].Comp_wt
+                field[i] = Base.invokelatest(calc_fn, x)
             else
                 field[i] = 0.0
             end

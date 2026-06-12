@@ -960,7 +960,9 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                     minColor,   maxColor,
                                     smooth,     colorm,     reverseColorMap, set_white,
                                     test,       refType,
-                                    seismicScheme = "VRH", seismicWeightFactor = 0.5        )
+                                    seismicScheme = "VRH", seismicWeightFactor = 0.5,
+                                    seismic_cor = false, aspect_ratio = 0.3, seismic_water = 0,
+                                    shallow_cor = false, anelastic_correction = false        )
         global CompProgress
 
         #________________________________________________________________________________________#
@@ -1015,7 +1017,8 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                                         oxi, bulk_L, bulk_R,
                                                         bufferType, bufferN1, bufferN2,
                                                         scp, boost, refType,
-                                                        pChip_wat, pChip_T    )
+                                                        pChip_wat, pChip_T,
+                                                        seismic_cor, aspect_ratio, seismic_water, shallow_cor, anelastic_correction    )
 
         
         #________________________________________________________________________________________#     
@@ -1036,7 +1039,8 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                                                                         oxi, bulk_L, bulk_R,
                                                                                         bufferType, bufferN1, bufferN2,
                                                                                         scp, boost, refType,
-                                                                                        pChip_wat, pChip_T ) # recompute points that have not been computed before
+                                                                                        pChip_wat, pChip_T,
+                                                                                        seismic_cor, aspect_ratio, seismic_water, shallow_cor, anelastic_correction ) # recompute points that have not been computed before
                                                                         
                 println("Computed $(length(data.npoints)) new points in $t seconds")
             end
@@ -1212,7 +1216,9 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                 minColor,   maxColor,
                                 smooth,     colorm,     reverseColorMap, set_white,
                                 test,       refType, bid,
-                                seismicScheme = "VRH", seismicWeightFactor = 0.5       )
+                                seismicScheme = "VRH", seismicWeightFactor = 0.5,
+                                seismic_cor = false, aspect_ratio = 0.3, seismic_water = 0,
+                                shallow_cor = false, anelastic_correction = false       )
 
     global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, gridded_fields, phase_infos, X, Y, addedRefinementLvl, layout, n_lbl, pChip_wat, pChip_T
 
@@ -1236,9 +1242,10 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                                                             phase_selection, fixT, fixP,
                                                                             e1_liq,     e2_liq,     e1_remain_wat,  e2_remain_wat,     e1_remain,  e2_remain,
                                                                             oxi, bulk_L, bulk_R,
-                                                                            bufferType, bufferN1, bufferN2, 
+                                                                            bufferType, bufferN1, bufferN2,
                                                                             scp, boost, refType,
-                                                                            pChip_wat,  pChip_T) # recompute points that have not been computed before
+                                                                            pChip_wat,  pChip_T,
+                                                                            seismic_cor, aspect_ratio, seismic_water, shallow_cor, anelastic_correction) # recompute points that have not been computed before
 
     println("Computed $(length(data.npoints)) new points in $(round(t, digits=3)) seconds")
     addedRefinementLvl += 1;

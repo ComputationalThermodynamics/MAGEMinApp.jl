@@ -740,6 +740,41 @@ function Tab_Simulation_Callbacks(app)
         return style
     end
 
+    # callback to display the seismic-correction-dependent options (aspect ratio, anelastic correction, shallow correction)
+    callback!(
+        app,
+        Output("aspect-ratio-row-id",      "style"),
+        Output("anelastic-toggle-row-id",  "style"),
+        Output("shallow-cor-row-id",       "style"),
+        Input("seismic-cor-dropdown", "value"),
+
+        prevent_initial_call = true,
+    ) do seismic_cor
+        if seismic_cor == true
+            style  = Dict("display" => "block")
+        else
+            style  = Dict("display" => "none")
+        end
+        return style, style, style
+    end
+
+    # callback to display the anelastic model dropdown, only when both seismic correction and anelastic correction are enabled
+    callback!(
+        app,
+        Output("anelastic-cor-row-id", "style"),
+        Input("seismic-cor-dropdown",   "value"),
+        Input("anelastic-cor-dropdown", "value"),
+
+        prevent_initial_call = true,
+    ) do seismic_cor, anelastic_cor
+        if seismic_cor == true && anelastic_cor == true
+            style  = Dict("display" => "block")
+        else
+            style  = Dict("display" => "none")
+        end
+        return style
+    end
+
     # callback to display initial title of the pseudosections
     callback!(
         app,
