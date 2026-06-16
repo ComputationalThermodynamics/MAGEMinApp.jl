@@ -23,6 +23,7 @@ module MAGEMinApp
 
     using Images, PolygonInbounds, LazyGrids, Graphs
     using MAGEMin_C
+    using IntersecT
     using PrecompileTools: @compile_workload
 
     import Contour as CTR
@@ -30,6 +31,7 @@ module MAGEMinApp
     pkg_dir = Base.pkgdir(MAGEMinApp)
 
     export App
+    export build_intersect_model_df, make_measurements_df, list_intersect_phases, list_intersect_elements
 
     # include functions
     include(joinpath(pkg_dir,"src","fetch.jl"))
@@ -44,15 +46,18 @@ module MAGEMinApp
     include(joinpath(pkg_dir,"src","Tab_PhaseDiagram.jl"))
     include(joinpath(pkg_dir,"src","Tab_Classification.jl"))
     include(joinpath(pkg_dir,"src","Tab_TraceElement.jl"))
+    include(joinpath(pkg_dir,"src","Tab_IntersecT.jl"))
     include(joinpath(pkg_dir,"src","Tab_PTXpaths.jl"))
     include(joinpath(pkg_dir,"src","data_plot.jl"))
     include(joinpath(pkg_dir,"src","Tab_Simulation_Callbacks.jl"))    
     include(joinpath(pkg_dir,"src","Tab_PhaseDiagram_Callbacks.jl"))
     include(joinpath(pkg_dir,"src","Tab_TraceElement_Callbacks.jl"))
+    include(joinpath(pkg_dir,"src","Tab_IntersecT_Callbacks.jl"))
     include(joinpath(pkg_dir,"src","PTXpaths_functions.jl"))   
     include(joinpath(pkg_dir,"src","Tab_PTXpaths_Callbacks.jl")) 
     include(joinpath(pkg_dir,"src","Tab_General_informations.jl"))
     include(joinpath(pkg_dir,"src","MAGEMinApp_functions.jl"))
+    include(joinpath(pkg_dir,"src","IntersecT_functions.jl"))
     include(joinpath(pkg_dir,"src","tools","Colormaps_MAGEMinApp.jl"))
     include(joinpath(pkg_dir,"src","Loading_functions.jl"))
     include(joinpath(pkg_dir,"src","Style_functions.jl"))
@@ -71,6 +76,7 @@ module MAGEMinApp
         Tab_Simulation()
         Tab_PhaseDiagram()
         Tab_TraceElement()
+        Tab_IntersecT()
         Tab_PTXpaths()
         Tab_General_informations()
     end
@@ -191,6 +197,10 @@ module MAGEMinApp
                                                                         label       = "Trace-elements",
                                                                         children    = [Tab_TraceElement()],
                                                                     ),
+                                                            dbc_tab(    tab_id      = "tab-intersect",
+                                                                        label       = "IntersecT",
+                                                                        children    = [Tab_IntersecT()],
+                                                                    ),
 
                                                     ], id = "tabs"), ]
                                     ),
@@ -258,6 +268,7 @@ module MAGEMinApp
         app = Tab_PhaseDiagram_Callbacks(app)
         app = Tab_TraceElement_Callbacks(app)
         app = Tab_PTXpaths_Callbacks(app)
+        app = Tab_IntersecT_Callbacks(app)
         app = Progress_Callbacks(app)
 
         println(" 4/4 Loading user data...")
