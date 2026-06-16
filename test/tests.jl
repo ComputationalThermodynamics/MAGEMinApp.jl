@@ -38,7 +38,7 @@ oxides          = ["SiO2", "Al2O3", "CaO", "MgO", "FeO", "K2O", "Na2O", "TiO2", 
 
 println("  Test P-T diagram computation")
 global Out_XY =  Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,0)
-Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(  "ig", data, 
+Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(  "ig", data,
                                                 MAGEMin_data,
                                                 false,
                                                 "pt",
@@ -62,7 +62,12 @@ Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(  "ig", data,
                                                 false,
                                                 "ph",
                                                 nothing,
-                                                nothing    )
+                                                nothing,
+                                                false,
+                                                1.0,
+                                                0,
+                                                false,
+                                                false    )
 @test length(Out_XY) == 25
 
 results = [ -787.5021281229567; -780.3561723080602; -773.3527763396436; -766.4099019277187; -759.5152725789162; -807.3352677633849; -800.1192103984516; -793.0479904520582; -786.0403142969375; -779.091199095056; -829.5233690370851; -822.2589936166174; -815.1059020451603; -808.0275997269894; -801.016558171696; -853.7724167758879; -846.4400658082319; -839.2155372393563; -832.0763170590177; -824.9827244715955; -880.4886361964809; -872.8679746851093; -865.3993513711622; -858.0353846182636; -850.7857604621469]
@@ -98,7 +103,12 @@ Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(   "ig", data,
                                                 false,
                                                 "ph",
                                                 nothing,
-                                                nothing ) # recompute points that have not been computed before
+                                                nothing,
+                                                false,
+                                                1.0,
+                                                0,
+                                                false,
+                                                false ) # recompute points that have not been computed before
 
 @test length(Out_XY) == 81
 

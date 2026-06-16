@@ -9,6 +9,36 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ =#
 
+
+SeismicVelocityMeltCorrection = """
+**Seismic velocity corrections (\$V_{p,cor}\$, \$V_{s,cor}\$)**
+
+When "Seismic correction" is set to *true*, MAGEMin computes melt-, anelastic- and shallow-corrected P- and S-wave velocities of the solid aggregate, in addition to the uncorrected elastic \$V_p\$ and \$V_s\$.
+
+#### Melt correction
+
+- Based on the reduction formulation of Clark et al. (2017), using the equilibrium geometry model for the solid skeleton of Takei (1997).
+- The "Aspect ratio" parameter (0.0-1.0) describes the geometry/contiguity of the solid framework: 0.0 corresponds to layered melt, ~0.1 to grain-boundary melt, and 1.0 to melt trapped in isolated, separated pockets.
+- The correction softens the solid bulk and shear moduli as a function of melt fraction, the solid/melt modulus contrast and the solid/melt density contrast, and reduces \$V_p\$ and \$V_s\$ accordingly.
+- If \$\\phi_{melt} = 0\$, no melt correction is applied (\$V_{p,cor}=V_p\$, \$V_{s,cor}=V_s\$ before any anelastic/shallow correction).
+
+#### Anelastic correction
+
+- When "Anelastic correction" is set to *true*, an additional attenuation (anelastic) correction is applied to \$V_s\$ prior to the melt correction, following Behn et al. (2009) with frequency/grain-size terms from Cobden et al. (2018).
+- The "Anelastic model" dropdown selects the water content of the mantle, which controls the strength of the attenuation:
+    - **Dry mantle**: low water content, smallest reduction in \$V_s\$.
+    - **Damp mantle**: intermediate water content.
+    - **Wet mantle (saturated)**: highest water content, largest reduction in \$V_s\$.
+
+#### Shallow correction
+
+- When "Shallow correction" is set to *true*, an additional near-surface porosity correction is applied to \$V_s\$, using a fixed aspect ratio (0.25) and Poisson's ratio (0.25).
+- The porosity fraction is estimated from pressure (depth), decreasing with depth, and is used to further reduce \$V_s\$ to account for the effect of shallow, fluid-filled porosity.
+
+If "Seismic correction" is set to *false*, \$V_{p,cor}\$ and \$V_{s,cor}\$ are not computed (returned as `NaN`, displayed as 0 in the gridded maps).
+"""
+
+
 SiteFractionCalculator = """
 **Site Fraction calculator (isopleths)**
 
@@ -319,6 +349,10 @@ function Tab_General_informations()
                     html_div("‎ "),
                     dbc_card([
                         dcc_markdown(SiteFractionCalculator;          mathjax=true, style = Dict("font-size" => "130%")),
+                    ]),
+                    html_div("‎ "),
+                    dbc_card([
+                        dcc_markdown(SeismicVelocityMeltCorrection;          mathjax=true, style = Dict("font-size" => "130%")),
                     ]),
                 ]),
 
