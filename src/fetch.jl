@@ -14,7 +14,7 @@ function fetch_message()
 
     try
         # Perform the HTTP GET request
-        response = HTTP.get(url)
+        response = HTTP.get(url; readtimeout=3, retries=0)
         
         # Check if the request was successful
         if response.status == 200
@@ -34,7 +34,7 @@ function fetch_message2()
 
     try
         # Perform the HTTP GET request
-        response = HTTP.get(url)
+        response = HTTP.get(url; readtimeout=3, retries=0)
         
         # Check if the request was successful
         if response.status == 200

@@ -23,6 +23,7 @@ module MAGEMinApp
 
     using Images, PolygonInbounds, LazyGrids, Graphs
     using MAGEMin_C
+    using PrecompileTools: @compile_workload
 
     import Contour as CTR
 
@@ -39,6 +40,7 @@ module MAGEMinApp
     include(joinpath(pkg_dir,"src","PhaseDiagram_functions.jl"))
     include(joinpath(pkg_dir,"src","TraceElement_functions.jl"))
     include(joinpath(pkg_dir,"src","Tab_Simulation.jl"))
+    include(joinpath(pkg_dir,"src","Tab_GeneralSetup.jl"))
     include(joinpath(pkg_dir,"src","Tab_PhaseDiagram.jl"))
     include(joinpath(pkg_dir,"src","Tab_Classification.jl"))
     include(joinpath(pkg_dir,"src","Tab_TraceElement.jl"))
@@ -51,6 +53,7 @@ module MAGEMinApp
     include(joinpath(pkg_dir,"src","Tab_PTXpaths_Callbacks.jl")) 
     include(joinpath(pkg_dir,"src","Tab_General_informations.jl"))
     include(joinpath(pkg_dir,"src","MAGEMinApp_functions.jl"))
+    include(joinpath(pkg_dir,"src","tools","Colormaps_MAGEMinApp.jl"))
     include(joinpath(pkg_dir,"src","Loading_functions.jl"))
     include(joinpath(pkg_dir,"src","Style_functions.jl"))
 
@@ -60,7 +63,17 @@ module MAGEMinApp
     include(joinpath(pkg_dir,"src","Boundaries/purge.jl"))
     include(joinpath(pkg_dir,"src","Boundaries/utils.jl"))
     include(joinpath(pkg_dir,"src","appData.jl"))
-    
+
+    # Pre-compile the layout-building functions at package build time, so the
+    # ~17s of JIT compilation they otherwise trigger isn't paid on first App() startup
+    @compile_workload begin
+        Tab_GeneralSetup()
+        Tab_Simulation()
+        Tab_PhaseDiagram()
+        Tab_TraceElement()
+        Tab_PTXpaths()
+        Tab_General_informations()
+    end
 
     """
         App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
@@ -68,13 +81,8 @@ module MAGEMinApp
     Starts the MAGEMin App.
     """
     function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
-
-        println(" 1/4 Loading messages...")
-        message     = fetch_message()
-        message2    = fetch_message2()
-
-        vApp = "Running MAGEMinApp@$(AppData.GUI_version) -> Last version @$(message2) - Julia 1.10+"
-
+        println(" 1/4 Initializing...")
+        vApp = "Running MAGEMinApp@$(AppData.GUI_version) - Julia 1.10+"
 
         cur_dir     = pwd()                 # directory from where you started the GUI
         pkg_dir     = pkgdir(MAGEMinApp)   # package dir
@@ -96,11 +104,11 @@ module MAGEMinApp
                         dbc_col([
                             dbc_row([
                                 html_div("‎ "),
-                                html_div(message, style = Dict("textAlign" => "center","font-size" => "120%")),    
+                                html_div(id="update-message-id", style = Dict("textAlign" => "center","font-size" => "120%")),
                             ]),
                             dbc_row([
                                 html_div("‎ "),
-                                html_div(vApp, style = Dict("textAlign" => "center","font-size" => "120%")),    
+                                html_div(vApp, id="update-version-id", style = Dict("textAlign" => "center","font-size" => "120%")),
                             ]),
                         ], width="auto" ),
 
@@ -163,6 +171,11 @@ module MAGEMinApp
 
                     dbc_tabs([
 
+                            dbc_tab(    tab_id      = "tab-general-setup",
+                                        label       = "General setup",
+                                        children    = [Tab_GeneralSetup()]
+                                    ),
+
                             dbc_tab(    tab_id      = "phase-diagrams",
                                         label       = "Phase diagrams",
                                         children    = [dbc_tabs([
@@ -192,13 +205,15 @@ module MAGEMinApp
                                     ),
 
                         ],
-                        active_tab="phase-diagrams",
+                        active_tab="tab-general-setup",
                     ),
 
                     ], width=12),
 
         
-                    dcc_store(id="session-id", data =  "")     # gives a unique number of our session
+                    dcc_store(id="session-id", data =  ""),     # gives a unique number of our session
+
+                    dcc_interval(id="version-check-interval", interval=500, n_intervals=0, max_intervals=1)
         ])
 
         end
@@ -220,6 +235,22 @@ module MAGEMinApp
 
             str = "id=$(session_id);   MAGEMinApp GUI v=$(GUI_version);   using $nthreads/$num_available_cores threads"
             return String("$(session_id)"), str
+        end
+
+        # Fetches the latest version/news messages from GitHub after the page has loaded,
+        # so a slow/unreachable network does not delay the app startup.
+        callback!(app,
+            Dash.Output("update-message-id", "children"),
+            Dash.Output("update-version-id", "children"),
+            Input("version-check-interval", "n_intervals"),
+            prevent_initial_call=true,
+        ) do n_intervals
+            message  = fetch_message()
+            message2 = fetch_message2()
+
+            vApp = "Running MAGEMinApp@$(AppData.GUI_version) -> Last version @$(message2) - Julia 1.10+"
+
+            return message, vApp
         end
 
         println(" 3/4 Loading callbacks...")

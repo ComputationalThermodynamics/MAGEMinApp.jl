@@ -50,7 +50,7 @@ function Tab_PTXpaths_Callbacks(app)
             T       = Vector{Float64}(undef, n_tot)
 
             for k=1:n_tot
-                P[k]    = Out_PTX[k].P_kbar
+                P[k]    = display_pressure(Out_PTX[k].P_kbar)
                 T[k]    = Out_PTX[k].T_C
             end
 
@@ -81,7 +81,7 @@ function Tab_PTXpaths_Callbacks(app)
             
             # Here we create the dataframe's header:
             MAGEMin_db = DataFrame(         Symbol("point[#]")                  => Int64[],
-                                            Symbol("P[kbar]")                   => Float64[],
+                                            Symbol("P[$(pressure_unit_label())]")  => Float64[],
                                             Symbol("T[°C]")                     => Float64[],
                                             Symbol("Step removed $(sysunit)%")       => Float64[])
 
@@ -121,7 +121,7 @@ function Tab_PTXpaths_Callbacks(app)
             step_rm[2:end] = fracEvol[2:end,2] - fracEvol[1:end-1,2]
             for k=1:n_tot
                 part_1 = Dict(  "point[#]"                  => k,
-                                "P[kbar]"                   => P[k],
+                                "P[$(pressure_unit_label())]" => P[k],
                                 "T[°C]"                     => T[k],
                                 "Step removed $(sysunit)%"  => step_rm[k])
 
@@ -224,8 +224,8 @@ function Tab_PTXpaths_Callbacks(app)
 
 
                 for i in ph_names_ext_ptx
-                    col = i*"_$(sysunit)%"
-                    MAGEMin_db[!, col] = Float64[] 
+                    col = display_ph_name(i)*"_$(sysunit)%"
+                    MAGEMin_db[!, col] = Float64[]
                 end
                 
                 # Z = hcat(zeros(length(ph_names_ext_ptx)),Z)
@@ -251,7 +251,7 @@ function Tab_PTXpaths_Callbacks(app)
                                     "T[°C]"                     => T[k],
                                     "Step removed $(sysunit)%"     => step_rm[k])
 
-                    part_2 = Dict(  (ph_names_ext_ptx[j]*"_$(sysunit)%" => Z[j,k])
+                    part_2 = Dict(  (display_ph_name(ph_names_ext_ptx[j])*"_$(sysunit)%" => Z[j,k])
                                     for j in eachindex(ph_names_ext_ptx))
 
                     row    = merge(part_1,part_2)   
@@ -339,7 +339,7 @@ function Tab_PTXpaths_Callbacks(app)
             datab   = "_"*dtb
             fileout = "./output/"*fname*datab
 
-            MAGEMin_data2dataframe(Out_PTX,dtb,fileout)
+            MAGEMin_data2dataframe(Out_PTX,dtb,fileout; use_Warr2021=use_warr_names[1], use_GPA=use_GPa[1])
             return "success", ""
         else
             return  "", "failed"
@@ -363,7 +363,7 @@ function Tab_PTXpaths_Callbacks(app)
             datab   = "_inlined_"*dtb
             fileout = "./output/"*fname*datab
 
-            MAGEMin_data2dataframe_inlined(Out_PTX,dtb,fileout)
+            MAGEMin_data2dataframe_inlined(Out_PTX,dtb,fileout; use_Warr2021=use_warr_names[1], use_GPA=use_GPa[1])
             return "success", ""
         else
             return  "", "failed"
@@ -413,7 +413,7 @@ function Tab_PTXpaths_Callbacks(app)
         datab   = "_te_"*dtb*"_"*kds*sat_ext
         fileout = "./output/"*fname*datab
 
-        MAGEMin_dataTE2dataframe(Out_PTX, Out_TE_PTX, dtb, fileout)
+        MAGEMin_dataTE2dataframe(Out_PTX, Out_TE_PTX, dtb, fileout; use_Warr2021=use_warr_names[1], use_GPA=use_GPa[1])
         return true, false, false
     end
 
@@ -465,7 +465,7 @@ function Tab_PTXpaths_Callbacks(app)
         n_te    = length(Out_TE_PTX[1].elements)
         elements = Out_TE_PTX[1].elements
 
-        P = [Out_PTX[k].P_kbar for k in 1:n_tot]
+        P = [display_pressure(Out_PTX[k].P_kbar) for k in 1:n_tot]
         T = [Out_PTX[k].T_C    for k in 1:n_tot]
 
         # extracted TE at each step: computed inline in compute_new_PTXpath, accounting for nRes/nCon mixing
@@ -509,7 +509,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         MAGEMin_db = DataFrame(
             Symbol("point[#]")              => Int64[],
-            Symbol("P[kbar]")               => Float64[],
+            Symbol("P[$(pressure_unit_label())]") => Float64[],
             Symbol("T[°C]")                 => Float64[],
             Symbol("Step removed%")         => Float64[],
             Symbol("Instantaneous removed%") => Float64[],
@@ -525,7 +525,7 @@ function Tab_PTXpaths_Callbacks(app)
         for k in 1:n_tot
             part_1 = Dict(
                 "point[#]"              => k,
-                "P[kbar]"               => P[k],
+                "P[$(pressure_unit_label())]" => P[k],
                 "T[°C]"                 => T[k],
                 "Step removed%"         => step_rm[k],
                 "Instantaneous removed%" => fracEvol[k,3],
@@ -617,7 +617,7 @@ function Tab_PTXpaths_Callbacks(app)
             margin      = attr(autoexpand = false, l=16, r=16, b=16, t=16),
             autosize    = false,
             xaxis_title = "Temperature [°C]",
-            yaxis_title = "Pressure [kbar]",
+            yaxis_title = "Pressure [$(pressure_unit_label())]",
             xaxis_range = [Xmin,Xmax], 
             yaxis_range = [Ymin,Ymax],
             annotations = annotations,
@@ -859,6 +859,8 @@ function Tab_PTXpaths_Callbacks(app)
 
         bid             = pushed_button( callback_context() )    # get which button has been pushed
 
+        pressure        = to_kbar_pressure(Float64(pressure))    # convert displayed pressure unit to kbar
+
         if bid == "find-liquidus-button"
             bufferN                 = Float64(bufferN)               # convert buffer_n to float
             bulk_ini, bulk_ini, oxi = get_bulkrock_prop(bulk, bulk)  
@@ -878,6 +880,35 @@ function Tab_PTXpaths_Callbacks(app)
         end
 
         return Tliq, Tsol
+    end
+
+    # update the "Find solidus/liquidus" pressure label & value when the pressure unit is toggled
+    callback!(app,
+        Output("solidus-pressure-label-id",      "children"),
+        Output("solidus-pressure-val-id",        "value"),
+        Output("pressure-unit-prev-ptx-solidus", "children"),
+
+        Input("pressure-unit-dropdown",          "value"),
+
+        State("solidus-pressure-val-id",         "value"),
+        State("pressure-unit-prev-ptx-solidus",  "children"),
+
+        prevent_initial_call = true,
+
+        ) do pressure_unit, pressure_val, pressure_unit_prev
+
+        global use_GPa
+        was_gpa    = (pressure_unit_prev == "gpa")
+        use_GPa[1] = (pressure_unit == "gpa")
+
+        if was_gpa != use_GPa[1]
+            factor       = use_GPa[1] ? (1.0/10.0) : 10.0
+            pressure_val = round(pressure_val * factor, digits=10)
+        end
+
+        label = "Pressure [$(pressure_unit_label())]"
+
+        return label, pressure_val, pressure_unit
     end
 
     callback!(
@@ -920,16 +951,19 @@ function Tab_PTXpaths_Callbacks(app)
             dataout[row_index][Symbol("Color")]             = color
             styleout[row_index][Symbol("background-color")] = color
 
-            mineral                             = data[row_index]["Mineral"]
+            mineral = haskey(data[row_index], "LegacyMineral") ? data[row_index]["LegacyMineral"] : data[row_index]["Mineral"]
             AppData.mineral_style[1][mineral][1]   = color
         
 
         elseif bid == "ptx-plot"
             global phase_infos_PTX
+            if !@isdefined(phase_infos_PTX)
+                return data, style, data_select, picker_style
+            end
             phase_selection = vcat(phase_infos_PTX.act_ss, phase_infos_PTX.act_pp)
 
             dataout = [
-                Dict("Mineral" => mineral, "Color" => AppData.mineral_style[1][mineral][1])
+                Dict("Mineral" => display_ph_name(mineral), "LegacyMineral" => mineral, "Color" => AppData.mineral_style[1][mineral][1])
                 for mineral in phase_selection
             ]
             color_list = [AppData.mineral_style[1][mineral][1] for mineral in phase_selection]
@@ -989,6 +1023,7 @@ function Tab_PTXpaths_Callbacks(app)
         Input("sys-unit-ptx",           "value"),
         Input("display-mode",           "value"),
         Input("ext-display-mode",       "value"),
+        Input("mineral-naming-dropdown","value"),
 
         State("select-bulk-unit-ptx",   "value"),
         State("phase-selection-PTX",    "value"),
@@ -1037,7 +1072,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         prevent_initial_call = true,
 
-        ) do    compute,    upsys,      display_mode,               ext_display_mode,
+        ) do    compute,    upsys,      display_mode,               ext_display_mode,   warr_naming,
                 sys_unit,   phase_selection, pure_phase_selection,  phase_list, nsteps,     PTdata,     mode,   assim,  var_buffer,
                 dtb,        dataset,    bufferType, solver,
                 verbose,    bulk,       bulk2,      bufferN,
@@ -1047,8 +1082,10 @@ function Tab_PTXpaths_Callbacks(app)
                 watsat,     watsat_val,
                 te_model,   kds_mod,    zrsat_mod,  ssat_mod,   P2O5sat_mod,    co2sat_mod, bulkte1,    bulkte2
 
+        global use_warr_names
+        use_warr_names[1]       = (warr_naming == "warr")
         bid                     = pushed_button( callback_context() )    # get which button has been pushed
-        phase_selection         = remove_phases(string_vec_diff(phase_selection,pure_phase_selection,dtb),dtb)
+        phase_selection         = remove_phases(string_vec_diff(to_str_vec(phase_selection),to_str_vec(pure_phase_selection),dtb),dtb)
         title                   = db[(db.db .== dtb), :].title[test+1]
         loading                 = ""
 
@@ -1104,7 +1141,8 @@ function Tab_PTXpaths_Callbacks(app)
 
             figrmintPTX                 = plot(data_comp_rm_int_plot,layout_rm_int_ptx)
 
-        elseif bid == "sys-unit-ptx" || bid == "ext-display-mode" || bid == "display-mode"
+        elseif (bid == "sys-unit-ptx" || bid == "ext-display-mode" || bid == "display-mode" || bid == "mineral-naming-dropdown") &&
+               @isdefined(Out_PTX) && !isempty(Out_PTX) && @isdefined(ph_names_ptx)
             data_plot_ptx, phase_list   = get_data_plot(display_mode,sysunit)
             data_extracted_plot_ptx, phase_list_ext   = get_extracted_data_plot(ext_display_mode,sysunit,mode,nRes,nCon,isentropic_mode)
 
@@ -1390,7 +1428,7 @@ function Tab_PTXpaths_Callbacks(app)
         db_in       = retrieve_solution_phase_information(dtb)
 
         # this is the phase selection part for the database when compute a diagram
-        phase_selection_options = [Dict(    "label"     => " "*i,
+        phase_selection_options = [Dict(    "label"     => " "*display_ph_name(i),
                                             "value"     => i )
                                                 for i in db_in.ss_name ]
         phase_selection_value   = db_in.ss_name
@@ -1400,7 +1438,7 @@ function Tab_PTXpaths_Callbacks(app)
         pp_all  = db_in.data_pp
         pp_disp = setdiff(pp_all, AppData.hidden_pp)
 
-        pure_phase_selection_options = [Dict(    "label"     => " "*i,
+        pure_phase_selection_options = [Dict(    "label"     => " "*display_ph_name(i),
                                                  "value"     => i )
                                                 for i in pp_disp ]
         pure_phase_selection_value   = pp_disp
@@ -1657,22 +1695,45 @@ function Tab_PTXpaths_Callbacks(app)
         Output("table-2-id-ptx",            "style"     ),
         Output("test-2-id-ptx",             "style"     ),
         Output("variable-buffer-display-id2","style"     ),
+        Output("pressure-unit-prev-ptx",    "children"  ),
 
         Input("assimilation-dropdown-ptx",  "value"     ),
         Input("add-row-button",             "n_clicks"  ),
         Input("variable-buffer-ptx-id",     "value"     ),
         Input("isentropic-dropdown-ptx",     "value"    ),
+        Input("pressure-unit-dropdown",     "value"     ),
 
         State("assimilation-dropdown-ptx",  "value"     ),
         State("ptx-table",                  "data"      ),
         State("ptx-table",                  "columns"   ),
+        State("pressure-unit-prev-ptx",     "children"  ),
 
         prevent_initial_call = true,
 
-        ) do value, n_clicks, var_buffer, isentropic_value,
-                assim, data, colout
+        ) do value, n_clicks, var_buffer, isentropic_value, pressure_unit,
+                assim, data, colout, pressure_unit_prev
 
         bid                     = pushed_button( callback_context() )    # get which button has been pushed
+
+        if bid == "pressure-unit-dropdown"
+            global use_GPa
+            was_gpa    = (pressure_unit_prev == "gpa")
+            use_GPa[1] = (pressure_unit == "gpa")
+
+            dataout    = copy(data)
+            colsout    = copy(colout)
+
+            if was_gpa != use_GPa[1]
+                factor = use_GPa[1] ? (1.0/10.0) : 10.0
+                for row in dataout
+                    row[Symbol("col-1")] = round(row[Symbol("col-1")] * factor, digits=10)
+                end
+            end
+
+            colsout[1][:name] = "P [$(pressure_unit_label())]"
+
+            return dataout, colsout, no_update(), no_update(), no_update(), pressure_unit
+        end
 
         dataout = copy(data)
         if value == "true"
@@ -1686,31 +1747,31 @@ function Tab_PTXpaths_Callbacks(app)
         if assim == "true"
             if isentropic_value == false
                 if var_buffer == false
-                    colout = [  Dict("name" => "P [kbar]",  "id"    => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                    colout = [  Dict("name" => "P [$(pressure_unit_label())]",  "id"    => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
                                 Dict("name" => "T [°C]",    "id"    => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric"),
                                 Dict("name" => "Add [mol%]", "id"   => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric")]
 
                     if n_clicks > 0 && bid == "add-row-button"
-                        add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0, Symbol("col-3") => 0.0)
+                        add = Dict(Symbol("col-1") => display_pressure(7.5), Symbol("col-2") => 1000.0, Symbol("col-3") => 0.0)
                         push!(dataout,add)
                     end
                 elseif var_buffer == true
-                    colout = [  Dict("name" => "P [kbar]",  "id"        => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                    colout = [  Dict("name" => "P [$(pressure_unit_label())]",  "id"        => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
                                 Dict("name" => "T [°C]",    "id"        => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric"),
                                 Dict("name" => "Add [mol%]", "id"       => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric"),
                                 Dict("name" => "Buffer",     "id"       => "col-4", "deletable" => false, "renamable" => false, "type" => "numeric")]
 
                     if n_clicks > 0 && bid == "add-row-button"
-                        add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0)
+                        add = Dict(Symbol("col-1") => display_pressure(7.5), Symbol("col-2") => 1000.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0)
                         push!(dataout,add)
                     end
                 end
             else
-                colout = [  Dict("name" => "P [kbar]",  "id"    => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                colout = [  Dict("name" => "P [$(pressure_unit_label())]",  "id"    => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
                             Dict("name" => "Add [mol%]", "id"   => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric")]
 
                 if n_clicks > 0 && bid == "add-row-button"
-                    add = Dict(Symbol("col-1") => 7.5, Symbol("col-3") => 0.0)
+                    add = Dict(Symbol("col-1") => display_pressure(7.5), Symbol("col-3") => 0.0)
                     push!(dataout,add)
                 end
             end
@@ -1718,28 +1779,28 @@ function Tab_PTXpaths_Callbacks(app)
         else
             if isentropic_value == false
                 if var_buffer == false
-                    colout = [  Dict("name" => "P [kbar]",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                    colout = [  Dict("name" => "P [$(pressure_unit_label())]",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
                                 Dict("name" => "T [°C]",    "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")]
 
                     if n_clicks > 0 && bid == "add-row-button"
-                        add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0)
+                        add = Dict(Symbol("col-1") => display_pressure(7.5), Symbol("col-2") => 1000.0)
                         push!(dataout,add)
                     end
                 elseif var_buffer == true
-                    colout = [  Dict("name" => "P [kbar]",  "id"        => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                    colout = [  Dict("name" => "P [$(pressure_unit_label())]",  "id"        => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
                                 Dict("name" => "T [°C]",    "id"        => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric"),
                                 Dict("name" => "Buffer",    "id"        => "col-4", "deletable" => false, "renamable" => false, "type" => "numeric")]
 
                     if n_clicks > 0 && bid == "add-row-button"
-                        add = Dict(Symbol("col-1") => 7.5, Symbol("col-2") => 1000.0, Symbol("col-4") => 0.0)
+                        add = Dict(Symbol("col-1") => display_pressure(7.5), Symbol("col-2") => 1000.0, Symbol("col-4") => 0.0)
                         push!(dataout,add)
                     end
                 end
             else
-                colout = [  Dict("name" => "P [kbar]",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric")
+                colout = [  Dict("name" => "P [$(pressure_unit_label())]",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric")
                             ]
                 if n_clicks > 0 && bid == "add-row-button"
-                    add = Dict(Symbol("col-1") => 7.5)
+                    add = Dict(Symbol("col-1") => display_pressure(7.5))
                     push!(dataout,add)
                 end
             end
@@ -1752,7 +1813,7 @@ function Tab_PTXpaths_Callbacks(app)
             var_buff_disp = Dict("display" => "none")
         end
 
-        return dataout, colout, table2, test2, var_buff_disp
+        return dataout, colout, table2, test2, var_buff_disp, no_update()
     end
 
     # Show/hide TE section + enable/disable TE tab based on tepm dropdown
@@ -1924,7 +1985,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         out  = Out_PTX[step_id]
         info = "\n| Variable | Value | Unit |\n|---|---|---|\n"
-        info *= "| P |" * string(round(out.P_kbar; digits=3)) * "| kbar |\n"
+        info *= "| P |" * string(round(display_pressure(out.P_kbar); digits=3)) * "| $(pressure_unit_label()) |\n"
         info *= "| T |" * string(round(out.T_C;   digits=3)) * "| °C |\n"
 
         return fig_pt, config_pt, fig_ree, config_ree, info
@@ -1937,26 +1998,44 @@ function Tab_PTXpaths_Callbacks(app)
         Output("te-evol-element-ptx", "value"  ),
         Output("te-evol-phase-ptx",   "options"),
         Output("te-evol-phase-ptx",   "value"  ),
-        Input("te-ptx-computed-store", "data"  ),
+        Input("te-ptx-computed-store",   "data" ),
+        Input("mineral-naming-dropdown", "value"),
         prevent_initial_call = true,
-    ) do computed
+    ) do computed, warr_naming
+
+        global use_warr_names
+        use_warr_names[1] = (warr_naming == "warr")
+
+        bid = pushed_button(callback_context())
+
+        # helper: build phase options with display labels and legacy values
+        function build_phase_opts()
+            opts = [Dict("label" => "Cliq", "value" => "Cliq"),
+                    Dict("label" => "Csol", "value" => "Csol")]
+            if @isdefined(all_TE_ph_ptx)
+                for ph in all_TE_ph_ptx
+                    push!(opts, Dict("label" => display_ph_name(string(ph)), "value" => string(ph)))
+                end
+            end
+            return opts
+        end
+
+        if bid == "mineral-naming-dropdown"
+            if !@isdefined(Out_TE_PTX) || isempty(Out_TE_PTX)
+                return no_update(), no_update(), no_update(), no_update()
+            end
+            return no_update(), no_update(), build_phase_opts(), no_update()
+        end
+
         if !computed || !@isdefined(Out_TE_PTX) || isempty(Out_TE_PTX)
             return [], nothing, [], nothing
         end
 
-        elem_opts  = [Dict("label" => e, "value" => e) for e in Out_TE_PTX[1].elements]
-        elem_val   = Out_TE_PTX[1].elements[1]
-
-        phase_opts = [Dict("label" => "Cliq", "value" => "Cliq"),
-                      Dict("label" => "Csol", "value" => "Csol")]
-        if @isdefined(all_TE_ph_ptx)
-            for ph in all_TE_ph_ptx
-                push!(phase_opts, Dict("label" => string(ph), "value" => string(ph)))
-            end
-        end
+        elem_opts = [Dict("label" => e, "value" => e) for e in Out_TE_PTX[1].elements]
+        elem_val  = Out_TE_PTX[1].elements[1]
         phase_val = ["Cliq", "Csol"]
 
-        return elem_opts, elem_val, phase_opts, phase_val
+        return elem_opts, elem_val, build_phase_opts(), phase_val
     end
 
     # Render TE evolution plot when element or phase selection changes

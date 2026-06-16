@@ -69,14 +69,14 @@ function get_contributors()
     app     *= "Yishen Zhang\n"
     app     *= "Zeling Wang"
 
-    contact  = "**Links**\n"
-    contact *= "[Tutorials](https://computationalthermodynamics.github.io/MAGEMin_C.jl/dev/)\n"
+    # contact  = "**Links**\n"
+    contact  = "[Tutorials](https://computationalthermodynamics.github.io/MAGEMin_C.jl/dev/)\n"
     contact *= "[Post issue](https://github.com/ComputationalThermodynamics/MAGEMinApp.jl/issues)\n"
     contact *= "[Open discussion](https://github.com/ComputationalThermodynamics/MAGEMin/discussions)\n"
     contact *= "[Discord](https://discord.gg/fjmVZyej9F)"
 
-    descri  = "**Comments**\n"
-    descri *= "Set of examples on how to use MAGEMinApp\n"
+    # descri  = "**Comments**\n"
+    descri  = "Set of examples on how to use MAGEMinApp\n"
     descri *= "Something is not working properly?\n"
     descri *= "Need additional options?\n"
     descri *= "... or join our Discord!"

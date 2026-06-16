@@ -9,6 +9,55 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ =#
 
+function pressure_unit_label()
+    return use_GPa[1] ? "GPa" : "kbar"
+end
+
+# convert a pressure value from kbar (internal/MAGEMin unit) to the display unit
+function display_pressure(P_kbar::Number)
+    return use_GPa[1] ? round(P_kbar / 10.0, digits=10) : P_kbar
+end
+function display_pressure(P_kbar::AbstractArray)
+    return use_GPa[1] ? [v isa Number ? round(v / 10.0, digits=10) : v for v in P_kbar] : P_kbar
+end
+
+# convert a pressure value from the display unit back to kbar (internal/MAGEMin unit)
+function to_kbar_pressure(P_display::Number)
+    return use_GPa[1] ? P_display * 10.0 : P_display
+end
+function to_kbar_pressure(P_display::AbstractArray)
+    return use_GPa[1] ? P_display .* 10.0 : P_display
+end
+
+function display_ph_name(name::String)
+    return use_warr_names[1] ? MAGEMin_C.get_Warr_name(name) : name
+end
+
+function display_ph_names(names::Vector{String})
+    return use_warr_names[1] ? MAGEMin_C.get_Warr_names(names) : names
+end
+
+function to_str_vec(v::AbstractVector)
+    return convert(Vector{String}, collect(v))
+end
+function to_str_vec(s::String)
+    return String[s]
+end
+function to_str_vec(::Nothing)
+    return String[]
+end
+
+function display_iso_label(label::String)
+    !use_warr_names[1] && return label
+    idx = findfirst('_', label)
+    isnothing(idx) && return display_ph_name(label)
+    phase = label[1:idx-1]
+    suffix = label[idx:end]
+    converted = MAGEMin_C.get_Warr_name(phase)
+    endswith(converted, "*") && return label
+    return converted * suffix
+end
+
 function sanitize_names(names::Vector{String})
     return [replace(replace(replace(replace(name, " " => "_"), "/" => "o"),"[" => ""),"]" => "") for name in names]
 end
@@ -521,14 +570,14 @@ function save_equilibrium_to_file(  out::MAGEMin_C.gmin_struct{Float64, Int64}, 
     file = ""
     file *= @sprintf("============================================================\n")
     for i=1:length(out.ph)
-        file *= @sprintf(" %4s ",out.ph[i])
+        file *= @sprintf(" %4s ",display_ph_name(out.ph[i]))
     end
-    file *= @sprintf(" {%.4f %.4f} kbar/°C\n\n",out.P_kbar,out.T_C)
+    file *= @sprintf(" {%.4f %.4f} %s/°C\n\n",display_pressure(out.P_kbar),out.T_C,pressure_unit_label())
 
     file *= @sprintf("End-members fractions[wt fr]:\n")
     for i=1:out.n_SS
         for j=1:length(out.SS_vec[i].emNames)
-            file *= @sprintf(" %8s",out.SS_vec[i].emNames[j])
+            file *= @sprintf(" %8s",display_ph_name(out.SS_vec[i].emNames[j]))
         end
         file *= @sprintf("\n")
         for j=1:length(out.SS_vec[i].emFrac_wt)
@@ -551,26 +600,26 @@ function save_equilibrium_to_file(  out::MAGEMin_C.gmin_struct{Float64, Int64}, 
     end
     file *= @sprintf("\n")  
     for i=1:out.n_SS
-        file *= @sprintf(" %8s",out.ph[i])
+        file *= @sprintf(" %8s",display_ph_name(out.ph[i]))
         for j=1:length(out.SS_vec[i].Comp_wt)
             file *= @sprintf(" %8f",out.SS_vec[i].Comp_wt[j])
         end
-        file *= @sprintf("\n")  
+        file *= @sprintf("\n")
     end
     for i=1:out.n_PP
-        file *= @sprintf(" %8s",out.ph[i+out.n_SS])
+        file *= @sprintf(" %8s",display_ph_name(out.ph[i+out.n_SS]))
         for j=1:length(out.PP_vec[i].Comp_wt)
             file *= @sprintf(" %8f",out.PP_vec[i].Comp_wt[j])
         end
-        file *= @sprintf("\n")  
+        file *= @sprintf("\n")
     end
-    file *= @sprintf("\n")  
+    file *= @sprintf("\n")
 
     file *= @sprintf("Stable mineral assemblage:\n")    
     file *= @sprintf("%6s%15s %13s %17s %17s %12s %12s %12s %12s %12s %12s %12s %12s %12s\n","phase","fraction[wt]","G[kJ]" ,"V_molar[cm3/mol]","V_partial[cm3]" ,"Cp[kJ/K]","Rho[kg/m3]","Alpha[1/K]","Entropy[kJ/K]","Enthalpy[kJ/mol]","BulkMod[GPa]","ShearMod[GPa]","Vp[km/s]","Vs[km/s]")
    
     for i=1:out.n_SS
-        file *= @sprintf("%6s",out.ph[i])
+        file *= @sprintf("%6s",display_ph_name(out.ph[i]))
         file *= @sprintf("%+15.5f %+13.5f %+17.5f %+17.5f %+12.5f %+12.5f %+12.8f %+12.6f %+12.4f %+12.2f %+12.2f %+13.2f %+12.2f",
                         out.ph_frac_wt[i],
                         out.SS_vec[i].G,
@@ -589,7 +638,7 @@ function save_equilibrium_to_file(  out::MAGEMin_C.gmin_struct{Float64, Int64}, 
     end
 
     for i=1:out.n_PP
-        file *= @sprintf("%6s",out.ph[i+out.n_SS])
+        file *= @sprintf("%6s",display_ph_name(out.ph[i+out.n_SS]))
         file *= @sprintf("%+15.5f %+13.5f %+17.5f %+17.5f %+12.5f %+12.5f %+12.8f %+12.6f %+12.4f %+12.2f %+12.2f %+13.2f %+12.2f",
                         out.ph_frac_wt[i],
                         out.PP_vec[i].G,
@@ -635,9 +684,9 @@ function save_equilibrium_to_file(  out::MAGEMin_C.gmin_struct{Float64, Int64}, 
     file *= @sprintf(" %6s %g\n","dQFM",out.dQFM)  
     file *= @sprintf("\n\n") 
 
-    file *= @sprintf("G-hyperplane distance[J]:\n")  
+    file *= @sprintf("G-hyperplane distance[J]:\n")
     for i=1:out.n_SS
-        file *= @sprintf(" %6s %12.8f\n",out.ph[i],out.SS_vec[i].deltaG)  
+        file *= @sprintf(" %6s %12.8f\n",display_ph_name(out.ph[i]),out.SS_vec[i].deltaG)
     end
     file *= @sprintf("\n\n") 
 
@@ -801,12 +850,12 @@ function get_diagram_labels(    Out_XY      :: Vector{MAGEMin_C.gmin_struct{Floa
         for i = 1:np
             phd[i]      = ""
             for k=1:length(Out_XY[i].ph)
-                phd[i] *= Out_XY[i].ph[k]*" "
+                phd[i] *= display_ph_name(Out_XY[i].ph[k])*" "
                 if k % 3 == 0
-                    phd[i] *= "<br>" 
+                    phd[i] *= "<br>"
                 end
             end
-            ph[i]       = join(Out_XY[i].ph," ")
+            ph[i]       = join(display_ph_names(Out_XY[i].ph)," ")
         end
 
     elseif refType == "em"
@@ -816,12 +865,12 @@ function get_diagram_labels(    Out_XY      :: Vector{MAGEMin_C.gmin_struct{Floa
                                         Out_XY[i].SS_vec)
             phd[i]      = ""
             for k=1:length(ph_em)
-                phd[i] *= ph_em[k]*" "
+                phd[i] *= display_ph_name(ph_em[k])*" "
                 if k % 3 == 0
-                    phd[i] *= "<br>" 
+                    phd[i] *= "<br>"
                 end
             end
-            ph[i]       = join(ph_em," ")  
+            ph[i]       = join(display_ph_names(ph_em)," ")
         end
     end
 
@@ -1250,14 +1299,14 @@ function get_gridded_map(   fieldname   ::String,
         jj              = compute_index(data.points[k][2], data.Yrange[1], dy)
         gridded[ii,jj]  = field[k] 
 
-        tmp                 = replace(string(Out_XY[k].ph), "\""=>"", "]"=>"", "["=>"", ","=>"")
+        tmp                 = replace(string(display_ph_names(Out_XY[k].ph)), "\""=>"", "]"=>"", "["=>"", ","=>"")
         gridded_info[ii,jj] = "#"*string(k)*"# "*tmp
 
     end
 
     for i=1:length(data.cells)
         cell   = data.cells[i]
-        tmp    = "#"*string(cell[1])*"# "*replace(string(Out_XY[cell[1]].ph), "\""=>"", "]"=>"", "["=>"", ","=>"")
+        tmp    = "#"*string(cell[1])*"# "*replace(string(display_ph_names(Out_XY[cell[1]].ph)), "\""=>"", "]"=>"", "["=>"", ","=>"")
 
         ii_min = compute_index(data.points[cell[2]][1], Xrange[1], dx)
         ii_max = compute_index(data.points[cell[3]][1], Xrange[1], dx)
@@ -1298,7 +1347,8 @@ function get_gridded_map(   fieldname   ::String,
 
     # test Anton functions
     f           = unique(Hash_XY)
-    int_vector  = [findfirst(x -> x == h, f) for h in Hash_XY] 
+    f_id        = Dict(h => i for (i,h) in enumerate(f))
+    int_vector  = [f_id[h] for h in Hash_XY]
     gridded_fields = Matrix{Int64}(undef,n,n);
 
     for k=1:np
@@ -1404,7 +1454,15 @@ function get_parsed_command(    point       :: Int64;
                             part1 = ref*".C0"
                             part2 = "["*string(id_el)*"]"
                         else
-                            id_ph = findfirst(Out_TE_XY[point].ph_TE .== st[1])
+                            ph_te = Out_TE_XY[point].ph_TE
+                            if isnothing(ph_te)
+                                id_ph = nothing
+                            else
+                                id_ph = findfirst(ph_te .== st[1])
+                                if isnothing(id_ph) && use_warr_names[1]
+                                    id_ph = findfirst(ph -> MAGEMin_C.get_Warr_name(ph) == st[1], ph_te)
+                                end
+                            end
                             if isnothing(id_ph)
                                 part1, part2 = "break", "break"
                                 # print("wrong phase name!\n")
@@ -1698,52 +1756,56 @@ function get_isopleth_map(  mod         ::String,
         end
 
         n_el        = length(el)
-        global i, j, id
+
+        # build and compile the formula once (it does not depend on the point index),
+        # then evaluate it per point on Comp_apfu via a fast compiled call
+        cmd2eval    = calc
+        for j = 1:n_el
+            if occursin(el[j], calc)
+                cmd2eval = replace(cmd2eval, el[j] => "x[$j]")
+            end
+        end
+        calc_fn = eval(:( (x) -> $(Meta.parse(cmd2eval)) ))
+
         for i=1:np
             id       = findall(Out_XY[i].ph .== ss)
-            if ~isempty(id)  
-                cmd2eval    = calc
-                id          = id[1]
-
-                for j = 1:n_el
-                    if occursin(el[j], calc)
-                        cmd2eval = replace(cmd2eval, el[j] => "Out_XY[$i].SS_vec[$id].Comp_apfu[$j]")
-                    end
-                end
-                command  = Meta.parse(cmd2eval)
-                field[i] = eval(command)
-
+            if ~isempty(id)
+                field[i] = Base.invokelatest(calc_fn, Out_XY[i].SS_vec[id[1]].Comp_apfu)
             else
                 field[i] = 0.0
             end
-        end  
+        end
     elseif mod == "ss_calc_sf"
 
-        global i, j, id
+        # build and compile the formula once, using the site fraction names of the
+        # first point where the phase is present (ordering is constant for a given phase)
+        calc_fn = nothing
         for i=1:np
             id       = findall(Out_XY[i].ph .== ss)
 
-            if ~isempty(id)  
+            if ~isempty(id)
 
                 id          = id[1]
-                sf        = Out_XY[i].SS_vec[id].siteFractionsNames
-                n_sf        = length(sf)
 
-                cmd2eval    = calc_sf
-                
+                if calc_fn === nothing
+                    sf       = Out_XY[i].SS_vec[id].siteFractionsNames
+                    n_sf     = length(sf)
 
-                for j = 1:n_sf
-                    if occursin(sf[j], calc_sf)
-                        cmd2eval = replace(cmd2eval, sf[j] => "Out_XY[$i].SS_vec[$id].siteFractions[$j]")
+                    cmd2eval = calc_sf
+                    for j = 1:n_sf
+                        if occursin(sf[j], calc_sf)
+                            cmd2eval = replace(cmd2eval, sf[j] => "x[$j]")
+                        end
                     end
+                    calc_fn = eval(:( (x) -> $(Meta.parse(cmd2eval)) ))
                 end
-                command  = Meta.parse(cmd2eval)
-                field[i] = eval(command)
+
+                field[i] = Base.invokelatest(calc_fn, Out_XY[i].SS_vec[id].siteFractions)
 
             else
                 field[i] = 0.0
             end
-        end 
+        end
     elseif mod == "ss_calc_ox_mol" || mod == "ss_calc_ox_wt"
         el          = Out_XY[1].oxides
         n_el        = length(el)
@@ -1753,24 +1815,22 @@ function get_isopleth_map(  mod         ::String,
             el[O_id]    = "o"   # put to lower case to avoid issue when evaluating the command
         end
 
-        global i, j, id
+        # build and compile the formula once (it does not depend on the point index),
+        # then evaluate it per point on Comp/Comp_wt via a fast compiled call
+        cmd2eval = calc_ox
+        for j = 1:n_el
+            if occursin(el[j], calc_ox)
+                cmd2eval = replace(cmd2eval, el[j] => "x[$j]")
+            end
+        end
+        calc_fn = eval(:( (x) -> $(Meta.parse(cmd2eval)) ))
+
         for i=1:np
             id       = findall(Out_XY[i].ph .== ss)
-            if ~isempty(id)  
-                cmd2eval    = calc_ox
-                id          = id[1]
-
-                for j = 1:n_el
-                    if occursin(el[j], calc_ox)
-                        if mod == "ss_calc_ox_mol" 
-                            cmd2eval = replace(cmd2eval, el[j] => "Out_XY[$i].SS_vec[$id].Comp[$j]")
-                        elseif mod == "ss_calc_ox_wt" 
-                            cmd2eval = replace(cmd2eval, el[j] => "Out_XY[$i].SS_vec[$id].Comp_wt[$j]")
-                        end
-                    end
-                end
-                command  = Meta.parse(cmd2eval)
-                field[i] = eval(command)
+            if ~isempty(id)
+                id  = id[1]
+                x   = mod == "ss_calc_ox_mol" ? Out_XY[i].SS_vec[id].Comp : Out_XY[i].SS_vec[id].Comp_wt
+                field[i] = Base.invokelatest(calc_fn, x)
             else
                 field[i] = 0.0
             end

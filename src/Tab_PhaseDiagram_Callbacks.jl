@@ -157,7 +157,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         if dtype == "pt"
             Xrange          = (Float64(tmin),Float64(tmax))
-            Yrange          = (Float64(pmin),Float64(pmax))
+            Yrange          = (to_kbar_pressure(Float64(pmin)),to_kbar_pressure(Float64(pmax)))
 
             testName = replace(db[(db.db .== dtb), :].title[t+1], " " => "_")
             fileout = testName*".in";
@@ -201,7 +201,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         if dtype == "pt"
             Xrange          = (Float64(tmin),Float64(tmax))
-            Yrange          = (Float64(pmin),Float64(pmax))
+            Yrange          = (to_kbar_pressure(Float64(pmin)),to_kbar_pressure(Float64(pmax)))
 
             testName = replace(db[(db.db .== dtb), :].title[t+1], " " => "_")
             fileout = testName*".in";
@@ -235,7 +235,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             mkpath("./output")
             datab   = "_"*dtb
             fileout = "./output/"*fname*datab
-            MAGEMin_data2dataframe(Out_XY[point_id],dtb,fileout)
+            MAGEMin_data2dataframe(Out_XY[point_id],dtb,fileout; use_Warr2021=use_warr_names[1], use_GPA=use_GPa[1])
 
             return  "success", ""
         else
@@ -285,7 +285,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             datab   = "_"*dtb
             fileout = "./output/"*fname*datab
 
-            MAGEMin_data2dataframe(Out_XY,dtb,fileout)
+            MAGEMin_data2dataframe(Out_XY,dtb,fileout; use_Warr2021=use_warr_names[1], use_GPA=use_GPa[1])
             return "success", ""
         else
             return  "", "failed"
@@ -363,7 +363,7 @@ function Tab_PhaseDiagram_Callbacks(app)
     ) do n_clicks, fname, dtb, mbCpx
 
         if fname != "filename"
-            P       = "_Pkbar_"*string(Out_XY[point_id].P_kbar)
+            P       = "_P$(pressure_unit_label())_"*string(round(display_pressure(Out_XY[point_id].P_kbar); digits=3))
             T       = "_TC_"*string(Out_XY[point_id].T_C)
             datab   = "_"*dtb
             fileout = fname*datab*P*T*".txt"
@@ -431,7 +431,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         if bid == "pie-diagram"
             global point_id
-            ph      = click_info[:points][1][:label]
+            ph      = click_info[:points][1][:customdata]
 
             p       = Out_XY[point_id].ph
             p_id    = findfirst(p .== ph)
@@ -456,7 +456,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                 for i=1:length(oxi) ]
 
             style  = Dict("display" => "block")
-            title =  "$(ph) composition"
+            title =  "$(display_ph_name(ph)) composition"
 
         elseif bid == "phase-diagram"
             style  = Dict("display" => "none")
@@ -492,7 +492,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         # phase_selection                 = remove_phases(string_vec_diff_ss(phase_selection,dtb),dtb)
         # pure_phase_selection            = remove_phases(string_vec_diff_ss(pure_phase_selection,dtb),dtb)
-        phase_selection                 = remove_phases(string_vec_diff(ph_selection,pure_ph_selection,dtb),dtb)
+        phase_selection                 = remove_phases(string_vec_diff(to_str_vec(ph_selection),to_str_vec(pure_ph_selection),dtb),dtb)
         global point_id
 
         all_ox  = ["CO2","Cl","MnO","Na2O","CaO","K2O","FeO","MgO","Al2O3","SiO2","H2O","TiO2","O","S","F","Cr2O3"];
@@ -508,7 +508,8 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             ids     = reverse(sortperm(Out_XY[point_id].ph_frac))   #this gets the ids in descending order of phase fraction
 
-            labels  = Out_XY[point_id].ph[ids]
+            legacy_labels = Out_XY[point_id].ph[ids]
+            labels        = display_ph_names(legacy_labels)
             if pie_unit == 1
                 values  = Out_XY[point_id].ph_frac[ids]     .* 100.0
                 sys     = "mol%"
@@ -520,7 +521,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                 sys     = "vol%"
             end
 
-            title = "P: $(round(Out_XY[point_id].P_kbar; digits = 3)) T: $(round(Out_XY[point_id].T_C; digits = 3)) Mode [$(sys)]"
+            title = "P: $(round(display_pressure(Out_XY[point_id].P_kbar); digits = 3)) $(pressure_unit_label()) T: $(round(Out_XY[point_id].T_C; digits = 3)) Mode [$(sys)]"
             layout = Layout(    font        = attr(size = 10),
                                 height      = 220,
                                 margin      = attr(autoexpand = false, l=8, r=8, b=8, t=24),
@@ -530,6 +531,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
 
             trace   = pie(; labels          = labels,
+                            customdata      = legacy_labels,
                             values          = values,
                             domain          = attr(x=[0.0, 0.95], y=[0.0, 0.9]),
                             hoverinfo       = "label+percent",
@@ -651,24 +653,28 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("reaction-line-dropdown","options"),
         Output("reaction-line-dropdown","value"),
         Input("trigger-update-reaction-line-list","value"),
+        Input("mineral-naming-dropdown",           "value"),
 
         prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
-    ) do reac_update
-    
-        global phase_infos;
+    ) do reac_update, warr_naming
 
-        # bid         = pushed_button( callback_context() ) 
+        global phase_infos, use_warr_names;
+        use_warr_names[1] = (warr_naming == "warr")
+
+        if !@isdefined(phase_infos)
+            return [], nothing
+        end
+
         pp          = phase_infos.act_pp;
         ss          = phase_infos.act_ss;
 
         ph          = vcat(ss,pp);
 
-        reac_opt    = [Dict(    "label"     => " "*i,
+        reac_opt    = [Dict(    "label"     => " "*display_ph_name(i),
                                 "value"     => i )
                             for i in ph ];
 
         reac_val    = ph[1];
-
 
         return reac_opt, reac_val
     end
@@ -690,8 +696,12 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
     ) do ph, up, reset, ls, lw, col, ts
-        bid     = pushed_button( callback_context() ) 
+        bid     = pushed_button( callback_context() )
         global phase_infos;
+
+        if !@isdefined(phase_infos) || isnothing(ph)
+            return no_update(), no_update(), no_update(), no_update()
+        end
 
         opt     = ("solid",0.75,"#000000",10.0,"")
 
@@ -820,6 +830,8 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("update-title-button",    "n_clicks"),
         Input("load-state-id",          "value"),
         Input("export-layers",          "n_clicks"),
+        Input("mineral-naming-dropdown","value"),
+        Input("pressure-unit-dropdown", "value"),
 
         # STATES
         State("field-size-id",          "value"),
@@ -870,6 +882,11 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("scp-dropdown",           "value"),           # none,light,full -> -1,0,1
         State("sas-dropdown",           "value"),           # seismic averaging scheme: 0=VRH, 1=HS
         State("wf-id",                  "value"),           # seismic weight factor [0,1]
+        State("seismic-cor-dropdown",   "value"),           # seismic velocity corrections true/false
+        State("aspect-ratio-id",        "value"),           # aspect ratio of melt/pore geometry [0,1]
+        State("seismic-water-dropdown", "value"),           # anelastic correction mode: 0=dry, 1=damp, 2=wet (saturated) mantle
+        State("shallow-cor-dropdown",   "value"),           # shallow correction true/false
+        State("anelastic-cor-dropdown", "value"),           # anelastic correction true/false
 
         State("table-bulk-rock",        "data" ),            # bulk-rock 1
         State("table-2-bulk-rock",      "data" ),            # bulk-rock 2
@@ -921,14 +938,14 @@ function Tab_PhaseDiagram_Callbacks(app)
     ) do    reac_up,    grid,       full_grid,  lbl,     addIso,     removeIso,  removeAllIso,    isoShow,   isoHide,   isoShowAll,    isoHideAll,    
             n_clicks_mesh, n_clicks_refine, uni_n_clicks_refine, 
             minColor,   maxColor,
-            colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  updateTitle,     loadstateid,       exportFig,
+            colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  updateTitle,     loadstateid,       exportFig,  warr_naming, pressure_unit,
             # STATES
             field_size, customTitle, txt_list,
             custW,      diagType,   dtb,        dataset,    watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  ph_selection, pure_ph_selection, PTpath,
             tmin,       tmax,       pmin,       pmax,       e1_tmin,    e1_tmax,    e2_tmin,    e2_tmax,    e1_liq,     e2_liq,  e1_remain_wat,     e2_remain_wat,e1_remain,     e2_remain,      
             fixT,       fixP,
             sub,        refType,    refLvl,
-            bufferType, solver,     boost,      verbose,    scp,        sas,        wf,
+            bufferType, solver,     boost,      verbose,    scp,        sas,        wf,         seismicCorMode, aspectRatioVal, seismicWaterMode, shallowCorMode, anelasticCorMode,
             bulk1,      bulk2,      sys_unit,   
             bufferN1,   bufferN2,
             tepm,       kds_mod,    zrsat_mod,  ssat_mod,   co2sat_mod, P2O5sat_mod,    bulkte1,    bulkte2,
@@ -939,12 +956,23 @@ function Tab_PhaseDiagram_Callbacks(app)
             active_tab
 
 
-        phase_selection                 = remove_phases(string_vec_diff(ph_selection,pure_ph_selection,dtb),dtb)
+        global use_GPa
+        use_GPa[1]                      = (pressure_unit == "gpa")                                                                          # keep in sync with the dropdown for this callback's invocation
+        phase_selection                 = remove_phases(string_vec_diff(to_str_vec(ph_selection),to_str_vec(pure_ph_selection),dtb),dtb)
         smooth                          = smooth
         seismicScheme                   = sas == 0 ? "VRH" : "HS"
         seismicWeightFactor             = Float64(wf)
+        seismicCor                      = Bool(seismicCorMode)
+        aspectRatio                     = Float64(aspectRatioVal)
+        seismicWater                    = Int64(seismicWaterMode)
+        shallowCor                      = Bool(shallowCorMode)
+        anelasticCor                    = Bool(anelasticCorMode)
+        pmin, pmax                      = to_kbar_pressure(Float64(pmin)), to_kbar_pressure(Float64(pmax))                                  # convert displayed pressure unit to kbar
         xtitle, ytitle, Xrange, Yrange  = diagram_type(diagType, tmin, tmax, pmin, pmax, e1_tmin, e1_tmax, e2_tmin, e2_tmax)                # get axis information
         bufferN1, bufferN2, fixT, fixP, e1_liq, e2_liq,  e1_remain_wat,  e2_remain_wat,  e1_remain,  e2_remain,  = convert2Float64(bufferN1, bufferN2, fixT, fixP, e1_liq, e2_liq,  e1_remain_wat,  e2_remain_wat,     e1_remain,  e2_remain,)               # convert buffer_n to float
+        fixP                            = to_kbar_pressure(fixP)                                                                            # convert displayed pressure unit to kbar
+        global use_warr_names
+        use_warr_names[1]               = (warr_naming == "warr")
         bid                             = pushed_button( callback_context() )                           # get the ID of the last pushed button
         bulkte_L, bulkte_R, elem        = get_terock_prop(bulkte1, bulkte2)
         colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)              # get colormap information
@@ -994,7 +1022,8 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                                                         minColor,   maxColor,
                                                                                                         smooth,     colorm,     reverseColorMap, set_white,
                                                                                                         test,       refType,
-                                                                                                        seismicScheme, seismicWeightFactor        )
+                                                                                                        seismicScheme, seismicWeightFactor,
+                                                                                                        seismicCor, aspectRatio, seismicWater, shallowCor, anelasticCor        )
             if tepm == "true"
                 if dtb != "um" && dtb != "ume" && dtb != "mtl"
                     t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
@@ -1047,7 +1076,8 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                                     minColor,   maxColor,
                                                                                     smooth,     colorm,     reverseColorMap, set_white,
                                                                                     test,       refType,    bid,
-                                                                                    seismicScheme, seismicWeightFactor     )
+                                                                                    seismicScheme, seismicWeightFactor,
+                                                                                    seismicCor, aspectRatio, seismicWater, shallowCor, anelasticCor     )
 
             if tepm == "true"
                 if dtb != "um" && dtb != "ume" && dtb != "mtl"
@@ -1194,6 +1224,21 @@ function Tab_PhaseDiagram_Callbacks(app)
                     yanchor = "top"
                 )
             end
+
+        elseif bid == "mineral-naming-dropdown"
+            if !@isdefined(Out_XY) || isempty(Out_XY) || !@isdefined(PT_infos)
+                return no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update()
+            end
+            data_plot, annotations, txt_list = get_diagram_labels(
+                Out_XY, Hash_XY, refType, data, PT_infos; field_size = field_size)
+            layout[:annotations] = annotations
+
+        elseif bid == "pressure-unit-dropdown"
+            if !@isdefined(data_plot) || !@isdefined(layout)
+                return no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update()
+            end
+            # redraw only: data_plot/layout stay in kbar, apply_pressure_display() rescales for display below
+
         else
             fig = plot()
         end
@@ -1235,7 +1280,8 @@ function Tab_PhaseDiagram_Callbacks(app)
                 end
             end
 
-            fig = plot_diagram(data_all,layout)
+            data_all_disp, layout_disp = apply_pressure_display(data_all, layout, diagType)
+            fig = plot_diagram(data_all_disp,layout_disp)
 
         end
 
@@ -1377,7 +1423,14 @@ function Tab_PhaseDiagram_Callbacks(app)
         if field2plot[4] == 0
             fig_cap = plot(layoutCap)
         else
-            fig_cap = plot(data_isopleth.isoCap[data_isopleth.active],layoutCap)
+            caps = [scatter(x           = [nothing],
+                            y           = [nothing],
+                            mode        = "lines",
+                            line        = data_isopleth.isoCap[data_isopleth.active[i]][:line],
+                            name        = display_iso_label(data_isopleth.label[data_isopleth.active[i]]),
+                            showlegend  = true)
+                    for i in 1:length(data_isopleth.active)]
+            fig_cap = plot(caps, layoutCap)
         end
         
         config_cap  = PlotConfig(    toImageButtonOptions  = attr(      name     = "Download as svg",
@@ -1533,12 +1586,14 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("phase-diagram",           "clickData" ),
         Input("draw-path-clear-button",  "n_clicks"  ),
         Input("draw-path-remove-button", "n_clicks"  ),
+        Input("pressure-unit-dropdown",  "value"     ),
         State("draw-path-record-switch", "value"     ),
         State("diagram-dropdown",        "value"     ),
         prevent_initial_call = true,
-    ) do click_info, _n_clear, _n_remove, is_recording, diagType  # _n_clear/_n_remove trigger via callback_context
+    ) do click_info, _n_clear, _n_remove, pressure_unit, is_recording, diagType  # _n_clear/_n_remove trigger via callback_context
 
-        global draw_path_ids
+        global draw_path_ids, use_GPa
+        use_GPa[1] = (pressure_unit == "gpa")
 
         if !@isdefined(draw_path_ids)
             draw_path_ids = Vector{Int64}()
@@ -1572,21 +1627,26 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("draw-path-diagram", "config" ),
         Output("draw-path-canvas",  "is_open"),
         Input("draw-path-generate-button", "n_clicks"),
+        Input("mineral-naming-dropdown",   "value"   ),
         State("draw-path-sysunit",         "value"   ),
         State("diagram-dropdown",          "value"   ),
         prevent_initial_call = true,
-    ) do _n, sysunit, diagType
+    ) do _n, warr_naming, sysunit, diagType
+        global use_warr_names
+        use_warr_names[1] = (warr_naming == "warr")
 
         global draw_path_ids
 
+        bid = pushed_button( callback_context() )
+
         if !@isdefined(draw_path_ids) || isempty(draw_path_ids)
-            return plot(Layout(height=360)), PlotConfig(), false
+            return plot(Layout(height=360)), PlotConfig(), (bid == "mineral-naming-dropdown" ? no_update() : false)
         end
 
         traces, _phase_list = get_draw_path_plot(diagType, sysunit, draw_path_ids)
 
-        xtitle = diagType == "px" ? "X; P [kbar]" :
-                 diagType == "tx" ? "X; T [°C]"   : "T [°C]; P [kbar]"
+        xtitle = diagType == "px" ? "X; P [$(pressure_unit_label())]" :
+                 diagType == "tx" ? "X; T [°C]"   : "T [°C]; P [$(pressure_unit_label())]"
 
         layout = Layout(
             font        = attr(size=10),
@@ -1612,7 +1672,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             ).fields
         )
 
-        return fig, config, true
+        return fig, config, (bid == "mineral-naming-dropdown" ? no_update() : true)
     end
 
     # ── Thermobarometric intersection callbacks ───────────────────────────────
@@ -1634,7 +1694,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         end
         ph_all = unique(vcat([Out_XY[i].ph for i in 1:length(Out_XY)]...))
         sort!(ph_all)
-        return [Dict("label" => p, "value" => p) for p in ph_all]
+        return [Dict("label" => display_ph_name(p), "value" => p) for p in ph_all]
     end
 
     # CSV upload → csv-store + info message

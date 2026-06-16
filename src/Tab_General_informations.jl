@@ -9,6 +9,36 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ =#
 
+
+SeismicVelocityMeltCorrection = """
+**Seismic velocity corrections (\$V_{p,cor}\$, \$V_{s,cor}\$)**
+
+When "Seismic correction" is set to *true*, MAGEMin computes melt-, anelastic- and shallow-corrected P- and S-wave velocities of the solid aggregate, in addition to the uncorrected elastic \$V_p\$ and \$V_s\$.
+
+#### Melt correction
+
+- Based on the reduction formulation of Clark et al. (2017), using the equilibrium geometry model for the solid skeleton of Takei (1997).
+- The "Aspect ratio" parameter (0.0-1.0) describes the geometry/contiguity of the solid framework: 0.0 corresponds to layered melt, ~0.1 to grain-boundary melt, and 1.0 to melt trapped in isolated, separated pockets.
+- The correction softens the solid bulk and shear moduli as a function of melt fraction, the solid/melt modulus contrast and the solid/melt density contrast, and reduces \$V_p\$ and \$V_s\$ accordingly.
+- If \$\\phi_{melt} = 0\$, no melt correction is applied (\$V_{p,cor}=V_p\$, \$V_{s,cor}=V_s\$ before any anelastic/shallow correction).
+
+#### Anelastic correction
+
+- When "Anelastic correction" is set to *true*, an additional attenuation (anelastic) correction is applied to \$V_s\$ prior to the melt correction, following Behn et al. (2009) with frequency/grain-size terms from Cobden et al. (2018).
+- The "Anelastic model" dropdown selects the water content of the mantle, which controls the strength of the attenuation:
+    - **Dry mantle**: low water content, smallest reduction in \$V_s\$.
+    - **Damp mantle**: intermediate water content.
+    - **Wet mantle (saturated)**: highest water content, largest reduction in \$V_s\$.
+
+#### Shallow correction
+
+- When "Shallow correction" is set to *true*, an additional near-surface porosity correction is applied to \$V_s\$, using a fixed aspect ratio (0.25) and Poisson's ratio (0.25).
+- The porosity fraction is estimated from pressure (depth), decreasing with depth, and is used to further reduce \$V_s\$ to account for the effect of shallow, fluid-filled porosity.
+
+If "Seismic correction" is set to *false*, \$V_{p,cor}\$ and \$V_{s,cor}\$ are not computed (returned as `NaN`, displayed as 0 in the gridded maps).
+"""
+
+
 SiteFractionCalculator = """
 **Site Fraction calculator (isopleths)**
 
@@ -132,11 +162,13 @@ function Tab_General_informations()
                     id="table-solution-phases",
                     columns=(  [    Dict("id" =>  "ss",         "name" =>  "solution name",     "editable" => false),
                                     Dict("id" =>  "ss_abrev",   "name" =>  "abbreviation",      "editable" => false),
-                                    Dict("id" =>  "solvus",     "name" =>  "solvus",            "editable" => false)     
+                                    Dict("id" =>  "warr",       "name" =>  "Warr (2021)",        "editable" => false),
+                                    Dict("id" =>  "solvus",     "name" =>  "solvus",            "editable" => false)
                                 ]
                     ),
                     data        =   [Dict(  "ss"         => AppData.dict_ss[i][1],
                                             "ss_abrev"   => i,
+                                            "warr"       => (w = MAGEMin_C.get_Warr_name(i); endswith(w, "*") ? "-" : w),
                                             "solvus"     => join(map((x, y) -> "$x, $y", AppData.dict_ss[i][2][2], AppData.dict_ss[i][2][1]), "; ") )
                                                 for i in keys(AppData.dict_ss) ],
 
@@ -154,11 +186,13 @@ function Tab_General_informations()
                     id="table-endmember-phases",
                     columns=(  [    Dict("id" =>  "em",         "name" =>  "end-member name",   "editable" => false),
                                     Dict("id" =>  "em_abrev",   "name" =>  "abbreviation",      "editable" => false),
-                                    Dict("id" =>  "compo",      "name" =>  join(vcat(AppData.dict_em["_header_"][3]...),", "),       "editable" => false)     
+                                    Dict("id" =>  "warr",       "name" =>  "Warr (2021)",        "editable" => false),
+                                    Dict("id" =>  "compo",      "name" =>  join(vcat(AppData.dict_em["_header_"][3]...),", "),       "editable" => false)
                                 ]
                     ),
                     data        =   [Dict(  "em"         => AppData.dict_em[i][2],
                                             "em_abrev"   => i,
+                                            "warr"       => (w = MAGEMin_C.get_Warr_name(i); endswith(w, "*") ? "-" : w),
                                             "compo"      => join(vcat(AppData.dict_em[i][3]...),", ") )
                                                 for i in keys(AppData.dict_em) if i != "_header-"],
 
@@ -290,7 +324,7 @@ function Tab_General_informations()
 
         ]),
 
-        ],width=6),
+        ],width=7),
 
             dbc_col([ 
 
@@ -316,9 +350,13 @@ function Tab_General_informations()
                     dbc_card([
                         dcc_markdown(SiteFractionCalculator;          mathjax=true, style = Dict("font-size" => "130%")),
                     ]),
+                    html_div("‎ "),
+                    dbc_card([
+                        dcc_markdown(SeismicVelocityMeltCorrection;          mathjax=true, style = Dict("font-size" => "130%")),
+                    ]),
                 ]),
 
-            ],width=6),
+            ],width=5),
 
 
 

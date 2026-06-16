@@ -904,7 +904,7 @@ function Tab_PTXpaths()
                                         # html_div("‎ "),
                                         dbc_row([
                                             dbc_col([
-                                                html_h1("Save cummulate", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
+                                                html_h1("Save cumulate", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
                                             ], width=4),
                                             dbc_col([ 
                                                 dbc_input(
@@ -1088,7 +1088,7 @@ function Tab_PTXpaths()
                                     dbc_row([
                                         dbc_col([ 
                                             dbc_row([
-                                                html_h1("Pressure [kbar]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
+                                                html_h1("Pressure [kbar]", id = "solidus-pressure-label-id", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
                                             ]),
                                             dbc_row([
                                                 html_h1("Tolerance [K]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),

@@ -275,12 +275,45 @@ function Tab_Simulation_Callbacks(app)
         Output(  "watsat-dropdown",                  "value"       ),
         Output(  "watsat-val-id",                    "value"       ),
         Output(  "load-state-id",                    "value"       ),
+
+        Output(  "pressure-range-label-id",          "children"    ),
+        Output(  "fixed-pressure-label-id",          "children"    ),
+
         Input(   "load-state-diagram-button",        "n_clicks"    ),
+        Input(   "pressure-unit-dropdown",           "value"       ),
         State(   "load-state-filename-id",           "value"       ),
         State(   "load-state-id",                    "value"       ),
+        State(   "pmin-id",                          "value"       ),
+        State(   "pmax-id",                          "value"       ),
+        State(   "fixed-pressure-val-id",            "value"       ),
+        State(   "pressure-unit-prev",               "children"    ),
 
         prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
-    ) do click, filename, state_id
+    ) do click, pressure_unit, filename, state_id, pmin_cur, pmax_cur, fixp_cur, pressure_unit_prev
+
+        bid = pushed_button( callback_context() )
+
+        if bid == "pressure-unit-dropdown"
+            # rescale the pressure-related input fields when the display unit toggles, leaving
+            # everything else (and the underlying kbar values used for computation) untouched
+            global use_GPa
+            was_gpa     = (pressure_unit_prev == "gpa")
+            use_GPa[1]  = (pressure_unit == "gpa")
+
+            out = Any[no_update() for _ = 1:32]
+            if was_gpa != use_GPa[1]
+                factor   = use_GPa[1] ? (1.0/10.0) : 10.0
+                out[13]  = round(pmin_cur  * factor, digits=10)
+                out[14]  = round(pmax_cur  * factor, digits=10)
+                out[17]  = round(fixp_cur  * factor, digits=10)
+            end
+
+            unit    = pressure_unit_label()
+            out[31] = "Pressure [$unit]"
+            out[32] = "Fixed pressure [$unit]"
+
+            return Tuple(out)
+        end
 
         state_id *=  -1.0
 
@@ -315,10 +348,10 @@ function Tab_Simulation_Callbacks(app)
             @load file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ssat_dtb P2O5sat_dtb pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer boost verbose scp buffer1 buffer2 watsat watsat_val
 
             success, failed = "success", ""
-            return success, failed, database, diagram_type, mb_cpx, limit_ca_opx, ca_opx_val, tepm, kds_dtb, zrsat_dtb, ssat_dtb, P2O5sat_dtb, pmin, pmax, tmin, tmax, pfix, tfix, grid_sub, refinement, refinement_level, buffer, boost, verbose, scp, buffer1, buffer2, watsat, watsat_val, state_id
+            return success, failed, database, diagram_type, mb_cpx, limit_ca_opx, ca_opx_val, tepm, kds_dtb, zrsat_dtb, ssat_dtb, P2O5sat_dtb, display_pressure(Float64(pmin)), display_pressure(Float64(pmax)), tmin, tmax, display_pressure(Float64(pfix)), tfix, grid_sub, refinement, refinement_level, buffer, boost, verbose, scp, buffer1, buffer2, watsat, watsat_val, state_id, no_update(), no_update()
         catch e
             success, failed = "", "failed"
-            return success, failed, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, state_id
+            return success, failed, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, state_id, no_update(), no_update()
         end
     end
 
@@ -334,10 +367,12 @@ function Tab_Simulation_Callbacks(app)
         Output("dataset-display-id", "style"),
 
         Input("database-dropdown","value"),
+        Input("mineral-naming-dropdown","value"),
 
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
-    ) do dtb
-    
+    ) do dtb, warr_naming
+        global use_warr_names
+        use_warr_names[1] = (warr_naming == "warr")
 
         if dtb == "sb11" || dtb == "sb21" || dtb == "sb24"
             style  = Dict("display" => "none")
@@ -347,7 +382,7 @@ function Tab_Simulation_Callbacks(app)
         db_in       = retrieve_solution_phase_information(dtb)
 
         # this is the phase selection part for the database when compute a diagram
-        phase_selection_options = [Dict(    "label"     => " "*i,
+        phase_selection_options = [Dict(    "label"     => " "*display_ph_name(i),
                                             "value"     => i )
                                                 for i in db_in.ss_name ]
         phase_selection_value   = db_in.ss_name
@@ -357,7 +392,7 @@ function Tab_Simulation_Callbacks(app)
         pp_all  = db_in.data_pp
         pp_disp = setdiff(pp_all, AppData.hidden_pp)
 
-        pure_phase_selection_options = [Dict(    "label"     => " "*i,
+        pure_phase_selection_options = [Dict(    "label"     => " "*display_ph_name(i),
                                                  "value"     => i )
                                                 for i in pp_disp ]
         pure_phase_selection_value   = pp_disp
@@ -429,16 +464,23 @@ function Tab_Simulation_Callbacks(app)
         Output("sys-unit-isopleth-id","style"),
         Output("rm-exfluid-isopleth-id","style"),
 
-        Input("trigger-update-ss-list","value"),
-        Input("phase-dropdown",     "value"),
-        Input("other-dropdown",     "value"),
-        State("ss-dropdown",        "value"),
-        State("database-dropdown",  "value"),
+        Input("trigger-update-ss-list",    "value"),
+        Input("phase-dropdown",            "value"),
+        Input("other-dropdown",            "value"),
+        Input("mineral-naming-dropdown",   "value"),
+        State("ss-dropdown",               "value"),
+        State("database-dropdown",         "value"),
 
         prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
-    ) do pd_update, phase, other, ph, dtb
-    
-        bid         = pushed_button( callback_context() ) 
+    ) do pd_update, phase, other, warr_naming, ph, dtb
+        global use_warr_names
+        use_warr_names[1] = (warr_naming == "warr")
+
+        if !@isdefined(phase_infos)
+            return no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update()
+        end
+
+        bid         = pushed_button( callback_context() )
 
         pp          = phase_infos.act_pp
         ss          = phase_infos.act_ss
@@ -460,7 +502,7 @@ function Tab_Simulation_Callbacks(app)
             val         = nothing
         elseif phase == "ss"
             
-            opts_ph     =  [Dict(   "label" => ss[i],
+            opts_ph     =  [Dict(   "label" => display_ph_name(ss[i]),
                                     "value" => ss[i] )
                                         for i=1:n_ss ]
             style_ot    = Dict("display" => "block")
@@ -521,7 +563,7 @@ function Tab_Simulation_Callbacks(app)
 
         else
 
-            opts_ph     =  [Dict(   "label" => pp[i],
+            opts_ph     =  [Dict(   "label" => display_ph_name(pp[i]),
                                     "value" => pp[i]  )
                                         for i=1:n_pp ]
 
@@ -560,11 +602,14 @@ function Tab_Simulation_Callbacks(app)
        
         Input("database-dropdown","value"),
         Input("ss-dropdown","value"),
+        Input("mineral-naming-dropdown","value"),
         State("phase-dropdown","value"),
         State("mb-cpx-switch","value"),
 
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
-    ) do dtb, ph_name, ph, mbCpx
+    ) do dtb, ph_name, warr_naming, ph, mbCpx
+        global use_warr_names
+        use_warr_names[1] = (warr_naming == "warr")
         bid  = pushed_button( callback_context() ) 
         if mbCpx == true
             aug = 1
@@ -577,6 +622,9 @@ function Tab_Simulation_Callbacks(app)
             ph_name         = get_ss_from_mineral(dtb, ph_name, aug)
             db_in           = retrieve_solution_phase_information(dtb)
             ph_id           = findfirst(db_in.ss_name .== ph_name)
+            if isnothing(ph_id)
+                return "", "none", "", "SiO2", ""
+            end
             sf_names        = join(db_in.data_ss[ph_id].ss_sf[2:end], " ")
 
             if ph_name in db_in.ss_name
@@ -589,7 +637,7 @@ function Tab_Simulation_Callbacks(app)
             n_em        = length(db_in.data_ss[ssid].ss_em)
 
             val         = "none"
-            opts_em     =  [Dict(   "label" => db_in.data_ss[ssid].ss_em[i],
+            opts_em     =  [Dict(   "label" => display_ph_name(db_in.data_ss[ssid].ss_em[i]),
                                     "value" => db_in.data_ss[ssid].ss_em[i] )
                                         for i=1:n_em ]
 
@@ -692,6 +740,41 @@ function Tab_Simulation_Callbacks(app)
         return style
     end
 
+    # callback to display the seismic-correction-dependent options (aspect ratio, anelastic correction, shallow correction)
+    callback!(
+        app,
+        Output("aspect-ratio-row-id",      "style"),
+        Output("anelastic-toggle-row-id",  "style"),
+        Output("shallow-cor-row-id",       "style"),
+        Input("seismic-cor-dropdown", "value"),
+
+        prevent_initial_call = true,
+    ) do seismic_cor
+        if seismic_cor == true
+            style  = Dict("display" => "block")
+        else
+            style  = Dict("display" => "none")
+        end
+        return style, style, style
+    end
+
+    # callback to display the anelastic model dropdown, only when both seismic correction and anelastic correction are enabled
+    callback!(
+        app,
+        Output("anelastic-cor-row-id", "style"),
+        Input("seismic-cor-dropdown",   "value"),
+        Input("anelastic-cor-dropdown", "value"),
+
+        prevent_initial_call = true,
+    ) do seismic_cor, anelastic_cor
+        if seismic_cor == true && anelastic_cor == true
+            style  = Dict("display" => "block")
+        else
+            style  = Dict("display" => "none")
+        end
+        return style
+    end
+
     # callback to display initial title of the pseudosections
     callback!(
         app,
@@ -731,17 +814,22 @@ function Tab_Simulation_Callbacks(app)
     # add new entry to the PT-X path definition
     callback!(app,
         Output( "pt-x-table",               "data"      ),
+        Output( "pt-x-table",               "columns"   ),
+        Output( "pressure-unit-dummy",      "children"  ),
+        Output( "pressure-unit-prev",       "children"  ),
         Input(  "add-ptx-row-button",       "n_clicks"  ),
         Input(  "load-state-diagram-button","n_clicks"  ),
+        Input(  "pressure-unit-dropdown",   "value"     ),
         State(  "save-state-filename-id",   "value"     ),
         State(  "pt-x-table",               "data"      ),
         State(  "pt-x-table",               "columns"   ),
+        State(  "pressure-unit-prev",       "children"  ),
 
         prevent_initial_call = true,
 
-        ) do n_clicks, n_clicks_load, filename, data, columns
+        ) do n_clicks, n_clicks_load, pressure_unit, filename, data, columns, pressure_unit_prev
 
-        bid  = pushed_button( callback_context() )     
+        bid  = pushed_button( callback_context() )
 
         if bid == "add-ptx-row-button"
             dataout = copy(data)
@@ -751,14 +839,33 @@ function Tab_Simulation_Callbacks(app)
                 push!(dataout,add)
             end
 
-            return dataout
+            return dataout, no_update(), no_update(), no_update()
 
         elseif bid ==  "load-state-diagram-button"
             file = "saved_states/"*String(filename)*"_options.jld2"
 
             @load file ptx_table
 
-            return ptx_table
+            return ptx_table, no_update(), no_update(), no_update()
+
+        elseif bid == "pressure-unit-dropdown"
+            global use_GPa
+            was_gpa    = (pressure_unit_prev == "gpa")
+            use_GPa[1] = (pressure_unit == "gpa")
+
+            dataout    = copy(data)
+            colsout    = copy(columns)
+
+            if was_gpa != use_GPa[1]
+                factor = use_GPa[1] ? (1.0/10.0) : 10.0
+                for row in dataout
+                    row[Symbol("col-1")] = round(row[Symbol("col-1")] * factor, digits=10)
+                end
+            end
+
+            colsout[1][:name] = "P [$(pressure_unit_label())]"
+
+            return dataout, colsout, pressure_unit, pressure_unit
         end
     end
 
@@ -1208,6 +1315,39 @@ function Tab_Simulation_Callbacks(app)
         return is_open 
             
     end
+
+    # open/close General parameters box (General setup tab)
+    callback!(app,
+        Output("collapse-general-setup-parameters", "is_open"),
+        [Input("button-general-setup-parameters", "n_clicks")],
+        [State("collapse-general-setup-parameters", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
+
+        if isnothing(n); n=0 end
+
+        if n>0
+            if is_open==1
+                is_open = 0
+            elseif is_open==0
+                is_open = 1
+            end
+        end
+        return is_open
+
+    end
+
+    # set global Warr naming flag when the mineral-naming dropdown changes
+    callback!(app,
+        Output("warr-naming-dummy", "children"),
+        Input("mineral-naming-dropdown", "value"),
+        prevent_initial_call = true,
+    ) do val
+        global use_warr_names
+        use_warr_names[1] = (val == "warr")
+        return val
+    end
+
 
     # open/close Curve interpretation box
     callback!(app,

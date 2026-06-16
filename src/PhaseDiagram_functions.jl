@@ -499,7 +499,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     Temp    = zeros(Float64,np)
     x       = zeros(Float64,np)
     for i=1:np
-        Pres[i] = ptx_data[i][Symbol("col-1")]
+        Pres[i] = to_kbar_pressure(ptx_data[i][Symbol("col-1")])
         Temp[i] = ptx_data[i][Symbol("col-2")]
         x[i]    = (i-1)*(1.0/(np-1))
     end
@@ -575,7 +575,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         if bufferType != "none"
             PD_infos[1] *= "Buffer factor <br>"
         end        
-        PD_infos[1] *= "Fixed Pres <br>"
+        PD_infos[1] *= "Fixed Pres [$(pressure_unit_label())] <br>"
     elseif diagType == "ptx"
         PD_infos[1] *= "X0 comp [mol] <br>"
         if bufferType != "none"
@@ -585,7 +585,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         if bufferType != "none"
             PD_infos[1] *= "Buffer factor <br>"
         end        
-        PD_infos[1] *= "PT path [P kbar]<br>"
+        PD_infos[1] *= "PT path [P $(pressure_unit_label())]<br>"
         PD_infos[1] *= "PT path [T °C]<br>"
         # add ptx path here
     elseif diagType == "tt"
@@ -593,7 +593,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         if bufferType != "none"
             PD_infos[1] *= "Buffer factor <br>"
         end           
-        PD_infos[1] *= "Fixed Pres <br>"
+        PD_infos[1] *= "Fixed Pres [$(pressure_unit_label())] <br>"
     end
     oxi_string = replace.(oxi,"2"=>"₂", "3"=>"₃");
 
@@ -641,7 +641,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         if bufferType != "none"
             PD_infos[2] *= string(bufferN2) *"<br>"
         end        
-        PD_infos[2] *= join(fixP, " ") *"<br>"
+        PD_infos[2] *= join(display_pressure(fixP), " ") *"<br>"
     elseif diagType == "ptx"
         PD_infos[2] *= join(round.(bulk_L,digits=6), " ") *"<br>"
         if bufferType != "none"
@@ -651,7 +651,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         if bufferType != "none"
             PD_infos[2] *= string(bufferN2) *"<br>"
         end        
-        PD_infos[2] *= join(Pres, " ") *"<br>"
+        PD_infos[2] *= join(display_pressure(Pres), " ") *"<br>"
         PD_infos[2] *= join(Temp, " ") *"<br>"
     elseif diagType == "tt"
         PD_infos[2] *= join(round.(bulk_L,digits=6), " ") *"<br>"
@@ -662,7 +662,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         # if bufferType != "none"
         #     PD_infos[2] *= string(bufferN2) *"<br>"
         # end        
-        PD_infos[2] *= join(fixP, " ") *"<br>"
+        PD_infos[2] *= join(display_pressure(fixP), " ") *"<br>"
     end
 
     PD_infos[2] *= "_"
@@ -679,14 +679,14 @@ end
 function diagram_type(diagType, tmin, tmax, pmin, pmax, e1_tmin, e1_tmax, e2_tmin, e2_tmax)
     if diagType == "pt"
         xtitle = "Temperature [Celsius]"
-        ytitle = "Pressure [kbar]"
+        ytitle = "Pressure [$(pressure_unit_label())]"
         Xrange          = (Float64(tmin),Float64(tmax))
         Yrange          = (Float64(pmin),Float64(pmax))
     elseif diagType == "px"
         Xrange          = (Float64(0.0),Float64(1.0))
         Yrange          = (Float64(pmin),Float64(pmax))
         xtitle = "Composition [X0 -> X1]"
-        ytitle = "Pressure [kbar]"
+        ytitle = "Pressure [$(pressure_unit_label())]"
     elseif diagType == "tx"
         Xrange          = (Float64(0.0),Float64(1.0) )
         Yrange          = (Float64(tmin),Float64(tmax))
@@ -704,6 +704,51 @@ function diagram_type(diagType, tmin, tmax, pmin, pmax, e1_tmin, e1_tmax, e2_tmi
             Yrange          = (Float64(e1_tmin),Float64(e1_tmax))
     end
     return xtitle, ytitle, Xrange, Yrange
+end
+
+"""
+    apply_pressure_display(data_in, layout_in, diagType)
+
+    Returns copies of `data_in`/`layout_in` with the y-axis (pressure) rescaled
+    from kbar to the currently selected display unit (cosmetic only). The
+    underlying `data_plot`/`layout` globals always remain in kbar.
+"""
+function apply_pressure_display(data_in, layout_in, diagType)
+    if !use_GPa[1] || !(diagType in ("pt","px"))
+        return data_in, layout_in
+    end
+
+    data_out = deepcopy(data_in)
+    for tr in data_out
+        if haskey(tr, :y) && tr[:y] isa AbstractArray && all(v -> v isa Union{Missing,Real}, tr[:y])
+            tr[:y] = display_pressure(tr[:y])
+        end
+    end
+
+    layout_out = deepcopy(layout_in)
+    if haskey(layout_out, :yaxis)
+        ya = layout_out[:yaxis]
+        if haskey(ya, :range)
+            ya[:range] = display_pressure(collect(Float64, ya[:range]))
+        end
+        if haskey(ya, :tick0)
+            ya[:tick0] = display_pressure(Float64(ya[:tick0]))
+        end
+        if haskey(ya, :dtick)
+            ya[:dtick] = display_pressure(Float64(ya[:dtick]))
+        end
+        ya[:title] = "Pressure [$(pressure_unit_label())]"
+    end
+
+    if haskey(layout_out, :annotations)
+        for ann in layout_out[:annotations]
+            if haskey(ann, :y) && ann[:y] isa Number
+                ann[:y] = display_pressure(Float64(ann[:y]))
+            end
+        end
+    end
+
+    return data_out, layout_out
 end
 
 """
@@ -747,7 +792,9 @@ end
 """
 function get_colormap_prop(colorMap, rangeColor, reverse) 
 
-    if rangeColor == [1,9]
+    if haskey(custom_colormaps, colorMap)
+        colorm = get_custom_colorscale(colorMap, rangeColor)
+    elseif rangeColor == [1,9]
         colorm = colors[Symbol(colorMap)]
     else
         colorm = restrict_colorMapRange(colorMap,rangeColor)
@@ -913,7 +960,9 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                     minColor,   maxColor,
                                     smooth,     colorm,     reverseColorMap, set_white,
                                     test,       refType,
-                                    seismicScheme = "VRH", seismicWeightFactor = 0.5        )
+                                    seismicScheme = "VRH", seismicWeightFactor = 0.5,
+                                    seismic_cor = false, aspect_ratio = 0.3, seismic_water = 0,
+                                    shallow_cor = false, anelastic_correction = false        )
         global CompProgress
 
         #________________________________________________________________________________________#
@@ -968,7 +1017,8 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                                         oxi, bulk_L, bulk_R,
                                                         bufferType, bufferN1, bufferN2,
                                                         scp, boost, refType,
-                                                        pChip_wat, pChip_T    )
+                                                        pChip_wat, pChip_T,
+                                                        seismic_cor, aspect_ratio, seismic_water, shallow_cor, anelastic_correction    )
 
         
         #________________________________________________________________________________________#     
@@ -989,7 +1039,8 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                                                                         oxi, bulk_L, bulk_R,
                                                                                         bufferType, bufferN1, bufferN2,
                                                                                         scp, boost, refType,
-                                                                                        pChip_wat, pChip_T ) # recompute points that have not been computed before
+                                                                                        pChip_wat, pChip_T,
+                                                                                        seismic_cor, aspect_ratio, seismic_water, shallow_cor, anelastic_correction ) # recompute points that have not been computed before
                                                                         
                 println("Computed $(length(data.npoints)) new points in $t seconds")
             end
@@ -1165,7 +1216,9 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                 minColor,   maxColor,
                                 smooth,     colorm,     reverseColorMap, set_white,
                                 test,       refType, bid,
-                                seismicScheme = "VRH", seismicWeightFactor = 0.5       )
+                                seismicScheme = "VRH", seismicWeightFactor = 0.5,
+                                seismic_cor = false, aspect_ratio = 0.3, seismic_water = 0,
+                                shallow_cor = false, anelastic_correction = false       )
 
     global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, gridded_fields, phase_infos, X, Y, addedRefinementLvl, layout, n_lbl, pChip_wat, pChip_T
 
@@ -1189,9 +1242,10 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                                                             phase_selection, fixT, fixP,
                                                                             e1_liq,     e2_liq,     e1_remain_wat,  e2_remain_wat,     e1_remain,  e2_remain,
                                                                             oxi, bulk_L, bulk_R,
-                                                                            bufferType, bufferN1, bufferN2, 
+                                                                            bufferType, bufferN1, bufferN2,
                                                                             scp, boost, refType,
-                                                                            pChip_wat,  pChip_T) # recompute points that have not been computed before
+                                                                            pChip_wat,  pChip_T,
+                                                                            seismic_cor, aspect_ratio, seismic_water, shallow_cor, anelastic_correction) # recompute points that have not been computed before
 
     println("Computed $(length(data.npoints)) new points in $(round(t, digits=3)) seconds")
     addedRefinementLvl += 1;
@@ -1960,7 +2014,7 @@ end
 
 function _draw_path_point_label(diagType, id)
     global Out_XY, data
-    P = round(Out_XY[id].P_kbar, digits=2)
+    P = round(display_pressure(Out_XY[id].P_kbar), digits=2)
     T = round(Out_XY[id].T_C,    digits=2)
     if (diagType == "px" || diagType == "tx") && @isdefined(data) && id <= length(data.points)
         X = round(data.points[id][1], digits=4)
@@ -1973,28 +2027,30 @@ end
 function draw_path_table_data(diagType, path_ids)
     global Out_XY, data
 
+    p_col = "P[$(pressure_unit_label())]"
+
     if isempty(path_ids)
         if diagType == "px"
-            cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"X","name"=>"X"), Dict("id"=>"P[kbar]","name"=>"P[kbar]")]
+            cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"X","name"=>"X"), Dict("id"=>p_col,"name"=>p_col)]
         elseif diagType == "tx"
             cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"X","name"=>"X"), Dict("id"=>"T[°C]","name"=>"T[°C]")]
         else
-            cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"P[kbar]","name"=>"P[kbar]"), Dict("id"=>"T[°C]","name"=>"T[°C]")]
+            cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>p_col,"name"=>p_col), Dict("id"=>"T[°C]","name"=>"T[°C]")]
         end
         return cols, []
     end
 
     if diagType == "px"
-        cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"X","name"=>"X"), Dict("id"=>"P[kbar]","name"=>"P[kbar]")]
+        cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"X","name"=>"X"), Dict("id"=>p_col,"name"=>p_col)]
         rows = [Dict("#"=>k, "X"=>(@isdefined(data) && id<=length(data.points) ? round(data.points[id][1],digits=4) : "—"),
-                     "P[kbar]"=>round(Out_XY[id].P_kbar, digits=3)) for (k,id) in enumerate(path_ids)]
+                     p_col=>round(display_pressure(Out_XY[id].P_kbar), digits=3)) for (k,id) in enumerate(path_ids)]
     elseif diagType == "tx"
         cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"X","name"=>"X"), Dict("id"=>"T[°C]","name"=>"T[°C]")]
         rows = [Dict("#"=>k, "X"=>(@isdefined(data) && id<=length(data.points) ? round(data.points[id][1],digits=4) : "—"),
                      "T[°C]"=>round(Out_XY[id].T_C, digits=3)) for (k,id) in enumerate(path_ids)]
     else
-        cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"P[kbar]","name"=>"P[kbar]"), Dict("id"=>"T[°C]","name"=>"T[°C]")]
-        rows = [Dict("#"=>k, "P[kbar]"=>round(Out_XY[id].P_kbar, digits=3),
+        cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>p_col,"name"=>p_col), Dict("id"=>"T[°C]","name"=>"T[°C]")]
+        rows = [Dict("#"=>k, p_col=>round(display_pressure(Out_XY[id].P_kbar), digits=3),
                      "T[°C]"=>round(Out_XY[id].T_C, digits=3)) for (k,id) in enumerate(path_ids)]
     end
 
@@ -2048,14 +2104,14 @@ function get_draw_path_plot(diagType, sysunit, path_ids)
         traces[i] = scatter(;
             x          = x,
             y          = Y[i,:],
-            name       = ph,
+            name       = display_ph_name(ph),
             stackgroup = "one",
             mode       = "lines",
             line       = attr(width=0.5, color=color)
         )
     end
 
-    phase_list = [Dict("label" => "  "*ph_names[i], "value" => ph_names[i]) for i in 1:n_ph]
+    phase_list = [Dict("label" => "  "*display_ph_name(ph_names[i]), "value" => ph_names[i]) for i in 1:n_ph]
 
     return traces, phase_list
 end
