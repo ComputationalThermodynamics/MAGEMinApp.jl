@@ -482,10 +482,7 @@ function _render_intersect_figure(result, field_value::String;
         x           = X,
         y           = Y,
         z           = mask,
-        zmin        = 0.0,
-        zmax        = 1.0,
-        colorscale  = [[0, "white"], [1, "white"]],
-        showscale   = false,
+        coloraxis   = "coloraxis2",
         connectgaps = false,
         hoverinfo   = "skip",
         type        = "heatmap",
@@ -634,6 +631,12 @@ function _render_intersect_figure(result, field_value::String;
         paper_bgcolor = "white",
         plot_bgcolor  = "white",
         uirevision    = "constant",
+        coloraxis2    = attr(
+            colorscale = [[0, "white"], [1, "white"]],
+            showscale  = false,
+            cmin       = 0.0,
+            cmax       = 1.0,
+        ),
     )
 
     return plot(traces, ix_layout)
@@ -785,8 +788,17 @@ function Tab_IntersecT_Callbacks(app)
                 x_col = "T [Celsius]",
                 y_col = "P [kbar]",
             )
+
+            # Filter measurements to only the selected phase columns plus any
+            # non-phase metadata columns (no underscore → T, P, uncertainty flags, etc.)
+            meas_cols     = filter(names(measurements_ix)) do col
+                parts = split(col, '_'; limit=2)
+                length(parts) != 2 || (col in phase_elements)
+            end
+            filtered_meas = measurements_ix[:, meas_cols]
+
             result   = IntersecT.run_intersect(
-                model_df, measurements_ix;
+                model_df, filtered_meas;
                 x_col         = "T [Celsius]",
                 y_col         = "P [kbar]",
                 analysis_type = analysis_type,
