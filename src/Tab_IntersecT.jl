@@ -3,7 +3,7 @@
 #   Project      : MAGEMin_App
 #   License      : GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #   Developers   : Nicolas Riel, Boris Kaus
-#   Contributors : Dominguez, H., Moyen, J-F.
+#   Contributors : Nerone, S., Dominguez, H., Moyen, J-F.
 #   Organization : Institute of Geosciences, Johannes-Gutenberg University, Mainz
 #   Contact      : nriel[at]uni-mainz.de
 #
@@ -176,6 +176,16 @@ function Tab_IntersecT()
                             ]),
 
                             html_div("‎ "),
+
+                            # Caption figure (above main diagram, height driven by callback)
+                            dbc_row([
+                                dcc_graph(
+                                    id     = "diagram-cap-ix",
+                                    figure = Dict(),
+                                    config = PlotConfig(displayModeBar=false),
+                                    style  = Dict("display" => "none"),
+                                ),
+                            ]),
 
                             # Diagram
                             dbc_row([
@@ -463,6 +473,316 @@ function Tab_IntersecT()
                             ]),
                         ]),
 
+                        html_div("‎ "),
+
+                        # ── Isocontours ──────────────────────────────────────
+                        html_h1("Isocontours",
+                            style = Dict("textAlign" => "center",
+                                         "font-size" => "120%",
+                                         "marginTop" => 8)),
+                        html_hr(),
+
+                        # Type selector
+                        dbc_row([
+                            dbc_col([
+                                html_h1("Type",
+                                    style = Dict("textAlign" => "center",
+                                                 "font-size" => "100%",
+                                                 "marginTop" => 8)),
+                            ], width=4),
+                            dbc_col([
+                                dcc_dropdown(
+                                    id        = "iso-type-ix",
+                                    options   = ["Measurements", "Field"],
+                                    value     = "Measurements",
+                                    clearable = false,
+                                ),
+                            ], width=8),
+                        ]),
+
+                        html_div("‎ "),
+
+                        # Measurements sub-section (phase + element)
+                        html_div([
+                            dbc_row([
+                                dbc_col([
+                                    html_h1("Phase",
+                                        style = Dict("textAlign" => "center",
+                                                     "font-size" => "100%",
+                                                     "marginTop" => 8)),
+                                ], width=4),
+                                dbc_col([
+                                    dcc_dropdown(
+                                        id          = "iso-phase-dd-ix",
+                                        options     = [],
+                                        value       = nothing,
+                                        clearable   = false,
+                                        placeholder = "Load measurements first",
+                                    ),
+                                ], width=8),
+                            ]),
+                            dbc_row([
+                                dbc_col([
+                                    html_h1("Element",
+                                        style = Dict("textAlign" => "center",
+                                                     "font-size" => "100%",
+                                                     "marginTop" => 8)),
+                                ], width=4),
+                                dbc_col([
+                                    dcc_dropdown(
+                                        id          = "iso-elem-dd-ix",
+                                        options     = [],
+                                        value       = nothing,
+                                        clearable   = false,
+                                        placeholder = "Select phase first",
+                                    ),
+                                ], width=8),
+                            ]),
+                        ], id="iso-meas-section-ix"),
+
+                        # Field sub-section (IntersecT result field)
+                        html_div([
+                            dbc_row([
+                                dbc_col([
+                                    html_h1("Field",
+                                        style = Dict("textAlign" => "center",
+                                                     "font-size" => "100%",
+                                                     "marginTop" => 8)),
+                                ], width=4),
+                                dbc_col([
+                                    dcc_dropdown(
+                                        id          = "iso-field-dd-ix",
+                                        options     = [],
+                                        value       = nothing,
+                                        clearable   = false,
+                                        placeholder = "Run IntersecT first",
+                                    ),
+                                ], width=8),
+                            ]),
+                        ], id="iso-field-section-ix", style=Dict("display" => "none")),
+
+                        html_div("‎ "),
+
+                        dbc_row([
+                            dbc_col([
+                                html_h1("Min",
+                                    style = Dict("textAlign" => "center",
+                                                 "font-size" => "100%",
+                                                 "marginTop" => 8)),
+                            ], width=4),
+                            dbc_col([
+                                dbc_input(
+                                    id       = "iso-min-ix",
+                                    type     = "number",
+                                    min      = -1e8,
+                                    max      =  1e8,
+                                    value    = 0.0,
+                                    debounce = true,
+                                ),
+                            ]),
+                        ]),
+
+                        dbc_row([
+                            dbc_col([
+                                html_h1("Step",
+                                    style = Dict("textAlign" => "center",
+                                                 "font-size" => "100%",
+                                                 "marginTop" => 8)),
+                            ], width=4),
+                            dbc_col([
+                                dbc_input(
+                                    id       = "iso-step-ix",
+                                    type     = "number",
+                                    min      = 1e-6,
+                                    max      =  1e8,
+                                    value    = 0.1,
+                                    debounce = true,
+                                ),
+                            ]),
+                        ]),
+
+                        dbc_row([
+                            dbc_col([
+                                html_h1("Max",
+                                    style = Dict("textAlign" => "center",
+                                                 "font-size" => "100%",
+                                                 "marginTop" => 8)),
+                            ], width=4),
+                            dbc_col([
+                                dbc_input(
+                                    id       = "iso-max-ix",
+                                    type     = "number",
+                                    min      = -1e8,
+                                    max      =  1e8,
+                                    value    = 1.0,
+                                    debounce = true,
+                                ),
+                            ]),
+                        ]),
+
+                        html_hr(),
+
+                        dbc_row([
+                            dbc_col([
+                                html_h1("Line style",
+                                    style = Dict("textAlign" => "center",
+                                                 "font-size" => "100%",
+                                                 "marginTop" => 8)),
+                            ], width=4),
+                            dbc_col([
+                                dcc_dropdown(
+                                    id        = "iso-lstyle-ix",
+                                    options   = [
+                                        (label = "Solid",       value = "solid"),
+                                        (label = "Dot",         value = "dot"),
+                                        (label = "Dash",        value = "dash"),
+                                        (label = "Longdash",    value = "longdash"),
+                                        (label = "Dashdot",     value = "dashdot"),
+                                        (label = "Longdashdot", value = "longdashdot"),
+                                    ],
+                                    value     = "solid",
+                                    clearable = false,
+                                ),
+                            ], width=8),
+                        ]),
+
+                        dbc_row([
+                            dbc_col([
+                                html_h1("Line width",
+                                    style = Dict("textAlign" => "center",
+                                                 "font-size" => "100%",
+                                                 "marginTop" => 8)),
+                            ], width=4),
+                            dbc_col([
+                                dbc_input(
+                                    id    = "iso-lwidth-ix",
+                                    type  = "number",
+                                    min   = 0,
+                                    max   = 10,
+                                    value = 1,
+                                ),
+                            ]),
+                        ]),
+
+                        dbc_row([
+                            dbc_col([
+                                html_h1("Color",
+                                    style = Dict("textAlign" => "center",
+                                                 "font-size" => "100%",
+                                                 "marginTop" => 8)),
+                            ], width=4),
+                            dbc_col([
+                                dbc_input(
+                                    type  = "color",
+                                    id    = "colorpicker-iso-ix",
+                                    value = "#000000",
+                                    style = Dict("width" => 75, "height" => 25),
+                                ),
+                            ]),
+                        ]),
+
+                        dbc_row([
+                            dbc_col([
+                                html_h1("Label size",
+                                    style = Dict("textAlign" => "center",
+                                                 "font-size" => "100%",
+                                                 "marginTop" => 8)),
+                            ], width=4),
+                            dbc_col([
+                                dbc_input(
+                                    id    = "iso-lsize-ix",
+                                    type  = "number",
+                                    min   = 6,
+                                    max   = 20,
+                                    value = 10,
+                                ),
+                            ]),
+                        ]),
+
+                        html_div("‎ "),
+                        dbc_row([
+                            dbc_button("Add", id="button-add-iso-ix", color="light",
+                                style = Dict("textAlign" => "center",
+                                             "font-size" => "100%",
+                                             "border"    => "1px lightgray solid")),
+                        ]),
+
+                        html_hr(),
+                        dbc_row([
+
+                            dbc_col([
+                                html_h1("Displayed",
+                                    style = Dict("textAlign" => "center",
+                                                 "font-size" => "120%",
+                                                 "marginTop" => 8)),
+                                dbc_row([
+                                    dcc_dropdown(
+                                        id        = "isopleth-list-ix",
+                                        options   = [],
+                                        value     = nothing,
+                                        clearable = false,
+                                        multi     = false,
+                                    ),
+                                ]),
+                                html_div("‎ "),
+                                dbc_row([
+                                    dbc_button("Hide", id="button-hide-iso-ix", color="light",
+                                        style = Dict("textAlign" => "center",
+                                                     "font-size" => "100%",
+                                                     "border"    => "1px lightgray solid")),
+                                ]),
+                                dbc_row([
+                                    dbc_button("Hide all", id="button-hide-all-iso-ix", color="light",
+                                        style = Dict("textAlign" => "center",
+                                                     "font-size" => "100%",
+                                                     "border"    => "1px lightgray solid")),
+                                ]),
+                                html_div("‎ "),
+                                dbc_row([
+                                    dbc_button("Remove", id="button-remove-iso-ix", color="light",
+                                        style = Dict("textAlign" => "center",
+                                                     "font-size" => "100%",
+                                                     "border"    => "1px lightgray solid")),
+                                ]),
+                                dbc_row([
+                                    dbc_button("Remove all", id="button-remove-all-iso-ix", color="light",
+                                        style = Dict("textAlign" => "center",
+                                                     "font-size" => "100%",
+                                                     "border"    => "1px lightgray solid")),
+                                ]),
+                            ], width=6),
+
+                            dbc_col([
+                                html_h1("Hidden",
+                                    style = Dict("textAlign" => "center",
+                                                 "font-size" => "120%",
+                                                 "marginTop" => 8)),
+                                dbc_row([
+                                    dcc_dropdown(
+                                        id        = "hidden-isopleth-list-ix",
+                                        options   = [],
+                                        value     = nothing,
+                                        clearable = false,
+                                        multi     = false,
+                                    ),
+                                ]),
+                                html_div("‎ "),
+                                dbc_row([
+                                    dbc_button("Show", id="button-show-iso-ix", color="light",
+                                        style = Dict("textAlign" => "center",
+                                                     "font-size" => "100%",
+                                                     "border"    => "1px lightgray solid")),
+                                ]),
+                                dbc_row([
+                                    dbc_button("Show all", id="button-show-all-iso-ix", color="light",
+                                        style = Dict("textAlign" => "center",
+                                                     "font-size" => "100%",
+                                                     "border"    => "1px lightgray solid")),
+                                ]),
+                            ], width=6),
+
+                        ]),
+
                     ])),
                         id      = "collapse-options-ix",
                         is_open = true,
@@ -476,6 +796,8 @@ function Tab_IntersecT()
         # Hidden store: incremented by Run button so all diagram callbacks re-fire
         # even when dropdown values haven't changed (e.g. re-run after diagram refinement).
         dcc_store(id="intersect-run-store-ix", data=0),
+        # Hidden store: incremented whenever isopleths change, to trigger diagram/caption re-render.
+        dcc_store(id="ix-iso-store-ix", data=0),
 
     ])
 end
