@@ -130,6 +130,54 @@ function Tab_IntersecT()
                             ]),
 
                             html_div("‎ "),
+                            html_hr(),
+
+                            dbc_row([
+                                dbc_col([
+                                    html_h1("Export references",
+                                        style = Dict("textAlign" => "center",
+                                                     "font-size" => "120%",
+                                                     "marginTop" => 0)),
+                                ], width=3),
+                                dbc_col([
+                                    dbc_input(
+                                        id    = "export-citation-id-ix",
+                                        type  = "text",
+                                        style = Dict("textAlign" => "center"),
+                                        value = "filename"),
+                                ], width=4),
+                                dbc_col([
+                                    dbc_button("bibtex file",
+                                        id      = "export-citation-button-ix",
+                                        color   = "light",
+                                        n_clicks = 0,
+                                        style   = Dict("textAlign" => "center",
+                                                       "font-size" => "100%",
+                                                       "border"    => "1px grey solid")),
+                                    dbc_tooltip([
+                                        html_div("Saves MAGEMin, thermodynamic database and IntersecT references"),
+                                        html_div("Output path is displayed in the Julia terminal")],
+                                        target = "export-citation-button-ix"),
+                                ]),
+                            ]),
+
+                            dbc_row([
+                                dbc_alert(
+                                    "Successfully saved references",
+                                    id      = "export-citation-save-ix",
+                                    is_open = false,
+                                    duration = 4000,
+                                ),
+                                dbc_alert(
+                                    "Provide a valid filename (without extension)",
+                                    color   = "danger",
+                                    id      = "export-citation-failed-ix",
+                                    is_open = false,
+                                    duration = 4000,
+                                ),
+                            ]),
+
+                            html_div("‎ "),
 
                             dbc_row([
                                 dbc_alert(

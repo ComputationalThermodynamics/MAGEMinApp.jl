@@ -1177,5 +1177,36 @@ function Tab_IntersecT_Callbacks(app)
                Dict("display" => "block", "height" => "$(cap_height)px")
     end
 
+    # export references to bibtex
+    callback!(
+        app,
+        Output("export-citation-save-ix",   "is_open"),
+        Output("export-citation-failed-ix", "is_open"),
+        Input("export-citation-button-ix",  "n_clicks"),
+        State("export-citation-id-ix",      "value"),
+        State("database-dropdown",          "value"),
+        prevent_initial_call = true,
+    ) do _, fname, dtb
+
+        fname != "filename" || return "", "failed"
+
+        mkpath("./output")
+        fileout  = "./output/" * fname * "_intersect_" * dtb * ".bib"
+        bib      = import_bibtex("./references/references.bib")
+        n_ref    = length(bib.keys)
+
+        print("\nSaving IntersecT references\noutput: $(fileout)\n")
+
+        selection = String[]
+        for info_key in ["MAGEMin", dtb, "Nerone25"]
+            id = findfirst(bib[bib.keys[i]].fields["info"] == info_key for i in 1:n_ref)
+            !isnothing(id) && push!(selection, String(bib.keys[id]))
+        end
+
+        export_bibtex(fileout, Bibliography.select(bib, selection))
+
+        return "success", ""
+    end
+
     return app
 end
