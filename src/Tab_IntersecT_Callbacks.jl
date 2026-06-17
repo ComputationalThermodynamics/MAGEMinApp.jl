@@ -139,6 +139,9 @@ function _render_intersect_figure(result, field_value::String;
     show_full_grid = "false",
     show_lbl       = "true",
     show_grid      = "true",
+    fig_width      = 640,
+    fig_height     = 640,
+    show_logos     = true,
 )
     values = _get_field(result, field_value)
     label  = _field_label(result, field_value)
@@ -265,41 +268,85 @@ function _render_intersect_figure(result, field_value::String;
     ticks = 4
     frame = get_plot_frame(data.Xrange, data.Yrange, ticks)
 
-    intersect_logo = attr(
-        source  = "assets/static/images/Logo-IntersecT.png",
-        xref    = "paper",
-        yref    = "paper",
-        x       = 0.05,
-        y       = 1.01,
-        sizex   = 0.1,
-        sizey   = 0.1,
-        xanchor = "left",
-        yanchor = "bottom",
-    )
-    frame_with_logos = vcat(collect(frame), [intersect_logo])
+    if show_logos
+        intersect_logo = attr(
+            source  = "assets/static/images/Logo-IntersecT.png",
+            xref    = "paper",
+            yref    = "paper",
+            x       = 0.05,
+            y       = 1.01,
+            sizex   = 0.1,
+            sizey   = 0.1,
+            xanchor = "left",
+            yanchor = "bottom",
+        )
+        # frame[1] is the MAGEMin logo; frame[2:end] are border lines and ticks
+        frame_images = vcat(collect(frame), [intersect_logo])
+    else
+        # The image-based border lines (sizex/sizey ≈ 0.002 in paper coords) become
+        # sub-pixel at 320px and don't render. Use Plotly native axis lines instead,
+        # so pass no images at all.
+        frame_images = []
+    end
+
+    r_margin = round(Int, fig_width  * 116 / 640)
+    b_margin = round(Int, fig_height *  50 / 640)
+    t_margin = round(Int, fig_height *  50 / 640)
+
+    # For sub-diagrams (no logos) use Plotly's native axis showline+mirror to draw
+    # the box border — image-based lines become sub-pixel at 320px and don't render.
+    if show_logos
+        xaxis_attr = attr(
+            title      = result.x_label,
+            tickmode   = "linear",
+            tick0      = data.Xrange[1],
+            dtick      = (data.Xrange[2] - data.Xrange[1]) / (ticks + 1),
+            fixedrange = true,
+        )
+        yaxis_attr = attr(
+            title      = "P [$(pressure_unit_label())]",
+            tickmode   = "linear",
+            tick0      = display_pressure(data.Yrange[1]),
+            dtick      = display_pressure((data.Yrange[2] - data.Yrange[1]) / (ticks + 1)),
+            fixedrange = true,
+        )
+    else
+        xaxis_attr = attr(
+            title      = result.x_label,
+            tickmode   = "linear",
+            tick0      = data.Xrange[1],
+            dtick      = (data.Xrange[2] - data.Xrange[1]) / (ticks + 1),
+            fixedrange = true,
+            showline   = true,
+            linewidth  = 1,
+            linecolor  = "black",
+            mirror     = true,
+            ticks      = "outside",
+        )
+        yaxis_attr = attr(
+            title      = "P [$(pressure_unit_label())]",
+            tickmode   = "linear",
+            tick0      = display_pressure(data.Yrange[1]),
+            dtick      = display_pressure((data.Yrange[2] - data.Yrange[1]) / (ticks + 1)),
+            fixedrange = true,
+            showline   = true,
+            linewidth  = 1,
+            linecolor  = "black",
+            mirror     = true,
+            ticks      = "outside",
+        )
+    end
 
     ix_layout = Layout(
-        images        = frame_with_logos,
-        width         = 640,
-        height        = 640,
+        images        = frame_images,
+        width         = fig_width,
+        height        = fig_height,
         autosize      = false,
-        margin        = attr(autoexpand=false, l=0, r=116, b=50, t=50, pad=1),
+        margin        = attr(autoexpand=false, l=0, r=r_margin, b=b_margin, t=t_margin, pad=1),
         xaxis_range   = data.Xrange,
         yaxis_range   = [display_pressure(data.Yrange[1]), display_pressure(data.Yrange[2])],
-        xaxis         = attr(
-            title     = result.x_label,
-            tickmode  = "linear",
-            tick0     = data.Xrange[1],
-            dtick     = (data.Xrange[2] - data.Xrange[1]) / (ticks + 1),
-            fixedrange = true,
-        ),
-        yaxis         = attr(
-            title     = "P [$(pressure_unit_label())]",
-            tickmode  = "linear",
-            tick0     = display_pressure(data.Yrange[1]),
-            dtick     = display_pressure((data.Yrange[2] - data.Yrange[1]) / (ticks + 1)),
-            fixedrange = true,
-        ),
+        xaxis         = xaxis_attr,
+        yaxis         = yaxis_attr,
         annotations   = annotations,
         paper_bgcolor = "white",
         plot_bgcolor  = "white",
@@ -408,31 +455,39 @@ function Tab_IntersecT_Callbacks(app)
     # This avoids the Dash rule that forbids two callbacks sharing the same output.
     callback!(
         app,
-        Output("field-dropdown-ix",   "options"),
-        Output("field-dropdown-ix",   "value"),
-        Output("intersect-alert-ix",  "is_open"),
-        Output("intersect-alert-ix",  "children"),
-        Output("intersect-alert-ix",  "color"),
-        Input("run-intersect-ix",     "n_clicks"),
-        State("phase-checklist-ix",   "value"),
-        State("analysis-type-ix",     "value"),
+        Output("field-dropdown-ix",       "options"),
+        Output("field-dropdown-ix",       "value"),
+        Output("intersect-alert-ix",      "is_open"),
+        Output("intersect-alert-ix",      "children"),
+        Output("intersect-alert-ix",      "color"),
+        Output("field-dropdown-ix-1",     "options"),
+        Output("field-dropdown-ix-1",     "value"),
+        Output("field-dropdown-ix-2",     "options"),
+        Output("field-dropdown-ix-2",     "value"),
+        Output("intersect-run-store-ix",  "data"),
+        Input("run-intersect-ix",         "n_clicks"),
+        State("phase-checklist-ix",       "value"),
+        State("analysis-type-ix",         "value"),
         prevent_initial_call = true,
-    ) do _, selected_phases, analysis_type
+    ) do n_clicks, selected_phases, analysis_type
 
         global Out_XY, measurements_ix, Out_intersect
 
         # Guards
         if !(@isdefined(Out_XY)) || isnothing(Out_XY) || length(Out_XY) == 0
             return [], nothing, true,
-                   "No phase diagram found. Compute a PT diagram first.", "danger"
+                   "No phase diagram found. Compute a PT diagram first.", "danger",
+                   [], nothing, [], nothing, n_clicks
         end
         if isnothing(measurements_ix)
             return [], nothing, true,
-                   "No measurement file loaded. Upload a CSV first.", "danger"
+                   "No measurement file loaded. Upload a CSV first.", "danger",
+                   [], nothing, [], nothing, n_clicks
         end
         if isnothing(selected_phases) || length(selected_phases) == 0
             return [], nothing, true,
-                   "No phases selected. Check at least one phase in the checklist.", "warning"
+                   "No phases selected. Check at least one phase in the checklist.", "warning",
+                   [], nothing, [], nothing, n_clicks
         end
 
         try
@@ -444,7 +499,8 @@ function Tab_IntersecT_Callbacks(app)
 
             if isempty(phase_elements)
                 return [], nothing, true,
-                       "No matching Phase_Element columns found for the selected phases.", "danger"
+                       "No matching Phase_Element columns found for the selected phases.", "danger",
+                       [], nothing, [], nothing, n_clicks
             end
 
             model_df = build_intersect_model_df(Out_XY, phase_elements;
@@ -462,10 +518,12 @@ function Tab_IntersecT_Callbacks(app)
             opts    = _build_field_options(result)
             default = "Qcmp_weighted"
 
-            return opts, default, false, "", "danger"
+            return opts, default, false, "", "danger",
+                   opts, default, opts, default, n_clicks
 
         catch e
-            return [], nothing, true, sprint(showerror, e), "danger"
+            return [], nothing, true, sprint(showerror, e), "danger",
+                   [], nothing, [], nothing, n_clicks
         end
     end
 
@@ -508,8 +566,9 @@ function Tab_IntersecT_Callbacks(app)
         Input("show-full-grid-ix",       "value"),
         Input("show-lbl-ix",             "value"),
         Input("show-grid-ix",            "value"),
+        Input("intersect-run-store-ix",  "data"),
         prevent_initial_call = true,
-    ) do field_value, colormap, zmin_val, zmax_val, color_range, set_min_white, reverse_cmap, smooth_cmap, show_full_grid, show_lbl, show_grid
+    ) do field_value, colormap, zmin_val, zmax_val, color_range, set_min_white, reverse_cmap, smooth_cmap, show_full_grid, show_lbl, show_grid, _
 
         global Out_intersect
 
@@ -529,6 +588,78 @@ function Tab_IntersecT_Callbacks(app)
             show_full_grid = show_full_grid,
             show_lbl       = show_lbl,
             show_grid      = show_grid,
+        )
+    end
+
+    # ── Callback 7: Sub-diagram 1 ─────────────────────────────────────────────
+    callback!(
+        app,
+        Output("diagram-ix-1",           "figure"),
+        Input("field-dropdown-ix-1",     "value"),
+        Input("colormaps-ix",            "value"),
+        Input("range-slider-color-ix",   "value"),
+        Input("set-min-white-ix",        "value"),
+        Input("reverse-colormap-ix",     "value"),
+        Input("smooth-colormap-ix",      "value"),
+        Input("intersect-run-store-ix",  "data"),
+        prevent_initial_call = true,
+    ) do field_value, colormap, color_range, set_min_white, reverse_cmap, smooth_cmap, _
+
+        global Out_intersect
+
+        if isnothing(field_value) || isnothing(Out_intersect)
+            return Dict()
+        end
+
+        return _render_intersect_figure(
+            Out_intersect, field_value;
+            colormap       = colormap,
+            color_range    = color_range,
+            set_min_white  = set_min_white,
+            reverse_cmap   = reverse_cmap,
+            smooth_cmap    = smooth_cmap,
+            show_full_grid = "false",
+            show_lbl       = "false",
+            show_grid      = "false",
+            fig_width      = 320,
+            fig_height     = 260,
+            show_logos     = false,
+        )
+    end
+
+    # ── Callback 8: Sub-diagram 2 ─────────────────────────────────────────────
+    callback!(
+        app,
+        Output("diagram-ix-2",           "figure"),
+        Input("field-dropdown-ix-2",     "value"),
+        Input("colormaps-ix",            "value"),
+        Input("range-slider-color-ix",   "value"),
+        Input("set-min-white-ix",        "value"),
+        Input("reverse-colormap-ix",     "value"),
+        Input("smooth-colormap-ix",      "value"),
+        Input("intersect-run-store-ix",  "data"),
+        prevent_initial_call = true,
+    ) do field_value, colormap, color_range, set_min_white, reverse_cmap, smooth_cmap, _
+
+        global Out_intersect
+
+        if isnothing(field_value) || isnothing(Out_intersect)
+            return Dict()
+        end
+
+        return _render_intersect_figure(
+            Out_intersect, field_value;
+            colormap       = colormap,
+            color_range    = color_range,
+            set_min_white  = set_min_white,
+            reverse_cmap   = reverse_cmap,
+            smooth_cmap    = smooth_cmap,
+            show_full_grid = "false",
+            show_lbl       = "false",
+            show_grid      = "false",
+            fig_width      = 320,
+            fig_height     = 260,
+            show_logos     = false,
         )
     end
 

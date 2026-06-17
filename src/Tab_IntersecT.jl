@@ -185,6 +185,61 @@ function Tab_IntersecT()
                                 ),
                             ]),
 
+                            html_div("‎ "),
+
+                            # Sub-diagrams row
+                            dbc_row([
+                                dbc_col([
+                                    dbc_row([
+                                        dbc_col([
+                                            html_h1("Display",
+                                                style = Dict("textAlign" => "left",
+                                                             "font-size" => "120%",
+                                                             "marginTop" => 4)),
+                                        ], width=3),
+                                        dbc_col([
+                                            dcc_dropdown(
+                                                id          = "field-dropdown-ix-1",
+                                                options     = [],
+                                                value       = nothing,
+                                                clearable   = false,
+                                                placeholder = "Run calculation first",
+                                            ),
+                                        ], width=9),
+                                    ]),
+                                    html_div("‎ "),
+                                    dcc_graph(
+                                        id     = "diagram-ix-1",
+                                        figure = Dict(),
+                                    ),
+                                ], width=6),
+
+                                dbc_col([
+                                    dbc_row([
+                                        dbc_col([
+                                            html_h1("Display",
+                                                style = Dict("textAlign" => "left",
+                                                             "font-size" => "120%",
+                                                             "marginTop" => 4)),
+                                        ], width=3),
+                                        dbc_col([
+                                            dcc_dropdown(
+                                                id          = "field-dropdown-ix-2",
+                                                options     = [],
+                                                value       = nothing,
+                                                clearable   = false,
+                                                placeholder = "Run calculation first",
+                                            ),
+                                        ], width=9),
+                                    ]),
+                                    html_div("‎ "),
+                                    dcc_graph(
+                                        id     = "diagram-ix-2",
+                                        figure = Dict(),
+                                    ),
+                                ], width=6),
+                            ]),
+
                         ])),
                         id      = "collapse-results-ix",
                         is_open = true,
@@ -417,5 +472,10 @@ function Tab_IntersecT()
 
             ]),
         ], width=12),
+
+        # Hidden store: incremented by Run button so all diagram callbacks re-fire
+        # even when dropdown values haven't changed (e.g. re-run after diagram refinement).
+        dcc_store(id="intersect-run-store-ix", data=0),
+
     ])
 end
