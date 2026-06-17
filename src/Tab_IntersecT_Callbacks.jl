@@ -410,8 +410,7 @@ function _render_intersect_figure(result, field_value::String;
     y_disp = display_pressure.(collect(y))
     Y      = repeat(y_disp', n)[:]
 
-    # gridded[T_idx, P_idx] — same index convention as get_gridded_map.
-    # NaN values remain nothing (JSON null); Plotly leaves those cells blank.
+    # Main heatmap: skip NaN (phase absent), let connectgaps=true smooth the valid region.
     gridded = Matrix{Union{Nothing, Float64}}(nothing, n, n)
     for k in 1:min(np, length(values))
         v = values[k]
@@ -420,6 +419,41 @@ function _render_intersect_figure(result, field_value::String;
         jj = compute_index(data.points[k][2], data.Yrange[1], dy)
         (1 ≤ ii ≤ n && 1 ≤ jj ≤ n) || continue
         gridded[ii, jj] = v
+    end
+
+    # White mask: BFS nearest-neighbor fill on binary absent(1)/present(0) classification.
+    # Covers the regions that connectgaps=true incorrectly extrapolates into.
+    mask = Matrix{Union{Nothing, Float64}}(nothing, n, n)
+    for k in 1:min(np, length(values))
+        v  = values[k]
+        ii = compute_index(data.points[k][1], data.Xrange[1], dx)
+        jj = compute_index(data.points[k][2], data.Yrange[1], dy)
+        (1 ≤ ii ≤ n && 1 ≤ jj ≤ n) || continue
+        mask[ii, jj] = isnan(v) ? 1.0 : 0.0
+    end
+    mask_visited = fill(false, n, n)
+    mask_queue   = Vector{Tuple{Int,Int}}(undef, n * n)
+    mq_head = 1; mq_tail = 0
+    for ii in 1:n, jj in 1:n
+        if !isnothing(mask[ii, jj])
+            mq_tail += 1; mask_queue[mq_tail] = (ii, jj); mask_visited[ii, jj] = true
+        end
+    end
+    while mq_head <= mq_tail
+        ii, jj = mask_queue[mq_head]; mq_head += 1
+        for (di, dj) in ((-1,0),(1,0),(0,-1),(0,1))
+            ni, nj = ii+di, jj+dj
+            (1 ≤ ni ≤ n && 1 ≤ nj ≤ n) || continue
+            mask_visited[ni, nj] && continue
+            mask[ni, nj] = mask[ii, jj]
+            mask_visited[ni, nj] = true
+            mq_tail += 1; mask_queue[mq_tail] = (ni, nj)
+        end
+    end
+    # Keep only absent cells (1.0) visible; present cells become nothing (transparent).
+    for ii in 1:n, jj in 1:n
+        v = mask[ii, jj]
+        !isnothing(v) && v == 0.0 && (mask[ii, jj] = nothing)
     end
 
     trace = heatmap(
@@ -431,7 +465,7 @@ function _render_intersect_figure(result, field_value::String;
         zsmooth      = smooth_cmap,
         colorscale   = colorm,
         reversescale = reverseColorMap,
-        connectgaps  = false,
+        connectgaps  = true,
         type         = "heatmap",
         colorbar     = attr(
             lenmode       = "fraction",
@@ -444,8 +478,21 @@ function _render_intersect_figure(result, field_value::String;
         ),
     )
 
-    # Collect traces: IntersecT heatmap first, then optional overlays
-    traces = AbstractTrace[trace]
+    trace_mask = heatmap(
+        x           = X,
+        y           = Y,
+        z           = mask,
+        zmin        = 0.0,
+        zmax        = 1.0,
+        colorscale  = [[0, "white"], [1, "white"]],
+        showscale   = false,
+        connectgaps = false,
+        hoverinfo   = "skip",
+        type        = "heatmap",
+    )
+
+    # Collect traces: heatmap, white mask, then optional overlays
+    traces = AbstractTrace[trace, trace_mask]
 
     if show_full_grid == "true" && @isdefined(data)
         try
