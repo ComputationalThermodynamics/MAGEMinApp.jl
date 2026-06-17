@@ -431,7 +431,7 @@ function _render_intersect_figure(result, field_value::String;
         zsmooth      = smooth_cmap,
         colorscale   = colorm,
         reversescale = reverseColorMap,
-        connectgaps  = true,
+        connectgaps  = false,
         type         = "heatmap",
         colorbar     = attr(
             lenmode       = "fraction",
