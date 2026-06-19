@@ -232,9 +232,9 @@ function Tab_PhaseDiagram_Callbacks(app)
     ) do n_clicks, fname, dtb
 
         if fname != "filename"
-            mkpath("./output")
+            mkpath(output_dir[1])
             datab   = "_"*dtb
-            fileout = "./output/"*fname*datab
+            fileout = output_dir[1]*fname*datab
             MAGEMin_data2dataframe(Out_XY[point_id],dtb,fileout; use_Warr2021=use_warr_names[1], use_GPA=use_GPa[1])
 
             return  "success", ""
@@ -281,9 +281,9 @@ function Tab_PhaseDiagram_Callbacks(app)
     ) do n_clicks, fname, dtb
 
         if fname != "filename"
-            mkpath("./output")
+            mkpath(output_dir[1])
             datab   = "_"*dtb
-            fileout = "./output/"*fname*datab
+            fileout = output_dir[1]*fname*datab
 
             MAGEMin_data2dataframe(Out_XY,dtb,fileout; use_Warr2021=use_warr_names[1], use_GPA=use_GPa[1])
             return "success", ""
@@ -305,9 +305,9 @@ function Tab_PhaseDiagram_Callbacks(app)
     ) do n_clicks, fname, dtb
 
         if fname != "filename"
-            mkpath("./output")
+            mkpath(output_dir[1])
             output_bib      = "_"*dtb*".bib"
-            fileout         = "./output/"*fname*output_bib
+            fileout         = output_dir[1]*fname*output_bib
             magemin         = "MAGEMin"
             bib             = import_bibtex("./references/references.bib")
 
@@ -1371,7 +1371,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             for i=1:n_lbl
                 lyt[:annotations][i][:visible] = false
             end
-            filename = "./output/"*replace(customTitle, " " => "_") * "_$fieldname.svg"
+            filename = output_dir[1]*replace(customTitle, " " => "_") * "_$fieldname.svg"
             savefig(plot(heat_map_export,lyt), filename; width=720, height=900)
             np       = length(fieldNames_exp)
             if np > 0
@@ -1383,15 +1383,15 @@ function Tab_PhaseDiagram_Callbacks(app)
                             names = sanitize_names(names_raw)
                             for j = 1:ni
                                 trace_fig = plot_diagram(data_isopleth.isoPexp[data_isopleth.active[j]], lyt)
-                                filename = "./output/"*replace(customTitle, " " => "_") * "_$(fieldNames_exp[i])_$(names[j]).svg"
+                                filename = output_dir[1]*replace(customTitle, " " => "_") * "_$(fieldNames_exp[i])_$(names[j]).svg"
                                 savefig(trace_fig, filename; width=720, height=900)
                             end
                         else
                             trace_fig = plot_diagram(eval(Symbol(fieldNames_exp[i])), lyt)
-                            filename = "./output/"*replace(customTitle, " " => "_") * "_$(fieldNames_exp[i]).svg"
+                            filename = output_dir[1]*replace(customTitle, " " => "_") * "_$(fieldNames_exp[i]).svg"
                             savefig(trace_fig, filename; width=720, height=900)
                         end
-                        filename = "./output/"*replace(customTitle, " " => "_") * "_isopleths_caption.svg"
+                        filename = output_dir[1]*replace(customTitle, " " => "_") * "_isopleths_caption.svg"
                         savefig(plot(data_isopleth.isoCap[data_isopleth.active],layoutCap), filename; width=900, height=30)
                     end
                 end
@@ -1403,9 +1403,9 @@ function Tab_PhaseDiagram_Callbacks(app)
                     lyt[:annotations][i][:visible] = true
                 end
                 
-                filename = "./output/"*replace(customTitle, " " => "_") * "_labels.svg"
+                filename = output_dir[1]*replace(customTitle, " " => "_") * "_labels.svg"
                 savefig(plot(PlotlyJS.AbstractTrace[], lyt), filename; width=720, height=900)
-                open("./output/" * replace(customTitle, " " => "_") * "_phase_equilibria.txt", "w") do io
+                open(output_dir[1] * replace(customTitle, " " => "_") * "_phase_equilibria.txt", "w") do io
                     write(io, txt_list)
                 end
             end

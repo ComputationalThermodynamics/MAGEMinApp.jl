@@ -46,6 +46,7 @@ module MAGEMinApp
     include(joinpath(pkg_dir,"src","Tab_TraceElement.jl"))
     include(joinpath(pkg_dir,"src","Tab_PTXpaths.jl"))
     include(joinpath(pkg_dir,"src","data_plot.jl"))
+    include(joinpath(pkg_dir,"src","Tab_GeneralSetup_Callbacks.jl"))
     include(joinpath(pkg_dir,"src","Tab_Simulation_Callbacks.jl"))    
     include(joinpath(pkg_dir,"src","Tab_PhaseDiagram_Callbacks.jl"))
     include(joinpath(pkg_dir,"src","Tab_TraceElement_Callbacks.jl"))
@@ -258,6 +259,7 @@ module MAGEMinApp
         app = Tab_PhaseDiagram_Callbacks(app)
         app = Tab_TraceElement_Callbacks(app)
         app = Tab_PTXpaths_Callbacks(app)
+        app = Tab_GeneralSetup_Callbacks(app)
         app = Progress_Callbacks(app)
 
         println(" 4/4 Loading user data...")

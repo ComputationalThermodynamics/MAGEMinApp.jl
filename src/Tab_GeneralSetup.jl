@@ -64,14 +64,20 @@ function Tab_GeneralSetup()
                                     html_h1("Output directory", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                 ], width=4),
                                 dbc_col([
-                                    dcc_textarea(
+                                    dbc_input(
                                         id          ="state-directory2",
-                                        value       = "$(pwd())/output/",
-                                        readOnly    = true,
-                                        disabled    = true,
-                                        draggable   = false,
-                                        style       = Dict("textAlign" => "center","font-size" => "120%", "width"=> "100%", "resize"=> "none")
+                                        type        = "text",
+                                        value       = output_dir[1],
+                                        style       = Dict("textAlign" => "center","font-size" => "120%", "width"=> "100%")
                                     ),
+                                ]),
+                                dbc_col([
+                                    dbc_button("Apply", id="apply-output-dir-button", color="primary", n_clicks=0),
+                                ], width="auto"),
+                            ]),
+                            dbc_row([
+                                dbc_col([
+                                    html_small(id="output-dir-feedback", children="", style=Dict("color"=>"grey")),
                                 ]),
                             ]),
 
