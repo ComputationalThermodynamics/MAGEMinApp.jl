@@ -494,9 +494,10 @@ function Tab_PTXpaths()
                             dbc_col([
                                 dcc_dropdown(   id      = "zrsat-dropdown-ptx",
                                                 options = [
-                                                    (label = "none",        value = "none"),
-                                                    (label = "Watson 1979", value = "Watson1979"),
-                                                    (label = "Blundy 2022", value = "Blundy2022"),
+                                                    (label = "none",                        value = "none"),
+                                                    (label = "Watson & Harrison (1983)",    value = "WH"),
+                                                    (label = "Boehnke et al. (2013)",       value = "B"),
+                                                    (label = "Crisp and Berry (2022)",      value = "CB"),
                                                 ],
                                                 value   = "none",
                                                 clearable = false,
@@ -511,8 +512,9 @@ function Tab_PTXpaths()
                             dbc_col([
                                 dcc_dropdown(   id      = "ssat-dropdown-ptx",
                                                 options = [
-                                                    (label = "none",        value = "none"),
-                                                    (label = "Liu 2021",    value = "Liu2021"),
+                                                    (label = "none",                value = "none"),
+                                                    (label = "Liu et al., 2007",    value = "Liu07"),
+                                                    (label = "O'Neill, 2021",       value = "Oneill21"),
                                                 ],
                                                 value   = "none",
                                                 clearable = false,
@@ -527,8 +529,10 @@ function Tab_PTXpaths()
                             dbc_col([
                                 dcc_dropdown(   id      = "P2O5sat-dropdown-ptx",
                                                 options = [
-                                                    (label = "none",            value = "none"),
-                                                    (label = "Tollari 2006",    value = "Tollari2006"),
+                                                    (label = "none",                            value = "none"),
+                                                    (label = "Klein et al., 2026",              value = "Klein26"),
+                                                    (label = "Tollari et al., 2006",            value = "Tollari06"),
+                                                    (label = "Bea et al., 1992 (after HW84)",   value = "HWBea92"),
                                                 ],
                                                 value   = "none",
                                                 clearable = false,
@@ -543,8 +547,8 @@ function Tab_PTXpaths()
                             dbc_col([
                                 dcc_dropdown(   id      = "co2sat-dropdown-ptx",
                                                 options = [
-                                                    (label = "none",    value = "none"),
-                                                    (label = "SY26",    value = "SY26"),
+                                                    (label = "none",            value = "none"),
+                                                    (label = "Sun & Yao, 2026", value = "SY26"),
                                                 ],
                                                 value   = "none",
                                                 clearable = false,

@@ -3,7 +3,7 @@
 #   Project      : MAGEMin_App
 #   License      : GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #   Developers   : Nicolas Riel, Boris Kaus
-#   Contributors : Dominguez, H., Moyen, J-F.
+#   Contributors : Nerone, S., Dominguez, H., Moyen, J-F.
 #   Organization : Institute of Geosciences, Johannes-Gutenberg University, Mainz
 #   Contact      : nriel[at]uni-mainz.de
 #
@@ -68,7 +68,7 @@ function Tab_Simulation_Callbacks(app)
 
     # ── helper: list existing saves ────────────────────────────────────────────
     function _list_saves()
-        dir = joinpath(pwd(), "saved_states")
+        dir = joinpath(@__DIR__, "..", "saved_states")
         isdir(dir) || return String[]
         files = readdir(dir)
         names = [replace(f, r"_options\.jld2$" => "") for f in files if endswith(f, "_options.jld2")]
@@ -198,7 +198,7 @@ function Tab_Simulation_Callbacks(app)
 
         global infos, layout, data, data_plot, data_reaction, iso_show, n_lbl, data_isopleth, data_isopleth_out, Out_XY, Hash_XY, Out_TE_XY, all_TE_ph, n_phase_XY, addedRefinementLvl, pChip_wat, pChip_T;
 
-        saved_states_dir = joinpath(pwd(), "saved_states")
+        saved_states_dir = joinpath(@__DIR__, "..", "saved_states")
         mkpath(saved_states_dir)
         base_path       = joinpath(saved_states_dir, String(filename))
 
@@ -320,7 +320,7 @@ function Tab_Simulation_Callbacks(app)
         # load the phase diagram if saved
         global infos, layout, data, data_plot, data_reaction, iso_show, n_lbl, data_isopleth, data_isopleth_out, Out_XY, Hash_XY, Out_TE_XY, all_TE_ph, n_phase_XY, addedRefinementLvl, pChip_wat, pChip_T;
 
-        saved_states_dir = joinpath(pwd(), "saved_states")
+        saved_states_dir = joinpath(@__DIR__, "..", "saved_states")
         base_path        = joinpath(saved_states_dir, String(filename))
 
         file_pd_data    = base_path * "_phase_diagram_data.jld2"
@@ -842,9 +842,11 @@ function Tab_Simulation_Callbacks(app)
             return dataout, no_update(), no_update(), no_update()
 
         elseif bid ==  "load-state-diagram-button"
-            file = "saved_states/"*String(filename)*"_options.jld2"
+            file = joinpath(@__DIR__, "..", "saved_states", String(filename)*"_options.jld2")
 
-            @load file ptx_table
+            if isfile(file)
+                @load file ptx_table
+            end
 
             return ptx_table, no_update(), no_update(), no_update()
 
@@ -1054,9 +1056,11 @@ function Tab_Simulation_Callbacks(app)
         bid  = pushed_button( callback_context() )  
 
         if bid ==  "load-state-diagram-button"
-            file = "saved_states/"*String(filename)*"_options.jld2"
+            file = joinpath(@__DIR__, "..", "saved_states", String(filename)*"_options.jld2")
 
-            @load file test
+            if isfile(file)
+                @load file test
+            end
 
             val = test
         else
@@ -1117,9 +1121,11 @@ function Tab_Simulation_Callbacks(app)
          bid  = pushed_button( callback_context() )     
 
          if bid == "load-state-diagram-button"
-            file = "saved_states/"*String(filename)*"_options.jld2"
+            file = joinpath(@__DIR__, "..", "saved_states", String(filename)*"_options.jld2")
 
-            @load file test2
+            if isfile(file)
+                @load file test2
+            end
             val = test2
             # return tb2_data, test2_opts, test2
 
@@ -1186,10 +1192,12 @@ function Tab_Simulation_Callbacks(app)
 
         # catching up some special cases
         if bid ==  "load-state-diagram-button"
-            file = "saved_states/"*String(filename)*"_options.jld2"
+            file = joinpath(@__DIR__, "..", "saved_states", String(filename)*"_options.jld2")
 
-            @load file te_test
-            t = te_test
+            if isfile(file)
+                @load file te_test
+                t = te_test
+            end
         else
             if test > length(dbte.test) - 1 
                 t = 0
@@ -1229,10 +1237,12 @@ function Tab_Simulation_Callbacks(app)
 
         # catching up some special cases
         if bid ==  "load-state-diagram-button"
-            file = "saved_states/"*String(filename)*"_options.jld2"
+            file = joinpath(@__DIR__, "..", "saved_states", String(filename)*"_options.jld2")
 
-            @load file te_test2
-            t = te_test2
+            if isfile(file)
+                @load file te_test2
+                t = te_test2
+            end
         else
             if test > length(dbte.test) - 1 
                 t = 0

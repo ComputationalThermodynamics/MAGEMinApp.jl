@@ -3,7 +3,7 @@
 #   Project      : MAGEMin_App
 #   License      : GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #   Developers   : Nicolas Riel, Boris Kaus
-#   Contributors : Dominguez, H., Moyen, J-F.
+#   Contributors : Nerone, S., Dominguez, H., Moyen, J-F.
 #   Organization : Institute of Geosciences, Johannes-Gutenberg University, Mainz
 #   Contact      : nriel[at]uni-mainz.de
 #
@@ -1922,6 +1922,100 @@ function Tab_PhaseDiagram_Callbacks(app)
         )
 
         return fig, config, true, stats
+    end
+
+    # ── Auto-range: populate iso-min/step/max from selected isopleth field ──
+    callback!(
+        app,
+        Output("iso-min-id",  "value"),
+        Output("iso-step-id", "value"),
+        Output("iso-max-id",  "value"),
+        Input("phase-dropdown",               "value"),
+        Input("ss-dropdown",                  "value"),
+        Input("em-dropdown",                  "value"),
+        Input("ox-dropdown",                  "value"),
+        Input("of-dropdown",                  "value"),
+        Input("other-dropdown",               "value"),
+        State("sys-unit-isopleth-dropdown",   "value"),
+        State("rm-exfluid-isopleth-dropdown", "value"),
+        State("input-calc-id",                "value"),
+        State("input-calc-sf-id",             "value"),
+        State("input-calc-ox-id",             "value"),
+        State("gsub-id",                      "value"),
+        State("refinement-levels",            "value"),
+        prevent_initial_call = true,
+    ) do phase, ss, em, ox, of, ot, sys, rmf, calc, calc_sf, calc_ox, sub, refLvl
+
+        global Out_XY, data, addedRefinementLvl
+
+        no_range = (no_update(), no_update(), no_update())
+
+        (!@isdefined(Out_XY) || isnothing(Out_XY) || isempty(Out_XY)) && return no_range
+        (!@isdefined(data))  && return no_range
+        isnothing(phase)     && return no_range
+
+        try
+            # dropdowns default to value=0 (Int64) until set — treat any non-string as default
+            to_str(x, d) = (isnothing(x) || !(x isa AbstractString)) ? d : String(x)
+            ss      = to_str(ss,  "")
+            em      = to_str(em,  "")
+            ox      = to_str(ox,  "")
+            of      = to_str(of,  "G_system")
+            ot      = to_str(ot,  "mode")
+            sys     = to_str(sys, "mol")
+            rmf_b   = something(rmf, false) == true
+            calc    = to_str(calc,    " ... ")
+            calc_sf = to_str(calc_sf, " ... ")
+            calc_ox = to_str(calc_ox, " ... ")
+
+            # Mirror mod determination from add_isopleth_phaseDiagram
+            if (phase == "ss" && ot == "mode") || phase == "pp"
+                mod = sys == "mol" ? "ph_frac" : (sys == "vol" ? "ph_frac_vol" : "ph_frac_wt")
+                em  = ""
+            elseif phase == "ss" && ot == "emMode"
+                mod = sys == "mol" ? "em_frac" : "ph_frac_wt"
+            elseif phase == "ss" && ot == "oxComp"
+                sys_cor = sys == "vol" ? "wt" : sys
+                mod = sys_cor == "mol" ? "ox_comp" : "ox_comp_wt"
+            elseif phase == "ss" && ot == "MgNum"
+                mod = "ss_MgNum"; em = ""
+            elseif phase == "ss" && ot == "calc"
+                mod = "ss_calc"; em = ""
+            elseif phase == "ss" && ot == "calc_sf"
+                mod = "ss_calc_sf"
+            elseif phase == "ss" && ot == "calc_ox"
+                sys_cor = sys == "vol" ? "wt" : sys
+                mod = "ss_calc_ox_" * sys_cor
+            elseif phase == "of"
+                mod = "of_mod"; em = ""; ss = ""
+            else
+                return no_range
+            end
+
+            oxi          = String.(Out_XY[1].oxides)
+            total_refLvl = Int64(something(refLvl, 0)) + addedRefinementLvl
+            Xrange_t     = (Float64(data.Xrange[1]), Float64(data.Xrange[2]))
+            Yrange_t     = (Float64(data.Yrange[1]), Float64(data.Yrange[2]))
+
+            gridded, _, _ = get_isopleth_map(
+                mod, ss, em, ox, of, ot, calc, calc_sf, calc_ox,
+                rmf_b, oxi, Out_XY,
+                Int64(something(sub, 3)), total_refLvl,
+                data, Xrange_t, Yrange_t,
+            )
+
+            finite_vals = filter(isfinite, Float64.(collect(skipmissing(vec(gridded)))))
+            isempty(finite_vals) && return no_range
+
+            vmin  = round(minimum(finite_vals), digits=4)
+            vmax  = round(maximum(finite_vals), digits=4)
+            vstep = max(round((vmax - vmin) / 10, digits=4), 1e-4)
+
+            return vmin, vstep, vmax
+
+        catch _
+            return no_range
+        end
     end
 
     return app
