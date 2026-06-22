@@ -33,6 +33,8 @@ mineral_style           = load_style(joinpath(pkg_dir, "./user_data/mineral_styl
 global CompProgress     =  ComputationalProgress()
 global use_warr_names   = [false]
 global use_GPa          = [false]
+global output_dir       = [joinpath(pkg_dir, "output") * "/"]
+mkpath(output_dir[1])
 customWs                =  DataFrame()
 
 # Here we fill a tupple with the KDs for the OL12 database

@@ -172,7 +172,7 @@ function Tab_PhaseDiagram()
                                             html_div("‎ "),
                                             dcc_textarea(
                                                 id          ="state-directory-2",
-                                                value       = "Figure directory: $(pwd())/output/",
+                                                value       = "Figure directory: $(output_dir[1])",
                                                 readOnly    = true,
                                                 disabled    = true,
                                                 draggable   = false,

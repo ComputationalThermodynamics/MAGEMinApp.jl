@@ -38,9 +38,9 @@ function Tab_PTXpaths_Callbacks(app)
     ) do n_clicks, fname, dtb, sysunit, mode, nRes
 
         if fname != "filename"
-            mkpath("./output")
+            mkpath(output_dir[1])
             output  = "_extracted_bulk_"*dtb
-            fileout = "./output/"*fname*output
+            fileout = output_dir[1]*fname*output
 
             n_ox    = length(Out_PTX[1].oxides)
             oxides  = Out_PTX[1].oxides
@@ -146,7 +146,7 @@ function Tab_PTXpaths_Callbacks(app)
 
             if mode == "fc"
                 output  = "_extracted_phases_"*dtb
-                fileout = "./output/"*fname*output
+                fileout = output_dir[1]*fname*output
 
                 n_ox    = length(Out_PTX[1].oxides)
                 oxides  = Out_PTX[1].oxides
@@ -280,14 +280,14 @@ function Tab_PTXpaths_Callbacks(app)
     ) do n_clicks, fname, dtb
 
         if fname != "filename"
-            mkpath("./output")
+            mkpath(output_dir[1])
             output_bib      = "_"*dtb*".bib"
-            fileout         = "./output/"*fname*output_bib
+            fileout         = output_dir[1]*fname*output_bib
             magemin         = "MAGEMin"
             bib             = import_bibtex("./references/references.bib")
 
             print("\nSaving references for computed PTX path\n")
-            print("output path: $(pwd())\n")
+            print("output path: $(output_dir[1])\n")
 
             n_ref           = length(bib.keys)
             id_db           = findfirst(bib[bib.keys[i]].fields["info"] .== dtb for i=1:n_ref)
@@ -335,9 +335,9 @@ function Tab_PTXpaths_Callbacks(app)
     ) do n_clicks, fname, dtb
 
         if fname != "filename"
-            mkpath("./output")
+            mkpath(output_dir[1])
             datab   = "_"*dtb
-            fileout = "./output/"*fname*datab
+            fileout = output_dir[1]*fname*datab
 
             MAGEMin_data2dataframe(Out_PTX,dtb,fileout; use_Warr2021=use_warr_names[1], use_GPA=use_GPa[1])
             return "success", ""
@@ -359,9 +359,9 @@ function Tab_PTXpaths_Callbacks(app)
     ) do n_clicks, fname, dtb
 
         if fname != "filename"
-            mkpath("./output")
+            mkpath(output_dir[1])
             datab   = "_inlined_"*dtb
-            fileout = "./output/"*fname*datab
+            fileout = output_dir[1]*fname*datab
 
             MAGEMin_data2dataframe_inlined(Out_PTX,dtb,fileout; use_Warr2021=use_warr_names[1], use_GPA=use_GPa[1])
             return "success", ""
@@ -409,9 +409,9 @@ function Tab_PTXpaths_Callbacks(app)
             sat_ext *= "_$co2sat"
         end
 
-        mkpath("./output")
+        mkpath(output_dir[1])
         datab   = "_te_"*dtb*"_"*kds*sat_ext
-        fileout = "./output/"*fname*datab
+        fileout = output_dir[1]*fname*datab
 
         MAGEMin_dataTE2dataframe(Out_PTX, Out_TE_PTX, dtb, fileout; use_Warr2021=use_warr_names[1], use_GPA=use_GPa[1])
         return true, false, false
@@ -457,9 +457,9 @@ function Tab_PTXpaths_Callbacks(app)
             sat_ext *= "_$co2sat"
         end
 
-        mkpath("./output")
+        mkpath(output_dir[1])
         datab   = "_extracted_te_"*dtb*"_"*kds*sat_ext
-        fileout = "./output/"*fname*datab*".csv"
+        fileout = output_dir[1]*fname*datab*".csv"
 
         n_tot   = length(Out_PTX)
         n_te    = length(Out_TE_PTX[1].elements)

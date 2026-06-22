@@ -97,7 +97,7 @@ function Tab_TraceElement()
                                         html_div("‎ "),
                                         dcc_textarea(
                                             id          ="state-directory-2-te",
-                                            value       = "Figure directory: $(pwd())/output/",
+                                            value       = "Figure directory: $(output_dir[1])",
                                             readOnly    = true,
                                             disabled    = true,
                                             draggable   = false,
