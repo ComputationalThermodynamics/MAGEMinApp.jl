@@ -392,7 +392,7 @@ function refine_MAGEMin(dtb,data,
                 Temp        = zeros(Float64,np)
                 x           = zeros(Float64,np)
                 for i=1:np
-                    Pres[i] = ptx_data[i][Symbol("col-1")]
+                    Pres[i] = to_kbar_pressure(ptx_data[i][Symbol("col-1")])
                     Temp[i] = ptx_data[i][Symbol("col-2")]
                     x[i]    = (i-1)*(1.0/(np-1))
                 end

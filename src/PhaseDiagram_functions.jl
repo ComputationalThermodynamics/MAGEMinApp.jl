@@ -714,7 +714,7 @@ end
     underlying `data_plot`/`layout` globals always remain in kbar.
 """
 function apply_pressure_display(data_in, layout_in, diagType)
-    if !use_GPa[1] || !(diagType in ("pt","px"))
+    if !use_GPa[1] || !(diagType in ("pt","px","ptx"))
         return data_in, layout_in
     end
 
