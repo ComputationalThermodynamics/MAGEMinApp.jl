@@ -1498,176 +1498,176 @@ function Tab_PhaseDiagram()
                                     ),
                                 ]),
                             ]),
-                            dbc_tab(label="Thermobarometric intersection", children=[
-                                dbc_row([
-                                    dbc_collapse(
-                                        dbc_card(dbc_cardbody([
+                            # dbc_tab(label="Thermobarometric intersection", children=[
+                            #     dbc_row([
+                            #         dbc_collapse(
+                            #             dbc_card(dbc_cardbody([
 
-                                            # ── Natural samples CSV loader ──────────────────
-                                            html_h1("Natural samples", style = Dict("textAlign" => "center", "font-size" => "120%", "marginTop" => 8)),
-                                            html_hr(),
-                                            dbc_row([
-                                                dbc_col([
-                                                    dcc_upload(
-                                                        id       = "tb-csv-upload",
-                                                        children = html_div(["Drop CSV or ", html_a("select file")]),
-                                                        style    = Dict(
-                                                            "borderWidth"  => "1px",
-                                                            "borderStyle"  => "dashed",
-                                                            "borderRadius" => "5px",
-                                                            "textAlign"    => "center",
-                                                            "padding"      => "6px",
-                                                            "width"        => "100%",
-                                                        ),
-                                                        multiple = false,
-                                                    ),
-                                                ]),
-                                            ]),
-                                            dbc_row([
-                                                dbc_col([
-                                                    html_div(id="tb-csv-info",
-                                                        children = "No file loaded",
-                                                        style    = Dict("font-size" => "80%", "marginTop" => 4, "textAlign" => "center")),
-                                                ]),
-                                            ]),
-                                            html_div("‎ "),
+                            #                 # ── Natural samples CSV loader ──────────────────
+                            #                 html_h1("Natural samples", style = Dict("textAlign" => "center", "font-size" => "120%", "marginTop" => 8)),
+                            #                 html_hr(),
+                            #                 dbc_row([
+                            #                     dbc_col([
+                            #                         dcc_upload(
+                            #                             id       = "tb-csv-upload",
+                            #                             children = html_div(["Drop CSV or ", html_a("select file")]),
+                            #                             style    = Dict(
+                            #                                 "borderWidth"  => "1px",
+                            #                                 "borderStyle"  => "dashed",
+                            #                                 "borderRadius" => "5px",
+                            #                                 "textAlign"    => "center",
+                            #                                 "padding"      => "6px",
+                            #                                 "width"        => "100%",
+                            #                             ),
+                            #                             multiple = false,
+                            #                         ),
+                            #                     ]),
+                            #                 ]),
+                            #                 dbc_row([
+                            #                     dbc_col([
+                            #                         html_div(id="tb-csv-info",
+                            #                             children = "No file loaded",
+                            #                             style    = Dict("font-size" => "80%", "marginTop" => 4, "textAlign" => "center")),
+                            #                     ]),
+                            #                 ]),
+                            #                 html_div("‎ "),
 
-                                            # ── Formula editor ──────────────────────────────
-                                            html_h1("Formulae", style = Dict("textAlign" => "center", "font-size" => "120%", "marginTop" => 8)),
-                                            html_hr(),
-                                            dbc_row([
-                                                dbc_col([
-                                                    dcc_dropdown(
-                                                        id          = "tb-phase-dropdown",
-                                                        placeholder = "Phase...",
-                                                        clearable   = true,
-                                                        multi       = false,
-                                                    ),
-                                                ], width=4),
-                                                dbc_col([
-                                                    dbc_button("↺", id="tb-refresh-phases-button", color="light", n_clicks=0,
-                                                        style = Dict("textAlign" => "center", "font-size" => "100%",
-                                                                     "border" => "1px grey solid", "width" => "100%")),
-                                                ], width=1),
-                                                dbc_col([
-                                                    dbc_input(
-                                                        id    = "tb-color-picker",
-                                                        type  = "color",
-                                                        value = "#808080",
-                                                        style = Dict("height" => "36px", "width" => "100%", "padding" => "2px"),
-                                                    ),
-                                                ], width=2),
-                                                dbc_col([
-                                                    dcc_dropdown(
-                                                        id      = "tb-compunit-dropdown",
-                                                        options = [
-                                                            (label = "wt%",   value = "wt"),
-                                                            (label = "mol%",  value = "mol"),
-                                                            (label = "apfu",  value = "apfu"),
-                                                        ],
-                                                        value     = "wt",
-                                                        clearable = false,
-                                                        multi     = false,
-                                                    ),
-                                                ], width=5),
-                                            ]),
-                                            html_div("‎ "),
-                                            dbc_row([
-                                                dbc_col([
-                                                    dbc_input(
-                                                        id          = "tb-formula-input",
-                                                        type        = "text",
-                                                        placeholder = "e.g. FeO/(MgO+FeO)",
-                                                        debounce    = true,
-                                                        style       = Dict("font-size" => "90%"),
-                                                    ),
-                                                ], width=9),
-                                                dbc_col([
-                                                    dbc_button("Add", id="tb-add-formula-button", color="light", n_clicks=0,
-                                                        style = Dict("textAlign" => "center", "font-size" => "100%",
-                                                                     "border" => "1px grey solid", "width" => "100%")),
-                                                ], width=3),
-                                            ]),
-                                            html_div("‎ "),
-                                            dash_datatable(
-                                                id         = "tb-formula-table",
-                                                columns    = [
-                                                    Dict("id" => "#",       "name" => "#"),
-                                                    Dict("id" => "phase",   "name" => "Phase"),
-                                                    Dict("id" => "formula", "name" => "Formula"),
-                                                ],
-                                                data       = [],
-                                                page_size  = 8,
-                                                style_cell = Dict("textAlign" => "left", "font-size" => "80%", "padding" => "3px 6px"),
-                                                style_header = Dict("fontWeight" => "bold"),
-                                            ),
-                                            html_div("‎ "),
-                                            dbc_row([
-                                                dbc_col([
-                                                    dbc_button("Remove last", id="tb-remove-formula-button", color="light", n_clicks=0,
-                                                        style = Dict("textAlign" => "center", "font-size" => "100%",
-                                                                     "border" => "1px grey solid", "width" => "100%")),
-                                                ], width=4),
-                                                dbc_col([
-                                                    dbc_button("Remove all", id="tb-remove-all-formula-button", color="light", n_clicks=0,
-                                                        style = Dict("textAlign" => "center", "font-size" => "100%",
-                                                                     "border" => "1px grey solid", "width" => "100%")),
-                                                ], width=4),
-                                                dbc_col([
-                                                    dbc_button("Generate", id="tb-generate-button", color="light", n_clicks=0,
-                                                        style = Dict("textAlign" => "center", "font-size" => "100%",
-                                                                     "border" => "1px grey solid", "width" => "100%")),
-                                                ], width=4),
-                                            ]),
+                            #                 # ── Formula editor ──────────────────────────────
+                            #                 html_h1("Formulae", style = Dict("textAlign" => "center", "font-size" => "120%", "marginTop" => 8)),
+                            #                 html_hr(),
+                            #                 dbc_row([
+                            #                     dbc_col([
+                            #                         dcc_dropdown(
+                            #                             id          = "tb-phase-dropdown",
+                            #                             placeholder = "Phase...",
+                            #                             clearable   = true,
+                            #                             multi       = false,
+                            #                         ),
+                            #                     ], width=4),
+                            #                     dbc_col([
+                            #                         dbc_button("↺", id="tb-refresh-phases-button", color="light", n_clicks=0,
+                            #                             style = Dict("textAlign" => "center", "font-size" => "100%",
+                            #                                          "border" => "1px grey solid", "width" => "100%")),
+                            #                     ], width=1),
+                            #                     dbc_col([
+                            #                         dbc_input(
+                            #                             id    = "tb-color-picker",
+                            #                             type  = "color",
+                            #                             value = "#808080",
+                            #                             style = Dict("height" => "36px", "width" => "100%", "padding" => "2px"),
+                            #                         ),
+                            #                     ], width=2),
+                            #                     dbc_col([
+                            #                         dcc_dropdown(
+                            #                             id      = "tb-compunit-dropdown",
+                            #                             options = [
+                            #                                 (label = "wt%",   value = "wt"),
+                            #                                 (label = "mol%",  value = "mol"),
+                            #                                 (label = "apfu",  value = "apfu"),
+                            #                             ],
+                            #                             value     = "wt",
+                            #                             clearable = false,
+                            #                             multi     = false,
+                            #                         ),
+                            #                     ], width=5),
+                            #                 ]),
+                            #                 html_div("‎ "),
+                            #                 dbc_row([
+                            #                     dbc_col([
+                            #                         dbc_input(
+                            #                             id          = "tb-formula-input",
+                            #                             type        = "text",
+                            #                             placeholder = "e.g. FeO/(MgO+FeO)",
+                            #                             debounce    = true,
+                            #                             style       = Dict("font-size" => "90%"),
+                            #                         ),
+                            #                     ], width=9),
+                            #                     dbc_col([
+                            #                         dbc_button("Add", id="tb-add-formula-button", color="light", n_clicks=0,
+                            #                             style = Dict("textAlign" => "center", "font-size" => "100%",
+                            #                                          "border" => "1px grey solid", "width" => "100%")),
+                            #                     ], width=3),
+                            #                 ]),
+                            #                 html_div("‎ "),
+                            #                 dash_datatable(
+                            #                     id         = "tb-formula-table",
+                            #                     columns    = [
+                            #                         Dict("id" => "#",       "name" => "#"),
+                            #                         Dict("id" => "phase",   "name" => "Phase"),
+                            #                         Dict("id" => "formula", "name" => "Formula"),
+                            #                     ],
+                            #                     data       = [],
+                            #                     page_size  = 8,
+                            #                     style_cell = Dict("textAlign" => "left", "font-size" => "80%", "padding" => "3px 6px"),
+                            #                     style_header = Dict("fontWeight" => "bold"),
+                            #                 ),
+                            #                 html_div("‎ "),
+                            #                 dbc_row([
+                            #                     dbc_col([
+                            #                         dbc_button("Remove last", id="tb-remove-formula-button", color="light", n_clicks=0,
+                            #                             style = Dict("textAlign" => "center", "font-size" => "100%",
+                            #                                          "border" => "1px grey solid", "width" => "100%")),
+                            #                     ], width=4),
+                            #                     dbc_col([
+                            #                         dbc_button("Remove all", id="tb-remove-all-formula-button", color="light", n_clicks=0,
+                            #                             style = Dict("textAlign" => "center", "font-size" => "100%",
+                            #                                          "border" => "1px grey solid", "width" => "100%")),
+                            #                     ], width=4),
+                            #                     dbc_col([
+                            #                         dbc_button("Generate", id="tb-generate-button", color="light", n_clicks=0,
+                            #                             style = Dict("textAlign" => "center", "font-size" => "100%",
+                            #                                          "border" => "1px grey solid", "width" => "100%")),
+                            #                     ], width=4),
+                            #                 ]),
 
-                                            # ── Hidden stores ────────────────────────────────
-                                            dcc_store(id="tb-csv-store",     data=[]),
-                                            dcc_store(id="tb-formula-store", data=[]),
-                                            dcc_store(id="tb-color-store",   data=Dict()),
+                            #                 # ── Hidden stores ────────────────────────────────
+                            #                 dcc_store(id="tb-csv-store",     data=[]),
+                            #                 dcc_store(id="tb-formula-store", data=[]),
+                            #                 dcc_store(id="tb-color-store",   data=Dict()),
 
-                                            # ── Left-side canvas ─────────────────────────────
-                                            dbc_row([
-                                                dbc_offcanvas(
-                                                    [
-                                                        dbc_row([
-                                                            thermobar_canvas_plot(),
-                                                        ]),
-                                                        html_div("‎ "),
-                                                        dbc_row([
-                                                            dbc_col([
-                                                                dash_datatable(
-                                                                    id           = "tb-stats-table",
-                                                                    columns      = [
-                                                                        Dict("id" => "phase",   "name" => "Phase"),
-                                                                        Dict("id" => "formula", "name" => "Formula"),
-                                                                        Dict("id" => "n",       "name" => "N"),
-                                                                        Dict("id" => "mean",    "name" => "Mean"),
-                                                                        Dict("id" => "std",     "name" => "Std dev"),
-                                                                    ],
-                                                                    data         = [],
-                                                                    style_cell   = Dict("textAlign" => "center", "font-size" => "85%", "padding" => "3px 8px"),
-                                                                    style_header = Dict("fontWeight" => "bold"),
-                                                                ),
-                                                            ]),
-                                                        ]),
-                                                    ],
-                                                    id        = "tb-canvas",
-                                                    title     = "Isopleth intersection",
-                                                    is_open   = false,
-                                                    placement = "start",
-                                                    style     = Dict(
-                                                        "width"            => "800px",
-                                                        "background-color" => "rgba(255,255,255,1.0)",
-                                                    ),
-                                                ),
-                                            ]),
+                            #                 # ── Left-side canvas ─────────────────────────────
+                            #                 dbc_row([
+                            #                     dbc_offcanvas(
+                            #                         [
+                            #                             dbc_row([
+                            #                                 thermobar_canvas_plot(),
+                            #                             ]),
+                            #                             html_div("‎ "),
+                            #                             dbc_row([
+                            #                                 dbc_col([
+                            #                                     dash_datatable(
+                            #                                         id           = "tb-stats-table",
+                            #                                         columns      = [
+                            #                                             Dict("id" => "phase",   "name" => "Phase"),
+                            #                                             Dict("id" => "formula", "name" => "Formula"),
+                            #                                             Dict("id" => "n",       "name" => "N"),
+                            #                                             Dict("id" => "mean",    "name" => "Mean"),
+                            #                                             Dict("id" => "std",     "name" => "Std dev"),
+                            #                                         ],
+                            #                                         data         = [],
+                            #                                         style_cell   = Dict("textAlign" => "center", "font-size" => "85%", "padding" => "3px 8px"),
+                            #                                         style_header = Dict("fontWeight" => "bold"),
+                            #                                     ),
+                            #                                 ]),
+                            #                             ]),
+                            #                         ],
+                            #                         id        = "tb-canvas",
+                            #                         title     = "Isopleth intersection",
+                            #                         is_open   = false,
+                            #                         placement = "start",
+                            #                         style     = Dict(
+                            #                             "width"            => "800px",
+                            #                             "background-color" => "rgba(255,255,255,1.0)",
+                            #                         ),
+                            #                     ),
+                            #                 ]),
 
-                                        ])),
-                                        id      = "collapse-thermobar",
-                                        is_open = true,
-                                    ),
-                                ]),
-                            ]),
+                            #             ])),
+                            #             id      = "collapse-thermobar",
+                            #             is_open = true,
+                            #         ),
+                            #     ]),
+                            # ]),
                             dbc_tab(label="Classifications", children=[
                         dbc_row([
 
