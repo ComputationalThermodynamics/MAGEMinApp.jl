@@ -31,7 +31,7 @@ function Tab_IntersecT()
                                     ),
                                 ], width="auto"),
                             ], justify="center"),
-
+                            html_div("Nerone et al. 2025: https://doi.org/10.1016/j.cageo.2025.105949"),
                             html_div("‎ "),
 
                             # Run button

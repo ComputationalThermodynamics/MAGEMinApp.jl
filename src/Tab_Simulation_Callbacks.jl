@@ -1380,6 +1380,27 @@ function Tab_Simulation_Callbacks(app)
             
     end
 
+    # open/close External libraries box
+    callback!(app,
+        Output("collapse-external-libraries", "is_open"),
+        [Input("button-external-libraries", "n_clicks")],
+        [State("collapse-external-libraries", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
+
+        if isnothing(n); n=0 end
+
+        if n>0
+            if is_open==1
+                is_open = 0
+            elseif is_open==0
+                is_open = 1
+            end
+        end
+        return is_open
+
+    end
+
     # open/close Curve interpretation box
     callback!(app,
         Output("collapse-contact", "is_open"),
