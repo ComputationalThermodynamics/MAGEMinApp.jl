@@ -2116,6 +2116,95 @@ function get_draw_path_plot(diagType, sysunit, path_ids)
     return traces, phase_list
 end
 
+# Display labels for the "Other" system-level fields, mirrored from the
+# "of-dropdown" options (Tab_PhaseDiagram.jl) so the draw-path field profile
+# uses the same wording.
+const OTHER_FIELD_LABELS = Dict(
+    "G_system"      => "G system",            "entropy"       => "Entropy",
+    "enthalpy"      => "Enthalpy",            "s_cp"          => "Specific cp",
+    "alpha"         => "Thermal expansivity", "fO2"           => "log10(fO2)",
+    "dQFM"          => "log10(dQFM)",         "aH2O"          => "H2O activity",
+    "aFeO"          => "FeO activity",        "aMgO"          => "MgO activity",
+    "aAl2O3"        => "Al2O3 activity",      "aSiO2"         => "SiO2 activity",
+    "aTiO2"         => "TiO2 activity",       "eta_M"         => "Melt viscosity [log10(Pa*s)]",
+    "rho"           => "ρ_system",            "rho_S"         => "ρ_solid",
+    "rho_M"         => "ρ_melt",              "Delta_rho"     => "Δρ",
+    "frac_S"        => "Solid mol fraction",  "frac_S_wt"     => "Solid wt fraction",
+    "frac_S_vol"    => "Solid vol fraction",  "frac_M"        => "Melt mol fraction",
+    "frac_M_wt"     => "Melt wt fraction",    "frac_M_vol"    => "Melt vol fraction",
+    "Vp/Vs"         => "Vp/Vs",               "Vp_S/Vs_S"     => "Vp_S/Vs_S",
+    "Vp"            => "Vp",                  "Vs"            => "Vs",
+    "Vp_cor"        => "Vp_cor",              "Vs_cor"        => "Vs_cor",
+    "Vp_S"          => "Vp_S",                "Vs_S"          => "Vs_S",
+    "bulk_res_norm" => "Bulk residual (norm)","time_ms"       => "Computation time (ms)",
+    "status"        => "Status",
+)
+
+"""
+    get_other_field_value(pt, of::String)::Float64
+
+Single-point counterpart of the `"of_mod"` branch in `get_isopleth_map`
+(MAGEMinApp_functions.jl), used to sample a system-level "Other" field
+directly from one `Out_XY` point instead of gridding it over the AMR mesh.
+"""
+function get_other_field_value(pt, of::String)::Float64
+    if of == "s_cp"
+        return pt.s_cp[1]
+    elseif of == "entropy"
+        return pt.entropy[1]
+    elseif of == "enthalpy"
+        return pt.enthalpy[1]
+    elseif of == "alpha"
+        return pt.alpha[1]
+    elseif of == "eta_M"
+        v = log10(pt.eta_M)
+        return (isnan(v) || isinf(v)) ? 0.0 : v
+    elseif of == "Vp/Vs"
+        return pt.Vp / pt.Vs
+    elseif of == "Vp_S/Vs_S"
+        return pt.Vp_S / pt.Vs_S
+    elseif of == "Delta_rho"
+        return (pt.frac_M > 0.0 && pt.frac_S > 0.0) ? (pt.rho_S - pt.rho_M) : 0.0
+    else
+        return Float64(get_property(pt, of))
+    end
+end
+
+"""
+    get_draw_path_field_plot(diagType, of, path_ids)
+
+Field-profile counterpart of `get_draw_path_plot`: samples a single
+system-level "Other" field (see `OTHER_FIELD_LABELS`) along the recorded
+path instead of stacking phase fractions.
+"""
+function get_draw_path_field_plot(diagType, of, path_ids)
+    global Out_XY
+
+    n_tot = length(path_ids)
+    if n_tot == 0
+        return GenericTrace[]
+    end
+
+    x = Vector{String}(undef, n_tot)
+    y = Vector{Float64}(undef, n_tot)
+    for (k, id) in enumerate(path_ids)
+        x[k] = _draw_path_point_label(diagType, id)
+        y[k] = get_other_field_value(Out_XY[id], of)
+    end
+
+    trace = scatter(;
+        x          = x,
+        y          = y,
+        mode       = "lines+markers",
+        line       = attr(width=1.5, color="black"),
+        marker     = attr(size=5, color="black"),
+        name       = get(OTHER_FIELD_LABELS, of, of),
+        showlegend = false,
+    )
+
+    return GenericTrace[trace]
+end
+
 
 # ─── Thermobarometric intersection helpers ────────────────────────────────────
 

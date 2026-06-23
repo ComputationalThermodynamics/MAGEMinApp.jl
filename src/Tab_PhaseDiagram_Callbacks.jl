@@ -1620,7 +1620,17 @@ function Tab_PhaseDiagram_Callbacks(app)
         return "$(length(draw_path_ids)) point(s)", cols, rows
     end
 
-    # Draw path — generate stacked area diagram
+    # Draw path — show/hide field dropdown depending on display mode
+    callback!(
+        app,
+        Output("draw-path-field-id", "style"),
+        Input("draw-path-mode-dropdown", "value"),
+        prevent_initial_call = true,
+    ) do mode
+        return mode == "field" ? Dict("display" => "block") : Dict("display" => "none")
+    end
+
+    # Draw path — generate stacked area / field profile diagram
     callback!(
         app,
         Output("draw-path-diagram", "figure" ),
@@ -1630,8 +1640,10 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("mineral-naming-dropdown",   "value"   ),
         State("draw-path-sysunit",         "value"   ),
         State("diagram-dropdown",          "value"   ),
+        State("draw-path-mode-dropdown",   "value"   ),
+        State("draw-path-field-dropdown",  "value"   ),
         prevent_initial_call = true,
-    ) do _n, warr_naming, sysunit, diagType
+    ) do _n, warr_naming, sysunit, diagType, mode, field_value
         global use_warr_names
         use_warr_names[1] = (warr_naming == "warr")
 
@@ -1643,7 +1655,15 @@ function Tab_PhaseDiagram_Callbacks(app)
             return plot(Layout(height=360)), PlotConfig(), (bid == "mineral-naming-dropdown" ? no_update() : false)
         end
 
-        traces, _phase_list = get_draw_path_plot(diagType, sysunit, draw_path_ids)
+        if mode == "field"
+            traces  = get_draw_path_field_plot(diagType, field_value, draw_path_ids)
+            ytitle  = get(OTHER_FIELD_LABELS, field_value, field_value)
+            fname   = "draw_path_field_profile"
+        else
+            traces, _phase_list = get_draw_path_plot(diagType, sysunit, draw_path_ids)
+            ytitle  = "Phase fraction [$(sysunit)%]"
+            fname   = "draw_path_phase_fractions"
+        end
 
         xtitle = diagType == "px" ? "X; P [$(pressure_unit_label())]" :
                  diagType == "tx" ? "X; T [°C]"   : "T [°C]; P [$(pressure_unit_label())]"
@@ -1655,9 +1675,13 @@ function Tab_PhaseDiagram_Callbacks(app)
             autosize    = true,
             paper_bgcolor = "white",
             plot_bgcolor  = "white",
-            xaxis       = attr(title=xtitle, showgrid=false, zeroline=false),
-            yaxis       = attr(title="Phase fraction [$(sysunit)%]", autorange=true, showgrid=false, zeroline=false),
-            showlegend  = true,
+            xaxis       = attr(title=xtitle, showgrid=false, zeroline=false,
+                                showline=true, linecolor="black", linewidth=1, mirror=true,
+                                ticks="outside", tickcolor="black"),
+            yaxis       = attr(title=ytitle, autorange=true, showgrid=false, zeroline=false,
+                                showline=true, linecolor="black", linewidth=1, mirror=true,
+                                ticks="outside", tickcolor="black"),
+            showlegend  = (mode != "field"),
         )
 
         fig    = plot(traces, layout)
@@ -1665,7 +1689,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             toImageButtonOptions = attr(
                 name     = "Download as svg",
                 format   = "svg",
-                filename = "draw_path_phase_fractions",
+                filename = fname,
                 width    = 800,
                 height   = 300,
                 scale    = 2.0,
