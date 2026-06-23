@@ -746,6 +746,7 @@ function Tab_IntersecT_Callbacks(app)
         Output("field-dropdown-ix-2",     "options"),
         Output("field-dropdown-ix-2",     "value"),
         Output("intersect-run-store-ix",  "data"),
+        Output("log-markdown-ix",         "children"),
         Input("run-intersect-ix",         "n_clicks"),
         State("phase-checklist-ix",       "value"),
         State("analysis-type-ix",         "value"),
@@ -758,17 +759,17 @@ function Tab_IntersecT_Callbacks(app)
         if !(@isdefined(Out_XY)) || isnothing(Out_XY) || length(Out_XY) == 0
             return [], nothing, true,
                    "No phase diagram found. Compute a PT diagram first.", "danger",
-                   [], nothing, [], nothing, n_clicks
+                   [], nothing, [], nothing, n_clicks, no_update()
         end
         if isnothing(measurements_ix)
             return [], nothing, true,
                    "No measurement file loaded. Upload a CSV first.", "danger",
-                   [], nothing, [], nothing, n_clicks
+                   [], nothing, [], nothing, n_clicks, no_update()
         end
         if isnothing(selected_phases) || length(selected_phases) == 0
             return [], nothing, true,
                    "No phases selected. Check at least one phase in the checklist.", "warning",
-                   [], nothing, [], nothing, n_clicks
+                   [], nothing, [], nothing, n_clicks, no_update()
         end
 
         try
@@ -781,7 +782,7 @@ function Tab_IntersecT_Callbacks(app)
             if isempty(phase_elements)
                 return [], nothing, true,
                        "No matching Phase_Element columns found for the selected phases.", "danger",
-                       [], nothing, [], nothing, n_clicks
+                       [], nothing, [], nothing, n_clicks, no_update()
             end
 
             model_df = build_intersect_model_df(Out_XY, phase_elements;
@@ -807,13 +808,14 @@ function Tab_IntersecT_Callbacks(app)
 
             opts    = _build_field_options(result)
             default = "Qcmp_weighted"
+            log_md  = intersect_log_markdown(result)
 
             return opts, default, false, "", "danger",
-                   opts, default, opts, default, n_clicks
+                   opts, default, opts, default, n_clicks, log_md
 
         catch e
             return [], nothing, true, sprint(showerror, e), "danger",
-                   [], nothing, [], nothing, n_clicks
+                   [], nothing, [], nothing, n_clicks, no_update()
         end
     end
 

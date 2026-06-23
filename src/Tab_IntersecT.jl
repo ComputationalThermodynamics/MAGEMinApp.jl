@@ -204,98 +204,112 @@ function Tab_IntersecT()
                     dbc_collapse(
                         dbc_card(dbc_cardbody([
 
-                            # Output field dropdown
-                            dbc_row([
-                                dbc_col([
-                                    html_h1("Display",
-                                        style = Dict("textAlign" => "left",
-                                                     "font-size" => "120%",
-                                                     "marginTop" => 4)),
-                                ], width=2),
-                                dbc_col([
-                                    dcc_dropdown(
-                                        id          = "field-dropdown-ix",
-                                        options     = [],
-                                        value       = nothing,
-                                        clearable   = false,
-                                        placeholder = "Run calculation first",
-                                    ),
-                                ], width=10),
-                            ]),
+                            dbc_tabs([
+                                dbc_tab(label="Diagrams", children=[
 
-                            html_div("‎ "),
-
-                            # Caption figure (above main diagram, height driven by callback)
-                            dbc_row([
-                                dcc_graph(
-                                    id     = "diagram-cap-ix",
-                                    figure = Dict(),
-                                    config = PlotConfig(displayModeBar=false),
-                                    style  = Dict("display" => "none"),
-                                ),
-                            ]),
-
-                            # Diagram
-                            dbc_row([
-                                dcc_graph(
-                                    id     = "diagram-ix",
-                                    figure = Dict(),
-                                ),
-                            ]),
-
-                            html_div("‎ "),
-
-                            # Sub-diagrams row
-                            dbc_row([
-                                dbc_col([
+                                    # Output field dropdown
                                     dbc_row([
                                         dbc_col([
                                             html_h1("Display",
                                                 style = Dict("textAlign" => "left",
                                                              "font-size" => "120%",
                                                              "marginTop" => 4)),
-                                        ], width=3),
+                                        ], width=2),
                                         dbc_col([
                                             dcc_dropdown(
-                                                id          = "field-dropdown-ix-1",
+                                                id          = "field-dropdown-ix",
                                                 options     = [],
                                                 value       = nothing,
                                                 clearable   = false,
                                                 placeholder = "Run calculation first",
                                             ),
-                                        ], width=9),
+                                        ], width=10),
                                     ]),
-                                    html_div("‎ "),
-                                    dcc_graph(
-                                        id     = "diagram-ix-1",
-                                        figure = Dict(),
-                                    ),
-                                ], width=6),
 
-                                dbc_col([
+                                    html_div("‎ "),
+
+                                    # Caption figure (above main diagram, height driven by callback)
+                                    dbc_row([
+                                        dcc_graph(
+                                            id     = "diagram-cap-ix",
+                                            figure = Dict(),
+                                            config = PlotConfig(displayModeBar=false),
+                                            style  = Dict("display" => "none"),
+                                        ),
+                                    ]),
+
+                                    # Diagram
+                                    dbc_row([
+                                        dcc_graph(
+                                            id     = "diagram-ix",
+                                            figure = Dict(),
+                                        ),
+                                    ]),
+
+                                    html_div("‎ "),
+
+                                    # Sub-diagrams row
                                     dbc_row([
                                         dbc_col([
-                                            html_h1("Display",
-                                                style = Dict("textAlign" => "left",
-                                                             "font-size" => "120%",
-                                                             "marginTop" => 4)),
-                                        ], width=3),
-                                        dbc_col([
-                                            dcc_dropdown(
-                                                id          = "field-dropdown-ix-2",
-                                                options     = [],
-                                                value       = nothing,
-                                                clearable   = false,
-                                                placeholder = "Run calculation first",
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("Display",
+                                                        style = Dict("textAlign" => "left",
+                                                                     "font-size" => "120%",
+                                                                     "marginTop" => 4)),
+                                                ], width=3),
+                                                dbc_col([
+                                                    dcc_dropdown(
+                                                        id          = "field-dropdown-ix-1",
+                                                        options     = [],
+                                                        value       = nothing,
+                                                        clearable   = false,
+                                                        placeholder = "Run calculation first",
+                                                    ),
+                                                ], width=9),
+                                            ]),
+                                            html_div("‎ "),
+                                            dcc_graph(
+                                                id     = "diagram-ix-1",
+                                                figure = Dict(),
                                             ),
-                                        ], width=9),
+                                        ], width=6),
+
+                                        dbc_col([
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("Display",
+                                                        style = Dict("textAlign" => "left",
+                                                                     "font-size" => "120%",
+                                                                     "marginTop" => 4)),
+                                                ], width=3),
+                                                dbc_col([
+                                                    dcc_dropdown(
+                                                        id          = "field-dropdown-ix-2",
+                                                        options     = [],
+                                                        value       = nothing,
+                                                        clearable   = false,
+                                                        placeholder = "Run calculation first",
+                                                    ),
+                                                ], width=9),
+                                            ]),
+                                            html_div("‎ "),
+                                            dcc_graph(
+                                                id     = "diagram-ix-2",
+                                                figure = Dict(),
+                                            ),
+                                        ], width=6),
                                     ]),
+
+                                ]),
+                                dbc_tab(label="Log", children=[
                                     html_div("‎ "),
-                                    dcc_graph(
-                                        id     = "diagram-ix-2",
-                                        figure = Dict(),
+                                    dcc_markdown(
+                                        id       = "log-markdown-ix",
+                                        children = "Run calculation first",
+                                        style    = Dict("white-space" => "pre-wrap", "font-size" => "100%"),
                                     ),
-                                ], width=6),
+                                ]),
                             ]),
 
                         ])),

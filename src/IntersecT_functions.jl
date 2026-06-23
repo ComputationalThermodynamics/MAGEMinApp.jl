@@ -228,3 +228,30 @@ function make_measurements_df(
     df = DataFrame([pe => [apfu_values[j], err_row[j]] for (j, pe) in enumerate(phase_elements)])
     return df
 end
+
+"""
+    intersect_log_markdown(result::IntersecT.IntersecTResult) -> String
+
+Build the IntersecT analysis report (see `IntersecT.generate_log`/`format_log`)
+as a markdown code block. The model's y-coordinate is always pressure in kbar
+(see `build_intersect_model_df`), so the y-related fields are rescaled to the
+currently selected display unit (kbar or GPa) before formatting.
+"""
+function intersect_log_markdown(result)::String
+    log = IntersecT.generate_log(result)
+
+    log_disp = IntersecT.IntersecTLog(
+        log.phase_names,                log.element_names,
+        log.Qcmp_elem_max,              log.Qcmp_elem_max_x,        display_pressure(log.Qcmp_elem_max_y),
+        log.Qcmp_phase_max,             log.Qcmp_phase_max_x,       display_pressure(log.Qcmp_phase_max_y),
+        log.redchi2_phase_min,          log.redchi2_phase_label,    log.redchi2_warnings,
+        log.redchi2_tot_min,            log.redchi2_tot_min_x,      display_pressure(log.redchi2_tot_min_y),
+        log.phase_weights,
+        log.Qcmp_weighted_max,          log.Qcmp_weighted_max_x,    display_pressure(log.Qcmp_weighted_max_y),
+        log.Qcmp_phase_at_weighted_max,
+        log.Qcmp_unweighted_max,        log.Qcmp_unweighted_max_x,  display_pressure(log.Qcmp_unweighted_max_y),
+    )
+
+    text = IntersecT.format_log(log_disp, "T [Celsius]", "P [$(pressure_unit_label())]")
+    return "```\n" * text * "\n```"
+end
