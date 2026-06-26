@@ -740,12 +740,13 @@ function Tab_Simulation_Callbacks(app)
         return style
     end
 
-    # callback to display the seismic-correction-dependent options (aspect ratio, anelastic correction, shallow correction)
+    # callback to display the seismic-correction-dependent options (aspect ratio, anelastic correction, shallow correction, fluid as melt)
     callback!(
         app,
         Output("aspect-ratio-row-id",      "style"),
         Output("anelastic-toggle-row-id",  "style"),
         Output("shallow-cor-row-id",       "style"),
+        Output("fluid-as-melt-row-id",     "style"),
         Input("seismic-cor-dropdown", "value"),
 
         prevent_initial_call = true,
@@ -755,7 +756,7 @@ function Tab_Simulation_Callbacks(app)
         else
             style  = Dict("display" => "none")
         end
-        return style, style, style
+        return style, style, style, style
     end
 
     # callback to display the anelastic model dropdown, only when both seismic correction and anelastic correction are enabled

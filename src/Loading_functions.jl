@@ -33,6 +33,7 @@ function get_contributors()
     debug   *= "Peter Luffi\n"
     debug   *= "Philip Hartmeier\n"
     debug   *= "Pierre Lanari\n"
+    debug   *= "Qiaozhi Liang\n"
     debug   *= "Renato Moraes\n"
     debug   *= "Richard Palin\n"
     debug   *= "Simon Schorn\n"
@@ -64,6 +65,7 @@ function get_contributors()
     app     *= "Paul Tackley\n"
     app     *= "Peter Luffi\n"
     app     *= "Pierre Lanari\n"
+    app     *= "Qiaozhi Liang\n"
     app     *= "Renee Tamblyn\n"
     app     *= "Simon Schorn\n"
     app     *= "Yishen Zhang\n"
@@ -124,6 +126,7 @@ function get_dtbulk_list()
         Dict("label" => "Metabasite (Green et al., 2016)", "value" => "mb"),
         Dict("label" => "Igneous (Green et al., 2025, after H18)", "value" => "ig"),
         # Dict("label" => "Igneous Mantle (Rinaldi et al., 2026)", "value" => "igm"),
+        Dict("label" => "Igneous dry (Bin et al., 2026, after T21)", "value" => "igd"),
         Dict("label" => "Igneous alkaline dry (Weller et al., 2024)", "value" => "igad"),
         Dict("label" => "Ultramafic (Evans & Frost., 2021)", "value" => "um"),
         # Dict("label" => "Calc-shist (Stuck et al., 2026)", "value" => "cs"),
@@ -152,6 +155,10 @@ function get_dtbulk_list()
     push!(dba,Dict(         :database    => "Igneous (Green et al., 2025, after H18)",
                             :acronym     => "ig",
                             ), cols=:union)
+
+    # push!(dba,Dict(         :database    => "Igneous dry (Bin et al., 2026, after T21)",
+    #                         :acronym     => "igd",
+    #                         ), cols=:union)
 
     # push!(dba,Dict(         :database    => "Igneous Mantle (Rinaldi et al., 2026)",
     #                         :acronym     => "igm",
@@ -458,6 +465,28 @@ function get_dtbulk_list()
                             :frac       => [50.0810,  8.6901,  11.6698, 12.1438, 7.7832,  0.2150,  2.4978,  1.0059,  0.4670,  0.0100, 5.4364],
                             :frac2      => [50.0810,  8.6901,  11.6698, 12.1438, 7.7832,  0.2150,  2.4978,  1.0059,  0.4670,  0.0100, 5.4364],
                             ), cols=:union)
+
+    # push!(db,Dict(          :bulk       => "predefined",
+    #                         :title      => "KLB1 Peridotite - Anhydrous",
+    #                         :comments   => "Holland et al., 2018",
+    #                         :db         => "igd",
+    #                         :test       => 0,
+    #                         :sysUnit    => "mol",
+    #                         :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3"],
+    #                         :frac       => [38.494,  1.776,  2.824, 50.566, 5.886,  0.01,  0.250,  0.10,  0.096,  0.109],
+    #                         :frac2      => [38.494,  1.776,  2.824, 50.566, 5.886,  0.01,  0.250,  0.10,  0.096,  0.109],
+    #                         ), cols=:union)
+
+    # push!(db,Dict(          :bulk       => "predefined",
+    #                         :title      => "RE46 - Icelandic basalt",
+    #                         :comments   => "Yang et al., 1996",
+    #                         :db         => "igd",
+    #                         :test       => 1,
+    #                         :sysUnit    => "mol",
+    #                         :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3"],
+    #                         :frac       => [ 50.72,	9.16,15.21, 16.25,	7.06, 0.01, 1.47, 0.39, 0.35,  0.01],
+    #                         :frac2      => [ 50.72,	9.16,15.21, 16.25,	7.06, 0.01, 1.47, 0.39, 0.35,  0.01],
+    #                         ), cols=:union)
 
     # MANTLE IGNEOUS DATABASE
     # push!(db,Dict(          :bulk       => "predefined",

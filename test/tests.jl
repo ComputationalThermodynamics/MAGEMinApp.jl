@@ -67,6 +67,7 @@ Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(  "ig", data,
                                                 1.0,
                                                 0,
                                                 false,
+                                                false,
                                                 false    )
 @test length(Out_XY) == 25
 
@@ -107,6 +108,7 @@ Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(   "ig", data,
                                                 false,
                                                 1.0,
                                                 0,
+                                                false,
                                                 false,
                                                 false ) # recompute points that have not been computed before
 

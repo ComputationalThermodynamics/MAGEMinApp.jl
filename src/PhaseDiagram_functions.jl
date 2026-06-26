@@ -962,7 +962,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                     test,       refType,
                                     seismicScheme = "VRH", seismicWeightFactor = 0.5,
                                     seismic_cor = false, aspect_ratio = 0.3, seismic_water = 0,
-                                    shallow_cor = false, anelastic_correction = false        )
+                                    shallow_cor = false, fluid_as_melt = false, anelastic_correction = false        )
         global CompProgress
 
         #________________________________________________________________________________________#
@@ -1018,7 +1018,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                                         bufferType, bufferN1, bufferN2,
                                                         scp, boost, refType,
                                                         pChip_wat, pChip_T,
-                                                        seismic_cor, aspect_ratio, seismic_water, shallow_cor, anelastic_correction    )
+                                                        seismic_cor, aspect_ratio, seismic_water, shallow_cor, fluid_as_melt, anelastic_correction    )
 
         
         #________________________________________________________________________________________#     
@@ -1040,7 +1040,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                                                                         bufferType, bufferN1, bufferN2,
                                                                                         scp, boost, refType,
                                                                                         pChip_wat, pChip_T,
-                                                                                        seismic_cor, aspect_ratio, seismic_water, shallow_cor, anelastic_correction ) # recompute points that have not been computed before
+                                                                                        seismic_cor, aspect_ratio, seismic_water, shallow_cor, fluid_as_melt, anelastic_correction ) # recompute points that have not been computed before
                                                                         
                 println("Computed $(length(data.npoints)) new points in $t seconds")
             end
@@ -1218,7 +1218,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                 test,       refType, bid,
                                 seismicScheme = "VRH", seismicWeightFactor = 0.5,
                                 seismic_cor = false, aspect_ratio = 0.3, seismic_water = 0,
-                                shallow_cor = false, anelastic_correction = false       )
+                                shallow_cor = false, fluid_as_melt = false, anelastic_correction = false       )
 
     global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, gridded_fields, phase_infos, X, Y, addedRefinementLvl, layout, n_lbl, pChip_wat, pChip_T
 
@@ -1245,7 +1245,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                                                             bufferType, bufferN1, bufferN2,
                                                                             scp, boost, refType,
                                                                             pChip_wat,  pChip_T,
-                                                                            seismic_cor, aspect_ratio, seismic_water, shallow_cor, anelastic_correction) # recompute points that have not been computed before
+                                                                            seismic_cor, aspect_ratio, seismic_water, shallow_cor, fluid_as_melt, anelastic_correction) # recompute points that have not been computed before
 
     println("Computed $(length(data.npoints)) new points in $(round(t, digits=3)) seconds")
     addedRefinementLvl += 1;

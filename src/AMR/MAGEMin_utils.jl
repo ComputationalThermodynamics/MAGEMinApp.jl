@@ -259,6 +259,7 @@ function refine_MAGEMin(dtb,data,
                         aspect_ratio    :: Float64,
                         seismic_water   :: Int64,
                         shallow_cor     :: Bool,
+                        fluid_as_melt   :: Bool,
                         anelastic_correction :: Bool    )
     global Out_XY, addedRefinementLvl;
 
@@ -422,7 +423,7 @@ function refine_MAGEMin(dtb,data,
             Out_XY_new  =   multi_point_minimization(   Pvec, Tvec, MAGEMin_data;
                                                         X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol", G=Gvec, scp=scp,
                                                         rm_list=phase_selection, name_solvus=true, fixed_bulk=fixed_bulk, iguess=Ivec, callback_fn = update_progress, W=new_Ws,
-                                                        seismic_cor=seismic_cor, aspect_ratio=aspect_ratio, seismic_water=seismic_water, shallow_correction=shallow_cor, anelastic_cor=anelastic_correction);
+                                                        seismic_cor=seismic_cor, aspect_ratio=aspect_ratio, seismic_water=seismic_water, shallow_correction=shallow_cor, fluid_as_melt=fluid_as_melt, anelastic_cor=anelastic_correction);
         else
             # if TT diagram does not exist, compute it
             id_h2o = findfirst(oxi .== "H2O") # check if H2O is in the oxides
@@ -434,7 +435,7 @@ function refine_MAGEMin(dtb,data,
                     out     = single_point_minimization(    fixP, npoints[i][2], MAGEMin_data;
                                                             X=start_bulk, B=bufferN1, Xoxides=oxi, sys_in="mol",  scp=scp,
                                                             rm_list=phase_selection, name_solvus=true,
-                                                            seismic_cor=seismic_cor, aspect_ratio=aspect_ratio, seismic_water=seismic_water, shallow_correction=shallow_cor, anelastic_cor=anelastic_correction)
+                                                            seismic_cor=seismic_cor, aspect_ratio=aspect_ratio, seismic_water=seismic_water, shallow_correction=shallow_cor, fluid_as_melt=fluid_as_melt, anelastic_cor=anelastic_correction)
                     
                     if "fl" in out.ph || "H2O" in out.ph || "liq" in out.ph
                         if "fl" in out.ph
@@ -460,7 +461,7 @@ function refine_MAGEMin(dtb,data,
                         out         = single_point_minimization(    fixP, npoints[i][2], MAGEMin_data;
                                                                     X=start_bulk, B=bufferN1, Xoxides=oxi, sys_in="mol",  scp=scp,
                                                                     rm_list=phase_selection, name_solvus=true, W=new_Ws,
-                                                                    seismic_cor=seismic_cor, aspect_ratio=aspect_ratio, seismic_water=seismic_water, shallow_correction=shallow_cor, anelastic_cor=anelastic_correction)
+                                                                    seismic_cor=seismic_cor, aspect_ratio=aspect_ratio, seismic_water=seismic_water, shallow_correction=shallow_cor, fluid_as_melt=fluid_as_melt, anelastic_cor=anelastic_correction)
             
                         Out_col_1[i] = deepcopy(out)
                         Out_col_1[i].X .= npoints[i][2]
@@ -487,7 +488,7 @@ function refine_MAGEMin(dtb,data,
 
                         out     = point_wise_minimization(  P_, T_[j], gv, z_b, DB, splx_data;
                                                             buffer_n=bufferN1, name_solvus=true, scp=scp, rm_list=phase_selection, W=new_Ws,
-                                                            seismic_cor=seismic_cor, aspect_ratio=aspect_ratio, seismic_water=seismic_water, shallow_correction=shallow_cor, anelastic_cor=anelastic_correction)
+                                                            seismic_cor=seismic_cor, aspect_ratio=aspect_ratio, seismic_water=seismic_water, shallow_correction=shallow_cor, fluid_as_melt=fluid_as_melt, anelastic_cor=anelastic_correction)
 
                         if "fl" in out.ph || "H2O" in out.ph || "liq" in out.ph
                             if "fl" in out.ph
@@ -510,7 +511,7 @@ function refine_MAGEMin(dtb,data,
                             gv      = define_bulk_rock(gv, bulk_, oxi, "mol",unsafe_string(gv.db))
                             out     = point_wise_minimization(  P_, T_[j], gv, z_b, DB, splx_data;
                                                                 buffer_n=bufferN1, name_solvus=true, scp=scp, rm_list=phase_selection, W=new_Ws,
-                                                                seismic_cor=seismic_cor, aspect_ratio=aspect_ratio, seismic_water=seismic_water, shallow_correction=shallow_cor, anelastic_cor=anelastic_correction)
+                                                                seismic_cor=seismic_cor, aspect_ratio=aspect_ratio, seismic_water=seismic_water, shallow_correction=shallow_cor, fluid_as_melt=fluid_as_melt, anelastic_cor=anelastic_correction)
 
                             Out_PT[j] = deepcopy(out)
                             Out_PT[j].X .= X
@@ -554,7 +555,7 @@ function refine_MAGEMin(dtb,data,
                 Out_XY_new  =   multi_point_minimization(   Pvec, Tvec, MAGEMin_data;
                                                             X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol", G=Gvec, scp=scp,
                                                             rm_list=phase_selection, name_solvus=true, iguess=boost, callback_fn = update_progress, W=new_Ws,
-                                                            seismic_cor=seismic_cor, aspect_ratio=aspect_ratio, seismic_water=seismic_water, shallow_correction=shallow_cor, anelastic_cor=anelastic_correction);
+                                                            seismic_cor=seismic_cor, aspect_ratio=aspect_ratio, seismic_water=seismic_water, shallow_correction=shallow_cor, fluid_as_melt=fluid_as_melt, anelastic_cor=anelastic_correction);
 
                 for i=1:n_new_points
                     Out_XY_new[i].X .= data.npoints[i][2]  

@@ -886,6 +886,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("aspect-ratio-id",        "value"),           # aspect ratio of melt/pore geometry [0,1]
         State("seismic-water-dropdown", "value"),           # anelastic correction mode: 0=dry, 1=damp, 2=wet (saturated) mantle
         State("shallow-cor-dropdown",   "value"),           # shallow correction true/false
+        State("fluid-as-melt-dropdown", "value"),           # fluid as melt true/false
         State("anelastic-cor-dropdown", "value"),           # anelastic correction true/false
 
         State("table-bulk-rock",        "data" ),            # bulk-rock 1
@@ -945,7 +946,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             tmin,       tmax,       pmin,       pmax,       e1_tmin,    e1_tmax,    e2_tmin,    e2_tmax,    e1_liq,     e2_liq,  e1_remain_wat,     e2_remain_wat,e1_remain,     e2_remain,      
             fixT,       fixP,
             sub,        refType,    refLvl,
-            bufferType, solver,     boost,      verbose,    scp,        sas,        wf,         seismicCorMode, aspectRatioVal, seismicWaterMode, shallowCorMode, anelasticCorMode,
+            bufferType, solver,     boost,      verbose,    scp,        sas,        wf,         seismicCorMode, aspectRatioVal, seismicWaterMode, shallowCorMode, fluidAsMeltMode, anelasticCorMode,
             bulk1,      bulk2,      sys_unit,   
             bufferN1,   bufferN2,
             tepm,       kds_mod,    zrsat_mod,  ssat_mod,   co2sat_mod, P2O5sat_mod,    bulkte1,    bulkte2,
@@ -966,6 +967,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         aspectRatio                     = Float64(aspectRatioVal)
         seismicWater                    = Int64(seismicWaterMode)
         shallowCor                      = Bool(shallowCorMode)
+        fluidAsMelt                     = Bool(fluidAsMeltMode)
         anelasticCor                    = Bool(anelasticCorMode)
         pmin, pmax                      = to_kbar_pressure(Float64(pmin)), to_kbar_pressure(Float64(pmax))                                  # convert displayed pressure unit to kbar
         xtitle, ytitle, Xrange, Yrange  = diagram_type(diagType, tmin, tmax, pmin, pmax, e1_tmin, e1_tmax, e2_tmin, e2_tmax)                # get axis information
@@ -1023,7 +1025,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                                                         smooth,     colorm,     reverseColorMap, set_white,
                                                                                                         test,       refType,
                                                                                                         seismicScheme, seismicWeightFactor,
-                                                                                                        seismicCor, aspectRatio, seismicWater, shallowCor, anelasticCor        )
+                                                                                                        seismicCor, aspectRatio, seismicWater, shallowCor, fluidAsMelt, anelasticCor        )
             if tepm == "true"
                 if dtb != "um" && dtb != "ume" && dtb != "mtl"
                     t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
@@ -1077,7 +1079,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                                     smooth,     colorm,     reverseColorMap, set_white,
                                                                                     test,       refType,    bid,
                                                                                     seismicScheme, seismicWeightFactor,
-                                                                                    seismicCor, aspectRatio, seismicWater, shallowCor, anelasticCor     )
+                                                                                    seismicCor, aspectRatio, seismicWater, shallowCor, fluidAsMelt, anelasticCor     )
 
             if tepm == "true"
                 if dtb != "um" && dtb != "ume" && dtb != "mtl"
