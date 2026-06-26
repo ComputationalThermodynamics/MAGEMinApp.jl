@@ -3,7 +3,7 @@
 #   Project      : MAGEMin_App
 #   License      : GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #   Developers   : Nicolas Riel, Boris Kaus
-#   Contributors : Dominguez, H., Moyen, J-F.
+#   Contributors : Nerone, S., Dominguez, H., Moyen, J-F.
 #   Organization : Institute of Geosciences, Johannes-Gutenberg University, Mainz
 #   Contact      : nriel[at]uni-mainz.de
 #
@@ -64,7 +64,7 @@ function create_ph_style()
     pp_list = String[]
     ss_list = String[]
 
-    dbs     = ["mp","mb","mbe","ig","igad","um","ume","mtl","mpe","sb11","sb21","sb24"] #"cs","igm",
+    dbs     = ["mp","mb","mbe","ig","igd","igad","um","ume","mtl","mpe","sb11","sb21","sb24"] #"cs","igm",
 
     for db in dbs
         ph = retrieve_solution_phase_information(db)

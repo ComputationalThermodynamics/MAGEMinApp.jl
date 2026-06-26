@@ -3,7 +3,7 @@
 #   Project      : MAGEMin_App
 #   License      : GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #   Developers   : Nicolas Riel, Boris Kaus
-#   Contributors : Dominguez, H., Moyen, J-F.
+#   Contributors : Nerone, S., Dominguez, H., Moyen, J-F.
 #   Organization : Institute of Geosciences, Johannes-Gutenberg University, Mainz
 #   Contact      : nriel[at]uni-mainz.de
 #
@@ -1031,6 +1031,23 @@ function Tab_Simulation()
                                             ]),
                                         ]),
                                     ], style = Dict("display" => "none"), id      = "shallow-cor-row-id"), #none, block
+                                    html_div([
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Fluid as melt", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ]),
+                                            dbc_col([
+                                                dcc_dropdown(   id      = "fluid-as-melt-dropdown",
+                                                options = [
+                                                    (label = "true",         value = true),
+                                                    (label = "false",        value = false),
+                                                ],
+                                                value       = false,
+                                                clearable   =  false,
+                                                multi       =  false),
+                                            ]),
+                                        ]),
+                                    ], style = Dict("display" => "none"), id      = "fluid-as-melt-row-id"), #none, block
                                     html_hr(),
                                     #verbose
                                     dbc_row([

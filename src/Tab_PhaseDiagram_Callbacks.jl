@@ -3,7 +3,7 @@
 #   Project      : MAGEMin_App
 #   License      : GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #   Developers   : Nicolas Riel, Boris Kaus
-#   Contributors : Dominguez, H., Moyen, J-F.
+#   Contributors : Nerone, S., Dominguez, H., Moyen, J-F.
 #   Organization : Institute of Geosciences, Johannes-Gutenberg University, Mainz
 #   Contact      : nriel[at]uni-mainz.de
 #
@@ -232,9 +232,9 @@ function Tab_PhaseDiagram_Callbacks(app)
     ) do n_clicks, fname, dtb
 
         if fname != "filename"
-            mkpath("./output")
+            mkpath(output_dir[1])
             datab   = "_"*dtb
-            fileout = "./output/"*fname*datab
+            fileout = output_dir[1]*fname*datab
             MAGEMin_data2dataframe(Out_XY[point_id],dtb,fileout; use_Warr2021=use_warr_names[1], use_GPA=use_GPa[1])
 
             return  "success", ""
@@ -281,9 +281,9 @@ function Tab_PhaseDiagram_Callbacks(app)
     ) do n_clicks, fname, dtb
 
         if fname != "filename"
-            mkpath("./output")
+            mkpath(output_dir[1])
             datab   = "_"*dtb
-            fileout = "./output/"*fname*datab
+            fileout = output_dir[1]*fname*datab
 
             MAGEMin_data2dataframe(Out_XY,dtb,fileout; use_Warr2021=use_warr_names[1], use_GPA=use_GPa[1])
             return "success", ""
@@ -305,9 +305,9 @@ function Tab_PhaseDiagram_Callbacks(app)
     ) do n_clicks, fname, dtb
 
         if fname != "filename"
-            mkpath("./output")
+            mkpath(output_dir[1])
             output_bib      = "_"*dtb*".bib"
-            fileout         = "./output/"*fname*output_bib
+            fileout         = output_dir[1]*fname*output_bib
             magemin         = "MAGEMin"
             bib             = import_bibtex("./references/references.bib")
 
@@ -886,6 +886,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("aspect-ratio-id",        "value"),           # aspect ratio of melt/pore geometry [0,1]
         State("seismic-water-dropdown", "value"),           # anelastic correction mode: 0=dry, 1=damp, 2=wet (saturated) mantle
         State("shallow-cor-dropdown",   "value"),           # shallow correction true/false
+        State("fluid-as-melt-dropdown", "value"),           # fluid as melt true/false
         State("anelastic-cor-dropdown", "value"),           # anelastic correction true/false
 
         State("table-bulk-rock",        "data" ),            # bulk-rock 1
@@ -945,7 +946,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             tmin,       tmax,       pmin,       pmax,       e1_tmin,    e1_tmax,    e2_tmin,    e2_tmax,    e1_liq,     e2_liq,  e1_remain_wat,     e2_remain_wat,e1_remain,     e2_remain,      
             fixT,       fixP,
             sub,        refType,    refLvl,
-            bufferType, solver,     boost,      verbose,    scp,        sas,        wf,         seismicCorMode, aspectRatioVal, seismicWaterMode, shallowCorMode, anelasticCorMode,
+            bufferType, solver,     boost,      verbose,    scp,        sas,        wf,         seismicCorMode, aspectRatioVal, seismicWaterMode, shallowCorMode, fluidAsMeltMode, anelasticCorMode,
             bulk1,      bulk2,      sys_unit,   
             bufferN1,   bufferN2,
             tepm,       kds_mod,    zrsat_mod,  ssat_mod,   co2sat_mod, P2O5sat_mod,    bulkte1,    bulkte2,
@@ -966,6 +967,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         aspectRatio                     = Float64(aspectRatioVal)
         seismicWater                    = Int64(seismicWaterMode)
         shallowCor                      = Bool(shallowCorMode)
+        fluidAsMelt                     = Bool(fluidAsMeltMode)
         anelasticCor                    = Bool(anelasticCorMode)
         pmin, pmax                      = to_kbar_pressure(Float64(pmin)), to_kbar_pressure(Float64(pmax))                                  # convert displayed pressure unit to kbar
         xtitle, ytitle, Xrange, Yrange  = diagram_type(diagType, tmin, tmax, pmin, pmax, e1_tmin, e1_tmax, e2_tmin, e2_tmax)                # get axis information
@@ -1023,7 +1025,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                                                         smooth,     colorm,     reverseColorMap, set_white,
                                                                                                         test,       refType,
                                                                                                         seismicScheme, seismicWeightFactor,
-                                                                                                        seismicCor, aspectRatio, seismicWater, shallowCor, anelasticCor        )
+                                                                                                        seismicCor, aspectRatio, seismicWater, shallowCor, fluidAsMelt, anelasticCor        )
             if tepm == "true"
                 if dtb != "um" && dtb != "ume" && dtb != "mtl"
                     t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
@@ -1077,7 +1079,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                                     smooth,     colorm,     reverseColorMap, set_white,
                                                                                     test,       refType,    bid,
                                                                                     seismicScheme, seismicWeightFactor,
-                                                                                    seismicCor, aspectRatio, seismicWater, shallowCor, anelasticCor     )
+                                                                                    seismicCor, aspectRatio, seismicWater, shallowCor, fluidAsMelt, anelasticCor     )
 
             if tepm == "true"
                 if dtb != "um" && dtb != "ume" && dtb != "mtl"
@@ -1371,7 +1373,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             for i=1:n_lbl
                 lyt[:annotations][i][:visible] = false
             end
-            filename = "./output/"*replace(customTitle, " " => "_") * "_$fieldname.svg"
+            filename = output_dir[1]*replace(customTitle, " " => "_") * "_$fieldname.svg"
             savefig(plot(heat_map_export,lyt), filename; width=720, height=900)
             np       = length(fieldNames_exp)
             if np > 0
@@ -1383,15 +1385,15 @@ function Tab_PhaseDiagram_Callbacks(app)
                             names = sanitize_names(names_raw)
                             for j = 1:ni
                                 trace_fig = plot_diagram(data_isopleth.isoPexp[data_isopleth.active[j]], lyt)
-                                filename = "./output/"*replace(customTitle, " " => "_") * "_$(fieldNames_exp[i])_$(names[j]).svg"
+                                filename = output_dir[1]*replace(customTitle, " " => "_") * "_$(fieldNames_exp[i])_$(names[j]).svg"
                                 savefig(trace_fig, filename; width=720, height=900)
                             end
                         else
                             trace_fig = plot_diagram(eval(Symbol(fieldNames_exp[i])), lyt)
-                            filename = "./output/"*replace(customTitle, " " => "_") * "_$(fieldNames_exp[i]).svg"
+                            filename = output_dir[1]*replace(customTitle, " " => "_") * "_$(fieldNames_exp[i]).svg"
                             savefig(trace_fig, filename; width=720, height=900)
                         end
-                        filename = "./output/"*replace(customTitle, " " => "_") * "_isopleths_caption.svg"
+                        filename = output_dir[1]*replace(customTitle, " " => "_") * "_isopleths_caption.svg"
                         savefig(plot(data_isopleth.isoCap[data_isopleth.active],layoutCap), filename; width=900, height=30)
                     end
                 end
@@ -1403,9 +1405,9 @@ function Tab_PhaseDiagram_Callbacks(app)
                     lyt[:annotations][i][:visible] = true
                 end
                 
-                filename = "./output/"*replace(customTitle, " " => "_") * "_labels.svg"
+                filename = output_dir[1]*replace(customTitle, " " => "_") * "_labels.svg"
                 savefig(plot(PlotlyJS.AbstractTrace[], lyt), filename; width=720, height=900)
-                open("./output/" * replace(customTitle, " " => "_") * "_phase_equilibria.txt", "w") do io
+                open(output_dir[1] * replace(customTitle, " " => "_") * "_phase_equilibria.txt", "w") do io
                     write(io, txt_list)
                 end
             end
@@ -1620,7 +1622,17 @@ function Tab_PhaseDiagram_Callbacks(app)
         return "$(length(draw_path_ids)) point(s)", cols, rows
     end
 
-    # Draw path — generate stacked area diagram
+    # Draw path — show/hide field dropdown depending on display mode
+    callback!(
+        app,
+        Output("draw-path-field-id", "style"),
+        Input("draw-path-mode-dropdown", "value"),
+        prevent_initial_call = true,
+    ) do mode
+        return mode == "field" ? Dict("display" => "block") : Dict("display" => "none")
+    end
+
+    # Draw path — generate stacked area / field profile diagram
     callback!(
         app,
         Output("draw-path-diagram", "figure" ),
@@ -1630,8 +1642,10 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("mineral-naming-dropdown",   "value"   ),
         State("draw-path-sysunit",         "value"   ),
         State("diagram-dropdown",          "value"   ),
+        State("draw-path-mode-dropdown",   "value"   ),
+        State("draw-path-field-dropdown",  "value"   ),
         prevent_initial_call = true,
-    ) do _n, warr_naming, sysunit, diagType
+    ) do _n, warr_naming, sysunit, diagType, mode, field_value
         global use_warr_names
         use_warr_names[1] = (warr_naming == "warr")
 
@@ -1643,7 +1657,15 @@ function Tab_PhaseDiagram_Callbacks(app)
             return plot(Layout(height=360)), PlotConfig(), (bid == "mineral-naming-dropdown" ? no_update() : false)
         end
 
-        traces, _phase_list = get_draw_path_plot(diagType, sysunit, draw_path_ids)
+        if mode == "field"
+            traces  = get_draw_path_field_plot(diagType, field_value, draw_path_ids)
+            ytitle  = get(OTHER_FIELD_LABELS, field_value, field_value)
+            fname   = "draw_path_field_profile"
+        else
+            traces, _phase_list = get_draw_path_plot(diagType, sysunit, draw_path_ids)
+            ytitle  = "Phase fraction [$(sysunit)%]"
+            fname   = "draw_path_phase_fractions"
+        end
 
         xtitle = diagType == "px" ? "X; P [$(pressure_unit_label())]" :
                  diagType == "tx" ? "X; T [°C]"   : "T [°C]; P [$(pressure_unit_label())]"
@@ -1655,9 +1677,13 @@ function Tab_PhaseDiagram_Callbacks(app)
             autosize    = true,
             paper_bgcolor = "white",
             plot_bgcolor  = "white",
-            xaxis       = attr(title=xtitle, showgrid=false, zeroline=false),
-            yaxis       = attr(title="Phase fraction [$(sysunit)%]", autorange=true, showgrid=false, zeroline=false),
-            showlegend  = true,
+            xaxis       = attr(title=xtitle, showgrid=false, zeroline=false,
+                                showline=true, linecolor="black", linewidth=1, mirror=true,
+                                ticks="outside", tickcolor="black"),
+            yaxis       = attr(title=ytitle, autorange=true, showgrid=false, zeroline=false,
+                                showline=true, linecolor="black", linewidth=1, mirror=true,
+                                ticks="outside", tickcolor="black"),
+            showlegend  = (mode != "field"),
         )
 
         fig    = plot(traces, layout)
@@ -1665,7 +1691,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             toImageButtonOptions = attr(
                 name     = "Download as svg",
                 format   = "svg",
-                filename = "draw_path_phase_fractions",
+                filename = fname,
                 width    = 800,
                 height   = 300,
                 scale    = 2.0,
@@ -1922,6 +1948,100 @@ function Tab_PhaseDiagram_Callbacks(app)
         )
 
         return fig, config, true, stats
+    end
+
+    # ── Auto-range: populate iso-min/step/max from selected isopleth field ──
+    callback!(
+        app,
+        Output("iso-min-id",  "value"),
+        Output("iso-step-id", "value"),
+        Output("iso-max-id",  "value"),
+        Input("phase-dropdown",               "value"),
+        Input("ss-dropdown",                  "value"),
+        Input("em-dropdown",                  "value"),
+        Input("ox-dropdown",                  "value"),
+        Input("of-dropdown",                  "value"),
+        Input("other-dropdown",               "value"),
+        State("sys-unit-isopleth-dropdown",   "value"),
+        State("rm-exfluid-isopleth-dropdown", "value"),
+        State("input-calc-id",                "value"),
+        State("input-calc-sf-id",             "value"),
+        State("input-calc-ox-id",             "value"),
+        State("gsub-id",                      "value"),
+        State("refinement-levels",            "value"),
+        prevent_initial_call = true,
+    ) do phase, ss, em, ox, of, ot, sys, rmf, calc, calc_sf, calc_ox, sub, refLvl
+
+        global Out_XY, data, addedRefinementLvl
+
+        no_range = (no_update(), no_update(), no_update())
+
+        (!@isdefined(Out_XY) || isnothing(Out_XY) || isempty(Out_XY)) && return no_range
+        (!@isdefined(data))  && return no_range
+        isnothing(phase)     && return no_range
+
+        try
+            # dropdowns default to value=0 (Int64) until set — treat any non-string as default
+            to_str(x, d) = (isnothing(x) || !(x isa AbstractString)) ? d : String(x)
+            ss      = to_str(ss,  "")
+            em      = to_str(em,  "")
+            ox      = to_str(ox,  "")
+            of      = to_str(of,  "G_system")
+            ot      = to_str(ot,  "mode")
+            sys     = to_str(sys, "mol")
+            rmf_b   = something(rmf, false) == true
+            calc    = to_str(calc,    " ... ")
+            calc_sf = to_str(calc_sf, " ... ")
+            calc_ox = to_str(calc_ox, " ... ")
+
+            # Mirror mod determination from add_isopleth_phaseDiagram
+            if (phase == "ss" && ot == "mode") || phase == "pp"
+                mod = sys == "mol" ? "ph_frac" : (sys == "vol" ? "ph_frac_vol" : "ph_frac_wt")
+                em  = ""
+            elseif phase == "ss" && ot == "emMode"
+                mod = sys == "mol" ? "em_frac" : "ph_frac_wt"
+            elseif phase == "ss" && ot == "oxComp"
+                sys_cor = sys == "vol" ? "wt" : sys
+                mod = sys_cor == "mol" ? "ox_comp" : "ox_comp_wt"
+            elseif phase == "ss" && ot == "MgNum"
+                mod = "ss_MgNum"; em = ""
+            elseif phase == "ss" && ot == "calc"
+                mod = "ss_calc"; em = ""
+            elseif phase == "ss" && ot == "calc_sf"
+                mod = "ss_calc_sf"
+            elseif phase == "ss" && ot == "calc_ox"
+                sys_cor = sys == "vol" ? "wt" : sys
+                mod = "ss_calc_ox_" * sys_cor
+            elseif phase == "of"
+                mod = "of_mod"; em = ""; ss = ""
+            else
+                return no_range
+            end
+
+            oxi          = String.(Out_XY[1].oxides)
+            total_refLvl = Int64(something(refLvl, 0)) + addedRefinementLvl
+            Xrange_t     = (Float64(data.Xrange[1]), Float64(data.Xrange[2]))
+            Yrange_t     = (Float64(data.Yrange[1]), Float64(data.Yrange[2]))
+
+            gridded, _, _ = get_isopleth_map(
+                mod, ss, em, ox, of, ot, calc, calc_sf, calc_ox,
+                rmf_b, oxi, Out_XY,
+                Int64(something(sub, 3)), total_refLvl,
+                data, Xrange_t, Yrange_t,
+            )
+
+            finite_vals = filter(isfinite, Float64.(collect(skipmissing(vec(gridded)))))
+            isempty(finite_vals) && return no_range
+
+            vmin  = round(minimum(finite_vals), digits=4)
+            vmax  = round(maximum(finite_vals), digits=4)
+            vstep = max(round((vmax - vmin) / 10, digits=4), 1e-4)
+
+            return vmin, vstep, vmax
+
+        catch _
+            return no_range
+        end
     end
 
     return app

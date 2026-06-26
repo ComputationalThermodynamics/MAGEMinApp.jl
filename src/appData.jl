@@ -3,7 +3,7 @@
 #   Project      : MAGEMin_App
 #   License      : GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #   Developers   : Nicolas Riel, Boris Kaus
-#   Contributors : Dominguez, H., Moyen, J-F.
+#   Contributors : Nerone, S., Dominguez, H., Moyen, J-F.
 #   Organization : Institute of Geosciences, Johannes-Gutenberg University, Mainz
 #   Contact      : nriel[at]uni-mainz.de
 #
@@ -33,6 +33,8 @@ mineral_style           = load_style(joinpath(pkg_dir, "./user_data/mineral_styl
 global CompProgress     =  ComputationalProgress()
 global use_warr_names   = [false]
 global use_GPa          = [false]
+global output_dir       = [joinpath(pkg_dir, "output") * "/"]
+mkpath(output_dir[1])
 customWs                =  DataFrame()
 
 # Here we fill a tupple with the KDs for the OL12 database

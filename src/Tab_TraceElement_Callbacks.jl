@@ -3,7 +3,7 @@
 #   Project      : MAGEMin_App
 #   License      : GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #   Developers   : Nicolas Riel, Boris Kaus
-#   Contributors : Dominguez, H., Moyen, J-F.
+#   Contributors : Nerone, S., Dominguez, H., Moyen, J-F.
 #   Organization : Institute of Geosciences, Johannes-Gutenberg University, Mainz
 #   Contact      : nriel[at]uni-mainz.de
 #
@@ -723,7 +723,7 @@ function Tab_TraceElement_Callbacks(app)
                 for i=1:n_lbl
                     lyt[:annotations][i][:visible] = false
                 end
-                filename = "./output/"*replace(customTitle, " " => "_") * "_$fieldname.svg"
+                filename = output_dir[1]*replace(customTitle, " " => "_") * "_$fieldname.svg"
                 savefig(plot(heat_map_export_te,lyt), filename; width=720, height=900)
                 np       = length(fieldNames_exp)
                 if np > 0
@@ -736,15 +736,15 @@ function Tab_TraceElement_Callbacks(app)
 
                                 for j = 1:ni
                                     trace_fig = plot_diagram(data_isopleth_te.isoPexp[data_isopleth_te.active[j]], lyt)
-                                    filename = "./output/"*replace(customTitle, " " => "_") * "_$(fieldNames_exp[i])_$(names[j])_te.svg"
+                                    filename = output_dir[1]*replace(customTitle, " " => "_") * "_$(fieldNames_exp[i])_$(names[j])_te.svg"
                                     savefig(trace_fig, filename; width=720, height=900)
                                 end
                             else
                                 trace_fig = plot_diagram(eval(Symbol(fieldNames_exp[i])), lyt)
-                                filename = "./output/"*replace(customTitle, " " => "_") * "_$(fieldNames_exp[i])_te.svg"
+                                filename = output_dir[1]*replace(customTitle, " " => "_") * "_$(fieldNames_exp[i])_te.svg"
                                 savefig(trace_fig, filename; width=720, height=900)
                             end
-                            filename = "./output/"*replace(customTitle, " " => "_") * "_isopleths_caption_te.svg"
+                            filename = output_dir[1]*replace(customTitle, " " => "_") * "_isopleths_caption_te.svg"
                             savefig(plot(data_isopleth_te.isoCap[data_isopleth_te.active],layoutCap), filename; width=900, height=30)
                         end
                     end
@@ -756,9 +756,9 @@ function Tab_TraceElement_Callbacks(app)
                         lyt[:annotations][i][:visible] = true
                     end
                     
-                    filename = "./output/"*replace(customTitle, " " => "_") * "_labels.svg"
+                    filename = output_dir[1]*replace(customTitle, " " => "_") * "_labels.svg"
                     savefig(plot(PlotlyJS.AbstractTrace[], lyt), filename; width=720, height=900)
-                    open("./output/" * replace(customTitle, " " => "_") * "_phase_equilibria.txt", "w") do io
+                    open(output_dir[1] * replace(customTitle, " " => "_") * "_phase_equilibria.txt", "w") do io
                         write(io, txt_list)
                     end
                 end
@@ -817,9 +817,9 @@ function Tab_TraceElement_Callbacks(app)
         end
 
         if fname != "filename"
-            mkpath("./output")
+            mkpath(output_dir[1])
             datab   = "_"*dtb*"_"*kds*sat_ext
-            fileout = "./output/"*fname*datab
+            fileout = output_dir[1]*fname*datab
 
             MAGEMin_dataTE2dataframe(Out_XY,Out_TE_XY,dtb,fileout; use_Warr2021=use_warr_names[1], use_GPA=use_GPa[1])
             return "success", ""
@@ -858,11 +858,11 @@ function Tab_TraceElement_Callbacks(app)
         end
 
         if fname != "filename"
-            mkpath("./output")
+            mkpath(output_dir[1])
             P       = "_Pkbar_"*string(Out_XY[point_id_te].P_kbar)
             T       = "_TC_"*string(Out_XY[point_id_te].T_C)
             datab   = "_"*dtb*P*T*"_"*kds*sat_ext
-            fileout = "./output/"*fname*datab
+            fileout = output_dir[1]*fname*datab
 
             MAGEMin_dataTE2dataframe(Out_XY[point_id_te],Out_TE_XY[point_id_te],dtb,fileout; use_Warr2021=use_warr_names[1], use_GPA=use_GPa[1])
             return "success", ""
@@ -888,14 +888,14 @@ function Tab_TraceElement_Callbacks(app)
     ) do n_clicks, fname, kds, zrc, sulf, fapt
 
         if fname != "filename"
-            mkpath("./output")
+            mkpath(output_dir[1])
             output_bib      = "_"*kds*".bib"
-            fileout         = "./output/"*fname*output_bib
+            fileout         = output_dir[1]*fname*output_bib
             magemin         = "MAGEMin"
             bib             = import_bibtex("./references/references.bib")
             
             print("\nSaving references for computed trace-element diagram\n")
-            print("output path: $(pwd())\n")
+            print("output path: $(output_dir[1])\n")
 
             n_ref           = length(bib.keys)
 

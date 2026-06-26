@@ -3,7 +3,7 @@
 #   Project      : MAGEMin_App
 #   License      : GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #   Developers   : Nicolas Riel, Boris Kaus
-#   Contributors : Dominguez, H., Moyen, J-F.
+#   Contributors : Nerone, S., Dominguez, H., Moyen, J-F.
 #   Organization : Institute of Geosciences, Johannes-Gutenberg University, Mainz
 #   Contact      : nriel[at]uni-mainz.de
 #
@@ -2124,6 +2124,8 @@ function get_oxide_list(dbin::String)
 
     if dbin == "ig"
 	    MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"; "H2O"];
+    elseif dbin == "igd"
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"]; 
     elseif dbin == "igad"
         MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"];        
     elseif dbin == "igm"
@@ -2291,7 +2293,7 @@ function bulk_csv_to_db(datain)
         dbin     = lowercase(strip(string(datain[i, idx_db])))
         sysUnit  = lowercase(strip(string(datain[i, idx_sysUnit])))
 
-        valid_db      = ("ig","igm","igad","mb","mbe","um","ume","mp","mtl","mpe","cs","sb11","sb21","sb24")
+        valid_db      = ("ig","igd","igm","igad","mb","mbe","um","ume","mp","mtl","mpe","cs","sb11","sb21","sb24")
         valid_sysunit = ("mol","wt")
 
         if dbin ∉ valid_db

@@ -3,7 +3,7 @@
 #   Project      : MAGEMin_App
 #   License      : GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #   Developers   : Nicolas Riel, Boris Kaus
-#   Contributors : Dominguez, H., Moyen, J-F.
+#   Contributors : Nerone, S., Dominguez, H., Moyen, J-F.
 #   Organization : Institute of Geosciences, Johannes-Gutenberg University, Mainz
 #   Contact      : nriel[at]uni-mainz.de
 #
@@ -67,6 +67,7 @@ Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(  "ig", data,
                                                 1.0,
                                                 0,
                                                 false,
+                                                false,
                                                 false    )
 @test length(Out_XY) == 25
 
@@ -107,6 +108,7 @@ Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(   "ig", data,
                                                 false,
                                                 1.0,
                                                 0,
+                                                false,
                                                 false,
                                                 false ) # recompute points that have not been computed before
 
