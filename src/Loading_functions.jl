@@ -126,7 +126,7 @@ function get_dtbulk_list()
         Dict("label" => "Metabasite (Green et al., 2016)", "value" => "mb"),
         Dict("label" => "Igneous (Green et al., 2025, after H18)", "value" => "ig"),
         # Dict("label" => "Igneous Mantle (Rinaldi et al., 2026)", "value" => "igm"),
-        Dict("label" => "Igneous dry (Bin et al., 2026, after T21)", "value" => "igd"),
+        # Dict("label" => "Igneous dry (Bin et al., 2026, after T21)", "value" => "igd"),
         Dict("label" => "Igneous alkaline dry (Weller et al., 2024)", "value" => "igad"),
         Dict("label" => "Ultramafic (Evans & Frost., 2021)", "value" => "um"),
         # Dict("label" => "Calc-shist (Stuck et al., 2026)", "value" => "cs"),
