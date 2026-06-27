@@ -729,6 +729,17 @@ function Tab_IntersecT_Callbacks(app)
         end
     end
 
+    # ── Callback 3b: Disable "Run IntersecT" unless mineral naming = Warr (2021) ─
+    # IntersecT matches model phase names against Warr-converted names
+    # (see build_intersect_model_df), so it can't run under the Legacy naming scheme.
+    callback!(
+        app,
+        Output("run-intersect-ix", "disabled"),
+        Input("mineral-naming-dropdown", "value"),
+    ) do mineral_naming
+        return mineral_naming != "warr"
+    end
+
     # ── Callback 4: Run IntersecT ─────────────────────────────────────────────
     # Callback 4: Run IntersecT.
     # Outputs only dropdown options/value and alert — NOT the figure.
