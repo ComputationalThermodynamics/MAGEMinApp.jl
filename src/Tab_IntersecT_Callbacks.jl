@@ -785,9 +785,12 @@ function Tab_IntersecT_Callbacks(app)
                        [], nothing, [], nothing, n_clicks, no_update()
             end
 
+            # y_col must not contain "kbar": IntersecT auto-converts any such column
+            # to GPa internally, which would corrupt the kbar values build_intersect_model_df
+            # produces and that display_pressure() expects downstream.
             model_df = build_intersect_model_df(Out_XY, phase_elements;
                 x_col = "T [Celsius]",
-                y_col = "P [kbar]",
+                y_col = "Pressure",
             )
 
             # Filter measurements to only the selected phase columns plus any
@@ -801,7 +804,7 @@ function Tab_IntersecT_Callbacks(app)
             result   = IntersecT.run_intersect(
                 model_df, filtered_meas;
                 x_col         = "T [Celsius]",
-                y_col         = "P [kbar]",
+                y_col         = "Pressure",
                 analysis_type = analysis_type,
             )
             global Out_intersect = result

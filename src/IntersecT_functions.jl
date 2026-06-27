@@ -18,7 +18,7 @@ vector into the model DataFrame expected by IntersecT.run_intersect.
 Workflow:
     model_df = build_intersect_model_df(Out_XY, ["Grt_Mg", "Grt_Ca", "Bt_Fe"])
     result   = IntersecT.run_intersect(model_df, measurements_df;
-                   x_col="T(C)", y_col="P(kbar)", analysis_type="WDS spot")
+                   x_col="T [Celsius]", y_col="Pressure", analysis_type="WDS spot")
 """
 
 # Maps oxide column names (as stored in Out_XY[i].oxides) to element symbols
@@ -47,7 +47,7 @@ const OXIDE_TO_ELEMENT = Dict(
 
 """
     build_intersect_model_df(Out_XY, phase_elements;
-                             x_col="T(C)", y_col="P(kbar)") -> DataFrame
+                             x_col="T [Celsius]", y_col="Pressure") -> DataFrame
 
 Build a model DataFrame in IntersecT format directly from MAGEMinApp's `Out_XY` data.
 
@@ -57,26 +57,31 @@ Build a model DataFrame in IntersecT format directly from MAGEMinApp's `Out_XY` 
                      Phase names must match entries in `Out_XY[i].ph` exactly.
                      Element names must be symbols (e.g. `"Mg"`, `"Ca"`, `"Fe"`) that map
                      to oxides in `Out_XY[i].oxides` via the OXIDE_TO_ELEMENT table.
-- `x_col`          : column header for the x-coordinate (default `"T(C)"`)
-- `y_col`          : column header for the y-coordinate (default `"P(kbar)"`)
+- `x_col`          : column header for the x-coordinate (default `"T [Celsius]"`)
+- `y_col`          : column header for the y-coordinate (default `"Pressure"`)
 
 # Returns
 DataFrame with columns [x_col, y_col, phase_elements...].
 T values come from `Out_XY[i].T_C` (°C) and P from `Out_XY[i].P_kbar` (kbar).
 Grid points where a requested phase is absent receive `NaN` for that phase's elements.
 
+Note: `y_col` must not contain the substring "kbar" (case-insensitive) — IntersecT's
+internal `convert_coordinate` auto-divides any such column by 10 and relabels it as
+GPa, which would silently corrupt the kbar values this function and `display_pressure`
+rely on.
+
 # Example
 ```julia
 model_df = build_intersect_model_df(Out_XY, ["Grt_Mg", "Grt_Ca", "Grt_Fe", "Bt_Fe"])
 result   = IntersecT.run_intersect(model_df, measurements_df;
-               x_col="T(C)", y_col="P(kbar)", analysis_type="WDS spot")
+               x_col="T [Celsius]", y_col="Pressure", analysis_type="WDS spot")
 ```
 """
 function build_intersect_model_df(
     Out_XY        :: Vector,
     phase_elements :: Vector{String};
     x_col          :: String = "T [Celsius]",
-    y_col          :: String = "P [kbar]"
+    y_col          :: String = "Pressure"
 )::DataFrame
 
     isempty(Out_XY)        && error("Out_XY is empty — compute a phase diagram first")
