@@ -36,18 +36,24 @@ function Tab_IntersecT()
 
                             # Run button
                             dbc_row([
-                                dbc_button(
-                                    "Run IntersecT",
-                                    id        = "run-intersect-ix",
-                                    n_clicks  = 0,
-                                    style     = Dict(
-                                        "textAlign"        => "center",
-                                        "font-size"        => "105%",
-                                        "background-color" => "#d3f2ce",
-                                        "color"            => "black",
-                                        "border"           => "1px grey solid",
-                                        "width"            => "100%",
+                                html_div([
+                                    dbc_button(
+                                        "Run IntersecT",
+                                        id        = "run-intersect-ix",
+                                        n_clicks  = 0,
+                                        style     = Dict(
+                                            "textAlign"        => "center",
+                                            "font-size"        => "105%",
+                                            "background-color" => "#d3f2ce",
+                                            "color"            => "black",
+                                            "border"           => "1px grey solid",
+                                            "width"            => "100%",
+                                        ),
                                     ),
+                                ], id = "run-intersect-ix-wrapper"),
+                                dbc_tooltip(
+                                    "Requires \"Mineral names\" set to Warr (2021) in General setup",
+                                    target = "run-intersect-ix-wrapper",
                                 ),
                             ]),
                             html_div("‎ "),

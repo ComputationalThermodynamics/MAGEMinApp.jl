@@ -729,6 +729,17 @@ function Tab_IntersecT_Callbacks(app)
         end
     end
 
+    # ── Callback 3b: Disable "Run IntersecT" unless mineral naming = Warr (2021) ─
+    # IntersecT matches model phase names against Warr-converted names
+    # (see build_intersect_model_df), so it can't run under the Legacy naming scheme.
+    callback!(
+        app,
+        Output("run-intersect-ix", "disabled"),
+        Input("mineral-naming-dropdown", "value"),
+    ) do mineral_naming
+        return mineral_naming != "warr"
+    end
+
     # ── Callback 4: Run IntersecT ─────────────────────────────────────────────
     # Callback 4: Run IntersecT.
     # Outputs only dropdown options/value and alert — NOT the figure.
@@ -785,9 +796,12 @@ function Tab_IntersecT_Callbacks(app)
                        [], nothing, [], nothing, n_clicks, no_update()
             end
 
+            # y_col must not contain "kbar": IntersecT auto-converts any such column
+            # to GPa internally, which would corrupt the kbar values build_intersect_model_df
+            # produces and that display_pressure() expects downstream.
             model_df = build_intersect_model_df(Out_XY, phase_elements;
                 x_col = "T [Celsius]",
-                y_col = "P [kbar]",
+                y_col = "Pressure",
             )
 
             # Filter measurements to only the selected phase columns plus any
@@ -801,7 +815,7 @@ function Tab_IntersecT_Callbacks(app)
             result   = IntersecT.run_intersect(
                 model_df, filtered_meas;
                 x_col         = "T [Celsius]",
-                y_col         = "P [kbar]",
+                y_col         = "Pressure",
                 analysis_type = analysis_type,
             )
             global Out_intersect = result
