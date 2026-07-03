@@ -999,6 +999,94 @@ function Tab_PTXpaths_Callbacks(app)
         return "Success"
     end
 
+
+    # Callback to refresh / reorder / reset the phase stacking-order table.
+    # Targets the table's "data"/"selected_cells" props directly (rather than
+    # replacing the whole component) so that after a move, the same phase stays
+    # selected and repeated ▲/▼ clicks don't require reselecting it.
+    callback!(
+        app,
+        Output("phase-order-table-id",  "data"),
+        Output("phase-order-table-id",  "selected_cells"),
+        Output("phase-order-store",     "data"),
+        Input("ptx-plot",               "figure"),
+        Input("phase-order-up-id",      "n_clicks"),
+        Input("phase-order-down-id",    "n_clicks"),
+        Input("phase-order-reset-id",   "n_clicks"),
+        State("phase-order-table-id",   "selected_cells"),
+        State("phase-order-table-id",   "data"),
+        State("phase-order-store",      "data"),
+        prevent_initial_call = true,
+    ) do clock, up_clicks, down_clicks, reset_clicks, selected, data, version
+
+        bid = pushed_button( callback_context() )
+
+        visible = @isdefined(phase_infos_PTX) ? vcat(phase_infos_PTX.act_ss, phase_infos_PTX.act_pp) : AppData.mineral_order[1]
+
+        if bid == "ptx-plot"
+            # active phase set may have changed entirely - drop any stale selection
+            return phase_order_rows(AppData.mineral_order[1], visible), [], version
+
+        elseif bid in ("phase-order-up-id", "phase-order-down-id")
+            if isnothing(selected) || isempty(selected) || isnothing(data) || isempty(data)
+                return phase_order_rows(AppData.mineral_order[1], visible), [], version
+            end
+
+            row_index = selected[1]["row"] + 1
+            ph        = data[row_index]["LegacyMineral"]
+            shown     = [d["LegacyMineral"] for d in data]     # already ordered as displayed
+            pos       = findfirst(==(ph), shown)
+
+            new_pos = pos
+            if !isnothing(pos)
+                neighbor = nothing
+                if bid == "phase-order-up-id" && pos > 1
+                    neighbor = shown[pos-1]
+                    new_pos  = pos - 1
+                elseif bid == "phase-order-down-id" && pos < length(shown)
+                    neighbor = shown[pos+1]
+                    new_pos  = pos + 1
+                end
+
+                if !isnothing(neighbor)
+                    order = AppData.mineral_order[1]
+                    i1    = findfirst(==(ph),       order)
+                    i2    = findfirst(==(neighbor), order)
+                    if !isnothing(i1) && !isnothing(i2)
+                        order[i1], order[i2] = order[i2], order[i1]
+                    end
+                end
+            end
+
+            newdata = phase_order_rows(AppData.mineral_order[1], visible)
+            sel     = isnothing(new_pos) ? [] :
+                      [Dict("row" => new_pos-1, "column" => 0, "row_id" => new_pos-1, "column_id" => "Mineral")]
+
+            return newdata, sel, version + 1
+
+        elseif bid == "phase-order-reset-id"
+            AppData.mineral_order[1] = sort(collect(keys(AppData.mineral_style[1])))
+            return phase_order_rows(AppData.mineral_order[1], visible), [], version + 1
+        end
+
+        return phase_order_rows(AppData.mineral_order[1], visible), [], version
+    end
+
+
+    # Callback to save the phase stacking order to disk
+    callback!(app,  Output("phase-order-save-alert", "is_open"),
+                    Input("save-phase-order-id",     "n_clicks"),
+                    prevent_initial_call = true ) do n_clicks
+
+        if n_clicks == 0
+            return false
+        end
+
+        save_mineral_order(AppData.mineral_order[1])
+
+        return true
+    end
+
     """
         Callback to compute and display PTX path
     """
@@ -1024,6 +1112,7 @@ function Tab_PTXpaths_Callbacks(app)
         Input("display-mode",           "value"),
         Input("ext-display-mode",       "value"),
         Input("mineral-naming-dropdown","value"),
+        Input("phase-order-store",      "data"),
 
         State("select-bulk-unit-ptx",   "value"),
         State("phase-selection-PTX",    "value"),
@@ -1072,7 +1161,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         prevent_initial_call = true,
 
-        ) do    compute,    upsys,      display_mode,               ext_display_mode,   warr_naming,
+        ) do    compute,    upsys,      display_mode,               ext_display_mode,   warr_naming,    phase_order_version,
                 sys_unit,   phase_selection, pure_phase_selection,  phase_list, nsteps,     PTdata,     mode,   assim,  var_buffer,
                 dtb,        dataset,    bufferType, solver,
                 verbose,    bulk,       bulk2,      bufferN,
@@ -1141,7 +1230,7 @@ function Tab_PTXpaths_Callbacks(app)
 
             figrmintPTX                 = plot(data_comp_rm_int_plot,layout_rm_int_ptx)
 
-        elseif (bid == "sys-unit-ptx" || bid == "ext-display-mode" || bid == "display-mode" || bid == "mineral-naming-dropdown") &&
+        elseif (bid == "sys-unit-ptx" || bid == "ext-display-mode" || bid == "display-mode" || bid == "mineral-naming-dropdown" || bid == "phase-order-store") &&
                @isdefined(Out_PTX) && !isempty(Out_PTX) && @isdefined(ph_names_ptx)
             data_plot_ptx, phase_list   = get_data_plot(display_mode,sysunit)
             data_extracted_plot_ptx, phase_list_ext   = get_extracted_data_plot(ext_display_mode,sysunit,mode,nRes,nCon,isentropic_mode)
@@ -1527,8 +1616,19 @@ function Tab_PTXpaths_Callbacks(app)
                 is_open = 1
             end
         end
-        return is_open    
+        return is_open
     end
+
+    callback!(
+        app,
+        Output("phase-order-canvas", "is_open"),
+        Input("button-phase-order-ptx", "n_clicks"),
+        State("phase-order-canvas", "is_open"),
+
+        prevent_initial_call=true,
+    ) do n1, is_open
+        return n1 > 0 ? is_open == 0 : is_open
+    end;
 
     callback!(app,
         Output("collapse-path-opt", "is_open"),

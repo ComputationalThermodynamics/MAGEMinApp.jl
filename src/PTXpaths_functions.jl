@@ -722,6 +722,9 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             id_dry_ptx         = findall(oxi .!= "H2O")
             if watsat == "true" && !isnothing(id_h2o_ptx)
                 Yrange             = [minimum(Pres), maximum(Pres)]
+                if Yrange[1] == Yrange[2]                  # constant-pressure path: avoid a zero-length range
+                    Yrange[2]      += 1.0
+                end
                 pChip_wat, pChip_T = get_wat_sat_function(  Yrange,     bulk_ini,   oxi,    phase_selection,
                                                             dtb,        bufferType, solver,
                                                             verbose,    bufferN,
@@ -1467,7 +1470,8 @@ end
 
 function get_data_plot(display_mode, sysunit)
 
-    n_ph    = length(ph_names_ptx)
+    ph_ord  = order_phases(ph_names_ptx)
+    n_ph    = length(ph_ord)
     n_tot   = length(Out_PTX)
     data_plot_ptx  = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_ph+2);
 
@@ -1475,10 +1479,10 @@ function get_data_plot(display_mode, sysunit)
     Y       = zeros(Float64, n_ph, n_tot)
 
     colormap = get_jet_colormap(n_ph)
-    
+
     for i=1:n_ph
 
-        ph = ph_names_ptx[i]
+        ph = ph_ord[i]
         for k=1:n_tot
             
             x[k]    = string(round(display_pressure(Out_PTX[k].P_kbar),digits=1))*"; "*string(round(Out_PTX[k].T_C,digits=1))
@@ -1507,11 +1511,11 @@ function get_data_plot(display_mode, sysunit)
 
     if display_mode == "stacked"
         for i=1:n_ph
-            ph      = ph_names_ptx[i]
+            ph      = ph_ord[i]
 
             data_plot_ptx[i] = scatter(;    x           =  x,
                                             y           =  Y[i,:],
-                                            name        = display_ph_name(ph_names_ptx[i]),
+                                            name        = display_ph_name(ph_ord[i]),
                                             stackgroup  = "one",
                                             mode        = "lines",
                                             line        = attr(     width   =  0.5,
@@ -1520,11 +1524,11 @@ function get_data_plot(display_mode, sysunit)
     elseif display_mode == "bars"
         for i=1:n_ph
 
-            ph      = ph_names_ptx[i]
+            ph      = ph_ord[i]
 
             data_plot_ptx[i] = bar(         x           =  x,
                                             y           =  Y[i,:],
-                                            name        = display_ph_name(ph_names_ptx[i]),
+                                            name        = display_ph_name(ph_ord[i]),
                                             marker      = attr( color   = AppData.mineral_style[1][ph][1],
                                                                 line    = attr(width=0.0, color="black"),
                                                                 opacity = 0.6) # black outline
@@ -1532,11 +1536,11 @@ function get_data_plot(display_mode, sysunit)
          end
     else
         for i=1:n_ph
-            ph      = ph_names_ptx[i]
+            ph      = ph_ord[i]
 
             data_plot_ptx[i] = scatter(;    x           =  x,
                                             y           =  Y[i,:],
-                                            name        = display_ph_name(ph_names_ptx[i]),
+                                            name        = display_ph_name(ph_ord[i]),
                                             mode        = "markers+lines",
                                             marker = attr(
                                                 size    = 5.0,          # Set the size of the circle
@@ -1568,7 +1572,7 @@ function get_data_plot(display_mode, sysunit)
 
 
     # build phase list:
-    phase_list = [Dict("label" => "  "*display_ph_name(ph_names_ptx[i]), "value" => ph_names_ptx[i]) for i=1:n_ph]
+    phase_list = [Dict("label" => "  "*display_ph_name(ph_ord[i]), "value" => ph_ord[i]) for i=1:n_ph]
 
 
     return data_plot_ptx, phase_list
@@ -1586,6 +1590,7 @@ function get_extracted_data_plot(ext_mode,sysunit,mode,nRes,nCon,isentropic_mode
             push!(ph_names_ext_ptx,i)
         end
     end
+    ph_names_ext_ptx = order_phases(ph_names_ext_ptx)
 
     n_ph_e = length(ph_names_ext_ptx)
     data_extracted_plot_ptx  = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_ph_e);

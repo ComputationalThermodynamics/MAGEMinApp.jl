@@ -1348,7 +1348,50 @@ function Tab_PTXpaths()
                                     id="collapse-disp-opt",
                                     is_open=true,
                                 )
-                             ]),                                                                           
+                             ]),
+                            dbc_row([
+                                dbc_button("Phase order",id="button-phase-order-ptx"),
+                                dbc_offcanvas(
+                                    [
+                                        dbc_row([
+                                            html_h1("Stacking order (area/bar plots)", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
+                                        ]),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_div(create_order_table(AppData.mineral_order[1], AppData.mineral_order[1]), id="phase-order-container")
+                                            ], width=9),
+                                            dbc_col([
+                                                dbc_button("▲", id="phase-order-up-id", color="light", size="sm", n_clicks=0,
+                                                    style = Dict("width" => "100%", "border" => "1px grey solid", "margin-bottom" => "4px")),
+                                                dbc_button("▼", id="phase-order-down-id", color="light", size="sm", n_clicks=0,
+                                                    style = Dict("width" => "100%", "border" => "1px grey solid")),
+                                            ], width=3),
+                                        ]),
+                                        dbc_row([
+                                            dbc_button("Reset to alphabetical", id="phase-order-reset-id", color="light", n_clicks=0,
+                                                style = Dict("textAlign" => "center", "font-size" => "100%", "border" => "1px grey solid", "margin-top" => "8px")),
+                                        ]),
+                                        dbc_row([
+                                            dbc_button("Save order", id="save-phase-order-id", color="light", n_clicks=0,
+                                                style = Dict("textAlign" => "center", "font-size" => "100%", "background-color" => "#d3f2ce", "border" => "1px grey solid", "margin-top" => "8px")),
+                                            dbc_alert(
+                                                "Successfully saved phase order",
+                                                id      = "phase-order-save-alert",
+                                                is_open = false,
+                                                duration= 4000,
+                                            ),
+                                        ]),
+                                        dcc_store(id="phase-order-store", data=0),
+                                    ],
+
+                                    id          = "phase-order-canvas",
+                                    title       = "Phase order",
+                                    is_open     = false,
+                                    placement   = "end",
+                                    style   = Dict( "width"             => "320px",
+                                                    "background-color"  => "rgba(255, 255, 255, 1.0)"),
+                                )
+                            ]),
                         ], width=4),
                     ]),
                     # html_div("‎ "),
