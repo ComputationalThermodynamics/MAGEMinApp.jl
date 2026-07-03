@@ -130,6 +130,38 @@ function load_style(json_path)
 end
 
 
+function save_mineral_order(order::Vector{String}; path::String=joinpath(pkg_dir, "saved_states", "mineral_order_user.json"))
+    mkpath(dirname(path))
+    open(path, "w") do io
+        JSON3.write(io, order)
+    end
+end
+
+# try to load a user-saved mineral stacking order; falls back to alphabetical.
+# keeps the saved relative order for known minerals and appends any new ones
+# (not present in the saved file) sorted alphabetically at the end.
+function load_mineral_order(all_minerals::Vector{String}; path::String=joinpath(pkg_dir, "saved_states", "mineral_order_user.json"))
+    saved = String[]
+    if isfile(path)
+        try
+            saved = collect(String, JSON3.read(open(path), Vector{String}))
+        catch
+            @warn "Failed to parse existing mineral order JSON, using default alphabetical order" path=path
+        end
+    end
+    kept        = filter(m -> m in all_minerals, saved)
+    missing_ph  = sort(setdiff(all_minerals, kept))
+    return vcat(kept, missing_ph)
+end
+
+# sort ph_list according to the rank of each name in `order`; names absent from
+# `order` are sorted alphabetically and placed after all ranked names.
+function order_phases(ph_list, order::Vector{String}=AppData.mineral_order[1])
+    rank(ph) = something(findfirst(==(ph), order), length(order) + 1)
+    return sort(collect(ph_list), by = ph -> (rank(ph), ph))
+end
+
+
 # Function to dynamically create dbc_input for each mineral
 function create_ph_names(style::Dict{String, Vector{Any}})
     inputs = []
@@ -193,6 +225,49 @@ function create_color_selec(style::Dict{String, Vector{Any}})
         style_cell                  =  Dict("margin" => "0", "padding" => "0", "height" => "24px", "line-height" => "24px", "text-align" => "center"),
         style_data                  =  Dict("background-color" => "white"),
         editable                    =  false, 
+        row_deletable               =  false,
+        cell_selectable             =  true,
+        filter_action               = "none",
+        sort_action                 = "none",
+        page_action                 = "none"
+    )
+end
+
+
+# Builds the row data (top-to-bottom) for the "Phase order" table. `visible` are
+# the mineral keys currently relevant (e.g. active phases for the current path).
+#
+# `order_phases` ranks phases in stacking order, i.e. the order traces are added
+# to the plot: first trace = bottom of the stack. Plotly's legend for stacked
+# area/bar plots is reversed by default (topmost legend entry = last trace added
+# = top of the visual stack), so the table is displayed reversed to match what
+# the user actually sees in the legend, top-to-bottom.
+function phase_order_rows(order::Vector{String}, visible)
+    ordered = reverse(order_phases(String.(visible), order))
+    return [
+        Dict("Mineral" => display_ph_name(mineral), "LegacyMineral" => mineral)
+        for mineral in ordered
+    ]
+end
+
+function create_order_table(order::Vector{String}, visible)
+
+    data = phase_order_rows(order, visible)
+    columns = [
+        Dict("name" => "Mineral", "id" => "Mineral"),
+    ]
+
+    return dash_datatable(
+        id                          = "phase-order-table-id",
+        data                        =  data,
+        columns                     =  columns,
+        style_table                 =  Dict("margin" => "0", "padding" => "0", "table-layout" => "fixed"),
+        style_cell                  =  Dict("margin" => "0", "padding" => "0", "height" => "24px", "line-height" => "24px", "text-align" => "center"),
+        style_data                  =  Dict("background-color" => "white"),
+        style_data_conditional      =  [
+            Dict("if" => Dict("row_index" => "odd"), "background-color" => "#f7f7f7"),
+        ],
+        editable                    =  false,
         row_deletable               =  false,
         cell_selectable             =  true,
         filter_action               = "none",

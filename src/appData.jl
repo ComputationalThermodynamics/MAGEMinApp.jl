@@ -29,6 +29,8 @@ const MAGEMin_C_version = MAGEMin_C_v
 
 # load mineral style
 mineral_style           = load_style(joinpath(pkg_dir, "./user_data/mineral_style_default.json"))
+# default mineral stacking order (alphabetical); may be overridden by a saved user order at startup
+mineral_order           = sort(collect(keys(mineral_style)))
 # Keep track of simulation progress - note that this should be added to a single global variable
 global CompProgress     =  ComputationalProgress()
 global use_warr_names   = [false]
@@ -60,4 +62,5 @@ AppData = ( contribs            = contribs,
             db_inf              = db_inf,
             customWs            = customWs,
             mineral_style       = [mineral_style],
-            )   
+            mineral_order       = [mineral_order],
+            )
