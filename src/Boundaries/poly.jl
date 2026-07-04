@@ -77,10 +77,17 @@ function get_poly(phase, P, T, nit)
         poly      = copy(edgnum[cnt:cnt+nedge-1])
         pedges, N = renum_edges(edges[poly, :])
         pnodes    = nodes[N, :]
-        pnodes    = get_node_cycle(pnodes, pedges)
-        polys[i]  = poly
-        pcoor[i]  = pnodes
-    
+        try
+            pnodes    = get_node_cycle(pnodes, pedges)
+            polys[i]  = poly
+            pcoor[i]  = pnodes
+        catch e
+            # some raster topologies (e.g. a field that only touches itself at a single
+            # pixel corner) don't reduce to one simple boundary loop -- skip just this
+            # domain (leave its polygon empty) instead of aborting every other domain
+            println("Could not close boundary polygon for domain $i: $e")
+        end
+
         cnt += nedge
     end
 

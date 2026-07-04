@@ -369,10 +369,15 @@ function Tab_Simulation_Callbacks(app)
         Input("database-dropdown","value"),
         Input("mineral-naming-dropdown","value"),
 
+        State("phase-selection","value"),
+        State("pure-phase-selection","value"),
+
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
-    ) do dtb, warr_naming
+    ) do dtb, warr_naming, current_ss_selection, current_pp_selection
         global use_warr_names
         use_warr_names[1] = (warr_naming == "warr")
+
+        bid = pushed_button( callback_context() )
 
         if dtb == "sb11" || dtb == "sb21" || dtb == "sb24"
             style  = Dict("display" => "none")
@@ -385,8 +390,6 @@ function Tab_Simulation_Callbacks(app)
         phase_selection_options = [Dict(    "label"     => " "*display_ph_name(i),
                                             "value"     => i )
                                                 for i in db_in.ss_name ]
-        phase_selection_value   = db_in.ss_name
-
 
         # this is the phase selection part for the database when compute a diagram
         pp_all  = db_in.data_pp
@@ -395,7 +398,28 @@ function Tab_Simulation_Callbacks(app)
         pure_phase_selection_options = [Dict(    "label"     => " "*display_ph_name(i),
                                                  "value"     => i )
                                                 for i in pp_disp ]
-        pure_phase_selection_value   = pp_disp
+
+        # remember the (de)activated phases per database, so switching back and forth
+        # between databases restores the last selection made for that database
+        cache = AppData.phase_selection_cache[1]
+        if bid == "database-dropdown"
+            prev_dtb = AppData.phase_selection_last_dtb[1]
+            if prev_dtb != "" && prev_dtb != dtb
+                cache[prev_dtb] = Dict("ss" => to_str_vec(current_ss_selection), "pp" => to_str_vec(current_pp_selection))
+            end
+            if haskey(cache, dtb)
+                saved                       = cache[dtb]
+                phase_selection_value       = intersect(saved["ss"], db_in.ss_name)
+                pure_phase_selection_value  = intersect(saved["pp"], pp_disp)
+            else
+                phase_selection_value       = db_in.ss_name
+                pure_phase_selection_value  = pp_disp
+            end
+        else
+            phase_selection_value       = db_in.ss_name
+            pure_phase_selection_value  = pp_disp
+        end
+        AppData.phase_selection_last_dtb[1] = dtb
 
 
         dataset_options = [Dict(    "label"     => "ds$(db_in.dataset_opt[i])",
