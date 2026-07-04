@@ -972,7 +972,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
 
         #________________________________________________________________________________________#
         # initialize database
-        global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, gridded_fields, phase_infos, X, Y, layout, n_lbl
+        global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, gridded_fields, phase_infos, X, Y, layout, n_lbl, poly_phases, poly_pcoor
         global addedRefinementLvl  = 0;
         global MAGEMin_data;
 
@@ -1070,14 +1070,17 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
 
         PT_infos = get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat,watsat_val)
 
-        data_plot, annotations, txt_list = get_diagram_labels(  Out_XY,
+        data_plot, annotations, txt_list, assemblage_rows, list_compacted_idx, raw_field_id = get_diagram_labels(  Out_XY,
                                                                 Hash_XY,
                                                                 refType,
                                                                 data,
                                                                 PT_infos;
                                                                 field_size = field_size )
+
+        poly_phases, poly_pcoor = compute_assemblage_boundaries(gridded_fields, Xrange, Yrange)
+
         ticks   = 4
-        frame   = get_plot_frame(Xrange,Yrange, ticks)                                  
+        frame   = get_plot_frame(Xrange,Yrange, ticks)
         layout  = Layout(
                     images=frame,
                     title= attr(
@@ -1185,13 +1188,13 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
 
         data_plot[1]    = heat_map
 
-        return vcat(data_plot,hover_lbl), layout, npoints, meant, txt_list, heat_map_export
+        return vcat(data_plot,hover_lbl), layout, npoints, meant, txt_list, heat_map_export, assemblage_rows, list_compacted_idx, raw_field_id
 end
 
 
 
 """
-    refine_phaseDiagram(            xtitle,     ytitle,     
+    refine_phaseDiagram(            xtitle,     ytitle,
                                     Xrange,     Yrange,     fieldname,
                                     dtb,        diagType,   verbose,    scp,    solver,
                                     fixT,       fixP,
@@ -1220,7 +1223,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                 seismic_cor = false, aspect_ratio = 0.3, seismic_water = 0,
                                 shallow_cor = false, fluid_as_melt = false, anelastic_correction = false       )
 
-    global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, gridded_fields, phase_infos, X, Y, addedRefinementLvl, layout, n_lbl, pChip_wat, pChip_T
+    global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, gridded_fields, phase_infos, X, Y, addedRefinementLvl, layout, n_lbl, pChip_wat, pChip_T, poly_phases, poly_pcoor
 
     mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb,        solver,
                                                     cpx,        limOpx,     limOpxVal ) 
@@ -1271,14 +1274,16 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
     
     PT_infos                           = get_phase_diagram_information(npoints,dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat,watsat_val)
                                                               
-    data_plot, annotations,txt_list = get_diagram_labels(   Out_XY,
+    data_plot, annotations, txt_list, assemblage_rows, list_compacted_idx, raw_field_id = get_diagram_labels(   Out_XY,
                                                             Hash_XY,
                                                             refType,
                                                             data,
                                                             PT_infos;
                                                             field_size = field_size )
-                                           
-    layout[:annotations] = annotations 
+
+    poly_phases, poly_pcoor = compute_assemblage_boundaries(gridded_fields, Xrange, Yrange)
+
+    layout[:annotations] = annotations
     layout[:title] = attr(
         text    = customTitle,
         x       = 0.5,
@@ -1342,13 +1347,13 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                             showlegend      = false,
                             text            = gridded_info )
 
-    return vcat(data_plot,hover_lbl), layout, npoints, meant, txt_list, heat_map_export
+    return vcat(data_plot,hover_lbl), layout, npoints, meant, txt_list, heat_map_export, assemblage_rows, list_compacted_idx, raw_field_id
 
 end
 
 
 """
-    update_colormap_phaseDiagram(      xtitle,     ytitle,     
+    update_colormap_phaseDiagram(      xtitle,     ytitle,
                                                 Xrange,     Yrange,     fieldname,
                                                 dtb,        diagType,
                                                 smooth,     colorm,     reverseColorMap,

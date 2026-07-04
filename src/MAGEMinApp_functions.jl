@@ -874,16 +874,17 @@ function get_diagram_labels(    Out_XY      :: Vector{MAGEMin_C.gmin_struct{Floa
         end
     end
 
-    hull        = unique(Hash_XY)
-    n_hull      = length(hull)
-    area        = Vector{Any}(undef,    n_hull)
-    n_pix       = Vector{Int64}(undef,    n_hull)
-    ph_list     = Vector{String}(undef, n_hull)
-    phd_list    = Vector{String}(undef, n_hull)
+    hull            = unique(Hash_XY)
+    n_hull          = length(hull)
+    area            = Vector{Any}(undef,    n_hull)
+    n_pix           = Vector{Int64}(undef,    n_hull)
+    ph_list         = Vector{String}(undef, n_hull)
+    phd_list        = Vector{String}(undef, n_hull)
+    raw_field_id    = Vector{Int64}(undef, n_hull)     # compacted field index -> raw gridded_fields id
     id          = 0
     coor        = []
 
-    int_vector  = [findfirst(x -> x == h, hull) for h in Hash_XY] 
+    int_vector  = [findfirst(x -> x == h, hull) for h in Hash_XY]
     for i = 1:length(int_vector)
 
         field_tmp   = findall(int_vector .== i)
@@ -892,6 +893,7 @@ function get_diagram_labels(    Out_XY      :: Vector{MAGEMin_C.gmin_struct{Floa
             id             += 1
             ph_list[id]     = ph[field_tmp][1]
             phd_list[id]    = phd[field_tmp][1]
+            raw_field_id[id]= i
 
             mask, bnds      = reduce_matrix(ifelse.(gridded_fields .!= i, 0, 1))
             mask            = BitArray(expand_with_zeros(mask))
@@ -915,7 +917,9 @@ function get_diagram_labels(    Out_XY      :: Vector{MAGEMin_C.gmin_struct{Floa
     traces      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef,n_trace+1);
     annotations = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,n_trace+2)
 
-    txt_list = ""
+    txt_list            = ""
+    assemblage_rows     = Vector{Dict{String,String}}()   # one row per numbered txt_list entry, for the phase-assemblage table
+    list_compacted_idx  = Vector{Int64}()                 # same order: compacted field index (1:n_trace, matches data_plot slot i+1)
     cnt = 1;
     for i=1:n_trace
         traces[i+1] = scatter(; x           =  nothing,
@@ -948,6 +952,8 @@ function get_diagram_labels(    Out_XY      :: Vector{MAGEMin_C.gmin_struct{Floa
                                             font        = attr( size = 9, color = "#212121"),
                                         )  
                 txt_list *= string(cnt)*") "*ph_list[i]*"\n"
+                push!(assemblage_rows, Dict("N" => string(cnt), "Assemblage" => ph_list[i]))
+                push!(list_compacted_idx, i)
                 cnt +=1
             elseif area[i] > 0.03 # place full label
                 annotations[i] =   attr(    xref        = "x",
@@ -974,9 +980,11 @@ function get_diagram_labels(    Out_XY      :: Vector{MAGEMin_C.gmin_struct{Floa
                                             font        = attr( size = 10, color = "#212121"),
                                         )  
         
-                txt_list *= string(cnt)*") "*ph_list[i]*"\n" 
-                cnt +=1  
-            end 
+                txt_list *= string(cnt)*") "*ph_list[i]*"\n"
+                push!(assemblage_rows, Dict("N" => string(cnt), "Assemblage" => ph_list[i]))
+                push!(list_compacted_idx, i)
+                cnt +=1
+            end
         else
             annotations[i] = attr(  xref        = "x",
                                     yref        = "y",
@@ -1021,9 +1029,41 @@ function get_diagram_labels(    Out_XY      :: Vector{MAGEMin_C.gmin_struct{Floa
                                         )   
 
     n_lbl = n_trace
-    println("\rGet phase diagram labels $(round(time()-t0, digits=3)) seconds"); 
+    println("\rGet phase diagram labels $(round(time()-t0, digits=3)) seconds");
 
-    return traces, annotations, txt_list 
+    return traces, annotations, txt_list, assemblage_rows, list_compacted_idx, raw_field_id
+end
+
+"""
+    compute_assemblage_boundaries(gridded_fields, Xrange, Yrange; nit=2)
+
+    Trace the boundary polygon of every phase-assemblage field in `gridded_fields`
+    (the same per-pixel raster built by `get_gridded_map`), using the boundary
+    tracer in `src/Boundaries/poly.jl`. Returns `(phases, pcoor)`: `phases[k]` is the
+    raw field id (matching `gridded_fields`'s values, and `get_diagram_labels`'s
+    `list_field_ids`) of domain `k`, `pcoor[k]` its ordered (x,y) boundary polygon.
+    Meant to be called once per diagram build (compute/refine), not per selection.
+"""
+function compute_assemblage_boundaries(gridded_fields::Matrix{Int64}, Xrange, Yrange; nit::Int64 = 2)
+    nr, nc  = size(gridded_fields)
+    dx      = (Xrange[2]-Xrange[1])/(nr-1)
+    dy      = (Yrange[2]-Yrange[1])/(nc-1)
+    Xnodes  = range(Xrange[1]-dx/2, Xrange[2]+dx/2, length=nr+1)
+    Ynodes  = range(Yrange[1]-dy/2, Yrange[2]+dy/2, length=nc+1)
+
+    # get_poly(phase, P, T, nit) builds nodes as [T[I] P[J]] with I indexing rows (nr+1)
+    # and J indexing columns (nc+1) of `phase` -- so P must be the column-length (Ynodes)
+    # array and T the row-length (Xnodes) array for nodes to come out as (x,y) pairs.
+    try
+        _, _, _, pcoor, phases = get_poly(gridded_fields, Ynodes, Xnodes, nit)
+        return phases, pcoor
+    catch e
+        # boundary tracing is best-effort (some field topologies aren't resolvable into a
+        # single simple polygon) -- fall back to "no boundaries available" rather than
+        # letting a highlighting failure take down the whole diagram build
+        println("Could not trace phase-assemblage boundaries: $e")
+        return Int64[], Matrix{Float64}[]
+    end
 end
 
 """

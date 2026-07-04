@@ -783,7 +783,9 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("phase-diagram",             "figure"),
         Output("phase-diagram",             "config"),
         Output("computation-info-id",       "children"),
-        Output("stable-assemblage-id",      "children"),     
+        Output("phase-assemblage-table-id", "data"),
+        Output("phase-assemblage-table-id", "selected_cells"),
+        Output("phase-assemblage-clipboard-id", "content"),
 
         Output("isopleth-dropdown",         "options"),
         Output("hidden-isopleth-dropdown",  "options"),
@@ -832,11 +834,13 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("export-layers",          "n_clicks"),
         Input("mineral-naming-dropdown","value"),
         Input("pressure-unit-dropdown", "value"),
+        Input("phase-assemblage-table-id", "selected_cells"),
+        Input("clear-assemblage-highlight-button", "n_clicks"),
 
         # STATES
         State("field-size-id",          "value"),
         State("title-id",               "value"),
-        State("stable-assemblage-id",   "children"),   
+        State("phase-assemblage-clipboard-id", "content"),
 
         State("exp-dropdown",           "value"),           # true,false
         State("diagram-dropdown",       "value"),           # pt, px, tx
@@ -936,10 +940,11 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         prevent_initial_call = true,
 
-    ) do    reac_up,    grid,       full_grid,  lbl,     addIso,     removeIso,  removeAllIso,    isoShow,   isoHide,   isoShowAll,    isoHideAll,    
-            n_clicks_mesh, n_clicks_refine, uni_n_clicks_refine, 
+    ) do    reac_up,    grid,       full_grid,  lbl,     addIso,     removeIso,  removeAllIso,    isoShow,   isoHide,   isoShowAll,    isoHideAll,
+            n_clicks_mesh, n_clicks_refine, uni_n_clicks_refine,
             minColor,   maxColor,
             colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  updateTitle,     loadstateid,       exportFig,  warr_naming, pressure_unit,
+            assemblage_selected_cells, clearHighlight,
             # STATES
             field_size, customTitle, txt_list,
             custW,      diagType,   dtb,        dataset,    watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  ph_selection, pure_ph_selection, PTpath,
@@ -984,10 +989,11 @@ function Tab_PhaseDiagram_Callbacks(app)
         field2plot                      = zeros(Int64,4)
 
         field2plot[1]       =  1
-        loading             = ""  
+        loading             = ""
         update_ss_list      = ""
         update_reaction_list      = ""
         store_stop   = string(rand())
+        clear_selection      = no_update()     # only touched when a new diagram is built or the Clear button is pushed
 
 
         if bid == "compute-button"
@@ -999,6 +1005,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             global n_lbl                = 0;
             global iso_show             = 1;
             global data_plot, data_reaction, data_grid, layout, data_isopleth, data_isopleth_out, data_isopleth_out_export, PT_infos, infos, heat_map_export;
+            global assemblage_rows, list_compacted_idx, raw_field_id, poly_phases, poly_pcoor
             global Out_XY =  Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,0)
             global CompProgress
 
@@ -1012,7 +1019,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                 colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)
             end
 
-            data_plot, layout, npoints, meant, txt_list, heat_map_export  =  compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_size,
+            data_plot, layout, npoints, meant, txt_list, heat_map_export, assemblage_rows, list_compacted_idx, raw_field_id  =  compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_size,
                                                                                                         Xrange,     Yrange,     fieldname,  customTitle,
                                                                                                         dtb,        dataset,    custW,      diagType,   verbose,    scp,        solver,     boost, phase_selection,
                                                                                                         fixT,       fixP,
@@ -1044,10 +1051,11 @@ function Tab_PhaseDiagram_Callbacks(app)
             data_grid       = show_hide_mesh_grid()
             active_tab      = "tab-phase-diagram" 
 
-            minColor        = round(minimum(skipmissing(gridded)),digits=2); 
-            maxColor        = round(maximum(skipmissing(gridded)),digits=2);  
+            minColor        = round(minimum(skipmissing(gridded)),digits=2);
+            maxColor        = round(maximum(skipmissing(gridded)),digits=2);
             update_ss_list  = 1
             update_reaction_list  = 1
+            clear_selection = []
         elseif bid == "update-reaction-line"
 
             data_reaction   = show_hide_reaction_lines(sub,refLvl,Xrange,Yrange)
@@ -1066,7 +1074,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             CompProgress.refinement_level = 1
             CompProgress.tinit = time()
 
-            data_plot, layout, npoints, meant, txt_list, heat_map_export   =  refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
+            data_plot, layout, npoints, meant, txt_list, heat_map_export, assemblage_rows, list_compacted_idx, raw_field_id   =  refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                                                                     Xrange,     Yrange,     fieldname,  customTitle,
                                                                                     dtb,        dataset,    custW,      diagType,   watsat,     watsat_val, verbose,    scp,    solver,  boost, phase_selection,
                                                                                     fixT,       fixP,
@@ -1097,6 +1105,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             data_grid       = show_hide_mesh_grid()
             update_ss_list  = 1
             update_reaction_list  = 1
+            clear_selection = []
 
         elseif bid == "load-state-id"
             data_plot,layout,heat_map_export =  update_displayed_field_phaseDiagram( xtitle,     ytitle,     
@@ -1229,17 +1238,61 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         elseif bid == "mineral-naming-dropdown"
             if !@isdefined(Out_XY) || isempty(Out_XY) || !@isdefined(PT_infos)
-                return no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update()
+                return no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update()
             end
-            data_plot, annotations, txt_list = get_diagram_labels(
+            global assemblage_rows, list_compacted_idx, raw_field_id
+            data_plot, annotations, txt_list, assemblage_rows, list_compacted_idx, raw_field_id = get_diagram_labels(
                 Out_XY, Hash_XY, refType, data, PT_infos; field_size = field_size)
             layout[:annotations] = annotations
 
         elseif bid == "pressure-unit-dropdown"
             if !@isdefined(data_plot) || !@isdefined(layout)
-                return no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update()
+                return no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update()
             end
             # redraw only: data_plot/layout stay in kbar, apply_pressure_display() rescales for display below
+
+        elseif bid == "phase-assemblage-table-id"
+            if !@isdefined(data_plot) || !@isdefined(layout) || !@isdefined(list_compacted_idx) || !@isdefined(raw_field_id)
+                return no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update()
+            end
+            # clear any previously highlighted field (reset every field trace back to its inert placeholder)
+            # before (possibly) drawing a new one -- data_plot[1] is the heatmap, data_plot[end] is the hidden hover layer
+            for k = 2:length(data_plot)-1
+                data_plot[k] = scatter(; x = nothing, y = nothing, fill = "toself", fillcolor = "transparent",
+                                        line_width = 0.0, mode = "lines", hoverinfo = "text", showlegend = false,
+                                        text = data_plot[k][:text])
+            end
+
+            if !isempty(assemblage_selected_cells)
+                row = assemblage_selected_cells[1]["row"] + 1
+                if row <= length(list_compacted_idx) && @isdefined(poly_phases) && @isdefined(poly_pcoor)
+                    compacted_idx   = list_compacted_idx[row]
+                    raw_id          = raw_field_id[compacted_idx]
+                    matches         = findall(==(raw_id), poly_phases)
+                    if !isempty(matches)
+                        px, py = Union{Float64,Nothing}[], Union{Float64,Nothing}[]
+                        for (n, m) in enumerate(matches)
+                            n > 1 && (push!(px, nothing); push!(py, nothing))
+                            append!(px, poly_pcoor[m][:,1]); append!(py, poly_pcoor[m][:,2])
+                        end
+                        data_plot[compacted_idx+1] = scatter(; x = px, y = py, fill = "toself", fillcolor = "transparent",
+                                                            line = attr(color = "red", width = 3), mode = "lines",
+                                                            hoverinfo = "text", showlegend = false,
+                                                            text = data_plot[compacted_idx+1][:text])
+                    end
+                end
+            end
+
+        elseif bid == "clear-assemblage-highlight-button"
+            if !@isdefined(data_plot) || !@isdefined(layout)
+                return no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update()
+            end
+            for k = 2:length(data_plot)-1
+                data_plot[k] = scatter(; x = nothing, y = nothing, fill = "toself", fillcolor = "transparent",
+                                        line_width = 0.0, mode = "lines", hoverinfo = "text", showlegend = false,
+                                        text = data_plot[k][:text])
+            end
+            clear_selection = []
 
         else
             fig = plot()
@@ -1443,9 +1496,9 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                         scale    =  2.0,       ).fields)
 
         if isempty(update_ss_list) && isempty(update_reaction_list)
-            return grid, full_grid, fig_cap, config_cap, fig, config, infos, txt_list, isopleths, isoplethsHid, smooth, active_tab, minColor,   maxColor, loading, no_update(), no_update(), show_text_list, store_stop, rangeColor
+            return grid, full_grid, fig_cap, config_cap, fig, config, infos, assemblage_rows, clear_selection, txt_list, isopleths, isoplethsHid, smooth, active_tab, minColor,   maxColor, loading, no_update(), no_update(), show_text_list, store_stop, rangeColor
         else
-            return grid, full_grid, fig_cap, config_cap, fig, config, infos, txt_list, isopleths, isoplethsHid, smooth, active_tab, minColor,   maxColor, loading, update_ss_list, update_reaction_list, show_text_list, store_stop, rangeColor
+            return grid, full_grid, fig_cap, config_cap, fig, config, infos, assemblage_rows, clear_selection, txt_list, isopleths, isoplethsHid, smooth, active_tab, minColor,   maxColor, loading, update_ss_list, update_reaction_list, show_text_list, store_stop, rangeColor
         end
     end
 

@@ -321,7 +321,7 @@ function Tab_TraceElement_Callbacks(app)
                                                                 "false",
                                                                 0)
 
-                data_plot_te, annotations, txt_list = get_diagram_labels(   Out_XY,
+                data_plot_te, annotations, txt_list, _, _, _ = get_diagram_labels(   Out_XY,
                                                                             Hash_XY,
                                                                             refType,
                                                                             data,
