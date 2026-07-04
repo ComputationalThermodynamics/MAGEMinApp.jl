@@ -250,14 +250,14 @@ function phase_order_rows(order::Vector{String}, visible)
     ]
 end
 
-function create_assemblage_table(rows::Vector{Dict{String,String}})
+function create_assemblage_table(rows::Vector{Dict{String,String}}; id::String = "phase-assemblage-table-id")
     columns = [
         Dict("name" => "#",           "id" => "N"),
         Dict("name" => "Assemblage",  "id" => "Assemblage"),
     ]
 
     return dash_datatable(
-        id                          = "phase-assemblage-table-id",
+        id                          = id,
         data                        =  rows,
         columns                     =  columns,
         style_table                 =  Dict("margin" => "0", "padding" => "0", "max-height" => "640px", "overflow-y" => "auto"),

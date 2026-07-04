@@ -156,7 +156,9 @@ function Tab_TraceElement_Callbacks(app)
         Output("max-color-id-te",           "value"     ),
         Output("isopleth-dropdown-te",      "options"   ),
         Output("hidden-isopleth-dropdown-te",     "options"),
-        Output("stable-assemblage-id-te",   "children"  ),   
+        Output("phase-assemblage-table-id-te", "data"),
+        Output("phase-assemblage-table-id-te", "selected_cells"),
+        Output("phase-assemblage-clipboard-id-te", "content"),
         Output("show-text-list-id-te",        "style"   ),
         Output("output-loading-id-te",        "children"),
 
@@ -192,6 +194,8 @@ function Tab_TraceElement_Callbacks(app)
 
         Input("update-title-button",        "n_clicks"  ),
         Input("export-layers-te",           "n_clicks"  ),
+        Input("phase-assemblage-table-id-te", "selected_cells"),
+        Input("clear-assemblage-highlight-button-te", "n_clicks"),
 
         State("title-id",                   "value"     ),
         State("tepm-dropdown",              "value"     ),
@@ -245,7 +249,7 @@ function Tab_TraceElement_Callbacks(app)
         State("iso-min-id-te",             "value"      ),
         State("iso-step-id-te",            "value"      ),
         State("iso-max-id-te",             "value"      ),
-        State("stable-assemblage-id-te",   "children"   ), 
+        State("phase-assemblage-clipboard-id-te",   "content"   ),
 
         prevent_initial_call = true,
 
@@ -254,8 +258,9 @@ function Tab_TraceElement_Callbacks(app)
 
                 addIso,     removeIso,  removeAllIso,           isoShow,    isoHide, isoShowAll,    isoHideAll,
 
-                colorMap,   smooth,     rangeColor, set_white, reverse,    minColor, maxColor, 
+                colorMap,   smooth,     rangeColor, set_white, reverse,    minColor, maxColor,
                 updateTitle,exportFig,
+                assemblage_selected_cells_te, clearHighlight_te,
                 customTitle,tepm,       varBuilder, norm, type, norm_te,
                 dtb,        diagType,   tmin,       tmax,       pmin,       pmax,       e1_tmin,    e1_tmax,    e2_tmin,    e2_tmax,  
                 bulk1,      bulk2,
@@ -277,12 +282,14 @@ function Tab_TraceElement_Callbacks(app)
         fieldType                       = type
         loading                         = ""
         field2plot[1]                   = 1
+        clear_selection_te              = no_update()     # only touched when the assemblage list is (re)built or Clear is pushed
 
         if @isdefined(Out_TE_XY) && length(Out_XY) == length(Out_TE_XY)
             if bid == "load-button-te"
                 fieldType = "zrc"
                 global gridded_te, gridded_info_te, gridded_fields_te, X_te, Y_te, npoints_te, meant_te
                 global layout_te, n_lbl, addedRefinementLvl
+                global assemblage_rows_te, list_compacted_idx_te, raw_field_id_te, poly_phases_te, poly_pcoor_te
                 global data_plot_te,  data_reaction_te, data_grid_te, PT_infos_te, data_isopleth_te, data_isopleth_out_te, data_isopleth_out_export_te
                 global heat_map_export_te
 
@@ -321,11 +328,15 @@ function Tab_TraceElement_Callbacks(app)
                                                                 "false",
                                                                 0)
 
-                data_plot_te, annotations, txt_list, _, _, _ = get_diagram_labels(   Out_XY,
+                data_plot_te, annotations, txt_list, assemblage_rows_te, list_compacted_idx_te, raw_field_id_te = get_diagram_labels(   Out_XY,
                                                                             Hash_XY,
                                                                             refType,
                                                                             data,
                                                                             PT_infos_te )
+
+                poly_phases_te, poly_pcoor_te = compute_assemblage_boundaries(gridded_fields_te, Xrange, Yrange)
+                clear_selection_te = []
+
                 ticks       = 4
                 frame       = get_plot_frame(Xrange,Yrange, ticks)                                  
                 layout_te   = Layout(
@@ -581,6 +592,43 @@ function Tab_TraceElement_Callbacks(app)
                         xanchor = "center",
                         yanchor = "top"
                     )
+
+            elseif bid == "phase-assemblage-table-id-te"
+                # clear any previously highlighted field before (possibly) drawing a new one
+                for k = 2:length(data_plot_te)-1
+                    data_plot_te[k] = scatter(; x = nothing, y = nothing, fill = "toself", fillcolor = "transparent",
+                                            line_width = 0.0, mode = "lines", hoverinfo = "text", showlegend = false,
+                                            text = data_plot_te[k][:text])
+                end
+
+                if !isempty(assemblage_selected_cells_te)
+                    row = assemblage_selected_cells_te[1]["row"] + 1
+                    if row <= length(list_compacted_idx_te) && @isdefined(poly_phases_te) && @isdefined(poly_pcoor_te)
+                        compacted_idx   = list_compacted_idx_te[row]
+                        raw_id          = raw_field_id_te[compacted_idx]
+                        matches         = findall(==(raw_id), poly_phases_te)
+                        if !isempty(matches)
+                            px, py = Union{Float64,Nothing}[], Union{Float64,Nothing}[]
+                            for (idx, m) in enumerate(matches)
+                                idx > 1 && (push!(px, nothing); push!(py, nothing))
+                                append!(px, poly_pcoor_te[m][:,1]); append!(py, poly_pcoor_te[m][:,2])
+                            end
+                            data_plot_te[compacted_idx+1] = scatter(; x = px, y = py, fill = "toself", fillcolor = "transparent",
+                                                                line = attr(color = "red", width = 3), mode = "lines",
+                                                                hoverinfo = "text", showlegend = false,
+                                                                text = data_plot_te[compacted_idx+1][:text])
+                        end
+                    end
+                end
+
+            elseif bid == "clear-assemblage-highlight-button-te"
+                for k = 2:length(data_plot_te)-1
+                    data_plot_te[k] = scatter(; x = nothing, y = nothing, fill = "toself", fillcolor = "transparent",
+                                            line_width = 0.0, mode = "lines", hoverinfo = "text", showlegend = false,
+                                            text = data_plot_te[k][:text])
+                end
+                clear_selection_te = []
+
             else
                 fig_te = plot()
                 print("Compute a phase diagram with activated trace-element in the Setup tab first!\n")
@@ -779,9 +827,9 @@ function Tab_TraceElement_Callbacks(app)
                                                                             width    =  900,
                                                                             scale    =  2.0,       ).fields)
     
-            return grid, full_grid, fig_cap, config_cap, fig_te, config, fieldType, minColor, maxColor, isopleths_te, isoplethsHid_te, txt_list, show_text_list, loading
+            return grid, full_grid, fig_cap, config_cap, fig_te, config, fieldType, minColor, maxColor, isopleths_te, isoplethsHid_te, assemblage_rows_te, clear_selection_te, txt_list, show_text_list, loading
         else
-            return no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update()
+            return no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update()
             print("Compute a phase diagram with activated trace-element in the Setup tab first!\n")
         end
 

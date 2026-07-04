@@ -117,22 +117,27 @@ function Tab_TraceElement()
 
                                     html_div([
                                         dbc_row([
-
-                                            dcc_clipboard(
-                                                target_id   = "stable-assemblage-id-te",
-                                                title       = "copy",
-                                                style       =  Dict(    "display"       => "inline-block",
-                                                                        "fontSize"      =>  20,
-                                                                        "verticalAlign" => "top"    ),
-                                            ),
+                                            dbc_col([
+                                                dcc_clipboard(
+                                                    id          = "phase-assemblage-clipboard-id-te",
+                                                    title       = "copy",
+                                                    style       =  Dict(    "display"       => "inline-block",
+                                                                            "fontSize"      =>  20,
+                                                                            "verticalAlign" => "top"    ),
+                                                ),
+                                            ]),
+                                            dbc_col([
+                                                dbc_button(     "Clear", id="clear-assemblage-highlight-button-te", color="light", size="sm", n_clicks=0,
+                                                                style       = Dict(     "display"       => "inline-block",
+                                                                                        "marginLeft"    =>  8,
+                                                                                        "border"        => "1px grey solid",
+                                                                                        "verticalAlign" => "top"    ),
+                                                ),
+                                            ]),
                                         ]),
                                         dbc_row([
                                             dbc_card([
-                                                dcc_markdown(   id          = "stable-assemblage-id-te", 
-                                                                children    = "",
-                                                                style       = Dict(     "white-space" => "pre", 
-                                                                                        "max-height" => "640px",
-                                                                                        "overflow-y" => "auto"      ))
+                                                create_assemblage_table(Dict{String,String}[]; id = "phase-assemblage-table-id-te")
                                             ])
                                         ]),
                                     ], style = Dict("display" => "block"), id      = "show-text-list-id-te"), #none, block
