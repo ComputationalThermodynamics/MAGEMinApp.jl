@@ -114,16 +114,14 @@ function get_node_cycle(nodes, edges)
     G = SimpleGraph(size(nodes, 1))
 
     for edge in eachrow(edges)
-
         add_edge!(G, edge[1], edge[2])
-    
     end
 
     cycle = cycle_basis(G)
     
-    if length(cycle) > 1
-        throw("More than one cycle detected for a polygon")
-    end
+    # if length(cycle) > 1
+    #     throw("More than one cycle detected for a polygon")
+    # end
 
     cnodes = nodes[cycle[1], : ]
 

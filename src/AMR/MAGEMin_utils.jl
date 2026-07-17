@@ -415,7 +415,7 @@ function refine_MAGEMin(dtb,data,
                     end
                 end
             end
-            if diagType == "pt" && dtb != "sb11" && dtb != "sb21"  && dtb != "sb24" && isnothing(pChip_wat) == true
+            if diagType == "pt" && dtb != "sb11" && dtb != "sb21"  && dtb != "sb24" && dtb != "rMELTS" && dtb != "pMELTS" && isnothing(pChip_wat) == true
                 fixed_bulk = true
             else
                 fixed_bulk = false
