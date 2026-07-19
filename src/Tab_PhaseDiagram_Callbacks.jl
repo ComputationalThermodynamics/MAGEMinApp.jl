@@ -522,11 +522,17 @@ function Tab_PhaseDiagram_Callbacks(app)
             end
 
             title = "P: $(round(display_pressure(Out_XY[point_id].P_kbar); digits = 3)) $(pressure_unit_label()) T: $(round(Out_XY[point_id].T_C; digits = 3)) Mode [$(sys)]"
+
+            show_x = (diagType == "px" || diagType == "tx") && @isdefined(data) && point_id <= length(data.points)
+            if show_x
+                title *= "<br>X: $(round(data.points[point_id][1]; digits = 3))"
+            end
+
             layout = Layout(    font        = attr(size = 10),
                                 height      = 220,
-                                margin      = attr(autoexpand = false, l=8, r=8, b=8, t=24),
+                                margin      = attr(autoexpand = false, l=8, r=8, b=8, t=(show_x ? 40 : 24)),
                                 autosize    = false,
-                                title       = attr(text=title, x=0.5, y=0.98),
+                                title       = attr(text=title, x=0.5, y=0.96),
                                 titlefont   = attr(size=12))
 
 

@@ -2192,8 +2192,12 @@ function get_oxide_list(dbin::String)
         MAGEMin_ox      = ["SiO2"; "CaO"; "Al2O3";"FeO"; "MgO"; "Na2O"]; 
     elseif dbin == "sb24"
         MAGEMin_ox      = ["SiO2"; "CaO"; "Al2O3"; "MgO"; "Na2O"; "O"; "Cr2O3"; "Fe"]; 
+    elseif dbin == "rMELTS"
+        MAGEMin_ox      = ["SiO2";"Al2O3";"CaO";"MgO";"FeO";"K2O";"Na2O";"TiO2";"O";"MnO"; "Cr2O3";"H2O";"CO2"]; 
+    elseif dbin == "pMELTS"
+        MAGEMin_ox      = ["SiO2";"Al2O3";"CaO";"MgO";"FeO";"K2O";"Na2O";"TiO2";"O";"MnO"; "Cr2O3";"H2O"]; 
     else
-        print("Database not implemented...\n")
+        print("Database not implemented... $dbin (get_oxide_list)\n")
     end
 
 
@@ -2333,7 +2337,7 @@ function bulk_csv_to_db(datain)
         dbin     = lowercase(strip(string(datain[i, idx_db])))
         sysUnit  = lowercase(strip(string(datain[i, idx_sysUnit])))
 
-        valid_db      = ("ig","igd","igm","igad","mb","mbe","um","ume","mp","mtl","mpe","cs","sb11","sb21","sb24")
+        valid_db      = ("ig","igd","igm","igad","mb","mbe","um","ume","mp","mtl","mpe","cs","sb11","sb21","sb24","rMELTS","pMELTS")
         valid_sysunit = ("mol","wt")
 
         if dbin ∉ valid_db

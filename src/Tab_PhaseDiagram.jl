@@ -1556,7 +1556,25 @@ function Tab_PhaseDiagram()
                                                         style = Dict("textAlign" => "center", "font-size" => "100%",
                                                                      "border" => "1px grey solid", "width" => "100%")),
                                                 ], width=6),
+                                                dbc_col([
+                                                    dbc_button("Export to PTX path", id="draw-path-export-button", color="light", n_clicks=0,
+                                                        style = Dict("textAlign" => "center", "font-size" => "100%",
+                                                                     "border" => "1px grey solid", "width" => "100%")),
+                                                ], width=6),
                                             ]),
+                                            dbc_alert(
+                                                "Path exported to PTX path → Define path",
+                                                id      ="draw-path-export-success",
+                                                is_open =false,
+                                                duration=4000,
+                                            ),
+                                            dbc_alert(
+                                                "Record a path on the diagram before exporting",
+                                                color="danger",
+                                                id      ="draw-path-export-failed",
+                                                is_open =false,
+                                                duration=4000,
+                                            ),
                                             dbc_row([
                                                 dbc_offcanvas(
                                                     [

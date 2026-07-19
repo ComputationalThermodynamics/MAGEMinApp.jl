@@ -1309,7 +1309,7 @@ function Tab_PTXpaths_Callbacks(app)
             style  = Dict("display" => "none")
         end
 
-        if value == "sb11" || value == "sb21" || value == "sb24"
+        if value == "sb11" || value == "sb21" || value == "sb24" || value == "rMELTS" || value == "pMELTS"
             style_dataset = Dict("display" => "none")
         else
             style_dataset = Dict("display" => "block")
@@ -1476,21 +1476,97 @@ function Tab_PTXpaths_Callbacks(app)
 
         Output("dataset-dropdown-ptx","options"),
         Output("dataset-dropdown-ptx","value"),
+        Output("display-o-liquidus-textarea", "value"),
+        Output("o-liquidus-failed",           "is_open"),
+        Output("o-liquidus-failed",           "children"),
+
         Input("select-bulk-unit-ptx","value"),
 
         Input("test-dropdown-ptx","value"),
         Input("database-dropdown-ptx","value"),
         Input("output-data-uploadn-ptx", "is_open"),        # this listens for changes and updated the list
+        Input("get-o-liquidus-button",   "n_clicks"),
 
         State("table-bulk-rock-ptx","data"),
         State("phase-selection-PTX","value"),
         State("pure-phase-selection-PTX","value"),
 
+        State("display-liquidus-textarea", "value"),
+        State("buffer-dropdown-ptx",        "value"),
+        State("buffer-1-mul-id-ptx",        "value"),
+        State("solidus-pressure-val-id",    "value"),
+        State("dataset-dropdown-ptx",       "value"),
+        State("solver-dropdown-ptx",        "value"),
+        State("verbose-dropdown-ptx",       "value"),
+        State("mb-cpx-switch-ptx",          "value"),
+        State("limit-ca-opx-id-ptx",        "value"),
+        State("ca-opx-val-id-ptx",          "value"),
+
         prevent_initial_call = false,
     ) do sys_unit,
-        test, dtb, update, tb_data, current_ss_selection, current_pp_selection
+        test, dtb, update, _o_liq_clicks, tb_data, current_ss_selection, current_pp_selection,
+        Tliq_txt, bufferType, bufferN, pressure_val, dataset, solver, verbose, cpx, limOpx, limOpxVal
 
         bid = pushed_button( callback_context() )
+
+        if bid == "get-o-liquidus-button"
+            no_upd = no_update()
+            fail(msg) = no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_update(), true, msg
+
+            Tliq = tryparse(Float64, string(Tliq_txt))
+            if isnothing(Tliq)
+                return fail("Compute the liquidus temperature first (Find liquidus)")
+            elseif bufferType == "none"
+                return fail("Select a buffer in the configuration panel first")
+            end
+
+            pressure = to_kbar_pressure(Float64(pressure_val))
+            bufferN_f = Float64(bufferN)
+            bulk_ini, _, oxi = get_bulkrock_prop(tb_data, tb_data)
+
+            mbCpx, limitCaOpx, CaOpxLim, sol = get_init_param(dtb, solver, cpx, limOpx, limOpxVal)
+
+            GC.gc()
+            gv, z_b, DB, splx_data = init_MAGEMin( dtb;
+                                                    verbose     = verbose,
+                                                    dataset     = dataset,
+                                                    mbCpx       = mbCpx,
+                                                    limitCaOpx  = limitCaOpx,
+                                                    CaOpxLim    = CaOpxLim,
+                                                    buffer      = bufferType,
+                                                    solver      = sol )
+
+            sys_in = sys_unit == 1 ? "mol" : "wt"
+            gv     = define_bulk_rock(gv, bulk_ini, oxi, sys_in, dtb)
+
+            rm_list = remove_phases(string_vec_diff_ss(current_ss_selection, dtb), dtb)
+
+            out = deepcopy( point_wise_minimization(pressure, Tliq, gv, z_b, DB, splx_data, sys_in;
+                                                     buffer_n=bufferN_f, rm_list=rm_list, name_solvus=true) )
+
+            LibMAGEMin.FreeDatabases(gv, DB, z_b)
+
+            if !(bufferType in out.ph)
+                return fail("Buffer '$(bufferType)' is not part of the stable assemblage — fO2 was not fixed at the liquidus")
+            end
+
+            o_idx = findfirst(==("O"), out.oxides)
+            if isnothing(o_idx)
+                return fail("No 'O' oxide in the current chemical system")
+            end
+
+            new_O_val = sys_unit == 1 ? out.bulk[o_idx] * 100.0 : mol2wt(out.bulk, out.oxides)[o_idx]
+            new_O_val = round(new_O_val, digits=6)
+
+            dataout = copy(tb_data)
+            row_idx = findfirst(r -> r[:oxide] == "O", dataout)
+            if isnothing(row_idx)
+                return fail("No 'O' oxide row in the current bulk-rock table")
+            end
+            dataout[row_idx] = Dict(:oxide => "O", :fraction => new_O_val)
+
+            return dataout, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, string(new_O_val), false, no_update()
+        end
 
         # catching up some special cases
         if test > length(db[(db.db .== dtb), :].test) - 1 
@@ -1560,7 +1636,7 @@ function Tab_PTXpaths_Callbacks(app)
                                 for i = 1:length(db_in.dataset_opt) ]
         dataset_value    = db_in.db_dataset
 
-        return data, opts, val, cap, phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value, dataset_options, dataset_value
+        return data, opts, val, cap, phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value, dataset_options, dataset_value, no_update(), no_update(), no_update()
     end
 
 
@@ -1819,12 +1895,15 @@ function Tab_PTXpaths_Callbacks(app)
         Output("test-2-id-ptx",             "style"     ),
         Output("variable-buffer-display-id2","style"     ),
         Output("pressure-unit-prev-ptx",    "children"  ),
+        Output("draw-path-export-success",  "is_open"   ),
+        Output("draw-path-export-failed",   "is_open"   ),
 
         Input("assimilation-dropdown-ptx",  "value"     ),
         Input("add-row-button",             "n_clicks"  ),
         Input("variable-buffer-ptx-id",     "value"     ),
         Input("isentropic-dropdown-ptx",     "value"    ),
         Input("pressure-unit-dropdown",     "value"     ),
+        Input("draw-path-export-button",    "n_clicks"  ),
 
         State("assimilation-dropdown-ptx",  "value"     ),
         State("ptx-table",                  "data"      ),
@@ -1833,7 +1912,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         prevent_initial_call = true,
 
-        ) do value, n_clicks, var_buffer, isentropic_value, pressure_unit,
+        ) do value, n_clicks, var_buffer, isentropic_value, pressure_unit, _export_clicks,
                 assim, data, colout, pressure_unit_prev
 
         bid                     = pushed_button( callback_context() )    # get which button has been pushed
@@ -1855,7 +1934,7 @@ function Tab_PTXpaths_Callbacks(app)
 
             colsout[1][:name] = "P [$(pressure_unit_label())]"
 
-            return dataout, colsout, no_update(), no_update(), no_update(), pressure_unit
+            return dataout, colsout, no_update(), no_update(), no_update(), pressure_unit, no_update(), no_update()
         end
 
         dataout = copy(data)
@@ -1930,13 +2009,32 @@ function Tab_PTXpaths_Callbacks(app)
 
         end
 
+        export_success = false
+        export_failed  = false
+        if bid == "draw-path-export-button"
+            if @isdefined(draw_path_ids) && !isempty(draw_path_ids)
+                col_ids = Set(c["id"] for c in colout)
+                dataout = Dict{Symbol,Any}[]
+                for id in draw_path_ids
+                    row = Dict{Symbol,Any}(Symbol("col-1") => display_pressure(Out_XY[id].P_kbar))
+                    "col-2" in col_ids && (row[Symbol("col-2")] = Out_XY[id].T_C)
+                    "col-3" in col_ids && (row[Symbol("col-3")] = 0.0)
+                    "col-4" in col_ids && (row[Symbol("col-4")] = 0.0)
+                    push!(dataout, row)
+                end
+                export_success = true
+            else
+                export_failed = true
+            end
+        end
+
         if var_buffer == false
-            var_buff_disp = Dict("display" => "block") 
+            var_buff_disp = Dict("display" => "block")
         else
             var_buff_disp = Dict("display" => "none")
         end
 
-        return dataout, colout, table2, test2, var_buff_disp, no_update()
+        return dataout, colout, table2, test2, var_buff_disp, no_update(), export_success, export_failed
     end
 
     # Show/hide TE section + enable/disable TE tab based on tepm dropdown

@@ -1139,17 +1139,17 @@ function Tab_PTXpaths()
                                     ]),
 
                                     dbc_row([
-                                        dbc_col([ 
+                                        dbc_col([
                                             dbc_row([
                                                 dbc_button("Find liquidus",id="find-liquidus-button", color="light", className="me-2", n_clicks=0,
                                                 style       = Dict( "textAlign"     => "center",
                                                                     "font-size"     => "100%",
-                                                                    "border"        =>"1px lightgray solid")), 
+                                                                    "border"        =>"1px lightgray solid")),
                                             ]),
                                         ],width=6),
-                                        dbc_col([ 
+                                        dbc_col([
                                         ],width=1),
-                                        dbc_col([ 
+                                        dbc_col([
                                             dbc_row([
                                                 dcc_textarea(
                                                     id="display-liquidus-textarea",
@@ -1164,8 +1164,41 @@ function Tab_PTXpaths()
 
                                         ]),
                                     ]),
-  
-                                    html_div("‎ "), 
+
+                                    html_div("‎ "),
+                                    dbc_row([
+                                        dbc_col([
+                                            dbc_row([
+                                                dbc_button("Get O at liquidus",id="get-o-liquidus-button", color="light", className="me-2", n_clicks=0,
+                                                style       = Dict( "textAlign"     => "center",
+                                                                    "font-size"     => "100%",
+                                                                    "border"        =>"1px lightgray solid")),
+                                            ]),
+                                        ],width=6),
+                                        dbc_col([
+                                        ],width=1),
+                                        dbc_col([
+                                            dbc_row([
+                                                dcc_textarea(
+                                                    id="display-o-liquidus-textarea",
+                                                    value       = "",
+                                                    readOnly    = true,
+                                                    disabled    = true,
+                                                    draggable   = false,
+                                                    style       = Dict("textAlign" => "center","font-size" => "100%", "width"=> "100%", "height" => 24, "resize"=> "none")
+                                                ),
+                                            ]),
+                                        ]),
+                                    ]),
+                                    dbc_alert(
+                                        "Oxygen fugacity could not be fixed at the liquidus",
+                                        color   ="danger",
+                                        id      ="o-liquidus-failed",
+                                        is_open =false,
+                                        duration=4000,
+                                    ),
+
+                                    html_div("‎ "),
                                     html_h1("Define path", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 4)),
                                     html_hr(),
                                     html_div([

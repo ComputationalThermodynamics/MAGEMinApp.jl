@@ -639,7 +639,14 @@ function _render_intersect_figure(result, field_value::String;
         ),
     )
 
-    return plot(traces, ix_layout)
+    config = PlotConfig(   toImageButtonOptions  = attr(     name     = "Download as svg",
+                                                              format   = "svg",
+                                                              filename =  replace(label, " " => "_"),
+                                                              height   =  fig_height,
+                                                              width    =  fig_width,
+                                                              scale    =  2.0,       ).fields)
+
+    return plot(traces, ix_layout), config
 end
 
 
@@ -861,6 +868,7 @@ function Tab_IntersecT_Callbacks(app)
     callback!(
         app,
         Output("diagram-ix",            "figure"),
+        Output("diagram-ix",            "config"),
         Input("field-dropdown-ix",      "value"),
         Input("colormaps-ix",           "value"),
         Input("min-color-ix",           "value"),
@@ -879,7 +887,7 @@ function Tab_IntersecT_Callbacks(app)
 
         global Out_intersect
 
-        (isnothing(field_value) || isnothing(Out_intersect)) && return Dict()
+        (isnothing(field_value) || isnothing(Out_intersect)) && return Dict(), PlotConfig()
 
         return _render_intersect_figure(
             Out_intersect, field_value;
@@ -900,6 +908,7 @@ function Tab_IntersecT_Callbacks(app)
     callback!(
         app,
         Output("diagram-ix-1",           "figure"),
+        Output("diagram-ix-1",           "config"),
         Input("field-dropdown-ix-1",     "value"),
         Input("colormaps-ix",            "value"),
         Input("range-slider-color-ix",   "value"),
@@ -913,7 +922,7 @@ function Tab_IntersecT_Callbacks(app)
         global Out_intersect
 
         if isnothing(field_value) || isnothing(Out_intersect)
-            return Dict()
+            return Dict(), PlotConfig()
         end
 
         return _render_intersect_figure(
@@ -936,6 +945,7 @@ function Tab_IntersecT_Callbacks(app)
     callback!(
         app,
         Output("diagram-ix-2",           "figure"),
+        Output("diagram-ix-2",           "config"),
         Input("field-dropdown-ix-2",     "value"),
         Input("colormaps-ix",            "value"),
         Input("range-slider-color-ix",   "value"),
@@ -949,7 +959,7 @@ function Tab_IntersecT_Callbacks(app)
         global Out_intersect
 
         if isnothing(field_value) || isnothing(Out_intersect)
-            return Dict()
+            return Dict(), PlotConfig()
         end
 
         return _render_intersect_figure(
