@@ -137,9 +137,9 @@ function get_dtbulk_list()
         Dict("label" => "Stixrude & Lithgow-Bertelloni (2011)", "value" => "sb11"),
         Dict("label" => "Stixrude & Lithgow-Bertelloni (2021)", "value" => "sb21"),
         Dict("label" => "Stixrude & Lithgow-Bertelloni (2024)", "value" => "sb24"),
-        Dict("label" => "- MELTS DATABASE -", "value" => "separator", "disabled" => true),  # Simulate a horizontal line
-        Dict("label" => "pMELTS (Ghiorso et al., 2002)", "value" => "pMELTS"),
-        Dict("label" => "rhyolite-MELTS (Ghiorso & Sack, 1995)", "value" => "rMELTS"),
+        # Dict("label" => "- MELTS DATABASE -", "value" => "separator", "disabled" => true),  # Simulate a horizontal line
+        # Dict("label" => "pMELTS (Ghiorso et al., 2002)", "value" => "pMELTS"),
+        # Dict("label" => "rhyolite-MELTS (Ghiorso & Sack, 1995)", "value" => "rMELTS"),
         Dict("label" => "- CUSTOM DATABASE -", "value" => "separator", "disabled" => true),  # Simulate a horizontal line
         Dict("label" => "Ultramafic extended (Evans & Frost., 2021)", "value" => "ume"),
         Dict("label" => "Metapelite extended (White et al., 2014, Green et al., 2016, Evans & Frost., 2021)", "value" => "mpe"),
@@ -194,13 +194,13 @@ function get_dtbulk_list()
                             ), cols=:union)
 
 
-    push!(dba,Dict(         :database    => "Ghiorso & (xxxx)",
-                            :acronym     => "pMELTS",
-                            ), cols=:union)
+    # push!(dba,Dict(         :database    => "Ghiorso & (xxxx)",
+    #                         :acronym     => "pMELTS",
+    #                         ), cols=:union)
 
-    push!(dba,Dict(         :database    => "Ghiorso & (yyyy)",
-                            :acronym     => "rMELTS",
-                            ), cols=:union)
+    # push!(dba,Dict(         :database    => "Ghiorso & (yyyy)",
+    #                         :acronym     => "rMELTS",
+    #                         ), cols=:union)
 
     # push!(dba,Dict(         :database    => "Calc-shist (Stuck et al., 2026)",
     #                         :acronym     => "cs",
@@ -904,38 +904,38 @@ function get_dtbulk_list()
 
 # MELTS DATABASE
 
-push!(db,Dict(          :bulk       => "predefined",
-                        :title      => "Tonalite 101",
-                        :comments   => "Piwinskii, 1968",
-                        :db         => "rMELTS",
-                        :test       => 0,
-                        :sysUnit    => "mol",
-                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","MnO","O","Cr2O3","H2O","CO2"],
-                        :frac       => [66.01,11.98,7.06,4.16,5.30,1.57,4.12,0.66, 0.2,0.97,0.01, 50,0.1],
-                        :frac2      => [66.01,11.98,7.06,4.16,5.30,1.57,4.12,0.66, 0.2,0.97,0.01, 50,0.1],
-                        ), cols=:union)
-                            
-push!(db,Dict(          :bulk       => "predefined",
-                        :title      => "Wet Basalt",
-                        :comments   => "unpublished",
-                        :db         => "pMELTS",
-                        :test       => 0,
-                        :sysUnit    => "mol",
-                        :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","MnO", "Cr2O3","H2O"],
-                        :frac       => [50.0810,  8.6901,  11.6698, 12.1438, 7.7832,  0.2150,  2.4978,  1.0059,  0.4670,  0.2, 0.0100, 5.4364],
-                        :frac2      => [50.0810,  8.6901,  11.6698, 12.1438, 7.7832,  0.2150,  2.4978,  1.0059,  0.4670,  0.2, 0.0100, 5.4364],
-                        ), cols=:union)
+    # push!(db,Dict(          :bulk       => "predefined",
+    #                         :title      => "Tonalite 101",
+    #                         :comments   => "Piwinskii, 1968",
+    #                         :db         => "rMELTS",
+    #                         :test       => 0,
+    #                         :sysUnit    => "mol",
+    #                         :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","MnO","O","Cr2O3","H2O","CO2"],
+    #                         :frac       => [66.01,11.98,7.06,4.16,5.30,1.57,4.12,0.66, 0.2,0.97,0.01, 50,0.1],
+    #                         :frac2      => [66.01,11.98,7.06,4.16,5.30,1.57,4.12,0.66, 0.2,0.97,0.01, 50,0.1],
+    #                         ), cols=:union)
+                                
+    # push!(db,Dict(          :bulk       => "predefined",
+    #                         :title      => "Wet Basalt",
+    #                         :comments   => "unpublished",
+    #                         :db         => "pMELTS",
+    #                         :test       => 0,
+    #                         :sysUnit    => "mol",
+    #                         :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","MnO", "Cr2O3","H2O"],
+    #                         :frac       => [50.0810,  8.6901,  11.6698, 12.1438, 7.7832,  0.2150,  2.4978,  1.0059,  0.4670,  0.2, 0.0100, 5.4364],
+    #                         :frac2      => [50.0810,  8.6901,  11.6698, 12.1438, 7.7832,  0.2150,  2.4978,  1.0059,  0.4670,  0.2, 0.0100, 5.4364],
+    #                         ), cols=:union)
 
-    push!(db,Dict(          :bulk       => "predefined",
-                            :title      => "KLB1 Peridotite - Anhydrous",
-                            :comments   => "Holland et al., 2018",
-                            :db         => "pMELTS",
-                            :test       => 1,
-                            :sysUnit    => "mol",
-                            :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","MnO","Cr2O3","H2O"],
-                            :frac       => [38.494,  1.776,  2.824, 50.566, 5.886,  0.01,  0.250,  0.10,  0.096,  0.01, 0.109, 0.0],
-                            :frac2      => [38.494,  1.776,  2.824, 50.566, 5.886,  0.01,  0.250,  0.10,  0.096,  0.01, 0.109, 0.0],
-                            ), cols=:union)
+    # push!(db,Dict(          :bulk       => "predefined",
+    #                         :title      => "KLB1 Peridotite - Anhydrous",
+    #                         :comments   => "Holland et al., 2018",
+    #                         :db         => "pMELTS",
+    #                         :test       => 1,
+    #                         :sysUnit    => "mol",
+    #                         :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","MnO","Cr2O3","H2O"],
+    #                         :frac       => [38.494,  1.776,  2.824, 50.566, 5.886,  0.01,  0.250,  0.10,  0.096,  0.01, 0.109, 0.0],
+    #                         :frac2      => [38.494,  1.776,  2.824, 50.566, 5.886,  0.01,  0.250,  0.10,  0.096,  0.01, 0.109, 0.0],
+    #                         ), cols=:union)
 
 # METABASITE DATABASE
     push!(db,Dict(          :bulk       => "predefined",

@@ -1636,7 +1636,7 @@ function Tab_PTXpaths_Callbacks(app)
                                 for i = 1:length(db_in.dataset_opt) ]
         dataset_value    = db_in.db_dataset
 
-        return data, opts, val, cap, phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value, dataset_options, dataset_value
+        return data, opts, val, cap, phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value, dataset_options, dataset_value, no_update(), no_update(), no_update()
     end
 
 
