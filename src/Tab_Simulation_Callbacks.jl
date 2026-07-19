@@ -411,6 +411,8 @@ function Tab_Simulation_Callbacks(app)
                 saved                       = cache[dtb]
                 phase_selection_value       = intersect(saved["ss"], db_in.ss_name)
                 pure_phase_selection_value  = intersect(saved["pp"], pp_disp)
+                isempty(phase_selection_value)      && (phase_selection_value      = db_in.ss_name)
+                isempty(pure_phase_selection_value) && (pure_phase_selection_value = pp_disp)
             else
                 phase_selection_value       = db_in.ss_name
                 pure_phase_selection_value  = pp_disp
