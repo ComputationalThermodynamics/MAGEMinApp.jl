@@ -1047,7 +1047,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
         # end
 
         for i = 1:Threads.maxthreadid()
-            finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i])
+            finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i],MAGEMin_data.splx_data[i])
         end
 
         #________________________________________________________________________________________#                   
@@ -1254,7 +1254,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
     addedRefinementLvl += 1;
 
     for i = 1:Threads.maxthreadid()
-        finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i])
+        finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i],MAGEMin_data.splx_data[i])
     end
 
     #________________________________________________________________________________________#                   

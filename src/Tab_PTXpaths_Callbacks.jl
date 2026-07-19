@@ -1544,7 +1544,7 @@ function Tab_PTXpaths_Callbacks(app)
             out = deepcopy( point_wise_minimization(pressure, Tliq, gv, z_b, DB, splx_data, sys_in;
                                                      buffer_n=bufferN_f, rm_list=rm_list, name_solvus=true) )
 
-            LibMAGEMin.FreeDatabases(gv, DB, z_b)
+            LibMAGEMin.FreeDatabases(gv, DB, z_b, pointer_from_objref(splx_data))
 
             if !(bufferType in out.ph)
                 return fail("Buffer '$(bufferType)' is not part of the stable assemblage — fO2 was not fixed at the liquidus")

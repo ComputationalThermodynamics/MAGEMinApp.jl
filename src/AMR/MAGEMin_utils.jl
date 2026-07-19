@@ -124,7 +124,7 @@ function get_wat_sat_function(     Yrange,     bulk_ini,   oxi,    phase_selecti
         # println("SatSol $SatSol")
         pChip_wat   = Interpolator(Prange, SatSol)
         pChip_T     = Interpolator(Prange, Tsol)
-        LibMAGEMin.FreeDatabases(gv, DB, z_b)
+        LibMAGEMin.FreeDatabases(gv, DB, z_b, pointer_from_objref(splx_data))
     else
         println("To compute water-saturation at sub-solidus liq must be part of the solution phase model and the bulk composition must contain water")
         println("Phase diagram will be computed without water-saturation at sub-solidus...")

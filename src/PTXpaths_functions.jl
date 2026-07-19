@@ -478,7 +478,7 @@ function compute_Tliq(          sysunit, pressure,   tolerance,  bulk_ini,   oxi
             n += 1
         end
 
-        LibMAGEMin.FreeDatabases(gv, DB, z_b)
+        LibMAGEMin.FreeDatabases(gv, DB, z_b, pointer_from_objref(splx_data))
 
         Tliq  = string( round((a+b)/2.0,digits=2))
     else
@@ -567,7 +567,7 @@ function compute_Tsol(          sysunit,    pressure,   tolerance,  bulk_ini,   
             n += 1
         end
 
-        LibMAGEMin.FreeDatabases(gv, DB, z_b)
+        LibMAGEMin.FreeDatabases(gv, DB, z_b, pointer_from_objref(splx_data))
 
         Tsol  = string(   round((a+b)/2.0,digits=2) )
     else
@@ -1101,7 +1101,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             ph_names_ptx = sort(ph_names_ptx)
 
             # free MAGEMin
-            LibMAGEMin.FreeDatabases(gv, DB, z_b)
+            LibMAGEMin.FreeDatabases(gv, DB, z_b, pointer_from_objref(splx_data))
         end
 
 end
