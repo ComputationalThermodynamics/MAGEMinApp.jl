@@ -58,6 +58,29 @@ function display_iso_label(label::String)
     return converted * suffix
 end
 
+function display_em_label(label::String)
+    !use_warr_names[1] && return label
+    idx = findfirst(':', label)
+    isnothing(idx) && return display_ph_name(label)
+    phase = label[1:idx-1]
+    suffix = label[idx:end]
+    converted = MAGEMin_C.get_Warr_name(phase)
+    endswith(converted, "*") && return label
+    return converted * suffix
+end
+
+function display_em_labels(labels::Vector{String})
+    return [display_em_label(l) for l in labels]
+end
+
+function display_phase_list(refType::String, out)
+    if refType == "em"
+        return display_em_labels(get_dominant_em(out.ph, out.n_SS, out.SS_vec))
+    else
+        return display_ph_names(out.ph)
+    end
+end
+
 function sanitize_names(names::Vector{String})
     return [replace(replace(replace(replace(name, " " => "_"), "/" => "o"),"[" => ""),"]" => "") for name in names]
 end
@@ -865,12 +888,12 @@ function get_diagram_labels(    Out_XY      :: Vector{MAGEMin_C.gmin_struct{Floa
                                         Out_XY[i].SS_vec)
             phd[i]      = ""
             for k=1:length(ph_em)
-                phd[i] *= display_ph_name(ph_em[k])*" "
+                phd[i] *= display_em_label(ph_em[k])*" "
                 if k % 3 == 0
                     phd[i] *= "<br>"
                 end
             end
-            ph[i]       = join(display_ph_names(ph_em)," ")
+            ph[i]       = join(display_em_labels(ph_em)," ")
         end
     end
 
@@ -1339,14 +1362,14 @@ function get_gridded_map(   fieldname   ::String,
         jj              = compute_index(data.points[k][2], data.Yrange[1], dy)
         gridded[ii,jj]  = field[k] 
 
-        tmp                 = replace(string(display_ph_names(Out_XY[k].ph)), "\""=>"", "]"=>"", "["=>"", ","=>"")
+        tmp                 = replace(string(display_phase_list(refType, Out_XY[k])), "\""=>"", "]"=>"", "["=>"", ","=>"")
         gridded_info[ii,jj] = "#"*string(k)*"# "*tmp
 
     end
 
     for i=1:length(data.cells)
         cell   = data.cells[i]
-        tmp    = "#"*string(cell[1])*"# "*replace(string(display_ph_names(Out_XY[cell[1]].ph)), "\""=>"", "]"=>"", "["=>"", ","=>"")
+        tmp    = "#"*string(cell[1])*"# "*replace(string(display_phase_list(refType, Out_XY[cell[1]])), "\""=>"", "]"=>"", "["=>"", ","=>"")
 
         ii_min = compute_index(data.points[cell[2]][1], Xrange[1], dx)
         ii_max = compute_index(data.points[cell[3]][1], Xrange[1], dx)

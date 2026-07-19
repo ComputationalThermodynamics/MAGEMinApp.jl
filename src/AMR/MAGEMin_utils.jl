@@ -300,7 +300,14 @@ function refine_MAGEMin(dtb,data,
     end
 
     for i in 1:Threads.maxthreadid()
-        MAGEMin_data.gv[i].buffer = pointer(bufferType)
+        # copy bufferType's bytes into gv.buffer's existing (C-malloc'd, 10-byte)
+        # buffer in place, rather than repointing gv.buffer at bufferType's own
+        # memory - the latter left gv.buffer aliasing Julia-GC-owned memory
+        # (a Julia String is not something C should ever free()), which caused
+        # a SIGABRT when MAGEMin's FreeDatabases tried to free(gv.buffer)
+        n = min(ncodeunits(bufferType), 9)
+        unsafe_copyto!(MAGEMin_data.gv[i].buffer, Ptr{Cchar}(pointer(bufferType)), n)
+        unsafe_store!(MAGEMin_data.gv[i].buffer, Cchar(0), n+1)
     end
 
     if n_new_points > 0
