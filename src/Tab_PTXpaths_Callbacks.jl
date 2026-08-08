@@ -1609,25 +1609,36 @@ function Tab_PTXpaths_Callbacks(app)
                                                  "value"     => i )
                                                 for i in pp_disp ]
 
-        # remember the (de)activated phases per database, so switching back and forth
-        # between databases restores the last selection made for that database
+        # remember the (de)activated phases per database, so switching databases (or
+        # reloading the page) restores the last selection made for that database
         cache = AppData.phase_selection_cache_ptx[1]
         if bid == "database-dropdown-ptx"
             prev_dtb = AppData.phase_selection_last_dtb_ptx[1]
             if prev_dtb != "" && prev_dtb != dtb
                 cache[prev_dtb] = Dict("ss" => to_str_vec(current_ss_selection), "pp" => to_str_vec(current_pp_selection))
             end
+        end
+
+        if bid == "database-dropdown-ptx" || bid == ""
+            # bid == "" happens on initial load / page reload: restore from cache too,
+            # instead of always falling back to "all phases"
             if haskey(cache, dtb)
                 saved                       = cache[dtb]
                 phase_selection_value       = intersect(saved["ss"], db_in.ss_name)
                 pure_phase_selection_value  = intersect(saved["pp"], pp_disp)
+                isempty(phase_selection_value)      && (phase_selection_value      = db_in.ss_name)
+                isempty(pure_phase_selection_value) && (pure_phase_selection_value = pp_disp)
             else
                 phase_selection_value       = db_in.ss_name
                 pure_phase_selection_value  = pp_disp
             end
         else
-            phase_selection_value       = db_in.ss_name
-            pure_phase_selection_value  = pp_disp
+            # unrelated trigger (e.g. test/bulk-unit change, upload): leave the current
+            # phase selection untouched instead of resetting it to "all phases"
+            phase_selection_value       = intersect(to_str_vec(current_ss_selection), db_in.ss_name)
+            pure_phase_selection_value  = intersect(to_str_vec(current_pp_selection), pp_disp)
+            isempty(phase_selection_value)      && (phase_selection_value      = db_in.ss_name)
+            isempty(pure_phase_selection_value) && (pure_phase_selection_value = pp_disp)
         end
         AppData.phase_selection_last_dtb_ptx[1] = dtb
 
@@ -1637,6 +1648,20 @@ function Tab_PTXpaths_Callbacks(app)
         dataset_value    = db_in.db_dataset
 
         return data, opts, val, cap, phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value, dataset_options, dataset_value, no_update(), no_update(), no_update()
+    end
+
+    # persist phase (de)selection into the per-database cache as soon as the user
+    # (de)activates a phase, so a page reload can restore it (not only a database switch)
+    callback!(
+        app,
+        Output("phase-selection-cache-store-ptx", "data"),
+        Input("phase-selection-PTX","value"),
+        Input("pure-phase-selection-PTX","value"),
+        State("database-dropdown-ptx","value"),
+        prevent_initial_call = true,
+    ) do ss_val, pp_val, dtb
+        AppData.phase_selection_cache_ptx[1][dtb] = Dict("ss" => to_str_vec(ss_val), "pp" => to_str_vec(pp_val))
+        return no_update()
     end
 
 

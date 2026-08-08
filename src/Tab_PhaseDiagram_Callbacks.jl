@@ -1114,17 +1114,25 @@ function Tab_PhaseDiagram_Callbacks(app)
             clear_selection = []
 
         elseif bid == "load-state-id"
-            data_plot,layout,heat_map_export =  update_displayed_field_phaseDiagram( xtitle,     ytitle,     
+            data_plot,layout,heat_map_export =  update_displayed_field_phaseDiagram( xtitle,     ytitle,
             Xrange,     Yrange,     fieldname,
             dtb,        oxi,
             sub,        refLvl,
             smooth,     colorm,     reverseColorMap, set_white,
             test,       refType                                 )
 
-            minColor        = round(minimum(skipmissing(gridded)),digits=2); 
-            maxColor        = round(maximum(skipmissing(gridded)),digits=2);        
+            minColor        = round(minimum(skipmissing(gridded)),digits=2);
+            maxColor        = round(maximum(skipmissing(gridded)),digits=2);
 
-            active_tab      = "tab-phase-diagram"     
+            active_tab      = "tab-phase-diagram"
+
+            # states saved before assemblage_rows/list_compacted_idx/raw_field_id were part
+            # of the saved fields (or a fresh session that never computed a diagram) won't
+            # have these defined yet -- fall back to empty rather than crashing below
+            global assemblage_rows, list_compacted_idx, raw_field_id
+            @isdefined(assemblage_rows)     || (assemblage_rows     = Vector{Dict{String,String}}())
+            @isdefined(list_compacted_idx)  || (list_compacted_idx  = Int[])
+            @isdefined(raw_field_id)        || (raw_field_id        = Int[])
         elseif bid == "set-min-white" || bid == "min-color-id" || bid == "max-color-id" || bid == "colormaps_cross" || bid == "smooth-colormap" || bid == "range-slider-color" || bid == "reverse-colormap"
 
             data_plot, layout, heat_map_export =  update_colormap_phaseDiagram(  xtitle,     ytitle,     

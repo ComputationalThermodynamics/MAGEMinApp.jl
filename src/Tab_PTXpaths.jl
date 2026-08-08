@@ -1,6 +1,8 @@
 function Tab_PTXpaths()
     html_div([
         dcc_store(id="te-ptx-computed-store", data=false),
+    # dummy store used solely to persist phase (de)selection into AppData.phase_selection_cache_ptx as it changes
+        dcc_store(id="phase-selection-cache-store-ptx", data=0),
         html_div("‎ "),
         dbc_row([ 
                 #= configuration column =#

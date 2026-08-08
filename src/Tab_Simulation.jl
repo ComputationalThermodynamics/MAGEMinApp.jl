@@ -11,6 +11,8 @@
 
 function Tab_Simulation()
     html_div([
+    # dummy store used solely to persist phase (de)selection into AppData.phase_selection_cache as it changes
+        dcc_store(id="phase-selection-cache-store", data=0),
     # one column for the plots
         dbc_col([
                 html_div("‎ "),
