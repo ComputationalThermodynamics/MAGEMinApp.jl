@@ -22,6 +22,42 @@ function Tab_PTXpaths_Callbacks(app)
         return n1 > 0 ? is_open == 0 : is_open
     end;
 
+    # callback to display the seismic-correction-dependent options (aspect ratio, anelastic correction, shallow correction, fluid as melt)
+    callback!(
+        app,
+        Output("aspect-ratio-row-id-ptx",      "style"),
+        Output("anelastic-toggle-row-id-ptx",  "style"),
+        Output("shallow-cor-row-id-ptx",       "style"),
+        Output("fluid-as-melt-row-id-ptx",     "style"),
+        Input("seismic-cor-dropdown-ptx", "value"),
+
+        prevent_initial_call = true,
+    ) do seismic_cor
+        if seismic_cor == true
+            style  = Dict("display" => "block")
+        else
+            style  = Dict("display" => "none")
+        end
+        return style, style, style, style
+    end
+
+    # callback to display the anelastic model dropdown, only when both seismic correction and anelastic correction are enabled
+    callback!(
+        app,
+        Output("anelastic-cor-row-id-ptx", "style"),
+        Input("seismic-cor-dropdown-ptx",   "value"),
+        Input("anelastic-cor-dropdown-ptx", "value"),
+
+        prevent_initial_call = true,
+    ) do seismic_cor, anelastic_cor
+        if seismic_cor == true && anelastic_cor == true
+            style  = Dict("display" => "block")
+        else
+            style  = Dict("display" => "none")
+        end
+        return style
+    end
+
     #save references to bibtex
     callback!(
         app,
@@ -1159,6 +1195,16 @@ function Tab_PTXpaths_Callbacks(app)
         State("table-te-rock-ptx",              "data"  ),
         State("table-te-2-rock-ptx",            "data"  ),
 
+        State("sas-dropdown-ptx",               "value"),
+        State("wf-id-ptx",                      "value"),
+        State("seismic-cor-dropdown-ptx",       "value"),
+        State("aspect-ratio-id-ptx",            "value"),
+        State("seismic-water-dropdown-ptx",     "value"),
+        State("shallow-cor-dropdown-ptx",       "value"),
+        State("fluid-as-melt-dropdown-ptx",     "value"),
+        State("anelastic-cor-dropdown-ptx",     "value"),
+        State("calc-unit-ptx",                  "value"),
+
         prevent_initial_call = true,
 
         ) do    compute,    upsys,      display_mode,               ext_display_mode,   warr_naming,    phase_order_version,
@@ -1169,7 +1215,10 @@ function Tab_PTXpaths_Callbacks(app)
                 nCon,       nRes,       color_table,
                 T_start,    isentropic_mode, entropy,
                 watsat,     watsat_val,
-                te_model,   kds_mod,    zrsat_mod,  ssat_mod,   P2O5sat_mod,    co2sat_mod, bulkte1,    bulkte2
+                te_model,   kds_mod,    zrsat_mod,  ssat_mod,   P2O5sat_mod,    co2sat_mod, bulkte1,    bulkte2,
+                sas,        wf,         seismicCorVal,
+                aspectRatioVal, seismicWaterMode, shallowCorMode, fluidAsMeltMode, anelasticCorMode,
+                calcUnit
 
         global use_warr_names
         use_warr_names[1]       = (warr_naming == "warr")
@@ -1191,6 +1240,15 @@ function Tab_PTXpaths_Callbacks(app)
                                                     get_terock_prop(bulkte1, bulkte2) :
                                                     (Float64[], Float64[], String[])
 
+            seismicScheme               = sas == 0 ? "VRH" : "HS"
+            seismicWeightFactor         = Float64(wf)
+            seismicCorMode              = Bool(seismicCorVal)
+            aspectRatio                 = Float64(aspectRatioVal)
+            seismicWater                = Int64(seismicWaterMode)
+            shallowCor                  = Bool(shallowCorMode)
+            fluidAsMelt                 = Bool(fluidAsMeltMode)
+            anelasticCor                = Bool(anelasticCorMode)
+
             compute_new_PTXpath(    nsteps,     PTdata,     mode,       bulk_ini,  bulk_assim,  oxi,    phase_selection,    assim, var_buffer,
                                     dtb,        dataset,    bufferType, solver,
                                     verbose,    bufferN,
@@ -1199,7 +1257,10 @@ function Tab_PTXpaths_Callbacks(app)
                                     T_start,    isentropic_mode,
                                     watsat,     watsat_val,
                                     te_model,   kds_mod,    zrsat_mod,  ssat_mod,   P2O5sat_mod,    co2sat_mod,
-                                    bulkte_ini_te, bulkte_ass_te, elem_te             )
+                                    bulkte_ini_te, bulkte_ass_te, elem_te,
+                                    seismicScheme, seismicWeightFactor, seismicCorMode,
+                                    aspectRatio, seismicWater, shallowCor, fluidAsMelt, anelasticCor,
+                                    calcUnit             )
 
             if isentropic_mode == true
                 entropy                 = string(round(Out_PTX[1].entropy[1],digits=3))
@@ -1220,12 +1281,12 @@ function Tab_PTXpaths_Callbacks(app)
             figPTX                      = plot(data_plot_ptx,layout_ptx)
             figExtractedPTX             = plot(data_extracted_plot_ptx,layout_extracted_ptx)
 
-            layout_rm_ptx               = initialize_rm_layout()
+            layout_rm_ptx               = initialize_rm_layout(calcUnit)
             data_comp_rm_plot           = get_data_comp_rm_plot()
 
             figrmPTX                    = plot(data_comp_rm_plot,layout_rm_ptx)
 
-            layout_rm_int_ptx           = initialize_rm_layout()
+            layout_rm_int_ptx           = initialize_rm_layout(calcUnit)
             data_comp_rm_int_plot       = get_data_comp_rm_int_plot()
 
             figrmintPTX                 = plot(data_comp_rm_int_plot,layout_rm_int_ptx)
@@ -1284,8 +1345,45 @@ function Tab_PTXpaths_Callbacks(app)
             return entropy, figIsoSPath, configPathIsoS, figPTX, configPTX, figExtractedPTX, configExtractedPTX, figrmPTX, configrmPTX, figrmintPTX, configrmintPTX, phase_list, loading, te_computed
         else
             return entropy, no_update(), no_update(), figPTX, configPTX, figExtractedPTX, configExtractedPTX, figrmPTX, configrmPTX, figrmintPTX, configrmintPTX, phase_list, loading, te_computed
-        end                            
-        
+        end
+
+    end
+
+
+    # renders the "selected field across path" plot, either after a new path is
+    # computed or when the user picks a different field -- both just re-sample
+    # the already-computed Out_PTX, no recomputation needed
+    callback!(
+        app,
+        Output("ptx-field-plot", "figure"),
+        Output("ptx-field-plot", "config"),
+
+        Input("compute-path-button",   "n_clicks"),
+        Input("ptx-field-dropdown",    "value"),
+
+        prevent_initial_call = true,
+
+    ) do compute, fieldname
+
+        global Out_PTX
+
+        if @isdefined(Out_PTX) && !isempty(Out_PTX)
+            ytitle       = get(OTHER_FIELD_LABELS, fieldname, fieldname)
+            layout_field = initialize_field_layout(ytitle, ytitle)
+            data_field   = get_ptx_field_plot(fieldname)
+            fig          = plot(data_field, layout_field)
+        else
+            fig          = plot( Layout( height= 360 ))
+        end
+
+        config = PlotConfig(    toImageButtonOptions  = attr(     name     = "Download as svg",
+                                    format   = "svg",
+                                    filename =  "PTX_path_field_"*fieldname,
+                                    height   =  360,
+                                    width    =  960,
+                                    scale    =  2.0,       ).fields)
+
+        return fig, config
     end
 
 
@@ -1374,13 +1472,26 @@ function Tab_PTXpaths_Callbacks(app)
 
         prevent_initial_call = true,
     ) do value
-  
+
         if value == "fm"
             style  = Dict("display" => "block")
-        else 
+        else
             style  = Dict("display" => "none")
         end
         return style
+    end
+
+    # keep the connectivity/residual threshold labels in sync with the chosen
+    # calculation unit, since nCon/nRes are interpreted in that same unit
+    callback!(
+        app,
+        Output("connectivity-label-id", "children"),
+        Output("residual-label-id",     "children"),
+        Input("calc-unit-ptx",          "value"),
+
+        prevent_initial_call = true,
+    ) do calc_unit
+        return "Connectivity threshold [$(calc_unit)%]", "Residual rock fraction [$(calc_unit)%]"
     end
 
     callback!(
@@ -1929,6 +2040,7 @@ function Tab_PTXpaths_Callbacks(app)
         Input("isentropic-dropdown-ptx",     "value"    ),
         Input("pressure-unit-dropdown",     "value"     ),
         Input("draw-path-export-button",    "n_clicks"  ),
+        Input("calc-unit-ptx",              "value"     ),
 
         State("assimilation-dropdown-ptx",  "value"     ),
         State("ptx-table",                  "data"      ),
@@ -1937,7 +2049,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         prevent_initial_call = true,
 
-        ) do value, n_clicks, var_buffer, isentropic_value, pressure_unit, _export_clicks,
+        ) do value, n_clicks, var_buffer, isentropic_value, pressure_unit, _export_clicks, calc_unit,
                 assim, data, colout, pressure_unit_prev
 
         bid                     = pushed_button( callback_context() )    # get which button has been pushed
@@ -1976,7 +2088,7 @@ function Tab_PTXpaths_Callbacks(app)
                 if var_buffer == false
                     colout = [  Dict("name" => "P [$(pressure_unit_label())]",  "id"    => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
                                 Dict("name" => "T [°C]",    "id"    => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric"),
-                                Dict("name" => "Add [mol%]", "id"   => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric")]
+                                Dict("name" => "Add [$(calc_unit)%]", "id"   => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric")]
 
                     if n_clicks > 0 && bid == "add-row-button"
                         add = Dict(Symbol("col-1") => display_pressure(7.5), Symbol("col-2") => 1000.0, Symbol("col-3") => 0.0)
@@ -1985,7 +2097,7 @@ function Tab_PTXpaths_Callbacks(app)
                 elseif var_buffer == true
                     colout = [  Dict("name" => "P [$(pressure_unit_label())]",  "id"        => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
                                 Dict("name" => "T [°C]",    "id"        => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric"),
-                                Dict("name" => "Add [mol%]", "id"       => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                                Dict("name" => "Add [$(calc_unit)%]", "id"       => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric"),
                                 Dict("name" => "Buffer",     "id"       => "col-4", "deletable" => false, "renamable" => false, "type" => "numeric")]
 
                     if n_clicks > 0 && bid == "add-row-button"
@@ -1995,7 +2107,7 @@ function Tab_PTXpaths_Callbacks(app)
                 end
             else
                 colout = [  Dict("name" => "P [$(pressure_unit_label())]",  "id"    => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
-                            Dict("name" => "Add [mol%]", "id"   => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric")]
+                            Dict("name" => "Add [$(calc_unit)%]", "id"   => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric")]
 
                 if n_clicks > 0 && bid == "add-row-button"
                     add = Dict(Symbol("col-1") => display_pressure(7.5), Symbol("col-3") => 0.0)

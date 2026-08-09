@@ -29,6 +29,7 @@ function get_contributors()
     debug   *= "Lorenzo Candioti\n"
     debug   *= "Nickolas Bardi Moccetti\n"
     debug   *= "Owen Weller\n"
+    debug   *= "Pascal Aelig\n"
     debug   *= "Paul Tackley\n"
     debug   *= "Peter Luffi\n"
     debug   *= "Philip Hartmeier\n"
@@ -41,6 +42,7 @@ function get_contributors()
     debug   *= "Tobias Keller"
 
     app      = "**Interface Suggestions**\n"
+    app     *= "Alexandre Peillod\n"
     app     *= "Boris Kaus\n"
     app     *= "Brendan Dyck\n"
     app     *= "Buchanan Kerswell\n"

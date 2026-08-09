@@ -2121,29 +2121,61 @@ function get_draw_path_plot(diagType, sysunit, path_ids)
     return traces, phase_list
 end
 
-# Display labels for the "Other" system-level fields, mirrored from the
-# "of-dropdown" options (Tab_PhaseDiagram.jl) so the draw-path field profile
-# uses the same wording.
-const OTHER_FIELD_LABELS = Dict(
-    "G_system"      => "G system",            "entropy"       => "Entropy",
-    "enthalpy"      => "Enthalpy",            "s_cp"          => "Specific cp",
-    "alpha"         => "Thermal expansivity", "fO2"           => "log10(fO2)",
-    "dQFM"          => "log10(dQFM)",         "aH2O"          => "H2O activity",
-    "aFeO"          => "FeO activity",        "aMgO"          => "MgO activity",
-    "aAl2O3"        => "Al2O3 activity",      "aSiO2"         => "SiO2 activity",
-    "aTiO2"         => "TiO2 activity",       "eta_M"         => "Melt viscosity [log10(Pa*s)]",
-    "rho"           => "ρ_system",            "rho_S"         => "ρ_solid",
-    "rho_M"         => "ρ_melt",              "Delta_rho"     => "Δρ",
-    "frac_S"        => "Solid mol fraction",  "frac_S_wt"     => "Solid wt fraction",
-    "frac_S_vol"    => "Solid vol fraction",  "frac_M"        => "Melt mol fraction",
-    "frac_M_wt"     => "Melt wt fraction",    "frac_M_vol"    => "Melt vol fraction",
-    "Vp/Vs"         => "Vp/Vs",               "Vp_S/Vs_S"     => "Vp_S/Vs_S",
-    "Vp"            => "Vp",                  "Vs"            => "Vs",
-    "Vp_cor"        => "Vp_cor",              "Vs_cor"        => "Vs_cor",
-    "Vp_S"          => "Vp_S",                "Vs_S"          => "Vs_S",
-    "bulk_res_norm" => "Bulk residual (norm)","time_ms"       => "Computation time (ms)",
-    "status"        => "Status",
-)
+"""
+    field_dropdown_options()
+
+Options for the Phase Diagram "Select field to display" -> "Field" dropdown
+(`fields-dropdown`, Tab_PhaseDiagram.jl). Factored out here so any other
+per-point field selector (e.g. the PTX path tab's field-across-path plot)
+can offer the exact same list.
+"""
+function field_dropdown_options()
+    return [
+        (label = "Hash",                    value = "Hash"),
+        (label = "Variance",                value = "Variance"),
+        (label = "Number of stable phases", value = "#Phases"),
+        (label = "G system",                value = "G_system"),
+        (label = "Entropy",                 value = "entropy"),
+        (label = "Enthalpy",                value = "enthalpy"),
+        (label = "Specific cp",             value = "s_cp"),
+        (label = "Thermal expansivity",     value = "alpha"),
+        (label = "log10(fO2)",              value = "fO2"),
+        (label = "log10(dQFM)",             value = "dQFM"),
+        (label = "H2O activity",            value = "aH2O"),
+        (label = "FeO activity",            value = "aFeO"),
+        (label = "MgO activity",            value = "aMgO"),
+        (label = "Al2O3 activity",          value = "aAl2O3"),
+        (label = "SiO2 activity",           value = "aSiO2"),
+        (label = "TiO2 activity",           value = "aTiO2"),
+        (label = "Melt viscosity [log10(Pa*s)]",          value = "eta_M"),
+        (label = "ρ_system",                value = "rho"),
+        (label = "ρ_solid",                 value = "rho_S"),
+        (label = "ρ_melt",                  value = "rho_M"),
+        (label = "Δρ",                      value = "Delta_rho"),
+        (label = "Solid mol fraction",      value = "frac_S"),
+        (label = "Solid wt fraction",       value = "frac_S_wt"),
+        (label = "Solid vol fraction",      value = "frac_S_vol"),
+        (label = "Melt mol fraction",       value = "frac_M"),
+        (label = "Melt wt fraction",        value = "frac_M_wt"),
+        (label = "Melt vol fraction",       value = "frac_M_vol"),
+        (label = "Vp/Vs",                   value = "Vp/Vs"),
+        (label = "Vp_S/Vs_S",               value = "Vp_S/Vs_S"),
+        (label = "Vp",                      value = "Vp"),
+        (label = "Vs",                      value = "Vs"),
+        (label = "Vp_cor",                  value = "Vp_cor"),
+        (label = "Vs_cor",                  value = "Vs_cor"),
+        (label = "Vp_S",                    value = "Vp_S"),
+        (label = "Vs_S",                    value = "Vs_S"),
+        (label = "Bulk residual (norm)",    value = "bulk_res_norm"),
+        (label = "Computation time (ms)",   value = "time_ms"),
+        (label = "Status",                  value = "status"),
+    ]
+end
+
+# Display labels for the "Other" system-level fields, derived from
+# field_dropdown_options() (single source of truth) so the draw-path field
+# profile and the PTX path field plot both use the exact same wording.
+const OTHER_FIELD_LABELS = Dict(o.value => o.label for o in field_dropdown_options())
 
 """
     get_other_field_value(pt, of::String)::Float64
@@ -2153,7 +2185,11 @@ Single-point counterpart of the `"of_mod"` branch in `get_isopleth_map`
 directly from one `Out_XY` point instead of gridding it over the AMR mesh.
 """
 function get_other_field_value(pt, of::String)::Float64
-    if of == "s_cp"
+    if of == "#Phases"
+        return Float64(length(pt.ph))
+    elseif of == "Variance"
+        return Float64(length(pt.oxides) - length(pt.ph) + 2.0)
+    elseif of == "s_cp"
         return pt.s_cp[1]
     elseif of == "entropy"
         return pt.entropy[1]
