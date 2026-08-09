@@ -1379,6 +1379,7 @@ function Tab_PTXpaths()
                                                     Dict("col-1" => 10.0,    "col-2"   => 1200.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0),
                                                     Dict("col-1" => 2.0,   "col-2"   => 600.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0),
                                                 ],
+                                                style_table     = (overflowX="auto",),
                                                 style_cell      = (textAlign="center", fontSize="140%",),
                                                 style_header    = (fontWeight="bold",),
                                                 editable        = true,
@@ -1390,9 +1391,116 @@ function Tab_PTXpaths()
                                             dbc_button("Add new point",id="add-row-button", color="light", className="me-2", n_clicks=0,
                                             style       = Dict( "textAlign"     => "center",
                                                                 "font-size"     => "100%",
-                                                                "border"        =>"1px lightgray solid")), 
+                                                                "border"        =>"1px lightgray solid")),
                                         ]),
-                                    ], style = Dict("display" => "block"), id      = "show-pathdef-id"), #none, block                                                                    
+
+                                        html_hr(),
+                                        dbc_row([
+                                            dbc_button("Advanced path option (phase extraction)", id="adv-pathdef-button", color="light", className="me-2", n_clicks=0,
+                                            style       = Dict( "textAlign"     => "center",
+                                                                "font-size"     => "100%",
+                                                                "border"        =>"1px lightgray solid")),
+                                        ]),
+                                        dbc_row([
+                                            dbc_offcanvas(
+                                                [
+                                                    html_h1("Per-phase extraction thresholds", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                                    html_div("Cap a mineral's modal proportion along the path -- once its proportion exceeds the threshold at a step, only the excess is removed from the bulk composition that step.", style = Dict("font-size" => "90%", "color" => "grey")),
+                                                    html_hr(),
+
+                                                    dash_datatable(
+                                                        id      = "ptx-table-adv",
+                                                        columns =[  Dict("name" => "P_kbar",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                                                                    Dict("name" => "T_°C",    "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")],
+                                                        data=[
+                                                            Dict("col-1" => 10.0,    "col-2"   => 1200.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0),
+                                                            Dict("col-1" => 2.0,   "col-2"   => 600.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0),
+                                                        ],
+                                                        style_table     = (overflowX="auto",),
+                                                        style_cell      = (textAlign="center", fontSize="110%",),
+                                                        style_header    = (fontWeight="bold",),
+                                                        editable        = true,
+                                                        row_deletable   = false
+                                                    ),
+
+                                                    html_div("‎ "),
+                                                    html_h1("Add phase threshold", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                                    dbc_row([
+                                                        dbc_col([
+                                                            html_h1("Phase", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                            dcc_dropdown(   id      = "adv-phase-dropdown-ptx",
+                                                                            options = [],
+                                                                            clearable   = false,
+                                                                            multi       = false),
+                                                        ], width=5),
+                                                        dbc_col([
+                                                            html_h1("Unit", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                            dcc_dropdown(   id      = "adv-unit-dropdown-ptx",
+                                                                            options = [
+                                                                                (label = "mol", value = "mol"),
+                                                                                (label = "wt",  value = "wt"),
+                                                                                (label = "vol", value = "vol"),
+                                                                            ],
+                                                                            value       = "mol",
+                                                                            clearable   = false,
+                                                                            multi       = false),
+                                                        ], width=3),
+                                                        dbc_col([
+                                                            html_h1("Threshold [%]", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                            dbc_input(
+                                                                id      = "adv-threshold-val-ptx",
+                                                                type    = "number",
+                                                                min     = 0.0,
+                                                                max     = 100.0,
+                                                                value   = 5.0   ),
+                                                        ], width=4),
+                                                    ]),
+                                                    html_div("‎ "),
+                                                    dbc_row([
+                                                        dbc_button("Add column", id="add-threshold-col-button-ptx", color="light", className="me-2", n_clicks=0,
+                                                        style       = Dict( "textAlign"     => "center",
+                                                                            "font-size"     => "100%",
+                                                                            "background-color" => "#d3f2ce",
+                                                                            "border"        =>"1px grey solid")),
+                                                        dbc_alert(
+                                                            "This phase already has a threshold column",
+                                                            color   = "warning",
+                                                            id      = "add-threshold-col-warning-ptx",
+                                                            is_open = false,
+                                                            duration= 4000,
+                                                        ),
+                                                    ]),
+
+                                                    html_div("‎ "),
+                                                    html_h1("Remove phase threshold", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                                    dbc_row([
+                                                        dbc_col([
+                                                            dcc_dropdown(   id      = "remove-threshold-dropdown-ptx",
+                                                                            options = [],
+                                                                            clearable   = false,
+                                                                            multi       = false),
+                                                        ], width=8),
+                                                        dbc_col([
+                                                            dbc_button("Remove", id="remove-threshold-col-button-ptx", color="light", n_clicks=0,
+                                                            style       = Dict( "textAlign"     => "center",
+                                                                                "font-size"     => "100%",
+                                                                                "border"        =>"1px grey solid")),
+                                                        ], width=4),
+                                                    ]),
+
+                                                    dcc_store(id="phase-threshold-store-ptx", data=[]),
+                                                ],
+
+                                                id          = "adv-pathdef-canvas",
+                                                title       = "Advanced path definition",
+                                                is_open     = false,
+                                                placement   = "start",
+                                                style   = Dict( "width"             => "480px",
+                                                                "background-color"  => "rgba(255, 255, 255, 1.0)"),
+                                            ),
+                                        ]),
+
+                                    ], style = Dict("display" => "block"), id      = "show-pathdef-id"), #none, block
 
                                 ])),
                                 id="collapse-pathdef",

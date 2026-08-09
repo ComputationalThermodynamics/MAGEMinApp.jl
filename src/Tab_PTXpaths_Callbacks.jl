@@ -22,6 +22,112 @@ function Tab_PTXpaths_Callbacks(app)
         return n1 > 0 ? is_open == 0 : is_open
     end;
 
+    callback!(
+        app,
+        Output("adv-pathdef-canvas", "is_open"),
+        Input("adv-pathdef-button", "n_clicks"),
+        State("adv-pathdef-canvas", "is_open"),
+
+        prevent_initial_call=true,
+    ) do n1, is_open
+        return n1 > 0 ? is_open == 0 : is_open
+    end;
+
+    # "ptx-table" (Define path) is the single authority for the combined base +
+    # threshold column list (its own callback below builds it, reading the same
+    # phase-threshold-store-ptx) and for row/value management (Add new point,
+    # row deletion, draw-path import, ...). This callback keeps "ptx-table-adv"
+    # (Advanced path definition) mirroring that exactly, plus handles adding a
+    # new per-phase threshold column, which both writes the store and gives
+    # immediate visual feedback here without waiting on the mirror round-trip.
+    # Everything funnels through one callback because two separate callbacks
+    # both writing "ptx-table-adv".data (or .columns) would be a duplicate
+    # output across callbacks -- allowed by Dash.jl's own registration check,
+    # which only compares whole combined-output sets, but rejected by the
+    # dash-renderer in the browser.
+    callback!(
+        app,
+        Output("phase-threshold-store-ptx",     "data"),
+        Output("ptx-table-adv",                 "columns"),
+        Output("ptx-table-adv",                 "data"),
+        Output("add-threshold-col-warning-ptx", "is_open"),
+
+        Input("ptx-table",                      "data"),
+        Input("ptx-table",                      "columns"),
+        Input("add-threshold-col-button-ptx",   "n_clicks"),
+        Input("remove-threshold-col-button-ptx","n_clicks"),
+
+        State("adv-phase-dropdown-ptx",         "value"),
+        State("adv-unit-dropdown-ptx",          "value"),
+        State("adv-threshold-val-ptx",          "value"),
+        State("remove-threshold-dropdown-ptx",  "value"),
+        State("phase-threshold-store-ptx",      "data"),
+        State("ptx-table-adv",                  "data"),
+
+        prevent_initial_call = false,
+    ) do main_data, main_cols, n_clicks, remove_clicks, phase, unit, thresh_val, remove_col_id, store, adv_data
+
+        bid = pushed_button( callback_context() )
+
+        # threshold columns are removed exclusively through the dedicated "Remove"
+        # control below, not the DataTable's own native column-delete "x" -- that
+        # button only changes the client-side prop; since nothing server-side
+        # reads it as an Input, the deletion never actually persists and the
+        # column reappears on the next sync from "ptx-table". Hence deletable
+        # is false here (and in the mirroring "ptx-table" callback below).
+        if bid == "add-threshold-col-button-ptx"
+            if n_clicks == 0 || isnothing(phase) || isnothing(thresh_val)
+                return no_update(), no_update(), no_update(), no_update()
+            end
+
+            if any(e -> e[:phase] == phase, store)
+                return no_update(), no_update(), no_update(), true
+            end
+
+            col_id = "col-thresh-$(length(store)+1)"
+            label  = "$(display_ph_name(phase)) [$(unit)%]"
+            entry  = Dict(:col_id => col_id, :phase => phase, :unit => unit, :label => label, :default => Float64(thresh_val))
+
+            new_store = vcat(store, [entry])
+            new_cols  = vcat(main_cols, [Dict("name" => label, "id" => col_id, "deletable" => false, "renamable" => false, "type" => "numeric")])
+            new_data  = [merge(Dict{Symbol,Any}(row), Dict{Symbol,Any}(Symbol(col_id) => Float64(thresh_val))) for row in adv_data]
+
+            return new_store, new_cols, new_data, false
+
+        elseif bid == "remove-threshold-col-button-ptx"
+            if remove_clicks == 0 || isnothing(remove_col_id)
+                return no_update(), no_update(), no_update(), no_update()
+            end
+
+            new_store = filter(e -> e[:col_id] != remove_col_id, store)
+            length(new_store) == length(store) && return no_update(), no_update(), no_update(), no_update()
+
+            new_cols = filter(c -> c["id"] != remove_col_id, main_cols)
+            key      = Symbol(remove_col_id)
+            new_data = [ Dict{Symbol,Any}(k => v for (k,v) in row if k != key) for row in adv_data ]
+
+            return new_store, new_cols, new_data, false
+
+        else
+            # bid == "ptx-table" (its data and/or columns changed) or "" (initial
+            # load): mirror both straight across -- "ptx-table"'s own callback is
+            # the single authority for the combined column list and row/value
+            # management, so no further per-key merging is needed here.
+            return no_update(), main_cols, copy(main_data), no_update()
+        end
+    end
+
+    # keeps the "Remove phase threshold" dropdown in sync with whichever columns
+    # are currently configured
+    callback!(
+        app,
+        Output("remove-threshold-dropdown-ptx", "options"),
+        Input("phase-threshold-store-ptx",      "data"),
+        prevent_initial_call = true,
+    ) do store
+        return [ Dict("label" => e[:label], "value" => e[:col_id]) for e in store ]
+    end
+
     # callback to display the seismic-correction-dependent options (aspect ratio, anelastic correction, shallow correction, fluid as melt)
     callback!(
         app,
@@ -1204,6 +1310,8 @@ function Tab_PTXpaths_Callbacks(app)
         State("fluid-as-melt-dropdown-ptx",     "value"),
         State("anelastic-cor-dropdown-ptx",     "value"),
         State("calc-unit-ptx",                  "value"),
+        State("ptx-table-adv",                  "data"),
+        State("phase-threshold-store-ptx",      "data"),
 
         prevent_initial_call = true,
 
@@ -1218,7 +1326,7 @@ function Tab_PTXpaths_Callbacks(app)
                 te_model,   kds_mod,    zrsat_mod,  ssat_mod,   P2O5sat_mod,    co2sat_mod, bulkte1,    bulkte2,
                 sas,        wf,         seismicCorVal,
                 aspectRatioVal, seismicWaterMode, shallowCorMode, fluidAsMeltMode, anelasticCorMode,
-                calcUnit
+                calcUnit,   ptxTableAdvData, threshStore
 
         global use_warr_names
         use_warr_names[1]       = (warr_naming == "warr")
@@ -1249,6 +1357,17 @@ function Tab_PTXpaths_Callbacks(app)
             fluidAsMelt                 = Bool(fluidAsMeltMode)
             anelasticCor                = Bool(anelasticCorMode)
 
+            # per-phase extraction thresholds from the "Advanced path definition" panel:
+            # one (phase, unit, per-point values) entry per configured column, only used
+            # if the advanced table's row count still matches the path definition
+            phase_thresholds = if length(ptxTableAdvData) == length(PTdata)
+                                    [ (phase = entry[:phase], unit = entry[:unit],
+                                       values = [Float64(get(row, Symbol(entry[:col_id]), entry[:default])) for row in ptxTableAdvData])
+                                      for entry in threshStore ]
+                                else
+                                    []
+                                end
+
             compute_new_PTXpath(    nsteps,     PTdata,     mode,       bulk_ini,  bulk_assim,  oxi,    phase_selection,    assim, var_buffer,
                                     dtb,        dataset,    bufferType, solver,
                                     verbose,    bufferN,
@@ -1260,7 +1379,7 @@ function Tab_PTXpaths_Callbacks(app)
                                     bulkte_ini_te, bulkte_ass_te, elem_te,
                                     seismicScheme, seismicWeightFactor, seismicCorMode,
                                     aspectRatio, seismicWater, shallowCor, fluidAsMelt, anelasticCor,
-                                    calcUnit             )
+                                    calcUnit,   phase_thresholds             )
 
             if isentropic_mode == true
                 entropy                 = string(round(Out_PTX[1].entropy[1],digits=3))
@@ -1584,6 +1703,7 @@ function Tab_PTXpaths_Callbacks(app)
         Output("phase-selection-PTX","value"),
         Output("pure-phase-selection-PTX","options"),
         Output("pure-phase-selection-PTX","value"),
+        Output("adv-phase-dropdown-ptx","options"),
 
         Output("dataset-dropdown-ptx","options"),
         Output("dataset-dropdown-ptx","value"),
@@ -1622,7 +1742,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         if bid == "get-o-liquidus-button"
             no_upd = no_update()
-            fail(msg) = no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_update(), true, msg
+            fail(msg) = no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_update(), true, msg
 
             Tliq = tryparse(Float64, string(Tliq_txt))
             if isnothing(Tliq)
@@ -1676,7 +1796,7 @@ function Tab_PTXpaths_Callbacks(app)
             end
             dataout[row_idx] = Dict(:oxide => "O", :fraction => new_O_val)
 
-            return dataout, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, string(new_O_val), false, no_update()
+            return dataout, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, string(new_O_val), false, no_update()
         end
 
         # catching up some special cases
@@ -1720,6 +1840,10 @@ function Tab_PTXpaths_Callbacks(app)
                                                  "value"     => i )
                                                 for i in pp_disp ]
 
+        # phase picker for the advanced path-definition (per-phase extraction threshold) panel
+        adv_phase_options = vcat(  [Dict("label" => " "*display_ph_name(i), "value" => i) for i in db_in.ss_name],
+                                    [Dict("label" => " "*display_ph_name(i), "value" => i) for i in pp_disp ] )
+
         # remember the (de)activated phases per database, so switching databases (or
         # reloading the page) restores the last selection made for that database
         cache = AppData.phase_selection_cache_ptx[1]
@@ -1758,7 +1882,7 @@ function Tab_PTXpaths_Callbacks(app)
                                 for i = 1:length(db_in.dataset_opt) ]
         dataset_value    = db_in.db_dataset
 
-        return data, opts, val, cap, phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value, dataset_options, dataset_value, no_update(), no_update(), no_update()
+        return data, opts, val, cap, phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value, adv_phase_options, dataset_options, dataset_value, no_update(), no_update(), no_update()
     end
 
     # persist phase (de)selection into the per-database cache as soon as the user
@@ -2041,6 +2165,8 @@ function Tab_PTXpaths_Callbacks(app)
         Input("pressure-unit-dropdown",     "value"     ),
         Input("draw-path-export-button",    "n_clicks"  ),
         Input("calc-unit-ptx",              "value"     ),
+        Input("ptx-table-adv",              "data"      ),
+        Input("phase-threshold-store-ptx",  "data"      ),
 
         State("assimilation-dropdown-ptx",  "value"     ),
         State("ptx-table",                  "data"      ),
@@ -2049,7 +2175,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         prevent_initial_call = true,
 
-        ) do value, n_clicks, var_buffer, isentropic_value, pressure_unit, _export_clicks, calc_unit,
+        ) do value, n_clicks, var_buffer, isentropic_value, pressure_unit, _export_clicks, calc_unit, adv_data, thresh_store,
                 assim, data, colout, pressure_unit_prev
 
         bid                     = pushed_button( callback_context() )    # get which button has been pushed
@@ -2074,7 +2200,11 @@ function Tab_PTXpaths_Callbacks(app)
             return dataout, colsout, no_update(), no_update(), no_update(), pressure_unit, no_update(), no_update()
         end
 
-        dataout = copy(data)
+        # "ptx-table-adv" is a full mirror of this table (Advanced path definition
+        # panel), so a change originating there simply becomes the new starting
+        # point for this table's own data, going through the exact same
+        # column/backfill pipeline below as every other trigger
+        dataout = bid == "ptx-table-adv" ? copy(adv_data) : copy(data)
         if value == "true"
             table2  = Dict("display" => "block")  
             test2   = Dict("display" => "block")  
@@ -2146,6 +2276,10 @@ function Tab_PTXpaths_Callbacks(app)
 
         end
 
+        # per-phase extraction threshold columns (Advanced path definition panel),
+        # appended on top of the base P/T/Add/Buffer columns computed above
+        colout = vcat(colout, [ Dict("name" => e[:label], "id" => e[:col_id], "deletable" => false, "renamable" => false, "type" => "numeric") for e in thresh_store ])
+
         export_success = false
         export_failed  = false
         if bid == "draw-path-export-button"
@@ -2162,6 +2296,16 @@ function Tab_PTXpaths_Callbacks(app)
                 export_success = true
             else
                 export_failed = true
+            end
+        end
+
+        # ensure every row carries every currently-configured threshold key (a
+        # freshly added column, or a freshly added/imported row, only gets its
+        # stored default; existing values elsewhere are left untouched)
+        for entry in thresh_store
+            key = Symbol(entry[:col_id])
+            for row in dataout
+                haskey(row, key) || (row[key] = entry[:default])
             end
         end
 

@@ -632,7 +632,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                 bulkte_ini  = Float64[], bulkte_ass  = Float64[], elem_TE = String[],
                                 seismicScheme = "VRH",  seismicWeightFactor = 0.5, seismicCorMode = false,
                                 aspectRatio = 0.3, seismicWater = 0, shallowCor = false, fluidAsMelt = false, anelasticCor = false,
-                                calcUnit = "mol" )
+                                calcUnit = "mol", phase_thresholds = [] )
 
         global Out_PTX, ph_names_ptx, fracEvol, compo_matrix, removedBulk, assimFrac
         global Out_TE_PTX, all_TE_ph_ptx, C_ext_TE_PTX
@@ -780,6 +780,22 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                 calcUnit == "wt" && return w_M
                 r = (o.frac_M_wt * o.frac_S) / (o.frac_M * o.frac_S_wt)   # molar mass ratio MM_melt / MM_solid
                 return (w_M * r) / (w_S + w_M * r)
+            end
+
+            # Per-phase extraction thresholds (Advanced path definition panel): converts
+            # a mol/wt/vol-basis threshold excess for a single phase into the equivalent
+            # MOL-basis amount to subtract from `bulk`, reusing the same ratio trick as
+            # te_melt_wt_frac above (moles per unit of the chosen fraction, recovered
+            # from that phase's own mol vs wt/vol fraction, no molar-mass table needed).
+            function phase_excess_mol_frac(pt, id, unit, threshold_pct)
+                prop = unit == "mol" ? sum(pt.ph_frac[id]) :
+                       unit == "wt"  ? sum(pt.ph_frac_wt[id]) :
+                                       sum(pt.ph_frac_vol[id])
+                excess = prop - threshold_pct/100.0
+                excess <= 0.0 && return 0.0
+                unit == "mol" && return excess
+                r = sum(pt.ph_frac[id]) / prop
+                return excess * r
             end
 
             sys_in  = "mol"
@@ -1012,6 +1028,83 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                         if te_enabled
                             Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb; ZrSat_model=zrsat_mod, SSat_model=ssat_mod, P2O5Sat_model=P2O5sat_mod, CO2Sat_model=co2sat_mod)
                             # not fc/fm: no bulk update
+                        end
+                    end
+
+                    # Per-phase extraction thresholds (Advanced path definition panel):
+                    # applies regardless of P-T-X Mode, on top of whatever the block
+                    # above already did to `bulk`/`removedBulk`/`fracEvol` this step.
+                    # Once a configured phase's proportion (in its own mol/wt/vol unit)
+                    # exceeds its threshold at this step, only the excess is removed --
+                    # a continuous cap, not a one-time full extraction. Merged into the
+                    # SAME removedBulk/fracEvol bookkeeping fm/fc already use, so the
+                    # existing "Extracted phases"/"Phase composition" plots correctly
+                    # show the combined total removed by either mechanism.
+                    if !isempty(phase_thresholds) && isassigned(Out_PTX, k)
+                        pt   = Out_PTX[k]
+                        n_SS = pt.n_SS
+
+                        # removedBulk[k+1,:] is a per-step COMPOSITION SHAPE (always
+                        # summing to 0 or 1, plotted directly as a 0-100% breakdown by
+                        # get_data_comp_rm_plot/get_data_comp_rm_int_plot) -- it is NOT
+                        # a mass-weighted quantity, so a threshold's contribution can't
+                        # simply be added on top of whatever fm/fc already wrote there.
+                        # Capture what fm/fc already removed THIS step (as a fraction of
+                        # the CURRENT, pre-this-step system) so it can be folded into a
+                        # single re-normalized sum-to-1 shape together with whatever
+                        # thresholding removes below, rather than corrupting the shape.
+                        existing_shape = copy(removedBulk[k+1,:])
+                        existing_mass  = fracEvol[k,1] > 0.0 ? clamp(1.0 - fracEvol[k+1,1]/fracEvol[k,1], 0.0, 1.0) : 0.0
+
+                        total_excess_calc     = 0.0                                  # calcUnit-basis fraction of the CURRENT system removed by thresholding this step
+                        combined_extra_shape  = zeros(Float64, length(bulk_ini))     # sums to total_excess_calc once the loop below is done
+
+                        for entry in phase_thresholds
+                            thr_val = entry.values[i] + (j-1)*((entry.values[i+1]-entry.values[i])/(nsteps+1))
+                            id_ph   = findall(pt.ph .== entry.phase)
+                            isempty(id_ph) && continue
+
+                            excess_mol_frac = phase_excess_mol_frac(pt, id_ph, entry.unit, thr_val)
+                            excess_mol_frac <= 0.0 && continue
+
+                            comps    = [ i_ph <= n_SS ? pt.SS_vec[i_ph].Comp : pt.PP_vec[i_ph - n_SS].Comp for i_ph in id_ph ]
+                            comp_avg = sum(comps) ./ length(comps)   # simple average across solvus instances
+
+                            bulk             .-= excess_mol_frac .* comp_avg
+                            bulk[bulk .< 0.0] .= 0.0
+                            bulk            ./= sum(bulk)
+
+                            # removedBulk/fracEvol are tracked in `calcUnit` basis (mol
+                            # or wt) throughout the rest of this function; convert this
+                            # mol-basis excess the same way, reusing the molar-mass
+                            # ratio trick already used for the trace-element fix (this
+                            # phase's own mol vs wt fraction gives exactly that ratio),
+                            # and MAGEMin's own already-fraction-scaled Comp_wt fields
+                            # for the composition shape -- NOT the mol2wt()/wt2mol()
+                            # utility functions, which are percent-scaled (sum to 100,
+                            # for user-facing bulk-rock display) rather than fraction-
+                            # scaled (sum to 1), unlike every native gmin_struct field.
+                            if calcUnit == "wt"
+                                comps_wt         = [ i_ph <= n_SS ? pt.SS_vec[i_ph].Comp_wt : pt.PP_vec[i_ph - n_SS].Comp_wt for i_ph in id_ph ]
+                                comp_avg_wt      = sum(comps_wt) ./ length(comps_wt)
+                                wt_frac_ratio    = sum(pt.ph_frac_wt[id_ph]) / sum(pt.ph_frac[id_ph])   # MM_phase / MM_system
+                                excess_calc      = excess_mol_frac * wt_frac_ratio
+                                removed_contrib  = excess_calc .* comp_avg_wt
+                            else
+                                excess_calc      = excess_mol_frac
+                                removed_contrib  = excess_mol_frac .* comp_avg
+                            end
+
+                            combined_extra_shape .+= removed_contrib
+                            total_excess_calc     += excess_calc
+                        end
+
+                        if total_excess_calc > 0.0
+                            total_mass = existing_mass + total_excess_calc
+                            removedBulk[k+1,:] .= (existing_shape .* existing_mass .+ combined_extra_shape) ./ total_mass
+
+                            fracEvol[k+1,1] *= (1.0 - total_excess_calc)
+                            fracEvol[k+1,2]  = 1.0 - fracEvol[k+1,1]
                         end
                     end
 
