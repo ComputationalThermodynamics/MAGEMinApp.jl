@@ -757,10 +757,47 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             # mol via `to_mol` before being stored into `bulk`, so mixing X% of
             # something means X mol% or X wt% depending on calcUnit, without
             # changing anything about how MAGEMin itself is driven.
-            calcUnit    = calcUnit in ("mol","wt") ? calcUnit : "mol"
-            frac_S_val(o) = calcUnit == "wt" ? o.frac_S_wt : o.frac_S
-            frac_M_val(o) = calcUnit == "wt" ? o.frac_M_wt : o.frac_M
-            frac_F_val(o) = calcUnit == "wt" ? o.frac_F_wt : o.frac_F
+            calcUnit    = calcUnit in ("mol","wt","vol") ? calcUnit : "mol"
+
+            # There is no native "bulk_S_vol"/"bulk_M_vol" field, and -- unlike
+            # mass -- volume cannot be used as a per-oxide mixing weight either.
+            # A first attempt at "vol" built bulk_S_val as a volume-fraction-
+            # weighted average of each solid phase's own MOL composition; that
+            # is NOT a valid mole-conserving bulk composition (verified with a
+            # 2-phase counter-example: 1 mol of a dense pure-oxide-1 phase + 1
+            # mol of a light pure-oxide-2 phase must average back to [0.5,0.5],
+            # but volume-fraction-weighting instead returns whatever the two
+            # phases' volume ratio happens to be, e.g. [0.09,0.91] for a 10x
+            # molar-volume contrast) -- because unlike mass, volume is not
+            # additive per-oxide, so it silently ignores the density contrast
+            # between whatever phases are being combined. That is what made the
+            # earlier "vol" fm/fc results diverge instead of converging with
+            # resolution: the error compounds every step as modal proportions
+            # (and therefore the built-in density mismatch) shift.
+            #
+            # bulk_S_val/bulk_M_val therefore stay on the native MOL basis for
+            # "vol" (same as "mol") -- correct and stable, since MAGEMin itself
+            # already computes bulk_S/bulk_M as a proper mole-weighted average.
+            # What "vol" actually changes is the MIXING WEIGHT: nCon/nRes are
+            # given as volume percentages, so before blending bulk_S_val/
+            # bulk_M_val (mol-basis) the target must be converted to the
+            # equivalent MOLE-fraction weight -- the same molar-volume-ratio
+            # trick already used by te_melt_wt_frac below, generalized to
+            # target either melt or solid. `t` is the desired volume fraction
+            # of whichever phase `target_is_melt` selects; `r` is the molar-
+            # volume ratio of the OTHER phase to the TARGET phase (recovered,
+            # again, from frac_*_vol vs frac_* without needing any molar-mass
+            # or molar-volume table).
+            function con_weight_mol(o, t, target_is_melt::Bool)
+                calcUnit != "vol" && return t
+                r = target_is_melt ? (o.frac_S_vol * o.frac_M) / (o.frac_S * o.frac_M_vol) :
+                                      (o.frac_M_vol * o.frac_S) / (o.frac_M * o.frac_S_vol)
+                return (t * r) / ((1.0 - t) + t * r)
+            end
+
+            frac_S_val(o) = calcUnit == "wt" ? o.frac_S_wt : calcUnit == "vol" ? o.frac_S_vol : o.frac_S
+            frac_M_val(o) = calcUnit == "wt" ? o.frac_M_wt : calcUnit == "vol" ? o.frac_M_vol : o.frac_M
+            frac_F_val(o) = calcUnit == "wt" ? o.frac_F_wt : calcUnit == "vol" ? o.frac_F_vol : o.frac_F
             bulk_S_val(o) = calcUnit == "wt" ? o.bulk_S_wt : o.bulk_S
             bulk_M_val(o) = calcUnit == "wt" ? o.bulk_M_wt : o.bulk_M
             # wt2mol (like mol2wt) is a MAGEMin_C utility that always returns its
@@ -771,7 +808,9 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             # function (define_bulk_rock/point_wise_minimization are scale-
             # invariant so this was invisible on its own, but the phase-threshold
             # capping below subtracts an absolute sum-to-1-basis quantity from
-            # `bulk` and silently no-ops if `bulk` is 100x too large).
+            # `bulk` and silently no-ops if `bulk` is 100x too large). Only "wt"
+            # needs this: bulk_S_val/bulk_M_val for "vol" are mol-basis, same as
+            # "mol" (see con_weight_mol above).
             to_mol(v)      = calcUnit == "wt" ? wt2mol(v, oxi) ./ 100.0 : v
 
             # Trace-element partitioning (TE_prediction) always works on MAGEMin's
@@ -780,14 +819,16 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             # concentrations. When re-mixing them for carry-forward using the
             # SAME (w_S, w_M) weights applied to the major-element bulk above, those
             # weights must therefore be WEIGHT fractions too. If calcUnit == "wt"
-            # they already are; if calcUnit == "mol", convert the mole-basis mixing
-            # weights to the equivalent weight fraction using the ratio of the
-            # melt/solid sub-compositions' molar masses, which is recoverable from
-            # o.frac_M_wt/o.frac_M vs o.frac_S_wt/o.frac_S (both already computed by
-            # MAGEMin) without needing any per-oxide molar-mass table.
+            # they already are; if calcUnit == "mol" or "vol", convert the mole-
+            # basis (or volume-basis) mixing weights to the equivalent weight
+            # fraction using the ratio of the melt/solid sub-compositions' molar
+            # masses, which is recoverable from o.frac_M_wt/o.frac_M(_vol) vs
+            # o.frac_S_wt/o.frac_S(_vol) (all already computed by MAGEMin)
+            # without needing any per-oxide molar-mass table.
             function te_melt_wt_frac(o, w_S, w_M)
                 calcUnit == "wt" && return w_M
-                r = (o.frac_M_wt * o.frac_S) / (o.frac_M * o.frac_S_wt)   # molar mass ratio MM_melt / MM_solid
+                r = calcUnit == "vol" ? (o.frac_M_wt * o.frac_S_vol) / (o.frac_M_vol * o.frac_S_wt) :
+                                         (o.frac_M_wt * o.frac_S)     / (o.frac_M     * o.frac_S_wt)
                 return (w_M * r) / (w_S + w_M * r)
             end
 
@@ -926,7 +967,8 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                         if frac_S_val(Out_PTX[k]) > 0.0
                             if nCon > 0.0
                                 if frac_M_val(Out_PTX[k]) > nCon/100.0
-                                    bulk               .= to_mol( bulk_S_val(Out_PTX[k]) .*((100.0-nCon)/100.0) .+ bulk_M_val(Out_PTX[k]) .*(nCon/100.0) )
+                                    w_con              = con_weight_mol(Out_PTX[k], nCon/100.0, true)
+                                    bulk               .= to_mol( bulk_S_val(Out_PTX[k]) .*(1.0 - w_con) .+ bulk_M_val(Out_PTX[k]) .* w_con )
                                     removedBulk[k+1,:] .= bulk_M_val(Out_PTX[k])
                                     fracEvol[k+1,1]     = fracEvol[k,1] * (frac_S_val(Out_PTX[k]) + frac_F_val(Out_PTX[k]) + nCon/100.0)
                                     fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
@@ -977,8 +1019,16 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                         if frac_M_val(Out_PTX[k]) > 0.0
                             if nRes > 0.0
                                 if frac_S_val(Out_PTX[k]) > nRes/100.0
-                                    bulk               .= to_mol( bulk_M_val(Out_PTX[k]) .*((100.0-nRes)/100.0) .+ bulk_S_val(Out_PTX[k]) .*(nRes/100.0) )
-                                    removedBulk[k+1,:] .= bulk_M_val(Out_PTX[k]) .*(nRes/100.0) .+ bulk_S_val(Out_PTX[k]) .*((100.0-nRes)/100.0)
+                                    # nRes/100 plays two different roles below (the
+                                    # residual solid's target fraction in the carried-
+                                    # forward `bulk`, vs. the entrained melt's fraction
+                                    # in the extracted `removedBulk`) -- each needs its
+                                    # own mole-equivalent conversion, targeting whichever
+                                    # phase that occurrence of nRes/100 actually applies to
+                                    w_con_S            = con_weight_mol(Out_PTX[k], nRes/100.0, false)
+                                    w_con_M            = con_weight_mol(Out_PTX[k], nRes/100.0, true)
+                                    bulk               .= to_mol( bulk_M_val(Out_PTX[k]) .*(1.0 - w_con_S) .+ bulk_S_val(Out_PTX[k]) .* w_con_S )
+                                    removedBulk[k+1,:] .= bulk_M_val(Out_PTX[k]) .* w_con_M .+ bulk_S_val(Out_PTX[k]) .*(1.0 - w_con_M)
                                     fracEvol[k+1,1]     = fracEvol[k,1] * (frac_M_val(Out_PTX[k]) - nRes/100.0)
                                     fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
                                     fracEvol[k+1,3]     = 1.0 - frac_M_val(Out_PTX[k]) - nRes/100.0

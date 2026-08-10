@@ -2201,11 +2201,18 @@ function Tab_PTXpaths_Callbacks(app)
         end
 
         if assim == "true"
+            # assimilation blends two raw bulk-rock compositions directly, before
+            # any equilibrium phases (and therefore any volumes) exist -- "vol"
+            # has no meaning here, so Add[%] always falls back to displaying/
+            # behaving as "wt" or "mol" (matching compute_new_PTXpath's own
+            # `calcUnit == "wt"` checks around the assimilation blend, which
+            # likewise treat anything other than "wt" as mol-basis)
+            add_unit_label = calc_unit == "wt" ? "wt" : "mol"
             if isentropic_value == false
                 if var_buffer == false
                     colout = [  Dict("name" => "P [$(pressure_unit_label())]",  "id"    => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
                                 Dict("name" => "T [°C]",    "id"    => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric"),
-                                Dict("name" => "Add [$(calc_unit)%]", "id"   => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric")]
+                                Dict("name" => "Add [$(add_unit_label)%]", "id"   => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric")]
 
                     if n_clicks > 0 && bid == "add-row-button"
                         add = Dict(Symbol("col-1") => display_pressure(7.5), Symbol("col-2") => 1000.0, Symbol("col-3") => 0.0)
@@ -2214,7 +2221,7 @@ function Tab_PTXpaths_Callbacks(app)
                 elseif var_buffer == true
                     colout = [  Dict("name" => "P [$(pressure_unit_label())]",  "id"        => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
                                 Dict("name" => "T [°C]",    "id"        => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric"),
-                                Dict("name" => "Add [$(calc_unit)%]", "id"       => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                                Dict("name" => "Add [$(add_unit_label)%]", "id"       => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric"),
                                 Dict("name" => "Buffer",     "id"       => "col-4", "deletable" => false, "renamable" => false, "type" => "numeric")]
 
                     if n_clicks > 0 && bid == "add-row-button"
@@ -2224,7 +2231,7 @@ function Tab_PTXpaths_Callbacks(app)
                 end
             else
                 colout = [  Dict("name" => "P [$(pressure_unit_label())]",  "id"    => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
-                            Dict("name" => "Add [$(calc_unit)%]", "id"   => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric")]
+                            Dict("name" => "Add [$(add_unit_label)%]", "id"   => "col-3", "deletable" => false, "renamable" => false, "type" => "numeric")]
 
                 if n_clicks > 0 && bid == "add-row-button"
                     add = Dict(Symbol("col-1") => display_pressure(7.5), Symbol("col-3") => 0.0)

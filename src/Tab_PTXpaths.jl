@@ -839,22 +839,7 @@ function Tab_PTXpaths()
                                                 multi       =  false    ),
                                             ]),
                                         ]),
-                                        # unit basis for assimilation blending and melt/solid extraction mass balance
-                                        dbc_row([
-                                            dbc_col([
-                                                html_h1("Calculation unit", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                            ], width=6),
-                                            dbc_col([
-                                                dcc_dropdown(   id      = "calc-unit-ptx",
-                                                options = [
-                                                    (label = "mol",         value = "mol"),
-                                                    (label = "wt",          value = "wt"),
-                                                ],
-                                                value       = "mol",
-                                                clearable   =  false,
-                                                multi       =  false    ),
-                                            ]),
-                                        ]),
+
                                         # PTX mode
                                         dbc_row([
                                             dbc_col([
@@ -887,7 +872,23 @@ function Tab_PTXpaths()
                                                 multi       = false),
                                             ]),
                                         ]),
-
+                                        # unit basis for assimilation blending and melt/solid extraction mass balance
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Cumulate/Connectivity unit", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ], width=6),
+                                            dbc_col([
+                                                dcc_dropdown(   id      = "calc-unit-ptx",
+                                                options = [
+                                                    (label = "mol",         value = "mol"),
+                                                    (label = "wt",          value = "wt"),
+                                                    (label = "vol",         value = "vol"),
+                                                ],
+                                                value       = "mol",
+                                                clearable   =  false,
+                                                multi       =  false    ),
+                                            ]),
+                                        ]),
                                         # connectivity threshold for fracitonal melting
                                         html_div([
                                             dbc_row([
