@@ -107,9 +107,13 @@ function Tab_PTXpaths_Callbacks(app)
         app,
         Output("remove-threshold-dropdown-ptx", "options"),
         Input("phase-threshold-store-ptx",      "data"),
+        Input("mineral-naming-dropdown",        "value"),
         prevent_initial_call = true,
-    ) do store
-        return [ Dict("label" => e[:label], "value" => e[:col_id]) for e in store ]
+    ) do store, warr_naming
+        global use_warr_names
+        use_warr_names[1] = (warr_naming == "warr")
+
+        return [ Dict("label" => "$(display_ph_name(e[:phase])) [$(e[:unit])%]", "value" => e[:col_id]) for e in store ]
     end
 
     # callback to display the seismic-correction-dependent options (aspect ratio, anelastic correction, shallow correction, fluid as melt)
@@ -1720,6 +1724,7 @@ function Tab_PTXpaths_Callbacks(app)
         Input("database-dropdown-ptx","value"),
         Input("output-data-uploadn-ptx", "is_open"),        # this listens for changes and updated the list
         Input("get-o-liquidus-button",   "n_clicks"),
+        Input("mineral-naming-dropdown", "value"),
 
         State("table-bulk-rock-ptx","data"),
         State("phase-selection-PTX","value"),
@@ -1738,8 +1743,11 @@ function Tab_PTXpaths_Callbacks(app)
 
         prevent_initial_call = false,
     ) do sys_unit,
-        test, dtb, update, _o_liq_clicks, tb_data, current_ss_selection, current_pp_selection,
+        test, dtb, update, _o_liq_clicks, warr_naming, tb_data, current_ss_selection, current_pp_selection,
         Tliq_txt, bufferType, bufferN, pressure_val, dataset, solver, verbose, cpx, limOpx, limOpxVal
+
+        global use_warr_names
+        use_warr_names[1] = (warr_naming == "warr")
 
         bid = pushed_button( callback_context() )
 
@@ -2172,6 +2180,7 @@ function Tab_PTXpaths_Callbacks(app)
         Input("calc-unit-ptx",              "value"     ),
         Input("ptx-table-adv",              "data"      ),
         Input("phase-threshold-store-ptx",  "data"      ),
+        Input("mineral-naming-dropdown",    "value"     ),
 
         State("assimilation-dropdown-ptx",  "value"     ),
         State("ptx-table",                  "data"      ),
@@ -2180,9 +2189,11 @@ function Tab_PTXpaths_Callbacks(app)
 
         prevent_initial_call = true,
 
-        ) do value, n_clicks, var_buffer, isentropic_value, pressure_unit, _export_clicks, calc_unit, adv_data, thresh_store,
+        ) do value, n_clicks, var_buffer, isentropic_value, pressure_unit, _export_clicks, calc_unit, adv_data, thresh_store, warr_naming,
                 assim, data, colout, pressure_unit_prev
 
+        global use_warr_names
+        use_warr_names[1]      = (warr_naming == "warr")
         bid                     = pushed_button( callback_context() )    # get which button has been pushed
 
         if bid == "pressure-unit-dropdown"
@@ -2289,8 +2300,10 @@ function Tab_PTXpaths_Callbacks(app)
         end
 
         # per-phase extraction threshold columns (Advanced path definition panel),
-        # appended on top of the base P/T/Add/Buffer columns computed above
-        colout = vcat(colout, [ Dict("name" => e[:label], "id" => e[:col_id], "deletable" => false, "renamable" => false, "type" => "numeric") for e in thresh_store ])
+        # appended on top of the base P/T/Add/Buffer columns computed above -- label
+        # is re-derived from e[:phase] (rather than trusting the stored e[:label])
+        # so it reflects the current legacy/Warr 2021 naming setting
+        colout = vcat(colout, [ Dict("name" => "$(display_ph_name(e[:phase])) [$(e[:unit])%]", "id" => e[:col_id], "deletable" => false, "renamable" => false, "type" => "numeric") for e in thresh_store ])
 
         export_success = false
         export_failed  = false
