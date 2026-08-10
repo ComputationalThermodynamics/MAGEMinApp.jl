@@ -1394,9 +1394,10 @@ function Tab_PTXpaths()
                                                                 "border"        =>"1px lightgray solid")),
                                         ]),
 
-                                        html_hr(),
+                                        # html_hr(),
+                                        html_div("‎ "),
                                         dbc_row([
-                                            dbc_button("Advanced path option (phase extraction)", id="adv-pathdef-button", color="light", className="me-2", n_clicks=0,
+                                            dbc_button("Add phase extraction", id="adv-pathdef-button", color="light", className="me-2", n_clicks=0,
                                             style       = Dict( "textAlign"     => "center",
                                                                 "font-size"     => "100%",
                                                                 "border"        =>"1px lightgray solid")),
@@ -1406,6 +1407,22 @@ function Tab_PTXpaths()
                                                 [
                                                     html_h1("Per-phase extraction thresholds", style = Dict("textAlign" => "center","font-size" => "120%")),
                                                     html_div("Cap a mineral's modal proportion along the path -- once its proportion exceeds the threshold at a step, only the excess is removed from the bulk composition that step.", style = Dict("font-size" => "90%", "color" => "grey")),
+                                                    dbc_row([
+                                                        dbc_col([
+                                                            html_h1("Re-minimize after capping", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                        ], width=8),
+                                                        dbc_col([
+                                                            dcc_dropdown(   id      = "adv-reminimize-dropdown-ptx",
+                                                                            options = [
+                                                                                (label = "true",  value = true),
+                                                                                (label = "false", value = false),
+                                                                            ],
+                                                                            value       = false,
+                                                                            clearable   = false,
+                                                                            multi       = false),
+                                                        ], width=4),
+                                                    ]),
+                                                    html_div("When true, each capped point is re-equilibrated with the post-extraction bulk, so the plotted phase proportion is pinned at the threshold instead of showing the pre-cap value. When false (default), the point's own equilibrium is left untouched and only the bulk carried into the next step is reduced -- matching how fractional melting/crystallization already display.", style = Dict("font-size" => "80%", "color" => "grey")),
                                                     html_hr(),
 
                                                     dash_datatable(

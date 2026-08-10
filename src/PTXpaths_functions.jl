@@ -632,7 +632,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                 bulkte_ini  = Float64[], bulkte_ass  = Float64[], elem_TE = String[],
                                 seismicScheme = "VRH",  seismicWeightFactor = 0.5, seismicCorMode = false,
                                 aspectRatio = 0.3, seismicWater = 0, shallowCor = false, fluidAsMelt = false, anelasticCor = false,
-                                calcUnit = "mol", phase_thresholds = [] )
+                                calcUnit = "mol", phase_thresholds = [], reminimize_threshold = false )
 
         global Out_PTX, ph_names_ptx, fracEvol, compo_matrix, removedBulk, assimFrac
         global Out_TE_PTX, all_TE_ph_ptx, C_ext_TE_PTX
@@ -763,7 +763,16 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             frac_F_val(o) = calcUnit == "wt" ? o.frac_F_wt : o.frac_F
             bulk_S_val(o) = calcUnit == "wt" ? o.bulk_S_wt : o.bulk_S
             bulk_M_val(o) = calcUnit == "wt" ? o.bulk_M_wt : o.bulk_M
-            to_mol(v)      = calcUnit == "wt" ? wt2mol(v, oxi) : v
+            # wt2mol (like mol2wt) is a MAGEMin_C utility that always returns its
+            # result on a sum-to-100 (percentage) basis, regardless of its input's
+            # scale -- unlike every native gmin_struct field (bulk_S_wt, Comp_wt,
+            # ...), which sums to 1. Dividing by 100 here restores the sum-to-1
+            # fraction convention that `bulk` must hold everywhere else in this
+            # function (define_bulk_rock/point_wise_minimization are scale-
+            # invariant so this was invisible on its own, but the phase-threshold
+            # capping below subtracts an absolute sum-to-1-basis quantity from
+            # `bulk` and silently no-ops if `bulk` is 100x too large).
+            to_mol(v)      = calcUnit == "wt" ? wt2mol(v, oxi) ./ 100.0 : v
 
             # Trace-element partitioning (TE_prediction) always works on MAGEMin's
             # weight-basis melt/solid split (out.frac_M_wt/frac_S_wt) internally,
@@ -1105,6 +1114,18 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
 
                             fracEvol[k+1,1] *= (1.0 - total_excess_calc)
                             fracEvol[k+1,2]  = 1.0 - fracEvol[k+1,1]
+
+                            # optional re-minimization (Re-minimize toggle in the Advanced
+                            # path definition panel): by default the capped phase's plotted
+                            # proportion is the PRE-cap equilibrium (matching how fm/fc only
+                            # ever adjust the bulk carried into the next step, never the
+                            # current point's own display). When enabled, re-equilibrate this
+                            # point with the post-cap bulk so the displayed phase proportion
+                            # is pinned at the threshold instead of showing the pre-cap value.
+                            if reminimize_threshold
+                                gv         = define_bulk_rock(gv, bulk, oxi, sys_in, dtb)
+                                Out_PTX[k] = deepcopy( point_wise_minimization(P, T, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true, seismic_cor=seismicCorMode, aspect_ratio=aspectRatio, seismic_water=seismicWater, shallow_correction=shallowCor, fluid_as_melt=fluidAsMelt, anelastic_cor=anelasticCor) )
+                            end
                         end
                     end
 
