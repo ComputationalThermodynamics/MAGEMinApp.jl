@@ -1,6 +1,8 @@
 function Tab_PTXpaths()
     html_div([
         dcc_store(id="te-ptx-computed-store", data=false),
+    # dummy store used solely to persist phase (de)selection into AppData.phase_selection_cache_ptx as it changes
+        dcc_store(id="phase-selection-cache-store-ptx", data=0),
         html_div("‎ "),
         dbc_row([ 
                 #= configuration column =#
@@ -245,10 +247,10 @@ function Tab_PTXpaths()
                                     ]),
                                     #verbose
                                     dbc_row([
-                                        dbc_col([ 
+                                        dbc_col([
                                             html_h1("Verbose", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                         ],width=4),
-                                        dbc_col([ 
+                                        dbc_col([
                                             dcc_dropdown(   id      = "verbose-dropdown-ptx",
                                             options = [
                                                 (label = "none",        value = -1),
@@ -260,6 +262,139 @@ function Tab_PTXpaths()
                                             multi       = false),
                                         ]),
                                     ]),
+
+                                    html_hr(),
+                                    dbc_row([
+                                        dbc_col([
+                                            html_h1("Seismic averaging scheme", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                        ]),
+                                        dbc_col([
+                                            dcc_dropdown(   id      = "sas-dropdown-ptx",
+                                            options = [
+                                                (label = "VRH",         value =  0),
+                                                (label = "HS",          value =  1),
+                                            ],
+                                            value       = 0,
+                                            clearable   = false,
+                                            multi       = false),
+                                        ]),
+                                    ]),
+                                    dbc_row([
+                                        dbc_col([
+                                            html_h1("Weight factor", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                        ]),
+                                        dbc_col([
+                                            dbc_input(
+                                                id      = "wf-id-ptx",
+                                                type    = "number",
+                                                min     = 0.0,
+                                                max     = 1.0,
+                                                value   = 0.5   ),
+                                        ]),
+                                    ]),
+                                    dbc_row([
+                                        dbc_col([
+                                            html_h1("Seismic correction", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                        ]),
+                                        dbc_col([
+                                            dcc_dropdown(   id      = "seismic-cor-dropdown-ptx",
+                                            options = [
+                                                (label = "true",         value = true),
+                                                (label = "false",        value = false),
+                                            ],
+                                            value       = false,
+                                            clearable   =  false,
+                                            multi       =  false),
+                                        ]),
+                                    ]),
+                                    html_div([
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Aspect ratio", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ]),
+                                            dbc_col([
+                                                dbc_row([
+                                                dbc_col([
+                                                        dbc_input(
+                                                            id      ="aspect-ratio-id-ptx",
+                                                            type    ="number",
+                                                            min     = 0.0,
+                                                            max     = 1.0,
+                                                            value   = 0.3   ),
+                                                    ]),
+                                                ]),
+                                            ]),
+                                        ]),
+                                    ], style = Dict("display" => "none"), id      = "aspect-ratio-row-id-ptx"), #none, block
+                                    html_div([
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Anelastic correction", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ]),
+                                            dbc_col([
+                                                dcc_dropdown(   id      = "anelastic-cor-dropdown-ptx",
+                                                options = [
+                                                    (label = "true",         value = true),
+                                                    (label = "false",        value = false),
+                                                ],
+                                                value       = false,
+                                                clearable   =  false,
+                                                multi       =  false),
+                                            ]),
+                                        ]),
+                                    ], style = Dict("display" => "none"), id      = "anelastic-toggle-row-id-ptx"), #none, block
+                                    html_div([
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Anelastic model", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ]),
+                                            dbc_col([
+                                                dcc_dropdown(   id      = "seismic-water-dropdown-ptx",
+                                                options = [
+                                                    (label = "Dry mantle",             value =  0),
+                                                    (label = "Damp mantle",            value =  1),
+                                                    (label = "Wet mantle (saturated)", value =  2),
+                                                ],
+                                                value       = 0,
+                                                clearable   =  false,
+                                                multi       =  false),
+                                            ]),
+                                        ]),
+                                    ], style = Dict("display" => "none"), id      = "anelastic-cor-row-id-ptx"), #none, block
+                                    html_div([
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Shallow correction", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ]),
+                                            dbc_col([
+                                                dcc_dropdown(   id      = "shallow-cor-dropdown-ptx",
+                                                options = [
+                                                    (label = "true",         value = true),
+                                                    (label = "false",        value = false),
+                                                ],
+                                                value       = false,
+                                                clearable   =  false,
+                                                multi       =  false),
+                                            ]),
+                                        ]),
+                                    ], style = Dict("display" => "none"), id      = "shallow-cor-row-id-ptx"), #none, block
+                                    html_div([
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Fluid as melt", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ]),
+                                            dbc_col([
+                                                dcc_dropdown(   id      = "fluid-as-melt-dropdown-ptx",
+                                                options = [
+                                                    (label = "true",         value = true),
+                                                    (label = "false",        value = false),
+                                                ],
+                                                value       = false,
+                                                clearable   =  false,
+                                                multi       =  false),
+                                            ]),
+                                        ]),
+                                    ], style = Dict("display" => "none"), id      = "fluid-as-melt-row-id-ptx"), #none, block
 
                                 ])),
                                 id="collapse-config",
@@ -704,6 +839,7 @@ function Tab_PTXpaths()
                                                 multi       =  false    ),
                                             ]),
                                         ]),
+
                                         # PTX mode
                                         dbc_row([
                                             dbc_col([
@@ -736,12 +872,31 @@ function Tab_PTXpaths()
                                                 multi       = false),
                                             ]),
                                         ]),
-
+                                        # unit basis for assimilation blending and melt/solid extraction mass balance
+                                        # -- only meaningful for fractional melting/crystallization, so only shown then
+                                        html_div([
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("Cumulate/Connectivity unit", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                ], width=6),
+                                                dbc_col([
+                                                    dcc_dropdown(   id      = "calc-unit-ptx",
+                                                    options = [
+                                                        (label = "mol",         value = "mol"),
+                                                        (label = "wt",          value = "wt"),
+                                                        (label = "vol",         value = "vol"),
+                                                    ],
+                                                    value       = "mol",
+                                                    clearable   =  false,
+                                                    multi       =  false    ),
+                                                ]),
+                                            ]),
+                                        ], style = Dict("display" => "none"), id      = "show-calc-unit-id"), #none, block
                                         # connectivity threshold for fracitonal melting
                                         html_div([
                                             dbc_row([
                                                 dbc_col([ 
-                                                    html_h1("Connectivity threshold [%]", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                    html_h1("Connectivity threshold [mol%]", id = "connectivity-label-id", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                                 ], width=6),
                                                 dbc_col([ 
                                                         dbc_input(
@@ -758,7 +913,7 @@ function Tab_PTXpaths()
                                         html_div([
                                             dbc_row([
                                                 dbc_col([ 
-                                                    html_h1("Residual rock fraction [%]", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                    html_h1("Residual rock fraction [mol%]", id = "residual-label-id", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                                 ], width=6),
                                                 dbc_col([ 
                                                         dbc_input(
@@ -1228,6 +1383,7 @@ function Tab_PTXpaths()
                                                     Dict("col-1" => 10.0,    "col-2"   => 1200.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0),
                                                     Dict("col-1" => 2.0,   "col-2"   => 600.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0),
                                                 ],
+                                                style_table     = (overflowX="auto",),
                                                 style_cell      = (textAlign="center", fontSize="140%",),
                                                 style_header    = (fontWeight="bold",),
                                                 editable        = true,
@@ -1239,9 +1395,133 @@ function Tab_PTXpaths()
                                             dbc_button("Add new point",id="add-row-button", color="light", className="me-2", n_clicks=0,
                                             style       = Dict( "textAlign"     => "center",
                                                                 "font-size"     => "100%",
-                                                                "border"        =>"1px lightgray solid")), 
+                                                                "border"        =>"1px lightgray solid")),
                                         ]),
-                                    ], style = Dict("display" => "block"), id      = "show-pathdef-id"), #none, block                                                                    
+
+                                        # html_hr(),
+                                        html_div("‎ "),
+                                        dbc_row([
+                                            dbc_button("Add phase extraction", id="adv-pathdef-button", color="light", className="me-2", n_clicks=0,
+                                            style       = Dict( "textAlign"     => "center",
+                                                                "font-size"     => "100%",
+                                                                "border"        =>"1px lightgray solid")),
+                                        ]),
+                                        dbc_row([
+                                            dbc_offcanvas(
+                                                [
+                                                    html_h1("Per-phase extraction thresholds", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                                    html_div("Cap a mineral's modal proportion along the path -- once its proportion exceeds the threshold at a step, only the excess is removed from the bulk composition that step.", style = Dict("font-size" => "90%", "color" => "grey")),
+                                                    dbc_row([
+                                                        dbc_col([
+                                                            html_h1("Re-minimize after capping", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                        ], width=8),
+                                                        dbc_col([
+                                                            dcc_dropdown(   id      = "adv-reminimize-dropdown-ptx",
+                                                                            options = [
+                                                                                (label = "true",  value = true),
+                                                                                (label = "false", value = false),
+                                                                            ],
+                                                                            value       = false,
+                                                                            clearable   = false,
+                                                                            multi       = false),
+                                                        ], width=4),
+                                                    ]),
+                                                    html_div("When true, each capped point is re-equilibrated with the post-extraction bulk, so the plotted phase proportion is pinned at the threshold instead of showing the pre-cap value. When false (default), the point's own equilibrium is left untouched and only the bulk carried into the next step is reduced -- matching how fractional melting/crystallization already display.", style = Dict("font-size" => "80%", "color" => "grey")),
+                                                    html_hr(),
+
+                                                    dash_datatable(
+                                                        id      = "ptx-table-adv",
+                                                        columns =[  Dict("name" => "P_kbar",  "id"   => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
+                                                                    Dict("name" => "T_°C",    "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")],
+                                                        data=[
+                                                            Dict("col-1" => 10.0,    "col-2"   => 1200.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0),
+                                                            Dict("col-1" => 2.0,   "col-2"   => 600.0, Symbol("col-3") => 0.0, Symbol("col-4") => 0.0),
+                                                        ],
+                                                        style_table     = (overflowX="auto",),
+                                                        style_cell      = (textAlign="center", fontSize="110%",),
+                                                        style_header    = (fontWeight="bold",),
+                                                        editable        = true,
+                                                        row_deletable   = false
+                                                    ),
+
+                                                    html_div("‎ "),
+                                                    html_h1("Add phase threshold", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                                    dbc_row([
+                                                        dbc_col([
+                                                            html_h1("Phase", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                            dcc_dropdown(   id      = "adv-phase-dropdown-ptx",
+                                                                            options = [],
+                                                                            clearable   = false,
+                                                                            multi       = false),
+                                                        ], width=5),
+                                                        dbc_col([
+                                                            html_h1("Unit", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                            dcc_dropdown(   id      = "adv-unit-dropdown-ptx",
+                                                                            options = [
+                                                                                (label = "mol", value = "mol"),
+                                                                                (label = "wt",  value = "wt"),
+                                                                                (label = "vol", value = "vol"),
+                                                                            ],
+                                                                            value       = "mol",
+                                                                            clearable   = false,
+                                                                            multi       = false),
+                                                        ], width=3),
+                                                        dbc_col([
+                                                            html_h1("Threshold [%]", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                            dbc_input(
+                                                                id      = "adv-threshold-val-ptx",
+                                                                type    = "number",
+                                                                min     = 0.0,
+                                                                max     = 100.0,
+                                                                value   = 5.0   ),
+                                                        ], width=4),
+                                                    ]),
+                                                    html_div("‎ "),
+                                                    dbc_row([
+                                                        dbc_button("Add column", id="add-threshold-col-button-ptx", color="light", className="me-2", n_clicks=0,
+                                                        style       = Dict( "textAlign"     => "center",
+                                                                            "font-size"     => "100%",
+                                                                            "background-color" => "#d3f2ce",
+                                                                            "border"        =>"1px grey solid")),
+                                                        dbc_alert(
+                                                            "This phase already has a threshold column",
+                                                            color   = "warning",
+                                                            id      = "add-threshold-col-warning-ptx",
+                                                            is_open = false,
+                                                            duration= 4000,
+                                                        ),
+                                                    ]),
+
+                                                    html_div("‎ "),
+                                                    html_h1("Remove phase threshold", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                                    dbc_row([
+                                                        dbc_col([
+                                                            dcc_dropdown(   id      = "remove-threshold-dropdown-ptx",
+                                                                            options = [],
+                                                                            clearable   = false,
+                                                                            multi       = false),
+                                                        ], width=8),
+                                                        dbc_col([
+                                                            dbc_button("Remove", id="remove-threshold-col-button-ptx", color="light", n_clicks=0,
+                                                            style       = Dict( "textAlign"     => "center",
+                                                                                "font-size"     => "100%",
+                                                                                "border"        =>"1px grey solid")),
+                                                        ], width=4),
+                                                    ]),
+
+                                                    dcc_store(id="phase-threshold-store-ptx", data=[]),
+                                                ],
+
+                                                id          = "adv-pathdef-canvas",
+                                                title       = "Advanced path definition",
+                                                is_open     = false,
+                                                placement   = "start",
+                                                style   = Dict( "width"             => "480px",
+                                                                "background-color"  => "rgba(255, 255, 255, 1.0)"),
+                                            ),
+                                        ]),
+
+                                    ], style = Dict("display" => "block"), id      = "show-pathdef-id"), #none, block
 
                                 ])),
                                 id="collapse-pathdef",
@@ -1471,6 +1751,28 @@ function Tab_PTXpaths()
                                                 ]),
                                                 dbc_row([
                                                     PTX_plot()
+                                                ]),
+                                            ]),
+
+                                            dbc_row([
+                                                dbc_row([
+                                                    dbc_col([
+                                                        html_h1("Selected field across path", style = Dict("textAlign" => "center","font-size" => "200%", "marginTop" => 16)),
+                                                    ],width=10),
+                                                    dbc_col([
+                                                        dcc_dropdown(   id      = "ptx-field-dropdown",
+                                                                        options = field_dropdown_options(),
+                                                                        value       = "rho" ,
+                                                                        clearable   = false,
+                                                                        multi       = false),
+                                                    ],width=2),
+                                                ]),
+                                                dbc_row([
+                                                    html_hr(),
+                                                    html_div("‎ "),
+                                                ]),
+                                                dbc_row([
+                                                    PTX_field_plot()
                                                 ]),
                                             ]),
 

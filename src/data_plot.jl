@@ -206,6 +206,15 @@ function PTX_plot()
                 figure      = fig,
             )
 end
+function PTX_field_plot()
+
+    fig =  plot(    Layout( height= 360 ))
+
+    dcc_graph(
+                id          = "ptx-field-plot",
+                figure      = fig,
+            )
+end
 function PTX_extracted_plot()
 
     fig =  plot(    Layout( height= 360 ))

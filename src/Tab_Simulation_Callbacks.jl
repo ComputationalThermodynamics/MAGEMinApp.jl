@@ -180,6 +180,9 @@ function Tab_Simulation_Callbacks(app)
         State(  "watsat-dropdown",                  "value"       ),
         State(  "watsat-val-id",                    "value"       ),
 
+        State(  "phase-selection",                  "value"       ),
+        State(  "pure-phase-selection",              "value"       ),
+
         prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
     ) do click, filename,
 
@@ -192,7 +195,8 @@ function Tab_Simulation_Callbacks(app)
         test, test2,
         buffer1, buffer2,
         te_test, te_test2,
-        watsat, watsat_val
+        watsat, watsat_val,
+        ss_selection, pp_selection
 
         global db, dbte
 
@@ -206,11 +210,14 @@ function Tab_Simulation_Callbacks(app)
         file_pd_data    = base_path * "_phase_diagram_data.jld2"
         file            = base_path * "_options.jld2"
 
-        println("Saving phase diagram options..."); t0 = time()
-        @save file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ssat_dtb P2O5sat_dtb ptx_table pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver boost verbose scp test test2 buffer1 buffer2 te_test te_test2 watsat watsat_val
-        println("Saved phase diagram options in $(round(time()-t0, digits=3)) seconds"); 
+        ss_selection = to_str_vec(ss_selection)
+        pp_selection = to_str_vec(pp_selection)
 
-        gv_names    = ["infos","layout","data", "data_plot", "data_reaction","iso_show", "n_lbl","data_isopleth", "data_isopleth_out","Out_XY", "Hash_XY", "Out_TE_XY", "all_TE_ph", "n_phase_XY", "addedRefinementLvl", "pChip_wat", "pChip_T"]
+        println("Saving phase diagram options..."); t0 = time()
+        @save file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ssat_dtb P2O5sat_dtb ptx_table pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver boost verbose scp test test2 buffer1 buffer2 te_test te_test2 watsat watsat_val ss_selection pp_selection
+        println("Saved phase diagram options in $(round(time()-t0, digits=3)) seconds");
+
+        gv_names    = ["infos","layout","data", "data_plot", "data_reaction","iso_show", "n_lbl","data_isopleth", "data_isopleth_out","Out_XY", "Hash_XY", "Out_TE_XY", "all_TE_ph", "n_phase_XY", "addedRefinementLvl", "pChip_wat", "pChip_T", "assemblage_rows", "list_compacted_idx", "raw_field_id"]
   
         save_cmd    = "@save file_pd"
         field_list  = []
@@ -347,6 +354,17 @@ function Tab_Simulation_Callbacks(app)
         try
             @load file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ssat_dtb P2O5sat_dtb pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer boost verbose scp buffer1 buffer2 watsat watsat_val
 
+            # phase (de)selection was only added to saved states later; tolerate older
+            # files saved before this field existed
+            try
+                ss_selection, pp_selection = nothing, nothing
+                @load file ss_selection pp_selection
+                if !isnothing(ss_selection)
+                    AppData.phase_selection_cache[1][database] = Dict("ss" => to_str_vec(ss_selection), "pp" => to_str_vec(pp_selection))
+                end
+            catch
+            end
+
             success, failed = "success", ""
             return success, failed, database, diagram_type, mb_cpx, limit_ca_opx, ca_opx_val, tepm, kds_dtb, zrsat_dtb, ssat_dtb, P2O5sat_dtb, display_pressure(Float64(pmin)), display_pressure(Float64(pmax)), tmin, tmax, display_pressure(Float64(pfix)), tfix, grid_sub, refinement, refinement_level, buffer, boost, verbose, scp, buffer1, buffer2, watsat, watsat_val, state_id, no_update(), no_update()
         catch e
@@ -368,12 +386,13 @@ function Tab_Simulation_Callbacks(app)
 
         Input("database-dropdown","value"),
         Input("mineral-naming-dropdown","value"),
+        Input("load-state-id","value"),
 
         State("phase-selection","value"),
         State("pure-phase-selection","value"),
 
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
-    ) do dtb, warr_naming, current_ss_selection, current_pp_selection
+    ) do dtb, warr_naming, _load_state_id, current_ss_selection, current_pp_selection
         global use_warr_names
         use_warr_names[1] = (warr_naming == "warr")
 
@@ -399,14 +418,20 @@ function Tab_Simulation_Callbacks(app)
                                                  "value"     => i )
                                                 for i in pp_disp ]
 
-        # remember the (de)activated phases per database, so switching back and forth
-        # between databases restores the last selection made for that database
+        # remember the (de)activated phases per database, so switching databases (or
+        # reloading the page) restores the last selection made for that database
         cache = AppData.phase_selection_cache[1]
         if bid == "database-dropdown"
             prev_dtb = AppData.phase_selection_last_dtb[1]
             if prev_dtb != "" && prev_dtb != dtb
                 cache[prev_dtb] = Dict("ss" => to_str_vec(current_ss_selection), "pp" => to_str_vec(current_pp_selection))
             end
+        end
+
+        if bid == "database-dropdown" || bid == "" || bid == "load-state-id"
+            # bid == "" happens on initial load / page reload, and "load-state-id" fires
+            # right after a saved state is loaded: restore from cache in both cases too,
+            # instead of always falling back to "all phases"
             if haskey(cache, dtb)
                 saved                       = cache[dtb]
                 phase_selection_value       = intersect(saved["ss"], db_in.ss_name)
@@ -418,8 +443,12 @@ function Tab_Simulation_Callbacks(app)
                 pure_phase_selection_value  = pp_disp
             end
         else
-            phase_selection_value       = db_in.ss_name
-            pure_phase_selection_value  = pp_disp
+            # unrelated trigger (e.g. mineral naming convention): leave the current
+            # phase selection untouched instead of resetting it to "all phases"
+            phase_selection_value       = intersect(to_str_vec(current_ss_selection), db_in.ss_name)
+            pure_phase_selection_value  = intersect(to_str_vec(current_pp_selection), pp_disp)
+            isempty(phase_selection_value)      && (phase_selection_value      = db_in.ss_name)
+            isempty(pure_phase_selection_value) && (pure_phase_selection_value = pp_disp)
         end
         AppData.phase_selection_last_dtb[1] = dtb
 
@@ -431,6 +460,20 @@ function Tab_Simulation_Callbacks(app)
 
 
         return phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value, dataset_options, dataset_value, style
+    end
+
+    # persist phase (de)selection into the per-database cache as soon as the user
+    # (de)activates a phase, so a page reload can restore it (not only a database switch)
+    callback!(
+        app,
+        Output("phase-selection-cache-store", "data"),
+        Input("phase-selection","value"),
+        Input("pure-phase-selection","value"),
+        State("database-dropdown","value"),
+        prevent_initial_call = true,
+    ) do ss_val, pp_val, dtb
+        AppData.phase_selection_cache[1][dtb] = Dict("ss" => to_str_vec(ss_val), "pp" => to_str_vec(pp_val))
+        return no_update()
     end
 
     

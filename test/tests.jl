@@ -120,7 +120,7 @@ for i = 1:81
 end
 
 for i = 1:Threads.maxthreadid()
-    finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i])
+    finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i],MAGEMin_data.splx_data[i])
 end
 
 # AppData lives in the MAGEMinApp module; re-included functions look for it in Main

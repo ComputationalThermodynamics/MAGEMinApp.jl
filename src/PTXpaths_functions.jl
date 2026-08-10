@@ -478,7 +478,7 @@ function compute_Tliq(          sysunit, pressure,   tolerance,  bulk_ini,   oxi
             n += 1
         end
 
-        LibMAGEMin.FreeDatabases(gv, DB, z_b)
+        LibMAGEMin.FreeDatabases(gv, DB, z_b, pointer_from_objref(splx_data))
 
         Tliq  = string( round((a+b)/2.0,digits=2))
     else
@@ -567,7 +567,7 @@ function compute_Tsol(          sysunit,    pressure,   tolerance,  bulk_ini,   
             n += 1
         end
 
-        LibMAGEMin.FreeDatabases(gv, DB, z_b)
+        LibMAGEMin.FreeDatabases(gv, DB, z_b, pointer_from_objref(splx_data))
 
         Tsol  = string(   round((a+b)/2.0,digits=2) )
     else
@@ -629,7 +629,10 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                 te_model    = "false",
                                 kds_mod     = "",       zrsat_mod   = "none",
                                 ssat_mod    = "none",   P2O5sat_mod = "none",   co2sat_mod  = "none",
-                                bulkte_ini  = Float64[], bulkte_ass  = Float64[], elem_TE = String[]  )
+                                bulkte_ini  = Float64[], bulkte_ass  = Float64[], elem_TE = String[],
+                                seismicScheme = "VRH",  seismicWeightFactor = 0.5, seismicCorMode = false,
+                                aspectRatio = 0.3, seismicWater = 0, shallowCor = false, fluidAsMelt = false, anelasticCor = false,
+                                calcUnit = "mol", phase_thresholds = [], reminimize_threshold = false )
 
         global Out_PTX, ph_names_ptx, fracEvol, compo_matrix, removedBulk, assimFrac
         global Out_TE_PTX, all_TE_ph_ptx, C_ext_TE_PTX
@@ -739,14 +742,118 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                                     limitCaOpx  = limitCaOpx,
                                                     CaOpxLim    = CaOpxLim,
                                                     buffer      = bufferType,
-                                                    solver      = sol    );
+                                                    solver      = sol,
+                                                    seismicScheme       = seismicScheme,
+                                                    seismicWeightFactor = seismicWeightFactor    );
     
             # define system unit and starting bulk rock composition
+            # NOTE: `bulk` (the running composition tracked/updated throughout the
+            # loop) is always kept in MOL basis here, since that's what `sys_in`/
+            # `define_bulk_rock` and the water-saturation lookup expect. When
+            # calcUnit == "wt", the assimilation blend and the melt/solid mass
+            # balance below are instead carried out in MAGEMin's own wt-basis
+            # fields (bulk_S_wt/bulk_M_wt, frac_S_wt/frac_M_wt) -- which already
+            # exist as computed outputs -- and the result is converted back to
+            # mol via `to_mol` before being stored into `bulk`, so mixing X% of
+            # something means X mol% or X wt% depending on calcUnit, without
+            # changing anything about how MAGEMin itself is driven.
+            calcUnit    = calcUnit in ("mol","wt","vol") ? calcUnit : "mol"
+
+            # There is no native "bulk_S_vol"/"bulk_M_vol" field, and -- unlike
+            # mass -- volume cannot be used as a per-oxide mixing weight either.
+            # A first attempt at "vol" built bulk_S_val as a volume-fraction-
+            # weighted average of each solid phase's own MOL composition; that
+            # is NOT a valid mole-conserving bulk composition (verified with a
+            # 2-phase counter-example: 1 mol of a dense pure-oxide-1 phase + 1
+            # mol of a light pure-oxide-2 phase must average back to [0.5,0.5],
+            # but volume-fraction-weighting instead returns whatever the two
+            # phases' volume ratio happens to be, e.g. [0.09,0.91] for a 10x
+            # molar-volume contrast) -- because unlike mass, volume is not
+            # additive per-oxide, so it silently ignores the density contrast
+            # between whatever phases are being combined. That is what made the
+            # earlier "vol" fm/fc results diverge instead of converging with
+            # resolution: the error compounds every step as modal proportions
+            # (and therefore the built-in density mismatch) shift.
+            #
+            # bulk_S_val/bulk_M_val therefore stay on the native MOL basis for
+            # "vol" (same as "mol") -- correct and stable, since MAGEMin itself
+            # already computes bulk_S/bulk_M as a proper mole-weighted average.
+            # What "vol" actually changes is the MIXING WEIGHT: nCon/nRes are
+            # given as volume percentages, so before blending bulk_S_val/
+            # bulk_M_val (mol-basis) the target must be converted to the
+            # equivalent MOLE-fraction weight -- the same molar-volume-ratio
+            # trick already used by te_melt_wt_frac below, generalized to
+            # target either melt or solid. `t` is the desired volume fraction
+            # of whichever phase `target_is_melt` selects; `r` is the molar-
+            # volume ratio of the OTHER phase to the TARGET phase (recovered,
+            # again, from frac_*_vol vs frac_* without needing any molar-mass
+            # or molar-volume table).
+            function con_weight_mol(o, t, target_is_melt::Bool)
+                calcUnit != "vol" && return t
+                r = target_is_melt ? (o.frac_S_vol * o.frac_M) / (o.frac_S * o.frac_M_vol) :
+                                      (o.frac_M_vol * o.frac_S) / (o.frac_M * o.frac_S_vol)
+                return (t * r) / ((1.0 - t) + t * r)
+            end
+
+            frac_S_val(o) = calcUnit == "wt" ? o.frac_S_wt : calcUnit == "vol" ? o.frac_S_vol : o.frac_S
+            frac_M_val(o) = calcUnit == "wt" ? o.frac_M_wt : calcUnit == "vol" ? o.frac_M_vol : o.frac_M
+            frac_F_val(o) = calcUnit == "wt" ? o.frac_F_wt : calcUnit == "vol" ? o.frac_F_vol : o.frac_F
+            bulk_S_val(o) = calcUnit == "wt" ? o.bulk_S_wt : o.bulk_S
+            bulk_M_val(o) = calcUnit == "wt" ? o.bulk_M_wt : o.bulk_M
+            # wt2mol (like mol2wt) is a MAGEMin_C utility that always returns its
+            # result on a sum-to-100 (percentage) basis, regardless of its input's
+            # scale -- unlike every native gmin_struct field (bulk_S_wt, Comp_wt,
+            # ...), which sums to 1. Dividing by 100 here restores the sum-to-1
+            # fraction convention that `bulk` must hold everywhere else in this
+            # function (define_bulk_rock/point_wise_minimization are scale-
+            # invariant so this was invisible on its own, but the phase-threshold
+            # capping below subtracts an absolute sum-to-1-basis quantity from
+            # `bulk` and silently no-ops if `bulk` is 100x too large). Only "wt"
+            # needs this: bulk_S_val/bulk_M_val for "vol" are mol-basis, same as
+            # "mol" (see con_weight_mol above).
+            to_mol(v)      = calcUnit == "wt" ? wt2mol(v, oxi) ./ 100.0 : v
+
+            # Trace-element partitioning (TE_prediction) always works on MAGEMin's
+            # weight-basis melt/solid split (out.frac_M_wt/frac_S_wt) internally,
+            # regardless of calcUnit -- so Csol/Cliq are always weight-basis
+            # concentrations. When re-mixing them for carry-forward using the
+            # SAME (w_S, w_M) weights applied to the major-element bulk above, those
+            # weights must therefore be WEIGHT fractions too. If calcUnit == "wt"
+            # they already are; if calcUnit == "mol" or "vol", convert the mole-
+            # basis (or volume-basis) mixing weights to the equivalent weight
+            # fraction using the ratio of the melt/solid sub-compositions' molar
+            # masses, which is recoverable from o.frac_M_wt/o.frac_M(_vol) vs
+            # o.frac_S_wt/o.frac_S(_vol) (all already computed by MAGEMin)
+            # without needing any per-oxide molar-mass table.
+            function te_melt_wt_frac(o, w_S, w_M)
+                calcUnit == "wt" && return w_M
+                r = calcUnit == "vol" ? (o.frac_M_wt * o.frac_S_vol) / (o.frac_M_vol * o.frac_S_wt) :
+                                         (o.frac_M_wt * o.frac_S)     / (o.frac_M     * o.frac_S_wt)
+                return (w_M * r) / (w_S + w_M * r)
+            end
+
+            # Per-phase extraction thresholds (Advanced path definition panel): converts
+            # a mol/wt/vol-basis threshold excess for a single phase into the equivalent
+            # MOL-basis amount to subtract from `bulk`, reusing the same ratio trick as
+            # te_melt_wt_frac above (moles per unit of the chosen fraction, recovered
+            # from that phase's own mol vs wt/vol fraction, no molar-mass table needed).
+            function phase_excess_mol_frac(pt, id, unit, threshold_pct)
+                prop = unit == "mol" ? sum(pt.ph_frac[id]) :
+                       unit == "wt"  ? sum(pt.ph_frac_wt[id]) :
+                                       sum(pt.ph_frac_vol[id])
+                excess = prop - threshold_pct/100.0
+                excess <= 0.0 && return 0.0
+                unit == "mol" && return excess
+                r = sum(pt.ph_frac[id]) / prop
+                return excess * r
+            end
+
             sys_in  = "mol"
             bulk    = copy(bulk_ini)
+            bulk_assim_calc = (assim == "true" && calcUnit == "wt") ? mol2wt(bulk_assim, oxi) : bulk_assim
 
             if assim == "true"
-                 bulk   .= (1.0 - Add[1]) .* bulk + Add[1].* bulk_assim
+                 bulk   .= to_mol( (1.0 - Add[1]) .* (calcUnit == "wt" ? mol2wt(bulk, oxi) : bulk) .+ Add[1] .* bulk_assim_calc )
             end
 
             gv      =  define_bulk_rock(gv, bulk, oxi, sys_in, dtb);
@@ -759,7 +866,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             # retrieve reference entropy of the system
             if isentropic_mode == true
                 out         = MAGEMin_C.gmin_struct{Float64, Int64};
-                Out_PTX[1]  = deepcopy( point_wise_minimization(Pres[1],T_start, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
+                Out_PTX[1]  = deepcopy( point_wise_minimization(Pres[1],T_start, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true, seismic_cor=seismicCorMode, aspect_ratio=aspectRatio, seismic_water=seismicWater, shallow_correction=shallowCor, fluid_as_melt=fluidAsMelt, anelastic_cor=anelasticCor) )
                 Sref        = Out_PTX[1].entropy[1];
                 n_max       = 32
                 tolerance   = 0.001
@@ -784,7 +891,8 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                     end
 
                     if assim == "true"
-                        bulk   .= (1.0 .- step ./ (1.0 .+ step .* j)) .* bulk .+ (step ./ (1.0 .+ step .* j)) .* bulk_assim
+                        w_assim = step ./ (1.0 .+ step .* j)
+                        bulk   .= to_mol( (1.0 .- w_assim) .* (calcUnit == "wt" ? mol2wt(bulk, oxi) : bulk) .+ w_assim .* bulk_assim_calc )
                     end
 
                     if ~isnothing(pChip_wat) && isentropic_mode == false
@@ -815,7 +923,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                 
                         while n < n_max && conv == 0
                             c       = (a+b)/2.0
-                            out     = deepcopy( point_wise_minimization(P, c , gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
+                            out     = deepcopy( point_wise_minimization(P, c , gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true, seismic_cor=seismicCorMode, aspect_ratio=aspectRatio, seismic_water=seismicWater, shallow_correction=shallowCor, fluid_as_melt=fluidAsMelt, anelastic_cor=anelasticCor) )
                             result  = out.entropy[1] - Sref
 
                             sign_c  = sign(result)
@@ -839,7 +947,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                         Out_PTX[k]    = deepcopy(out)
 
                     elseif isentropic_mode == false
-                        Out_PTX[k] = deepcopy( point_wise_minimization(P,T, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
+                        Out_PTX[k] = deepcopy( point_wise_minimization(P,T, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true, seismic_cor=seismicCorMode, aspect_ratio=aspectRatio, seismic_water=seismicWater, shallow_correction=shallowCor, fluid_as_melt=fluidAsMelt, anelastic_cor=anelasticCor) )
                     end
 
 
@@ -856,18 +964,20 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                     end
 
                     if mode == "fm"
-                        if Out_PTX[k].frac_S > 0.0
+                        if frac_S_val(Out_PTX[k]) > 0.0
                             if nCon > 0.0
-                                if Out_PTX[k].frac_M > nCon/100.0
-                                    bulk               .= Out_PTX[k].bulk_S .*((100.0-nCon)/100.0) .+ Out_PTX[k].bulk_M .*(nCon/100.0)
-                                    removedBulk[k+1,:] .= Out_PTX[k].bulk_M
-                                    fracEvol[k+1,1]     = fracEvol[k,1] * (Out_PTX[k].frac_S + Out_PTX[k].frac_F + nCon/100.0)
+                                if frac_M_val(Out_PTX[k]) > nCon/100.0
+                                    w_con              = con_weight_mol(Out_PTX[k], nCon/100.0, true)
+                                    bulk               .= to_mol( bulk_S_val(Out_PTX[k]) .*(1.0 - w_con) .+ bulk_M_val(Out_PTX[k]) .* w_con )
+                                    removedBulk[k+1,:] .= bulk_M_val(Out_PTX[k])
+                                    fracEvol[k+1,1]     = fracEvol[k,1] * (frac_S_val(Out_PTX[k]) + frac_F_val(Out_PTX[k]) + nCon/100.0)
                                     fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
-                                    fracEvol[k+1,3]     = 1.0 - (Out_PTX[k].frac_S + Out_PTX[k].frac_F + nCon/100.0)
+                                    fracEvol[k+1,3]     = 1.0 - (frac_S_val(Out_PTX[k]) + frac_F_val(Out_PTX[k]) + nCon/100.0)
                                     if te_enabled
                                         Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb; ZrSat_model=zrsat_mod, SSat_model=ssat_mod, P2O5Sat_model=P2O5sat_mod, CO2Sat_model=co2sat_mod)
                                         if !all(isnan, Out_TE_PTX[k].Csol) && !all(isnan, Out_TE_PTX[k].Cliq)
-                                            bulkte_cur        = Out_TE_PTX[k].Csol .* (1.0 - nCon/100.0) .+ Out_TE_PTX[k].Cliq .* (nCon/100.0)
+                                            w_M_te            = te_melt_wt_frac(Out_PTX[k], (100.0-nCon)/100.0, nCon/100.0)
+                                            bulkte_cur        = Out_TE_PTX[k].Csol .* (1.0 - w_M_te) .+ Out_TE_PTX[k].Cliq .* w_M_te
                                             C_ext_TE_PTX[k+1] = copy(Out_TE_PTX[k].Cliq)
                                         end
                                     end
@@ -882,7 +992,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                     end
                                 end
                             else
-                                bulk               .= Out_PTX[k].bulk_S
+                                bulk               .= to_mol( bulk_S_val(Out_PTX[k]) )
                                 removedBulk[k+1,:] .= zeros(length(bulk_ini))
                                 fracEvol[k+1,1]     = fracEvol[k,1]
                                 fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
@@ -906,27 +1016,37 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                             end
                         end
                     elseif mode == "fc"
-                        if Out_PTX[k].frac_M > 0.0
+                        if frac_M_val(Out_PTX[k]) > 0.0
                             if nRes > 0.0
-                                if Out_PTX[k].frac_S > nRes/100.0
-                                    bulk               .= Out_PTX[k].bulk_M .*((100.0-nRes)/100.0) .+ Out_PTX[k].bulk_S .*(nRes/100.0)
-                                    removedBulk[k+1,:] .= Out_PTX[k].bulk_M .*(nRes/100.0) .+ Out_PTX[k].bulk_S .*((100.0-nRes)/100.0)
-                                    fracEvol[k+1,1]     = fracEvol[k,1] * (Out_PTX[k].frac_M - nRes/100.0)
+                                if frac_S_val(Out_PTX[k]) > nRes/100.0
+                                    # nRes/100 plays two different roles below (the
+                                    # residual solid's target fraction in the carried-
+                                    # forward `bulk`, vs. the entrained melt's fraction
+                                    # in the extracted `removedBulk`) -- each needs its
+                                    # own mole-equivalent conversion, targeting whichever
+                                    # phase that occurrence of nRes/100 actually applies to
+                                    w_con_S            = con_weight_mol(Out_PTX[k], nRes/100.0, false)
+                                    w_con_M            = con_weight_mol(Out_PTX[k], nRes/100.0, true)
+                                    bulk               .= to_mol( bulk_M_val(Out_PTX[k]) .*(1.0 - w_con_S) .+ bulk_S_val(Out_PTX[k]) .* w_con_S )
+                                    removedBulk[k+1,:] .= bulk_M_val(Out_PTX[k]) .* w_con_M .+ bulk_S_val(Out_PTX[k]) .*(1.0 - w_con_M)
+                                    fracEvol[k+1,1]     = fracEvol[k,1] * (frac_M_val(Out_PTX[k]) - nRes/100.0)
                                     fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
-                                    fracEvol[k+1,3]     = 1.0 - Out_PTX[k].frac_M - nRes/100.0
+                                    fracEvol[k+1,3]     = 1.0 - frac_M_val(Out_PTX[k]) - nRes/100.0
                                     if te_enabled
                                         Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb; ZrSat_model=zrsat_mod, SSat_model=ssat_mod, P2O5Sat_model=P2O5sat_mod, CO2Sat_model=co2sat_mod)
                                         if !all(isnan, Out_TE_PTX[k].Cliq) && !all(isnan, Out_TE_PTX[k].Csol)
-                                            bulkte_cur        = Out_TE_PTX[k].Cliq .* (1.0 - nRes/100.0) .+ Out_TE_PTX[k].Csol .* (nRes/100.0)
-                                            C_ext_TE_PTX[k+1] = Out_TE_PTX[k].Cliq .* (nRes/100.0) .+ Out_TE_PTX[k].Csol .* (1.0 - nRes/100.0)
+                                            w_M_te            = te_melt_wt_frac(Out_PTX[k], nRes/100.0, (100.0-nRes)/100.0)
+                                            w_M_ext_te        = te_melt_wt_frac(Out_PTX[k], (100.0-nRes)/100.0, nRes/100.0)
+                                            bulkte_cur        = Out_TE_PTX[k].Cliq .* w_M_te .+ Out_TE_PTX[k].Csol .* (1.0 - w_M_te)
+                                            C_ext_TE_PTX[k+1] = Out_TE_PTX[k].Cliq .* w_M_ext_te .+ Out_TE_PTX[k].Csol .* (1.0 - w_M_ext_te)
                                         end
                                     end
                                 else
-                                    bulk               .= Out_PTX[k].bulk_M
-                                    removedBulk[k+1,:] .= Out_PTX[k].bulk_S
-                                    fracEvol[k+1,1]     = fracEvol[k,1] * (Out_PTX[k].frac_M - Out_PTX[k].frac_S)
+                                    bulk               .= to_mol( bulk_M_val(Out_PTX[k]) )
+                                    removedBulk[k+1,:] .= bulk_S_val(Out_PTX[k])
+                                    fracEvol[k+1,1]     = fracEvol[k,1] * (frac_M_val(Out_PTX[k]) - frac_S_val(Out_PTX[k]))
                                     fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
-                                    fracEvol[k+1,3]     = 1.0 - (Out_PTX[k].frac_M - Out_PTX[k].frac_S)
+                                    fracEvol[k+1,3]     = 1.0 - (frac_M_val(Out_PTX[k]) - frac_S_val(Out_PTX[k]))
                                     if te_enabled
                                         Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb; ZrSat_model=zrsat_mod, SSat_model=ssat_mod, P2O5Sat_model=P2O5sat_mod, CO2Sat_model=co2sat_mod)
                                         if !all(isnan, Out_TE_PTX[k].Cliq) && !all(isnan, Out_TE_PTX[k].Csol)
@@ -936,11 +1056,11 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                     end
                                 end
                             else
-                                bulk               .= Out_PTX[k].bulk_M
-                                removedBulk[k+1,:] .= Out_PTX[k].bulk_S
-                                fracEvol[k+1,1]     = fracEvol[k,1] * Out_PTX[k].frac_M
+                                bulk               .= to_mol( bulk_M_val(Out_PTX[k]) )
+                                removedBulk[k+1,:] .= bulk_S_val(Out_PTX[k])
+                                fracEvol[k+1,1]     = fracEvol[k,1] * frac_M_val(Out_PTX[k])
                                 fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
-                                fracEvol[k+1,3]     = 1.0 - Out_PTX[k].frac_M
+                                fracEvol[k+1,3]     = 1.0 - frac_M_val(Out_PTX[k])
                                 if te_enabled
                                     Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb; ZrSat_model=zrsat_mod, SSat_model=ssat_mod, P2O5Sat_model=P2O5sat_mod, CO2Sat_model=co2sat_mod)
                                     if !all(isnan, Out_TE_PTX[k].Cliq) && !all(isnan, Out_TE_PTX[k].Csol)
@@ -967,6 +1087,95 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                         if te_enabled
                             Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb; ZrSat_model=zrsat_mod, SSat_model=ssat_mod, P2O5Sat_model=P2O5sat_mod, CO2Sat_model=co2sat_mod)
                             # not fc/fm: no bulk update
+                        end
+                    end
+
+                    # Per-phase extraction thresholds (Advanced path definition panel):
+                    # applies regardless of P-T-X Mode, on top of whatever the block
+                    # above already did to `bulk`/`removedBulk`/`fracEvol` this step.
+                    # Once a configured phase's proportion (in its own mol/wt/vol unit)
+                    # exceeds its threshold at this step, only the excess is removed --
+                    # a continuous cap, not a one-time full extraction. Merged into the
+                    # SAME removedBulk/fracEvol bookkeeping fm/fc already use, so the
+                    # existing "Extracted phases"/"Phase composition" plots correctly
+                    # show the combined total removed by either mechanism.
+                    if !isempty(phase_thresholds) && isassigned(Out_PTX, k)
+                        pt   = Out_PTX[k]
+                        n_SS = pt.n_SS
+
+                        # removedBulk[k+1,:] is a per-step COMPOSITION SHAPE (always
+                        # summing to 0 or 1, plotted directly as a 0-100% breakdown by
+                        # get_data_comp_rm_plot/get_data_comp_rm_int_plot) -- it is NOT
+                        # a mass-weighted quantity, so a threshold's contribution can't
+                        # simply be added on top of whatever fm/fc already wrote there.
+                        # Capture what fm/fc already removed THIS step (as a fraction of
+                        # the CURRENT, pre-this-step system) so it can be folded into a
+                        # single re-normalized sum-to-1 shape together with whatever
+                        # thresholding removes below, rather than corrupting the shape.
+                        existing_shape = copy(removedBulk[k+1,:])
+                        existing_mass  = fracEvol[k,1] > 0.0 ? clamp(1.0 - fracEvol[k+1,1]/fracEvol[k,1], 0.0, 1.0) : 0.0
+
+                        total_excess_calc     = 0.0                                  # calcUnit-basis fraction of the CURRENT system removed by thresholding this step
+                        combined_extra_shape  = zeros(Float64, length(bulk_ini))     # sums to total_excess_calc once the loop below is done
+
+                        for entry in phase_thresholds
+                            thr_val = entry.values[i] + (j-1)*((entry.values[i+1]-entry.values[i])/(nsteps+1))
+                            id_ph   = findall(pt.ph .== entry.phase)
+                            isempty(id_ph) && continue
+
+                            excess_mol_frac = phase_excess_mol_frac(pt, id_ph, entry.unit, thr_val)
+                            excess_mol_frac <= 0.0 && continue
+
+                            comps    = [ i_ph <= n_SS ? pt.SS_vec[i_ph].Comp : pt.PP_vec[i_ph - n_SS].Comp for i_ph in id_ph ]
+                            comp_avg = sum(comps) ./ length(comps)   # simple average across solvus instances
+
+                            bulk             .-= excess_mol_frac .* comp_avg
+                            bulk[bulk .< 0.0] .= 0.0
+                            bulk            ./= sum(bulk)
+
+                            # removedBulk/fracEvol are tracked in `calcUnit` basis (mol
+                            # or wt) throughout the rest of this function; convert this
+                            # mol-basis excess the same way, reusing the molar-mass
+                            # ratio trick already used for the trace-element fix (this
+                            # phase's own mol vs wt fraction gives exactly that ratio),
+                            # and MAGEMin's own already-fraction-scaled Comp_wt fields
+                            # for the composition shape -- NOT the mol2wt()/wt2mol()
+                            # utility functions, which are percent-scaled (sum to 100,
+                            # for user-facing bulk-rock display) rather than fraction-
+                            # scaled (sum to 1), unlike every native gmin_struct field.
+                            if calcUnit == "wt"
+                                comps_wt         = [ i_ph <= n_SS ? pt.SS_vec[i_ph].Comp_wt : pt.PP_vec[i_ph - n_SS].Comp_wt for i_ph in id_ph ]
+                                comp_avg_wt      = sum(comps_wt) ./ length(comps_wt)
+                                wt_frac_ratio    = sum(pt.ph_frac_wt[id_ph]) / sum(pt.ph_frac[id_ph])   # MM_phase / MM_system
+                                excess_calc      = excess_mol_frac * wt_frac_ratio
+                                removed_contrib  = excess_calc .* comp_avg_wt
+                            else
+                                excess_calc      = excess_mol_frac
+                                removed_contrib  = excess_mol_frac .* comp_avg
+                            end
+
+                            combined_extra_shape .+= removed_contrib
+                            total_excess_calc     += excess_calc
+                        end
+
+                        if total_excess_calc > 0.0
+                            total_mass = existing_mass + total_excess_calc
+                            removedBulk[k+1,:] .= (existing_shape .* existing_mass .+ combined_extra_shape) ./ total_mass
+
+                            fracEvol[k+1,1] *= (1.0 - total_excess_calc)
+                            fracEvol[k+1,2]  = 1.0 - fracEvol[k+1,1]
+
+                            # optional re-minimization (Re-minimize toggle in the Advanced
+                            # path definition panel): by default the capped phase's plotted
+                            # proportion is the PRE-cap equilibrium (matching how fm/fc only
+                            # ever adjust the bulk carried into the next step, never the
+                            # current point's own display). When enabled, re-equilibrate this
+                            # point with the post-cap bulk so the displayed phase proportion
+                            # is pinned at the threshold instead of showing the pre-cap value.
+                            if reminimize_threshold
+                                gv         = define_bulk_rock(gv, bulk, oxi, sys_in, dtb)
+                                Out_PTX[k] = deepcopy( point_wise_minimization(P, T, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true, seismic_cor=seismicCorMode, aspect_ratio=aspectRatio, seismic_water=seismicWater, shallow_correction=shallowCor, fluid_as_melt=fluidAsMelt, anelastic_cor=anelasticCor) )
+                            end
                         end
                     end
 
@@ -1017,7 +1226,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                         T_C     = Out_PTX[k].T_C
                         P_kbar  = Out_PTX[k].P_kbar
                         gv      = define_bulk_rock(gv, bulk, oxi, sys_in, dtb);
-                        out     = deepcopy( point_wise_minimization(P_kbar,T_C, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
+                        out     = deepcopy( point_wise_minimization(P_kbar,T_C, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true, seismic_cor=seismicCorMode, aspect_ratio=aspectRatio, seismic_water=seismicWater, shallow_correction=shallowCor, fluid_as_melt=fluidAsMelt, anelastic_cor=anelasticCor) )
                         Sref    = out.entropy[1]
                     end
 
@@ -1039,7 +1248,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
         
                 while n < n_max && conv == 0
                     c       = (a+b)/2.0
-                    out     = deepcopy( point_wise_minimization(P, c , gv, z_b, DB, splx_data, sys_in; buffer_n=Buff[np], rm_list=phase_selection, name_solvus=true) )
+                    out     = deepcopy( point_wise_minimization(P, c , gv, z_b, DB, splx_data, sys_in; buffer_n=Buff[np], rm_list=phase_selection, name_solvus=true, seismic_cor=seismicCorMode, aspect_ratio=aspectRatio, seismic_water=seismicWater, shallow_correction=shallowCor, fluid_as_melt=fluidAsMelt, anelastic_cor=anelasticCor) )
                     result  = out.entropy[1] - Sref
 
                     sign_c  = sign(result)
@@ -1061,7 +1270,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                 Out_PTX[k]    = deepcopy(out)
 
             elseif isentropic_mode == false
-                 Out_PTX[k] = deepcopy( point_wise_minimization(Pres[np],Temp[np], gv, z_b, DB, splx_data, sys_in; buffer_n=Buff[np], rm_list=phase_selection, name_solvus=true) )
+                 Out_PTX[k] = deepcopy( point_wise_minimization(Pres[np],Temp[np], gv, z_b, DB, splx_data, sys_in; buffer_n=Buff[np], rm_list=phase_selection, name_solvus=true, seismic_cor=seismicCorMode, aspect_ratio=aspectRatio, seismic_water=seismicWater, shallow_correction=shallowCor, fluid_as_melt=fluidAsMelt, anelastic_cor=anelasticCor) )
             end
 
             if assim == "true" && k > 1
@@ -1101,7 +1310,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             ph_names_ptx = sort(ph_names_ptx)
 
             # free MAGEMin
-            LibMAGEMin.FreeDatabases(gv, DB, z_b)
+            LibMAGEMin.FreeDatabases(gv, DB, z_b, pointer_from_objref(splx_data))
         end
 
 end
@@ -1955,8 +2164,8 @@ end
 
 
 # ------------------------------------------------ LAYOUTS ------------------------------------------------#
-function initialize_rm_layout()
-    ytitle         = "Oxide fraction [mol%]"
+function initialize_rm_layout(calcUnit = "mol")
+    ytitle         = "Oxide fraction [$(calcUnit)%]"
     layout_rm_ptx  = Layout(
 
         title= attr(
@@ -2046,6 +2255,95 @@ function initialize_layout(title,sysunit)
 end
 
 
+"""
+    initialize_field_layout(title, ytitle)
+
+Layout for the PTX path "selected field across path" plot. Unlike the
+phase-fraction plots, the y-axis is not a 0-100% scale (fields like
+density, Vp, entropy, ... each have their own range), so autorange is left on.
+"""
+function initialize_field_layout(title, ytitle)
+    layout_field  = Layout(
+        title= attr(
+            text    = title,
+            x       = 0.5,
+            y       = 1.10,
+            xanchor = "center",
+            yanchor = "top",
+            font    = attr(
+                size  = 14,
+            )
+        ),
+        margin      = attr(autoexpand = false, l=16, r=16, b=16, t=24),
+        hoverlabel = attr(
+            bgcolor     = "#566573",
+            bordercolor = "#f8f9f9",
+        ),
+        plot_bgcolor = "#FFF",
+        paper_bgcolor = "#FFF",
+        xaxis_title = "P-T conditions [$(pressure_unit_label()), °C]",
+        yaxis_title = ytitle,
+        height      = 360,
+        showlegend  = false,
+        xaxis       = attr(
+            fixedrange    = true,
+            showgrid      = false,  # Disable gridlines inside the plot
+            zeroline      = true,   # Show the axis line
+            linecolor     = "black", # Set the bottom axis line color
+            linewidth     = 1       # Set the thickness of the axis line
+        ),
+        yaxis       = attr(
+            autorange     = true,
+            fixedrange    = true,
+            showgrid      = false,  # Disable gridlines inside the plot
+            zeroline      = true,   # Show the axis line
+            linecolor     = "black", # Set the left axis line color
+            linewidth     = 1,       # Set the thickness of the axis line
+        ),
+    )
+
+    return layout_field
+end
+
+
+"""
+    get_ptx_field_plot(fieldname::String)
+
+Samples a single system-level field (see `field_dropdown_options()` /
+`OTHER_FIELD_LABELS`, PhaseDiagram_functions.jl) at every step of the
+computed PTX path, reusing `get_other_field_value` (the same per-point
+extractor the Phase Diagram tab's "draw path field profile" uses). "Hash"
+is handled separately here since it only becomes a meaningful small integer
+once mapped against the *other* assemblages seen along this path.
+"""
+function get_ptx_field_plot(fieldname::String)
+
+    n_tot   = length(Out_PTX)
+    x       = Vector{String}(undef, n_tot)
+    y       = Vector{Float64}(undef, n_tot)
+
+    for k = 1:n_tot
+        x[k] = string(round(display_pressure(Out_PTX[k].P_kbar),digits=1))*"; "*string(round(Out_PTX[k].T_C,digits=1))
+    end
+
+    if fieldname == "Hash"
+        raw_hash    = [hash(sort(Out_PTX[k].ph)) for k = 1:n_tot]
+        uniq_hash   = unique(raw_hash)
+        y          .= [Float64(findfirst(==(h), uniq_hash)) for h in raw_hash]
+    else
+        y          .= [get_other_field_value(Out_PTX[k], fieldname) for k = 1:n_tot]
+    end
+
+    trace = scatter(;   x       = x,
+                        y       = y,
+                        mode    = "markers+lines",
+                        marker  = attr(size = 5.0, color = "black", symbol = "circle-open", opacity = 0.5),
+                        line    = attr(width = 0.75, color = "black"),
+                        name    = get(OTHER_FIELD_LABELS, fieldname, fieldname),
+                    )
+
+    return GenericTrace[trace]
+end
 
 
 function initialize_ext_layout(title,sysunit)
