@@ -1585,6 +1585,24 @@ function Tab_PTXpaths_Callbacks(app)
         return style
     end
 
+    # "Cumulate/Connectivity unit" (calc-unit-ptx) only affects the fm nCon /
+    # fc nRes melt-solid mixing basis, so only show it for those two modes
+    callback!(
+        app,
+        Output("show-calc-unit-id",     "style"),
+        Input("mode-dropdown-ptx",      "value"),
+
+        prevent_initial_call = true,
+    ) do value
+
+        if value == "fm" || value == "fc"
+            style  = Dict("display" => "block")
+        else
+            style  = Dict("display" => "none")
+        end
+        return style
+    end
+
     # keep the connectivity/residual threshold labels in sync with the chosen
     # calculation unit, since nCon/nRes are interpreted in that same unit
     callback!(

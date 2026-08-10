@@ -873,22 +873,25 @@ function Tab_PTXpaths()
                                             ]),
                                         ]),
                                         # unit basis for assimilation blending and melt/solid extraction mass balance
-                                        dbc_row([
-                                            dbc_col([
-                                                html_h1("Cumulate/Connectivity unit", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                            ], width=6),
-                                            dbc_col([
-                                                dcc_dropdown(   id      = "calc-unit-ptx",
-                                                options = [
-                                                    (label = "mol",         value = "mol"),
-                                                    (label = "wt",          value = "wt"),
-                                                    (label = "vol",         value = "vol"),
-                                                ],
-                                                value       = "mol",
-                                                clearable   =  false,
-                                                multi       =  false    ),
+                                        # -- only meaningful for fractional melting/crystallization, so only shown then
+                                        html_div([
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("Cumulate/Connectivity unit", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                ], width=6),
+                                                dbc_col([
+                                                    dcc_dropdown(   id      = "calc-unit-ptx",
+                                                    options = [
+                                                        (label = "mol",         value = "mol"),
+                                                        (label = "wt",          value = "wt"),
+                                                        (label = "vol",         value = "vol"),
+                                                    ],
+                                                    value       = "mol",
+                                                    clearable   =  false,
+                                                    multi       =  false    ),
+                                                ]),
                                             ]),
-                                        ]),
+                                        ], style = Dict("display" => "none"), id      = "show-calc-unit-id"), #none, block
                                         # connectivity threshold for fracitonal melting
                                         html_div([
                                             dbc_row([
