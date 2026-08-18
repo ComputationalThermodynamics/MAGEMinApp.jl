@@ -161,6 +161,11 @@ function order_phases(ph_list, order::Vector{String}=AppData.mineral_order[1])
     return sort(collect(ph_list), by = ph -> (rank(ph), ph))
 end
 
+function get_phase_color(ph::String; default::String="grey")
+    style = AppData.mineral_style[1]
+    return haskey(style, ph) ? style[ph][1] : default
+end
+
 
 # Function to dynamically create dbc_input for each mineral
 function create_ph_names(style::Dict{String, Vector{Any}})

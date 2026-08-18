@@ -1082,7 +1082,7 @@ function Tab_PTXpaths_Callbacks(app)
             styleout[row_index][Symbol("background-color")] = color
 
             mineral = haskey(data[row_index], "LegacyMineral") ? data[row_index]["LegacyMineral"] : data[row_index]["Mineral"]
-            AppData.mineral_style[1][mineral][1]   = color
+            get!(AppData.mineral_style[1], mineral, Any["grey", "solid", 1])[1] = color
         
 
         elseif bid == "ptx-plot"
@@ -1093,10 +1093,10 @@ function Tab_PTXpaths_Callbacks(app)
             phase_selection = vcat(phase_infos_PTX.act_ss, phase_infos_PTX.act_pp)
 
             dataout = [
-                Dict("Mineral" => display_ph_name(mineral), "LegacyMineral" => mineral, "Color" => AppData.mineral_style[1][mineral][1])
+                Dict("Mineral" => display_ph_name(mineral), "LegacyMineral" => mineral, "Color" => get_phase_color(mineral))
                 for mineral in phase_selection
             ]
-            color_list = [AppData.mineral_style[1][mineral][1] for mineral in phase_selection]
+            color_list = [get_phase_color(mineral) for mineral in phase_selection]
             styleout = [
                 Dict("if" => Dict("row_index" => i-1, "column_id" => "Color"), "background-color" => color_list[i])
                 for i in 1:length(color_list)

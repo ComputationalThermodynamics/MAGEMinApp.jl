@@ -1728,7 +1728,7 @@ function get_data_plot(display_mode, sysunit)
                                             stackgroup  = "one",
                                             mode        = "lines",
                                             line        = attr(     width   =  0.5,
-                                                                    color   = AppData.mineral_style[1][ph][1])  )
+                                                                    color   = get_phase_color(ph))  )
         end
     elseif display_mode == "bars"
         for i=1:n_ph
@@ -1738,7 +1738,7 @@ function get_data_plot(display_mode, sysunit)
             data_plot_ptx[i] = bar(         x           =  x,
                                             y           =  Y[i,:],
                                             name        = display_ph_name(ph_ord[i]),
-                                            marker      = attr( color   = AppData.mineral_style[1][ph][1],
+                                            marker      = attr( color   = get_phase_color(ph),
                                                                 line    = attr(width=0.0, color="black"),
                                                                 opacity = 0.6) # black outline
                                             )
@@ -1753,12 +1753,12 @@ function get_data_plot(display_mode, sysunit)
                                             mode        = "markers+lines",
                                             marker = attr(
                                                 size    = 5.0,          # Set the size of the circle
-                                                color   = AppData.mineral_style[1][ph][1],      # Set the color of the circle
+                                                color   = get_phase_color(ph),      # Set the color of the circle
                                                 symbol  = "circle-open", # Use an open circle marker
                                                 opacity = 0.5           # Set the transparency (0.0 = fully transparent, 1.0 = fully opaque)
                                             ),
                                             line        = attr(     width   = 0.75,
-                                                                    color   = AppData.mineral_style[1][ph][1])  )
+                                                                    color   = get_phase_color(ph))  )
          end
     end
 
@@ -1868,7 +1868,7 @@ function get_extracted_data_plot(ext_mode,sysunit,mode,nRes,nCon,isentropic_mode
                                                     stackgroup  = "one",
                                                     mode        = "lines",
                                                     line        = attr(     width   =  1.0,
-                                                                            color   = AppData.mineral_style[1][ph][1])  )
+                                                                            color   = get_phase_color(ph))  )
         end
     elseif ext_mode == "bars"
 
@@ -1891,7 +1891,7 @@ function get_extracted_data_plot(ext_mode,sysunit,mode,nRes,nCon,isentropic_mode
                 data_extracted_plot_ptx[i] = bar(   x           =  x_sampled,
                                                     y           =  Z_sampled[i,:],
                                                     name        = display_ph_name(ph_names_ext_ptx[i]),
-                                                    marker      = attr( color   = AppData.mineral_style[1][ph][1],
+                                                    marker      = attr( color   = get_phase_color(ph),
                                                                         line    = attr(width=0.0, color="black"),
                                                                         opacity = 0.6) # black outline
                                                 )
@@ -1905,7 +1905,7 @@ function get_extracted_data_plot(ext_mode,sysunit,mode,nRes,nCon,isentropic_mode
                 data_extracted_plot_ptx[i] = bar(   x           =  x,
                                                     y           =  Z[i,:],
                                                     name        = display_ph_name(ph_names_ext_ptx[i]),
-                                                    marker      = attr( color   = AppData.mineral_style[1][ph][1],
+                                                    marker      = attr( color   = get_phase_color(ph),
                                                                         line    = attr(width=0.0, color="black"),
                                                                         opacity = 0.6) # black outline
                                                 )
@@ -1922,12 +1922,12 @@ function get_extracted_data_plot(ext_mode,sysunit,mode,nRes,nCon,isentropic_mode
                                                     mode        = "lines",
                                                     marker = attr(
                                                         size    = 5.0,          # Set the size of the circle
-                                                        color   = AppData.mineral_style[1][ph][1],      # Set the color of the circle
+                                                        color   = get_phase_color(ph),      # Set the color of the circle
                                                         symbol  = "circle-open", # Use an open circle marker
                                                         opacity = 0.6           # Set the transparency (0.0 = fully transparent, 1.0 = fully opaque)
                                                     ),
                                                     line        = attr(     width   = 1.0,
-                                                                            color   = AppData.mineral_style[1][ph][1])   )
+                                                                            color   = get_phase_color(ph))   )
          end
     end
 

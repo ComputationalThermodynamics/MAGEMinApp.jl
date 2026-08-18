@@ -990,7 +990,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
         else
             pChip_wat, pChip_T = nothing, nothing
         end
-                    
+
         CompProgress.stage = "Initialize MAGEMin"
         MAGEMin_data    =   Initialize_MAGEMin( dtb;
                                                 verbose             = false,
@@ -2105,7 +2105,7 @@ function get_draw_path_plot(diagType, sysunit, path_ids)
 
     traces = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_ph)
     for (i, ph) in enumerate(ph_names)
-        color = haskey(AppData.mineral_style[1], ph) ? AppData.mineral_style[1][ph][1] : "grey"
+        color = get_phase_color(ph)
         traces[i] = scatter(;
             x          = x,
             y          = Y[i,:],
@@ -2392,7 +2392,7 @@ function get_thermobar_contour_plot(formula_store, color_store, comp_unit, csv_d
         formula = fdict["formula"]
         label   = fdict["label"]
         key     = (ph, formula)
-        color   = get(color_store, ph, haskey(AppData.mineral_style[1], ph) ? AppData.mineral_style[1][ph][1] : "#808080")
+        color   = get(color_store, ph, get_phase_color(ph; default="#808080"))
         # first formula for this phase → solid; subsequent → cycle dashed styles
         phase_fi[ph] = get(phase_fi, ph, 0) + 1
         dash = dash_cycle[mod1(phase_fi[ph], length(dash_cycle))]

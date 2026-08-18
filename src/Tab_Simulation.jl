@@ -173,7 +173,7 @@ function Tab_Simulation()
 
                                         html_div([
                                             dbc_row([
-                                                dbc_col([ 
+                                                dbc_col([
                                                     html_h1("Additional H₂O [mol%]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
                                                 ]),
                                                 dbc_col([ 

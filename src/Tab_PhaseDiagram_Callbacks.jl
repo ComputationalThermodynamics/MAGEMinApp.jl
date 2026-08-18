@@ -854,7 +854,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("dataset-dropdown",       "value"),           # pt, px, tx
         State("watsat-dropdown",        "value"),           # false,true -> 0,1
         State("watsat-val-id",          "value"),           # false,true -> 0,1
-        
+
         State("mb-cpx-switch",          "value"),           # false,true -> 0,1
         State("limit-ca-opx-id",        "value"),           # ON,OFF -> 0,1
         State("ca-opx-val-id",          "value"),           # 0.0-1.0 -> 0,1
@@ -1869,7 +1869,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         if haskey(cs, ph)
             return String(cs[ph])
         end
-        return haskey(AppData.mineral_style[1], ph) ? AppData.mineral_style[1][ph][1] : "#808080"
+        return get_phase_color(ph; default="#808080")
     end
 
     # Color picker change → update color-store
