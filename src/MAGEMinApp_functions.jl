@@ -37,6 +37,146 @@ function display_ph_names(names::Vector{String})
     return use_warr_names[1] ? MAGEMin_C.get_Warr_names(names) : names
 end
 
+function ss_fname_lookup(dtb::String)
+    db_in = retrieve_solution_phase_information(dtb)
+    return Dict(s.ss_name => s.ss_fName for s in db_in.data_ss)
+end
+
+function display_ph_name_tagged(name::String, lookup::Dict{String,String})
+    disp = display_ph_name(name)
+    idx  = findfirst('_', name)
+    if !isnothing(idx)
+        tag = name[idx:end]
+        occursin(tag, disp) && return disp
+        startswith(name, disp) && return name
+        return disp * tag
+    end
+    fname = get(lookup, name, name)
+    idx2  = findfirst('_', fname)
+    isnothing(idx2) && return disp
+    tag = fname[idx2:end]
+    occursin(tag, disp) && return disp
+    return disp * tag
+end
+
+const TC_PRESET_PHASES = Dict(
+    "mp"   => ["liq_W14", "fsp_H22", "bi_W14", "g_W14", "ep_H11", "ma_W14", "mu_W14", "opx_W14", "sa_W14", "cd_W14", "st_W14", "chl_W14", "ctd_W14", "sp_W02", "mt_W00", "ilm_W00", "ilmm_W14"],
+    "mb"   => ["sp_W02", "opx_W14", "fsp_H22", "liq_G16", "mu_W14", "ilmm_W14", "ilm_W00", "ol_H11", "amp_G16", "ep_H11", "g_W14", "chl_W14", "bi_W14", "dio_G16", "aug_G16", "abc_H11", "spl_W02"],
+    "ig"   => ["spl_T21", "bi_G25", "cd_G25", "cpx_W24", "ep_H11", "g_W24", "amp_G16", "ilm_W24", "liq_G25w", "ol_H18", "opx_W24", "fsp_H22", "fl_G25", "mu_W14", "fper", "chl_W14"],
+    "igad" => ["spl_T21", "cpx_W24", "g_W24", "ilm_W24", "liq_W24d", "ol_H18", "opx_W24", "fsp_H22", "lct_W24", "mel_W24", "nph_W24", "kals_W24"],
+    "igd"  => ["spl_T21", "cpx_W24", "g_W24", "ilm_W24", "liq_W24d", "ol_H18", "opx_W24", "fsp_H22op"],
+    "um"   => ["fl_EF21", "ol_H11", "br_E13", "ch_EF21", "atg_EF21", "g_H18", "ta_EF21", "chl_W14", "spi_W02", "opx_W14", "po_E10", "anth_D07"],
+)
+
+const TC_PRESET_OPTIONS = [
+    Dict("label" => "none",               "value" => "none"),
+    Dict("label" => "Metapelite",         "value" => "mp"),
+    Dict("label" => "Metabasite",         "value" => "mb"),
+    Dict("label" => "Igneous",            "value" => "ig"),
+    Dict("label" => "Igneous alkali-dry", "value" => "igad"),
+    Dict("label" => "Igneous dry",        "value" => "igd"),
+    Dict("label" => "Ultramafic",         "value" => "um"),
+]
+
+function preset_ss_selection(preset::String, available::Vector{String})
+    return intersect(get(TC_PRESET_PHASES, preset, String[]), available)
+end
+
+function display_ph_names_tagged(names::Vector{String}, dtb::String)
+    lookup = ss_fname_lookup(dtb)
+    return [display_ph_name_tagged(n, lookup) for n in names]
+end
+
+const ALL_DB_OXIDES = ["SiO2", "Al2O3", "CaO", "MgO", "FeO", "K2O", "Na2O", "TiO2", "O", "MnO", "Cr2O3", "H2O", "CO2", "S"]
+
+const _all_db_oxide_support = Ref{Union{Nothing,Dict{String,Set{String}}}}(nothing)
+
+function compute_all_db_oxide_support()
+    n_ox = length(ALL_DB_OXIDES)
+    data = Initialize_MAGEMin("all", verbose=false)
+    gv, z_b, DB, splx_data = data.gv[1], data.z_b[1], data.DB[1], data.splx_data[1]
+
+    gv = define_bulk_rock(gv, fill(1.0, n_ox), ALL_DB_OXIDES, "mol", "all")
+    z_b.T = 900.0 + 273.15
+    z_b.P = 10.0
+    gv.numPoint = 1
+    gv  = LibMAGEMin.reset_gv(gv, z_b, DB.PP_ref_db, DB.SS_ref_db)
+    z_b = LibMAGEMin.reset_z_b_bulk(gv, z_b)
+    LibMAGEMin.reset_simplex_A(pointer_from_objref(splx_data), z_b, gv)
+    LibMAGEMin.reset_simplex_B_em(pointer_from_objref(splx_data), gv)
+    LibMAGEMin.reset_cp(gv, z_b, DB.cp)
+    LibMAGEMin.reset_SS(gv, z_b, DB.SS_ref_db)
+    LibMAGEMin.reset_sp(gv, DB.sp)
+    gv = LibMAGEMin.ComputeG0_point(gv.EM_database, z_b, gv, DB.PP_ref_db, DB.SS_ref_db)
+
+    ss_names = unsafe_string.(unsafe_wrap(Vector{Ptr{Int8}}, gv.SS_list, gv.len_ss))
+    pp_names = unsafe_string.(unsafe_wrap(Vector{Ptr{Int8}}, gv.PP_list, gv.len_pp))
+
+    support = Dict{String,Set{String}}()
+
+    for (i, name) in enumerate(ss_names)
+        ss_ref  = unsafe_load(DB.SS_ref_db, i)
+        em_ptrs = unsafe_wrap(Vector{Ptr{Cdouble}}, ss_ref.Comp, ss_ref.n_em)
+        oxides  = Set{String}()
+        for em_i in 1:ss_ref.n_em
+            comp = unsafe_wrap(Vector{Cdouble}, em_ptrs[em_i], n_ox)
+            for k in 1:n_ox
+                abs(comp[k]) > 1e-8 && push!(oxides, ALL_DB_OXIDES[k])
+            end
+        end
+        support[name] = oxides
+    end
+
+    for (i, name) in enumerate(pp_names)
+        pp_ref = unsafe_load(DB.PP_ref_db, i)
+        oxides = Set{String}()
+        for k in 1:n_ox
+            abs(pp_ref.Comp[k]) > 1e-8 && push!(oxides, ALL_DB_OXIDES[k])
+        end
+        support[name] = oxides
+    end
+
+    Finalize_MAGEMin(data)
+    return support
+end
+
+function all_db_oxide_support()
+    isnothing(_all_db_oxide_support[]) && (_all_db_oxide_support[] = compute_all_db_oxide_support())
+    return _all_db_oxide_support[]
+end
+
+function bulk_oxide_coverage_status(bulk_data, ss_selected, pp_selected)
+    support = all_db_oxide_support()
+
+    needed = String[]
+    for row in bulk_data
+        frac = row["fraction"]
+        (frac isa Number && frac > 0) && push!(needed, row["oxide"])
+    end
+    isempty(needed) && return ("success", "Bulk-rock covered by phase selection")
+
+    selected = vcat(to_str_vec(ss_selected), to_str_vec(pp_selected))
+    coverage_phases = Dict(ox => String[] for ox in needed)
+    for ph in selected
+        oxides = get(support, ph, Set{String}())
+        for ox in needed
+            (ox in oxides) && push!(coverage_phases[ox], ph)
+        end
+    end
+
+    missing_ox = sort([ox for ox in needed if isempty(coverage_phases[ox])])
+    single_ox  = sort([ox for ox in needed if length(coverage_phases[ox]) == 1])
+
+    if !isempty(missing_ox)
+        return ("danger", "Bulk-rock not covered by phase selection (missing: $(join(missing_ox, ", ")))")
+    elseif !isempty(single_ox)
+        single_desc = join(["$ox ($(coverage_phases[ox][1]))" for ox in single_ox], ", ")
+        return ("warning", "Warning, only one selected phase covers: $single_desc")
+    else
+        return ("success", "Bulk-rock covered by phase selection")
+    end
+end
+
 function to_str_vec(v::AbstractVector)
     return convert(Vector{String}, collect(v))
 end

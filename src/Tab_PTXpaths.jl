@@ -46,9 +46,24 @@ function Tab_PTXpaths()
                                             ]),
                                         ]),
                                     ], style = Dict("display" => "none"), id  = "dataset-ptx-display-id"), #none, block
-                                    
-                                    dbc_row([  
-                                        dbc_col([ 
+
+                                    html_div([
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Preset", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ],width=4),
+                                            dbc_col([
+                                                dcc_dropdown(   id      = "preset-dropdown-ptx",
+                                                                options     = TC_PRESET_OPTIONS,
+                                                                value       = "none",
+                                                                clearable   = false,
+                                                                multi       = false),
+                                            ]),
+                                        ]),
+                                    ], style = Dict("display" => "none"), id  = "preset-dropdown-ptx-container"), #none, block
+
+                                    dbc_row([
+                                        dbc_col([
                                             html_h1("Phase selection", style = Dict("textAlign" => "center","font-size" => "120%")),
                                         ],width=4),
 
@@ -517,6 +532,12 @@ function Tab_PTXpaths()
                                                                     style_cell  = (textAlign="center", fontSize="140%",),
                                                                     style_header= (fontWeight="bold",),
                                                                     editable    = true,
+                                                                ),
+                                                                dbc_alert(
+                                                                    "Bulk-rock covered by phase selection",
+                                                                    id      = "alert-bulk-oxide-coverage-ptx",
+                                                                    color   = "success",
+                                                                    is_open = false,
                                                                 ),
 
                                                                 # buffer offset

@@ -299,6 +299,7 @@ function Tab_PTXpaths_Callbacks(app)
                     end
                 end
                 n_ph_e = length(ph_names_ext_ptx)
+                ph_disp_ext_ptx = display_ph_names_tagged(ph_names_ext_ptx, dtb)
 
                 x       = Vector{String}(undef, n_tot)
                 melt    = zeros(Int64, n_tot)
@@ -353,8 +354,8 @@ function Tab_PTXpaths_Callbacks(app)
                                                 Symbol("Step removed $(sysunit)%")   => Float64[])
 
 
-                for i in ph_names_ext_ptx
-                    col = display_ph_name(i)*"_$(sysunit)%"
+                for i in eachindex(ph_names_ext_ptx)
+                    col = ph_disp_ext_ptx[i]*"_$(sysunit)%"
                     MAGEMin_db[!, col] = Float64[]
                 end
                 
@@ -381,7 +382,7 @@ function Tab_PTXpaths_Callbacks(app)
                                     "T[°C]"                     => T[k],
                                     "Step removed $(sysunit)%"     => step_rm[k])
 
-                    part_2 = Dict(  (display_ph_name(ph_names_ext_ptx[j])*"_$(sysunit)%" => Z[j,k])
+                    part_2 = Dict(  (ph_disp_ext_ptx[j]*"_$(sysunit)%" => Z[j,k])
                                     for j in eachindex(ph_names_ext_ptx))
 
                     row    = merge(part_1,part_2)   
@@ -1717,6 +1718,8 @@ function Tab_PTXpaths_Callbacks(app)
         Output("display-o-liquidus-textarea", "value"),
         Output("o-liquidus-failed",           "is_open"),
         Output("o-liquidus-failed",           "children"),
+        Output("preset-dropdown-ptx-container", "style"),
+        Output("preset-dropdown-ptx",           "value"),
 
         Input("select-bulk-unit-ptx","value"),
 
@@ -1725,6 +1728,7 @@ function Tab_PTXpaths_Callbacks(app)
         Input("output-data-uploadn-ptx", "is_open"),        # this listens for changes and updated the list
         Input("get-o-liquidus-button",   "n_clicks"),
         Input("mineral-naming-dropdown", "value"),
+        Input("preset-dropdown-ptx",     "value"),
 
         State("table-bulk-rock-ptx","data"),
         State("phase-selection-PTX","value"),
@@ -1743,7 +1747,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         prevent_initial_call = false,
     ) do sys_unit,
-        test, dtb, update, _o_liq_clicks, warr_naming, tb_data, current_ss_selection, current_pp_selection,
+        test, dtb, update, _o_liq_clicks, warr_naming, preset_ptx, tb_data, current_ss_selection, current_pp_selection,
         Tliq_txt, bufferType, bufferN, pressure_val, dataset, solver, verbose, cpx, limOpx, limOpxVal
 
         global use_warr_names
@@ -1753,7 +1757,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         if bid == "get-o-liquidus-button"
             no_upd = no_update()
-            fail(msg) = no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_update(), true, msg
+            fail(msg) = no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_update(), true, msg, no_upd, no_upd
 
             Tliq = tryparse(Float64, string(Tliq_txt))
             if isnothing(Tliq)
@@ -1807,7 +1811,7 @@ function Tab_PTXpaths_Callbacks(app)
             end
             dataout[row_idx] = Dict(:oxide => "O", :fraction => new_O_val)
 
-            return dataout, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, string(new_O_val), false, no_update()
+            return dataout, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, string(new_O_val), false, no_update(), no_upd, no_upd
         end
 
         # catching up some special cases
@@ -1837,9 +1841,10 @@ function Tab_PTXpaths_Callbacks(app)
         val         = t
 
         db_in       = retrieve_solution_phase_information(dtb)
+        ss_fname_lu = Dict(s.ss_name => s.ss_fName for s in db_in.data_ss)
 
         # this is the phase selection part for the database when compute a diagram
-        phase_selection_options = [Dict(    "label"     => " "*display_ph_name(i),
+        phase_selection_options = [Dict(    "label"     => " "*display_ph_name_tagged(i, ss_fname_lu),
                                             "value"     => i )
                                                 for i in db_in.ss_name ]
 
@@ -1852,7 +1857,7 @@ function Tab_PTXpaths_Callbacks(app)
                                                 for i in pp_disp ]
 
         # phase picker for the advanced path-definition (per-phase extraction threshold) panel
-        adv_phase_options = vcat(  [Dict("label" => " "*display_ph_name(i), "value" => i) for i in db_in.ss_name],
+        adv_phase_options = vcat(  [Dict("label" => " "*display_ph_name_tagged(i, ss_fname_lu), "value" => i) for i in db_in.ss_name],
                                     [Dict("label" => " "*display_ph_name(i), "value" => i) for i in pp_disp ] )
 
         # remember the (de)activated phases per database, so switching databases (or
@@ -1864,6 +1869,8 @@ function Tab_PTXpaths_Callbacks(app)
                 cache[prev_dtb] = Dict("ss" => to_str_vec(current_ss_selection), "pp" => to_str_vec(current_pp_selection))
             end
         end
+
+        preset_style = dtb == "all" ? Dict("display" => "block") : Dict("display" => "none")
 
         if bid == "database-dropdown-ptx" || bid == ""
             # bid == "" happens on initial load / page reload: restore from cache too,
@@ -1878,6 +1885,17 @@ function Tab_PTXpaths_Callbacks(app)
                 phase_selection_value       = db_in.ss_name
                 pure_phase_selection_value  = pp_disp
             end
+            preset_value_out = "none"
+        elseif bid == "preset-dropdown-ptx"
+            if isnothing(preset_ptx) || preset_ptx == "none"
+                phase_selection_value       = db_in.ss_name
+                pure_phase_selection_value  = pp_disp
+            else
+                phase_selection_value       = preset_ss_selection(preset_ptx, db_in.ss_name)
+                pure_phase_selection_value  = intersect(to_str_vec(current_pp_selection), pp_disp)
+                isempty(pure_phase_selection_value) && (pure_phase_selection_value = pp_disp)
+            end
+            preset_value_out = no_update()
         else
             # unrelated trigger (e.g. test/bulk-unit change, upload): leave the current
             # phase selection untouched instead of resetting it to "all phases"
@@ -1885,6 +1903,7 @@ function Tab_PTXpaths_Callbacks(app)
             pure_phase_selection_value  = intersect(to_str_vec(current_pp_selection), pp_disp)
             isempty(phase_selection_value)      && (phase_selection_value      = db_in.ss_name)
             isempty(pure_phase_selection_value) && (pure_phase_selection_value = pp_disp)
+            preset_value_out = no_update()
         end
         AppData.phase_selection_last_dtb_ptx[1] = dtb
 
@@ -1893,7 +1912,25 @@ function Tab_PTXpaths_Callbacks(app)
                                 for i = 1:length(db_in.dataset_opt) ]
         dataset_value    = db_in.db_dataset
 
-        return data, opts, val, cap, phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value, adv_phase_options, dataset_options, dataset_value, no_update(), no_update(), no_update()
+        return data, opts, val, cap, phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value, adv_phase_options, dataset_options, dataset_value, no_update(), no_update(), no_update(), preset_style, preset_value_out
+    end
+
+    callback!(
+        app,
+        Output("alert-bulk-oxide-coverage-ptx", "is_open"),
+        Output("alert-bulk-oxide-coverage-ptx", "color"),
+        Output("alert-bulk-oxide-coverage-ptx", "children"),
+
+        Input("database-dropdown-ptx","value"),
+        Input("phase-selection-PTX","value"),
+        Input("pure-phase-selection-PTX","value"),
+        Input("table-bulk-rock-ptx","data"),
+
+        prevent_initial_call = false,
+    ) do dtb, ss_selected, pp_selected, bulk_data
+        dtb != "all" && return false, "success", ""
+        color, msg = bulk_oxide_coverage_status(bulk_data, ss_selected, pp_selected)
+        return true, color, msg
     end
 
     # persist phase (de)selection into the per-database cache as soon as the user

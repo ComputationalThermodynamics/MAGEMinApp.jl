@@ -2062,7 +2062,7 @@ function draw_path_table_data(diagType, path_ids)
     return cols, rows
 end
 
-function get_draw_path_plot(diagType, sysunit, path_ids)
+function get_draw_path_plot(diagType, sysunit, path_ids, dtb)
     global Out_XY
 
     n_tot = length(path_ids)
@@ -2080,6 +2080,7 @@ function get_draw_path_plot(diagType, sysunit, path_ids)
     end
     ph_names = sort(ph_names)
     n_ph     = length(ph_names)
+    ph_disp_names = display_ph_names_tagged(ph_names, dtb)
 
     x = Vector{String}(undef, n_tot)
     Y = zeros(Float64, n_ph, n_tot)
@@ -2109,14 +2110,14 @@ function get_draw_path_plot(diagType, sysunit, path_ids)
         traces[i] = scatter(;
             x          = x,
             y          = Y[i,:],
-            name       = display_ph_name(ph),
+            name       = ph_disp_names[i],
             stackgroup = "one",
             mode       = "lines",
             line       = attr(width=0.5, color=color)
         )
     end
 
-    phase_list = [Dict("label" => "  "*display_ph_name(ph_names[i]), "value" => ph_names[i]) for i in 1:n_ph]
+    phase_list = [Dict("label" => "  "*ph_disp_names[i], "value" => ph_names[i]) for i in 1:n_ph]
 
     return traces, phase_list
 end

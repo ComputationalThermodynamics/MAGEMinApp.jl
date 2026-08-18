@@ -57,8 +57,24 @@ function Tab_Simulation()
                                             ]),
                                         ]),
                                     ], style = Dict("display" => "block"), id  = "dataset-display-id"), #none, block
-                                    dbc_row([  
-                                        dbc_col([ 
+
+                                    html_div([
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Preset", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ]),
+                                            dbc_col([
+                                                dcc_dropdown(   id      = "preset-dropdown",
+                                                                options     = TC_PRESET_OPTIONS,
+                                                                value       = "none",
+                                                                clearable   = false,
+                                                                multi       = false),
+                                            ]),
+                                        ]),
+                                    ], style = Dict("display" => "none"), id  = "preset-dropdown-container"), #none, block
+
+                                    dbc_row([
+                                        dbc_col([
                                             html_h1("Phase selection", style = Dict("textAlign" => "center","font-size" => "120%")),
                                         ],width=6),
 
@@ -1200,6 +1216,12 @@ function Tab_Simulation()
                                                                         style_cell  = (textAlign="center", fontSize="140%",),
                                                                         style_header= (fontWeight="bold",),
                                                                         editable    = true,
+                                                                    ),
+                                                                    dbc_alert(
+                                                                        "Bulk-rock covered by phase selection",
+                                                                        id      = "alert-bulk-oxide-coverage",
+                                                                        color   = "success",
+                                                                        is_open = false,
                                                                     ),
                                                                     dbc_alert(
                                                                         "Successfully tested",
