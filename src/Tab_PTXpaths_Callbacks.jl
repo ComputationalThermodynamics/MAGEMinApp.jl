@@ -895,6 +895,9 @@ function Tab_PTXpaths_Callbacks(app)
         Output("AFM-plot",              "figure"),
         Output("AFM-plot",              "config"),
         Input("phase-selector-id",      "value"),
+        Input("ptx-compute-version-store", "data"),
+        Input("classification-diagram-colormap", "value"),
+        Input("classification-diagram-field",    "value"),
 
         State("database-dropdown-ptx",  "value"),
         State("test-dropdown-ptx",      "value"),
@@ -902,18 +905,22 @@ function Tab_PTXpaths_Callbacks(app)
 
         prevent_initial_call = true,
 
-        ) do    phases,
-                dtb,    test,   sysunit
+        ) do    phases,     compute_version,    colorMap,   field,
+                dtb,        test,   sysunit
 
         bid         = pushed_button( callback_context() )    # get which button has been pushed
         title       = db[(db.db .== dtb), :].title[test+1]
 
-        if "liq" in phases
-            tas, layout_ptx = get_TAS_diagram(phases,title)
+        liq_present = @isdefined(Out_PTX) && !isempty(Out_PTX) && any(o -> "liq" in o.ph, Out_PTX)
+
+        if liq_present
+            colorscale      = haskey(custom_colormaps, colorMap) ? get_custom_colorscale(colorMap, [1,9]) : colorMap
+
+            tas, layout_ptx = get_TAS_diagram(phases,title,field,colorscale)
             figTAS          = plot( tas, layout_ptx)
-            tas_pluto, layout_ptx_pluto = get_TAS_pluto_diagram(phases,title)
+            tas_pluto, layout_ptx_pluto = get_TAS_pluto_diagram(phases,title,field,colorscale)
             figTAS_pluto    = plot( tas_pluto, layout_ptx_pluto)
-            afm, layout_afm = get_AFM()
+            afm, layout_afm = get_AFM(field,colorscale)
             figAFM          = plot( afm, layout_afm)
         else
             figTAS          =  plot(Layout( height= 360 ))
@@ -1237,6 +1244,7 @@ function Tab_PTXpaths_Callbacks(app)
         Output("phase-selector-id",     "options"),
         Output("output-loading-id-ptx", "children"),
         Output("te-ptx-computed-store", "data"    ),
+        Output("ptx-compute-version-store", "data"),
 
         Input("compute-path-button",    "n_clicks"),
         Input("sys-unit-ptx",           "value"),
@@ -1302,6 +1310,7 @@ function Tab_PTXpaths_Callbacks(app)
         State("ptx-table-adv",                  "data"),
         State("phase-threshold-store-ptx",      "data"),
         State("adv-reminimize-dropdown-ptx",    "value"),
+        State("ptx-compute-version-store",      "data"),
 
         prevent_initial_call = true,
 
@@ -1316,7 +1325,7 @@ function Tab_PTXpaths_Callbacks(app)
                 te_model,   kds_mod,    zrsat_mod,  ssat_mod,   P2O5sat_mod,    co2sat_mod, bulkte1,    bulkte2,
                 sas,        wf,         seismicCorVal,
                 aspectRatioVal, seismicWaterMode, shallowCorMode, fluidAsMeltMode, anelasticCorMode,
-                calcUnit,   ptxTableAdvData, threshStore, reminimizeThreshold
+                calcUnit,   ptxTableAdvData, threshStore, reminimizeThreshold, computeVersion
 
         global use_warr_names
         use_warr_names[1]       = (warr_naming == "warr")
@@ -1449,11 +1458,13 @@ function Tab_PTXpaths_Callbacks(app)
                                     height   =  640,
                                     width    =  640,
                                     scale    =  2.0,       ).fields)
-        te_computed = bid == "compute-path-button" && te_model == "true"
+        te_computed     = bid == "compute-path-button" && te_model == "true"
+        compute_version = bid == "compute-path-button" ? (isnothing(computeVersion) ? 1 : computeVersion+1) : no_update()
+
         if isentropic_mode == true
-            return entropy, figIsoSPath, configPathIsoS, figPTX, configPTX, figExtractedPTX, configExtractedPTX, figrmPTX, configrmPTX, figrmintPTX, configrmintPTX, phase_list, loading, te_computed
+            return entropy, figIsoSPath, configPathIsoS, figPTX, configPTX, figExtractedPTX, configExtractedPTX, figrmPTX, configrmPTX, figrmintPTX, configrmintPTX, phase_list, loading, te_computed, compute_version
         else
-            return entropy, no_update(), no_update(), figPTX, configPTX, figExtractedPTX, configExtractedPTX, figrmPTX, configrmPTX, figrmintPTX, configrmintPTX, phase_list, loading, te_computed
+            return entropy, no_update(), no_update(), figPTX, configPTX, figExtractedPTX, configExtractedPTX, figrmPTX, configrmPTX, figrmintPTX, configrmintPTX, phase_list, loading, te_computed, compute_version
         end
 
     end
@@ -2138,7 +2149,7 @@ function Tab_PTXpaths_Callbacks(app)
         [State("collapse-bulk-ptx", "is_open")],
 
         prevent_initial_call = true, ) do  n, is_open
-            
+
         if isnothing(n); n=0 end
 
         if n>0
@@ -2148,8 +2159,62 @@ function Tab_PTXpaths_Callbacks(app)
                 is_open = 1
             end
         end
-        return is_open    
+        return is_open
     end
+
+    callback!(app,
+        Output("collapse-classification-diagram-options-ptx", "is_open"),
+        [Input("button-classification-diagram-options-ptx", "n_clicks")],
+        [State("collapse-classification-diagram-options-ptx", "is_open")],
+
+        prevent_initial_call = true, ) do  n, is_open
+
+        if isnothing(n); n=0 end
+
+        if n>0
+            if is_open==1
+                is_open = 0
+            elseif is_open==0
+                is_open = 1
+            end
+        end
+        return is_open
+    end
+
+    # show the Classification diagram options panel only while that sub-tab is active
+    callback!(app,
+        Output("classification-diagram-options-container-ptx", "style"),
+        Input("ptx-main-tabs", "active_tab"),
+        prevent_initial_call = false,
+    ) do active_tab
+        if active_tab == "classification-diagrams-tab"
+            return Dict("display" => "block")
+        else
+            return Dict("display" => "none")
+        end
+    end
+
+    callback!(
+        """
+        function(active_tab) {
+            if (active_tab === "classification-diagrams-tab") {
+                setTimeout(function() {
+                    ["TAS-plot", "TAS-pluto-plot", "AFM-plot"].forEach(function(id) {
+                        var gd = document.getElementById(id);
+                        if (gd && gd.data) {
+                            Plotly.Plots.resize(gd);
+                        }
+                    });
+                }, 50);
+            }
+            return "";
+        }
+        """,
+        app,
+        Output("classification-diagram-resize-trigger", "children"),
+        Input("ptx-main-tabs", "active_tab"),
+        prevent_initial_call = true,
+    )
 
 
     # open/close Curve interpretation box

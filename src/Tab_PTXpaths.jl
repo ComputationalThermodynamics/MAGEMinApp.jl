@@ -3,6 +3,8 @@ function Tab_PTXpaths()
         dcc_store(id="te-ptx-computed-store", data=false),
     # dummy store used solely to persist phase (de)selection into AppData.phase_selection_cache_ptx as it changes
         dcc_store(id="phase-selection-cache-store-ptx", data=0),
+        dcc_store(id="ptx-compute-version-store", data=0),
+        html_div(id="classification-diagram-resize-trigger", style=Dict("display"=>"none")),
         html_div("‎ "),
         dbc_row([ 
                 #= configuration column =#
@@ -624,6 +626,53 @@ function Tab_PTXpaths()
                                 ),
 
                         ])
+
+                    html_div([
+                        dbc_row([dbc_button("Classification diagram options",id="button-classification-diagram-options-ptx"),
+                        dbc_collapse(
+                            dbc_card(dbc_cardbody([
+                                dbc_row([
+                                    dbc_col([
+                                        html_h1("Colormap", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                    ], width=5),
+                                    dbc_col([
+                                        dcc_dropdown(   id          = "classification-diagram-colormap",
+                                                        options     = vcat(
+                                                                        [Dict("label" => name, "value" => name) for name in ["blackbody","Blues","cividis","Greens","Greys","hot","jet","RdBu","Reds","viridis","YlGnBu","YlOrRd"]],
+                                                                        [Dict("label" => "- R.J. Tamblyn colormaps -", "value" => "separator", "disabled" => true)],
+                                                                        [Dict("label" => name, "value" => name) for name in ["Pink","Sunset","Dawn","Almeria","Almeria Extended","Almeria Red","Almeria Blue"]],
+                                                                    ),
+                                                        value       = "jet",
+                                                        clearable   = false,
+                                                        placeholder = "Colormap"),
+                                    ]),
+                                ]),
+                                html_div("‎ "),
+                                dbc_row([
+                                    dbc_col([
+                                        html_h1("Field", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                    ], width=5),
+                                    dbc_col([
+                                        dcc_dropdown(   id          = "classification-diagram-field",
+                                                        options     = [
+                                                            Dict("label" => "Point number",    "value" => "point"),
+                                                            Dict("label" => "Pressure",         "value" => "pressure"),
+                                                            Dict("label" => "Temperature",      "value" => "temperature"),
+                                                            Dict("label" => "liq [mol%]",       "value" => "liq_mol"),
+                                                            Dict("label" => "liq [wt%]",        "value" => "liq_wt"),
+                                                            Dict("label" => "liq [vol%]",       "value" => "liq_vol"),
+                                                        ],
+                                                        value       = "temperature",
+                                                        clearable   = false,
+                                                        multi       = false),
+                                    ]),
+                                ]),
+                            ])),
+                            id="collapse-classification-diagram-options-ptx",
+                            is_open=true,
+                        ),
+                        ]),
+                    ], id="classification-diagram-options-container-ptx", style = Dict("display" => "none"))
 
                 dbc_row([dbc_button("Trace Elements",id="button-te-ptx"),
                 dbc_collapse(
@@ -1912,7 +1961,7 @@ function Tab_PTXpaths()
 
                         # ]),
 
-                        dbc_tab(label="Classification diagrams", children=[
+                        dbc_tab(label="Classification diagrams", tab_id="classification-diagrams-tab", children=[
                             dbc_col([
                                 dbc_card(dbc_cardbody([
                                     dbc_row([
@@ -2053,7 +2102,7 @@ function Tab_PTXpaths()
                                 ], width=12),
                             ]),
                         ]),
-                    ]),
+                    ], id="ptx-main-tabs"),
 
 
 

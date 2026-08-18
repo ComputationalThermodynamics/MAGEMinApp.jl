@@ -10,9 +10,48 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ =#
 
 """
+    Retrieve the per-point data driving the classification-diagram marker color, plus its axis label
+"""
+function get_classification_color_data(field::String)
+    global Out_PTX
+
+    n_tot   = length(Out_PTX)
+    vals    = Vector{Union{Float64,Missing}}(undef, (n_tot+1)) .= missing
+
+    if field == "point"
+        for j=1:n_tot
+            vals[j] = Float64(j)
+        end
+        label = "Point number"
+    elseif field == "pressure"
+        for j=1:n_tot
+            vals[j] = Out_PTX[j].P_kbar
+        end
+        label = "Pressure [kbar]"
+    elseif field == "liq_mol" || field == "liq_wt" || field == "liq_vol"
+        for j=1:n_tot
+            id  = findall(Out_PTX[j].ph .== "liq")
+            if ~isempty(id)
+                vals[j] = field == "liq_mol" ? Out_PTX[j].ph_frac[id[1]]*100.0 :
+                          field == "liq_wt"  ? Out_PTX[j].ph_frac_wt[id[1]]*100.0 :
+                                                Out_PTX[j].ph_frac_vol[id[1]]*100.0
+            end
+        end
+        label = field == "liq_mol" ? "liq [mol%]" : field == "liq_wt" ? "liq [wt%]" : "liq [vol%]"
+    else
+        for j=1:n_tot
+            vals[j] = Out_PTX[j].T_C
+        end
+        label = "Temperature [°C]"
+    end
+
+    return vals, label
+end
+
+"""
     Retrieve AFM diagram
 """
-function get_AFM()
+function get_AFM(field::String, colorscale)
 
     global Out_PTX;
 
@@ -22,15 +61,14 @@ function get_AFM()
 
     liq_afm        = Matrix{Union{Float64,Missing}}(undef, n_ox, (n_tot+1))    .= missing
     liq_wt          = Vector{Union{Float64,Missing}}(undef, (n_tot+1))          .= missing
-    liq_P           = Vector{Union{Float64,Missing}}(undef, (n_tot+1))          .= missing
-    colormap        = get_jet_colormap(n_tot+1)
- 
+
+    color_data, color_label = get_classification_color_data(field)
+
     for j=1:n_tot
         id      = findall(Out_PTX[j].ph .== "liq")
         if ~isempty(id)
             liq_afm[:,j] = Out_PTX[j].SS_vec[id[1]].Comp_wt .*100.0
             liq_wt[j]    = Out_PTX[j].ph_frac_wt[id[1]]
-            liq_P[j]     = Out_PTX[j].P_kbar
         end
     end
 
@@ -57,14 +95,29 @@ function get_AFM()
         mode    = "markers",
         hoverinfo   = "skip",
         opacity     = 0.6,
+        showlegend  = false,
         marker  = attr(     size        = liq_wt .*20.0 .+ 2.0,
-                            color       = liq_P,
-                            colorscale  = colormap,
+                            color       = color_data,
+                            colorscale  = colorscale,
+                            showscale   = true,
+                            colorbar    = attr( title     = attr(text=color_label, side="right"),
+                                                thickness = 12,
+                                                len       = 0.38,
+                                                x         = 0.82,
+                                                y         = 0.68 ),
                             line        = attr( width = 0.75,
                                                 color = "black" )    ),
         name    = "Sample Points"
     )
-    
+
+    size_legend = [scatterternary(  a = [nothing], b = [nothing], c = [nothing],
+                            mode        = "markers",
+                            showlegend  = true,
+                            name        = lbl,
+                            marker      = attr( size = sz, color = "#888888",
+                                                line = attr(width=0.75, color="black") ))
+                    for (sz, lbl) in ((2.0, "0%"), (12.0, "50%"), (22.0, "100%"))]
+
     layout_afm = Layout(
         title= attr(
             text    = "AFM Diagram [wt%]",
@@ -72,7 +125,12 @@ function get_AFM()
             xanchor = "center",
             yanchor = "top"
         ),
+        margin      = attr(autoexpand = false, l=16, r=50, b=16, t=40),
+        legend      = attr( x = 0.82, y = 0.28, xanchor = "left", yanchor = "top",
+                            title = attr(text="Marker size<br>(melt fraction)"),
+                            bgcolor = "rgba(255,255,255,0.9)", bordercolor = "#ccc", borderwidth = 1 ),
         ternary=attr(
+            domain  = attr(x=[0.0, 0.80], y=[0.0, 1.0]),
             sum     = 100,
             baxis   = attr(title="A [Al2O3]", gridcolor     = "darkgray",
                                                 showline    =  true,
@@ -84,13 +142,12 @@ function get_AFM()
                                                 showline    =  true,
                                                 linecolor   = "darkgray"),
             bgcolor = "#FFF",
-            width       = 640,
-            height      = 400,
         ),
+        height      = 400,
         paper_bgcolor = "#FFF",
     )
 
-    return afm, layout_afm
+    return vcat([afm], size_legend), layout_afm
 end
 
 
@@ -98,7 +155,7 @@ end
 """
     Retrieve TAS diagram
 """
-function get_TAS_diagram(phases,title)
+function get_TAS_diagram(phases,title,field::String,colorscale)
 
     tas      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, 16);
  
@@ -156,8 +213,9 @@ function get_TAS_diagram(phases,title)
     n_tot   = length(Out_PTX)
 
     liq_tas         = Matrix{Union{Float64,Missing}}(undef, n_ox, (n_tot+1))      .= missing
-    colormap        = get_jet_colormap(n_tot+1)
- 
+
+    color_data, color_label = get_classification_color_data(field)
+
     for j=1:n_tot
         id      = findall(Out_PTX[j].ph .== "liq")
         if ~isempty(id)
@@ -165,26 +223,41 @@ function get_TAS_diagram(phases,title)
         end
     end
 
-    dry  = findall(oxides .!= "H2O") 
+    dry  = findall(oxides .!= "H2O")
     id_Y = findall(oxides .== "K2O" .|| oxides .== "Na2O")
-    id_X = findall(oxides .== "SiO2") 
+    id_X = findall(oxides .== "SiO2")
 
     if ~isempty(dry)
         liq_tas ./=sum(liq_tas[dry,:],dims=1)
         liq_tas .*= 100.0
     end
 
-    tas[end] = scatter(     x           = liq_tas[id_X,:], 
-                            y           = sum(liq_tas[id_Y,:],dims=1), 
+    tas[end] = scatter(     x           = liq_tas[id_X,:],
+                            y           = sum(liq_tas[id_Y,:],dims=1),
                             hoverinfo   = "skip",
                             mode        = "markers",
                             opacity     = 0.8,
-                            showscale   = false,
                             showlegend  = false,
                             marker      = attr(     size        = fracEvol[:,1].*15.0 .+ 6.0,
-                                                    color       = colormap,
+                                                    color       = color_data,
+                                                    colorscale  = colorscale,
+                                                    showscale   = true,
+                                                    colorbar    = attr( title     = attr(text=color_label, side="right"),
+                                                                        thickness = 12,
+                                                                        len       = 0.38,
+                                                                        x         = 0.82,
+                                                                        y         = 0.68 ),
                                                     line        = attr( width = 0.75,
                                                                         color = "black" )    ))
+
+    for (sz, lbl) in ((6.0, "0%"), (13.5, "50%"), (21.0, "100%"))
+        push!(tas, scatter(     x = [nothing], y = [nothing],
+                                mode        = "markers",
+                                showlegend  = true,
+                                name        = lbl,
+                                marker      = attr( size = sz, color = "#888888",
+                                                    line = attr(width=0.75, color="black") )))
+    end
 
     annotations = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,nf)
 
@@ -209,7 +282,7 @@ function get_TAS_diagram(phases,title)
             xanchor = "center",
             yanchor = "top"
         ),
-        margin      = attr(autoexpand = false, l=16, r=16, b=16, t=24),
+        margin      = attr(autoexpand = false, l=16, r=50, b=16, t=24),
         hoverlabel = attr(
             bgcolor     = "#566573",
             bordercolor = "#f8f9f9",
@@ -218,12 +291,15 @@ function get_TAS_diagram(phases,title)
         paper_bgcolor = "#FFF",
         xaxis_title = "SiO2 [wt%]",
         yaxis_title = "K2O + Na2O [wt%]",
-        xaxis_range = [35.0, 85.0], 
+        xaxis_range = [35.0, 85.0],
         # yaxis_range = [0.0,15.0],
         annotations = annotations,
-        width       = 760,
+        legend      = attr( x = 0.82, y = 0.28, xanchor = "left", yanchor = "top",
+                            title = attr(text="Marker size<br>(system remaining)"),
+                            bgcolor = "rgba(255,255,255,0.9)", bordercolor = "#ccc", borderwidth = 1 ),
         height      = 480,
         xaxis       = attr(
+            domain        = [0.0, 0.80],
             fixedrange    = true,
             # showgrid      = false,  # Disable gridlines inside the plot
             # zeroline      = true,   # Show the axis line
@@ -251,7 +327,7 @@ end
 """
     Retrieve TAS diagram
 """
-function get_TAS_pluto_diagram(phases,title)
+function get_TAS_pluto_diagram(phases,title,field::String,colorscale)
 
     tas      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, 16);
 
@@ -303,8 +379,9 @@ function get_TAS_pluto_diagram(phases,title)
     n_tot   = length(Out_PTX)
 
     liq_tas         = Matrix{Union{Float64,Missing}}(undef, n_ox, (n_tot+1))      .= missing
-    colormap        = get_jet_colormap(n_tot+1)
- 
+
+    color_data, color_label = get_classification_color_data(field)
+
     for j=1:n_tot
         id      = findall(Out_PTX[j].ph .== "liq")
         if ~isempty(id)
@@ -312,26 +389,41 @@ function get_TAS_pluto_diagram(phases,title)
         end
     end
 
-    dry  = findall(oxides .!= "H2O") 
+    dry  = findall(oxides .!= "H2O")
     id_Y = findall(oxides .== "K2O" .|| oxides .== "Na2O")
-    id_X = findall(oxides .== "SiO2") 
+    id_X = findall(oxides .== "SiO2")
 
     if ~isempty(dry)
         liq_tas ./=sum(liq_tas[dry,:],dims=1)
         liq_tas .*= 100.0
     end
 
-    tas[end] = scatter(     x           = liq_tas[id_X,:], 
-                            y           = sum(liq_tas[id_Y,:],dims=1), 
+    tas[end] = scatter(     x           = liq_tas[id_X,:],
+                            y           = sum(liq_tas[id_Y,:],dims=1),
                             hoverinfo   = "skip",
                             mode        = "markers",
                             opacity     = 0.8,
-                            showscale   = false,
                             showlegend  = false,
                             marker      = attr(     size        = fracEvol[:,1].*15.0 .+ 6.0,
-                                                    color       = colormap,
+                                                    color       = color_data,
+                                                    colorscale  = colorscale,
+                                                    showscale   = true,
+                                                    colorbar    = attr( title     = attr(text=color_label, side="right"),
+                                                                        thickness = 12,
+                                                                        len       = 0.38,
+                                                                        x         = 0.82,
+                                                                        y         = 0.68 ),
                                                     line        = attr( width = 0.75,
                                                                         color = "black" )    ))
+
+    for (sz, lbl) in ((6.0, "0%"), (13.5, "50%"), (21.0, "100%"))
+        push!(tas, scatter(     x = [nothing], y = [nothing],
+                                mode        = "markers",
+                                showlegend  = true,
+                                name        = lbl,
+                                marker      = attr( size = sz, color = "#888888",
+                                                    line = attr(width=0.75, color="black") )))
+    end
 
     annotations = Vector{PlotlyBase.PlotlyAttribute{Dict{Symbol, Any}}}(undef,nf)
 
@@ -356,7 +448,7 @@ function get_TAS_pluto_diagram(phases,title)
             xanchor = "center",
             yanchor = "top"
         ),
-        margin      = attr(autoexpand = false, l=16, r=16, b=16, t=24),
+        margin      = attr(autoexpand = false, l=16, r=50, b=16, t=24),
         hoverlabel = attr(
             bgcolor     = "#566573",
             bordercolor = "#f8f9f9",
@@ -365,12 +457,15 @@ function get_TAS_pluto_diagram(phases,title)
         paper_bgcolor = "#FFF",
         xaxis_title = "SiO2 [wt%]",
         yaxis_title = "K2O + Na2O [wt%]",
-        xaxis_range = [35.0, 85.0], 
+        xaxis_range = [35.0, 85.0],
         # yaxis_range = [0.0,15.0],
         annotations = annotations,
-        width       = 760,
+        legend      = attr( x = 0.82, y = 0.28, xanchor = "left", yanchor = "top",
+                            title = attr(text="Marker size<br>(system remaining)"),
+                            bgcolor = "rgba(255,255,255,0.9)", bordercolor = "#ccc", borderwidth = 1 ),
         height      = 480,
         xaxis       = attr(
+            domain        = [0.0, 0.80],
             fixedrange    = true,
             # showgrid      = false,  # Disable gridlines inside the plot
             # zeroline      = true,   # Show the axis line
