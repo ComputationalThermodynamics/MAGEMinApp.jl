@@ -37,14 +37,9 @@
     {"id": "10.13039/501100000780::771143"}
   ],
   "license": {
-    "id": "GPL3"
+    "id": "GPL-3.0-or-later"
   },
   "upload_type": "software",
   "access_right": "open",
-  "communities": [
-    {
-      "identifier": "juliapackage"
-    }
-  ],
   "notes": "This work was supported by the German Research Foundation (DFG) project number 521637679"
 }
