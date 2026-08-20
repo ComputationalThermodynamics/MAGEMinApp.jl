@@ -990,7 +990,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
         else
             pChip_wat, pChip_T = nothing, nothing
         end
-                    
+
         CompProgress.stage = "Initialize MAGEMin"
         MAGEMin_data    =   Initialize_MAGEMin( dtb;
                                                 verbose             = false,
@@ -2062,7 +2062,7 @@ function draw_path_table_data(diagType, path_ids)
     return cols, rows
 end
 
-function get_draw_path_plot(diagType, sysunit, path_ids)
+function get_draw_path_plot(diagType, sysunit, path_ids, dtb)
     global Out_XY
 
     n_tot = length(path_ids)
@@ -2080,6 +2080,7 @@ function get_draw_path_plot(diagType, sysunit, path_ids)
     end
     ph_names = sort(ph_names)
     n_ph     = length(ph_names)
+    ph_disp_names = display_ph_names_tagged(ph_names, dtb)
 
     x = Vector{String}(undef, n_tot)
     Y = zeros(Float64, n_ph, n_tot)
@@ -2105,18 +2106,18 @@ function get_draw_path_plot(diagType, sysunit, path_ids)
 
     traces = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_ph)
     for (i, ph) in enumerate(ph_names)
-        color = haskey(AppData.mineral_style[1], ph) ? AppData.mineral_style[1][ph][1] : "grey"
+        color = get_phase_color(ph)
         traces[i] = scatter(;
             x          = x,
             y          = Y[i,:],
-            name       = display_ph_name(ph),
+            name       = ph_disp_names[i],
             stackgroup = "one",
             mode       = "lines",
             line       = attr(width=0.5, color=color)
         )
     end
 
-    phase_list = [Dict("label" => "  "*display_ph_name(ph_names[i]), "value" => ph_names[i]) for i in 1:n_ph]
+    phase_list = [Dict("label" => "  "*ph_disp_names[i], "value" => ph_names[i]) for i in 1:n_ph]
 
     return traces, phase_list
 end
@@ -2392,7 +2393,7 @@ function get_thermobar_contour_plot(formula_store, color_store, comp_unit, csv_d
         formula = fdict["formula"]
         label   = fdict["label"]
         key     = (ph, formula)
-        color   = get(color_store, ph, haskey(AppData.mineral_style[1], ph) ? AppData.mineral_style[1][ph][1] : "#808080")
+        color   = get(color_store, ph, get_phase_color(ph; default="#808080"))
         # first formula for this phase → solid; subsequent → cycle dashed styles
         phase_fi[ph] = get(phase_fi, ph, 0) + 1
         dash = dash_cycle[mod1(phase_fi[ph], length(dash_cycle))]

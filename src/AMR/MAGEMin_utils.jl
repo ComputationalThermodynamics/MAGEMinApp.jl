@@ -37,7 +37,7 @@ function get_wat_sat_function(     Yrange,     bulk_ini,   oxi,    phase_selecti
 
         # initialize single thread MAGEMin 
 
-        gv, z_b, DB, splx_data = init_MAGEMin(  dtb;        
+        gv, z_b, DB, splx_data = init_MAGEMin(  dtb;
                                                 verbose     = verbose,
                                                 mbCpx       = mbCpx,
                                                 limitCaOpx  = limitCaOpx,

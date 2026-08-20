@@ -129,6 +129,7 @@ The CSV file should have columns for each oxide and relevant metadata. The table
 | ume | ultramafic extended (Green et al., 2016 + Evans & Frost, 2021) |
 | mpe | extended metapelite (White et al., 2014 + Green et al., 2016 + ...) |
 | mbe | extended metabasite (Green et al., 2016 + Diener et al., 2007 + ...) |
+| all | global TC dataset (all `tc`-family solution models combined) |
 
 """
 
@@ -210,20 +211,20 @@ function Tab_General_informations()
                 dash_datatable(
                     id          = "table-csv-bulk-format",
                     columns     = [ Dict("id" => c, "name" => c, "editable" => false)
-                                    for c in ["title","comments","db","sysUnit","SiO2","Al2O3","CaO","MgO","FeO","Fe2O3","K2O","Na2O","TiO2","O","MnO","H2O","P2O5","SiO2_frac2"] ],
+                                    for c in ["title","comments","db","sysUnit","SiO2","Al2O3","CaO","MgO","FeO","Fe2O3","K2O","Na2O","TiO2","O","MnO","H2O","SiO2_frac2"] ],
                     data        = [
                         Dict("title"=>"Basalt_Xu08",  "comments"=>"bulk test", "db"=>"sb21", "sysUnit"=>"mol",
                              "SiO2"=>0.5175, "Al2O3"=>0.1019, "CaO"=>0.1388, "MgO"=>0.1494, "FeO"=>0.0706, "Fe2O3"=>0.0218,
-                             "K2O"=>"", "Na2O"=>"", "TiO2"=>"", "O"=>"", "MnO"=>"", "H2O"=>"", "P2O5"=>"", "SiO2_frac2"=>55),
+                             "K2O"=>"", "Na2O"=>"", "TiO2"=>"", "O"=>"", "MnO"=>"", "H2O"=>"", "SiO2_frac2"=>55),
                         Dict("title"=>"Basalt_Xu08l", "comments"=>"testy",     "db"=>"sb21", "sysUnit"=>"mol",
                              "SiO2"=>0.5175, "Al2O3"=>0.1019, "CaO"=>0.1388, "MgO"=>0.1494, "FeO"=>0.0706, "Fe2O3"=>0.0218,
-                             "K2O"=>"", "Na2O"=>"", "TiO2"=>"", "O"=>"", "MnO"=>"", "H2O"=>"", "P2O5"=>"", "SiO2_frac2"=>55),
+                             "K2O"=>"", "Na2O"=>"", "TiO2"=>"", "O"=>"", "MnO"=>"", "H2O"=>"", "SiO2_frac2"=>55),
                         Dict("title"=>"title1",       "comments"=>"comment,2l", "db"=>"um",   "sysUnit"=>"wt",
                              "SiO2"=>35.66, "Al2O3"=>6.51, "CaO"=>5.12, "MgO"=>26.62, "FeO"=>14.56, "Fe2O3"=>0.08,
-                             "K2O"=>0.04, "Na2O"=>3.78, "TiO2"=>0.52, "O"=>"", "MnO"=>0.47, "H2O"=>"", "P2O5"=>"", "SiO2_frac2"=>32),
+                             "K2O"=>0.04, "Na2O"=>3.78, "TiO2"=>0.52, "O"=>"", "MnO"=>0.47, "H2O"=>"", "SiO2_frac2"=>32),
                         Dict("title"=>"Renato_2",     "comments"=>"test2",     "db"=>"mb",   "sysUnit"=>"wt",
                              "SiO2"=>50.91, "Al2O3"=>10.1, "CaO"=>11.56, "MgO"=>13.89, "FeO"=>11.02, "Fe2O3"=>0.09,
-                             "K2O"=>1.4, "Na2O"=>0.77, "TiO2"=>0.06, "O"=>0.19, "MnO"=>0, "H2O"=>"", "P2O5"=>"", "SiO2_frac2"=>45),
+                             "K2O"=>1.4, "Na2O"=>0.77, "TiO2"=>0.06, "O"=>0.19, "MnO"=>0, "H2O"=>"", "SiO2_frac2"=>45),
                     ],
                     style_cell  = Dict("textAlign" => "center", "fontSize" => "110%", "userSelect" => "text"),
                     style_header= (fontWeight="bold",),

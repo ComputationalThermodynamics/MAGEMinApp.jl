@@ -146,6 +146,7 @@ function get_dtbulk_list()
         Dict("label" => "Ultramafic extended (Evans & Frost., 2021)", "value" => "ume"),
         Dict("label" => "Metapelite extended (White et al., 2014, Green et al., 2016, Evans & Frost., 2021)", "value" => "mpe"),
         Dict("label" => "Metabasite extended (Green et al., 2016, Diener et al., 2007)", "value" => "mbe"),
+        Dict("label" => "Global TC dataset", "value" => "all"),
     ]
 
     dba = DataFrame(        database     = String[],
@@ -220,6 +221,9 @@ function get_dtbulk_list()
                             :acronym     => "mbe",
                             ), cols=:union)
 
+    push!(dba,Dict(         :database    => "Global TC dataset",
+                            :acronym     => "all",
+                            ), cols=:union)
 
     db = DataFrame(         bulk        = String[],
                             title       = String[],
@@ -662,8 +666,8 @@ function get_dtbulk_list()
                             :test       => 0,
                             :sysUnit    => "mol",
                             :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","MnO","H2O","CO2","S"],
-                            :frac       => [70.999,12.805,0.771,3.978,6.342,2.7895,1.481,0.758,0.72933,0.075,30.0,10.0,1.0],
-                            :frac2      => [70.999,12.805,0.771,3.978,6.342,2.7895,1.481,0.758,0.72933,0.075,30.0,10.0,1.0],
+                            :frac       => [70.999,12.805,0.771,3.978,6.342,2.7895,1.481,0.758,0.72933,0.075,30.0,5.0,1.0],
+                            :frac2      => [70.999,12.805,0.771,3.978,6.342,2.7895,1.481,0.758,0.72933,0.075,30.0,5.0,1.0],
                             ), cols=:union)
 
     push!(db,Dict(          :bulk       => "predefined",
@@ -673,8 +677,8 @@ function get_dtbulk_list()
                             :test       => 1,
                             :sysUnit    => "mol",
                             :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","MnO","H2O","CO2","S"],
-                            :frac       => [70.999,12.805,0.771,3.978,6.342,2.7895,1.481,0.758,0.72933,0.075,5.0,10.0,1.0],
-                            :frac2      => [70.999,12.805,0.771,3.978,6.342,2.7895,1.481,0.758,0.72933,0.075,5.0,10.0,1.0],
+                            :frac       => [70.999,12.805,0.771,3.978,6.342,2.7895,1.481,0.758,0.72933,0.075,5.0,5.0,1.0],
+                            :frac2      => [70.999,12.805,0.771,3.978,6.342,2.7895,1.481,0.758,0.72933,0.075,5.0,5.0,1.0],
                             ), cols=:union)
 
     push!(db,Dict(          :bulk       => "predefined",
@@ -684,8 +688,8 @@ function get_dtbulk_list()
                             :test       => 2,
                             :sysUnit    => "mol",
                             :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","MnO","H2O","CO2","S"],
-                            :frac       => [64.578,13.651,1.586,5.529,8.025,2.943,2.000,0.907,0.65,0.175,40.0,10.0,1.0],
-                            :frac2      => [64.578,13.651,1.586,5.529,8.025,2.943,2.000,0.907,0.65,0.175,40.0,10.0,1.0],
+                            :frac       => [64.578,13.651,1.586,5.529,8.025,2.943,2.000,0.907,0.65,0.175,40.0,5.0,1.0],
+                            :frac2      => [64.578,13.651,1.586,5.529,8.025,2.943,2.000,0.907,0.65,0.175,40.0,5.0,1.0],
                             ), cols=:union)
 
     push!(db,Dict(          :bulk       => "predefined",
@@ -695,8 +699,8 @@ function get_dtbulk_list()
                             :test       => 3,
                             :sysUnit    => "mol",
                             :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","MnO","H2O","CO2","S"],
-                            :frac       => [64.578,13.651,1.586,5.529,8.025,2.943,2.000,0.907,0.65,0.175,6.244,10.0,1.0],
-                            :frac2      => [64.578,13.651,1.586,5.529,8.025,2.943,2.000,0.907,0.65,0.175,6.244,10.0,1.0],
+                            :frac       => [64.578,13.651,1.586,5.529,8.025,2.943,2.000,0.907,0.65,0.175,6.244,5.0,1.0],
+                            :frac2      => [64.578,13.651,1.586,5.529,8.025,2.943,2.000,0.907,0.65,0.175,6.244,5.0,1.0],
                             ), cols=:union)
 
     push!(db,Dict(          :bulk       => "predefined",
@@ -706,8 +710,8 @@ function get_dtbulk_list()
                             :test       => 4,
                             :sysUnit    => "mol",
                             :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","MnO","H2O","CO2","S"],
-                            :frac       => [73.9880,8.6143,2.0146,2.7401, 3.8451, 1.7686, 2.4820, 0.6393, 0.11, 0.0630,  10.0,10.0,1.0],
-                            :frac2      => [73.9880,8.6143,2.0146,2.7401, 3.8451, 1.7686, 2.4820, 0.6393, 0.11, 0.0630,  10.0,10.0,1.0],
+                            :frac       => [73.9880,8.6143,2.0146,2.7401, 3.8451, 1.7686, 2.4820, 0.6393, 0.11, 0.0630,  10.0,5.0,1.0],
+                            :frac2      => [73.9880,8.6143,2.0146,2.7401, 3.8451, 1.7686, 2.4820, 0.6393, 0.11, 0.0630,  10.0,5.0,1.0],
                             ), cols=:union)
 
     push!(db,Dict(          :bulk       => "predefined",
@@ -1008,16 +1012,40 @@ function get_dtbulk_list()
                             ), cols=:union)
 
 
-    # push!(db,Dict(          :bulk       => "predefined",
-    #                         :title      => "WM pelite",
-    #                         :comments   => "Forshaw et al., 2023",
-    #                         :db         => "cs",
-    #                         :test       => 0,
-    #                         :sysUnit    => "mol",
-    #                         :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3","H2O","CO2"],
-    #                         :frac       => [61,  13.0,  0.8, 4, 6.3,  2.7,  1.4,  0.17,  0.7,  0.109, 5.0, 20.0],
-    #                         :frac2      => [61,  13.0,  0.8, 4, 6.3,  2.7,  1.4,  0.17,  0.7,  0.109, 5.0, 20.0],
-    #                         ), cols=:union)
+    # METAPELITE DATABASE
+    push!(db,Dict(          :bulk       => "predefined",
+                            :title      => "FPWorldMedian pelite - water oversaturated",
+                            :comments   => "Forshaw, J. B., & Pattison, D. R. (2023)",
+                            :db         => "all",
+                            :test       => 0,
+                            :sysUnit    => "mol",
+                            :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3","MnO","H2O","CO2","S"],
+                            :frac       => [70.999,12.805,0.771,3.978,6.342,2.7895,1.481,0.758,0.72933,0.0,0.075,30.0,2.0,0.05],
+                            :frac2      => [70.999,12.805,0.771,3.978,6.342,2.7895,1.481,0.758,0.72933,0.0,0.075,30.0,2.0,0.05],
+                            ), cols=:union)
+
+    push!(db,Dict(          :bulk       => "predefined",
+                            :title      => "KLB1 Peridotite - Anhydrous",
+                            :comments   => "Holland et al., 2018",
+                            :db         => "all",
+                            :test       => 1,
+                            :sysUnit    => "mol",
+                            :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3","MnO","H2O","CO2","S"],
+                            :frac       => [38.494,  1.776,  2.824, 50.566, 5.886,  0.01,  0.250,  0.10,  0.096,  0.109, 0.0, 0.0, 0.0, 0.0],
+                            :frac2      => [38.494,  1.776,  2.824, 50.566, 5.886,  0.01,  0.250,  0.10,  0.096,  0.109, 0.0, 0.0, 0.0, 0.0],
+                            ), cols=:union)
+
+    push!(db,Dict(          :bulk       => "predefined",
+                            :title      => "RE46 - Icelandic basalt",
+                            :comments   => "Yang et al., 1996",
+                            :db         => "all",
+                            :test       => 2,
+                            :sysUnit    => "mol",
+                            :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3","MnO","H2O","CO2","S"],
+                            :frac       => [ 50.72,	9.16,15.21, 16.25,	7.06, 0.01, 1.47, 0.39, 0.35,  0.01, 0.0, 0.0, 0.0, 0.0],
+                            :frac2      => [ 50.72,	9.16,15.21, 16.25,	7.06, 0.01, 1.47, 0.39, 0.35,  0.01, 0.0, 0.0, 0.0, 0.0],
+                            ), cols=:union)
+                            
 
     dbte = DataFrame(       composition = String[],
                             title       = String[],

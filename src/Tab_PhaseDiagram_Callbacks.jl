@@ -481,7 +481,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         State("buffer-dropdown",        "value"     ),
         State("buffer-1-mul-id",        "value"     ),
-        State("buffer-2-mul-id",        "value"     ),  
+        State("buffer-2-mul-id",        "value"     ),
         State("phase-selection",        "value"     ),
         State("pure-phase-selection",   "value"     ),
         State("solver-dropdown",        "value"     ),            # bulk-rock 1
@@ -509,7 +509,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             ids     = reverse(sortperm(Out_XY[point_id].ph_frac))   #this gets the ids in descending order of phase fraction
 
             legacy_labels = Out_XY[point_id].ph[ids]
-            labels        = display_ph_names(legacy_labels)
+            labels        = display_ph_names_tagged(legacy_labels, dtb)
             if pie_unit == 1
                 values  = Out_XY[point_id].ph_frac[ids]     .* 100.0
                 sys     = "mol%"
@@ -854,7 +854,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("dataset-dropdown",       "value"),           # pt, px, tx
         State("watsat-dropdown",        "value"),           # false,true -> 0,1
         State("watsat-val-id",          "value"),           # false,true -> 0,1
-        
+
         State("mb-cpx-switch",          "value"),           # false,true -> 0,1
         State("limit-ca-opx-id",        "value"),           # ON,OFF -> 0,1
         State("ca-opx-val-id",          "value"),           # 0.0-1.0 -> 0,1
@@ -1711,8 +1711,9 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("diagram-dropdown",          "value"   ),
         State("draw-path-mode-dropdown",   "value"   ),
         State("draw-path-field-dropdown",  "value"   ),
+        State("database-dropdown",         "value"   ),
         prevent_initial_call = true,
-    ) do _n, warr_naming, sysunit, diagType, mode, field_value
+    ) do _n, warr_naming, sysunit, diagType, mode, field_value, dtb
         global use_warr_names
         use_warr_names[1] = (warr_naming == "warr")
 
@@ -1729,7 +1730,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             ytitle  = get(OTHER_FIELD_LABELS, field_value, field_value)
             fname   = "draw_path_field_profile"
         else
-            traces, _phase_list = get_draw_path_plot(diagType, sysunit, draw_path_ids)
+            traces, _phase_list = get_draw_path_plot(diagType, sysunit, draw_path_ids, dtb)
             ytitle  = "Phase fraction [$(sysunit)%]"
             fname   = "draw_path_phase_fractions"
         end
@@ -1869,7 +1870,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         if haskey(cs, ph)
             return String(cs[ph])
         end
-        return haskey(AppData.mineral_style[1], ph) ? AppData.mineral_style[1][ph][1] : "#808080"
+        return get_phase_color(ph; default="#808080")
     end
 
     # Color picker change → update color-store

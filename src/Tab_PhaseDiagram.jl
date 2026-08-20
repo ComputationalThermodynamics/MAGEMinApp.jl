@@ -53,7 +53,7 @@ function Tab_PhaseDiagram()
                                     ),
                                 ),
                                 ], width=1),
-    
+
                             dbc_col([
                                 dbc_row([
                                     # this parts serves as a relay to trigger an update of the phase diagram and loading the progress bar
