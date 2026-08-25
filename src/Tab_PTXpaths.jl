@@ -262,6 +262,22 @@ function Tab_PTXpaths()
                                             multi   = false),
                                         ]),
                                     ]),
+
+                                    dbc_row([
+                                        dbc_col([
+                                            html_h1("Specific Cp", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                        ],width=4),
+                                        dbc_col([
+                                            dcc_dropdown(   id      = "scp-dropdown-ptx",
+                                            options = [
+                                                (label = "G0 (no latent heat)",         value =  0),
+                                                (label = "G_system (with latent heat)", value =  1),
+                                            ],
+                                            value       = 0,
+                                            clearable   = false,
+                                            multi       = false),
+                                        ]),
+                                    ]),
                                     #verbose
                                     dbc_row([
                                         dbc_col([
@@ -1466,6 +1482,40 @@ function Tab_PTXpaths()
                                             style       = Dict( "textAlign"     => "center",
                                                                 "font-size"     => "100%",
                                                                 "border"        =>"1px lightgray solid")),
+                                        ]),
+                                        html_div("‎ "),
+                                        dbc_row([
+                                            dcc_upload(
+                                                id="upload-path-ptx",
+                                                children=html_div([
+                                                    "Drag and drop path",
+                                                ]),
+                                                style=Dict(
+                                                    "width" => "100%",
+                                                    "height" => "40px",
+                                                    "lineHeight" => "40px",
+                                                    "borderWidth" => "1px",
+                                                    "borderStyle" => "dashed",
+                                                    "borderRadius" => "5px",
+                                                    "textAlign" => "center",
+                                                    "font-size" => "90%"
+                                                ),
+                                                multiple=false
+                                            ),
+                                            dbc_alert(
+                                                "Path successfully loaded",
+                                                id      = "upload-path-ptx-success",
+                                                color   = "success",
+                                                is_open = false,
+                                                duration= 4000,
+                                            ),
+                                            dbc_alert(
+                                                "Path failed to load, check input file format",
+                                                id      = "upload-path-ptx-failed",
+                                                color   = "danger",
+                                                is_open = false,
+                                                duration= 4000,
+                                            ),
                                         ]),
 
                                         # html_hr(),

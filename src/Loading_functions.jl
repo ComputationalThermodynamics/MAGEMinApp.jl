@@ -18,6 +18,7 @@ function get_contributors()
     debug   *= "Alexandre Peillod\n"
     debug   *= "Animesh Gorai\n"
     debug   *= "Anton Popov\n"
+    debug   *= "Bo Huang\n"
     debug   *= "Boris Kaus\n"
     debug   *= "Ding Chenlong\n"
     debug   *= "Hugo Dominguez\n"

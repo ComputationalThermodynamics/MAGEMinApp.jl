@@ -2347,6 +2347,8 @@ function get_oxide_list(dbin::String)
         MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO";"Na2O"]; 
     elseif dbin == "mpe"
         MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "MnO"; "H2O"; "CO2"; "S"];
+    elseif dbin == "all"
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "MnO"; "Cr2O3"; "H2O"; "CO2"; "S"];
     elseif dbin == "cs"
 	    MAGEMin_ox      = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"; "H2O"; "CO2"];
     elseif dbin == "sb11"
@@ -2601,6 +2603,64 @@ function parse_bulk_rock(contents, filename)
         return 0, sprint(showerror, e)
     end
 
+end
+
+
+"""
+    Parse a drag-and-dropped P-T(-X) path CSV/text file into DataTable rows.
+    `header_map` maps an uppercased column header (e.g. "P", "T", "ASSIM", "BUFFER")
+    to the DataTable column id it fills ("col-1", "col-2", ...); `required`
+    lists the col ids that must be present in the file; `optional` lists col
+    ids that are backfilled with 0.0 on every row when their column is absent
+    from the file (matching the 0.0 default "Add new point" uses for them).
+    Pressure is always given in kbar in the file and converted to the
+    currently displayed pressure unit here, matching how "Add new point"
+    inserts rows.
+"""
+function parse_path_csv(contents, filename, header_map::Dict{String,String}, required::Vector{String}, optional::Vector{String}=String[])
+    try
+        content_type, content_string = split(contents, ',');
+        decoded = base64decode(content_string);
+        input   = String(decoded);
+
+        lines     = split(input, '\n');
+        first_idx = findfirst(l -> !startswith(strip(l), '#') && !isempty(strip(l)), lines);
+        isnothing(first_idx) && return 0, "File is empty or contains no header line", nothing
+
+        delim  = occursin(';', lines[first_idx]) ? ';' : ',';
+        datain = strip.(string.(readdlm(IOBuffer(input), delim, comments=true, comment_char='#')));
+        size(datain,1) < 2 && return 0, "No data rows found below the header", nothing
+
+        header  = uppercase.(datain[1,:]);
+        col_idx = Dict{String,Int}();
+        for (i,h) in enumerate(header)
+            haskey(header_map, h) && (col_idx[header_map[h]] = i)
+        end
+
+        missing_cols = setdiff(required, keys(col_idx));
+        ~isempty(missing_cols) && return 0, "Missing required column(s): "*join(missing_cols, ", "), nothing
+
+        absent_optional = setdiff(optional, keys(col_idx));
+
+        nrows = size(datain,1) - 1;
+        rows  = Vector{Dict{Symbol,Float64}}(undef, nrows);
+        for r = 1:nrows
+            row = Dict{Symbol,Float64}();
+            for (col_id, idx) in col_idx
+                val = tryparse(Float64, string(datain[r+1,idx]));
+                isnothing(val) && return 0, "Non-numeric value in row $(r+1)", nothing
+                row[Symbol(col_id)] = col_id == "col-1" ? display_pressure(val) : val;
+            end
+            for col_id in absent_optional
+                row[Symbol(col_id)] = 0.0;
+            end
+            rows[r] = row;
+        end
+
+        return 1, "", rows
+    catch e
+        return 0, sprint(showerror, e), nothing
+    end
 end
 
 
