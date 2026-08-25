@@ -1,6 +1,6 @@
 #=~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-#   Project      : MAGEMin_App
+#   Project      : MAGEMinApp
 #   License      : GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #   Developers   : Nicolas Riel, Boris Kaus
 #   Contributors : Nerone, S., Dominguez, H., Moyen, J-F.
@@ -937,9 +937,14 @@ function Tab_Simulation_Callbacks(app)
         Output( "pt-x-table",               "columns"   ),
         Output( "pressure-unit-dummy",      "children"  ),
         Output( "pressure-unit-prev",       "children"  ),
+        Output( "upload-pt-path-success",   "is_open"   ),
+        Output( "upload-pt-path-failed",    "is_open"   ),
+        Output( "upload-pt-path-failed",    "children"  ),
         Input(  "add-ptx-row-button",       "n_clicks"  ),
         Input(  "load-state-diagram-button","n_clicks"  ),
         Input(  "pressure-unit-dropdown",   "value"     ),
+        Input(  "upload-pt-path",           "contents"  ),
+        State(  "upload-pt-path",           "filename"  ),
         State(  "save-state-filename-id",   "value"     ),
         State(  "pt-x-table",               "data"      ),
         State(  "pt-x-table",               "columns"   ),
@@ -947,7 +952,7 @@ function Tab_Simulation_Callbacks(app)
 
         prevent_initial_call = true,
 
-        ) do n_clicks, n_clicks_load, pressure_unit, filename, data, columns, pressure_unit_prev
+        ) do n_clicks, n_clicks_load, pressure_unit, path_contents, path_filename, filename, data, columns, pressure_unit_prev
 
         bid  = pushed_button( callback_context() )
 
@@ -959,7 +964,7 @@ function Tab_Simulation_Callbacks(app)
                 push!(dataout,add)
             end
 
-            return dataout, no_update(), no_update(), no_update()
+            return dataout, no_update(), no_update(), no_update(), no_update(), no_update(), no_update()
 
         elseif bid ==  "load-state-diagram-button"
             file = joinpath(@__DIR__, "..", "saved_states", String(filename)*"_options.jld2")
@@ -968,7 +973,7 @@ function Tab_Simulation_Callbacks(app)
                 @load file ptx_table
             end
 
-            return ptx_table, no_update(), no_update(), no_update()
+            return ptx_table, no_update(), no_update(), no_update(), no_update(), no_update(), no_update()
 
         elseif bid == "pressure-unit-dropdown"
             global use_GPa
@@ -987,7 +992,19 @@ function Tab_Simulation_Callbacks(app)
 
             colsout[1][:name] = "P [$(pressure_unit_label())]"
 
-            return dataout, colsout, pressure_unit, pressure_unit
+            return dataout, colsout, pressure_unit, pressure_unit, no_update(), no_update(), no_update()
+
+        elseif bid == "upload-pt-path"
+            if !(path_contents isa Nothing)
+                status, msg, rows = parse_path_csv(path_contents, path_filename,
+                                                    Dict("P"=>"col-1", "T"=>"col-2"),
+                                                    ["col-1", "col-2"])
+                if status == 1
+                    return rows, no_update(), no_update(), no_update(), true, false, ""
+                else
+                    return no_update(), no_update(), no_update(), no_update(), false, true, msg
+                end
+            end
         end
     end
 

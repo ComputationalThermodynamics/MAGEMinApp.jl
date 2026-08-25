@@ -1,6 +1,6 @@
 #=~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-#   Project      : MAGEMin_App
+#   Project      : MAGEMinApp
 #   License      : GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #   Developers   : Nicolas Riel, Boris Kaus
 #   Contributors : Nerone, S., Dominguez, H., Moyen, J-F.
@@ -716,7 +716,7 @@ end
 
 function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   bulk_assim, oxi,    phase_selection,    assim, var_buffer,
                                 dtb,        dataset,    bufferType, solver,
-                                verbose,    bufferN,
+                                verbose,    bufferN,    scp,
                                 cpx,        limOpx,     limOpxVal,
                                 nCon,       nRes,
                                 T_start,    isentropic_mode,
@@ -961,7 +961,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             # retrieve reference entropy of the system
             if isentropic_mode == true
                 out         = MAGEMin_C.gmin_struct{Float64, Int64};
-                Out_PTX[1]  = deepcopy( point_wise_minimization(Pres[1],T_start, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true, seismic_cor=seismicCorMode, aspect_ratio=aspectRatio, seismic_water=seismicWater, shallow_correction=shallowCor, fluid_as_melt=fluidAsMelt, anelastic_cor=anelasticCor) )
+                Out_PTX[1]  = deepcopy( point_wise_minimization(Pres[1],T_start, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true, scp=scp, seismic_cor=seismicCorMode, aspect_ratio=aspectRatio, seismic_water=seismicWater, shallow_correction=shallowCor, fluid_as_melt=fluidAsMelt, anelastic_cor=anelasticCor) )
                 Sref        = Out_PTX[1].entropy[1];
                 n_max       = 32
                 tolerance   = 0.001
@@ -1018,7 +1018,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                 
                         while n < n_max && conv == 0
                             c       = (a+b)/2.0
-                            out     = deepcopy( point_wise_minimization(P, c , gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true, seismic_cor=seismicCorMode, aspect_ratio=aspectRatio, seismic_water=seismicWater, shallow_correction=shallowCor, fluid_as_melt=fluidAsMelt, anelastic_cor=anelasticCor) )
+                            out     = deepcopy( point_wise_minimization(P, c , gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true, scp=scp, seismic_cor=seismicCorMode, aspect_ratio=aspectRatio, seismic_water=seismicWater, shallow_correction=shallowCor, fluid_as_melt=fluidAsMelt, anelastic_cor=anelasticCor) )
                             result  = out.entropy[1] - Sref
 
                             sign_c  = sign(result)
@@ -1042,7 +1042,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                         Out_PTX[k]    = deepcopy(out)
 
                     elseif isentropic_mode == false
-                        Out_PTX[k] = deepcopy( point_wise_minimization(P,T, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true, seismic_cor=seismicCorMode, aspect_ratio=aspectRatio, seismic_water=seismicWater, shallow_correction=shallowCor, fluid_as_melt=fluidAsMelt, anelastic_cor=anelasticCor) )
+                        Out_PTX[k] = deepcopy( point_wise_minimization(P,T, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true, scp=scp, seismic_cor=seismicCorMode, aspect_ratio=aspectRatio, seismic_water=seismicWater, shallow_correction=shallowCor, fluid_as_melt=fluidAsMelt, anelastic_cor=anelasticCor) )
                     end
 
 
@@ -1269,7 +1269,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                             # is pinned at the threshold instead of showing the pre-cap value.
                             if reminimize_threshold
                                 gv         = define_bulk_rock(gv, bulk, oxi, sys_in, dtb)
-                                Out_PTX[k] = deepcopy( point_wise_minimization(P, T, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true, seismic_cor=seismicCorMode, aspect_ratio=aspectRatio, seismic_water=seismicWater, shallow_correction=shallowCor, fluid_as_melt=fluidAsMelt, anelastic_cor=anelasticCor) )
+                                Out_PTX[k] = deepcopy( point_wise_minimization(P, T, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true, scp=scp, seismic_cor=seismicCorMode, aspect_ratio=aspectRatio, seismic_water=seismicWater, shallow_correction=shallowCor, fluid_as_melt=fluidAsMelt, anelastic_cor=anelasticCor) )
                             end
                         end
                     end
@@ -1321,7 +1321,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                         T_C     = Out_PTX[k].T_C
                         P_kbar  = Out_PTX[k].P_kbar
                         gv      = define_bulk_rock(gv, bulk, oxi, sys_in, dtb);
-                        out     = deepcopy( point_wise_minimization(P_kbar,T_C, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true, seismic_cor=seismicCorMode, aspect_ratio=aspectRatio, seismic_water=seismicWater, shallow_correction=shallowCor, fluid_as_melt=fluidAsMelt, anelastic_cor=anelasticCor) )
+                        out     = deepcopy( point_wise_minimization(P_kbar,T_C, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true, scp=scp, seismic_cor=seismicCorMode, aspect_ratio=aspectRatio, seismic_water=seismicWater, shallow_correction=shallowCor, fluid_as_melt=fluidAsMelt, anelastic_cor=anelasticCor) )
                         Sref    = out.entropy[1]
                     end
 
@@ -1343,7 +1343,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
         
                 while n < n_max && conv == 0
                     c       = (a+b)/2.0
-                    out     = deepcopy( point_wise_minimization(P, c , gv, z_b, DB, splx_data, sys_in; buffer_n=Buff[np], rm_list=phase_selection, name_solvus=true, seismic_cor=seismicCorMode, aspect_ratio=aspectRatio, seismic_water=seismicWater, shallow_correction=shallowCor, fluid_as_melt=fluidAsMelt, anelastic_cor=anelasticCor) )
+                    out     = deepcopy( point_wise_minimization(P, c , gv, z_b, DB, splx_data, sys_in; buffer_n=Buff[np], rm_list=phase_selection, name_solvus=true, scp=scp, seismic_cor=seismicCorMode, aspect_ratio=aspectRatio, seismic_water=seismicWater, shallow_correction=shallowCor, fluid_as_melt=fluidAsMelt, anelastic_cor=anelasticCor) )
                     result  = out.entropy[1] - Sref
 
                     sign_c  = sign(result)
@@ -1365,7 +1365,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                 Out_PTX[k]    = deepcopy(out)
 
             elseif isentropic_mode == false
-                 Out_PTX[k] = deepcopy( point_wise_minimization(Pres[np],Temp[np], gv, z_b, DB, splx_data, sys_in; buffer_n=Buff[np], rm_list=phase_selection, name_solvus=true, seismic_cor=seismicCorMode, aspect_ratio=aspectRatio, seismic_water=seismicWater, shallow_correction=shallowCor, fluid_as_melt=fluidAsMelt, anelastic_cor=anelasticCor) )
+                 Out_PTX[k] = deepcopy( point_wise_minimization(Pres[np],Temp[np], gv, z_b, DB, splx_data, sys_in; buffer_n=Buff[np], rm_list=phase_selection, name_solvus=true, scp=scp, seismic_cor=seismicCorMode, aspect_ratio=aspectRatio, seismic_water=seismicWater, shallow_correction=shallowCor, fluid_as_melt=fluidAsMelt, anelastic_cor=anelasticCor) )
             end
 
             if assim == "true" && k > 1

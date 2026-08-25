@@ -1,6 +1,6 @@
 #=~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-#   Project      : MAGEMin_App
+#   Project      : MAGEMinApp
 #   License      : GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #   Developers   : Nicolas Riel, Boris Kaus
 #   Contributors : Nerone, S., Dominguez, H., Moyen, J-F.
@@ -31,6 +31,22 @@ function Tab_PTXpaths_Callbacks(app)
         prevent_initial_call=true,
     ) do n1, is_open
         return n1 > 0 ? is_open == 0 : is_open
+    end;
+
+    # Same Cp/solver constraint as the phase diagram tab (scp-dropdown callback
+    # in Tab_Simulation_Callbacks.jl): G_system (with latent heat) requires the
+    # Legacy solver, since it re-equilibrates the assemblage to differentiate
+    # G_system rather than just fixing it and differentiating G0. There is no
+    # boost-mode toggle in the P-T-X tab, so switching back to G0 always falls
+    # back to the tab's own default (Hybrid).
+    callback!(
+        app,
+        Output("solver-dropdown-ptx", "value"),
+        Input("scp-dropdown-ptx",     "value"),
+
+        prevent_initial_call = true,
+    ) do scp
+        return scp == 1 ? "lp" : "hyb"
     end;
 
     # This callback owns only the phase-threshold-store-ptx list itself (which
@@ -1266,11 +1282,12 @@ function Tab_PTXpaths_Callbacks(app)
         State("database-dropdown-ptx",  "value"),
         State("dataset-dropdown-ptx",  "value"),
         State("buffer-dropdown-ptx",    "value"),
-        State("solver-dropdown-ptx",    "value"),    
-        State("verbose-dropdown-ptx",   "value"),   
-        State("table-bulk-rock-ptx",    "data"),  
-        State("table-2-bulk-rock-ptx",  "data"),  
-        State("buffer-1-mul-id-ptx",    "value"),  
+        State("solver-dropdown-ptx",    "value"),
+        State("scp-dropdown-ptx",       "value"),
+        State("verbose-dropdown-ptx",   "value"),
+        State("table-bulk-rock-ptx",    "data"),
+        State("table-2-bulk-rock-ptx",  "data"),
+        State("buffer-1-mul-id-ptx",    "value"),
 
         State("mb-cpx-switch-ptx",      "value"),           # false,true -> 0,1
         State("limit-ca-opx-id-ptx",    "value"),           # ON,OFF -> 0,1
@@ -1316,7 +1333,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         ) do    compute,    upsys,      display_mode,               ext_display_mode,   warr_naming,    phase_order_version,
                 sys_unit,   phase_selection, pure_phase_selection,  phase_list, nsteps,     PTdata,     mode,   assim,  var_buffer,
-                dtb,        dataset,    bufferType, solver,
+                dtb,        dataset,    bufferType, solver,     scp,
                 verbose,    bulk,       bulk2,      bufferN,
                 cpx,        limOpx,     limOpxVal,  test,   sysunit,
                 nCon,       nRes,       color_table,
@@ -1369,7 +1386,7 @@ function Tab_PTXpaths_Callbacks(app)
 
             compute_new_PTXpath(    nsteps,     PTdata,     mode,       bulk_ini,  bulk_assim,  oxi,    phase_selection,    assim, var_buffer,
                                     dtb,        dataset,    bufferType, solver,
-                                    verbose,    bufferN,
+                                    verbose,    bufferN,    scp,
                                     cpx,        limOpx,     limOpxVal,
                                     nCon,       nRes,
                                     T_start,    isentropic_mode,
@@ -2272,6 +2289,9 @@ function Tab_PTXpaths_Callbacks(app)
         Output("draw-path-export-failed",   "is_open"   ),
         Output("ptx-table-adv",             "data"      ),
         Output("ptx-table-adv",             "columns"   ),
+        Output("upload-path-ptx-success",   "is_open"   ),
+        Output("upload-path-ptx-failed",    "is_open"   ),
+        Output("upload-path-ptx-failed",    "children"  ),
 
         Input("assimilation-dropdown-ptx",  "value"     ),
         Input("add-row-button",             "n_clicks"  ),
@@ -2283,20 +2303,25 @@ function Tab_PTXpaths_Callbacks(app)
         Input("ptx-table-adv",              "data"      ),
         Input("phase-threshold-store-ptx",  "data"      ),
         Input("mineral-naming-dropdown",    "value"     ),
+        Input("upload-path-ptx",            "contents"  ),
 
         State("assimilation-dropdown-ptx",  "value"     ),
         State("ptx-table",                  "data"      ),
         State("ptx-table",                  "columns"   ),
         State("pressure-unit-prev-ptx",     "children"  ),
+        State("upload-path-ptx",            "filename"  ),
 
         prevent_initial_call = true,
 
-        ) do value, n_clicks, var_buffer, isentropic_value, pressure_unit, _export_clicks, calc_unit, adv_data, thresh_store, warr_naming,
-                assim, data, colout, pressure_unit_prev
+        ) do value, n_clicks, var_buffer, isentropic_value, pressure_unit, _export_clicks, calc_unit, adv_data, thresh_store, warr_naming, path_contents,
+                assim, data, colout, pressure_unit_prev, path_filename
 
         global use_warr_names
         use_warr_names[1]      = (warr_naming == "warr")
         bid                     = pushed_button( callback_context() )    # get which button has been pushed
+        upload_success          = false
+        upload_failed           = false
+        upload_failed_msg       = ""
 
         if bid == "pressure-unit-dropdown"
             global use_GPa
@@ -2315,14 +2340,33 @@ function Tab_PTXpaths_Callbacks(app)
 
             colsout[1][:name] = "P [$(pressure_unit_label())]"
 
-            return dataout, colsout, no_update(), no_update(), no_update(), pressure_unit, no_update(), no_update(), dataout, colsout
+            return dataout, colsout, no_update(), no_update(), no_update(), pressure_unit, no_update(), no_update(), dataout, colsout, no_update(), no_update(), no_update()
         end
 
         # "ptx-table-adv" is a full mirror of this table (Advanced path definition
         # panel), so a change originating there simply becomes the new starting
         # point for this table's own data, going through the exact same
-        # column/backfill pipeline below as every other trigger
-        dataout = bid == "ptx-table-adv" ? copy(adv_data) : copy(data)
+        # column/backfill pipeline below as every other trigger. A dropped path
+        # CSV works the same way: on success it becomes the new starting data
+        # (col-3/col-4 backfilled with 0.0 by parse_path_csv when the file
+        # doesn't provide them), then the usual column-visibility logic below
+        # decides which of those columns are actually shown for the current
+        # assim/var_buffer/isentropic mode.
+        if bid == "upload-path-ptx" && !(path_contents isa Nothing)
+            status, msg, rows = parse_path_csv(path_contents, path_filename,
+                                                Dict("P"=>"col-1", "T"=>"col-2", "ASSIM"=>"col-3", "BUFFER"=>"col-4"),
+                                                ["col-1", "col-2"], ["col-3", "col-4"])
+            if status == 1
+                dataout        = rows
+                upload_success = true
+            else
+                dataout           = copy(data)
+                upload_failed     = true
+                upload_failed_msg = msg
+            end
+        else
+            dataout = bid == "ptx-table-adv" ? copy(adv_data) : copy(data)
+        end
         if value == "true"
             table2  = Dict("display" => "block")  
             test2   = Dict("display" => "block")  
@@ -2455,7 +2499,7 @@ function Tab_PTXpaths_Callbacks(app)
             var_buff_disp = Dict("display" => "none")
         end
 
-        return dataout, colout, table2, test2, var_buff_disp, no_update(), export_success, export_failed, dataout, colout
+        return dataout, colout, table2, test2, var_buff_disp, no_update(), export_success, export_failed, dataout, colout, upload_success, upload_failed, upload_failed_msg
     end
 
     # Show/hide TE section + enable/disable TE tab based on tepm dropdown

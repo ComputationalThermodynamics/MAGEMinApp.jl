@@ -1,6 +1,6 @@
 #=~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-#   Project      : MAGEMin_App
+#   Project      : MAGEMinApp
 #   License      : GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #   Developers   : Nicolas Riel, Boris Kaus
 #   Contributors : Nerone, S., Dominguez, H., Moyen, J-F.
@@ -464,7 +464,41 @@ function Tab_Simulation()
                                                     dbc_button("Add new point",id="add-ptx-row-button", color="light", className="me-2", n_clicks=0,
                                                     style       = Dict( "textAlign"     => "center",
                                                                         "font-size"     => "100%",
-                                                                        "border"        =>"1px lightgray solid")), 
+                                                                        "border"        =>"1px lightgray solid")),
+                                                ]),
+                                                html_div("‎ "),
+                                                dbc_row([
+                                                    dcc_upload(
+                                                        id="upload-pt-path",
+                                                        children=html_div([
+                                                            "Drag and drop path",
+                                                        ]),
+                                                        style=Dict(
+                                                            "width" => "100%",
+                                                            "height" => "40px",
+                                                            "lineHeight" => "40px",
+                                                            "borderWidth" => "1px",
+                                                            "borderStyle" => "dashed",
+                                                            "borderRadius" => "5px",
+                                                            "textAlign" => "center",
+                                                            "font-size" => "90%"
+                                                        ),
+                                                        multiple=false
+                                                    ),
+                                                    dbc_alert(
+                                                        "Path successfully loaded",
+                                                        id      = "upload-pt-path-success",
+                                                        color   = "success",
+                                                        is_open = false,
+                                                        duration= 4000,
+                                                    ),
+                                                    dbc_alert(
+                                                        "Path failed to load, check input file format",
+                                                        id      = "upload-pt-path-failed",
+                                                        color   = "danger",
+                                                        is_open = false,
+                                                        duration= 4000,
+                                                    ),
                                                 ]),
                                             ]),
                                         ]),

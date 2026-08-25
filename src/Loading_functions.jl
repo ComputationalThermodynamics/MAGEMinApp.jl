@@ -1,6 +1,6 @@
 #=~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-#   Project      : MAGEMin_App
+#   Project      : MAGEMinApp
 #   License      : GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #   Developers   : Nicolas Riel, Boris Kaus
 #   Contributors : Nerone, S., Dominguez, H., Moyen, J-F.
@@ -18,6 +18,7 @@ function get_contributors()
     debug   *= "Alexandre Peillod\n"
     debug   *= "Animesh Gorai\n"
     debug   *= "Anton Popov\n"
+    debug   *= "Bo Huang\n"
     debug   *= "Boris Kaus\n"
     debug   *= "Ding Chenlong\n"
     debug   *= "Hugo Dominguez\n"
