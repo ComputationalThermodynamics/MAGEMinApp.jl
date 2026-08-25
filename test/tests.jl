@@ -1,6 +1,6 @@
 #=~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-#   Project      : MAGEMin_App
+#   Project      : MAGEMinApp
 #   License      : GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #   Developers   : Nicolas Riel, Boris Kaus
 #   Contributors : Nerone, S., Dominguez, H., Moyen, J-F.
@@ -131,19 +131,8 @@ const AppData = MAGEMinApp.AppData
 global use_GPa        = [false]
 global use_warr_names = [false]
 
-# get_init_param is defined in MAGEMinApp_functions.jl which is not re-included here
-function get_init_param(dtb::String, solver::String, cpx, limOpx, limOpxVal::Float64)
-    mbCpx      = (cpx == true && dtb in ("mb","mbe")) ? 1 : 0
-    limitCaOpx = 0
-    CaOpxLim   = 1.0
-    if limOpx == "ON" && dtb in ("mb","mbe","ig","igd","alk")
-        limitCaOpx = 1
-        CaOpxLim   = limOpxVal
-    end
-    sol = solver == "pge" ? 1 : solver == "lp" ? 0 : 2
-    return mbCpx, limitCaOpx, CaOpxLim, sol
-end
-
+# get_init_param, display_pressure, to_kbar_pressure, pressure_unit_label are
+# all already in Main from the MAGEMinApp_functions.jl include above.
 include(joinpath(pkg_dir,"src","PTXpaths_functions.jl"))
 
 println("  Test PTX path - fractional crystallization with trace elements")
@@ -174,7 +163,7 @@ PTdata_fc = [
 ]
 
 compute_new_PTXpath(4, PTdata_fc, "fc", bulk_morb, bulk_morb, oxides, nothing, "false", false,
-                    dtb, 1, "none", "lp", -1, 0.0, false, false, 0.0, 0.0, 0.0, 1250.0, false,
+                    dtb, 1, "none", "lp", -1, 0.0, 0, false, false, 0.0, 0.0, 0.0, 1250.0, false,
                     "false", 0.0, "true", "OL", "none", "none", "none", "none", bulkte_pm, bulkte_pm, elements_te)
 
 Out_PTX_fc  = deepcopy(Out_PTX)
@@ -222,7 +211,7 @@ PTdata_fm = [
 ]
 
 compute_new_PTXpath(4, PTdata_fm, "fm", bulk_klb1, bulk_klb1, oxides, nothing, "false", false,
-                    dtb, 1, "none", "lp", -1, 0.0, false, false, 0.0, 0.0, 0.0, 1100.0, false,
+                    dtb, 1, "none", "lp", -1, 0.0, 0, false, false, 0.0, 0.0, 0.0, 1100.0, false,
                     "false", 0.0, "true", "OL", "none", "none", "none", "none", bulkte_pm, bulkte_pm, elements_te)
 
 Out_PTX_fm = deepcopy(Out_PTX)

@@ -1,6 +1,6 @@
 #=~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-#   Project      : MAGEMin_App
+#   Project      : MAGEMinApp
 #   License      : GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 #   Developers   : Nicolas Riel, Boris Kaus
 #   Contributors : Dominguez, H., Moyen, J-F.
