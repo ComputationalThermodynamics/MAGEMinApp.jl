@@ -1536,8 +1536,6 @@ function Tab_PTXpaths_Callbacks(app)
         # global db
         if value == "ig"
             style  = Dict("display" => "none")
-        elseif value == "igd"
-            style  = Dict("display" => "block")    
         elseif value == "alk"
             style  = Dict("display" => "block")  
         else 
