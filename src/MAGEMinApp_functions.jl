@@ -63,8 +63,8 @@ const TC_PRESET_PHASES = Dict(
     "mp"   => ["liq_W14", "fsp_H22", "bi_W14", "g_W14", "ep_H11", "ma_W14", "mu_W14", "opx_W14", "sa_W14", "cd_W14", "st_W14", "chl_W14", "ctd_W14", "sp_W02", "ilm_W00"],
     "mb"   => ["sp_W02", "opx_W14", "fsp_H22", "liq_G16", "mu_W14", "ilmm_W14", "ilm_W00", "ol_H11", "amp_G16", "ep_H11", "g_W14", "chl_W14", "bi_W14", "dio_G16", "aug_G16", "abc_H11", "spl_W02"],
     "ig"   => ["spl_T21", "bi_G25", "cd_G25", "cpx_W24", "ep_H11", "g_W24", "amp_G16", "ilm_W24", "liq_G25w", "ol_H18", "opx_W24", "fsp_H22", "fl_G25", "mu_W14", "fper", "chl_W14"],
-    "igad" => ["spl_T21", "cpx_W24", "g_W24", "ilm_W24", "liq_W24d", "ol_H18", "opx_W24", "fsp_H22", "lct_W24", "mel_W24", "nph_W24", "kals_W24"],
-    # "igd"  => ["spl_T21", "cpx_W24", "g_W24", "ilm_W24", "liq_W24d", "ol_H18", "opx_W24", "fsp_H22op"],
+    "igad" => ["spl_T21", "cpx_W24", "g_W24", "ilm_W24", "liq_S26", "ol_H18", "opx_W24", "fsp_H22", "lct_W24", "mel_W24", "nph_W24", "kals_W24"],
+    "igd"  => ["spl_T21", "cpx_T21", "g_T21", "ilm_T21", "liq_S26", "ol_H18", "opx_T21", "fsp_H22op"],
     "um"   => ["fl_EF21", "ol_H11", "br_E13", "ch_EF21", "atg_EF21", "g_H18", "ta_EF21", "chl_W14", "spi_W02", "opx_W14", "po_E10", "anth_D07"],
 )
 
@@ -74,7 +74,7 @@ const TC_PRESET_OPTIONS = [
     Dict("label" => "Metabasite",         "value" => "mb"),
     Dict("label" => "Igneous",            "value" => "ig"),
     Dict("label" => "Igneous alkali-dry", "value" => "igad"),
-    # Dict("label" => "Igneous dry",        "value" => "igd"),
+    Dict("label" => "Igneous dry High-TiO2",        "value" => "igd"),
     Dict("label" => "Ultramafic",         "value" => "um"),
 ]
 
@@ -856,41 +856,43 @@ function save_equilibrium_to_file(  out::MAGEMin_C.gmin_struct{Float64, Int64}, 
     #for THERMOCALC
     if mbCpx == true; aug = 1;
     else  aug = 0; end
-       
-    file *= @sprintf("Initial guess for THERMOCALC:\n") 
-    file *= @sprintf("%% ----------------------------------------------------------\n") 
+
+    # solution-phase label to use per stable phase; when the same underlying
+    # solution model is stable more than once (solvus splitting into two
+    # coexisting phases), THERMOCALC distinguishes the repeats with a numeral
+    # suffix (e.g. "cpx", "cpx2")
+    phs  = [get_ss_from_mineral(dtb, out.ph[i], aug, [out.sol_name[i]]) for i=1:out.n_SS]
+    seen = Dict{String,Int}()
+    for i=1:out.n_SS
+        n_seen = get(seen, phs[i], 0) + 1
+        seen[phs[i]] = n_seen
+        if n_seen > 1
+            phs[i] = phs[i] * string(n_seen)
+        end
+    end
+
+    file *= @sprintf("Initial guess for THERMOCALC:\n")
+    file *= @sprintf("%% ----------------------------------------------------------\n")
     file *= @sprintf("%% at P =  %12.8f, T = %12.8f, for: ",out.P_kbar,out.T_C)
     for i=1:out.n_SS
-        ph = get_ss_from_mineral(dtb, out.ph[i], aug)
-        file *= @sprintf("%s ",ph)  
+        file *= @sprintf("%s ",phs[i])
     end
-    file *= @sprintf("\n") 
-    file *= @sprintf("%% ----------------------------------------------------------\n") 
-    file *= @sprintf("ptguess  %12.8f %12.8f\n",out.P_kbar,out.T_C) 
-    file *= @sprintf("%% ----------------------------------------------------------\n")     
+    file *= @sprintf("\n")
+    file *= @sprintf("%% ----------------------------------------------------------\n")
+    file *= @sprintf("ptguess  %12.8f %12.8f\n",out.P_kbar,out.T_C)
+    file *= @sprintf("%% ----------------------------------------------------------\n")
     n = 1;
 
-    
+
     for i=1:out.n_SS
         for j=1:length(out.SS_vec[i].emFrac)-1
-            ph = get_ss_from_mineral(dtb, out.ph[i], aug)
-            if length(ph) == 1
-                file *= @sprintf(	"xyzguess %5s(%1s) %10f\n", out.SS_vec[i].compVariablesNames[j],ph ,out.SS_vec[i].compVariables[j])
-            elseif length(ph) == 2
-                file *= @sprintf(	"xyzguess %5s(%2s) %10f\n", out.SS_vec[i].compVariablesNames[j],ph ,out.SS_vec[i].compVariables[j])
-            elseif length(ph) == 3
-                file *= @sprintf(	"xyzguess %5s(%3s) %10f\n", out.SS_vec[i].compVariablesNames[j],ph ,out.SS_vec[i].compVariables[j])
-            elseif length(ph) == 4
-                file *= @sprintf(	"xyzguess %5s(%4s) %10f\n", out.SS_vec[i].compVariablesNames[j],ph ,out.SS_vec[i].compVariables[j])
-            elseif length(ph) == 5
-                file *= @sprintf(	"xyzguess %5s(%5s) %10f\n", out.SS_vec[i].compVariablesNames[j],ph ,out.SS_vec[i].compVariables[j])
-            end
+            file *= @sprintf(	"xyzguess %5s(%s) %10f\n", out.SS_vec[i].compVariablesNames[j],phs[i] ,out.SS_vec[i].compVariables[j])
         end
         if n < out.n_SS
             file *= @sprintf("%% -----------------------------\n");
         end
         n += 1
-    end     
+    end
     file *= @sprintf("%% —————————————————————————————\n");
 
     return file
@@ -2502,7 +2504,7 @@ function bulk_csv_to_db(datain)
         dbin     = lowercase(strip(string(datain[i, idx_db])))
         sysUnit  = lowercase(strip(string(datain[i, idx_sysUnit])))
 
-        valid_db      = ("ig","igd","igm","igad","mb","mbe","um","ume","mp","mtl","mpe","cs","sb11","sb21","sb24","rMELTS","pMELTS")
+        valid_db      = ("ig","igd","igm","igad","mb","mbe","um","ume","mp","mtl","mpe","all","cs","sb11","sb21","sb24","rMELTS","pMELTS")
         valid_sysunit = ("mol","wt")
 
         if dbin ∉ valid_db

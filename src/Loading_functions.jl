@@ -131,7 +131,7 @@ function get_dtbulk_list()
         Dict("label" => "Metabasite (Green et al., 2016)", "value" => "mb"),
         Dict("label" => "Igneous (Green et al., 2025, after H18)", "value" => "ig"),
         # Dict("label" => "Igneous Mantle (Rinaldi et al., 2026)", "value" => "igm"),
-        # Dict("label" => "Igneous dry (Bin et al., 2026, after T21)", "value" => "igd"),
+        Dict("label" => "Igneous dry (Su et al., 2026, after T21)", "value" => "igd"),
         Dict("label" => "Igneous alkaline dry (Weller et al., 2024)", "value" => "igad"),
         Dict("label" => "Ultramafic (Evans & Frost., 2021)", "value" => "um"),
         # Dict("label" => "Calc-shist (Stuck et al., 2026)", "value" => "cs"),
@@ -165,9 +165,9 @@ function get_dtbulk_list()
                             :acronym     => "ig",
                             ), cols=:union)
 
-    # push!(dba,Dict(         :database    => "Igneous dry (Bin et al., 2026, after T21)",
-    #                         :acronym     => "igd",
-    #                         ), cols=:union)
+    push!(dba,Dict(         :database    => "Igneous dry (Su et al., 2026, after T21)",
+                            :acronym     => "igd",
+                            ), cols=:union)
 
     # push!(dba,Dict(         :database    => "Igneous Mantle (Rinaldi et al., 2026)",
     #                         :acronym     => "igm",
@@ -488,50 +488,85 @@ function get_dtbulk_list()
                             ), cols=:union)
 
 
-    # push!(db,Dict(          :bulk       => "predefined",
-    #                         :title      => "KLB1 Peridotite - Anhydrous",
-    #                         :comments   => "Holland et al., 2018",
-    #                         :db         => "igd",
-    #                         :test       => 0,
-    #                         :sysUnit    => "mol",
-    #                         :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3"],
-    #                         :frac       => [38.494,  1.776,  2.824, 50.566, 5.886,  0.01,  0.250,  0.10,  0.096,  0.109],
-    #                         :frac2      => [38.494,  1.776,  2.824, 50.566, 5.886,  0.01,  0.250,  0.10,  0.096,  0.109],
-    #                         ), cols=:union)
+    push!(db,Dict(          :bulk       => "predefined",
+                            :title      => "KLB1 Peridotite - Anhydrous",
+                            :comments   => "Holland et al., 2018",
+                            :db         => "igd",
+                            :test       => 0,
+                            :sysUnit    => "mol",
+                            :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3"],
+                            :frac       => [38.494,  1.776,  2.824, 50.566, 5.886,  0.01,  0.250,  0.10,  0.096,  0.109],
+                            :frac2      => [38.494,  1.776,  2.824, 50.566, 5.886,  0.01,  0.250,  0.10,  0.096,  0.109],
+                            ), cols=:union)
 
-    # push!(db,Dict(          :bulk       => "predefined",
-    #                         :title      => "RE46 - Icelandic basalt",
-    #                         :comments   => "Yang et al., 1996",
-    #                         :db         => "igd",
-    #                         :test       => 1,
-    #                         :sysUnit    => "mol",
-    #                         :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3"],
-    #                         :frac       => [ 50.72,	9.16,15.21, 16.25,	7.06, 0.01, 1.47, 0.39, 0.35,  0.01],
-    #                         :frac2      => [ 50.72,	9.16,15.21, 16.25,	7.06, 0.01, 1.47, 0.39, 0.35,  0.01],
-    #                         ), cols=:union)
+    push!(db,Dict(          :bulk       => "predefined",
+                            :title      => "RE46 - Icelandic basalt",
+                            :comments   => "Yang et al., 1996",
+                            :db         => "igd",
+                            :test       => 1,
+                            :sysUnit    => "mol",
+                            :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3"],
+                            :frac       => [ 50.72,	9.16,15.21, 16.25,	7.06, 0.01, 1.47, 0.39, 0.35,  0.01],
+                            :frac2      => [ 50.72,	9.16,15.21, 16.25,	7.06, 0.01, 1.47, 0.39, 0.35,  0.01],
+                            ), cols=:union)
 
-    # MANTLE IGNEOUS DATABASE
-    # push!(db,Dict(          :bulk       => "predefined",
-    #                         :title      => "KLB1 Peridotite - Anhydrous",
-    #                         :comments   => "Holland et al., 2018",
-    #                         :db         => "igm",
-    #                         :test       => 0,
-    #                         :sysUnit    => "mol",
-    #                         :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3"],
-    #                         :frac       => [38.494,  1.776,  2.824, 50.566, 5.886,  0.01,  0.250,  0.10,  0.096,  0.109],
-    #                         :frac2      => [38.494,  1.776,  2.824, 50.566, 5.886,  0.01,  0.250,  0.10,  0.096,  0.109],
-    #                         ), cols=:union)
+    push!(db,Dict(          :bulk       => "predefined",
+                            :title      => "CMV - High-Ti ultramafic",
+                            :comments   => "Partial melting of high-Ti ultramafic composition CMV",
+                            :db         => "igd",
+                            :test       => 2,
+                            :sysUnit    => "mol",
+                            :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3"],
+                            :frac       => [35.95, 2.91, 3.82, 38.00, 12.96, 0.15, 0.24, 5.90, 0.0, 0.06],
+                            :frac2      => [35.95, 2.91, 3.82, 38.00, 12.96, 0.15, 0.24, 5.90, 0.0, 0.06],
+                            ), cols=:union)
 
-    # push!(db,Dict(          :bulk       => "predefined",
-    #                         :title      => "RE46 - Icelandic basalt",
-    #                         :comments   => "Yang et al., 1996",
-    #                         :db         => "igm",
-    #                         :test       => 1,
-    #                         :sysUnit    => "mol",
-    #                         :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3"],
-    #                         :frac       => [ 50.72,	9.16,15.21, 16.25,	7.06, 0.01, 1.47, 0.39, 0.35,  0.01],
-    #                         :frac2      => [ 50.72,	9.16,15.21, 16.25,	7.06, 0.01, 1.47, 0.39, 0.35,  0.01],
-    #                         ), cols=:union)
+    push!(db,Dict(          :bulk       => "predefined",
+                            :title      => "Sample 10084",
+                            :comments   => "Apollo 11 high-Ti mare basalt",
+                            :db         => "igd",
+                            :test       => 3,
+                            :sysUnit    => "mol",
+                            :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3"],
+                            :frac       => [43.87, 8.57, 14.23, 12.67, 14.03, 0.09, 0.42, 5.99, 0.0, 0.12],
+                            :frac2      => [43.87, 8.57, 14.23, 12.67, 14.03, 0.09, 0.42, 5.99, 0.0, 0.12],
+                            ), cols=:union)
+
+    push!(db,Dict(          :bulk       => "predefined",
+                            :title      => "TiCum",
+                            :comments   => "Ti-cumulate composition",
+                            :db         => "igd",
+                            :test       => 4,
+                            :sysUnit    => "mol",
+                            :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3"],
+                            :frac       => [43.74, 1.73, 9.24, 11.75, 26.02, 0.07, 0.20, 7.20, 0.0, 0.04],
+                            :frac2      => [43.74, 1.73, 9.24, 11.75, 26.02, 0.07, 0.20, 7.20, 0.0, 0.04],
+                            ), cols=:union)
+                     
+
+
+    #MANTLE IGNEOUS DATABASE
+    push!(db,Dict(          :bulk       => "predefined",
+                            :title      => "KLB1 Peridotite - Anhydrous",
+                            :comments   => "Holland et al., 2018",
+                            :db         => "igm",
+                            :test       => 0,
+                            :sysUnit    => "mol",
+                            :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3"],
+                            :frac       => [38.494,  1.776,  2.824, 50.566, 5.886,  0.01,  0.250,  0.10,  0.096,  0.109],
+                            :frac2      => [38.494,  1.776,  2.824, 50.566, 5.886,  0.01,  0.250,  0.10,  0.096,  0.109],
+                            ), cols=:union)
+
+    push!(db,Dict(          :bulk       => "predefined",
+                            :title      => "RE46 - Icelandic basalt",
+                            :comments   => "Yang et al., 1996",
+                            :db         => "igm",
+                            :test       => 1,
+                            :sysUnit    => "mol",
+                            :oxide      => ["SiO2","Al2O3","CaO","MgO","FeO","K2O","Na2O","TiO2","O","Cr2O3"],
+                            :frac       => [ 50.72,	9.16,15.21, 16.25,	7.06, 0.01, 1.47, 0.39, 0.35,  0.01],
+                            :frac2      => [ 50.72,	9.16,15.21, 16.25,	7.06, 0.01, 1.47, 0.39, 0.35,  0.01],
+                            ), cols=:union)
 
     # IGNEOUS ALKALINE DRY DATABASE
     push!(db,Dict(          :bulk       => "predefined",

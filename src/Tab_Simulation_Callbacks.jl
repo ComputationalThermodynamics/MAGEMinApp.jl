@@ -738,8 +738,8 @@ function Tab_Simulation_Callbacks(app)
 
         if ph == "ss"
 
-            ph_name         = get_ss_from_mineral(dtb, ph_name, aug)
             db_in           = retrieve_solution_phase_information(dtb)
+            ph_name         = get_ss_from_mineral(dtb, ph_name, aug, db_in.ss_name)
             ph_id           = findfirst(db_in.ss_name .== ph_name)
             if isnothing(ph_id)
                 return "", "none", "", "SiO2", ""
@@ -814,8 +814,6 @@ function Tab_Simulation_Callbacks(app)
         # global db
         if value == "ig"
             style  = Dict("display" => "none")
-        elseif value == "igd"
-            style  = Dict("display" => "block")    
         elseif value == "alk"
             style  = Dict("display" => "block")  
         else 
