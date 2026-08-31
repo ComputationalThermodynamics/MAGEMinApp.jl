@@ -1296,6 +1296,7 @@ function Tab_PTXpaths_Callbacks(app)
         State("sys-unit-ptx",           "value"),
 
         State("connectivity-id",        "value"),
+        State("residual-threshold-id",  "value"),
         State("residual-id",            "value"),
         State("color-table-id",         "data"),
 
@@ -1336,7 +1337,7 @@ function Tab_PTXpaths_Callbacks(app)
                 dtb,        dataset,    bufferType, solver,     scp,
                 verbose,    bulk,       bulk2,      bufferN,
                 cpx,        limOpx,     limOpxVal,  test,   sysunit,
-                nCon,       nRes,       color_table,
+                nCon,       nConRes,    nRes,       color_table,
                 T_start,    isentropic_mode, entropy,
                 watsat,     watsat_val,
                 te_model,   kds_mod,    zrsat_mod,  ssat_mod,   P2O5sat_mod,    co2sat_mod, bulkte1,    bulkte2,
@@ -1388,7 +1389,7 @@ function Tab_PTXpaths_Callbacks(app)
                                     dtb,        dataset,    bufferType, solver,
                                     verbose,    bufferN,    scp,
                                     cpx,        limOpx,     limOpxVal,
-                                    nCon,       nRes,
+                                    nCon,       nConRes,    nRes,
                                     T_start,    isentropic_mode,
                                     watsat,     watsat_val,
                                     te_model,   kds_mod,    zrsat_mod,  ssat_mod,   P2O5sat_mod,    co2sat_mod,
@@ -1602,8 +1603,9 @@ function Tab_PTXpaths_Callbacks(app)
 
     callback!(
         app,
-        Output("show-connectivity-id",  "style"),
-        Input("mode-dropdown-ptx",      "value"),
+        Output("show-connectivity-id",      "style"),
+        Output("show-residual-threshold-id","style"),
+        Input("mode-dropdown-ptx",          "value"),
 
         prevent_initial_call = true,
     ) do value
@@ -1613,7 +1615,23 @@ function Tab_PTXpaths_Callbacks(app)
         else
             style  = Dict("display" => "none")
         end
-        return style
+        return style, style
+    end
+
+    # residual threshold must never exceed the connectivity threshold: clamp
+    # it down whenever either field changes and the constraint is violated
+    callback!(
+        app,
+        Output("residual-threshold-id", "value"),
+        Input("residual-threshold-id",  "value"),
+        Input("connectivity-id",        "value"),
+
+        prevent_initial_call = true,
+    ) do nConRes, nCon
+        if !isnothing(nConRes) && !isnothing(nCon) && nConRes > nCon
+            return nCon
+        end
+        return no_update()
     end
 
     # "Cumulate/Connectivity unit" (calc-unit-ptx) only affects the fm nCon /
@@ -1635,16 +1653,17 @@ function Tab_PTXpaths_Callbacks(app)
     end
 
     # keep the connectivity/residual threshold labels in sync with the chosen
-    # calculation unit, since nCon/nRes are interpreted in that same unit
+    # calculation unit, since nCon/nConRes/nRes are interpreted in that same unit
     callback!(
         app,
-        Output("connectivity-label-id", "children"),
-        Output("residual-label-id",     "children"),
-        Input("calc-unit-ptx",          "value"),
+        Output("connectivity-label-id",         "children"),
+        Output("residual-threshold-label-id",   "children"),
+        Output("residual-label-id",             "children"),
+        Input("calc-unit-ptx",                  "value"),
 
         prevent_initial_call = true,
     ) do calc_unit
-        return "Connectivity threshold [$(calc_unit)%]", "Residual rock fraction [$(calc_unit)%]"
+        return "Connectivity threshold [$(calc_unit)%]", "Residual Threshold [$(calc_unit)%]", "Residual rock fraction [$(calc_unit)%]"
     end
 
     callback!(

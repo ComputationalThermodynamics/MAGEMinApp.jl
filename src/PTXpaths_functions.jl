@@ -718,7 +718,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                 dtb,        dataset,    bufferType, solver,
                                 verbose,    bufferN,    scp,
                                 cpx,        limOpx,     limOpxVal,
-                                nCon,       nRes,
+                                nCon,       nConRes,    nRes,
                                 T_start,    isentropic_mode,
                                 watsat      = "false",  watsat_val  = 0.0,
                                 te_model    = "false",
@@ -1062,16 +1062,18 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                         if frac_S_val(Out_PTX[k]) > 0.0
                             if nCon > 0.0
                                 if frac_M_val(Out_PTX[k]) > nCon/100.0
-                                    w_con              = con_weight_mol(Out_PTX[k], nCon/100.0, true)
+                                    # connectivity threshold reached: drain melt down to the
+                                    # (lower) residual threshold rather than back to nCon itself
+                                    w_con              = con_weight_mol(Out_PTX[k], nConRes/100.0, true)
                                     bulk               .= to_mol( bulk_S_val(Out_PTX[k]) .*(1.0 - w_con) .+ bulk_M_val(Out_PTX[k]) .* w_con )
                                     removedBulk[k+1,:] .= bulk_M_val(Out_PTX[k])
-                                    fracEvol[k+1,1]     = fracEvol[k,1] * (frac_S_val(Out_PTX[k]) + frac_F_val(Out_PTX[k]) + nCon/100.0)
+                                    fracEvol[k+1,1]     = fracEvol[k,1] * (frac_S_val(Out_PTX[k]) + frac_F_val(Out_PTX[k]) + nConRes/100.0)
                                     fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
-                                    fracEvol[k+1,3]     = 1.0 - (frac_S_val(Out_PTX[k]) + frac_F_val(Out_PTX[k]) + nCon/100.0)
+                                    fracEvol[k+1,3]     = 1.0 - (frac_S_val(Out_PTX[k]) + frac_F_val(Out_PTX[k]) + nConRes/100.0)
                                     if te_enabled
                                         Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb; ZrSat_model=zrsat_mod, SSat_model=ssat_mod, P2O5Sat_model=P2O5sat_mod, CO2Sat_model=co2sat_mod)
                                         if !all(isnan, Out_TE_PTX[k].Csol) && !all(isnan, Out_TE_PTX[k].Cliq)
-                                            w_M_te            = te_melt_wt_frac(Out_PTX[k], (100.0-nCon)/100.0, nCon/100.0)
+                                            w_M_te            = te_melt_wt_frac(Out_PTX[k], (100.0-nConRes)/100.0, nConRes/100.0)
                                             bulkte_cur        = Out_TE_PTX[k].Csol .* (1.0 - w_M_te) .+ Out_TE_PTX[k].Cliq .* w_M_te
                                             C_ext_TE_PTX[k+1] = copy(Out_TE_PTX[k].Cliq)
                                         end

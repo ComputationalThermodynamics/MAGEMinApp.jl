@@ -163,7 +163,7 @@ PTdata_fc = [
 ]
 
 compute_new_PTXpath(4, PTdata_fc, "fc", bulk_morb, bulk_morb, oxides, nothing, "false", false,
-                    dtb, 1, "none", "lp", -1, 0.0, 0, false, false, 0.0, 0.0, 0.0, 1250.0, false,
+                    dtb, 1, "none", "lp", -1, 0.0, 0, false, false, 0.0, 0.0, 0.0, 0.0, 1250.0, false,
                     "false", 0.0, "true", "OL", "none", "none", "none", "none", bulkte_pm, bulkte_pm, elements_te)
 
 Out_PTX_fc  = deepcopy(Out_PTX)
@@ -211,7 +211,7 @@ PTdata_fm = [
 ]
 
 compute_new_PTXpath(4, PTdata_fm, "fm", bulk_klb1, bulk_klb1, oxides, nothing, "false", false,
-                    dtb, 1, "none", "lp", -1, 0.0, 0, false, false, 0.0, 0.0, 0.0, 1100.0, false,
+                    dtb, 1, "none", "lp", -1, 0.0, 0, false, false, 0.0, 0.0, 0.0, 0.0, 1100.0, false,
                     "false", 0.0, "true", "OL", "none", "none", "none", "none", bulkte_pm, bulkte_pm, elements_te)
 
 Out_PTX_fm = deepcopy(Out_PTX)
