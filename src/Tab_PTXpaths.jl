@@ -995,6 +995,24 @@ function Tab_PTXpaths()
                                             ]), 
                                         ], style = Dict("display" => "none"), id      = "show-connectivity-id"), #none, block
 
+                                        # residual threshold for fractional melting: once melt fraction reaches the
+                                        # connectivity threshold, melt is drained down to this (lower) fraction instead
+                                        html_div([
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("Residual Threshold [mol%]", id = "residual-threshold-label-id", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                ], width=6),
+                                                dbc_col([
+                                                        dbc_input(
+                                                        id      = "residual-threshold-id",
+                                                        type    = "number",
+                                                        min     = 0,
+                                                        max     = 100.0,
+                                                        value   = 7.0   ),
+                                                ]),
+                                            ]),
+                                        ], style = Dict("display" => "none"), id      = "show-residual-threshold-id"), #none, block
+
                                         # residual fraction for fractional crystallization
                                         html_div([
                                             dbc_row([
