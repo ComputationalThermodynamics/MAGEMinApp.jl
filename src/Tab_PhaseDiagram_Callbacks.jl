@@ -132,6 +132,427 @@ function Tab_PhaseDiagram_Callbacks(app)
     end;
 
 
+    """
+        Callback to compute and display Ca-amphibole classification diagrams
+    """
+    callback!(
+        app,
+        Output("CaAmpPanelA-plot-pd",    "figure"),
+        Output("CaAmpPanelA-plot-pd",    "config"),
+        Output("CaAmpPanelB-plot-pd",    "figure"),
+        Output("CaAmpPanelB-plot-pd",    "config"),
+        Output("CaAmpPanelC-plot-pd",    "figure"),
+        Output("CaAmpPanelC-plot-pd",    "config"),
+
+        Input("compute-CaAmp-button",    "n_clicks"),
+
+        State("database-dropdown",       "value"),
+        State("test-dropdown",           "value"),
+
+        prevent_initial_call = true,
+
+        ) do    n_click,
+                dtb,    test
+
+        global points_in_idx, Out_XY;
+
+        title       = db[(db.db .== dtb), :].title[test+1]
+
+        if @isdefined(points_in_idx) && @isdefined(Out_XY)
+            panelA, layoutA     = get_CaAmpPanelA_diagram()
+            figCaAmpA           = plot( panelA, layoutA)
+
+            panelB, layoutB     = get_CaAmpPanelB_diagram()
+            figCaAmpB           = plot( panelB, layoutB)
+
+            panelC, layoutC     = get_CaAmpPanelC_diagram()
+            figCaAmpC           = plot( panelC, layoutC)
+        else
+            figCaAmpA        = plot(Layout( height= 740 ))
+            figCaAmpB        = plot(Layout( height= 740 ))
+            figCaAmpC        = plot(Layout( height= 740 ))
+        end
+
+        configCaAmpA   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
+                                        format   = "svg",
+                                        filename = "CaAmp_PanelA_diagram_"*replace(title, " " => "_"),
+                                        width       = 760,
+                                        height      = 480,
+                                        scale    =  2.0,       ).fields)
+
+        configCaAmpB   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
+                                        format   = "svg",
+                                        filename = "CaAmp_PanelB_diagram_"*replace(title, " " => "_"),
+                                        width       = 760,
+                                        height      = 480,
+                                        scale    =  2.0,       ).fields)
+
+        configCaAmpC   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
+                                        format   = "svg",
+                                        filename = "CaAmp_PanelC_diagram_"*replace(title, " " => "_"),
+                                        width       = 760,
+                                        height      = 480,
+                                        scale    =  2.0,       ).fields)
+
+        return figCaAmpA, configCaAmpA, figCaAmpB, configCaAmpB, figCaAmpC, configCaAmpC
+    end
+
+    callback!(
+        app,
+        Output("CaAmp-classification-canvas", "is_open"),
+        Input("CaAmp-classification-canvas-button", "n_clicks"),
+        State("CaAmp-classification-canvas", "is_open"),
+    ) do n1, is_open
+        return n1 > 0 ? is_open == 0 : is_open
+    end;
+
+
+    """
+        Callback to compute and display clinopyroxene classification diagrams
+    """
+    callback!(
+        app,
+        Output("CpxQJ-plot-pd",          "figure"),
+        Output("CpxQJ-plot-pd",          "config"),
+        Output("CpxQuad-plot-pd",        "figure"),
+        Output("CpxQuad-plot-pd",        "config"),
+        Output("CpxNaPx-plot-pd",        "figure"),
+        Output("CpxNaPx-plot-pd",        "config"),
+
+        Input("compute-Cpx-button",      "n_clicks"),
+
+        State("database-dropdown",       "value"),
+        State("test-dropdown",           "value"),
+
+        prevent_initial_call = true,
+
+        ) do    n_click,
+                dtb,    test
+
+        global points_in_idx, Out_XY;
+
+        title       = db[(db.db .== dtb), :].title[test+1]
+
+        if @isdefined(points_in_idx) && @isdefined(Out_XY)
+            qj, layoutQJ         = get_CpxQJ_diagram()
+            figCpxQJ             = plot( qj, layoutQJ)
+
+            quad, layoutQuad     = get_CpxQuad_diagram()
+            figCpxQuad           = plot( quad, layoutQuad)
+
+            napx, layoutNaPx     = get_CpxNaPx_diagram()
+            figCpxNaPx           = plot( napx, layoutNaPx)
+        else
+            figCpxQJ         = plot(Layout( height= 740 ))
+            figCpxQuad       = plot(Layout( height= 740 ))
+            figCpxNaPx       = plot(Layout( height= 740 ))
+        end
+
+        configCpxQJ   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
+                                        format   = "svg",
+                                        filename = "Cpx_QJ_diagram_"*replace(title, " " => "_"),
+                                        width       = 760,
+                                        height      = 480,
+                                        scale    =  2.0,       ).fields)
+
+        configCpxQuad   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
+                                        format   = "svg",
+                                        filename = "Cpx_Quad_diagram_"*replace(title, " " => "_"),
+                                        width       = 760,
+                                        height      = 480,
+                                        scale    =  2.0,       ).fields)
+
+        configCpxNaPx   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
+                                        format   = "svg",
+                                        filename = "Cpx_NaPx_diagram_"*replace(title, " " => "_"),
+                                        width       = 760,
+                                        height      = 480,
+                                        scale    =  2.0,       ).fields)
+
+        return figCpxQJ, configCpxQJ, figCpxQuad, configCpxQuad, figCpxNaPx, configCpxNaPx
+    end
+
+    callback!(
+        app,
+        Output("Cpx-classification-canvas", "is_open"),
+        Input("Cpx-classification-canvas-button", "n_clicks"),
+        State("Cpx-classification-canvas", "is_open"),
+    ) do n1, is_open
+        return n1 > 0 ? is_open == 0 : is_open
+    end;
+
+
+    """
+        Callback to compute and display orthopyroxene classification diagram
+    """
+    callback!(
+        app,
+        Output("OpxQuad-plot-pd",        "figure"),
+        Output("OpxQuad-plot-pd",        "config"),
+
+        Input("compute-Opx-button",      "n_clicks"),
+
+        State("database-dropdown",       "value"),
+        State("test-dropdown",           "value"),
+
+        prevent_initial_call = true,
+
+        ) do    n_click,
+                dtb,    test
+
+        global points_in_idx, Out_XY;
+
+        title       = db[(db.db .== dtb), :].title[test+1]
+
+        if @isdefined(points_in_idx) && @isdefined(Out_XY)
+            quad, layoutQuad     = get_OpxQuad_diagram()
+            figOpxQuad           = plot( quad, layoutQuad)
+        else
+            figOpxQuad       = plot(Layout( height= 740 ))
+        end
+
+        configOpxQuad   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
+                                        format   = "svg",
+                                        filename = "Opx_Quad_diagram_"*replace(title, " " => "_"),
+                                        width       = 760,
+                                        height      = 480,
+                                        scale    =  2.0,       ).fields)
+
+        return figOpxQuad, configOpxQuad
+    end
+
+    callback!(
+        app,
+        Output("Opx-classification-canvas", "is_open"),
+        Input("Opx-classification-canvas-button", "n_clicks"),
+        State("Opx-classification-canvas", "is_open"),
+    ) do n1, is_open
+        return n1 > 0 ? is_open == 0 : is_open
+    end;
+
+
+    """
+        Callback to compute and display muscovite classification diagrams
+    """
+    callback!(
+        app,
+        Output("MicaInterlayer-plot-pd",  "figure"),
+        Output("MicaInterlayer-plot-pd",  "config"),
+        Output("MicaCeladonite-plot-pd",  "figure"),
+        Output("MicaCeladonite-plot-pd",  "config"),
+
+        Input("compute-Mica-button",      "n_clicks"),
+
+        State("database-dropdown",        "value"),
+        State("test-dropdown",            "value"),
+
+        prevent_initial_call = true,
+
+        ) do    n_click,
+                dtb,    test
+
+        global points_in_idx, Out_XY;
+
+        title       = db[(db.db .== dtb), :].title[test+1]
+
+        if @isdefined(points_in_idx) && @isdefined(Out_XY)
+            il, layoutIL       = get_MicaInterlayer_diagram()
+            figMicaIL          = plot( il, layoutIL)
+
+            cel, layoutCel     = get_MicaCeladonite_diagram()
+            figMicaCel         = plot( cel, layoutCel)
+        else
+            figMicaIL        = plot(Layout( height= 740 ))
+            figMicaCel       = plot(Layout( height= 740 ))
+        end
+
+        configMicaIL   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
+                                        format   = "svg",
+                                        filename = "Mica_Interlayer_diagram_"*replace(title, " " => "_"),
+                                        width       = 760,
+                                        height      = 480,
+                                        scale    =  2.0,       ).fields)
+
+        configMicaCel   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
+                                        format   = "svg",
+                                        filename = "Mica_Celadonite_diagram_"*replace(title, " " => "_"),
+                                        width       = 760,
+                                        height      = 480,
+                                        scale    =  2.0,       ).fields)
+
+        return figMicaIL, configMicaIL, figMicaCel, configMicaCel
+    end
+
+    callback!(
+        app,
+        Output("Mica-classification-canvas", "is_open"),
+        Input("Mica-classification-canvas-button", "n_clicks"),
+        State("Mica-classification-canvas", "is_open"),
+    ) do n1, is_open
+        return n1 > 0 ? is_open == 0 : is_open
+    end;
+
+
+    """
+        Callback to compute and display feldspar classification diagram
+    """
+    callback!(
+        app,
+        Output("Feldspar-plot-pd",       "figure"),
+        Output("Feldspar-plot-pd",       "config"),
+
+        Input("compute-Feldspar-button", "n_clicks"),
+
+        State("database-dropdown",       "value"),
+        State("test-dropdown",           "value"),
+
+        prevent_initial_call = true,
+
+        ) do    n_click,
+                dtb,    test
+
+        global points_in_idx, Out_XY;
+
+        title       = db[(db.db .== dtb), :].title[test+1]
+
+        if @isdefined(points_in_idx) && @isdefined(Out_XY)
+            fsp, layoutFsp     = get_Feldspar_diagram()
+            figFsp             = plot( fsp, layoutFsp)
+        else
+            figFsp       = plot(Layout( height= 740 ))
+        end
+
+        configFsp   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
+                                        format   = "svg",
+                                        filename = "Feldspar_diagram_"*replace(title, " " => "_"),
+                                        width       = 760,
+                                        height      = 480,
+                                        scale    =  2.0,       ).fields)
+
+        return figFsp, configFsp
+    end
+
+    callback!(
+        app,
+        Output("Feldspar-classification-canvas", "is_open"),
+        Input("Feldspar-classification-canvas-button", "n_clicks"),
+        State("Feldspar-classification-canvas", "is_open"),
+    ) do n1, is_open
+        return n1 > 0 ? is_open == 0 : is_open
+    end;
+
+
+    """
+        Callback to compute and display garnet classification diagram
+    """
+    callback!(
+        app,
+        Output("Garnet-plot-pd",         "figure"),
+        Output("Garnet-plot-pd",         "config"),
+
+        Input("compute-Garnet-button",   "n_clicks"),
+
+        State("database-dropdown",       "value"),
+        State("test-dropdown",           "value"),
+
+        prevent_initial_call = true,
+
+        ) do    n_click,
+                dtb,    test
+
+        global points_in_idx, Out_XY;
+
+        title       = db[(db.db .== dtb), :].title[test+1]
+
+        if @isdefined(points_in_idx) && @isdefined(Out_XY)
+            grt, layoutGrt     = get_Garnet_diagram()
+            figGrt             = plot( grt, layoutGrt)
+        else
+            figGrt       = plot(Layout( height= 740 ))
+        end
+
+        configGrt   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
+                                        format   = "svg",
+                                        filename = "Garnet_diagram_"*replace(title, " " => "_"),
+                                        width       = 760,
+                                        height      = 480,
+                                        scale    =  2.0,       ).fields)
+
+        return figGrt, configGrt
+    end
+
+    callback!(
+        app,
+        Output("Garnet-classification-canvas", "is_open"),
+        Input("Garnet-classification-canvas-button", "n_clicks"),
+        State("Garnet-classification-canvas", "is_open"),
+    ) do n1, is_open
+        return n1 > 0 ? is_open == 0 : is_open
+    end;
+
+
+    """
+        Callback to compute and display Fe-Ti oxide classification diagrams
+    """
+    callback!(
+        app,
+        Output("Spinel-plot-pd",         "figure"),
+        Output("Spinel-plot-pd",         "config"),
+        Output("Ilmenite-plot-pd",       "figure"),
+        Output("Ilmenite-plot-pd",       "config"),
+
+        Input("compute-Oxide-button",    "n_clicks"),
+
+        State("database-dropdown",       "value"),
+        State("test-dropdown",           "value"),
+
+        prevent_initial_call = true,
+
+        ) do    n_click,
+                dtb,    test
+
+        global points_in_idx, Out_XY;
+
+        title       = db[(db.db .== dtb), :].title[test+1]
+
+        if @isdefined(points_in_idx) && @isdefined(Out_XY)
+            spl, layoutSpl     = get_Spinel_diagram()
+            figSpl             = plot( spl, layoutSpl)
+
+            ilm, layoutIlm     = get_Ilmenite_diagram()
+            figIlm             = plot( ilm, layoutIlm)
+        else
+            figSpl       = plot(Layout( height= 740 ))
+            figIlm       = plot(Layout( height= 740 ))
+        end
+
+        configSpl   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
+                                        format   = "svg",
+                                        filename = "Spinel_diagram_"*replace(title, " " => "_"),
+                                        width       = 760,
+                                        height      = 480,
+                                        scale    =  2.0,       ).fields)
+
+        configIlm   = PlotConfig(      toImageButtonOptions  = attr(     name     = "Download as svg",
+                                        format   = "svg",
+                                        filename = "Ilmenite_diagram_"*replace(title, " " => "_"),
+                                        width       = 760,
+                                        height      = 480,
+                                        scale    =  2.0,       ).fields)
+
+        return figSpl, configSpl, figIlm, configIlm
+    end
+
+    callback!(
+        app,
+        Output("Oxide-classification-canvas", "is_open"),
+        Input("Oxide-classification-canvas-button", "n_clicks"),
+        State("Oxide-classification-canvas", "is_open"),
+    ) do n1, is_open
+        return n1 > 0 ? is_open == 0 : is_open
+    end;
+
+
     #save all to file
     callback!(
         app,

@@ -1774,18 +1774,334 @@ function Tab_PhaseDiagram()
                                                                     "background-color"  => "rgba(255, 255, 255, 1.0)"),
                                                 ),
                                             ]),
-                                            html_div("‎ "),
-                                            html_h1("Work in progress...", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                            html_hr(),  
 
-                                
                                         ])),
                                         id      = "collapse-class-phase-diagram",
                                         is_open =  true,
                                 ),
                                 # html_div("‎ "),
                                 ]),
+                        dbc_row([
+
+                                dbc_collapse(
+                                    dbc_card(dbc_cardbody([
+                                            html_h1("Amphibole", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            html_hr(),
+                                            dbc_row([
+                                                dbc_col([
+                                                    dbc_button("Compute Ca-amphibole classification",id="compute-CaAmp-button", color="light",  n_clicks=0,
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"1px grey solid",
+                                                                        "width"         => "100%" )),
+                                                ], width=6),
+                                                dbc_col([
+                                                    dbc_button("Display",id="CaAmp-classification-canvas-button", color="light",  n_clicks=0,
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"1px grey solid",
+                                                                        "width"         => "100%" )),
+                                                ], width=6),
+                                            ]),
+                                            dbc_row([
+                                                dbc_offcanvas(
+                                                [
+                                                    dbc_row([
+                                                        CaAmpPanelA_plot_pd()
+                                                    ]),
+                                                    dbc_row([
+                                                        CaAmpPanelB_plot_pd()
+                                                    ]),
+                                                    dbc_row([
+                                                        CaAmpPanelC_plot_pd()
+                                                    ]),
+                                                ],
+
+                                                    id      = "CaAmp-classification-canvas",
+                                                    title   = "Ca-amphibole classification canvas",
+                                                    is_open = false,
+                                                    placement = "start",
+                                                    style   = Dict( "width"             => "660px",
+                                                                    "background-color"  => "rgba(255, 255, 255, 1.0)"),
+                                                ),
+                                            ]),
+                                        ])),
+                                        id      = "collapse-CaAmp-phase-diagram",
+                                        is_open =  true,
+                                ),
+                                ]),
+                        dbc_row([
+
+                                dbc_collapse(
+                                    dbc_card(dbc_cardbody([
+                                            html_h1("Clinopyroxene", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            html_hr(),
+                                            dbc_row([
+                                                dbc_col([
+                                                    dbc_button("Compute clinopyroxene classification",id="compute-Cpx-button", color="light",  n_clicks=0,
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"1px grey solid",
+                                                                        "width"         => "100%" )),
+                                                ], width=6),
+                                                dbc_col([
+                                                    dbc_button("Display",id="Cpx-classification-canvas-button", color="light",  n_clicks=0,
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"1px grey solid",
+                                                                        "width"         => "100%" )),
+                                                ], width=6),
+                                            ]),
+                                            dbc_row([
+                                                dbc_offcanvas(
+                                                [
+                                                    dbc_row([
+                                                        CpxQJ_plot_pd()
+                                                    ]),
+                                                    dbc_row([
+                                                        CpxQuad_plot_pd()
+                                                    ]),
+                                                    dbc_row([
+                                                        CpxNaPx_plot_pd()
+                                                    ]),
+                                                ],
+
+                                                    id      = "Cpx-classification-canvas",
+                                                    title   = "Clinopyroxene classification canvas",
+                                                    is_open = false,
+                                                    placement = "start",
+                                                    style   = Dict( "width"             => "660px",
+                                                                    "background-color"  => "rgba(255, 255, 255, 1.0)"),
+                                                ),
+                                            ]),
+                                        ])),
+                                        id      = "collapse-Cpx-phase-diagram",
+                                        is_open =  true,
+                                ),
+                                ]),
+                        dbc_row([
+
+                                dbc_collapse(
+                                    dbc_card(dbc_cardbody([
+                                            html_h1("Orthopyroxene", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            html_hr(),
+                                            dbc_row([
+                                                dbc_col([
+                                                    dbc_button("Compute orthopyroxene classification",id="compute-Opx-button", color="light",  n_clicks=0,
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"1px grey solid",
+                                                                        "width"         => "100%" )),
+                                                ], width=6),
+                                                dbc_col([
+                                                    dbc_button("Display",id="Opx-classification-canvas-button", color="light",  n_clicks=0,
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"1px grey solid",
+                                                                        "width"         => "100%" )),
+                                                ], width=6),
+                                            ]),
+                                            dbc_row([
+                                                dbc_offcanvas(
+                                                [
+                                                    dbc_row([
+                                                        OpxQuad_plot_pd()
+                                                    ]),
+                                                ],
+
+                                                    id      = "Opx-classification-canvas",
+                                                    title   = "Orthopyroxene classification canvas",
+                                                    is_open = false,
+                                                    placement = "start",
+                                                    style   = Dict( "width"             => "660px",
+                                                                    "background-color"  => "rgba(255, 255, 255, 1.0)"),
+                                                ),
+                                            ]),
+                                        ])),
+                                        id      = "collapse-Opx-phase-diagram",
+                                        is_open =  true,
+                                ),
+                                ]),
+                        dbc_row([
+
+                                dbc_collapse(
+                                    dbc_card(dbc_cardbody([
+                                            html_h1("Muscovite", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            html_hr(),
+                                            dbc_row([
+                                                dbc_col([
+                                                    dbc_button("Compute muscovite classification",id="compute-Mica-button", color="light",  n_clicks=0,
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"1px grey solid",
+                                                                        "width"         => "100%" )),
+                                                ], width=6),
+                                                dbc_col([
+                                                    dbc_button("Display",id="Mica-classification-canvas-button", color="light",  n_clicks=0,
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"1px grey solid",
+                                                                        "width"         => "100%" )),
+                                                ], width=6),
+                                            ]),
+                                            dbc_row([
+                                                dbc_offcanvas(
+                                                [
+                                                    dbc_row([
+                                                        MicaInterlayer_plot_pd()
+                                                    ]),
+                                                    dbc_row([
+                                                        MicaCeladonite_plot_pd()
+                                                    ]),
+                                                ],
+
+                                                    id      = "Mica-classification-canvas",
+                                                    title   = "Muscovite classification canvas",
+                                                    is_open = false,
+                                                    placement = "start",
+                                                    style   = Dict( "width"             => "660px",
+                                                                    "background-color"  => "rgba(255, 255, 255, 1.0)"),
+                                                ),
+                                            ]),
+                                        ])),
+                                        id      = "collapse-Mica-phase-diagram",
+                                        is_open =  true,
+                                ),
+                                ]),
+                        dbc_row([
+
+                                dbc_collapse(
+                                    dbc_card(dbc_cardbody([
+                                            html_h1("Feldspar", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            html_hr(),
+                                            dbc_row([
+                                                dbc_col([
+                                                    dbc_button("Compute feldspar classification",id="compute-Feldspar-button", color="light",  n_clicks=0,
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"1px grey solid",
+                                                                        "width"         => "100%" )),
+                                                ], width=6),
+                                                dbc_col([
+                                                    dbc_button("Display",id="Feldspar-classification-canvas-button", color="light",  n_clicks=0,
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"1px grey solid",
+                                                                        "width"         => "100%" )),
+                                                ], width=6),
+                                            ]),
+                                            dbc_row([
+                                                dbc_offcanvas(
+                                                [
+                                                    dbc_row([
+                                                        Feldspar_plot_pd()
+                                                    ]),
+                                                ],
+
+                                                    id      = "Feldspar-classification-canvas",
+                                                    title   = "Feldspar classification canvas",
+                                                    is_open = false,
+                                                    placement = "start",
+                                                    style   = Dict( "width"             => "660px",
+                                                                    "background-color"  => "rgba(255, 255, 255, 1.0)"),
+                                                ),
+                                            ]),
+                                        ])),
+                                        id      = "collapse-Feldspar-phase-diagram",
+                                        is_open =  true,
+                                ),
+                                ]),
+                        dbc_row([
+
+                                dbc_collapse(
+                                    dbc_card(dbc_cardbody([
+                                            html_h1("Garnet", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            html_hr(),
+                                            dbc_row([
+                                                dbc_col([
+                                                    dbc_button("Compute garnet classification",id="compute-Garnet-button", color="light",  n_clicks=0,
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"1px grey solid",
+                                                                        "width"         => "100%" )),
+                                                ], width=6),
+                                                dbc_col([
+                                                    dbc_button("Display",id="Garnet-classification-canvas-button", color="light",  n_clicks=0,
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"1px grey solid",
+                                                                        "width"         => "100%" )),
+                                                ], width=6),
+                                            ]),
+                                            dbc_row([
+                                                dbc_offcanvas(
+                                                [
+                                                    dbc_row([
+                                                        Garnet_plot_pd()
+                                                    ]),
+                                                ],
+
+                                                    id      = "Garnet-classification-canvas",
+                                                    title   = "Garnet classification canvas",
+                                                    is_open = false,
+                                                    placement = "start",
+                                                    style   = Dict( "width"             => "660px",
+                                                                    "background-color"  => "rgba(255, 255, 255, 1.0)"),
+                                                ),
+                                            ]),
+                                        ])),
+                                        id      = "collapse-Garnet-phase-diagram",
+                                        is_open =  true,
+                                ),
+                                ]),
+                        dbc_row([
+
+                                dbc_collapse(
+                                    dbc_card(dbc_cardbody([
+                                            html_h1("Fe-Ti oxides", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            html_hr(),
+                                            dbc_row([
+                                                dbc_col([
+                                                    dbc_button("Compute Fe-Ti oxide classification",id="compute-Oxide-button", color="light",  n_clicks=0,
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"1px grey solid",
+                                                                        "width"         => "100%" )),
+                                                ], width=6),
+                                                dbc_col([
+                                                    dbc_button("Display",id="Oxide-classification-canvas-button", color="light",  n_clicks=0,
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"1px grey solid",
+                                                                        "width"         => "100%" )),
+                                                ], width=6),
+                                            ]),
+                                            dbc_row([
+                                                dbc_offcanvas(
+                                                [
+                                                    dbc_row([
+                                                        Spinel_plot_pd()
+                                                    ]),
+                                                    dbc_row([
+                                                        Ilmenite_plot_pd()
+                                                    ]),
+                                                ],
+
+                                                    id      = "Oxide-classification-canvas",
+                                                    title   = "Fe-Ti oxide classification canvas",
+                                                    is_open = false,
+                                                    placement = "start",
+                                                    style   = Dict( "width"             => "660px",
+                                                                    "background-color"  => "rgba(255, 255, 255, 1.0)"),
+                                                ),
+                                            ]),
+                                        ])),
+                                        id      = "collapse-Oxide-phase-diagram",
+                                        is_open =  true,
+                                ),
+                                ]),
                             ]),
+
                     
                     ]),
 
