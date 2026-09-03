@@ -2362,7 +2362,9 @@ function get_oxide_list(dbin::String)
     elseif dbin == "rMELTS"
         MAGEMin_ox      = ["SiO2";"Al2O3";"CaO";"MgO";"FeO";"K2O";"Na2O";"TiO2";"O";"MnO"; "Cr2O3";"H2O";"CO2"]; 
     elseif dbin == "pMELTS"
-        MAGEMin_ox      = ["SiO2";"Al2O3";"CaO";"MgO";"FeO";"K2O";"Na2O";"TiO2";"O";"MnO"; "Cr2O3";"H2O"]; 
+        MAGEMin_ox      = ["SiO2";"Al2O3";"CaO";"MgO";"FeO";"K2O";"Na2O";"TiO2";"O";"MnO"; "Cr2O3";"H2O"];
+    elseif dbin == "po"
+        MAGEMin_ox      = ["SiO2"; "Al2O3"; "MgO"; "FeO"; "K2O"; "Na2O"; "H2O"; "CaO"; "TiO2"; "O"];
     else
         print("Database not implemented... $dbin (get_oxide_list)\n")
     end
@@ -2504,7 +2506,7 @@ function bulk_csv_to_db(datain)
         dbin     = lowercase(strip(string(datain[i, idx_db])))
         sysUnit  = lowercase(strip(string(datain[i, idx_sysUnit])))
 
-        valid_db      = ("ig","igd","igm","igad","mb","mbe","um","ume","mp","mtl","mpe","all","cs","sb11","sb21","sb24","rMELTS","pMELTS")
+        valid_db      = ("ig","igd","igm","igad","mb","mbe","um","ume","mp","mtl","mpe","all","cs","sb11","sb21","sb24","rMELTS","pMELTS","po")
         valid_sysunit = ("mol","wt")
 
         if dbin ∉ valid_db

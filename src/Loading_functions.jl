@@ -148,6 +148,8 @@ function get_dtbulk_list()
         Dict("label" => "Metapelite extended (White et al., 2014, Green et al., 2016, Evans & Frost., 2021)", "value" => "mpe"),
         Dict("label" => "Metabasite extended (Green et al., 2016, Diener et al., 2007)", "value" => "mbe"),
         Dict("label" => "Global TC dataset", "value" => "all"),
+        Dict("label" => "- BERMAN EOS DATABASE -", "value" => "separator", "disabled" => true),  # Simulate a horizontal line
+        Dict("label" => "HP/LT (Pourteau et al., 2014)", "value" => "po"),
     ]
 
     dba = DataFrame(        database     = String[],
@@ -224,6 +226,10 @@ function get_dtbulk_list()
 
     push!(dba,Dict(         :database    => "Global TC dataset",
                             :acronym     => "all",
+                            ), cols=:union)
+
+    push!(dba,Dict(         :database    => "Metapelite HP/LT, Ctd-Car-Chl-Mica (Pourteau et al., 2014)",
+                            :acronym     => "po",
                             ), cols=:union)
 
     db = DataFrame(         bulk        = String[],
@@ -942,6 +948,18 @@ function get_dtbulk_list()
                             :oxide      => ["SiO2"; "CaO"; "Al2O3"; "MgO"; "Na2O"; "FeO"; "Cr2O3"; "O"],
                             :frac       => [34.009, 0.755, 0.461, 53.617, 0.008, 5.46, 0.093, 0.081],
                             :frac2      => [34.009, 0.755, 0.461, 53.617, 0.008, 5.46, 0.093, 0.081],
+                            ), cols=:union)
+
+# BERMAN EOS DATABASE
+    push!(db,Dict(          :bulk       => "predefined",
+                            :title      => "Pelite - water oversaturated",
+                            :comments   => "White et al., 2014, Fig 8 (H2O/O adapted for po)",
+                            :db         => "po",
+                            :test       => 0,
+                            :sysUnit    => "mol",
+                            :oxide      => ["SiO2","Al2O3","MgO","FeO","K2O","Na2O","H2O","CaO","TiO2","O"],
+                            :frac       => [64.578, 13.651, 5.529, 8.025,2.943, 2.0, 13.5, 1.586, 0.907, 0.0],
+                            :frac2      => [64.578, 13.651, 5.529, 8.025,2.943, 2.0, 13.5, 1.586, 0.907, 0.0],
                             ), cols=:union)
 
 # MELTS DATABASE

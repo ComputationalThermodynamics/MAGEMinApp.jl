@@ -411,7 +411,7 @@ function Tab_Simulation_Callbacks(app)
 
         bid = pushed_button( callback_context() )
 
-        if dtb == "sb11" || dtb == "sb21" || dtb == "sb24" || dtb == "rMELTS" || dtb == "pMELTS"
+        if dtb == "sb11" || dtb == "sb21" || dtb == "sb24" || dtb == "rMELTS" || dtb == "pMELTS" || dtb == "po"
             style  = Dict("display" => "none")
         else
             style   = Dict("display" => "block")
