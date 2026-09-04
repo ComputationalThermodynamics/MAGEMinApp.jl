@@ -176,23 +176,23 @@ function Tab_Simulation()
                                         html_div("‎ "),
                                         dbc_row([
                                             dbc_col([
-                                                html_h1("Free oxide 1", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                                html_h1("μ oxide 1", style = Dict("textAlign" => "center","font-size" => "120%")),
                                             ]),
                                             dbc_col([
                                                 dcc_dropdown(   id      = "mumu-oxide1-dropdown",
                                                 options = [ Dict("label" => ox, "value" => ox)
                                                             for ox in db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1] ],
-                                                value       = "SiO2",
+                                                value       = "MgO",
                                                 clearable   = false,
                                                 multi       = false),
                                                 dbc_row([
                                                     dbc_col([
                                                         html_h1("min [mol%]", style = Dict("textAlign" => "center","font-size" => "100%")),
-                                                        dbc_input(id = "mumu-oxide1-min-id", type = "number", min = 0.0, max = 100.0, value = 35.0),
+                                                        dbc_input(id = "mumu-oxide1-min-id", type = "number", min = 0.0, max = 100.0, value = 0.1),
                                                     ]),
                                                     dbc_col([
                                                         html_h1("max [mol%]", style = Dict("textAlign" => "center","font-size" => "100%")),
-                                                        dbc_input(id = "mumu-oxide1-max-id", type = "number", min = 0.0, max = 100.0, value = 55.0),
+                                                        dbc_input(id = "mumu-oxide1-max-id", type = "number", min = 0.0, max = 100.0, value = 20.0),
                                                     ]),
                                                 ]),
                                             ]),
@@ -200,23 +200,23 @@ function Tab_Simulation()
                                         html_div("‎ "),
                                         dbc_row([
                                             dbc_col([
-                                                html_h1("Free oxide 2", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                                html_h1("μ oxide 2", style = Dict("textAlign" => "center","font-size" => "120%")),
                                             ]),
                                             dbc_col([
                                                 dcc_dropdown(   id      = "mumu-oxide2-dropdown",
                                                 options = [ Dict("label" => ox, "value" => ox)
                                                             for ox in db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1] ],
-                                                value       = "Al2O3",
+                                                value       = "O",
                                                 clearable   = false,
                                                 multi       = false),
                                                 dbc_row([
                                                     dbc_col([
                                                         html_h1("min [mol%]", style = Dict("textAlign" => "center","font-size" => "100%")),
-                                                        dbc_input(id = "mumu-oxide2-min-id", type = "number", min = 0.0, max = 100.0, value = 8.0),
+                                                        dbc_input(id = "mumu-oxide2-min-id", type = "number", min = 0.0, max = 100.0, value = 0.1),
                                                     ]),
                                                     dbc_col([
                                                         html_h1("max [mol%]", style = Dict("textAlign" => "center","font-size" => "100%")),
-                                                        dbc_input(id = "mumu-oxide2-max-id", type = "number", min = 0.0, max = 100.0, value = 16.0),
+                                                        dbc_input(id = "mumu-oxide2-max-id", type = "number", min = 0.0, max = 100.0, value = 2.0),
                                                     ]),
                                                 ]),
                                             ]),
