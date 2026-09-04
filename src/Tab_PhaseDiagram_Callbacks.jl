@@ -1326,6 +1326,13 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("buffer-1-mul-id",        "value"),           # buffer n 1
         State("buffer-2-mul-id",        "value"),           # buffer n 2
 
+        State("mumu-oxide1-dropdown",      "value"),
+        State("mumu-oxide2-dropdown",      "value"),
+        State("mumu-mu1-min-id",           "value"),
+        State("mumu-mu1-max-id",           "value"),
+        State("mumu-mu2-min-id",           "value"),
+        State("mumu-mu2-max-id",           "value"),
+
         State("tepm-dropdown",          "value"),
         State("kds-dropdown",           "value"),
         State("zrsat-dropdown",         "value"),
@@ -1379,8 +1386,9 @@ function Tab_PhaseDiagram_Callbacks(app)
             fixT,       fixP,
             sub,        refType,    refLvl,
             bufferType, solver,     boost,      verbose,    scp,        sas,        wf,         seismicCorMode, aspectRatioVal, seismicWaterMode, shallowCorMode, fluidAsMeltMode, anelasticCorMode,
-            bulk1,      bulk2,      sys_unit,   
+            bulk1,      bulk2,      sys_unit,
             bufferN1,   bufferN2,
+            mumu_oxide1, mumu_oxide2, mumu_mu1_min, mumu_mu1_max, mumu_mu2_min, mumu_mu2_max,
             tepm,       kds_mod,    zrsat_mod,  ssat_mod,   co2sat_mod, P2O5sat_mod,    bulkte1,    bulkte2,
             test,
             isopleths,  isoplethsID,isoplethsHid,  isoplethsHidID,  phase,      ss,         em,     ox,    of,     ot, sys, rmf, calc, cust, calc_sf, calc_ox, cust_sf, cust_ox,
@@ -1411,6 +1419,21 @@ function Tab_PhaseDiagram_Callbacks(app)
         bulkte_L, bulkte_R, elem        = get_terock_prop(bulkte1, bulkte2)
         colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)              # get colormap information
         bulk_L, bulk_R, oxi             = get_bulkrock_prop(bulk1, bulk2; sys_unit=sys_unit)                               # get bulk rock composition information
+
+        mumu_oxide1_idx     = 0
+        mumu_oxide2_idx     = 0
+
+        if diagType == "mumu"
+            mumu_oxide1_idx     = findfirst(oxi .== mumu_oxide1)
+            mumu_oxide2_idx     = findfirst(oxi .== mumu_oxide2)
+
+            xtitle, ytitle, _, _   = diagram_type(diagType, tmin, tmax, pmin, pmax, e1_tmin, e1_tmax, e2_tmin, e2_tmax;
+                                                    mumu_oxide1_name=mumu_oxide1, mumu_oxide2_name=mumu_oxide2)
+
+            Xrange = (Float64(mumu_mu1_min), Float64(mumu_mu1_max))
+            Yrange = (Float64(mumu_mu2_min), Float64(mumu_mu2_max))
+        end
+
         fieldNames                      = ["data_plot","data_reaction","data_grid","data_isopleth_out"]
         fieldNames_exp                  = ["data_plot","data_reaction","data_grid","data_isopleth_out_export"]
         field2plot                      = zeros(Int64,4)
@@ -1459,7 +1482,8 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                                                         smooth,     colorm,     reverseColorMap, set_white,
                                                                                                         test,       refType,
                                                                                                         seismicScheme, seismicWeightFactor,
-                                                                                                        seismicCor, aspectRatio, seismicWater, shallowCor, fluidAsMelt, anelasticCor        )
+                                                                                                        seismicCor, aspectRatio, seismicWater, shallowCor, fluidAsMelt, anelasticCor;
+                                                                                                        mumu_oxide1_idx=mumu_oxide1_idx, mumu_oxide2_idx=mumu_oxide2_idx        )
             if tepm == "true"
                 if dtb != "um" && dtb != "ume" && dtb != "mtl"
                     t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
@@ -1514,7 +1538,8 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                                     smooth,     colorm,     reverseColorMap, set_white,
                                                                                     test,       refType,    bid,
                                                                                     seismicScheme, seismicWeightFactor,
-                                                                                    seismicCor, aspectRatio, seismicWater, shallowCor, fluidAsMelt, anelasticCor     )
+                                                                                    seismicCor, aspectRatio, seismicWater, shallowCor, fluidAsMelt, anelasticCor;
+                                                                                    mumu_oxide1_idx=mumu_oxide1_idx, mumu_oxide2_idx=mumu_oxide2_idx     )
 
             if tepm == "true"
                 if dtb != "um" && dtb != "ume" && dtb != "mtl"

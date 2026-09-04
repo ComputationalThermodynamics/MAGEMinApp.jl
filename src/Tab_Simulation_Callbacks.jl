@@ -1023,6 +1023,7 @@ function Tab_Simulation_Callbacks(app)
         Output("event2-temperature-id", "style"),
         Output("display-refine-option-id", "style"),
         Output("display-refine-option-2-id", "style"),
+        Output("mumu-setup-id", "style"),
         Input("diagram-dropdown", "value"),
 
         prevent_initial_call = true,
@@ -1041,8 +1042,9 @@ function Tab_Simulation_Callbacks(app)
             watsat  = Dict("display" => "none")
             T1      = Dict("display" => "none")
             T2      = Dict("display" => "none")
-            refine  = Dict("display" => "block")  
-            refine2 = Dict("display" => "block")  
+            refine  = Dict("display" => "block")
+            refine2 = Dict("display" => "block")
+            mumu    = Dict("display" => "none")
         elseif value == "tx"
             Tstyle  = Dict("display" => "none")
             Pstyle  = Dict("display" => "block")
@@ -1053,11 +1055,12 @@ function Tab_Simulation_Callbacks(app)
             PTx     = Dict("display" => "none")
             testte2 = Dict("display" => "block")  
             tabte2  = Dict("display" => "block") 
-            watsat  = Dict("display" => "none")  
+            watsat  = Dict("display" => "none")
             T1      = Dict("display" => "none")
             T2      = Dict("display" => "none")
-            refine  = Dict("display" => "block")  
+            refine  = Dict("display" => "block")
             refine2 = Dict("display" => "block")
+            mumu    = Dict("display" => "none")
         elseif value == "pt"
             Tstyle  = Dict("display" => "none")
             Pstyle  = Dict("display" => "none")
@@ -1070,9 +1073,10 @@ function Tab_Simulation_Callbacks(app)
             tabte2  = Dict("display" => "none") 
             watsat  = Dict("display" => "block")
             T1      = Dict("display" => "none")
-            T2      = Dict("display" => "none")  
-            refine  = Dict("display" => "block")  
+            T2      = Dict("display" => "none")
+            refine  = Dict("display" => "block")
             refine2 = Dict("display" => "block")
+            mumu    = Dict("display" => "none")
         elseif value == "ptx"
             Tstyle  = Dict("display" => "none")
             Pstyle  = Dict("display" => "none")
@@ -1083,11 +1087,12 @@ function Tab_Simulation_Callbacks(app)
             PTx     = Dict("display" => "block")
             testte2 = Dict("display" => "block")  
             tabte2  = Dict("display" => "block") 
-            watsat  = Dict("display" => "none")  
+            watsat  = Dict("display" => "none")
             T1      = Dict("display" => "none")
             T2      = Dict("display" => "none")
-            refine  = Dict("display" => "block")  
+            refine  = Dict("display" => "block")
             refine2 = Dict("display" => "block")
+            mumu    = Dict("display" => "none")
         elseif value == "tt"
             Tstyle  = Dict("display" => "none")
             Pstyle  = Dict("display" => "block")
@@ -1098,28 +1103,145 @@ function Tab_Simulation_Callbacks(app)
             PTx     = Dict("display" => "none")
             testte2 = Dict("display" => "none")  
             tabte2  = Dict("display" => "none") 
-            watsat  = Dict("display" => "none")  
+            watsat  = Dict("display" => "none")
             T1      = Dict("display" => "block")
             T2      = Dict("display" => "block")
             refine  = Dict("display" => "block")  #was none, trying to refine TT diagrams now
             refine2 = Dict("display" => "block")  #was none, trying to refine TT diagrams now
+            mumu    = Dict("display" => "none")
+        elseif value == "mumu"
+            Tstyle  = Dict("display" => "block")
+            Pstyle  = Dict("display" => "block")
+            Ts      = Dict("display" => "none")
+            Ps      = Dict("display" => "none")
+            test2   = Dict("display" => "none")
+            table2  = Dict("display" => "none")
+            PTx     = Dict("display" => "none")
+            testte2 = Dict("display" => "none")
+            tabte2  = Dict("display" => "none")
+            watsat  = Dict("display" => "none")
+            T1      = Dict("display" => "none")
+            T2      = Dict("display" => "none")
+            refine  = Dict("display" => "block")
+            refine2 = Dict("display" => "block")
+            mumu    = Dict("display" => "block")
         else
             Tstyle  = Dict("display" => "none")
             Pstyle  = Dict("display" => "none")
             Ts      = Dict("display" => "none")
             Ps      = Dict("display" => "none")
-            test2   = Dict("display" => "none")  
-            table2  = Dict("display" => "none") 
+            test2   = Dict("display" => "none")
+            table2  = Dict("display" => "none")
             PTx     = Dict("display" => "none")
-            testte2 = Dict("display" => "none")  
-            tabte2  = Dict("display" => "none") 
-            watsat  = Dict("display" => "none")  
+            testte2 = Dict("display" => "none")
+            tabte2  = Dict("display" => "none")
+            watsat  = Dict("display" => "none")
             T1      = Dict("display" => "none")
             T2      = Dict("display" => "none")
-            refine  = Dict("display" => "none")  
+            refine  = Dict("display" => "none")
+            mumu    = Dict("display" => "none")
         end
 
-        return Tstyle, Pstyle, Ts, Ps, test2, table2, PTx, testte2, tabte2, watsat, T1, T2, refine, refine2
+        return Tstyle, Pstyle, Ts, Ps, test2, table2, PTx, testte2, tabte2, watsat, T1, T2, refine, refine2, mumu
+    end
+
+
+    callback!(
+        app,
+        Output("mumu-oxide1-dropdown",     "options"),
+        Output("mumu-oxide2-dropdown",     "options"),
+        Output("table-bulk-rock",          "style_data_conditional"),
+
+        Input("table-bulk-rock",           "data"),
+        Input("mumu-oxide1-dropdown",      "value"),
+        Input("mumu-oxide2-dropdown",      "value"),
+        Input("diagram-dropdown",          "value"),
+
+        prevent_initial_call = true,
+
+    ) do bulk_data, ox1, ox2, diagType
+
+        oxides  = [row["oxide"] for row in bulk_data]
+        opts1   = [Dict("label" => ox, "value" => ox) for ox in oxides if ox != ox2]
+        opts2   = [Dict("label" => ox, "value" => ox) for ox in oxides if ox != ox1]
+
+        style_cond = []
+        if diagType == "mumu"
+            for (i, row) in enumerate(bulk_data)
+                if row["oxide"] == ox1 || row["oxide"] == ox2
+                    push!(style_cond, Dict(
+                        "if"                => Dict("row_index" => i-1, "column_id" => "fraction"),
+                        "backgroundColor"   => "#e9ecef",
+                        "color"             => "#6c757d",
+                        "pointerEvents"     => "none",
+                    ))
+                end
+            end
+        end
+
+        return opts1, opts2, style_cond
+    end
+
+
+    callback!(
+        app,
+        Output("mumu-mu1-min-id",              "value"),
+        Output("mumu-mu1-max-id",              "value"),
+        Output("mumu-mu2-min-id",              "value"),
+        Output("mumu-mu2-max-id",              "value"),
+        Output("mumu-bounds-warning",          "children"),
+        Output("mumu-bounds-warning",          "is_open"),
+
+        Input("compute-mumu-bounds-button",    "n_clicks"),
+
+        State("table-bulk-rock",               "data"),
+        State("mumu-oxide1-dropdown",          "value"),
+        State("mumu-oxide2-dropdown",          "value"),
+        State("mumu-oxide1-min-id",            "value"),
+        State("mumu-oxide1-max-id",            "value"),
+        State("mumu-oxide2-min-id",            "value"),
+        State("mumu-oxide2-max-id",            "value"),
+        State("fixed-pressure-val-id",         "value"),
+        State("fixed-temperature-val-id",      "value"),
+        State("database-dropdown",             "value"),
+        State("buffer-dropdown",               "value"),
+        State("solver-dropdown",               "value"),
+        State("select-bulk-unit",              "value"),
+
+        prevent_initial_call = true,
+
+    ) do n_clicks, bulk_data, ox1, ox2, ox1_min, ox1_max, ox2_min, ox2_max, fixP, fixT, dtb, bufferType, solver, sys_unit
+
+        oxi     = [row["oxide"] for row in bulk_data]
+        bulk    = [Float64(row["fraction"] isa String ? parse(Float64, row["fraction"]) : row["fraction"]) for row in bulk_data]
+        bulk  ./= sum(bulk)
+        if sys_unit == 2
+            bulk    = wt2mol(bulk, oxi)
+            bulk  ./= sum(bulk)
+        end
+
+        idx1    = findfirst(oxi .== ox1)
+        idx2    = findfirst(oxi .== ox2)
+        fixP_kbar = to_kbar_pressure(Float64(fixP))
+
+        mu1_bounds, mu2_bounds, statuses, ok = compute_mumu_bounds(
+            fixP_kbar,          Float64(fixT),
+            bulk,               oxi,
+            idx1,               idx2,
+            Float64(ox1_min)/100.0,    Float64(ox1_max)/100.0,
+            Float64(ox2_min)/100.0,    Float64(ox2_max)/100.0,
+            dtb,    bufferType, solver,
+            -1,  0.0,        nothing,
+            false,  "OFF",      0.0     )
+
+        if ok
+            warn_msg, warn_open = "", false
+        else
+            warn_msg  = "One or more pre-pass minimizations did not converge (status=$(statuses)) — bounds shown may be unreliable. Try narrower content bounds."
+            warn_open = true
+        end
+
+        return round(mu1_bounds[1],digits=2), round(mu1_bounds[2],digits=2), round(mu2_bounds[1],digits=2), round(mu2_bounds[2],digits=2), warn_msg, warn_open
     end
 
 

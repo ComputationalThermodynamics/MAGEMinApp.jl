@@ -1,10 +1,96 @@
 
 """
+    compute_mumu_bounds(    fixP,           fixT,
+                            bulk_ref,       oxi,
+                            oxide1_idx,     oxide2_idx,
+                            oxide1_min,     oxide1_max,
+                            oxide2_min,     oxide2_max,
+                            dtb,            bufferType, solver,
+                            verbose,        bufferN,    phase_selection,
+                            cpx,            limOpx,     limOpxVal   )
+
+    Pre-pass for a mu-mu (chemical potential) diagram: at fixed P,T and the
+    reference bulk composition, runs 4 single-point minimizations — oxide1
+    at its min/max content bound (oxide2 held at its reference value), then
+    oxide2 at its min/max bound (oxide1 held at its reference value) — and
+    reads off the resulting chemical potentials (`Gamma`) for the varied
+    oxide from each. This determines the μ-axis bounds a mu-mu grid should
+    span (μ generally moves non-monotonically-predictably with which bound
+    is "min"/"max" content, so the two evaluated values are sorted into
+    (mu_min, mu_max) rather than assumed to correspond directly to
+    (content_min, content_max)).
+
+    Self-contained (own single-thread `init_MAGEMin` instance) so it can run
+    standalone from a "Compute μ bounds" UI action before any AMR mesh or
+    the main multi-threaded `MAGEMin_data` bundle exists — mirrors
+    `get_wat_sat_function`'s pre-pass pattern below.
+
+    Returns `(mu1_bounds, mu2_bounds, statuses, ok)` where `statuses` is the
+    4 `gmin_struct.status` values (0 = converged, 5 = not converged) in
+    (oxide1_min, oxide1_max, oxide2_min, oxide2_max) order, and `ok` is
+    `all(statuses .== 0)`.
+"""
+function compute_mumu_bounds(   fixP            :: Float64,
+                                fixT            :: Float64,
+                                bulk_ref        :: Vector{Float64},
+                                oxi             :: Vector{String},
+                                oxide1_idx      :: Int64,
+                                oxide2_idx      :: Int64,
+                                oxide1_min      :: Float64,
+                                oxide1_max      :: Float64,
+                                oxide2_min      :: Float64,
+                                oxide2_max      :: Float64,
+                                dtb             :: String,
+                                bufferType      :: String,
+                                solver          :: String,
+                                verbose,
+                                bufferN         :: Float64,
+                                phase_selection,
+                                cpx,            limOpx,     limOpxVal   )
+
+    mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb, solver, cpx, limOpx, limOpxVal )
+
+    gv, z_b, DB, splx_data = init_MAGEMin(  dtb;
+                                            verbose     = verbose,
+                                            mbCpx       = mbCpx,
+                                            limitCaOpx  = limitCaOpx,
+                                            CaOpxLim    = CaOpxLim,
+                                            buffer      = bufferType,
+                                            solver      = sol    );
+
+    sys_in  = "mol"
+
+    function eval_gamma(content1, content2, target_idx)
+        trial               = deepcopy(bulk_ref)
+        trial[oxide1_idx]   = content1
+        trial[oxide2_idx]   = content2
+        gv2     = define_bulk_rock(gv, trial, oxi, sys_in, dtb)
+        out     = deepcopy( point_wise_minimization(fixP, fixT, gv2, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
+        return out.Gamma[target_idx], out.status
+    end
+
+    mu1_a, status_1a  = eval_gamma(oxide1_min, bulk_ref[oxide2_idx], oxide1_idx)
+    mu1_b, status_1b  = eval_gamma(oxide1_max, bulk_ref[oxide2_idx], oxide1_idx)
+    mu2_a, status_2a  = eval_gamma(bulk_ref[oxide1_idx], oxide2_min, oxide2_idx)
+    mu2_b, status_2b  = eval_gamma(bulk_ref[oxide1_idx], oxide2_max, oxide2_idx)
+
+    LibMAGEMin.FreeDatabases(gv, DB, z_b, pointer_from_objref(splx_data))
+
+    mu1_bounds  = (min(mu1_a,mu1_b), max(mu1_a,mu1_b))
+    mu2_bounds  = (min(mu2_a,mu2_b), max(mu2_a,mu2_b))
+    statuses    = (status_1a, status_1b, status_2a, status_2b)
+    ok          = all(statuses .== 0)
+
+    return mu1_bounds, mu2_bounds, statuses, ok
+end
+
+
+"""
     get_wat_sat_function(     Yrange,     bulk_ini,   oxi,    phase_selection,
                                 dtb,        bufferType, solver,
                                 verbose,    bufferN,
                                 cpx,        limOpx,     limOpxVal)
-    
+
     Computes water-saturation at sub-solidus
 
 """
@@ -226,11 +312,102 @@ function get_data_thread( MAGEMin_db :: MAGEMin_Data )
     z_b         = MAGEMin_db.z_b[id]
     DB          = MAGEMin_db.DB[id]
     splx_data   = MAGEMin_db.splx_data[id]
-    
+
    return (gv, z_b, DB, splx_data)
 end
 
-function refine_MAGEMin(dtb,data, 
+"""
+    multi_point_mumu(     target_mu1,     target_mu2,
+                        oxide1_idx,     oxide2_idx,
+                        bulk_ref,       oxi,
+                        fixP,           fixT,       dtb,
+                        MAGEMin_data;
+                        bufferN, phase_selection, tol )
+
+    For a mu-mu (chemical potential) diagram: given `n = length(target_mu1)`
+    target (μ1,μ2) grid points, compute — independently per point, in
+    parallel — the equilibrium at each target via MAGEMin_C's native
+    chemical-potential-fixing mechanism (`mu_fix_idx`/`mu_fix_val`): one
+    `point_wise_minimization` call per point with
+    `mu_fix_val=[target_mu1[i], target_mu2[i]]`, no search loop. Requires
+    `MAGEMin_data` to have been built with
+    `mu_fix_idx=[oxi[oxide1_idx],oxi[oxide2_idx]]` at `Initialize_MAGEMin`
+    time (see `refine_MAGEMin`'s "mumu" branch and
+    `compute_new_phaseDiagram`/`refine_phaseDiagram`, which build it this
+    way whenever `diagType=="mumu"`).
+
+    The trial bulk composition is `bulk_ref` with both mu-mu oxides
+    unconditionally overridden to `100.0` (mol%, pre-normalization) — the
+    bulk-rock table's own entries for those two oxides are irrelevant here
+    (locked/greyed in the UI) and never read. MAGEMin_C's docs for
+    `mu_fix_val` require each fixed oxide's bulk content to be set
+    "generously in excess" of what its target implies, or the underlying
+    fictive-phase mechanism may not reliably activate; `100.0` is used
+    unconditionally for both oxides so this always holds regardless of P,T
+    or the rest of the bulk composition, without needing user input.
+    MAGEMin_C explicitly does not itself verify the target was hit, so this
+    still checks `out.Gamma` against `(target_mu1[i],target_mu2[i])` before
+    reporting a point converged.
+
+    Mirrors `multi_point_minimization`'s own `@threads :static` outer loop
+    over grid points and per-thread buffer pattern (`get_data_thread`) —
+    NOT a modification of `multi_point_minimization` itself.
+
+    Returns `(results, status)`: `results` is a `Vector{gmin_struct}` (for
+    direct storage into `Out_XY`/`Hash_XY`/`n_phase_XY` like any other
+    diagram type), `status` is `0` (both targets hit within `tol`) or `5`
+    (not hit — e.g. a target outside what any real phase in the database
+    can support at this P,T) per point, same convention as
+    `gmin_struct.status`.
+"""
+function multi_point_mumu(     target_mu1      :: Vector{Float64},
+                                target_mu2      :: Vector{Float64},
+                                oxide1_idx      :: Int64,
+                                oxide2_idx      :: Int64,
+                                bulk_ref        :: Vector{Float64},
+                                oxi             :: Vector{String},
+                                fixP            :: Float64,
+                                fixT            :: Float64,
+                                dtb             :: String,
+                                MAGEMin_data    :: MAGEMin_Data;
+                                bufferN         :: Float64 = 0.0,
+                                phase_selection = nothing,
+                                tol             :: Float64 = 1e-3    )
+
+    n           = length(target_mu1)
+    results     = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef, n)
+    status      = Vector{Int64}(undef, n)
+    sys_in      = "mol"
+
+    trial_seed              = deepcopy(bulk_ref)
+    trial_seed[oxide1_idx]  = 100.0
+    trial_seed[oxide2_idx]  = 100.0
+
+    count = 0
+
+    @showprogress desc="Computing $n points..." @threads :static for i in eachindex(target_mu1)
+
+        gv, z_b, DB, splx_data = get_data_thread(MAGEMin_data)
+
+        gv2 = define_bulk_rock(gv, trial_seed, oxi, sys_in, dtb)
+        out = deepcopy( point_wise_minimization(fixP, fixT, gv2, z_b, DB, splx_data, sys_in;
+                                                    buffer_n=bufferN, rm_list=phase_selection, name_solvus=true,
+                                                    mu_fix_val=[target_mu1[i], target_mu2[i]]    ) )
+
+        conv        = abs(out.Gamma[oxide1_idx] - target_mu1[i]) < tol &&
+                      abs(out.Gamma[oxide2_idx] - target_mu2[i]) < tol
+
+        results[i]  = out
+        status[i]   = conv ? 0 : 5
+
+        count += 1
+        update_progress(count, n, time())
+    end
+
+    return results, status
+end
+
+function refine_MAGEMin(dtb,data,
                         MAGEMin_data    :: MAGEMin_Data, 
                         custW           :: Bool,
                         diagType        :: String,
@@ -260,7 +437,9 @@ function refine_MAGEMin(dtb,data,
                         seismic_water   :: Int64,
                         shallow_cor     :: Bool,
                         fluid_as_melt   :: Bool,
-                        anelastic_correction :: Bool    )
+                        anelastic_correction :: Bool;
+                        mumu_oxide1_idx     :: Int64                   = 0,
+                        mumu_oxide2_idx     :: Int64                   = 0    )
     global Out_XY, addedRefinementLvl;
 
     #= First we create a structure to store the data in memory =#
@@ -324,7 +503,30 @@ function refine_MAGEMin(dtb,data,
             Gvec = nothing;
         end
 
-        if diagType != "tt"    
+        if diagType == "mumu"
+
+            target_mu1 = zeros(Float64,n_new_points)
+            target_mu2 = zeros(Float64,n_new_points)
+            for i = 1:n_new_points
+                target_mu1[i] = npoints[i][1]
+                target_mu2[i] = npoints[i][2]
+            end
+
+            Out_XY_new, mumu_status = multi_point_mumu(
+                                            target_mu1,     target_mu2,
+                                            mumu_oxide1_idx, mumu_oxide2_idx,
+                                            bulk_L,         oxi,
+                                            fixP,           fixT,           dtb,
+                                            MAGEMin_data;
+                                            bufferN         = bufferN1,
+                                            phase_selection = phase_selection    )
+
+            n_failed = count(==(5), mumu_status)
+            if n_failed > 0
+                println("Warning: $n_failed / $n_new_points mu-mu grid point(s) did not converge (status=5) — check your oxide content bounds.")
+            end
+
+        elseif diagType != "tt"
             if diagType == "tx"
 
                 for i = 1:n_new_points

@@ -164,12 +164,107 @@ function Tab_Simulation()
                                                 (label = "T-X diagram (fixed pressure)",            value = "tx"),
                                                 (label = "PT-X diagram",                            value = "ptx"),
                                                 (label = "T-T diagram (poly-metamorphic)",          value = "tt"),
+                                                (label = "μ-μ diagram (chemical potential)",        value = "mumu"),
                                             ],
                                             value="pt" ,
                                             clearable   = false,
                                             multi   = false),
                                         ]),
                                     ]),
+
+                                    html_div([
+                                        html_div("‎ "),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Free oxide 1", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            ]),
+                                            dbc_col([
+                                                dcc_dropdown(   id      = "mumu-oxide1-dropdown",
+                                                options = [ Dict("label" => ox, "value" => ox)
+                                                            for ox in db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1] ],
+                                                value       = "SiO2",
+                                                clearable   = false,
+                                                multi       = false),
+                                                dbc_row([
+                                                    dbc_col([
+                                                        html_h1("min [mol%]", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                        dbc_input(id = "mumu-oxide1-min-id", type = "number", min = 0.0, max = 100.0, value = 35.0),
+                                                    ]),
+                                                    dbc_col([
+                                                        html_h1("max [mol%]", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                        dbc_input(id = "mumu-oxide1-max-id", type = "number", min = 0.0, max = 100.0, value = 55.0),
+                                                    ]),
+                                                ]),
+                                            ]),
+                                        ]),
+                                        html_div("‎ "),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Free oxide 2", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            ]),
+                                            dbc_col([
+                                                dcc_dropdown(   id      = "mumu-oxide2-dropdown",
+                                                options = [ Dict("label" => ox, "value" => ox)
+                                                            for ox in db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1] ],
+                                                value       = "Al2O3",
+                                                clearable   = false,
+                                                multi       = false),
+                                                dbc_row([
+                                                    dbc_col([
+                                                        html_h1("min [mol%]", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                        dbc_input(id = "mumu-oxide2-min-id", type = "number", min = 0.0, max = 100.0, value = 8.0),
+                                                    ]),
+                                                    dbc_col([
+                                                        html_h1("max [mol%]", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                        dbc_input(id = "mumu-oxide2-max-id", type = "number", min = 0.0, max = 100.0, value = 16.0),
+                                                    ]),
+                                                ]),
+                                            ]),
+                                        ]),
+                                        html_div("‎ "),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("μ bounds", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            ]),
+                                            dbc_col([
+                                                dbc_button("Compute μ bounds", id="compute-mumu-bounds-button", color="light", n_clicks=0,
+                                                style       = Dict( "textAlign"     => "center",
+                                                                    "font-size"     => "100%",
+                                                                    "border"        =>"1px grey solid",
+                                                                    "width"         => "100%" )),
+                                                html_div("‎ "),
+                                                dbc_row([
+                                                    dbc_col([
+                                                        html_h1("min [μ1, J/mol]", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                        dbc_input(id = "mumu-mu1-min-id", type = "number", value = 0.0),
+                                                    ]),
+                                                    dbc_col([
+                                                        html_h1("max [μ1, J/mol]", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                        dbc_input(id = "mumu-mu1-max-id", type = "number", value = 1.0),
+                                                    ]),
+                                                ]),
+                                                html_div("‎ "),
+                                                dbc_row([
+                                                    dbc_col([
+                                                        html_h1("min [μ2, J/mol]", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                        dbc_input(id = "mumu-mu2-min-id", type = "number", value = 0.0),
+                                                    ]),
+                                                    dbc_col([
+                                                        html_h1("max [μ2, J/mol]", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                        dbc_input(id = "mumu-mu2-max-id", type = "number", value = 1.0),
+                                                    ]),
+                                                ]),
+                                            ]),
+                                        ]),
+                                        html_div("‎ "),
+                                        dbc_alert(
+                                            "",
+                                            id      = "mumu-bounds-warning",
+                                            color   = "warning",
+                                            is_open = false,
+                                            duration= 6000,
+                                        ),
+                                    ], style = Dict("display" => "none"), id = "mumu-setup-id"), #none, block
                                     html_div([
                                         dbc_row([
                                             dbc_col([ 
