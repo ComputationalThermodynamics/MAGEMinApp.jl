@@ -760,7 +760,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             # TE initialization: set up KD database, adjust TE bulk compositions, and
             # pre-adjust the assimilant TE if assimilation is active
             te_enabled  = te_model == "true" && !isempty(bulkte_ini) && !isempty(kds_mod) &&
-                          !(dtb in ["um", "ume", "mtl"])
+                          !(dtb in ["um", "ume", "mtl", "po"])
             if te_enabled
                 KDs_dtb      = build_kds_database(kds_mod)
                 bulkte_ini_a = MAGEMin_C.adjust_chemical_system(KDs_dtb, bulkte_ini, elem_TE)

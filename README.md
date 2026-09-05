@@ -16,8 +16,11 @@
 5. Compute Pressure-Temperature path diagrams for fractional melting and crystallization.
 6. Save generated diagrams/figures as vector files (svg format).
 7. Export single point and whole grid information as table (ascii format)
+8. Compute Temperature-Temperature poly-metamorphic path diagrams.
+9. Compute μ-μ (chemical potential) diagrams, fixing the chemical potential of two oxide components directly via `MAGEMin`'s native chemical-potential mechanism.
+10. Classify computed phases using standard petrological classification diagrams: melt (TAS & AFM), Ca-amphibole (Leake et al., 1997), clinopyroxene (Morimoto et al., 1988), orthopyroxene, muscovite, feldspar, garnet and Fe-Ti oxides, with an optional switch to Warr (2021) IMA-CNMNC mineral abbreviations.
 
-As for `MAGEMin`, you can choose among several thermodynamic dataset: Metapelite (White et al., 2014), Metabasite (Green et al., 2016), Igneous (Holland et al., 2018) or Ultramafic (Evans & Frost, 2021).
+As for `MAGEMin`, you can choose among several thermodynamic datasets, including Metapelite (White et al., 2014), Metabasite (Green et al., 2016), Igneous (Holland et al., 2018), Ultramafic (Evans & Frost, 2021), and mantle-oriented datasets (Holland et al., 2013; Stixrude & Lithgow-Bertelloni, 2011/2021/2024) — see the full list below.
 
 ## Available thermodynamic database
 
@@ -25,16 +28,25 @@ As for `MAGEMin`, you can choose among several thermodynamic dataset: Metapelite
 - `mp`; `MnNCKFMASHTO` -> metapelite, White et al. (2014)
 - `mb`; `MnNCKFMASHTO` -> metabasite, Green et al. (2016)
 - `ig`; `NCKFMASHTOCr` ->  igneous, Green et al. (2025) corrected after Holland et al. (2018)
+- `igd`; `NCKFMASTOCr` -> igneous dry, Su et al. (2026), after T21
 - `igad`; `NCKFMASTOCr` ->  igneous alkaline dry, Weller et al. (2024)
 - `um`; `FMASHOS` -> ultramafic, Evans & Frost (2021)
+
+### Mantle
 - `mtl`; `NCFMAS` -> mantle to upper lowermost mantle, Holland et al. (2013)
+- `sb11`; `NCFMAS` -> mantle, Stixrude & Lithgow-Bertelloni (2011)
+- `sb21`; `NCFMAS` -> mantle, Stixrude & Lithgow-Bertelloni (2021)
+- `sb24` ; `NCFMASOCr` -> mantle, Stixrude & Lithgow-Bertelloni (2024)
 
 ### Custom
 - `ume`; `FMASHOS` ->  ultramafic extended, Evans & Frost (2021) + Green et al., (2016)
 - `mpe`; `CO2MnNCKFMASHTS` -> metapelite extended , White et al. (2014) + Green et al. (2016) (hb, dio, aug) + Evans & Frost (2021) (po, fl) + Franzolin et al. (2011) (occm).
+- `mbe`; `NCKFMASHTO` -> metabasite extended, Green et al. (2016) + Diener et al. (2007)
+- `all` -> global TC dataset, combining all available published components
 
-> [!CAUTION]
-> Custom/Hybrid database are provided in the hope it may be useful for advanced users. In most cases it is recommenced to use the official published database.
+### Berman EOS
+- `po`; `NCKFMASHTO` -> HP/LT, Pourteau et al. (2014)
+
 
 ### Installation
 
@@ -115,7 +127,7 @@ MAGEMinApp is designed is such a way that bulk-rock composition must be entered 
 `Test 2;Moo et al., 2000;ig;mol;[SiO2, Al2O3, CaO, MgO, FeO, K2O, Na2O, TiO2, O, Cr2O3, H2O];[48.97, 11.76, 13.87, 4.21, 8.97, 1.66, 10.66, 1.36, 1.66, 0.0, 5.0];`\
 
 > [!IMPORTANT] 
-> `db` must be either `mp` (metapelite, White et al., 2014), `mb` (metabasite, Green et al., 2016), `ig` (igneous, Holland et al., 2018), `um` (ultramafic, Evans & Frost, 2021), `ume` (ultramafic extended, Evans & Frost, 2021 + Green et al., 2016), `mtl` (mantle to upper lowermost mantle, Holland et al., 2013) or `mpe` (metapelite extended, White et al., 2014 + Green et al., 2016, Evans & Frost, 2021).
+> `db` must be one of `mp`, `mb`, `ig`, `igd`, `igad`, `um`, `mtl`, `sb11`, `sb21`, `sb24`, `ume`, `mpe`, `mbe`, `all` or `po` — see [Available thermodynamic database](#available-thermodynamic-database) above for what each acronym refers to.
 > 
 > `sysUnit` must be `mol` or `wt`. Note that if `wt` is provided, the composition is converted and subsequently displayed in `mol` in `MAGEMinApp`.
 > 
@@ -128,6 +140,9 @@ MAGEMinApp is designed is such a way that bulk-rock composition must be entered 
 
 ### Remarks
 
+> [!CAUTION]
+> Custom/Hybrid database are provided in the hope it may be useful for advanced users. In most cases it is recommenced to use the official published database.
+
 > [!TIP]
 > For Windows machine you can launch a multi-threaded (parallel) version of the Julia terminal (to perform computation in parallel using `MAGEMinApp`) by creating a `Julia_parallel.cmd` file and adding the following lines (changing `8` to the number of threads your machine can support (type `versioninfo()` in a Julia terminal)). Then save the changes and execute  `Julia_parallel.cmd`.
 ```
@@ -135,12 +150,12 @@ set JULIA_NUM_THREADS=8
 C:\YOUR_PATH_TO_JULIA\bin\julia.exe
 ```
 
-> [!CAUTION]
-> As of now, `MAGEMinApp.jl` remains under development and the current release is a beta version. Reporting issues, potential improvement and contributions are most welcome.
-
 > [!IMPORTANT] 
 > In the simulation tab, bulk-rock composition are displayed in mol fraction. When using a bulk-rock composition file and the system unit is wt%, the bulk-rock are loaded and converted to mol%.
 
 > [!IMPORTANT] 
 > When computing PTX paths (fractional crystalllization or melting), if an oxide reaches low concentration (< 1e-5 mol fraction) and if this oxide can effectively be set to 0.0, MAGEMinApp will automatically set it to 0.0. Conversely if the same oxide cannot be put to 0.0 with the current solution phase formulation, it will be set to 1e-5. This ensures stability of the algorithm.
+
+> [!IMPORTANT] 
+> For μ-μ (chemical potential) diagrams, the two selected free oxides are automatically oversaturated in the bulk-rock composition (set to 100 mol%) at computation time, so that their chemical potential can be fixed independently. Their rows in the bulk-rock composition table are therefore locked and greyed out; the actual content bounds used to derive the μ-axis ranges are set separately in the diagram setup panel (with a "Compute μ bounds" helper button, and the option to edit the resulting bounds by hand).
 

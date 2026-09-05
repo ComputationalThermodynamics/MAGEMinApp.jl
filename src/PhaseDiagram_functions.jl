@@ -520,6 +520,8 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         dgtype = "Pressure Temperature path-Composition"
     elseif diagType == "tt"
         dgtype = "Polymetamorphic T-T path, fixed pressure"
+    elseif diagType == "mumu"
+        dgtype = "μ-μ (chemical potential), fixed pressure and temperature"
     end
 
     if solver == "lp"
@@ -592,8 +594,12 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         PD_infos[1] *= "Starting comp [mol] <br>"
         if bufferType != "none"
             PD_infos[1] *= "Buffer factor <br>"
-        end           
+        end
         PD_infos[1] *= "Fixed Pres [$(pressure_unit_label())] <br>"
+    elseif diagType == "mumu"
+        PD_infos[1] *= "Bulk comp [mol] <br>"
+        PD_infos[1] *= "Fixed Pres [$(pressure_unit_label())] <br>"
+        PD_infos[1] *= "Fixed Temp <br>"
     end
     oxi_string = replace.(oxi,"2"=>"₂", "3"=>"₃");
 
@@ -661,8 +667,12 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         # PD_infos[2] *= join(round.(bulk_R,digits=6), " ") *"<br>"
         # if bufferType != "none"
         #     PD_infos[2] *= string(bufferN2) *"<br>"
-        # end        
+        # end
         PD_infos[2] *= join(display_pressure(fixP), " ") *"<br>"
+    elseif diagType == "mumu"
+        PD_infos[2] *= join(round.(bulk_L,digits=6), " ") *"<br>"
+        PD_infos[2] *= join(display_pressure(fixP), " ") *"<br>"
+        PD_infos[2] *= join(fixT, " ") *"<br>"
     end
 
     PD_infos[2] *= "_"
@@ -676,7 +686,7 @@ end
 
     returns axis titles and axis ranges
 """
-function diagram_type(diagType, tmin, tmax, pmin, pmax, e1_tmin, e1_tmax, e2_tmin, e2_tmax)
+function diagram_type(diagType, tmin, tmax, pmin, pmax, e1_tmin, e1_tmax, e2_tmin, e2_tmax; mumu_oxide1_name = "", mumu_oxide2_name = "")
     if diagType == "pt"
         xtitle = "Temperature [Celsius]"
         ytitle = "Pressure [$(pressure_unit_label())]"
@@ -702,6 +712,11 @@ function diagram_type(diagType, tmin, tmax, pmin, pmax, e1_tmin, e1_tmax, e2_tmi
             ytitle = "Event 1: temperature [Celsius]"
             Xrange          = (Float64(e2_tmin),Float64(e2_tmax))
             Yrange          = (Float64(e1_tmin),Float64(e1_tmax))
+    elseif diagType == "mumu"
+            xtitle = "μ($(mumu_oxide1_name)) [J/mol]"
+            ytitle = "μ($(mumu_oxide2_name)) [J/mol]"
+            Xrange          = (Float64(0.0),Float64(1.0))
+            Yrange          = (Float64(0.0),Float64(1.0))
     end
     return xtitle, ytitle, Xrange, Yrange
 end
@@ -962,7 +977,9 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                     test,       refType,
                                     seismicScheme = "VRH", seismicWeightFactor = 0.5,
                                     seismic_cor = false, aspect_ratio = 0.3, seismic_water = 0,
-                                    shallow_cor = false, fluid_as_melt = false, anelastic_correction = false        )
+                                    shallow_cor = false, fluid_as_melt = false, anelastic_correction = false;
+                                    mumu_oxide1_idx     = 0,
+                                    mumu_oxide2_idx     = 0        )
         global CompProgress
 
         #________________________________________________________________________________________#
@@ -992,6 +1009,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
         end
 
         CompProgress.stage = "Initialize MAGEMin"
+        mu_fix_idx      = diagType == "mumu" ? [oxi[mumu_oxide1_idx], oxi[mumu_oxide2_idx]] : String[]
         MAGEMin_data    =   Initialize_MAGEMin( dtb;
                                                 verbose             = false,
                                                 dataset             = dataset,
@@ -1001,7 +1019,8 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                                 buffer              = bufferType,
                                                 solver              = sol,
                                                 seismicScheme       = seismicScheme,
-                                                seismicWeightFactor = seismicWeightFactor    );
+                                                seismicWeightFactor = seismicWeightFactor,
+                                                mu_fix_idx          = mu_fix_idx    );
 
         #________________________________________________________________________________________#
         # initial optimization on regular grid
@@ -1018,9 +1037,10 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                                         bufferType, bufferN1, bufferN2,
                                                         scp, boost, refType,
                                                         pChip_wat, pChip_T,
-                                                        seismic_cor, aspect_ratio, seismic_water, shallow_cor, fluid_as_melt, anelastic_correction    )
+                                                        seismic_cor, aspect_ratio, seismic_water, shallow_cor, fluid_as_melt, anelastic_correction;
+                                                        mumu_oxide1_idx=mumu_oxide1_idx, mumu_oxide2_idx=mumu_oxide2_idx    )
 
-        
+
         #________________________________________________________________________________________#     
         # Refine the mesh along phase boundaries
         # if diagType != "tt"
@@ -1040,8 +1060,9 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                                                                         bufferType, bufferN1, bufferN2,
                                                                                         scp, boost, refType,
                                                                                         pChip_wat, pChip_T,
-                                                                                        seismic_cor, aspect_ratio, seismic_water, shallow_cor, fluid_as_melt, anelastic_correction ) # recompute points that have not been computed before
-                                                                        
+                                                                                        seismic_cor, aspect_ratio, seismic_water, shallow_cor, fluid_as_melt, anelastic_correction;
+                                                                                        mumu_oxide1_idx=mumu_oxide1_idx, mumu_oxide2_idx=mumu_oxide2_idx    ) # recompute points that have not been computed before
+
                 println("Computed $(length(data.npoints)) new points in $t seconds")
             end
         # end
@@ -1050,7 +1071,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
             finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i],MAGEMin_data.splx_data[i])
         end
 
-        #________________________________________________________________________________________#                   
+        #________________________________________________________________________________________#
         # Scatter plotly of the grid
 
         gridded, gridded_info, gridded_fields, X, Y, npoints, meant = get_gridded_map(  fieldname,
@@ -1221,13 +1242,16 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                 test,       refType, bid,
                                 seismicScheme = "VRH", seismicWeightFactor = 0.5,
                                 seismic_cor = false, aspect_ratio = 0.3, seismic_water = 0,
-                                shallow_cor = false, fluid_as_melt = false, anelastic_correction = false       )
+                                shallow_cor = false, fluid_as_melt = false, anelastic_correction = false;
+                                mumu_oxide1_idx     = 0,
+                                mumu_oxide2_idx     = 0       )
 
     global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, gridded_fields, phase_infos, X, Y, addedRefinementLvl, layout, n_lbl, pChip_wat, pChip_T, poly_phases, poly_pcoor
 
     mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb,        solver,
                                                     cpx,        limOpx,     limOpxVal ) 
 
+    mu_fix_idx      = diagType == "mumu" ? [oxi[mumu_oxide1_idx], oxi[mumu_oxide2_idx]] : String[]
     MAGEMin_data    =   Initialize_MAGEMin( dtb;
                                             verbose             = false,
                                             dataset             = dataset,
@@ -1237,7 +1261,8 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                             buffer              = bufferType,
                                             solver              = sol,
                                             seismicScheme       = seismicScheme,
-                                            seismicWeightFactor = seismicWeightFactor    );
+                                            seismicWeightFactor = seismicWeightFactor,
+                                            mu_fix_idx          = mu_fix_idx    );
 
     data    = select_cells_to_split_and_keep(data; bid = bid)
     data    = perform_AMR(data)
@@ -1248,7 +1273,8 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                                                             bufferType, bufferN1, bufferN2,
                                                                             scp, boost, refType,
                                                                             pChip_wat,  pChip_T,
-                                                                            seismic_cor, aspect_ratio, seismic_water, shallow_cor, fluid_as_melt, anelastic_correction) # recompute points that have not been computed before
+                                                                            seismic_cor, aspect_ratio, seismic_water, shallow_cor, fluid_as_melt, anelastic_correction;
+                                                                            mumu_oxide1_idx=mumu_oxide1_idx, mumu_oxide2_idx=mumu_oxide2_idx    ) # recompute points that have not been computed before
 
     println("Computed $(length(data.npoints)) new points in $(round(t, digits=3)) seconds")
     addedRefinementLvl += 1;

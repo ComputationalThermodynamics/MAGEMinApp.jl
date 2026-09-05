@@ -286,6 +286,136 @@ function AFM_plot()
                 figure      = fig,
             )
 end
+function CaAmpPanelA_plot_pd()
+
+    fig =  plot(    Layout(     width       = 640,
+                                height      = 400 ))
+
+    dcc_graph(
+                id          = "CaAmpPanelA-plot-pd",
+                figure      = fig,
+            )
+end
+function CaAmpPanelB_plot_pd()
+
+    fig =  plot(    Layout(     width       = 640,
+                                height      = 400 ))
+
+    dcc_graph(
+                id          = "CaAmpPanelB-plot-pd",
+                figure      = fig,
+            )
+end
+function CaAmpPanelC_plot_pd()
+
+    fig =  plot(    Layout(     width       = 640,
+                                height      = 400 ))
+
+    dcc_graph(
+                id          = "CaAmpPanelC-plot-pd",
+                figure      = fig,
+            )
+end
+function CpxQJ_plot_pd()
+
+    fig =  plot(    Layout(     width       = 640,
+                                height      = 400 ))
+
+    dcc_graph(
+                id          = "CpxQJ-plot-pd",
+                figure      = fig,
+            )
+end
+function CpxQuad_plot_pd()
+
+    fig =  plot(    Layout(     width       = 640,
+                                height      = 400 ))
+
+    dcc_graph(
+                id          = "CpxQuad-plot-pd",
+                figure      = fig,
+            )
+end
+function CpxNaPx_plot_pd()
+
+    fig =  plot(    Layout(     width       = 640,
+                                height      = 400 ))
+
+    dcc_graph(
+                id          = "CpxNaPx-plot-pd",
+                figure      = fig,
+            )
+end
+function OpxQuad_plot_pd()
+
+    fig =  plot(    Layout(     width       = 640,
+                                height      = 400 ))
+
+    dcc_graph(
+                id          = "OpxQuad-plot-pd",
+                figure      = fig,
+            )
+end
+function MicaInterlayer_plot_pd()
+
+    fig =  plot(    Layout(     width       = 640,
+                                height      = 400 ))
+
+    dcc_graph(
+                id          = "MicaInterlayer-plot-pd",
+                figure      = fig,
+            )
+end
+function MicaCeladonite_plot_pd()
+
+    fig =  plot(    Layout(     width       = 640,
+                                height      = 400 ))
+
+    dcc_graph(
+                id          = "MicaCeladonite-plot-pd",
+                figure      = fig,
+            )
+end
+function Feldspar_plot_pd()
+
+    fig =  plot(    Layout(     width       = 640,
+                                height      = 400 ))
+
+    dcc_graph(
+                id          = "Feldspar-plot-pd",
+                figure      = fig,
+            )
+end
+function Garnet_plot_pd()
+
+    fig =  plot(    Layout(     width       = 640,
+                                height      = 400 ))
+
+    dcc_graph(
+                id          = "Garnet-plot-pd",
+                figure      = fig,
+            )
+end
+function Spinel_plot_pd()
+
+    fig =  plot(    Layout(     width       = 640,
+                                height      = 400 ))
+
+    dcc_graph(
+                id          = "Spinel-plot-pd",
+                figure      = fig,
+            )
+end
+function Ilmenite_plot_pd()
+
+    fig =  plot(    Layout(     width       = 640,
+                                height      = 400 ))
+
+    dcc_graph(
+                id          = "Ilmenite-plot-pd",
+                figure      = fig,
+            )
+end
 function isoS_frac_plot()
 
     fig =  plot(    Layout( height= 360 ))
