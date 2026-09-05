@@ -135,6 +135,8 @@ function get_dtbulk_list()
         Dict("label" => "Igneous alkaline dry (Weller et al., 2024)", "value" => "igad"),
         Dict("label" => "Ultramafic (Evans & Frost., 2021)", "value" => "um"),
         # Dict("label" => "Calc-shist (Stuck et al., 2026)", "value" => "cs"),
+        Dict("label" => "- BERMAN EOS DATABASE -", "value" => "separator", "disabled" => true),  # Simulate a horizontal line
+        Dict("label" => "HP/LT (Pourteau et al., 2014)", "value" => "po"),
         Dict("label" => "- MANTLE DATABASE -", "value" => "separator", "disabled" => true),  # Simulate a horizontal line
         Dict("label" => "Mantle (Holland et al., 2013)", "value" => "mtl"),
         Dict("label" => "Stixrude & Lithgow-Bertelloni (2011)", "value" => "sb11"),
@@ -148,8 +150,6 @@ function get_dtbulk_list()
         Dict("label" => "Metapelite extended (White et al., 2014, Green et al., 2016, Evans & Frost., 2021)", "value" => "mpe"),
         Dict("label" => "Metabasite extended (Green et al., 2016, Diener et al., 2007)", "value" => "mbe"),
         Dict("label" => "Global TC dataset", "value" => "all"),
-        Dict("label" => "- BERMAN EOS DATABASE -", "value" => "separator", "disabled" => true),  # Simulate a horizontal line
-        Dict("label" => "HP/LT (Pourteau et al., 2014)", "value" => "po"),
     ]
 
     dba = DataFrame(        database     = String[],
