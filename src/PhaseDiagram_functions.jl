@@ -719,7 +719,7 @@ function apply_pressure_display(data_in, layout_in, diagType)
 
     data_out = deepcopy(data_in)
     for tr in data_out
-        if haskey(tr, :y) && tr[:y] isa AbstractArray && all(v -> v isa Union{Missing,Real}, tr[:y])
+        if haskey(tr, :y) && tr[:y] isa AbstractArray && all(v -> v isa Union{Missing,Nothing,Real}, tr[:y])
             tr[:y] = display_pressure(tr[:y])
         end
     end
@@ -782,6 +782,49 @@ function pushed_button( ctx )
         bid = split(ctx.triggered[1].prop_id, ".")[1]
     end
     return bid
+end
+
+is_integer_field(fieldname) = fieldname in ("Variance", "#Phases")
+
+function field_colorbar(fieldname)
+    cb = attr(  lenmode         = "fraction",
+                len             =  0.75,
+                thicknessmode   = "fraction",
+                exponentformat  = "e" ,
+                tickness        =  0.5,
+                x               =  1.005,
+                y               =  0.5,
+                title           = attr(text = fieldname, side = "right") )
+    if is_integer_field(fieldname)
+        cb[:tickmode] = "linear"
+        cb[:tick0]    = 0
+        cb[:dtick]    = 1
+    end
+    return cb
+end
+
+function discrete_colorscale(colorm, n::Int; set_white::Bool = false, reverseColorMap::Bool = false)
+    stops = svg_colorscale(colorm)
+    rgba(c) = "rgba($(round(Int, c[1])),$(round(Int, c[2])),$(round(Int, c[3])),$(c[4]))"
+    cols  = [rgba(svg_color_at(stops, n == 1 ? 0.5 : (k - 1) / (n - 1))) for k in 1:n]
+    set_white && (cols[reverseColorMap ? n : 1] = "rgba(255,255,255,0.0)")
+    scale = Vector{Any}[]
+    for k in 1:n
+        push!(scale, [(k - 1) / n, cols[k]])
+        push!(scale, [k / n,       cols[k]])
+    end
+    return scale
+end
+
+function field_colorscale(fieldname, colorm, reverseColorMap, set_white, zlo, zhi)
+    white = set_white == "true"
+    if is_integer_field(fieldname) && zlo isa Real && zhi isa Real && isfinite(zlo) && isfinite(zhi)
+        lo = round(Int, zlo)
+        hi = max(lo, round(Int, zhi))
+        return discrete_colorscale(colorm, hi - lo + 1; set_white = white, reverseColorMap = reverseColorMap), (zmin = lo - 0.5, zmax = hi + 0.5)
+    end
+    cs = white ? set_min_to_white(colorm; reverseColorMap) : colorm
+    return cs, (isnothing(zlo) ? (;) : (zmin = zlo, zmax = zhi))
 end
 
 """
@@ -982,7 +1025,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
 
         #________________________________________________________________________________________#
         # initialize database
-        global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, gridded_fields, phase_infos, X, Y, layout, n_lbl, poly_phases, poly_pcoor
+        global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, gridded_fields, phase_infos, X, Y, layout, n_lbl, poly_phases, poly_pcoor, PT_infos
         global addedRefinementLvl  = 0;
         global MAGEMin_data;
 
@@ -1131,17 +1174,12 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                 )
         minColor        = round(minimum(skipmissing(gridded)),digits=2); 
         maxColor        = round(maximum(skipmissing(gridded)),digits=2);    
-        if set_white == "true"
-            colorm = set_min_to_white(colorm; reverseColorMap)
-        end
-        if fieldname == "Variance"
-        #     colorm = discretize_colormap(colorm,minColor,maxColor)
-        end
+        colorm, zr      = field_colorscale(fieldname, colorm, reverseColorMap, set_white, minColor, maxColor)
         heat_map = heatmap( x               = X,
                             y               = Y,
                             z               = gridded,
-                            zmin            =  minColor,
-                            zmax            =  maxColor,
+                            zmin            =  zr.zmin,
+                            zmax            =  zr.zmax,
                             zsmooth         = smooth,
                             connectgaps     = true,
                             type            = "heatmap",
@@ -1150,15 +1188,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                             # colorbar_title  = fieldname,
                             hoverinfo       = "skip",
                             showlegend      = false,
-                            colorbar        = attr(     lenmode         = "fraction",
-                                                        len             =  0.75,
-                                                        thicknessmode   = "fraction",
-                                                        exponentformat  = "e" ,
-                                                        tickness        =  0.5,
-                                                        x               =  1.005,
-                                                        y               =  0.5,
-                                                                title = attr(   text = fieldname,
-                                                                                side = "right")         ),)
+                            colorbar        = field_colorbar(fieldname),)
 
 
         n       = 2^(sub + refLvl)+1
@@ -1167,8 +1197,8 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
         heat_map_export = heatmap(  x               = xvals,
                                     y               = yvals,
                                     z               = gridded',
-                                    zmin            = minColor,
-                                    zmax            = maxColor,
+                                    zmin            = zr.zmin,
+                                    zmax            = zr.zmax,
                                     zsmooth         = smooth,
                                     connectgaps     = true,
                                     type            = "heatmap",
@@ -1177,15 +1207,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                     # colorbar_title  = fieldname,
                                     hoverinfo       = "skip",
                                     showlegend      = false,
-                                    colorbar        = attr(     lenmode         = "fraction",
-                                                                len             =  0.75,
-                                                                thicknessmode   = "fraction",
-                                                                exponentformat  = "e" ,
-                                                                tickness        =  0.5,
-                                                                x               =  1.005,
-                                                                y               =  0.5,
-                                                                title = attr(   text = fieldname,
-                                                                                side = "right")         ),)
+                                    colorbar        = field_colorbar(fieldname),)
 
         # savefig(plot(heat_map_export,layout), "phase_diagram.svg"; width=720, height=900)
 
@@ -1239,7 +1261,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                 mumu_oxide1_idx     = 0,
                                 mumu_oxide2_idx     = 0       )
 
-    global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, gridded_fields, phase_infos, X, Y, addedRefinementLvl, layout, n_lbl, pChip_wat, pChip_T, poly_phases, poly_pcoor
+    global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, gridded_fields, phase_infos, X, Y, addedRefinementLvl, layout, n_lbl, pChip_wat, pChip_T, poly_phases, poly_pcoor, PT_infos
 
     mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb,        solver,
                                                     cpx,        limOpx,     limOpxVal ) 
@@ -1309,12 +1331,14 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
         xanchor = "center",
         yanchor = "top"
     )
-    if set_white == "true"
-        colorm = set_min_to_white(colorm; reverseColorMap)
-    end
+    minColor        = round(minimum(skipmissing(gridded)),digits=2);
+    maxColor        = round(maximum(skipmissing(gridded)),digits=2);
+    colorm, zr      = field_colorscale(fieldname, colorm, reverseColorMap, set_white, minColor, maxColor)
     data_plot[1] = heatmap( x               = X,
                             y               = Y,
                             z               = gridded,
+                            zmin            = zr.zmin,
+                            zmax            = zr.zmax,
                             connectgaps     = true,
                             zsmooth         =  smooth,
                             type            = "heatmap",
@@ -1322,23 +1346,15 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                             # colorbar_title  = fieldname,
                             reversescale    = reverseColorMap,
                             hoverinfo       = "skip",
-                            colorbar        = attr(     lenmode         = "fraction",
-                                                        len             =  0.75,
-                                                        thicknessmode   = "fraction",
-                                                        exponentformat  = "e" ,
-                                                        tickness        =  0.5,
-                                                        x               =  1.005,
-                                                        y               =  0.5,
-                                                                title = attr(   text = fieldname,
-                                                                                side = "right")         ),)
+                            colorbar        = field_colorbar(fieldname),)
     n       = 2^(sub + refLvl + addedRefinementLvl)+1
     xvals   = range(data.Xrange[1], stop = data.Xrange[2], length = n)
     yvals   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
     heat_map_export = heatmap(  x               = xvals,
                                 y               = yvals,
                                 z               = gridded',
-                                zmin            = minColor,
-                                zmax            = maxColor,
+                                zmin            = zr.zmin,
+                                zmax            = zr.zmax,
                                 zsmooth         = smooth,
                                 connectgaps     = true,
                                 type            = "heatmap",
@@ -1347,15 +1363,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                 # colorbar_title  = fieldname,
                                 hoverinfo       = "skip",
                                 showlegend      = false,
-                                colorbar        = attr(     lenmode         = "fraction",
-                                                            len             =  0.75,
-                                                            thicknessmode   = "fraction",
-                                                            exponentformat  = "e" ,
-                                                            tickness        =  0.5,
-                                                            x               =  1.005,
-                                                            y               =  0.5,
-                                                                title = attr(   text = fieldname,
-                                                                                side = "right")         ),)
+                                colorbar        = field_colorbar(fieldname),)
     hover_lbl = heatmap(    x               = X,
                             y               = Y,
                             z               = X,
@@ -1387,17 +1395,12 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
                                             smooth,     colorm,     reverseColorMap, set_white,
                                             test                                  )
     global PT_infos, layout, addedRefinementLvl
-    if set_white == "true"
-        colorm = set_min_to_white(colorm; reverseColorMap)
-    end
-    # if fieldname == "Variance"
-    #     colorm = discretize_colormap(colorm,minColor,maxColor)
-    # end
+    colorm, zr = field_colorscale(fieldname, colorm, reverseColorMap, set_white, minColor, maxColor)
     data_plot[1] = heatmap( x               =  X,
                             y               =  Y,
                             z               =  gridded,
-                            zmin            =  minColor,
-                            zmax            =  maxColor,
+                            zmin            =  zr.zmin,
+                            zmax            =  zr.zmax,
                             zsmooth         =  smooth,
                             connectgaps     = true,
                             type            = "heatmap",
@@ -1405,15 +1408,7 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
                             # colorbar_title  =  fieldname,
                             reversescale    =  reverseColorMap,
                             hoverinfo       = "skip",
-                            colorbar        = attr(     lenmode         = "fraction",
-                                                        len             =  0.75,
-                                                        thicknessmode   = "fraction",
-                                                        exponentformat  = "e" ,
-                                                        tickness        =  0.5,
-                                                        x               =  1.005,
-                                                        y               =  0.5,
-                                                                title = attr(   text = fieldname,
-                                                                                side = "right")         ),)
+                            colorbar        = field_colorbar(fieldname),)
 
 
     n       = 2^(sub + refLvl + addedRefinementLvl)+1
@@ -1422,8 +1417,8 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
     heat_map_export = heatmap(  x               = xvals,
                                 y               = yvals,
                                 z               = gridded',
-                                zmin            =  minColor,
-                                zmax            =  maxColor,
+                                zmin            =  zr.zmin,
+                                zmax            =  zr.zmax,
                                 zsmooth         =  smooth,
                                 connectgaps     = true,
                                 type            = "heatmap",
@@ -1431,15 +1426,7 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
                                 # colorbar_title  =  fieldname,
                                 reversescale    =  reverseColorMap,
                                 hoverinfo       = "skip",
-                                colorbar        = attr(     lenmode         = "fraction",
-                                                            len             =  0.75,
-                                                            thicknessmode   = "fraction",
-                                                            exponentformat  = "e" ,
-                                                            tickness        =  0.5,
-                                                            x               =  1.005,
-                                                            y               =  0.5,
-                                                                title = attr(   text = fieldname,
-                                                                                side = "right")         ),)
+                                colorbar        = field_colorbar(fieldname),)
     return data_plot,layout, heat_map_export
 end
 
@@ -1580,8 +1567,8 @@ function  show_hide_reaction_lines(     sub,
 
         for j=1:length(phase_contours[i][2].contours[1].lines)
             ctr     = phase_contours[i][2].contours[1].lines[j].vertices
-            x       = vcat(x, [ctr[k][1] for k in 1:size(ctr,1)],missing)
-            y       = vcat(y, [ctr[k][2] for k in 1:size(ctr,1)],missing)
+            append!(x, (ctr[k][1] for k in 1:size(ctr,1))); push!(x, missing)
+            append!(y, (ctr[k][2] for k in 1:size(ctr,1))); push!(y, missing)
         end
 
         data_contour[i] = scatter(      x           = x, 
@@ -1665,12 +1652,12 @@ function  update_displayed_field_phaseDiagram(   xtitle,     ytitle,
                                                                 Xrange,
                                                                 Yrange )
 
-    if set_white == "true"
-        colorm = set_min_to_white(colorm; reverseColorMap)
-    end
-    data_plot[1] = heatmap( x               = X,
+    zlo, zhi   = is_integer_field(fieldname) ? extrema(skipmissing(gridded)) : (nothing, nothing)
+    colorm, zr = field_colorscale(fieldname, colorm, reverseColorMap, set_white, zlo, zhi)
+    data_plot[1] = heatmap(; x               = X,
                             y               = Y,
                             z               = gridded,
+                            zr...,
                             zsmooth         = smooth,
                             connectgaps     = true,
                             type            = "heatmap",
@@ -1680,23 +1667,16 @@ function  update_displayed_field_phaseDiagram(   xtitle,     ytitle,
                             hoverinfo       = "skip",
                             # hoverinfo       = "text",
                             # text            = gridded_info,
-                            colorbar        = attr(     lenmode         = "fraction",
-                                                        len             =  0.75,
-                                                        thicknessmode   = "fraction",
-                                                        exponentformat  = "e" ,
-                                                        tickness        =  0.5,
-                                                        x               =  1.005,
-                                                        y               =  0.5,
-                                                                title = attr(   text = fieldname,
-                                                                                side = "right")         ),)
+                            colorbar        = field_colorbar(fieldname),)
 
 
     n       = 2^(sub + refLvl + addedRefinementLvl)+1
     xvals   = range(data.Xrange[1], stop = data.Xrange[2], length = n)
     yvals   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
-    heat_map_export = heatmap(  x               = xvals,
+    heat_map_export = heatmap(; x               = xvals,
                                 y               = yvals,
                                 z               = gridded',
+                                zr...,
                                 zsmooth         = smooth,
                                 connectgaps     = true,
                                 type            = "heatmap",
@@ -1706,15 +1686,7 @@ function  update_displayed_field_phaseDiagram(   xtitle,     ytitle,
                                 hoverinfo       = "skip",
                                 # hoverinfo       = "text",
                                 # text            = gridded_info,
-                                colorbar        = attr(     lenmode         = "fraction",
-                                                            len             =  0.75,
-                                                            thicknessmode   = "fraction",
-                                                            exponentformat  = "e" ,
-                                                            tickness        =  0.5,
-                                                            x               =  1.005,
-                                                            y               =  0.5,
-                                                                title = attr(   text = fieldname,
-                                                                                side = "right")         ),)
+                                colorbar        = field_colorbar(fieldname),)
 
     return data_plot,layout, heat_map_export
 end

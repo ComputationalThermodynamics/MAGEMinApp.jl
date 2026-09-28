@@ -34,8 +34,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             global AppData = merge(AppData, (customWs = CSV.read(filename, DataFrame),))
             return success, failed = "success", ""
         else
-            return success, failed = "", "failed"
             println("File not found: $filename, check path")
+            return success, failed = "", "failed"
         end
     end
 
@@ -1061,7 +1061,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         function magemin_snippet(out)
             # code snippet to perform the point calculation in MAGEMin_C
             if buffer != "none"
-                buf      = ", buffer=\"qfm\""
+                buf      = ", buffer=\"$buffer\""
                 bufn     = ", B="*string(out.buffer_n)
             else
                 buf     = ""
@@ -1128,6 +1128,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             # buffer, solver, cpx/Ca-opx settings, seismic scheme) as the grid/diagram
             # computation itself uses, so the sample point is fully consistent with it
             out = nothing
+            MAGEMin_data = nothing
             try
                 MAGEMin_data = Initialize_MAGEMin( dtb;
                                                     verbose             = false,
@@ -1154,10 +1155,11 @@ function Tab_PhaseDiagram_Callbacks(app)
                                     shallow_correction  = Bool(shallowCorMode),
                                     fluid_as_melt       = Bool(fluidAsMeltMode),
                                     anelastic_cor       = Bool(anelasticCorMode) ) )
-                Finalize_MAGEMin(MAGEMin_data)
             catch e
                 println("Sample point minimization failed: ", e)
                 return no_update(), no_update(), no_update(), "MAGEMin failed to compute this point - check the P/T/X values.", true
+            finally
+                isnothing(MAGEMin_data) || Finalize_MAGEMin(MAGEMin_data)
             end
 
             using_sample_point = true
@@ -1765,6 +1767,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             infos           = get_computation_info(npoints, meant)
             data_reaction   = show_hide_reaction_lines(sub,refLvl,Xrange,Yrange)
             data_grid       = show_hide_mesh_grid()
+            minColor        = round(minimum(skipmissing(gridded)),digits=2);
+            maxColor        = round(maximum(skipmissing(gridded)),digits=2);
             update_ss_list  = 1
             update_reaction_list  = 1
             clear_selection = []
@@ -1809,9 +1813,17 @@ function Tab_PhaseDiagram_Callbacks(app)
             end
 
         elseif bid == "load-state-id"
+            if !loaded_state_has_diagram
+                return ntuple(_ -> no_update(), 23)
+            end
+
+            Xrange_s    = (data.Xrange[1], data.Xrange[2])
+            Yrange_s    = (data.Yrange[1], data.Yrange[2])
+            oxi_s       = String.(Out_XY[1].oxides)
+
             data_plot,layout,heat_map_export =  update_displayed_field_phaseDiagram( xtitle,     ytitle,
-            Xrange,     Yrange,     fieldname,
-            dtb,        oxi,
+            Xrange_s,   Yrange_s,   fieldname,
+            dtb,        oxi_s,
             sub,        refLvl,
             smooth,     colorm,     reverseColorMap, set_white,
             test,       refType                                 )
@@ -1828,6 +1840,17 @@ function Tab_PhaseDiagram_Callbacks(app)
             @isdefined(assemblage_rows)     || (assemblage_rows     = Vector{Dict{String,String}}())
             @isdefined(list_compacted_idx)  || (list_compacted_idx  = Int[])
             @isdefined(raw_field_id)        || (raw_field_id        = Int[])
+
+            global gridded_info, gridded_fields, poly_phases, poly_pcoor
+            phase_infos     = get_phase_infos(Out_XY)
+            _, gridded_info, gridded_fields, _, _, _, _ = get_gridded_map( fieldname, "major", oxi_s, Out_XY, nothing, Hash_XY,
+                                                                            sub, refLvl + addedRefinementLvl, refType, data, Xrange_s, Yrange_s )
+            poly_phases, poly_pcoor     = compute_assemblage_boundaries(gridded_fields, Xrange_s, Yrange_s)
+            data_grid                   = show_hide_mesh_grid()
+            data_isopleth_out_export    = data_isopleth.isoPexp[data_isopleth.active]
+            update_ss_list              = 1
+            update_reaction_list        = 1
+            clear_selection             = []
         elseif bid == "set-min-white" || bid == "min-color-id" || bid == "max-color-id" || bid == "colormaps_cross" || bid == "smooth-colormap" || bid == "range-slider-color" || bid == "reverse-colormap"
 
             data_plot, layout, heat_map_export =  update_colormap_phaseDiagram(  xtitle,     ytitle,     
@@ -1950,8 +1973,10 @@ function Tab_PhaseDiagram_Callbacks(app)
                 return no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update()
             end
             global assemblage_rows, list_compacted_idx, raw_field_id
-            data_plot, annotations, txt_list, assemblage_rows, list_compacted_idx, raw_field_id = get_diagram_labels(
+            label_plot, annotations, txt_list, assemblage_rows, list_compacted_idx, raw_field_id = get_diagram_labels(
                 Out_XY, Hash_XY, refType, data, PT_infos; field_size = field_size)
+            label_plot[1]        = data_plot[1]
+            data_plot            = vcat(label_plot, data_plot[end])
             layout[:annotations] = annotations
 
         elseif bid == "pressure-unit-dropdown"
@@ -2519,8 +2544,12 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("gsub-id",            "value"),
         State("refinement-levels",  "value"),
         State("diagram-dropdown",   "value"),
+        State("pressure-unit-dropdown", "value"),
         prevent_initial_call = true,
-    ) do _n, formula_store, color_store, comp_unit, csv_data, sub, refLvl, diagType
+    ) do _n, formula_store, color_store, comp_unit, csv_data, sub, refLvl, diagType, pressure_unit
+
+        global use_GPa
+        use_GPa[1] = (pressure_unit == "gpa")
 
         if isnothing(formula_store) || isempty(formula_store) ||
            isnothing(csv_data)      || isempty(csv_data)
@@ -2583,6 +2612,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             showlegend    = true,
         )
 
+        traces, canvas_layout = apply_pressure_display(traces, canvas_layout, diagType)
         fig    = plot(traces, canvas_layout)
         config = PlotConfig(
             toImageButtonOptions = attr(

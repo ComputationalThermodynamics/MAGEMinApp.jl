@@ -295,9 +295,11 @@ module MAGEMinApp
         AppData.mineral_style[1] = load_mineral_style();
         AppData.mineral_order[1] = load_mineral_order(sort(collect(keys(AppData.mineral_style[1]))));
 
-        run_server(app, host, port, debug=debug)
-
-        cd(cur_dir) # go back to directory
+        try
+            run_server(app, host, port, debug=debug)
+        finally
+            cd(cur_dir) # go back to directory
+        end
 
     end
 

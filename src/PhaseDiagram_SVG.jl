@@ -231,6 +231,11 @@ function pd_figure_parts(; data, gridded, heat_map, layout_g, reaction, data_iso
     catch
         ""
     end
+    ztick = try
+        Float64(heat_map[:colorbar][:dtick])
+    catch
+        nothing
+    end
 
     mesh = show_mesh ? [(a, yconv(b), c, yconv(d)) for (a, b, c, d) in pd_mesh_segments(data, n)] : NTuple{4,Float64}[]
 
@@ -279,7 +284,7 @@ function pd_figure_parts(; data, gridded, heat_map, layout_g, reaction, data_iso
     end
 
     return (xrange = xr, yrange = yr, ticks = 4, title = title, xtitle = String(xtitle), ytitle = ytitle_disp,
-            gridded = pd_fill_gridded(gridded, data), zmin = zmin, zmax = zmax, stops = stops, smooth = smooth, field_title = ftitle,
+            gridded = pd_fill_gridded(gridded, data), zmin = zmin, zmax = zmax, stops = stops, smooth = smooth, field_title = ftitle, ztick = ztick,
             mesh = mesh, reaction = lines, isopleths = isopleths, annotations = annotations,
             info = info, assemblages = assemblages)
 end
@@ -429,7 +434,9 @@ function pd_export_svg(parts, path::AbstractString)
     bar_y        = top + (ph - bar_h) / 2
     svg_group_open(io, svg_id(seen, "Colorbar"); font_family = font, font_size = 10, fill = ink)
     svg_gradient_bar_stops(io, svg_id(seen, "Colorbar_bar"), bar_x, bar_y, bar_w, bar_h, parts.stops)
-    for (k, v) in enumerate(svg_nice_ticks(parts.zmin, parts.zmax))
+    zticks = isnothing(get(parts, :ztick, nothing)) ? svg_nice_ticks(parts.zmin, parts.zmax) :
+             collect(ceil(parts.zmin / parts.ztick - 1e-9) * parts.ztick : parts.ztick : parts.zmax + 1e-9)
+    for (k, v) in enumerate(zticks)
         t = parts.zmax == parts.zmin ? 0.0 : (v - parts.zmin) / (parts.zmax - parts.zmin)
         svg_text(io, bar_x + bar_w + 5, bar_y + bar_h * (1 - t), svg_tick_label(v); id = svg_id(seen, "Colorbar_tick_$(k)"), anchor = "start")
     end
