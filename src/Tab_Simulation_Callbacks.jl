@@ -9,6 +9,45 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ =#
 
+const STATE_DIAGRAM_FIELDS = [  "infos", "layout", "data", "data_plot", "data_reaction", "iso_show", "n_lbl", "data_isopleth", "data_isopleth_out",
+                                "Out_XY", "Hash_XY", "Out_TE_XY", "all_TE_ph", "n_phase_XY", "addedRefinementLvl", "pChip_wat", "pChip_T",
+                                "assemblage_rows", "list_compacted_idx", "raw_field_id", "PT_infos" ]
+
+global loaded_state_has_diagram = false
+
+state_dir() = joinpath(@__DIR__, "..", "saved_states")
+
+function state_base_path(filename)
+    filename isa AbstractString || return nothing
+    name = strip(filename)
+    if isempty(name) || name in (".", "..") || occursin(r"[/\\:\x00]", name)
+        return nothing
+    end
+    return joinpath(state_dir(), String(name))
+end
+
+function state_options_file(filename)
+    base = state_base_path(filename)
+    isnothing(base) && return nothing
+    file = base * "_options.jld2"
+    return isfile(file) ? file : nothing
+end
+
+function state_read(file, keys::AbstractString...; optional = keys)
+    return jldopen(file, "r") do f
+        for k in keys
+            haskey(f, k) || k in optional || throw(KeyError(k))
+        end
+        Tuple(haskey(f, k) ? f[k] : nothing for k in keys)
+    end
+end
+
+state_plain_rows(rows) = isnothing(rows) ? nothing : [Dict{String,Any}(String(k) => v for (k, v) in pairs(r)) for r in rows]
+
+state_load_triggered() = any(t -> startswith(String(t.prop_id), "load-state-diagram-button."), callback_context().triggered)
+
+state_pressure_kbar(v, saved_unit) =saved_unit == "gpa" ? Float64(v) * 10.0 : Float64(v)
+
 function Tab_Simulation_Callbacks(app)
 
     # update the dictionary of the solution phases and end-members for isopleths
@@ -68,7 +107,7 @@ function Tab_Simulation_Callbacks(app)
 
     # ── helper: list existing saves ────────────────────────────────────────────
     function _list_saves()
-        dir = joinpath(@__DIR__, "..", "saved_states")
+        dir = state_dir()
         isdir(dir) || return String[]
         files = readdir(dir)
         names = [replace(f, r"_options\.jld2$" => "") for f in files if endswith(f, "_options.jld2")]
@@ -183,6 +222,12 @@ function Tab_Simulation_Callbacks(app)
         State(  "phase-selection",                  "value"       ),
         State(  "pure-phase-selection",              "value"       ),
         State(  "preset-dropdown",                  "value"       ),
+        State(  "pressure-unit-dropdown",           "value"       ),
+        State(  "select-bulk-unit",                 "value"       ),
+        State(  "table-bulk-rock",                  "data"        ),
+        State(  "table-2-bulk-rock",                "data"        ),
+        State(  "table-te-rock",                    "data"        ),
+        State(  "table-te-2-rock",                  "data"        ),
 
         prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
     ) do click, filename,
@@ -197,49 +242,54 @@ function Tab_Simulation_Callbacks(app)
         buffer1, buffer2,
         te_test, te_test2,
         watsat, watsat_val,
-        ss_selection, pp_selection, preset
+        ss_selection, pp_selection, preset,
+        pressure_unit, bulk_unit, bulk_table, bulk_table2, te_table, te_table2
 
         global db, dbte
 
-        global infos, layout, data, data_plot, data_reaction, iso_show, n_lbl, data_isopleth, data_isopleth_out, Out_XY, Hash_XY, Out_TE_XY, all_TE_ph, n_phase_XY, addedRefinementLvl, pChip_wat, pChip_T;
+        base_path = state_base_path(filename)
+        if isnothing(base_path)
+            println("Cannot save state: invalid file name \"$(filename)\" (must be non-empty, without path separators)")
+            return false
+        end
+        mkpath(state_dir())
 
-        saved_states_dir = joinpath(@__DIR__, "..", "saved_states")
-        mkpath(saved_states_dir)
-        base_path       = joinpath(saved_states_dir, String(filename))
-
-        global file_pd  = base_path * "_phase_diagram.jld2"
+        file_pd         = base_path * "_phase_diagram.jld2"
         file_pd_data    = base_path * "_phase_diagram_data.jld2"
         file            = base_path * "_options.jld2"
 
-        ss_selection = to_str_vec(ss_selection)
-        pp_selection = to_str_vec(pp_selection)
+        ss_selection    = to_str_vec(ss_selection)
+        pp_selection    = to_str_vec(pp_selection)
+        ptx_table       = state_plain_rows(ptx_table)
+        bulk_table      = state_plain_rows(bulk_table)
+        bulk_table2     = state_plain_rows(bulk_table2)
+        te_table        = state_plain_rows(te_table)
+        te_table2       = state_plain_rows(te_table2)
+        pressure_unit   = pressure_unit == "gpa" ? "gpa" : "kbar"
 
         println("Saving phase diagram options..."); t0 = time()
-        @save file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ssat_dtb P2O5sat_dtb ptx_table pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver boost verbose scp test test2 buffer1 buffer2 te_test te_test2 watsat watsat_val ss_selection pp_selection preset
+        @save file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ssat_dtb P2O5sat_dtb ptx_table pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver boost verbose scp test test2 buffer1 buffer2 te_test te_test2 watsat watsat_val ss_selection pp_selection preset pressure_unit bulk_unit bulk_table bulk_table2 te_table te_table2
         println("Saved phase diagram options in $(round(time()-t0, digits=3)) seconds");
 
-        gv_names    = ["infos","layout","data", "data_plot", "data_reaction","iso_show", "n_lbl","data_isopleth", "data_isopleth_out","Out_XY", "Hash_XY", "Out_TE_XY", "all_TE_ph", "n_phase_XY", "addedRefinementLvl", "pChip_wat", "pChip_T", "assemblage_rows", "list_compacted_idx", "raw_field_id"]
-  
-        save_cmd    = "@save file_pd"
-        field_list  = []
-        for i in gv_names
-            if isdefined(MAGEMinApp, Symbol(i))
-                save_cmd *= " $i"
-                push!(field_list, i)
-            end 
-        end
+        field_list = [n for n in STATE_DIAGRAM_FIELDS if isdefined(MAGEMinApp, Symbol(n))]
 
-        if !isempty(field_list)
+        if isempty(field_list)
+            rm(file_pd;      force = true)
+            rm(file_pd_data; force = true)
+        else
             println("Saving phase diagram data (can take a while 1-5 Go)..."); t0 = time()
+            jldopen(file_pd, "w") do f
+                for n in field_list
+                    f[n] = getfield(MAGEMinApp, Symbol(n))
+                end
+            end
             @save file_pd_data field_list
-            eval(Meta.parse(save_cmd))
-            println("Saved phase diagram data in $(round(time()-t0, digits=3)) seconds"); 
+            println("Saved phase diagram data in $(round(time()-t0, digits=3)) seconds");
         end
 
-        status = "success"
-        println("saved in: $(pwd())/")
+        println("saved in: $(abspath(state_dir()))/")
 
-        return status
+        return "success"
     end
 
     # update the dictionary of the solution phases and end-members for isopleths
@@ -311,9 +361,9 @@ function Tab_Simulation_Callbacks(app)
             out = Any[no_update() for _ = 1:32]
             if was_gpa != use_GPa[1]
                 factor   = use_GPa[1] ? (1.0/10.0) : 10.0
-                out[13]  = round(pmin_cur  * factor, digits=10)
-                out[14]  = round(pmax_cur  * factor, digits=10)
-                out[17]  = round(fixp_cur  * factor, digits=10)
+                pmin_cur isa Number && (out[13] = round(pmin_cur * factor, digits=10))
+                pmax_cur isa Number && (out[14] = round(pmax_cur * factor, digits=10))
+                fixp_cur isa Number && (out[17] = round(fixp_cur * factor, digits=10))
             end
 
             unit    = pressure_unit_label()
@@ -323,64 +373,74 @@ function Tab_Simulation_Callbacks(app)
             return Tuple(out)
         end
 
-        state_id *=  -1.0
+        failed_out    = Any[no_update() for _ = 1:32]
+        failed_out[1] = ""
+        failed_out[2] = "failed"
 
-        # load the phase diagram if saved
-        global infos, layout, data, data_plot, data_reaction, iso_show, n_lbl, data_isopleth, data_isopleth_out, Out_XY, Hash_XY, Out_TE_XY, all_TE_ph, n_phase_XY, addedRefinementLvl, pChip_wat, pChip_T;
-
-        saved_states_dir = joinpath(@__DIR__, "..", "saved_states")
-        base_path        = joinpath(saved_states_dir, String(filename))
-
-        file_pd_data    = base_path * "_phase_diagram_data.jld2"
-        global file_pdr = base_path * "_phase_diagram.jld2"
-        load_cmd        = "@load file_pdr"
-        try
-            field_list = []
-            @load file_pd_data field_list
-            for i in field_list
-                load_cmd *= " $i"
-            end
-            if !isempty(field_list)
-                println("Loading phase diagram..."); t0 = time()
-                eval(Meta.parse(load_cmd))
-                println("Loaded phase diagram in $(round(time()-t0, digits=3)) seconds")
-            end
-        catch
-            println("failed to load the phase diagram data")
+        file = state_options_file(filename)
+        if isnothing(file)
+            println("Cannot load state: no saved state named \"$(filename)\" in $(abspath(state_dir()))")
+            return Tuple(failed_out)
         end
 
-        # load option of the phase diagram tab
         global db, dbte
-        file = base_path * "_options.jld2"
+        local opts
         try
-            @load file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ssat_dtb P2O5sat_dtb pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer boost verbose scp buffer1 buffer2 watsat watsat_val
-
-            # phase (de)selection was only added to saved states later; tolerate older
-            # files saved before this field existed
-            try
-                ss_selection, pp_selection = nothing, nothing
-                @load file ss_selection pp_selection
-                if !isnothing(ss_selection)
-                    AppData.phase_selection_cache[1][database] = Dict{String,Any}("ss" => to_str_vec(ss_selection), "pp" => to_str_vec(pp_selection))
-                end
-            catch
-            end
-
-            try
-                preset = nothing
-                @load file preset
-                if !isnothing(preset) && haskey(AppData.phase_selection_cache[1], database)
-                    AppData.phase_selection_cache[1][database]["preset"] = preset
-                end
-            catch
-            end
-
-            success, failed = "success", ""
-            return success, failed, database, diagram_type, mb_cpx, limit_ca_opx, ca_opx_val, tepm, kds_dtb, zrsat_dtb, ssat_dtb, P2O5sat_dtb, display_pressure(Float64(pmin)), display_pressure(Float64(pmax)), tmin, tmax, display_pressure(Float64(pfix)), tfix, grid_sub, refinement, refinement_level, buffer, boost, verbose, scp, buffer1, buffer2, watsat, watsat_val, state_id, no_update(), no_update()
+            opts = state_read(file, "db", "dbte", "database", "diagram_type", "mb_cpx", "limit_ca_opx", "ca_opx_val", "tepm", "kds_dtb", "zrsat_dtb", "ssat_dtb", "P2O5sat_dtb",
+                                    "pmin", "pmax", "tmin", "tmax", "pfix", "tfix", "grid_sub", "refinement", "refinement_level", "buffer", "boost", "verbose", "scp",
+                                    "buffer1", "buffer2", "watsat", "watsat_val", "ss_selection", "pp_selection", "preset", "pressure_unit";
+                                    optional = ("ss_selection", "pp_selection", "preset", "pressure_unit"))
         catch e
-            success, failed = "", "failed"
-            return success, failed, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, state_id, no_update(), no_update()
+            println("Failed to read saved state options from $file: ", sprint(showerror, e))
+            return Tuple(failed_out)
         end
+
+        db_s, dbte_s, database, diagram_type, mb_cpx, limit_ca_opx, ca_opx_val, tepm, kds_dtb, zrsat_dtb, ssat_dtb, P2O5sat_dtb,
+        pmin, pmax, tmin, tmax, pfix, tfix, grid_sub, refinement, refinement_level, buffer, boost, verbose, scp,
+        buffer1, buffer2, watsat, watsat_val, ss_selection, pp_selection, preset, saved_unit = opts
+
+        global infos, layout, data, data_plot, data_reaction, iso_show, n_lbl, data_isopleth, data_isopleth_out, Out_XY, Hash_XY, Out_TE_XY, all_TE_ph, n_phase_XY, addedRefinementLvl, pChip_wat, pChip_T, loaded_state_has_diagram
+
+        base_path       = state_base_path(filename)
+        file_pd         = base_path * "_phase_diagram.jld2"
+        file_pd_data    = base_path * "_phase_diagram_data.jld2"
+        loaded          = Dict{String,Any}()
+        if isfile(file_pd) && isfile(file_pd_data)
+            try
+                println("Loading phase diagram..."); t0 = time()
+                field_list = filter(in(STATE_DIAGRAM_FIELDS), String.(something(state_read(file_pd_data, "field_list")[1], String[])))
+                jldopen(file_pd, "r") do f
+                    for n in field_list
+                        haskey(f, n) && (loaded[n] = f[n])
+                    end
+                end
+                println("Loaded phase diagram in $(round(time()-t0, digits=3)) seconds")
+            catch e
+                println("failed to load the phase diagram data: ", sprint(showerror, e))
+                empty!(loaded)
+            end
+        end
+
+        for (n, v) in loaded
+            Core.eval(MAGEMinApp, Expr(:(=), Symbol(n), QuoteNode(v)))
+        end
+        loaded_state_has_diagram = all(k -> haskey(loaded, k), ("data", "Out_XY", "Hash_XY", "data_plot", "layout", "data_isopleth", "n_phase_XY", "addedRefinementLvl"))
+
+        db, dbte = db_s, dbte_s
+
+        if !isnothing(ss_selection)
+            AppData.phase_selection_cache[1][database] = Dict{String,Any}("ss" => to_str_vec(ss_selection), "pp" => to_str_vec(pp_selection))
+        end
+        if !isnothing(preset) && haskey(AppData.phase_selection_cache[1], database)
+            AppData.phase_selection_cache[1][database]["preset"] = preset
+        end
+
+        global use_GPa
+        use_GPa[1] = (pressure_unit == "gpa")
+        to_disp(v) = v isa Number ? display_pressure(state_pressure_kbar(v, saved_unit)) : v
+
+        state_id *= -1.0
+        return "success", "", database, diagram_type, mb_cpx, limit_ca_opx, ca_opx_val, tepm, kds_dtb, zrsat_dtb, ssat_dtb, P2O5sat_dtb, to_disp(pmin), to_disp(pmax), tmin, tmax, to_disp(pfix), tfix, grid_sub, refinement, refinement_level, buffer, boost, verbose, scp, buffer1, buffer2, watsat, watsat_val, state_id, no_update(), no_update()
     end
 
     # update the dictionary of phase_selection_options
@@ -545,7 +605,7 @@ function Tab_Simulation_Callbacks(app)
             if boost == true
                 solver_opt    = "lp"
             else
-                if scp == "G_system"
+                if scp == 1
                     solver_opt    = "lp"
                 else
                     solver_opt    = "hyb"
@@ -903,9 +963,8 @@ function Tab_Simulation_Callbacks(app)
 
         prevent_initial_call = true,
     ) do reset, test, dtb
-    
-            title = db[(db.db .== dtb), :].title[test+1]
-        return title
+        titles = db[(db.db .== dtb), :].title
+        return (test isa Integer && 0 <= test < length(titles)) ? titles[test+1] : titles[1]
     end
 
     # callback function to display to right set of variables as function of the diagram type
@@ -943,7 +1002,7 @@ function Tab_Simulation_Callbacks(app)
         Input(  "pressure-unit-dropdown",   "value"     ),
         Input(  "upload-pt-path",           "contents"  ),
         State(  "upload-pt-path",           "filename"  ),
-        State(  "save-state-filename-id",   "value"     ),
+        State(  "load-state-filename-id",   "value"     ),
         State(  "pt-x-table",               "data"      ),
         State(  "pt-x-table",               "columns"   ),
         State(  "pressure-unit-prev",       "children"  ),
@@ -965,13 +1024,27 @@ function Tab_Simulation_Callbacks(app)
             return dataout, no_update(), no_update(), no_update(), no_update(), no_update(), no_update()
 
         elseif bid ==  "load-state-diagram-button"
-            file = joinpath(@__DIR__, "..", "saved_states", String(filename)*"_options.jld2")
+            file = state_options_file(filename)
+            isnothing(file) && return ntuple(_ -> no_update(), 7)
 
-            if isfile(file)
-                @load file ptx_table
+            rows, saved_unit = try
+                ptx_table, saved_unit = state_read(file, "ptx_table", "pressure_unit"; optional = ("pressure_unit",))
+                state_plain_rows(ptx_table), saved_unit
+            catch
+                return ntuple(_ -> no_update(), 7)
+            end
+            isnothing(rows) && return ntuple(_ -> no_update(), 7)
+
+            cur_unit = pressure_unit == "gpa" ? "gpa" : "kbar"
+            if something(saved_unit, "kbar") != cur_unit
+                factor = cur_unit == "gpa" ? (1.0/10.0) : 10.0
+                for row in rows
+                    p = get(row, "col-1", nothing)
+                    p isa Number && (row["col-1"] = round(p * factor, digits=10))
+                end
             end
 
-            return ptx_table, no_update(), no_update(), no_update(), no_update(), no_update(), no_update()
+            return rows, no_update(), no_update(), no_update(), no_update(), no_update(), no_update()
 
         elseif bid == "pressure-unit-dropdown"
             global use_GPa
@@ -1139,6 +1212,7 @@ function Tab_Simulation_Callbacks(app)
             T1      = Dict("display" => "none")
             T2      = Dict("display" => "none")
             refine  = Dict("display" => "none")
+            refine2 = Dict("display" => "none")
             mumu    = Dict("display" => "none")
         end
 
@@ -1300,7 +1374,7 @@ function Tab_Simulation_Callbacks(app)
         Input( "select-bulk-unit","value"),
 
         State( "table-bulk-rock","data"),
-        State( "save-state-filename-id",   "value"    ),
+        State( "load-state-filename-id",   "value"    ),
         State( "test-dropdown","options"),
         State( "database-caption","value"),
 
@@ -1310,45 +1384,44 @@ function Tab_Simulation_Callbacks(app)
             n_clicks_load, sys_unit, 
             tb_data, filename, test_opts, db_cap
 
-        bid  = pushed_button( callback_context() )  
-
-        if bid ==  "load-state-diagram-button"
-            file = joinpath(@__DIR__, "..", "saved_states", String(filename)*"_options.jld2")
-
-            if isfile(file)
-                @load file test
+        saved_table = nothing
+        if state_load_triggered()
+            file = state_options_file(filename)
+            isnothing(file) && return ntuple(_ -> no_update(), 4)
+            val, saved_table, saved_unit = try
+                state_read(file, "test", "bulk_table", "bulk_unit"; optional = ("bulk_table", "bulk_unit"))
+            catch
+                return ntuple(_ -> no_update(), 4)
             end
-
-            val = test
+            saved_unit != sys_unit && (saved_table = nothing)
         else
             # catching up some special cases
-            if test > length(db[(db.db .== dtb), :].test) - 1 
+            if test > length(db[(db.db .== dtb), :].test) - 1
                 val = 0
             else
                 val = test
             end
         end
 
-        if sys_unit == 1
-            data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== val), :].oxide[1][i],
-                                    "fraction"           => db[(db.db .== dtb) .& (db.test .== val), :].frac[1][i])
-                                        for i=1:length(db[(db.db .== dtb) .& (db.test .== val), :].oxide[1]) ]
+        db_dtb      = db[(db.db .== dtb), :]
+        row         = db_dtb[(db_dtb.test .== val), :]
+
+        if !isnothing(saved_table)
+            data    = saved_table
+        elseif sys_unit == 1
+            data    = [Dict("oxide" => row.oxide[1][i], "fraction" => row.frac[1][i])    for i=1:length(row.oxide[1]) ]
         elseif sys_unit == 2
-            data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== val), :].oxide[1][i],
-                                    "fraction"            => db[(db.db .== dtb) .& (db.test .== val), :].frac_wt[1][i])
-                                        for i=1:length(db[(db.db .== dtb) .& (db.test .== val), :].oxide[1]) ]
+            data    = [Dict("oxide" => row.oxide[1][i], "fraction" => row.frac_wt[1][i]) for i=1:length(row.oxide[1]) ]
         end
 
+        opts        =  [Dict(   "label" => db_dtb.title[i],
+                                "value" => db_dtb.test[i]  )
+                                    for i=1:length(db_dtb.test)]
 
+        cap         = dba[(dba.acronym .== dtb) , :].database[1]
 
-        opts        =  [Dict(   "label" => db[(db.db .== dtb), :].title[i],
-                                "value" => db[(db.db .== dtb), :].test[i]  )
-                                    for i=1:length(db[(db.db .== dtb), :].test)]
+        return data, opts, val, cap
 
-        cap         = dba[(dba.acronym .== dtb) , :].database[1]  
-
-        return data, opts, val, cap    
-    
     end
 
 
@@ -1365,7 +1438,7 @@ function Tab_Simulation_Callbacks(app)
         Input( "select-bulk-unit","value"),
         State( "table-2-bulk-rock","data"),
 
-        State( "save-state-filename-id",   "value"     ),
+        State( "load-state-filename-id",   "value"     ),
         State( "test-2-dropdown","options"),
 
         prevent_initial_call=true,
@@ -1375,60 +1448,44 @@ function Tab_Simulation_Callbacks(app)
             tb2_data, filename,
             test2_opts
 
-         bid  = pushed_button( callback_context() )     
-
-         if bid == "load-state-diagram-button"
-            file = joinpath(@__DIR__, "..", "saved_states", String(filename)*"_options.jld2")
-
-            if isfile(file)
-                @load file test2
+        saved_table = nothing
+        if state_load_triggered()
+            file = state_options_file(filename)
+            isnothing(file) && return ntuple(_ -> no_update(), 3)
+            val, saved_table, saved_unit = try
+                state_read(file, "test2", "bulk_table2", "bulk_unit"; optional = ("bulk_table2", "bulk_unit"))
+            catch
+                return ntuple(_ -> no_update(), 3)
             end
-            val = test2
-            # return tb2_data, test2_opts, test2
-
-         else
-
+            saved_unit != sys_unit && (saved_table = nothing)
+        else
             # catching up some special cases
-            if test > length(db[(db.db .== dtb), :].test) - 1 
+            if test > length(db[(db.db .== dtb), :].test) - 1
                 val = 0
             else
                 val = test
             end
         end
 
-            if (~isempty(db[(db.db .== dtb) .& (db.test .== val), :].frac2[1]))
+        db_dtb  = db[(db.db .== dtb), :]
+        row     = db_dtb[(db_dtb.test .== val), :]
+        has_2   = !isempty(row.frac2[1])
 
-                if sys_unit == 1
-                    data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== val), :].oxide[1][i],
-                                            "fraction"  => db[(db.db .== dtb) .& (db.test .== val), :].frac2[1][i])
-                                                for i=1:length(db[(db.db .== dtb) .& (db.test .== val), :].oxide[1]) ]
-                elseif sys_unit == 2
-                    data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== val), :].oxide[1][i],
-                                            "fraction"  => db[(db.db .== dtb) .& (db.test .== val), :].frac2_wt[1][i])
-                                                for i=1:length(db[(db.db .== dtb) .& (db.test .== val), :].oxide[1]) ]
-                end
+        if !isnothing(saved_table)
+            data    = saved_table
+        elseif sys_unit == 1
+            frac    = has_2 ? row.frac2[1]    : row.frac[1]
+            data    = [Dict("oxide" => row.oxide[1][i], "fraction" => frac[i]) for i=1:length(row.oxide[1]) ]
+        elseif sys_unit == 2
+            frac    = has_2 ? row.frac2_wt[1] : row.frac_wt[1]
+            data    = [Dict("oxide" => row.oxide[1][i], "fraction" => frac[i]) for i=1:length(row.oxide[1]) ]
+        end
 
-            else
-                if sys_unit == 1
-                    data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== val), :].oxide[1][i],
-                                            "fraction"  => db[(db.db .== dtb) .& (db.test .== val), :].frac[1][i])
-                                                for i=1:length(db[(db.db .== dtb) .& (db.test .== val), :].oxide[1]) ]
-                elseif sys_unit == 2
-                    data        =   [Dict(  "oxide"         => db[(db.db .== dtb) .& (db.test .== val), :].oxide[1][i],
-                                            "fraction"  => db[(db.db .== dtb) .& (db.test .== val), :].frac_wt[1][i])
-                                                for i=1:length(db[(db.db .== dtb) .& (db.test .== val), :].oxide[1]) ]
-                end
+        opts        =  [Dict(   "label" => db_dtb.title[i],
+                                "value" => db_dtb.test[i]  )
+                                    for i=1:length(db_dtb.test)]
 
-            end
-
-            opts        =  [Dict(   "label" => db[(db.db .== dtb), :].title[i],
-                                    "value" => db[(db.db .== dtb), :].test[i]  )
-                                        for i=1:length(db[(db.db .== dtb), :].test)]
-
-            # cap         = dba[(dba.acronym .== dtb) , :].database[1]      
-            
-            return data, opts, val 
-        # end                 
+        return data, opts, val
     end
 
 
@@ -1440,39 +1497,39 @@ function Tab_Simulation_Callbacks(app)
         Input("test-te-dropdown","value"),
         Input("output-te-uploadn", "is_open"),        # this listens for changes and updated the list
         Input(  "load-state-diagram-button","n_clicks"  ),
-        State(  "save-state-filename-id",   "value"     ),
+        State(  "load-state-filename-id",   "value"     ),
         prevent_initial_call=true,
     ) do test, update,
         n_clicks_load, filename
 
-        bid  = pushed_button( callback_context() )  
-
-        # catching up some special cases
-        if bid ==  "load-state-diagram-button"
-            file = joinpath(@__DIR__, "..", "saved_states", String(filename)*"_options.jld2")
-
-            if isfile(file)
-                @load file te_test
-                t = te_test
+        te_db       = dbte
+        saved_table = nothing
+        if state_load_triggered()
+            file = state_options_file(filename)
+            isnothing(file) && return ntuple(_ -> no_update(), 3)
+            t, te_db, saved_table = try
+                state_read(file, "te_test", "dbte", "te_table"; optional = ("te_table",))
+            catch
+                return ntuple(_ -> no_update(), 3)
             end
         else
-            if test > length(dbte.test) - 1 
+            if test > length(dbte.test) - 1
                 t = 0
             else
                 t = test
             end
-        end 
+        end
 
-        data        =   [Dict(  "elements"  => dbte[(dbte.test .== t), :].elements[1][i],
-                                "μg_g"       => dbte[(dbte.test .== t), :].μg_g[1][i])
-                                    for i=1:length(dbte[(dbte.test .== t), :].elements[1]) ]
+        row         = te_db[(te_db.test .== t), :]
+        data        = !isnothing(saved_table) ? saved_table :
+                      [Dict("elements" => row.elements[1][i], "μg_g" => row.μg_g[1][i]) for i=1:length(row.elements[1]) ]
 
-        opts        =  [Dict(   "label" => dbte.title[i],
-                                "value" => dbte.test[i]  )
-                                    for i=1:length(dbte.test)]
+        opts        =  [Dict(   "label" => te_db.title[i],
+                                "value" => te_db.test[i]  )
+                                    for i=1:length(te_db.test)]
 
         val         = t
-        return data, opts, val                  
+        return data, opts, val
     end
 
 
@@ -1485,37 +1542,36 @@ function Tab_Simulation_Callbacks(app)
         Input("test-2-te-dropdown","value"),
         Input("output-te-uploadn", "is_open"),        # this listens for changes and updated the list
         Input(  "load-state-diagram-button","n_clicks"  ),
-        State(  "save-state-filename-id",   "value"     ),
+        State(  "load-state-filename-id",   "value"     ),
         prevent_initial_call=true,
     ) do test, update,
         n_clicks_load, filename
         
-        bid  = pushed_button( callback_context() )  
-
-        # catching up some special cases
-        if bid ==  "load-state-diagram-button"
-            file = joinpath(@__DIR__, "..", "saved_states", String(filename)*"_options.jld2")
-
-            if isfile(file)
-                @load file te_test2
-                t = te_test2
+        te_db       = dbte
+        saved_table = nothing
+        if state_load_triggered()
+            file = state_options_file(filename)
+            isnothing(file) && return ntuple(_ -> no_update(), 3)
+            t, te_db, saved_table = try
+                state_read(file, "te_test2", "dbte", "te_table2"; optional = ("te_table2",))
+            catch
+                return ntuple(_ -> no_update(), 3)
             end
         else
-            if test > length(dbte.test) - 1 
+            if test > length(dbte.test) - 1
                 t = 0
             else
                 t = test
             end
-        end 
+        end
 
+        row         = te_db[(te_db.test .== t), :]
+        data        = !isnothing(saved_table) ? saved_table :
+                      [Dict("elements" => row.elements[1][i], "μg_g" => row.μg_g2[1][i]) for i=1:length(row.elements[1]) ]
 
-        data        =   [Dict(  "elements"  => dbte[(dbte.test .== t), :].elements[1][i],
-                                "μg_g"       => dbte[(dbte.test .== t), :].μg_g2[1][i])
-                                    for i=1:length(dbte[(dbte.test .== t), :].elements[1]) ]
-
-        opts        =  [Dict(   "label" => dbte.title[i],
-                                "value" => dbte.test[i]  )
-                                    for i=1:length(dbte.test)]
+        opts        =  [Dict(   "label" => te_db.title[i],
+                                "value" => te_db.test[i]  )
+                                    for i=1:length(te_db.test)]
 
         val         = t
         return data, opts, val                  

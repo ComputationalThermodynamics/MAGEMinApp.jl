@@ -468,6 +468,16 @@ function draw_path_diagram_plot()
             )
 end
 
+function mc_diagram_plot()
+
+    fig = plot( Layout( width = 720, height = 700, autosize = false ))
+
+    dcc_graph(
+                id          = "mc-diagram",
+                figure      = fig,
+            )
+end
+
 function thermobar_canvas_plot()
 
     fig = plot( Layout( height= 600 ))

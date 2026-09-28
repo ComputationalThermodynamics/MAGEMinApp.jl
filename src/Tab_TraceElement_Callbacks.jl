@@ -200,7 +200,6 @@ function Tab_TraceElement_Callbacks(app)
         Input("max-color-id-te",            "value"     ),
 
         Input("update-title-button",        "n_clicks"  ),
-        Input("export-layers-te",           "n_clicks"  ),
         Input("phase-assemblage-table-id-te", "selected_cells"),
         Input("clear-assemblage-highlight-button-te", "n_clicks"),
 
@@ -267,7 +266,7 @@ function Tab_TraceElement_Callbacks(app)
                 addIso,     removeIso,  removeAllIso,           isoShow,    isoHide, isoShowAll,    isoHideAll,
 
                 colorMap,   smooth,     rangeColor, set_white, reverse,    minColor, maxColor,
-                updateTitle,exportFig,
+                updateTitle,
                 assemblage_selected_cells_te, clearHighlight_te,
                 customTitle,tepm,       varBuilder, norm, type, norm_te,
                 dtb,        diagType,   tmin,       tmax,       pmin,       pmax,       e1_tmin,    e1_tmax,    e2_tmin,    e2_tmax,  
@@ -282,6 +281,8 @@ function Tab_TraceElement_Callbacks(app)
         pmin, pmax                      = to_kbar_pressure(Float64(pmin)), to_kbar_pressure(Float64(pmax))                                  # convert displayed pressure unit to kbar
         xtitle, ytitle, Xrange, Yrange  = diagram_type(diagType, tmin, tmax, pmin, pmax, e1_tmin, e1_tmax, e2_tmin, e2_tmax)
         bulk_L, bulk_R, oxi             = get_bulkrock_prop(bulk1, bulk2) 
+        global pd_fig_meta_te
+        pd_fig_meta_te                  = (xtitle = xtitle, ytitle = ytitle, diagType = diagType)
         colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)              # get colormap information
         bid                             = pushed_button( callback_context() )                           # get the ID of the last pushed button
         fieldNames                      = ["data_plot_te","data_reaction","data_grid","data_isopleth_out_te"]
@@ -715,124 +716,6 @@ function Tab_TraceElement_Callbacks(app)
 
                                     
 
-            if bid == "export-layers-te"
-                lyt     = copy(layout_te)
-                outline = [attr(
-                                        type = "rect",
-                                        xref = "x",
-                                        yref = "y",
-                                        x0 = Xrange[1],
-                                        y0 = Yrange[1],
-                                        x1 = Xrange[2],
-                                        y1 = Yrange[2],
-                                        line = attr(color = "black", width = 2),
-                                        fillcolor = "rgba(0,0,0,0)"  # transparent fill
-                                    )]
-                nticks      = 6  # number of ticks
-                tick_length = 0.01 * (Yrange[2] - Yrange[1])  # length of tick in data units
-
-                # X-axis ticks
-                xticks = range(Xrange[1], Xrange[2], length=nticks)
-                x_tick_shapes_B = [
-                    attr(
-                        type = "line",
-                        xref = "x",
-                        yref = "y",
-                        x0 = x,
-                        y0 = Yrange[1],
-                        x1 = x,
-                        y1 = Yrange[1] + tick_length,
-                        line = attr(color = "black", width = 1)
-                    ) for x in xticks
-                ]
-                x_tick_shapes_T = [
-                    attr(
-                        type = "line",
-                        xref = "x",
-                        yref = "y",
-                        x0 = x,
-                        y0 = Yrange[2] - tick_length,
-                        x1 = x,
-                        y1 = Yrange[2],
-                        line = attr(color = "black", width = 1)
-                    ) for x in xticks
-                ]
-
-                yticks = range(Yrange[1], Yrange[2], length=nticks)
-                tick_length = 0.01 * (Xrange[2] - Xrange[1])  # length of tick in data units
-                y_tick_shapes_L = [
-                    attr(
-                        type = "line",
-                        xref = "x",
-                        yref = "y",
-                        x0 = Xrange[1],
-                        y0 = y,
-                        x1 = Xrange[1] + tick_length,
-                        y1 = y,
-                        line = attr(color = "black", width = 1)
-                    ) for y in yticks
-                ]
-                y_tick_shapes_R = [
-                    attr(
-                        type = "line",
-                        xref = "x",
-                        yref = "y",
-                        x0 = Xrange[2] - tick_length,
-                        y0 = y,
-                        x1 = Xrange[2],
-                        y1 = y,
-                        line = attr(color = "black", width = 1)
-                    ) for y in yticks
-                ]
-                lyt[:shapes] = vcat(get(layout_te, :shapes, PlotlyBase.PlotlyAttribute[]), outline, y_tick_shapes_L, y_tick_shapes_R, x_tick_shapes_B, x_tick_shapes_T)
-
-                for i=1:n_lbl
-                    lyt[:annotations][i][:visible] = false
-                end
-                filename = output_dir[1]*replace(customTitle, " " => "_") * "_$fieldname.svg"
-                savefig(plot(heat_map_export_te,lyt), filename; width=720, height=900)
-                np       = length(fieldNames_exp)
-                if np > 0
-                    for i in 2:np
-                        if field2plot[i] == 1
-                            if fieldNames_exp[i] == "data_isopleth_out_export_te"
-                                ni = length(data_isopleth_te.active)
-                                names_raw = [trace[:name] for trace in data_isopleth_te.isoCap[data_isopleth_te.active] if haskey(trace, :name)]
-                                names = sanitize_names(names_raw)
-
-                                for j = 1:ni
-                                    trace_fig = plot_diagram(data_isopleth_te.isoPexp[data_isopleth_te.active[j]], lyt)
-                                    filename = output_dir[1]*replace(customTitle, " " => "_") * "_$(fieldNames_exp[i])_$(names[j])_te.svg"
-                                    savefig(trace_fig, filename; width=720, height=900)
-                                end
-                            else
-                                trace_fig = plot_diagram(eval(Symbol(fieldNames_exp[i])), lyt)
-                                filename = output_dir[1]*replace(customTitle, " " => "_") * "_$(fieldNames_exp[i])_te.svg"
-                                savefig(trace_fig, filename; width=720, height=900)
-                            end
-                            filename = output_dir[1]*replace(customTitle, " " => "_") * "_isopleths_caption_te.svg"
-                            savefig(plot(data_isopleth_te.isoCap[data_isopleth_te.active],layoutCap), filename; width=900, height=30)
-                        end
-                    end
-
-                end
-
-                if field2plot[2] == 1
-                    for i=1:n_lbl
-                        lyt[:annotations][i][:visible] = true
-                    end
-                    
-                    filename = output_dir[1]*replace(customTitle, " " => "_") * "_labels.svg"
-                    savefig(plot(PlotlyJS.AbstractTrace[], lyt), filename; width=720, height=900)
-                    open(output_dir[1] * replace(customTitle, " " => "_") * "_phase_equilibria.txt", "w") do io
-                        write(io, txt_list)
-                    end
-                end
-
-            end
-
-
-
             if field2plot[4] == 0
                 fig_cap = plot(layoutCap)
             else
@@ -1075,6 +958,55 @@ function Tab_TraceElement_Callbacks(app)
             end
         end
         return is_open    
+    end
+
+    """
+        Save the trace-element diagram as one clean layered SVG ([`pd_export_svg`](@ref)),
+        the same export as the Phase diagram tab (see its callback) built from this tab's
+        `_te` globals, as `<title>_TE.svg` in the figure directory, plus
+        `<title>_TE_phase_equilibria.txt` when there are numbered assemblages. The
+        reaction lines are the ones this tab's figure draws (`data_reaction`).
+    """
+    callback!(
+        app,
+        Output("export-svg-status-te", "children"),
+
+        Input("export-layers-te", "n_clicks"),
+
+        State("show-grid-te",      "value"),
+        State("show-full-grid-te", "value"),
+        State("show-lbl-id-te",    "value"),
+
+        prevent_initial_call = true,
+    ) do _n, show_reaction, show_mesh, show_labels
+
+        global data, gridded_te, layout_te, data_reaction, data_isopleth_te, iso_show_te, heat_map_export_te, assemblage_rows_te, pd_fig_meta_te, output_dir
+
+        if !(@isdefined(heat_map_export_te) && @isdefined(gridded_te) && @isdefined(layout_te) && @isdefined(data)) || isnothing(pd_fig_meta_te)
+            return pd_export_status("Compute a trace-element diagram first."; ok = false)
+        end
+
+        try
+            parts = pd_figure_parts(data = data, gridded = gridded_te, heat_map = heat_map_export_te, layout_g = layout_te,
+                                    reaction = @isdefined(data_reaction) ? data_reaction : nothing,
+                                    data_isopleth = data_isopleth_te, iso_show = @isdefined(iso_show_te) ? iso_show_te : 0,
+                                    assemblage_rows = @isdefined(assemblage_rows_te) ? assemblage_rows_te : Dict{String,String}[],
+                                    xtitle = pd_fig_meta_te.xtitle, ytitle = pd_fig_meta_te.ytitle, diagType = pd_fig_meta_te.diagType,
+                                    show_reaction = show_reaction == "true", show_mesh = show_mesh == "true", show_labels = show_labels == "true")
+            mkpath(output_dir[1])
+            base = output_dir[1] * replace(isempty(parts.title) ? "trace_element_diagram" : parts.title, r"[ /\\:]" => "_") * "_TE"
+            r    = pd_export_svg(parts, base * ".svg")
+            msg  = "Saved $(r.path) ($(round(r.bytes / 1024, digits = 1)) KB, $(r.n_paths) paths)."
+            if !isempty(parts.assemblages)
+                open(base * "_phase_equilibria.txt", "w") do io
+                    write(io, join(parts.assemblages, "\n") * "\n")
+                end
+                msg *= " Assemblage list: $(base)_phase_equilibria.txt."
+            end
+            return pd_export_status(msg; ok = true)
+        catch e
+            return pd_export_status("Export failed: " * sprint(showerror, e); ok = false)
+        end
     end
 
     return app

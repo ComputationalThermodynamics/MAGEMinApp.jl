@@ -292,7 +292,7 @@ function get_TAS_diagram(phases,title,field::String,colorscale)
         xaxis_title = "SiO2 [wt%]",
         yaxis_title = "K2O + Na2O [wt%]",
         xaxis_range = [35.0, 85.0],
-        # yaxis_range = [0.0,15.0],
+        yaxis_range = [0.0, 16.0],
         annotations = annotations,
         legend      = attr( x = 0.82, y = 0.28, xanchor = "left", yanchor = "top",
                             title = attr(text="Marker size<br>(system remaining)"),
@@ -458,7 +458,7 @@ function get_TAS_pluto_diagram(phases,title,field::String,colorscale)
         xaxis_title = "SiO2 [wt%]",
         yaxis_title = "K2O + Na2O [wt%]",
         xaxis_range = [35.0, 85.0],
-        # yaxis_range = [0.0,15.0],
+        yaxis_range = [1.497, 15.978],
         annotations = annotations,
         legend      = attr( x = 0.82, y = 0.28, xanchor = "left", yanchor = "top",
                             title = attr(text="Marker size<br>(system remaining)"),
@@ -1625,6 +1625,84 @@ function get_te_fieldbuilder_plot(varBuilder::String, norm::String)
     )
 
     return traces, layout
+end
+
+"""
+    ptx_bulk_info_rows(out, out_te)
+
+    `(label, value)` rows describing `out`'s (a `Out_PTX` entry) bulk-rock composition:
+    major elements from `out.oxides`/`out.bulk_wt` (already wt%, not a 0-1 fraction -
+    matches how `MAGEMinApp_functions.jl` writes it out elsewhere with no extra
+    scaling), and, when `out_te` (the paired `Out_TE_PTX` entry) is given, trace
+    elements from `out_te.elements`/`out_te.C0` - the same "C0" bulk trace-element
+    concentration already drawn as the spectrum's own dashed reference line, so this is
+    guaranteed to match what is on screen, not a separately recomputed value. Shared by
+    every PTX export-only info box ([`get_ptx_spectrum_info`](@ref),
+    [`get_ptx_evolution_info`](@ref)).
+"""
+function ptx_bulk_info_rows(out, out_te)
+    oxi_str = replace.(out.oxides, "2" => "₂", "3" => "₃")
+    major   = join(["$o $(round(v, digits = 2))" for (o, v) in zip(oxi_str, out.bulk_wt)], "  ")
+    rows = [("Database", "$(out.database); $(out.dataset)"),
+            ("Bulk-rock, major elements [wt%]", major)]
+    if out_te !== nothing
+        trace = join(["$e $(round(v, digits = 3))" for (e, v) in zip(out_te.elements, out_te.C0)], "  ")
+        push!(rows, ("Bulk-rock, trace elements [μg/g]", trace))
+    end
+    return rows
+end
+
+"""
+    ptx_info_columns(rows)
+
+    `(labels, values)` - the `<br>`-joined pair `extra_info`/`svg_info_layer` expects -
+    from a list of `(label, value)` rows.
+"""
+ptx_info_columns(rows) = (join(first.(rows), "<br>"), join(last.(rows), "<br>"))
+
+"""
+    get_ptx_spectrum_info(step_id, norm)
+
+    The export-only info box for the PTX tab's REE/trace-element spectrum
+    (`ree-spectrum-ptx`, filename `PTX_TE_spectrum`): database, this step's bulk-rock
+    composition (major and trace elements, [`ptx_bulk_info_rows`](@ref)), the
+    normalization the spectrum is actually plotted against (`norm`, `"chondrite"` or
+    `"bulk"` - the same value `get_layout_ree_ptx` puts in the y-axis title, so this is
+    guaranteed to match what the curve on screen means) and its P-T point - built fresh
+    from `Out_PTX[step_id]`/`Out_TE_PTX[step_id]` at export-click time
+    (`register_svg_export!`'s `info_fn`), never added to the on-screen figure. Returns
+    `nothing` when there is nothing computed yet to describe.
+"""
+function get_ptx_spectrum_info(step_id::Int, norm::AbstractString)
+    global Out_PTX, Out_TE_PTX
+    (@isdefined(Out_PTX) && @isdefined(Out_TE_PTX) && !isempty(Out_PTX) && !isempty(Out_TE_PTX) &&
+     1 <= step_id <= length(Out_PTX) && step_id <= length(Out_TE_PTX)) || return nothing
+    out, out_te = Out_PTX[step_id], Out_TE_PTX[step_id]
+    rows = ptx_bulk_info_rows(out, out_te)
+    push!(rows, ("Normalization", String(norm)))
+    push!(rows, ("P", "$(round(display_pressure(out.P_kbar), digits = 3)) $(pressure_unit_label())"))
+    push!(rows, ("T", "$(round(out.T_C, digits = 3)) °C"))
+    return ptx_info_columns(rows)
+end
+
+"""
+    get_ptx_evolution_info()
+
+    The export-only info box for the PTX tab's TE evolution plot (`te-evol-ptx`,
+    filename `PTX_TE_evolution`): same content shape as
+    [`get_ptx_spectrum_info`](@ref), but for the whole path rather than one point - the
+    starting point's bulk-rock composition and the path's P-T range (start -> end),
+    built fresh from `Out_PTX`/`Out_TE_PTX` at export-click time.
+"""
+function get_ptx_evolution_info()
+    global Out_PTX, Out_TE_PTX
+    (@isdefined(Out_PTX) && @isdefined(Out_TE_PTX) && !isempty(Out_PTX) && !isempty(Out_TE_PTX)) || return nothing
+    rows = ptx_bulk_info_rows(Out_PTX[1], Out_TE_PTX[1])
+    p0, p1 = round(display_pressure(Out_PTX[1].P_kbar), digits = 3), round(display_pressure(Out_PTX[end].P_kbar), digits = 3)
+    t0, t1 = round(Out_PTX[1].T_C, digits = 3), round(Out_PTX[end].T_C, digits = 3)
+    push!(rows, ("P range", "$p0 -> $p1 $(pressure_unit_label())"))
+    push!(rows, ("T range", "$t0 -> $t1 °C"))
+    return ptx_info_columns(rows)
 end
 
 

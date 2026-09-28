@@ -817,18 +817,20 @@ function Tab_PTXpaths_Callbacks(app)
                 end
             end
         elseif bid == "transfer-bulk-button"
-            global point_id
+            global point_id, using_sample_point, SamplePoint
 
-            bulkrock    = zeros(Float64,length(Out_XY[point_id].oxides))
-            oxides      = Out_XY[point_id].oxides
-            dbin        = Out_XY[point_id].database
+            out         = using_sample_point ? SamplePoint.out : Out_XY[point_id]     #point_id/SamplePoint are defined as global variables in the Phase diagram pie-chart callback
+
+            bulkrock    = zeros(Float64,length(out.oxides))
+            oxides      = out.oxides
+            dbin        = out.database
             test 		= length(db[(db.db .== dbin), :].test);
             if transfer_bulk_id == "Solid"
-                bulkrock = Out_XY[point_id].bulk_S
+                bulkrock = out.bulk_S
             elseif transfer_bulk_id == "Melt"
-                bulkrock = Out_XY[point_id].bulk_M
+                bulkrock = out.bulk_M
             else
-                bulkrock = Out_XY[point_id].bulk
+                bulkrock = out.bulk
             end
 
             if sum(bulkrock) == 0.0
@@ -2850,6 +2852,12 @@ function Tab_PTXpaths_Callbacks(app)
         hidden = ["cco", "nno", "aTiO2", "aH2O"]
         return dtb == "sb24" ? filter(o -> !(o.value in hidden), all_opts) : all_opts
     end
+
+    register_svg_exports!(app, PTX_SVG_EXPORTS)
+    register_svg_export!(app, "ree-spectrum-ptx", "PTX_TE_spectrum";
+                          extra_states = [("te-ptx-step-id", "value"), ("normalization-te-ptx", "value")],
+                          info_fn = (step_id, norm) -> get_ptx_spectrum_info(Int(step_id), norm))
+    register_svg_export!(app, "te-evol-ptx", "PTX_TE_evolution"; info_fn = get_ptx_evolution_info)
 
     return app
 end

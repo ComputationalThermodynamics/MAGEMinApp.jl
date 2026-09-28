@@ -72,10 +72,16 @@ function Tab_PhaseDiagram()
                                             value   = -1   ),
                                         dbc_input(
                                             id      = "start-trigger",
-                                            type    = "number", 
+                                            type    = "number",
                                             value   = -1   ),
                                         dcc_store(
                                             id      = "stop-trigger"),
+                                        dbc_input(
+                                            id      = "mc-run-trigger",
+                                            type    = "number",
+                                            value   = -1   ),
+                                        dcc_store(
+                                            id      = "mc-run-done"),
 
                                     ], style = Dict("display" => "none"), id      = "show-hidden-relay-button-id"), #none, block
                                 ]),
@@ -162,11 +168,16 @@ function Tab_PhaseDiagram()
                                 dbc_collapse(
                                     dbc_card(dbc_cardbody([
                                         dbc_row([
-                                            dbc_button("Export all layers", 
+                                            dbc_button("Export svg", 
                                                         id          = "export-layers", color="light",  n_clicks=0,
                                                         style       =  Dict( "textAlign"    => "center",
                                                                             "font-size"     => "100%",
                                                                             "border"        =>"1px grey solid")), 
+                                        ]),
+                                        dbc_row([
+                                            html_div(id="export-svg-status", children="",
+                                                style = Dict("textAlign" => "center", "font-size" => "75%", "color" => "grey",
+                                                             "marginTop" => 6, "wordBreak" => "break-all")),
                                         ]),
                                         dbc_row([
                                             html_div("‎ "),
@@ -244,13 +255,13 @@ function Tab_PhaseDiagram()
 
                                             dbc_row([
                                                 dbc_card([
-                                                    dcc_markdown(   id          = "computation-info-id", 
+                                                    dcc_markdown(   id          = "computation-info-id",
                                                                     children    = "",
                                                                     style       = Dict("white-space" => "pre"))
                                                 ])
                                             ]),
                                             dbc_row([
-                                                dbc_col([ 
+                                                dbc_col([
                                                     dcc_dropdown(   id      = "select-pie-unit",
                                                     options = [
                                                         (label = "mol%",                value = 1),
@@ -265,40 +276,10 @@ function Tab_PhaseDiagram()
                                             ]),
 
                                             dbc_row([
-                                                dbc_col([ 
+                                                dbc_col([
                                                     pie_plot(),
                                                 ]),
                                             ]),
-
-                                            html_div("‎ "),
-                                            html_h1("Transfer point as bulk for PTX path", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
-                                            html_hr(),
-                                            dbc_row([
-                                                dbc_col([
-                                                    html_h1("Name", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),    
-                                                ], width=2),
-                                                dbc_col([ 
-                                                    dbc_input(
-                                                        id      = "transfer-bulk-name",
-                                                        type    = "text", 
-                                                        style   = Dict("textAlign" => "center") ,
-                                                        value   = "bulk-name"   ),     
-                                                ], width=3),
-                                                dbc_col([
-                                                    dcc_dropdown(   id          = "transfer-bulk-id",
-                                                                    options     =  ["Solid","Melt","Whole-rock"],
-                                                                    value       = "Melt" ,
-                                                                    clearable   =  false,
-                                                                    multi       =  false),
-                                                ], width=3), 
-                                                dbc_col([    
-                                                    dbc_button("transfer", id="transfer-bulk-button", color="light",  n_clicks=0,
-                                                    style       = Dict( "textAlign"     => "center",
-                                                                        "font-size"     => "100%",
-                                                                        "border"        =>"1px grey solid")), 
-                                                ], width=3),
-                                            ]),
-
 
                                             html_div([
                                             ], style = Dict("display" => "none"), id      = "test-show-id"),
@@ -338,7 +319,71 @@ function Tab_PhaseDiagram()
                                                     ),
                                                 ]),
                                             ], style = Dict("display" => "none"), id      = "disp-test-id"),
-                                            
+
+                                            html_div("‎ "),
+                                            html_hr(),
+                                            html_div([
+                                                html_h1("Sample point", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
+                                                dbc_row([
+                                                    dbc_col([
+                                                        html_h1("Pressure [kbar]", id = "sample-point-p-label-id", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                        dbc_input(id = "sample-point-p-id", type = "number", value = 5.0, style = Dict("textAlign" => "center")),
+                                                    ], width=6, id = "sample-point-p-div-id"),
+                                                    dbc_col([
+                                                        html_h1("Temperature [°C]", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                        dbc_input(id = "sample-point-t-id", type = "number", value = 600.0, style = Dict("textAlign" => "center")),
+                                                    ], width=6, id = "sample-point-t-div-id"),
+                                                    dbc_col([
+                                                        html_h1("X (bulk-rock 1 → 2)", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                        dbc_input(id = "sample-point-x-id", type = "number", min = 0.0, max = 1.0, value = 0.5, style = Dict("textAlign" => "center")),
+                                                    ], width=6, id = "sample-point-x-div-id", style = Dict("display" => "none")),
+                                                ]),
+                                                dbc_row([
+                                                    dbc_col([
+                                                        dbc_button("Compute", id = "compute-sample-point-button", color="light",  n_clicks=0,
+                                                        style       = Dict( "textAlign"     => "center",
+                                                                            "font-size"     => "100%",
+                                                                            "border"        => "1px grey solid",
+                                                                            "width"         => "100%" )),
+                                                    ]),
+                                                ]),
+                                                dbc_alert(
+                                                    "",
+                                                    id      = "sample-point-error-id",
+                                                    color   = "danger",
+                                                    is_open = false,
+                                                    duration= 6000,
+                                                ),
+                                            ], style = Dict("display" => "block"), id = "sample-point-section-id"),
+                                            html_hr(),
+                                            html_h1("Transfer point as bulk for PTX path", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
+                                            html_hr(),
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("Name", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
+                                                ], width=2),
+                                                dbc_col([
+                                                    dbc_input(
+                                                        id      = "transfer-bulk-name",
+                                                        type    = "text",
+                                                        style   = Dict("textAlign" => "center") ,
+                                                        value   = "bulk-name"   ),
+                                                ], width=3),
+                                                dbc_col([
+                                                    dcc_dropdown(   id          = "transfer-bulk-id",
+                                                                    options     =  ["Solid","Melt","Whole-rock"],
+                                                                    value       = "Melt" ,
+                                                                    clearable   =  false,
+                                                                    multi       =  false),
+                                                ], width=3),
+                                                dbc_col([
+                                                    dbc_button("transfer", id="transfer-bulk-button", color="light",  n_clicks=0,
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"1px grey solid")),
+                                                ], width=3),
+                                            ]),
+
                                             # SAVE POINTS INFORMATION
                                             html_hr(),
                                             dbc_row([
@@ -1728,6 +1773,7 @@ function Tab_PhaseDiagram()
                             #         ),
                             #     ]),
                             # ]),
+                            Tab_MonteCarlo(),
                             dbc_tab(label="Classifications", children=[
                         dbc_row([
 
@@ -1755,12 +1801,15 @@ function Tab_PhaseDiagram()
                                             dbc_row([    
                                                 dbc_offcanvas(
                                                 [
+                                                    svg_export_button_row("TAS-plot-pd"),
                                                     dbc_row([                                                                                     
                                                         TAS_plot_pd()
                                                     ]),
+                                                    svg_export_button_row("TAS-pluto-plot-pd"),
                                                     dbc_row([                                                                                     
                                                         TAS_pluto_plot_pd()
                                                     ]),
+                                                    svg_export_button_row("AFM-plot-pd"),
                                                     dbc_row([                                                                                     
                                                         AFM_plot_pd()
                                                     ]),
@@ -1806,12 +1855,15 @@ function Tab_PhaseDiagram()
                                             dbc_row([
                                                 dbc_offcanvas(
                                                 [
+                                                    svg_export_button_row("CaAmpPanelA-plot-pd"),
                                                     dbc_row([
                                                         CaAmpPanelA_plot_pd()
                                                     ]),
+                                                    svg_export_button_row("CaAmpPanelB-plot-pd"),
                                                     dbc_row([
                                                         CaAmpPanelB_plot_pd()
                                                     ]),
+                                                    svg_export_button_row("CaAmpPanelC-plot-pd"),
                                                     dbc_row([
                                                         CaAmpPanelC_plot_pd()
                                                     ]),
@@ -1855,12 +1907,15 @@ function Tab_PhaseDiagram()
                                             dbc_row([
                                                 dbc_offcanvas(
                                                 [
+                                                    svg_export_button_row("CpxQJ-plot-pd"),
                                                     dbc_row([
                                                         CpxQJ_plot_pd()
                                                     ]),
+                                                    svg_export_button_row("CpxQuad-plot-pd"),
                                                     dbc_row([
                                                         CpxQuad_plot_pd()
                                                     ]),
+                                                    svg_export_button_row("CpxNaPx-plot-pd"),
                                                     dbc_row([
                                                         CpxNaPx_plot_pd()
                                                     ]),
@@ -1904,6 +1959,7 @@ function Tab_PhaseDiagram()
                                             dbc_row([
                                                 dbc_offcanvas(
                                                 [
+                                                    svg_export_button_row("OpxQuad-plot-pd"),
                                                     dbc_row([
                                                         OpxQuad_plot_pd()
                                                     ]),
@@ -1947,9 +2003,11 @@ function Tab_PhaseDiagram()
                                             dbc_row([
                                                 dbc_offcanvas(
                                                 [
+                                                    svg_export_button_row("MicaInterlayer-plot-pd"),
                                                     dbc_row([
                                                         MicaInterlayer_plot_pd()
                                                     ]),
+                                                    svg_export_button_row("MicaCeladonite-plot-pd"),
                                                     dbc_row([
                                                         MicaCeladonite_plot_pd()
                                                     ]),
@@ -1993,6 +2051,7 @@ function Tab_PhaseDiagram()
                                             dbc_row([
                                                 dbc_offcanvas(
                                                 [
+                                                    svg_export_button_row("Feldspar-plot-pd"),
                                                     dbc_row([
                                                         Feldspar_plot_pd()
                                                     ]),
@@ -2036,6 +2095,7 @@ function Tab_PhaseDiagram()
                                             dbc_row([
                                                 dbc_offcanvas(
                                                 [
+                                                    svg_export_button_row("Garnet-plot-pd"),
                                                     dbc_row([
                                                         Garnet_plot_pd()
                                                     ]),
@@ -2079,9 +2139,11 @@ function Tab_PhaseDiagram()
                                             dbc_row([
                                                 dbc_offcanvas(
                                                 [
+                                                    svg_export_button_row("Spinel-plot-pd"),
                                                     dbc_row([
                                                         Spinel_plot_pd()
                                                     ]),
+                                                    svg_export_button_row("Ilmenite-plot-pd"),
                                                     dbc_row([
                                                         Ilmenite_plot_pd()
                                                     ]),

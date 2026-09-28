@@ -406,6 +406,7 @@ function add_isopleth_phaseDiagram_te(      Xrange,     Yrange,
 
     data_isopleth_te.n_iso += 1
 
+    data_isopleth_te.isoT[data_isopleth_te.n_iso] = CTR.contours(X[1:size(gridded_te,1)],Y[1:size(gridded_te,1):end],Float64.(coalesce.(gridded_te, NaN)),collect(range(minIso, maxIso, Int(floor((maxIso-minIso)/stepIso)+1) )))
     data_isopleth_te.isoP[data_isopleth_te.n_iso]= contour( x                   = X,
                                                             y                   = Y,
                                                             z                   = gridded_te,

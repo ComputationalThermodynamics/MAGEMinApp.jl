@@ -318,7 +318,7 @@ function get_CaAmpPanelA_diagram()
     traces = _amp_field_traces(fields)
     push!(traces, _amp_point_trace(si_v, mg_v, label_v, P_v, wt_v, panel_v, :A))
 
-    layout = _amp_panel_layout("Ca-amphibole [(Na+K)ᴬ < 0.50]")
+    layout = _amp_panel_layout("Ca-amphibole [(Na+K)<sup>A</sup> < 0.50]")
     layout.fields[:annotations] = _amp_field_annotations(fields)
 
     return traces, layout
@@ -344,7 +344,7 @@ function get_CaAmpPanelB_diagram()
     traces = _amp_field_traces(fields)
     push!(traces, _amp_point_trace(si_v, mg_v, label_v, P_v, wt_v, panel_v, :B))
 
-    layout = _amp_panel_layout("Ca-amphibole [(Na+K)ᴬ ≥ 0.50, Ti < 0.50]")
+    layout = _amp_panel_layout("Ca-amphibole [(Na+K)<sup>A</sup> ≥ 0.50, Ti < 0.50]")
     layout.fields[:annotations] = _amp_field_annotations(fields)
 
     return traces, layout

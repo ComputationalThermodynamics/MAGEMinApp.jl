@@ -190,48 +190,22 @@ end
 
 function set_min_to_white(colormap; reverseColorMap = false)
 
-    color       = colormap
-    nc          = length(color)
-    cust_color  = Vector{String}(undef, nc)
-    cust_color = [ [(i-1)/(nc-1),"rgba($(color[i].r),$(color[i].g),$(color[i].b),1.0)"] for i = 1:nc]
+    nc = length(colormap)
+    if first(colormap) isa AbstractVector
+        cust_color = [[colormap[i][1], colormap[i][2]] for i = 1:nc]
+    else
+        rgb255(c) = round(Int, 255 * clamp(c, 0, 1))
+        cust_color = [ [(i-1)/(nc-1),"rgba($(rgb255(colormap[i].r)),$(rgb255(colormap[i].g)),$(rgb255(colormap[i].b)),1.0)"] for i = 1:nc]
+    end
 
     if reverseColorMap == false
-        cust_color[1][2] = "rgba(1.0,1.0,1.0,0.0)"
+        cust_color[1][2] = "rgba(255,255,255,0.0)"
     else
-        cust_color[end][2] = "rgba(1.0,1.0,1.0,0.0)"
+        cust_color[end][2] = "rgba(255,255,255,0.0)"
     end
-    colormap = cust_color
-
-    return colormap
-end
-
-function discretize_colormap(colormap,min,max)
-
-    color       = colormap
-    nc          = length(color)
-    n           = Int64((max - min)+1)
-    stp         = Int64(floor(nc / n ))
-    println("color $color")
-    println("nc $nc n $n stp $stp")
-
-    tmp  = Vector{String}(undef, n)
-    tmp  = ["rgba($(round(color[i].r,digits=5)),$(round(color[i].g,digits=5)),$(round(color[i].b,digits=5)),1.0)" for i = 1:stp:nc]
-
-    cust_color = Vector{Any}[]
-    for i=1:n
-        line1 = [round(Float64((i)/n - 1/n),digits=5),tmp[i]]
-        line2 = [round(Float64((i)/n),digits=5),tmp[i]]
-        
-        push!(cust_color,line1)
-        push!(cust_color,line2)
-    end  
-    # cust_color[1][1] = 0.001
-
-    println("cust_color $cust_color")
 
     return cust_color
 end
-
 
 function get_jet_colormap(n)
 
@@ -2419,10 +2393,11 @@ function bulk_csv_to_db(datain)
     idx_db       = findfirst(headers .== "db")
     idx_sysUnit  = findfirst(headers .== "sysUnit")
 
-    # Separate oxide columns from frac2 columns (suffix _frac2)
+    # Separate oxide columns from frac2 (suffix _frac2) and WDS uncertainty (suffix _wds) columns
     standard_cols = Set(["title", "comments", "db", "sysUnit"])
     oxide_indices = Int[]
     frac2_map     = Dict{String,Int}()
+    wds_map       = Dict{String,Int}()
 
     for j in 1:length(headers)
         h = headers[j]
@@ -2431,12 +2406,16 @@ function bulk_csv_to_db(datain)
         elseif endswith(h, "_frac2")
             ox_name = replace(h, "_frac2" => "")
             frac2_map[ox_name] = j
+        elseif endswith(h, "_wds")
+            ox_name = replace(h, "_wds" => "")
+            wds_map[ox_name] = j
         else
             push!(oxide_indices, j)
         end
     end
 
     has_frac2_cols = !isempty(frac2_map)
+    has_wds_cols   = !isempty(wds_map)
 
     for i = 2:size(datain, 1)
         bulk     = "custom"
@@ -2502,7 +2481,45 @@ function bulk_csv_to_db(datain)
         bulkrock2, _ = convertBulk4MAGEMin(frac2, oxide, sysUnit, dbin)
         bulkrock2   .= round.(bulkrock2; digits = 4)
 
+        # Per-oxide WDS 1-sigma, converted to absolute mol% (matching the Uncertainty
+        # tab's "value [mol%]" column) by finite-differencing the same raw-value -> mol%
+        # transform used for the bulk itself just above (plain renormalization for a
+        # mol-basis row, wt2mol for a wt-basis row): perturb only that oxide's raw value
+        # by its _wds number, holding every other raw value fixed. This lets a _wds
+        # column be given in the row's own sysUnit, same as its oxide columns, instead
+        # of forcing every CSV to pre-convert to mol%. Oxides without a _wds column, or
+        # that don't survive into the database's own oxide list (e.g. Fe2O3 speciated
+        # into FeO/O), are left NaN.
+        wds_by_name = Dict{String,Float64}()
+        if has_wds_cols
+            up_oxides = string.(keys(wds_map))
+            for j in up_oxides
+                if j in oxide
+                    idx_oxide = findfirst(oxide .== j)
+                    val_str = strip(string(datain[i, wds_map[j]]))
+                    if !isempty(val_str)
+                        val = tryparse(Float64, val_str)
+                        if isnothing(val)
+                            error("Row $i ('$title'), column '$(j)_wds': " *
+                                  "cannot parse '$val_str' as a number")
+                        end
+
+                        perturbed = copy(frac); perturbed[idx_oxide] += val
+                        if sysUnit == "mol"
+                            mol_base = frac      ./ sum(frac)      .* 100.0
+                            mol_pert = perturbed ./ sum(perturbed) .* 100.0
+                        else # wt
+                            mol_base = wt2mol(frac,      oxide)
+                            mol_pert = wt2mol(perturbed, oxide)
+                        end
+                        wds_by_name[j] = abs(mol_pert[idx_oxide] - mol_base[idx_oxide])
+                    end
+                end
+            end
+        end
+
         oxide        = get_oxide_list(dbin)
+        wds          = [get(wds_by_name, oxide[k], NaN) for k in eachindex(oxide)]
 
         bulkrock_wt  = round.(mol2wt(bulkrock, oxide), digits=6)
         bulkrock2_wt = round.(mol2wt(bulkrock2, oxide), digits=6)
@@ -2518,6 +2535,7 @@ function bulk_csv_to_db(datain)
                         :frac2      => bulkrock2,
                         :frac_wt    => bulkrock_wt,
                         :frac2_wt   => bulkrock2_wt,
+                        :wds        => wds,
                     ), cols=:union)
     end
 

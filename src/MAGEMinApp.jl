@@ -40,6 +40,11 @@ module MAGEMinApp
     include(joinpath(pkg_dir,"src","AMR/MAGEMin_utils.jl"))
     include(joinpath(pkg_dir,"src","AMR/AMR_utils.jl"))
     include(joinpath(pkg_dir,"src","PhaseDiagram_functions.jl"))
+    include(joinpath(pkg_dir,"src","Plotly_ColorScales.jl"))
+    include(joinpath(pkg_dir,"src","SVG_export.jl"))
+    include(joinpath(pkg_dir,"src","MonteCarlo_functions.jl"))
+    include(joinpath(pkg_dir,"src","PhaseDiagram_SVG.jl"))
+    include(joinpath(pkg_dir,"src","Plotly_SVG.jl"))
     include(joinpath(pkg_dir,"src","Classifications/Mineral_recalc_functions.jl"))
     include(joinpath(pkg_dir,"src","Classifications/Amphibole_functions.jl"))
     include(joinpath(pkg_dir,"src","Classifications/Clinopyroxene_functions.jl"))
@@ -52,6 +57,7 @@ module MAGEMinApp
     include(joinpath(pkg_dir,"src","Tab_Simulation.jl"))
     include(joinpath(pkg_dir,"src","Tab_GeneralSetup.jl"))
     include(joinpath(pkg_dir,"src","Tab_PhaseDiagram.jl"))
+    include(joinpath(pkg_dir,"src","Tab_MonteCarlo.jl"))
     include(joinpath(pkg_dir,"src","Tab_Classification.jl"))
     include(joinpath(pkg_dir,"src","Tab_TraceElement.jl"))
     include(joinpath(pkg_dir,"src","Tab_IntersecT.jl"))
@@ -60,6 +66,7 @@ module MAGEMinApp
     include(joinpath(pkg_dir,"src","Tab_GeneralSetup_Callbacks.jl"))
     include(joinpath(pkg_dir,"src","Tab_Simulation_Callbacks.jl"))    
     include(joinpath(pkg_dir,"src","Tab_PhaseDiagram_Callbacks.jl"))
+    include(joinpath(pkg_dir,"src","Tab_MonteCarlo_Callbacks.jl"))
     include(joinpath(pkg_dir,"src","Tab_TraceElement_Callbacks.jl"))
     include(joinpath(pkg_dir,"src","Tab_IntersecT_Callbacks.jl"))
     include(joinpath(pkg_dir,"src","PTXpaths_functions.jl"))   
@@ -76,6 +83,8 @@ module MAGEMinApp
     include(joinpath(pkg_dir,"src","Boundaries/poly.jl"))
     include(joinpath(pkg_dir,"src","Boundaries/purge.jl"))
     include(joinpath(pkg_dir,"src","Boundaries/utils.jl"))
+    include_dependency(joinpath(pkg_dir,"user_data","predefined_bulks.csv"))
+    include_dependency(joinpath(pkg_dir,"user_data","mc_default_sigma.csv"))
     include(joinpath(pkg_dir,"src","appData.jl"))
 
     # Pre-compile the layout-building functions at package build time, so the
@@ -275,6 +284,7 @@ module MAGEMinApp
         println(" 3/4 Loading callbacks...")
         app = Tab_Simulation_Callbacks(app)
         app = Tab_PhaseDiagram_Callbacks(app)
+        app = Tab_MonteCarlo_Callbacks(app)
         app = Tab_TraceElement_Callbacks(app)
         app = Tab_PTXpaths_Callbacks(app)
         app = Tab_GeneralSetup_Callbacks(app)
@@ -285,9 +295,11 @@ module MAGEMinApp
         AppData.mineral_style[1] = load_mineral_style();
         AppData.mineral_order[1] = load_mineral_order(sort(collect(keys(AppData.mineral_style[1]))));
 
-        run_server(app, host, port, debug=debug)
-
-        cd(cur_dir) # go back to directory
+        try
+            run_server(app, host, port, debug=debug)
+        finally
+            cd(cur_dir) # go back to directory
+        end
 
     end
 

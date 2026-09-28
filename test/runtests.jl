@@ -1,3 +1,13 @@
+#=~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#   Project      : MAGEMinApp
+#   License      : GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
+#   Developers   : Nicolas Riel, Boris Kaus
+#   Contributors : Nerone, S., Dominguez, H., Moyen, J-F.
+#   Organization : Institute of Geosciences, Johannes-Gutenberg University, Mainz
+#   Contact      : nriel[at]uni-mainz.de
+#
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ =#
 # this tests the julia interface to MAGEMin
 using Test
 
@@ -11,6 +21,10 @@ if endswith(cur_dir, "test")
     cd("../")           # change to main directory if we are in /test
 end
 
+
+@testset "state io" begin
+    include(joinpath(@__DIR__, "test_state_io.jl"))
+end
 
 @testset "serial" begin
     include(joinpath(@__DIR__, "tests.jl"))

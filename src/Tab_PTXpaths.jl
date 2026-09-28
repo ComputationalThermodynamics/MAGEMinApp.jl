@@ -1906,6 +1906,7 @@ function Tab_PTXpaths()
                                                     html_hr(),
                                                     html_div("‎ "),
                                                 ]),
+svg_export_button_row("ptx-plot"),
                                                 dbc_row([
                                                     PTX_plot()
                                                 ]),
@@ -1928,6 +1929,7 @@ function Tab_PTXpaths()
                                                     html_hr(),
                                                     html_div("‎ "),
                                                 ]),
+svg_export_button_row("ptx-field-plot"),
                                                 dbc_row([
                                                     PTX_field_plot()
                                                 ]),
@@ -1958,6 +1960,7 @@ function Tab_PTXpaths()
                                                         html_hr(),
                                                         html_div("‎ "),
                                                     ]),
+svg_export_button_row("ptx-extracted-plot"),
                                                     dbc_row([
                                                         PTX_extracted_plot()
                                                     ]),
@@ -1980,6 +1983,7 @@ function Tab_PTXpaths()
                                                 html_hr(),
                                                 html_div("‎ "),
                                             ]),
+svg_export_button_row("ptx-frac-plot"),
                                             dbc_row([
                                                 dbc_col([ 
                                                     PTX_frac_plot()
@@ -2014,6 +2018,7 @@ function Tab_PTXpaths()
                                                     dbc_row([                                                                                     
                                                         dbc_col([
                 
+svg_export_button_row("ptx-removed-plot"),
                                                             dbc_row([
                                                                 dbc_card(dbc_cardbody([
                                                                     PTX_removed_plot()
@@ -2026,6 +2031,7 @@ function Tab_PTXpaths()
                                                     dbc_row([                                                                                     
                                                         dbc_col([
                 
+svg_export_button_row("ptx-removed-int-plot"),
                                                             dbc_row([
                                                                 dbc_card(dbc_cardbody([
                                                                     PTX_removed_int_plot()
@@ -2056,12 +2062,15 @@ function Tab_PTXpaths()
                                         html_hr(),
                                         html_div("‎ "),
                                     ]),
+svg_export_button_row("TAS-plot"),
                                     dbc_row([
                                         TAS_plot()
                                     ]),
+svg_export_button_row("TAS-pluto-plot"),
                                     dbc_row([
                                         TAS_pluto_plot()
                                     ]),
+svg_export_button_row("AFM-plot"),
                                     dbc_row([
                                         AFM_plot()
                                     ]),
@@ -2102,6 +2111,7 @@ function Tab_PTXpaths()
                                                         style  = Dict("height" => "160px"),
                                                     ),
                                                 ]),
+svg_export_button_row("ree-spectrum-ptx"),
                                                 dbc_row([
                                                     dcc_graph(
                                                         id     = "ree-spectrum-ptx",
@@ -2133,6 +2143,7 @@ function Tab_PTXpaths()
                                                             clearable=false, multi=true),
                                                     ], width=8),
                                                 ]),
+svg_export_button_row("te-evol-ptx"),
                                                 dbc_row([
                                                     dcc_graph(
                                                         id     = "te-evol-ptx",
@@ -2175,6 +2186,7 @@ function Tab_PTXpaths()
                                                         style=Dict("font-size"=>"100%","color"=>"grey")),
                                                     ]),
                                                 ]),
+svg_export_button_row("te-fieldbuilder-ptx"),
                                                 dbc_row([
                                                     dcc_graph(
                                                         id     = "te-fieldbuilder-ptx",

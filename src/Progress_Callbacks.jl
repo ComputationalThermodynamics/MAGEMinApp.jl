@@ -41,12 +41,16 @@ function Progress_Callbacks(app)
             if CompProgress.total_points > 0
 
                 perc            = round(CompProgress.current_point/CompProgress.total_points*100)
-                
+
                 p2              = "Point $(CompProgress.current_point)/$(CompProgress.total_points) | $perc%"
-                t_s             = round(CompProgress.tlast-CompProgress.tinit, digits=2)    
-                t_left          = t_s/CompProgress.current_point*(CompProgress.total_points-CompProgress.current_point)
-                r_str           = ProgressMeter.durationstring(t_s)    
-                eta_str         = ProgressMeter.durationstring(t_left)
+                t_s             = round(CompProgress.tlast-CompProgress.tinit, digits=2)
+                r_str           = ProgressMeter.durationstring(t_s)
+                if CompProgress.current_point > 0
+                    t_left      = t_s/CompProgress.current_point*(CompProgress.total_points-CompProgress.current_point)
+                    eta_str     = ProgressMeter.durationstring(t_left)
+                else
+                    eta_str     = "estimating..."
+                end
                 p3              = "Time: $r_str | ETA: $eta_str"
 
                 top = "$(CompProgress.title): $(CompProgress.stage) $p1"

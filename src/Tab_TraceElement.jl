@@ -87,11 +87,16 @@ function Tab_TraceElement()
                             dbc_collapse(
                                 dbc_card(dbc_cardbody([
                                     dbc_row([
-                                        dbc_button("Export all layers", 
+                                        dbc_button("Export svg", 
                                                     id          = "export-layers-te", color="light",  n_clicks=0,
                                                     style       =  Dict( "textAlign"    => "center",
                                                                         "font-size"     => "100%",
                                                                         "border"        =>"1px grey solid")), 
+                                    ]),
+                                    dbc_row([
+                                        html_div(id="export-svg-status-te", children="",
+                                            style = Dict("textAlign" => "center", "font-size" => "75%", "color" => "grey",
+                                                         "marginTop" => 6, "wordBreak" => "break-all")),
                                     ]),
                                     dbc_row([
                                         html_div("‎ "),
