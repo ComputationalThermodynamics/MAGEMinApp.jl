@@ -557,6 +557,12 @@ function Tab_PTXpaths()
                                                                     color   = "success",
                                                                     is_open = false,
                                                                 ),
+                                                                dbc_alert(
+                                                                    "",
+                                                                    id      = "alert-ds62-placeholder-ptx",
+                                                                    color   = "warning",
+                                                                    is_open = false,
+                                                                ),
 
                                                                 # buffer offset
                                                                 html_div([

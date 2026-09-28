@@ -140,6 +140,20 @@ function bulk_oxide_coverage_status(bulk_data, ss_selected, pp_selected)
     end
 end
 
+function keep_dataset(database_changed::Bool, current_dataset, db_in)
+    (database_changed || !(current_dataset in db_in.dataset_opt)) && return db_in.db_dataset
+    return current_dataset
+end
+
+function ds62_placeholder_alert(dtb, dataset, ss_selected)
+    (isnothing(dtb) || isnothing(dataset)) && return (false, "")
+    ds     = dataset isa Integer ? dataset : tryparse(Int, string(dataset))
+    isnothing(ds) && return (false, "")
+    phases = ds62_placeholder_phases(string(dtb), ds, to_str_vec(ss_selected))
+    isempty(phases) && return (false, "")
+    return (true, ds62_placeholder_warning(phases))
+end
+
 function to_str_vec(v::AbstractVector)
     return convert(Vector{String}, collect(v))
 end

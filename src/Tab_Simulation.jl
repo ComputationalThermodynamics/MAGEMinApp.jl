@@ -1372,6 +1372,12 @@ function Tab_Simulation()
                                                                         is_open = false,
                                                                     ),
                                                                     dbc_alert(
+                                                                        "",
+                                                                        id      = "alert-ds62-placeholder",
+                                                                        color   = "warning",
+                                                                        is_open = false,
+                                                                    ),
+                                                                    dbc_alert(
                                                                         "Successfully tested",
                                                                         id      ="test-id-test",
                                                                         is_open =false,

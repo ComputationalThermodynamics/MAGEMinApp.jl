@@ -463,9 +463,10 @@ function Tab_Simulation_Callbacks(app)
 
         State("phase-selection","value"),
         State("pure-phase-selection","value"),
+        State("dataset-dropdown","value"),
 
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
-    ) do dtb, warr_naming, _load_state_id, preset, current_ss_selection, current_pp_selection
+    ) do dtb, warr_naming, _load_state_id, preset, current_ss_selection, current_pp_selection, current_dataset
         global use_warr_names
         use_warr_names[1] = (warr_naming == "warr")
 
@@ -548,7 +549,7 @@ function Tab_Simulation_Callbacks(app)
         dataset_options = [Dict(    "label"     => "ds$(db_in.dataset_opt[i])",
                                     "value"     => db_in.dataset_opt[i] )
                                 for i = 1:length(db_in.dataset_opt) ]
-        dataset_value    = db_in.db_dataset
+        dataset_value    = keep_dataset(bid in ("database-dropdown", ""), current_dataset, db_in)
 
 
         return phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value, dataset_options, dataset_value, style, preset_style, preset_value_out
@@ -570,6 +571,20 @@ function Tab_Simulation_Callbacks(app)
         dtb != "all" && return false, "success", ""
         color, msg = bulk_oxide_coverage_status(bulk_data, ss_selected, pp_selected)
         return true, color, msg
+    end
+
+    callback!(
+        app,
+        Output("alert-ds62-placeholder", "is_open"),
+        Output("alert-ds62-placeholder", "children"),
+
+        Input("database-dropdown","value"),
+        Input("dataset-dropdown","value"),
+        Input("phase-selection","value"),
+
+        prevent_initial_call = false,
+    ) do dtb, dataset, ss_selected
+        return ds62_placeholder_alert(dtb, dataset, ss_selected)
     end
 
     # persist phase (de)selection into the per-database cache as soon as the user
