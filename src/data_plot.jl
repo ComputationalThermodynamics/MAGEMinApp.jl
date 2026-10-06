@@ -137,12 +137,12 @@ function diagram_plot()
                 figure      = fig,
             )
 end
-function pie_plot()
+function pie_plot(; id = "pie-diagram")
 
     fig = plot( Layout( height= 220 ) )
 
     dcc_graph(
-                id          = "pie-diagram",
+                id          = id,
                 figure      = fig,
             )
 end

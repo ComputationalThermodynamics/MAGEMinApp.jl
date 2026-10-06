@@ -407,6 +407,34 @@ function multi_point_mumu(     target_mu1      :: Vector{Float64},
     return results, status
 end
 
+function get_custom_Ws(custW::Bool)
+    if custW == true && !isempty(AppData.customWs)
+        df     = AppData.customWs
+        new_Ws = Vector{MAGEMin_C.W_data{Float64,Int64}}(undef, size(df,1))
+        for i=1:size(df,1)
+            n_Ws      = df[i, :n_Ws]
+            Ws        = reshape(parse.(Float64, split(df[i, :Ws], ";")), n_Ws, 3)
+            new_Ws[i] = MAGEMin_C.W_data(df[i, :dtb], df[i, :id], n_Ws, Ws)
+        end
+        return new_Ws
+    end
+    return nothing
+end
+
+function set_magemin_buffer!(MAGEMin_data::MAGEMin_Data, bufferType::String)
+    for i in 1:Threads.maxthreadid()
+        # copy bufferType's bytes into gv.buffer's existing (C-malloc'd, 10-byte)
+        # buffer in place, rather than repointing gv.buffer at bufferType's own
+        # memory - the latter left gv.buffer aliasing Julia-GC-owned memory
+        # (a Julia String is not something C should ever free()), which caused
+        # a SIGABRT when MAGEMin's FreeDatabases tried to free(gv.buffer)
+        n = min(ncodeunits(bufferType), 9)
+        unsafe_copyto!(MAGEMin_data.gv[i].buffer, Ptr{Cchar}(pointer(bufferType)), n)
+        unsafe_store!(MAGEMin_data.gv[i].buffer, Cchar(0), n+1)
+    end
+    return nothing
+end
+
 function refine_MAGEMin(dtb,data,
                         MAGEMin_data    :: MAGEMin_Data, 
                         custW           :: Bool,
@@ -442,31 +470,7 @@ function refine_MAGEMin(dtb,data,
                         mumu_oxide2_idx     :: Int64                   = 0    )
     global Out_XY, addedRefinementLvl;
 
-    #= First we create a structure to store the data in memory =#
-    if custW == true
-        if !isempty(AppData.customWs)
-            df = AppData.customWs
-            n_entries = size(df,1)
-            new_Ws = Vector{MAGEMin_C.W_data{Float64,Int64}}(undef, n_entries)
-
-            for i=1:size(df,1)
-                dtb     = df[i, :dtb]
-                ss_id   = df[i, :id]
-                n_Ws    = df[i, :n_Ws]
-                Ws      = split(df[i, :Ws], ";")
-                Ws      = parse.(Float64, Ws)
-                Ws      = reshape(Ws, n_Ws, 3)
-                
-                new_Ws[i] = MAGEMin_C.W_data(dtb, ss_id, n_Ws, Ws)   
-
-                # println("new_Ws: $(new_Ws)")
-            end
-        else
-            new_Ws = nothing
-        end
-    else
-        new_Ws = nothing
-    end
+    new_Ws = get_custom_Ws(custW)
 
     if isempty(data.split_cell_list)
         Out_XY_new      = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,length(data.points))
@@ -478,16 +482,7 @@ function refine_MAGEMin(dtb,data,
         npoints         = data.npoints
     end
 
-    for i in 1:Threads.maxthreadid()
-        # copy bufferType's bytes into gv.buffer's existing (C-malloc'd, 10-byte)
-        # buffer in place, rather than repointing gv.buffer at bufferType's own
-        # memory - the latter left gv.buffer aliasing Julia-GC-owned memory
-        # (a Julia String is not something C should ever free()), which caused
-        # a SIGABRT when MAGEMin's FreeDatabases tried to free(gv.buffer)
-        n = min(ncodeunits(bufferType), 9)
-        unsafe_copyto!(MAGEMin_data.gv[i].buffer, Ptr{Cchar}(pointer(bufferType)), n)
-        unsafe_store!(MAGEMin_data.gv[i].buffer, Cchar(0), n+1)
-    end
+    set_magemin_buffer!(MAGEMin_data, bufferType)
 
     if n_new_points > 0
         Tvec = zeros(Float64,n_new_points);

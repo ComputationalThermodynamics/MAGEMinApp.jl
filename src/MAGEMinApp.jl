@@ -23,12 +23,18 @@ module MAGEMinApp
 
     using Images, PolygonInbounds, LazyGrids, Graphs
     using MAGEMin_C
+    using StaticArrays: SVector
+    using SparseArrays: sparse
+    using LinearAlgebra: norm, dot, ⋅
     using IntersecT
     using PrecompileTools: @compile_workload
 
     import Contour as CTR
+    import Meshing
 
     pkg_dir = Base.pkgdir(MAGEMinApp)
+
+    const ENABLE_MAGERES = false
 
     export App
     export build_intersect_model_df, make_measurements_df, list_intersect_phases, list_intersect_elements
@@ -40,9 +46,17 @@ module MAGEMinApp
     include(joinpath(pkg_dir,"src","AMR/MAGEMin_utils.jl"))
     include(joinpath(pkg_dir,"src","AMR/AMR_utils.jl"))
     include(joinpath(pkg_dir,"src","PhaseDiagram_functions.jl"))
+    include(joinpath(pkg_dir,"src","PhaseDiagram3D_functions.jl"))
+    include(joinpath(pkg_dir,"src","PhaseDiagram3D_export.jl"))
     include(joinpath(pkg_dir,"src","Plotly_ColorScales.jl"))
     include(joinpath(pkg_dir,"src","SVG_export.jl"))
     include(joinpath(pkg_dir,"src","MonteCarlo_functions.jl"))
+    if ENABLE_MAGERES
+        for mageres_file in ("options", "materials", "geometry", "chamber", "quadtree", "remap", "thermal", "thermo",
+                             "state", "coupling", "body", "settling", "eruption", "events", "trace", "zircon", "overpressure", "plotting", "io", "app_live", "app_figures", "methodology")
+            include(joinpath(pkg_dir, "src", "MAGERes", mageres_file * ".jl"))
+        end
+    end
     include(joinpath(pkg_dir,"src","PhaseDiagram_SVG.jl"))
     include(joinpath(pkg_dir,"src","Plotly_SVG.jl"))
     include(joinpath(pkg_dir,"src","Classifications/Mineral_recalc_functions.jl"))
@@ -57,20 +71,24 @@ module MAGEMinApp
     include(joinpath(pkg_dir,"src","Tab_Simulation.jl"))
     include(joinpath(pkg_dir,"src","Tab_GeneralSetup.jl"))
     include(joinpath(pkg_dir,"src","Tab_PhaseDiagram.jl"))
+    include(joinpath(pkg_dir,"src","Tab_PhaseDiagram3D.jl"))
     include(joinpath(pkg_dir,"src","Tab_MonteCarlo.jl"))
     include(joinpath(pkg_dir,"src","Tab_Classification.jl"))
     include(joinpath(pkg_dir,"src","Tab_TraceElement.jl"))
     include(joinpath(pkg_dir,"src","Tab_IntersecT.jl"))
     include(joinpath(pkg_dir,"src","Tab_PTXpaths.jl"))
+    ENABLE_MAGERES && include(joinpath(pkg_dir,"src","Tab_MAGERes.jl"))
     include(joinpath(pkg_dir,"src","data_plot.jl"))
     include(joinpath(pkg_dir,"src","Tab_GeneralSetup_Callbacks.jl"))
     include(joinpath(pkg_dir,"src","Tab_Simulation_Callbacks.jl"))    
     include(joinpath(pkg_dir,"src","Tab_PhaseDiagram_Callbacks.jl"))
+    include(joinpath(pkg_dir,"src","Tab_PhaseDiagram3D_Callbacks.jl"))
     include(joinpath(pkg_dir,"src","Tab_MonteCarlo_Callbacks.jl"))
     include(joinpath(pkg_dir,"src","Tab_TraceElement_Callbacks.jl"))
     include(joinpath(pkg_dir,"src","Tab_IntersecT_Callbacks.jl"))
     include(joinpath(pkg_dir,"src","PTXpaths_functions.jl"))   
     include(joinpath(pkg_dir,"src","Tab_PTXpaths_Callbacks.jl")) 
+    ENABLE_MAGERES && include(joinpath(pkg_dir,"src","Tab_MAGERes_Callbacks.jl"))
     include(joinpath(pkg_dir,"src","Tab_General_informations.jl"))
     include(joinpath(pkg_dir,"src","MAGEMinApp_functions.jl"))
     include(joinpath(pkg_dir,"src","IntersecT_functions.jl"))
@@ -93,9 +111,11 @@ module MAGEMinApp
         Tab_GeneralSetup()
         Tab_Simulation()
         Tab_PhaseDiagram()
+        Tab_PhaseDiagram3D()
         Tab_TraceElement()
         Tab_IntersecT()
         Tab_PTXpaths()
+        ENABLE_MAGERES && Tab_MAGERes()
         Tab_General_informations()
     end
 
@@ -169,6 +189,12 @@ module MAGEMinApp
                                 children    =   [html_div(id="output-loading-id-ptx")],
                                 className   =   "custom-loading",
                             ),
+                            dcc_loading(
+                                id          =   "loading-id-3d",
+                                type        =   "circle",
+                                children    =   [html_div(id="output-loading-id-3d")],
+                                className   =   "custom-loading",
+                            ),
                         ], width="auto" ),
         
                     ], justify="between"),
@@ -211,6 +237,12 @@ module MAGEMinApp
                                                                         label       = "Diagram",
                                                                         children    = [Tab_PhaseDiagram()]
                                                                     ),
+                                                            dbc_tab(    tab_id      = "tab-3d-diagram",
+                                                                        id          = "tab-3d-diagram-tab",
+                                                                        label       = "3D diagram",
+                                                                        tab_style   = Dict("display" => "none"),
+                                                                        children    = [Tab_PhaseDiagram3D()]
+                                                                    ),
                                                             dbc_tab(    tab_id      = "tab-te",
                                                                         label       = "Trace-elements",
                                                                         children    = [Tab_TraceElement()],
@@ -227,6 +259,11 @@ module MAGEMinApp
                                         label       = "PTX path",
                                         children    = [Tab_PTXpaths()]
                                     ),
+                            (ENABLE_MAGERES ? [
+                            dbc_tab(    tab_id      = "tab-magma-reservoir",
+                                        label       = "MAGEMin Reservoir",
+                                        children    = [Tab_MAGERes()]
+                                    )] : [])...,
                             dbc_tab(    tab_id      = "tab-general-info",
                                         label       = "General information",
                                         children    = [Tab_General_informations()]
@@ -240,6 +277,11 @@ module MAGEMinApp
 
         
                     dcc_store(id="session-id", data =  ""),     # gives a unique number of our session
+
+                    (ENABLE_MAGERES ? [] : [
+                    dcc_store(id="mageres-progress-off", data = ""),
+                    html_button(id="launch-run-button-mageres", n_clicks = 0, style = Dict("display" => "none")),
+                    ])...,
 
                     dcc_interval(id="version-check-interval", interval=500, n_intervals=0, max_intervals=1)
         ])
@@ -284,9 +326,11 @@ module MAGEMinApp
         println(" 3/4 Loading callbacks...")
         app = Tab_Simulation_Callbacks(app)
         app = Tab_PhaseDiagram_Callbacks(app)
+        app = Tab_PhaseDiagram3D_Callbacks(app)
         app = Tab_MonteCarlo_Callbacks(app)
         app = Tab_TraceElement_Callbacks(app)
         app = Tab_PTXpaths_Callbacks(app)
+        ENABLE_MAGERES && (app = Tab_MAGERes_Callbacks(app))
         app = Tab_GeneralSetup_Callbacks(app)
         app = Tab_IntersecT_Callbacks(app)
         app = Progress_Callbacks(app)

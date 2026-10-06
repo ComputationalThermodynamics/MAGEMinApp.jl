@@ -858,10 +858,11 @@ function Tab_Simulation_Callbacks(app)
         
         Input("tepm-dropdown",      "value"),
         Input("kds-dropdown",       "value"),
+        Input("diagram-dropdown",   "value"),
         prevent_initial_call = true,
-    ) do tepm, kds
+    ) do tepm, kds, diagType
 
-        if tepm == "false"
+        if tepm == "false" || diagType == "ptx3d"
             opt     = Dict("display" => "none")
             panel   = Dict("display" => "none")
             zr      = Dict("display" => "none")
@@ -1112,6 +1113,9 @@ function Tab_Simulation_Callbacks(app)
         Output("display-refine-option-id", "style"),
         Output("display-refine-option-2-id", "style"),
         Output("mumu-setup-id", "style"),
+        Output("gsub-row-id", "style"),
+        Output("tepm-row-id", "style"),
+        Output("pd3d-resolution-id", "style"),
         Input("diagram-dropdown", "value"),
 
         prevent_initial_call = true,
@@ -1213,6 +1217,22 @@ function Tab_Simulation_Callbacks(app)
             refine  = Dict("display" => "block")
             refine2 = Dict("display" => "block")
             mumu    = Dict("display" => "block")
+        elseif value == "ptx3d"
+            Tstyle  = Dict("display" => "none")
+            Pstyle  = Dict("display" => "none")
+            Ts      = Dict("display" => "block")
+            Ps      = Dict("display" => "block")
+            test2   = Dict("display" => "block")
+            table2  = Dict("display" => "block")
+            PTx     = Dict("display" => "none")
+            testte2 = Dict("display" => "none")
+            tabte2  = Dict("display" => "none")
+            watsat  = Dict("display" => "none")
+            T1      = Dict("display" => "none")
+            T2      = Dict("display" => "none")
+            refine  = Dict("display" => "none")
+            refine2 = Dict("display" => "none")
+            mumu    = Dict("display" => "none")
         else
             Tstyle  = Dict("display" => "none")
             Pstyle  = Dict("display" => "none")
@@ -1231,7 +1251,12 @@ function Tab_Simulation_Callbacks(app)
             mumu    = Dict("display" => "none")
         end
 
-        return Tstyle, Pstyle, Ts, Ps, test2, table2, PTx, testte2, tabte2, watsat, T1, T2, refine, refine2, mumu
+        is3d    = value == "ptx3d"
+        gsub    = Dict("display" => is3d ? "none"  : "block")
+        tepmrow = Dict("display" => is3d ? "none"  : "block")
+        res3d   = Dict("display" => is3d ? "block" : "none")
+
+        return Tstyle, Pstyle, Ts, Ps, test2, table2, PTx, testte2, tabte2, watsat, T1, T2, refine, refine2, mumu, gsub, tepmrow, res3d
     end
 
 

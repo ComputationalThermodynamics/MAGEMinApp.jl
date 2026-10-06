@@ -9,6 +9,71 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ =#
 
+colormap_dropdown_options() = vcat(
+    [Dict("label" => name, "value" => name) for name in ["blackbody","Blues","cividis","Greens","Greys","hot","jet","RdBu","Reds","viridis","YlGnBu","YlOrRd"]],
+    [Dict("label" => "- R.J. Tamblyn colormaps -", "value" => "separator", "disabled" => true)],
+    [Dict("label" => name, "value" => name) for name in ["Pink","Sunset","Dawn","Almeria","Almeria Extended","Almeria Red","Almeria Blue"]],
+)
+
+function phase_pie_section(; unit_id, pie_id, title_id, table_id, div_id)
+    return [
+        dbc_row([
+            dbc_col([
+                dcc_dropdown(   id      = unit_id,
+                options = [
+                    (label = "mol%",                value = 1),
+                    (label = "wt%",                 value = 2),
+                    (label = "vol%",                value = 3),
+                ],
+                value       = 1,
+                style       = Dict("border" => "none"),
+                clearable   = false,
+                multi       = false),
+            ], width=3),
+        ]),
+
+        dbc_row([
+            dbc_col([
+                pie_plot(id = pie_id),
+            ]),
+        ]),
+
+        html_div([
+            dbc_row([
+                dbc_col([
+                    html_h3(id=title_id, "Mineral composition", style = Dict("textAlign" => "center","font-size" => "140%", "marginTop" => 8)),
+                ], width=11),
+                dbc_col([
+                        dcc_clipboard(
+                            target_id   = table_id,
+                            title       = "copy",
+                            style       =  Dict(
+                                "display"       => "inline-block",
+                                "fontSize"      => 20,
+                                "verticalAlign" => "top",
+                        ),
+                    ),
+                ], width=1),
+            ]),
+            dbc_row([
+                dash_datatable(
+                    id=table_id,
+                    columns=(  [    Dict("id" =>  "oxide",  "name"  =>  "oxide",    "editable" => false),
+                                    Dict("id" =>  "mol%",   "name"  =>  "mol%",     "editable" => false),
+                                    Dict("id" =>  "wt%",    "name"  =>  "wt%",      "editable" => false),
+                                    Dict("id" =>  "apfu",   "name"  =>  "apfu",     "editable" => false)
+                                    ]
+                    ),
+                    data            = [],
+                    style_cell      = Dict("fontSize" => "140%", "textAlign" => "center", "padding" => "0px"),
+                    style_header    = (fontWeight="bold"),
+                    editable    = true,
+                ),
+            ]),
+        ], style = Dict("display" => "none"), id = div_id),
+    ]
+end
+
 function Tab_PhaseDiagram()
     html_div([
     # one column for the plots
@@ -82,6 +147,12 @@ function Tab_PhaseDiagram()
                                             value   = -1   ),
                                         dcc_store(
                                             id      = "mc-run-done"),
+                                        dbc_input(
+                                            id      = "compute-3d-button",
+                                            type    = "number",
+                                            value   = -1   ),
+                                        dcc_store(
+                                            id      = "pd2d-goto-tab"),
 
                                     ], style = Dict("display" => "none"), id      = "show-hidden-relay-button-id"), #none, block
                                 ]),
@@ -260,65 +331,11 @@ function Tab_PhaseDiagram()
                                                                     style       = Dict("white-space" => "pre"))
                                                 ])
                                             ]),
-                                            dbc_row([
-                                                dbc_col([
-                                                    dcc_dropdown(   id      = "select-pie-unit",
-                                                    options = [
-                                                        (label = "mol%",                value = 1),
-                                                        (label = "wt%",                 value = 2),
-                                                        (label = "vol%",                value = 3), 
-                                                    ],
-                                                    value       = 1,
-                                                    style       = Dict("border" => "none"),
-                                                    clearable   = false,
-                                                    multi       = false),
-                                                ], width=3),
-                                            ]),
-
-                                            dbc_row([
-                                                dbc_col([
-                                                    pie_plot(),
-                                                ]),
-                                            ]),
+                                            phase_pie_section(  unit_id = "select-pie-unit", pie_id = "pie-diagram", title_id = "ph-comp-title",
+                                                                table_id = "table-phase-composition", div_id = "disp-test-id")...,
 
                                             html_div([
                                             ], style = Dict("display" => "none"), id      = "test-show-id"),
-
-                                            # html_div("‎ "), 
-                                            html_div([
-                                                dbc_row([
-                                                    dbc_col([ 
-                                                        html_h3(id="ph-comp-title", "Mineral composition", style = Dict("textAlign" => "center","font-size" => "140%", "marginTop" => 8)),  # Title with an id
-                                                    ], width=11),
-                                                    dbc_col([ 
-                                                            dcc_clipboard(
-                                                                target_id   = "table-phase-composition",
-                                                                title       = "copy",
-                                                                style       =  Dict(
-                                                                    "display"       => "inline-block",
-                                                                    "fontSize"      => 20,
-                                                                    "verticalAlign" => "top",
-                                                            ),
-                                                        ),
-                                                    ], width=1),
-                                                ]),
-                                                dbc_row([
-                                                    dash_datatable(
-                                                        id="table-phase-composition",
-                                                        columns=(  [    Dict("id" =>  "oxide",  "name"  =>  "oxide",    "editable" => false),
-                                                                        Dict("id" =>  "mol%",   "name"  =>  "mol%",     "editable" => false),
-                                                                        Dict("id" =>  "wt%",    "name"  =>  "wt%",      "editable" => false),
-                                                                        Dict("id" =>  "apfu",   "name"  =>  "apfu",     "editable" => false)
-                                                                        ]
-                                                        ),
-                                                        data            = [],
-                                                        # row_selectable  = "single",
-                                                        style_cell      = Dict("fontSize" => "140%", "textAlign" => "center", "padding" => "0px"),
-                                                        style_header    = (fontWeight="bold"),
-                                                        editable    = true,
-                                                    ),
-                                                ]),
-                                            ], style = Dict("display" => "none"), id      = "disp-test-id"),
 
                                             html_div("‎ "),
                                             html_hr(),
@@ -787,11 +804,7 @@ function Tab_PhaseDiagram()
                                                 ], width=5),
                                                 dbc_col([
                                                     dcc_dropdown(   id          = "colormaps_cross",
-                                                                    options     = vcat(
-                                                                                    [Dict("label" => name, "value" => name) for name in ["blackbody","Blues","cividis","Greens","Greys","hot","jet","RdBu","Reds","viridis","YlGnBu","YlOrRd"]],
-                                                                                    [Dict("label" => "- R.J. Tamblyn colormaps -", "value" => "separator", "disabled" => true)],
-                                                                                    [Dict("label" => name, "value" => name) for name in ["Pink","Sunset","Dawn","Almeria","Almeria Extended","Almeria Red","Almeria Blue"]],
-                                                                                ),
+                                                                    options     = colormap_dropdown_options(),
                                                                     value       = "Blues",
                                                                     clearable   = false,
                                                                     placeholder = "Colormap")
