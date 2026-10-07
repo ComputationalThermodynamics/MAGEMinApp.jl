@@ -27,7 +27,10 @@ mutable struct PD3D_state
     bufferN2    :: Float64
     date        :: String
     act_sol     :: Vector{String}
+    params      :: NamedTuple
 end
+
+const PD3D_POINT = Ref{Any}(nothing)
 
 const PD3D = Ref{Union{Nothing,PD3D_state}}(nothing)
 
@@ -126,8 +129,42 @@ function compute_phaseDiagram3D(    Prange,     Trange,     nP,         nT,     
     prev_id = isnothing(PD3D[]) ? 0 : PD3D[].id
     date    = string(Dates.today()) * ", " * string(Dates.Time(Dates.now()))
     act_sol = String.(get_phase_infos(Out).act_sol)
+    params  = ( dataset = dataset, custW = custW, scp = scp, phase_selection = phase_selection,
+                cpx = cpx, limOpx = limOpx, limOpxVal = limOpxVal,
+                seismicScheme = seismicScheme, seismicWeightFactor = seismicWeightFactor,
+                seismic_cor = seismic_cor, aspect_ratio = aspect_ratio, seismic_water = seismic_water,
+                shallow_cor = shallow_cor, fluid_as_melt = fluid_as_melt, anelastic_correction = anelastic_correction )
     return PD3D_state(  dtb, copy(oxi), copy(bulk_L), copy(bulk_R), Pv, Tv, Xv, Out, Dict{String,Array{Float64,3}}(), t_total, prev_id + 1,
-                        solver, bufferType, bufferN1, bufferN2, date, act_sol )
+                        solver, bufferType, bufferN1, bufferN2, date, act_sol, params )
+end
+
+function pd3d_compute_point(st::PD3D_state, P::Float64, T::Float64, x::Float64)
+    q = st.params
+    mbCpx, limitCaOpx, CaOpxLim, sol = get_init_param(st.dtb, st.solver, q.cpx, q.limOpx, q.limOpxVal)
+    MAGEMin_data = Initialize_MAGEMin(  st.dtb;
+                                        verbose             = false,
+                                        dataset             = q.dataset,
+                                        limitCaOpx          = limitCaOpx,
+                                        CaOpxLim            = CaOpxLim,
+                                        mbCpx               = mbCpx,
+                                        buffer              = st.buffer,
+                                        solver              = sol,
+                                        seismicScheme       = q.seismicScheme,
+                                        seismicWeightFactor = q.seismicWeightFactor )
+    try
+        set_magemin_buffer!(MAGEMin_data, st.buffer)
+        x = clamp(x, 0.0, 1.0)
+        return multi_point_minimization([P], [T], MAGEMin_data;
+                                        X = [st.bulk_L .* (1.0 - x) .+ st.bulk_R .* x], B = [st.bufferN1 * (1.0 - x) + st.bufferN2 * x],
+                                        Xoxides = st.oxi, sys_in = "mol", scp = q.scp, rm_list = q.phase_selection, name_solvus = true,
+                                        W = get_custom_Ws(q.custW), progressbar = false,
+                                        seismic_cor = q.seismic_cor, aspect_ratio = q.aspect_ratio, seismic_water = q.seismic_water,
+                                        shallow_correction = q.shallow_cor, fluid_as_melt = q.fluid_as_melt, anelastic_cor = q.anelastic_correction )[1]
+    finally
+        for i = 1:Threads.maxthreadid()
+            finalize_MAGEMin(MAGEMin_data.gv[i], MAGEMin_data.DB[i], MAGEMin_data.z_b[i], MAGEMin_data.splx_data[i])
+        end
+    end
 end
 
 const PD3D_ISO_TYPES = [
@@ -296,6 +333,27 @@ function pd3d_em_names(st::PD3D_state, phase)
     return String[]
 end
 
+const PD3D_SURF_PRESETS = [
+    (value = "melt_mg", label = "Melt Mg# = 0.7 · colour: melt fraction · lines: garnet mode", iso = 0.7,
+        a = (type = "ss", phase = "liq", ssfield = "MgNum"),
+        b = (type = "ss", phase = "liq", ssfield = "mode",   unit = "vol"),
+        c = (type = "ss", phase = "g",   ssfield = "mode",   unit = "vol")),
+    (value = "solidus", label = "Solidus (melt-in) · colour: H₂O activity · lines: garnet mode", iso = 0.001,
+        a = (type = "ss", phase = "liq", ssfield = "mode",   unit = "vol"),
+        b = (type = "of", offield = "aH2O"),
+        c = (type = "ss", phase = "g",   ssfield = "mode",   unit = "vol")),
+    (value = "garnet_in", label = "Garnet-in · colour: pyrope in garnet · lines: melt fraction", iso = 0.001,
+        a = (type = "ss", phase = "g",   ssfield = "mode",   unit = "vol"),
+        b = (type = "ss", phase = "g",   ssfield = "emMode", unit = "mol", em = "py"),
+        c = (type = "ss", phase = "liq", ssfield = "mode",   unit = "vol")),
+    (value = "density", label = "Density = 3000 kg/m³ · colour: melt fraction · lines: Vp", iso = 3000.0,
+        a = (type = "of", offield = "rho"),
+        b = (type = "of", offield = "frac_M_vol"),
+        c = (type = "of", offield = "Vp")),
+]
+
+pd3d_surf_preset(value) = (i = findfirst(p -> p.value == value, PD3D_SURF_PRESETS); isnothing(i) ? nothing : PD3D_SURF_PRESETS[i])
+
 function pd3d_spec_from_selector(type, phase, ssfield, offield, unit, rmf, ox, em, calc, calcox, calcsf)
     str(v)  = v isa AbstractString ? String(v) : ""
     phase   = str(phase)
@@ -323,6 +381,37 @@ function pd3d_default_iso(fieldname, lo, hi)
     return round(lo + d, sigdigits = 4), round(hi - d, sigdigits = 4), 5
 end
 
+pd3d_oxide_label(ox) = replace(String(ox), "2" => "₂", "3" => "₃")
+
+function pd3d_bulk_relation(bL::AbstractVector, bR::AbstractVector; rtol = 1e-6)
+    isapprox(bL, bR; rtol = rtol, atol = 1e-12) && return :identical, 0
+    act = [i for i in eachindex(bL) if bL[i] > 0 || bR[i] > 0]
+    for k in act
+        rest = [i for i in act if i != k]
+        any(i -> bL[i] == 0 || bR[i] == 0, rest) && continue
+        r = [bR[i] / bL[i] for i in rest]
+        all(x -> isapprox(x, r[1]; rtol = rtol), r) && return :single, k
+    end
+    return :multiple, 0
+end
+
+function pd3d_x_axis(oxi, bL, bR)
+    rel, k = pd3d_bulk_relation(bL, bR)
+    if rel == :single
+        lab   = pd3d_oxide_label(oxi[k])
+        xs    = collect(range(0.0, 1.0, length = 5))
+        vals  = [100 * ((1 - x) * bL[k] + x * bR[k]) for x in xs]
+        text  = [string(round(v, sigdigits = 3)) for v in vals]
+        return (title = "$lab [mol%]", tickvals = xs, ticktext = text,
+                info  = "$lab content, $(text[1]) → $(text[end]) mol% (other oxides in constant proportions)", relation = rel)
+    elseif rel == :identical
+        return (title = "Composition [X0 → X1]", tickvals = nothing, ticktext = nothing,
+                info  = "identical X0 and X1 compositions (nothing varies along X)", relation = rel)
+    end
+    return (title = "Composition [X0 → X1]", tickvals = nothing, ticktext = nothing,
+            info  = "linear mixing from X0 (X = 0) to X1 (X = 1)", relation = rel)
+end
+
 function pd3d_nearest(st::PD3D_state, p_kbar, t, x)
     iP = argmin(abs.(st.Pv .- p_kbar))
     iT = argmin(abs.(st.Tv .- t))
@@ -345,6 +434,7 @@ function pd3d_diagram_information(st::PD3D_state)
         ("Database",            dba[(dba.acronym .== st.dtb), :].database[1] * "; " * st.Out[1].dataset),
         ("Solution names",      join(st.act_sol, ", ")),
         ("Diagram type",        "Pressure-Temperature-Composition (3D)"),
+        ("X axis",              pd3d_x_axis(st.oxi, st.bulk_L, st.bulk_R).info),
         ("Solver",              get(solv, st.solver, st.solver)),
         ("Oxide list",          join(replace.(st.oxi, "2" => "₂", "3" => "₃"), " ")),
     ]
@@ -395,9 +485,28 @@ pd3d_isosurface(st::PD3D_state, A::AbstractArray, iso::Real) = Meshing.isosurfac
 
 pd3d_mesh(st::PD3D_state, A::AbstractArray, iso::Real) = pd3d_compact(pd3d_isosurface(st, A, iso)...)
 
+function pd3d_cell(axis, v)
+    n = length(axis)
+    i = clamp(searchsortedlast(axis, v), 1, n - 1)
+    t = clamp((v - axis[i]) / (axis[i+1] - axis[i]), 0.0, 1.0)
+    return i, t
+end
+
 function pd3d_interp(st::PD3D_state, A::AbstractArray, verts)
-    itp = extrapolate(interpolate((st.Pv, st.Tv, st.Xv), A, Gridded(Linear())), Flat())
-    return [all(isfinite, v) ? itp(v...) : NaN for v in verts]
+    out = fill(NaN, length(verts))
+    for (k, v) in enumerate(verts)
+        all(isfinite, v) || continue
+        (i, ti), (j, tj), (l, tl) = pd3d_cell(st.Pv, v[1]), pd3d_cell(st.Tv, v[2]), pd3d_cell(st.Xv, v[3])
+        acc, wsum = 0.0, 0.0
+        for di in 0:1, dj in 0:1, dl in 0:1
+            a = A[i+di, j+dj, l+dl]
+            isfinite(a) || continue
+            w = (di == 0 ? 1 - ti : ti) * (dj == 0 ? 1 - tj : tj) * (dl == 0 ? 1 - tl : tl)
+            acc += w * a; wsum += w
+        end
+        wsum > 1e-12 && (out[k] = acc / wsum)
+    end
+    return out
 end
 
 function pd3d_mesh_kw(verts, faces)
@@ -526,8 +635,8 @@ function pd3d_phase_traces(st::PD3D_state, phases, eps, opacity, Pd)
         col  = pd3d_phase_color(ph)
         name = display_ph_name(ph)
         push!(traces, mesh3d(; pd3d_mesh_kw(verts, faces)..., color = col, opacity = opacity, flatshading = false,
-                                name = name, showlegend = false, hovertemplate = "$name in/out<extra></extra>"))
-        push!(traces, scatter3d(x = [nothing], y = [nothing], z = [nothing], mode = "markers",
+                                name = name, legendgroup = "phase_$ph", showlegend = false, hovertemplate = "$name in/out<extra></extra>"))
+        push!(traces, scatter3d(x = [nothing], y = [nothing], z = [nothing], mode = "markers", legendgroup = "phase_$ph",
                                 marker = attr(color = col, size = 8), name = "$name in/out", showlegend = true))
     end
     return traces
@@ -545,6 +654,12 @@ function pd3d_cloud_trace(st::PD3D_state, stride::Int, size)
                         mode = "markers", text = vec(txt), hovertemplate = "P: %{x:.3f}<br>T: %{y:.1f}<br>X: %{z:.3f}<br>%{text}<extra></extra>",
                         marker = attr(size = size, color = vec(var), colorscale = "Portland", showscale = false, opacity = 0.8),
                         name = "grid", showlegend = false )
+end
+
+function pd3d_zaxis(st::PD3D_state)
+    xa = pd3d_x_axis(st.oxi, st.bulk_L, st.bulk_R)
+    isnothing(xa.tickvals) && return attr(title = xa.title, range = [st.Xv[1], st.Xv[end]])
+    return attr(title = xa.title, range = [st.Xv[1], st.Xv[end]], tickmode = "array", tickvals = xa.tickvals, ticktext = xa.ticktext)
 end
 
 const PD3D_LAST_OPTS = Ref{Any}(nothing)
@@ -597,7 +712,7 @@ function pd3d_figure(st::PD3D_state, o; logo_src = PD3D_LOGO_SRC)
                 scene           = attr(
                     xaxis       = attr(title = "Pressure [$(pressure_unit_label())]", range = o.reverseP ? [Pd[end], Pd[1]] : [Pd[1], Pd[end]]),
                     yaxis       = attr(title = "Temperature [°C]", range = o.reverseT ? [st.Tv[end], st.Tv[1]] : [st.Tv[1], st.Tv[end]]),
-                    zaxis       = attr(title = "Composition [X0 → X1]", range = [st.Xv[1], st.Xv[end]]),
+                    zaxis       = pd3d_zaxis(st),
                     aspectmode  = "cube",
                     domain      = attr(x = [0.02, 0.9], y = [0.0, 1.0]),
                     camera      = attr(eye = attr(; cam.eye...), up = attr(; cam.up...), center = attr(x = 0, y = 0, z = cam.proj == "perspective" ? -0.16 : 0.0), projection = attr(type = cam.proj)),

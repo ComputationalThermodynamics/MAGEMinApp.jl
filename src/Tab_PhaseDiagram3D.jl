@@ -22,6 +22,8 @@ end
 
 pd3d_title(txt) = html_h1(txt, style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8, "fontWeight" => "bold"))
 
+pd3d_hint(txt) = html_div(txt, style = Dict("textAlign" => "center", "font-size" => "85%", "color" => "grey", "marginBottom" => 4))
+
 pd3d_bool_dropdown(id, value) = dcc_dropdown(id = id, options = ["true","false"], value = value, clearable = false, multi = false)
 
 pd3d_number(id, value; kw...) = dbc_input(; id = id, type = "number", value = value, debounce = false, kw...)
@@ -127,6 +129,14 @@ function Tab_PhaseDiagram3D()
 
                         dbc_tab(label = "Informations", tab_id = "pd3d-tab-info", children = [
                             dbc_card(dbc_cardbody([
+                                pd3d_option_row("Clicked point",
+                                    dcc_dropdown(   id          = "pd3d-click-mode",
+                                                    options     = [ (label = "Nearest grid node",              value = "node"),
+                                                                    (label = "Exact point (computed)",         value = "exact") ],
+                                                    value       = "node",
+                                                    clearable   = false)),
+                                html_div(id = "pd3d-point-status", children = "Click a surface or a grid point of the figure.",
+                                         style = Dict("textAlign" => "center", "font-size" => "85%", "color" => "grey", "marginBottom" => 4)),
                                 phase_pie_section(  unit_id = "pd3d-pie-unit", pie_id = "pd3d-pie", title_id = "pd3d-comp-title",
                                                     table_id = "pd3d-comp-table", div_id = "pd3d-comp-div")...,
                             ])),
@@ -160,12 +170,21 @@ function Tab_PhaseDiagram3D()
 
                         dbc_tab(label = "Surface", tab_id = "pd3d-tab-surface", children = [
                             dbc_card(dbc_cardbody([
-                                pd3d_title("Surface: A = value"),
+                                pd3d_option_row("Preset",
+                                    dcc_dropdown(   id          = "pd3d-surf-preset",
+                                                    options     = [(label = p.label, value = p.value) for p in PD3D_SURF_PRESETS],
+                                                    value       = nothing,
+                                                    placeholder = "Choose a preset (optional)",
+                                                    clearable   = true)),
+                                html_hr(),
+                                pd3d_title("Surface"),
+                                pd3d_hint("the surface where this quantity equals the value"),
                                 pd3d_spec_selector("a"; type = "ss", phase = "liq", ssfield = "MgNum"),
-                                pd3d_option_row("Value of A",   pd3d_number("pd3d-a-iso", 0.7)),
+                                pd3d_option_row("Value",        pd3d_number("pd3d-a-iso", 0.7)),
                                 html_div(id = "pd3d-a-range", style = Dict("textAlign" => "center", "font-size" => "90%", "color" => "grey")),
                                 html_hr(),
-                                pd3d_title("Colour: B"),
+                                pd3d_title("Colour of the surface"),
+                                pd3d_hint("the surface is coloured by this quantity"),
                                 pd3d_spec_selector("b"; type = "ss", phase = "liq", ssfield = "mode", unit = "vol"),
                                 pd3d_option_row("Colormap",
                                     dcc_dropdown(   id          = "pd3d-surf-colormap",
@@ -175,7 +194,8 @@ function Tab_PhaseDiagram3D()
                                 pd3d_option_row("Reverse colormap", pd3d_bool_dropdown("pd3d-surf-reverse", "false")),
                                 pd3d_option_row("Opacity",          pd3d_number("pd3d-surf-opacity", 0.8; min = 0.05, max = 1.0, step = 0.05)),
                                 html_hr(),
-                                pd3d_title("Contour lines: C"),
+                                pd3d_title("Contour lines on the surface"),
+                                pd3d_hint("black lines of constant value of this quantity"),
                                 pd3d_option_row("Show contours",    pd3d_bool_dropdown("pd3d-contours", "true")),
                                 pd3d_spec_selector("c"; type = "ss", phase = "g", ssfield = "mode", unit = "vol"),
                                 pd3d_option_row("Number of levels", pd3d_number("pd3d-c-nlev", 8; min = 1, max = 40, step = 1)),
@@ -219,6 +239,9 @@ function Tab_PhaseDiagram3D()
 
             dcc_store(id = "pd3d-computed"),
             dcc_store(id = "pd3d-node"),
+            dcc_store(id = "pd3d-click"),
+            dcc_store(id = "pd3d-layers-prev", data = ["field"]),
+            html_div(id = "pd3d-marker-dummy", style = Dict("display" => "none")),
             dcc_store(id = "pd3d-goto-tab"),
             dcc_store(id = "pd3d-progress-off"),
         ], width=12),

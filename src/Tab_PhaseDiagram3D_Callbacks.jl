@@ -42,6 +42,37 @@ function Tab_PhaseDiagram3D_Callbacks(app)
 
     callback!(
         app,
+        Output("pd3d-x0-label",             "style"),
+        Output("pd3d-x1-label",             "style"),
+        Output("pd3d-bulk-x-alert",         "is_open"),
+        Output("pd3d-bulk-x-alert",         "color"),
+        Output("pd3d-bulk-x-alert",         "children"),
+        Input("diagram-dropdown",           "value"),
+        Input("table-bulk-rock",            "data"),
+        Input("table-2-bulk-rock",          "data"),
+        Input("select-bulk-unit",           "value"),
+
+        prevent_initial_call = false,
+    ) do diagType, bulk1, bulk2, sys_unit
+        label(show) = Dict("display" => show ? "block" : "none", "textAlign" => "center", "fontWeight" => "bold", "font-size" => "110%", "marginBottom" => 4)
+        diagType == "ptx3d" || return label(false), label(false), false, "info", ""
+        rel = try
+            bulk_L, bulk_R, oxi = get_bulkrock_prop(bulk1, bulk2; sys_unit = sys_unit)
+            pd3d_x_axis(oxi, bulk_L, bulk_R)
+        catch
+            nothing
+        end
+        isnothing(rel) && return label(true), label(true), false, "info", ""
+        if rel.relation == :identical
+            return label(true), label(true), true, "warning",
+                   "Both bulk-rock compositions are identical: nothing varies along the X axis of the 3D diagram. Edit the X = 1 composition (e.g. its H₂O content)."
+        end
+        return label(true), label(true), true, "info", "X axis of the 3D diagram: " * rel.info * "."
+    end
+
+
+    callback!(
+        app,
         Output("pd3d-estimate-id",  "value"),
         Input("pd3d-nP-id",         "value"),
         Input("pd3d-nT-id",         "value"),
@@ -150,8 +181,12 @@ function Tab_PhaseDiagram3D_Callbacks(app)
             Output("pd3d-$prefix-calcsf-div",   "style"),
             Output("pd3d-$prefix-sites-div",    "style"),
             Output("pd3d-$prefix-spec",         "data"),
+            Output("pd3d-$prefix-type",         "value"),
+            Output("pd3d-$prefix-ssfield",      "value"),
+            Output("pd3d-$prefix-offield",      "value"),
 
             Input("pd3d-computed",              "data"),
+            Input("pd3d-surf-preset",           "value"),
             Input("pd3d-$prefix-type",          "value"),
             Input("pd3d-$prefix-phase",         "value"),
             Input("pd3d-$prefix-ssfield",       "value"),
@@ -166,7 +201,17 @@ function Tab_PhaseDiagram3D_Callbacks(app)
             Input("mineral-naming-dropdown",    "value"),
 
             prevent_initial_call = false,
-        ) do _computed, type, phase, ssfield, offield, unit, rmf, ox, em, calc, calcox, calcsf, _naming
+        ) do _computed, preset, type, phase, ssfield, offield, unit, rmf, ox, em, calc, calcox, calcsf, _naming
+            pr = prefix in ("a", "b", "c") && any(t -> startswith(String(t.prop_id), "pd3d-surf-preset."), callback_context().triggered) ? pd3d_surf_preset(preset) : nothing
+            if !isnothing(pr)
+                q       = getfield(pr, Symbol(prefix))
+                type    = q.type
+                phase   = get(q, :phase, phase)
+                ssfield = get(q, :ssfield, ssfield)
+                offield = get(q, :offield, offield)
+                unit    = get(q, :unit, unit)
+                em      = get(q, :em, em)
+            end
             vis(b)     = Dict("display" => b ? "block" : "none")
             is_ss      = type == "ss"
             mode_like  = type == "pp" || (is_ss && ssfield == "mode")
@@ -198,7 +243,8 @@ function Tab_PhaseDiagram3D_Callbacks(app)
                     vis(is_ss && ssfield == "oxComp"), vis(is_ss && ssfield == "emMode"),
                     vis(is_ss && ssfield == "calc"), vis(is_ss && ssfield == "calc_ox"), vis(is_ss && ssfield == "calc_sf"),
                     vis(is_ss && ssfield == "calc_sf"),
-                    collect(spec)
+                    collect(spec),
+                    type, ssfield, offield
         end
     end
 
@@ -210,14 +256,22 @@ function Tab_PhaseDiagram3D_Callbacks(app)
 
         Input("pd3d-computed",              "data"),
         Input("pd3d-a-spec",                "data"),
+        Input("pd3d-surf-preset",           "value"),
         State("pd3d-a-iso",                 "value"),
 
         prevent_initial_call = true,
-    ) do _computed, spec_a, iso
+    ) do _computed, spec_a, preset, iso
         st = PD3D[]
         isnothing(st) && return no_update(), ""
         lo, hi = pd3d_range(pd3d_field(st, pd3d_spec(spec_a)...))
-        keep   = pushed_button( callback_context() ) == "pd3d-computed" && iso isa Number && lo < iso < hi
+        trig   = [String(t.prop_id) for t in callback_context().triggered]
+        pr     = any(t -> startswith(t, "pd3d-surf-preset."), trig) ? pd3d_surf_preset(preset) : nothing
+        if !isnothing(pr)
+            iso = pr.iso
+            keep = lo <= iso <= hi
+        else
+            keep = any(t -> startswith(t, "pd3d-computed."), trig) && iso isa Number && lo < iso < hi
+        end
         iso    = keep ? iso : round((lo + hi) / 2, sigdigits = 3)
         return iso, "range: $(round(lo, sigdigits = 4)) – $(round(hi, sigdigits = 4))"
     end
@@ -352,18 +406,60 @@ function Tab_PhaseDiagram3D_Callbacks(app)
         Output("pd3d-node",                 "data"),
         Output("pd3d-sidebar-tabs",         "active_tab"),
         Output("pd3d-system-chemistry-id",  "value"),
+        Output("pd3d-point-status",         "children"),
+        Output("pd3d-layers-prev",          "data"),
 
-        Input("pd3d-graph",                 "clickData"),
+        Input("pd3d-click",                 "data"),
         Input("pd3d-pie-unit",              "value"),
+        Input("pd3d-click-mode",            "value"),
+        Input("pd3d-layers",                "value"),
+        State("pd3d-node",                  "data"),
+        State("pd3d-layers-prev",           "data"),
 
         prevent_initial_call = true,
-    ) do click, pie_unit
+    ) do click, pie_unit, mode, layers, node, layers_prev
+        bid  = pushed_button( callback_context() )
+        none = ntuple(_ -> no_update(), 6)
+
+        if bid == "pd3d-layers"
+            added = setdiff(something(layers, String[]), something(layers_prev, String[]))
+            tabs  = Dict("field" => "pd3d-tab-field", "surface" => "pd3d-tab-surface", "phases" => "pd3d-tab-phases", "cloud" => "pd3d-tab-phases")
+            tab   = isempty(added) ? no_update() : get(tabs, first(added), no_update())
+            return no_update(), no_update(), tab, no_update(), no_update(), layers
+        end
+
         st = PD3D[]
-        (isnothing(st) || isnothing(click)) && return no_update(), no_update(), no_update(), no_update()
-        pt      = click[:points][1]
-        l, xval = pd3d_nearest(st, to_kbar_pressure(Float64(pt[:x])), Float64(pt[:y]), Float64(pt[:z]))
-        tab     = pushed_button( callback_context() ) == "pd3d-graph" ? "pd3d-tab-info" : no_update()
-        return phase_pie_figure(st.Out[l], st.dtb, pie_unit, xval), Dict("id" => st.id, "l" => l), tab, system_chemistry_text(st.Out[l])
+        isnothing(st) && return none
+
+        if bid == "pd3d-pie-unit"
+            (isnothing(node) || node[:id] != st.id) && return none
+            out = node[:exact] ? PD3D_POINT[] : st.Out[node[:l]]
+            return phase_pie_figure(out, st.dtb, pie_unit, node[:xval]), no_update(), no_update(), no_update(), no_update(), no_update()
+        end
+
+        isnothing(click) && return none
+        pt   = click[:points][1]
+        p_kb = to_kbar_pressure(Float64(pt[:x]))
+        t, x = Float64(pt[:y]), Float64(pt[:z])
+        if mode == "exact"
+            local out
+            dt = @elapsed out = try pd3d_compute_point(st, p_kb, t, x) catch e; e end
+            if out isa Exception
+                return no_update(), no_update(), no_update(), no_update(), "Exact point failed: $(sprint(showerror, out))", no_update()
+            end
+            PD3D_POINT[] = out
+            xval   = clamp(x, 0.0, 1.0)
+            newn   = Dict("id" => st.id, "l" => 0, "exact" => true, "xval" => xval,
+                          "x" => display_pressure(p_kb), "y" => t, "z" => xval)
+            status = "Exact point computed in $(round(dt, digits = 2)) s (red marker)."
+        else
+            l, xval = pd3d_nearest(st, p_kb, t, x)
+            out     = st.Out[l]
+            newn    = Dict("id" => st.id, "l" => l, "exact" => false, "xval" => xval,
+                           "x" => display_pressure(out.P_kbar), "y" => out.T_C, "z" => xval)
+            status  = "Nearest grid node to the clicked point (red marker)."
+        end
+        return phase_pie_figure(out, st.dtb, pie_unit, newn["xval"]), newn, "pd3d-tab-info", system_chemistry_text(out), status, no_update()
     end
 
 
@@ -383,8 +479,9 @@ function Tab_PhaseDiagram3D_Callbacks(app)
         if pushed_button( callback_context() ) != "pd3d-pie" || isnothing(st) || isnothing(node) || node[:id] != st.id
             return hidden
         end
-        ph = click_pie[:points][1][:customdata]
-        return Dict("display" => "block"), phase_composition_rows(st.Out[node[:l]], ph), "$(display_ph_name(ph)) composition"
+        ph  = click_pie[:points][1][:customdata]
+        out = node[:exact] ? PD3D_POINT[] : st.Out[node[:l]]
+        return Dict("display" => "block"), phase_composition_rows(out, ph), "$(display_ph_name(ph)) composition"
     end
 
     callback!(
@@ -425,6 +522,75 @@ function Tab_PhaseDiagram3D_Callbacks(app)
         end
         return no_update()
     end
+
+    callback!(
+        """
+        function(click) {
+            var host = document.getElementById('pd3d-graph');
+            if (host && !host.__pd3dWatch) {
+                host.__pd3dWatch   = true;
+                host.__pd3dWaiters = [];
+                host.addEventListener('mousedown', function(e) {
+                    host.__pd3dDown    = [e.clientX, e.clientY];
+                    host.__pd3dPressed = true;
+                }, true);
+                window.addEventListener('mouseup', function(e) {
+                    if (!host.__pd3dPressed) { return; }
+                    host.__pd3dPressed = false;
+                    var moved   = host.__pd3dDown ? Math.hypot(e.clientX - host.__pd3dDown[0], e.clientY - host.__pd3dDown[1]) : 0;
+                    var waiters = host.__pd3dWaiters;
+                    host.__pd3dWaiters = [];
+                    waiters.forEach(function(w) { w(moved <= 5); });
+                }, true);
+            }
+            if (!click) { return window.dash_clientside.no_update; }
+            if (!host || !host.__pd3dPressed) { return click; }
+            return new Promise(function(resolve) {
+                host.__pd3dWaiters.push(function(isClick) { resolve(isClick ? click : window.dash_clientside.no_update); });
+            });
+        }
+        """,
+        app,
+        Output("pd3d-click",                "data"),
+        Input("pd3d-graph",                 "clickData"),
+        prevent_initial_call = false,
+    )
+
+
+    callback!(
+        """
+        function(node, fig) {
+            setTimeout(function() {
+                var gd = document.querySelector('#pd3d-graph .js-plotly-plot');
+                if (!gd || !gd.data) { return; }
+                var scene = gd._fullLayout && gd._fullLayout.scene && gd._fullLayout.scene._scene;
+                var cam   = scene ? scene.getCamera() : null;
+                var keepCamera = function() {
+                    if (!cam) { return; }
+                    var sc = gd._fullLayout.scene._scene;
+                    sc.camera.lookAt([cam.eye.x, cam.eye.y, cam.eye.z], [cam.center.x, cam.center.y, cam.center.z], [cam.up.x, cam.up.y, cam.up.z]);
+                    if (gd.layout.scene) { gd.layout.scene.camera = {eye: cam.eye, center: cam.center, up: cam.up, projection: (gd.layout.scene.camera || {}).projection}; }
+                };
+                var old = [];
+                gd.data.forEach(function(d, i) { if (d.name === 'clicked point') { old.push(i); } });
+                var p = old.length ? Plotly.deleteTraces(gd, old) : Promise.resolve();
+                p.then(function() {
+                    if (node && node.x !== undefined && node.x !== null) {
+                        return Plotly.addTraces(gd, {type: 'scatter3d', mode: 'markers', name: 'clicked point',
+                                                     x: [node.x], y: [node.y], z: [node.z], showlegend: false, hoverinfo: 'skip',
+                                                     marker: {size: 7, color: 'red', symbol: 'diamond', line: {color: 'black', width: 2}}});
+                    }
+                }).then(keepCamera);
+            }, 400);
+            return '';
+        }
+        """,
+        app,
+        Output("pd3d-marker-dummy",         "children"),
+        Input("pd3d-node",                  "data"),
+        Input("pd3d-graph",                 "figure"),
+        prevent_initial_call = true,
+    )
 
     return app
 end

@@ -1366,6 +1366,7 @@ function Tab_Simulation()
                                                         
                                                             dbc_col([
                                                                 html_div([
+                                                                    html_div("X = 0", id = "pd3d-x0-label", style = Dict("display" => "none", "textAlign" => "center", "fontWeight" => "bold", "font-size" => "110%", "marginBottom" => 4)),
                                                                     dcc_dropdown(   id      = "test-dropdown",
                                                                     options = [
                                                                         Dict(   "label" => db[(db.db .== "ig"), :].title[i],
@@ -1380,6 +1381,7 @@ function Tab_Simulation()
                                                         
                                                             dbc_col([
                                                                 html_div([
+                                                                    html_div("X = 1", id = "pd3d-x1-label", style = Dict("display" => "none", "textAlign" => "center", "fontWeight" => "bold", "font-size" => "110%", "marginBottom" => 4)),
                                                                     dcc_dropdown(   id      = "test-2-dropdown",
                                                                     options = [
                                                                         Dict(   "label" => db[(db.db .== "ig"), :].title[i],
@@ -1501,6 +1503,12 @@ function Tab_Simulation()
                                                         disabled    = true,
                                                         draggable   = false,
                                                         style       = Dict("textAlign" => "center","font-size" => "100%", "width"=> "100%", "resize"=> "none")
+                                                    ),
+                                                    dbc_alert(
+                                                        "",
+                                                        id      = "pd3d-bulk-x-alert",
+                                                        color   = "info",
+                                                        is_open = false,
                                                     ),
 
                                                 ]),
