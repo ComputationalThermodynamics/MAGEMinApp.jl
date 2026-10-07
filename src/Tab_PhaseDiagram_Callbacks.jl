@@ -861,28 +861,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             ph      = click_info[:points][1][:customdata]
 
             out     = using_sample_point ? SamplePoint.out : Out_XY[point_id]
-
-            p       = out.ph
-            p_id    = findfirst(p .== ph)
-            n_SS    = out.n_SS
-
-            if p_id > n_SS
-                p_id       -= n_SS
-                comp        = out.PP_vec[p_id].Comp
-                comp_wt     = out.PP_vec[p_id].Comp_wt
-                comp_apfu   = out.PP_vec[p_id].Comp_apfu
-            else
-                comp        = out.SS_vec[p_id].Comp
-                comp_wt     = out.SS_vec[p_id].Comp_wt
-                comp_apfu   = out.SS_vec[p_id].Comp_apfu
-            end
-            oxi = out.oxides
-
-            data        =   [Dict(  "oxide"     => oxi[i],
-                                    "mol%"      => round(comp[i]*100.0,digits=2),
-                                     "wt%"      => round(comp_wt[i]*100.0,digits=2),
-                                     "apfu"     => round(comp_apfu[i],digits=2))
-                                                for i=1:length(oxi) ]
+            data    = phase_composition_rows(out, ph)
 
             style  = Dict("display" => "block")
             title =  "$(display_ph_name(ph)) composition"
@@ -990,73 +969,19 @@ function Tab_PhaseDiagram_Callbacks(app)
             seismicCorMode, aspectRatioVal, seismicWaterMode, shallowCorMode, fluidAsMeltMode, anelasticCorMode,
             bulk1, bulk2, sys_unit, fixT, fixP
 
+        diagType = diagram_type_2d(diagType)
         # phase_selection                 = remove_phases(string_vec_diff_ss(phase_selection,dtb),dtb)
         # pure_phase_selection            = remove_phases(string_vec_diff_ss(pure_phase_selection,dtb),dtb)
         phase_selection                 = remove_phases(string_vec_diff(to_str_vec(ph_selection),to_str_vec(pure_ph_selection),dtb),dtb)
         global point_id
         global using_sample_point, SamplePoint
 
-        all_ox  = ["CO2","Cl","MnO","Na2O","CaO","K2O","FeO","MgO","Al2O3","SiO2","H2O","TiO2","O","S","F","Cr2O3"];
-        all_acr = ["CO2","Cl","Mn","N","C","K","F","M","A","S","H","T","O","S","Fe","Cr"];
-
         bid = pushed_button( callback_context() )
 
         # ---- shared builders: turn any single-point result (gmin_struct) into the pie chart / system chemistry text / MAGEMin_C snippet ----
-        function pie_from_result(out, xval)
-            ids           = reverse(sortperm(out.ph_frac))   #this gets the ids in descending order of phase fraction
-            legacy_labels = out.ph[ids]
-            labels        = display_ph_names_tagged(legacy_labels, dtb)
-            if pie_unit == 1
-                values  = out.ph_frac[ids]     .* 100.0
-                sys     = "mol%"
-            elseif pie_unit == 2
-                values  = out.ph_frac_wt[ids]  .* 100.0
-                sys     = "wt%"
-            elseif pie_unit == 3
-                values  = out.ph_frac_vol[ids] .* 100.0
-                sys     = "vol%"
-            end
+        pie_from_result(out, xval) = phase_pie_figure(out, dtb, pie_unit, xval)
 
-            title  = "P: $(round(display_pressure(out.P_kbar); digits = 3)) $(pressure_unit_label()) T: $(round(out.T_C; digits = 3)) Mode [$(sys)]"
-            show_x = !isnothing(xval)
-            if show_x
-                title *= "<br>X: $(round(xval; digits = 3))"
-            end
-
-            layout = Layout(    font        = attr(size = 10),
-                                height      = 220,
-                                margin      = attr(autoexpand = false, l=8, r=8, b=8, t=(show_x ? 40 : 24)),
-                                autosize    = false,
-                                title       = attr(text=title, x=0.5, y=0.96),
-                                titlefont   = attr(size=12))
-
-            trace   = pie(; labels          = labels,
-                            customdata      = legacy_labels,
-                            values          = values,
-                            domain          = attr(x=[0.0, 0.95], y=[0.0, 0.9]),
-                            hoverinfo       = "label+percent",
-                            textposition    = "inside" #=,
-                            hovertext   = hover_text[ids] =# )
-            return plot(trace,layout)
-        end
-
-        function system_chem_text(out)
-            ids     = (out.bulk .!= 0.0)
-            act_ox  = out.oxides[ids]
-
-            sys_chem = []
-            id_sys   = []
-            for i=1:length(all_ox)
-                if all_ox[i] in act_ox
-                    push!(sys_chem, all_acr[i])
-                    push!(id_sys,findfirst(act_ox .== all_ox[i]))
-                end
-            end
-            sys_chem = join(sys_chem)
-            bk       = join(round.(out.bulk[id_sys] .*100.0; digits = 3),"; ")
-
-            return sys_chem*" (mol%)"*" - ["*bk*"]"
-        end
+        system_chem_text(out) = system_chemistry_text(out)
 
         function magemin_snippet(out)
             # code snippet to perform the point calculation in MAGEMin_C
@@ -1218,9 +1143,11 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("interval-simulation_progress",  "disabled"),
         Input("stop-trigger",                   "modified_timestamp"),
         Input("start-trigger",                  "value"),
+        Input("mageres-progress-off",               "data"),
+        Input("pd3d-progress-off",                  "modified_timestamp"),
 
         prevent_initial_call    = true,
-    ) do stop, start
+    ) do stop, start, mageres_off, pd3d_off
 
         bid  = pushed_button( callback_context() )
 
@@ -1228,6 +1155,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             return true
         elseif bid == "start-trigger"
             return false
+        elseif bid == "mageres-progress-off" || bid == "pd3d-progress-off"
+            return true
         end
         
     end
@@ -1243,29 +1172,37 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("refine-pb-button",          "value"),
         Output("mc-run-trigger",            "value"),
         Output("start-trigger",              "value"),
+        Output("compute-3d-button",          "value"),
 
         Input("compute-button-raw",         "n_clicks"),
         Input("uni-refine-pb-button-raw",   "n_clicks"),
         Input("refine-pb-button-raw",       "n_clicks"),
         Input("mc-run-button-raw",          "n_clicks"),
+        Input("launch-run-button-mageres",      "n_clicks"),
 
         State("compute-button",             "value"),
         State("uni-refine-pb-button",       "value"),
         State("refine-pb-button",           "value"),
         State("mc-run-trigger",             "value"),
+        State("compute-3d-button",          "value"),
+        State("diagram-dropdown",           "value"),
 
         prevent_initial_call    = true,
-    ) do compute_raw, uni_refine_raw, refine_raw, mc_run_raw, compute, uni_refine, refine, mc_run_trigger
+    ) do compute_raw, uni_refine_raw, refine_raw, mc_run_raw, mageres_launch_raw, compute, uni_refine, refine, mc_run_trigger, compute3d, diagType
 
         bid  = pushed_button( callback_context() )
-        if bid == "compute-button-raw"
-            return compute*-1, no_update(), no_update(), no_update(), 1
+        if bid == "compute-button-raw" && diagType == "ptx3d"
+            return no_update(), no_update(), no_update(), no_update(), 1, compute3d*-1
+        elseif bid == "compute-button-raw"
+            return compute*-1, no_update(), no_update(), no_update(), 1, no_update()
         elseif bid == "uni-refine-pb-button-raw"
-            return no_update(), uni_refine*-1, no_update(), no_update(), 1
+            return no_update(), uni_refine*-1, no_update(), no_update(), 1, no_update()
         elseif bid == "refine-pb-button-raw"
-            return no_update(), no_update(), refine*-1, no_update(), 1
+            return no_update(), no_update(), refine*-1, no_update(), 1, no_update()
         elseif bid == "mc-run-button-raw"
-            return no_update(), no_update(), no_update(), mc_run_trigger*-1, 1
+            return no_update(), no_update(), no_update(), mc_run_trigger*-1, 1, no_update()
+        elseif bid == "launch-run-button-mageres"
+            return no_update(), no_update(), no_update(), no_update(), 1, no_update()
         end
 
     end
@@ -1415,7 +1352,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("isopleth-dropdown",         "options"),
         Output("hidden-isopleth-dropdown",  "options"),
         Output("smooth-colormap",           "value"),
-        Output("tabs",                      "active_tab"),      # currently active tab
+        Output("pd2d-goto-tab",             "data"),
 
         Output("min-color-id",              "value"),
         Output("max-color-id",              "value"),
@@ -1605,6 +1542,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             mc_sigma_data, mc_sigma_mode_str, mc_bulk_unit, mc_n_real, mc_seed_val
 
 
+        diagType                        = diagram_type_2d(diagType)
         global use_GPa
         use_GPa[1]                      = (pressure_unit == "gpa")                                                                          # keep in sync with the dropdown for this callback's invocation
         phase_selection                 = remove_phases(string_vec_diff(to_str_vec(ph_selection),to_str_vec(pure_ph_selection),dtb),dtb)

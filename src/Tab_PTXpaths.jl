@@ -557,6 +557,12 @@ function Tab_PTXpaths()
                                                                     color   = "success",
                                                                     is_open = false,
                                                                 ),
+                                                                dbc_alert(
+                                                                    "",
+                                                                    id      = "alert-ds62-placeholder-ptx",
+                                                                    color   = "warning",
+                                                                    is_open = false,
+                                                                ),
 
                                                                 # buffer offset
                                                                 html_div([
@@ -696,7 +702,7 @@ function Tab_PTXpaths()
 
                         dbc_row([
                             dbc_col([
-                                html_h1("KD model", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
+                                html_h1("Kd's database", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
                             ],width=6),
                             dbc_col([
                                 dcc_dropdown(   id      = "kds-dropdown-ptx",

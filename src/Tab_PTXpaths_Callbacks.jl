@@ -1982,7 +1982,7 @@ function Tab_PTXpaths_Callbacks(app)
         dataset_options = [Dict(    "label"     => "ds$(db_in.dataset_opt[i])",
                                     "value"     => db_in.dataset_opt[i] )
                                 for i = 1:length(db_in.dataset_opt) ]
-        dataset_value    = db_in.db_dataset
+        dataset_value    = keep_dataset(bid in ("database-dropdown-ptx", ""), dataset, db_in)
 
         return data, opts, val, cap, phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value, adv_phase_options, dataset_options, dataset_value, no_update(), no_update(), no_update(), preset_style, preset_value_out
     end
@@ -2003,6 +2003,20 @@ function Tab_PTXpaths_Callbacks(app)
         dtb != "all" && return false, "success", ""
         color, msg = bulk_oxide_coverage_status(bulk_data, ss_selected, pp_selected)
         return true, color, msg
+    end
+
+    callback!(
+        app,
+        Output("alert-ds62-placeholder-ptx", "is_open"),
+        Output("alert-ds62-placeholder-ptx", "children"),
+
+        Input("database-dropdown-ptx","value"),
+        Input("dataset-dropdown-ptx","value"),
+        Input("phase-selection-PTX","value"),
+
+        prevent_initial_call = false,
+    ) do dtb, dataset, ss_selected
+        return ds62_placeholder_alert(dtb, dataset, ss_selected)
     end
 
     # persist phase (de)selection into the per-database cache as soon as the user

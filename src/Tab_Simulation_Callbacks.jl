@@ -463,9 +463,10 @@ function Tab_Simulation_Callbacks(app)
 
         State("phase-selection","value"),
         State("pure-phase-selection","value"),
+        State("dataset-dropdown","value"),
 
         prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
-    ) do dtb, warr_naming, _load_state_id, preset, current_ss_selection, current_pp_selection
+    ) do dtb, warr_naming, _load_state_id, preset, current_ss_selection, current_pp_selection, current_dataset
         global use_warr_names
         use_warr_names[1] = (warr_naming == "warr")
 
@@ -548,7 +549,7 @@ function Tab_Simulation_Callbacks(app)
         dataset_options = [Dict(    "label"     => "ds$(db_in.dataset_opt[i])",
                                     "value"     => db_in.dataset_opt[i] )
                                 for i = 1:length(db_in.dataset_opt) ]
-        dataset_value    = db_in.db_dataset
+        dataset_value    = keep_dataset(bid in ("database-dropdown", ""), current_dataset, db_in)
 
 
         return phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value, dataset_options, dataset_value, style, preset_style, preset_value_out
@@ -570,6 +571,20 @@ function Tab_Simulation_Callbacks(app)
         dtb != "all" && return false, "success", ""
         color, msg = bulk_oxide_coverage_status(bulk_data, ss_selected, pp_selected)
         return true, color, msg
+    end
+
+    callback!(
+        app,
+        Output("alert-ds62-placeholder", "is_open"),
+        Output("alert-ds62-placeholder", "children"),
+
+        Input("database-dropdown","value"),
+        Input("dataset-dropdown","value"),
+        Input("phase-selection","value"),
+
+        prevent_initial_call = false,
+    ) do dtb, dataset, ss_selected
+        return ds62_placeholder_alert(dtb, dataset, ss_selected)
     end
 
     # persist phase (de)selection into the per-database cache as soon as the user
@@ -843,10 +858,11 @@ function Tab_Simulation_Callbacks(app)
         
         Input("tepm-dropdown",      "value"),
         Input("kds-dropdown",       "value"),
+        Input("diagram-dropdown",   "value"),
         prevent_initial_call = true,
-    ) do tepm, kds
+    ) do tepm, kds, diagType
 
-        if tepm == "false"
+        if tepm == "false" || diagType == "ptx3d"
             opt     = Dict("display" => "none")
             panel   = Dict("display" => "none")
             zr      = Dict("display" => "none")
@@ -1097,6 +1113,9 @@ function Tab_Simulation_Callbacks(app)
         Output("display-refine-option-id", "style"),
         Output("display-refine-option-2-id", "style"),
         Output("mumu-setup-id", "style"),
+        Output("gsub-row-id", "style"),
+        Output("tepm-row-id", "style"),
+        Output("pd3d-resolution-id", "style"),
         Input("diagram-dropdown", "value"),
 
         prevent_initial_call = true,
@@ -1198,6 +1217,22 @@ function Tab_Simulation_Callbacks(app)
             refine  = Dict("display" => "block")
             refine2 = Dict("display" => "block")
             mumu    = Dict("display" => "block")
+        elseif value == "ptx3d"
+            Tstyle  = Dict("display" => "none")
+            Pstyle  = Dict("display" => "none")
+            Ts      = Dict("display" => "block")
+            Ps      = Dict("display" => "block")
+            test2   = Dict("display" => "block")
+            table2  = Dict("display" => "block")
+            PTx     = Dict("display" => "none")
+            testte2 = Dict("display" => "none")
+            tabte2  = Dict("display" => "none")
+            watsat  = Dict("display" => "none")
+            T1      = Dict("display" => "none")
+            T2      = Dict("display" => "none")
+            refine  = Dict("display" => "none")
+            refine2 = Dict("display" => "none")
+            mumu    = Dict("display" => "none")
         else
             Tstyle  = Dict("display" => "none")
             Pstyle  = Dict("display" => "none")
@@ -1216,7 +1251,12 @@ function Tab_Simulation_Callbacks(app)
             mumu    = Dict("display" => "none")
         end
 
-        return Tstyle, Pstyle, Ts, Ps, test2, table2, PTx, testte2, tabte2, watsat, T1, T2, refine, refine2, mumu
+        is3d    = value == "ptx3d"
+        gsub    = Dict("display" => is3d ? "none"  : "block")
+        tepmrow = Dict("display" => is3d ? "none"  : "block")
+        res3d   = Dict("display" => is3d ? "block" : "none")
+
+        return Tstyle, Pstyle, Ts, Ps, test2, table2, PTx, testte2, tabte2, watsat, T1, T2, refine, refine2, mumu, gsub, tepmrow, res3d
     end
 
 

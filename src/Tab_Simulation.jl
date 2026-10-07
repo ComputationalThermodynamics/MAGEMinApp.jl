@@ -165,6 +165,7 @@ function Tab_Simulation()
                                                 (label = "PT-X diagram",                            value = "ptx"),
                                                 (label = "T-T diagram (poly-metamorphic)",          value = "tt"),
                                                 (label = "μ-μ diagram (chemical potential)",        value = "mumu"),
+                                                (label = "P-T-X 3D diagram",                        value = "ptx3d"),
                                             ],
                                             value="pt" ,
                                             clearable   = false,
@@ -355,7 +356,7 @@ function Tab_Simulation()
                                     ], style = Dict("display" => "none"), id      = "switch-opx-id"), #none, block
 
                                     #Trace element predictive models
-                                    # html_div([
+                                    html_div([
                                     html_hr(),
                                     dbc_row([
                                         dbc_col([ 
@@ -372,7 +373,7 @@ function Tab_Simulation()
                                             multi       =  false),
                                         ]),
                                     ]),
-                                    # ], style = Dict("display" => "none"), id      = "tepm-id"), #none, block
+                                    ], style = Dict("display" => "block"), id      = "tepm-row-id"), #none, block
 
                                     #options for trace element predictive modelling
                                     html_div([
@@ -944,8 +945,9 @@ function Tab_Simulation()
 
                                     html_hr(),
                                     #subdivision
+                                    html_div([
                                     dbc_row([
-                                        dbc_col([ 
+                                        dbc_col([
                                             html_h1("Initial grid subdivision", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
                                         ], width=6),
                                         dbc_col([ 
@@ -968,6 +970,52 @@ function Tab_Simulation()
                                         ], width=3),
 
                                     ]),
+                                    ], style = Dict("display" => "block"), id      = "gsub-row-id"), #none, block
+
+                                    #3D grid resolution
+                                    html_div([
+                                    dbc_row([
+                                        dbc_col([
+                                        ], width=6),
+                                        dbc_col([
+                                            html_h1("P", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                        ], width=2),
+                                        dbc_col([
+                                            html_h1("T", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                        ], width=2),
+                                        dbc_col([
+                                            html_h1("X", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                        ], width=2),
+                                    ]),
+                                    dbc_row([
+                                        dbc_col([
+                                            html_h1("3D grid [points per axis]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                        ], width=6),
+                                        dbc_col([
+                                            dbc_input(id = "pd3d-nP-id", type = "number", min = 3, max = 65, step = 1, value = 20),
+                                        ], width=2),
+                                        dbc_col([
+                                            dbc_input(id = "pd3d-nT-id", type = "number", min = 3, max = 65, step = 1, value = 20),
+                                        ], width=2),
+                                        dbc_col([
+                                            dbc_input(id = "pd3d-nX-id", type = "number", min = 2, max = 65, step = 1, value = 20),
+                                        ], width=2),
+                                    ]),
+                                    dbc_row([
+                                        dbc_col([
+                                        ], width=6),
+                                        dbc_col([
+                                            dcc_textarea(
+                                                id          = "pd3d-estimate-id",
+                                                value       = "",
+                                                readOnly    = true,
+                                                disabled    = true,
+                                                draggable   = false,
+                                                style       = Dict("height" => "26px","resize"=> "none","textAlign" => "center","font-size" => "100%", "width"=> "100%",),
+                                            ),
+                                        ], width=6),
+                                    ]),
+                                    ], style = Dict("display" => "none"), id      = "pd3d-resolution-id"), #none, block
                                     #refinement type
                                     html_div([
                                     dbc_row([
@@ -1318,6 +1366,7 @@ function Tab_Simulation()
                                                         
                                                             dbc_col([
                                                                 html_div([
+                                                                    html_div("X = 0", id = "pd3d-x0-label", style = Dict("display" => "none", "textAlign" => "center", "fontWeight" => "bold", "font-size" => "110%", "marginBottom" => 4)),
                                                                     dcc_dropdown(   id      = "test-dropdown",
                                                                     options = [
                                                                         Dict(   "label" => db[(db.db .== "ig"), :].title[i],
@@ -1332,6 +1381,7 @@ function Tab_Simulation()
                                                         
                                                             dbc_col([
                                                                 html_div([
+                                                                    html_div("X = 1", id = "pd3d-x1-label", style = Dict("display" => "none", "textAlign" => "center", "fontWeight" => "bold", "font-size" => "110%", "marginBottom" => 4)),
                                                                     dcc_dropdown(   id      = "test-2-dropdown",
                                                                     options = [
                                                                         Dict(   "label" => db[(db.db .== "ig"), :].title[i],
@@ -1369,6 +1419,12 @@ function Tab_Simulation()
                                                                         "Bulk-rock covered by phase selection",
                                                                         id      = "alert-bulk-oxide-coverage",
                                                                         color   = "success",
+                                                                        is_open = false,
+                                                                    ),
+                                                                    dbc_alert(
+                                                                        "",
+                                                                        id      = "alert-ds62-placeholder",
+                                                                        color   = "warning",
                                                                         is_open = false,
                                                                     ),
                                                                     dbc_alert(
@@ -1447,6 +1503,12 @@ function Tab_Simulation()
                                                         disabled    = true,
                                                         draggable   = false,
                                                         style       = Dict("textAlign" => "center","font-size" => "100%", "width"=> "100%", "resize"=> "none")
+                                                    ),
+                                                    dbc_alert(
+                                                        "",
+                                                        id      = "pd3d-bulk-x-alert",
+                                                        color   = "info",
+                                                        is_open = false,
                                                     ),
 
                                                 ]),

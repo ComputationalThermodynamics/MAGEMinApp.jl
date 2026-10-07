@@ -2492,3 +2492,89 @@ function export_contours_to_txt(cont, name, filename)
         end
     end
 end
+
+
+function phase_pie_figure(out, dtb, pie_unit, xval)
+    ids           = reverse(sortperm(out.ph_frac))   #this gets the ids in descending order of phase fraction
+    legacy_labels = out.ph[ids]
+    labels        = display_ph_names_tagged(legacy_labels, dtb)
+    if pie_unit == 1
+        values  = out.ph_frac[ids]     .* 100.0
+        sys     = "mol%"
+    elseif pie_unit == 2
+        values  = out.ph_frac_wt[ids]  .* 100.0
+        sys     = "wt%"
+    elseif pie_unit == 3
+        values  = out.ph_frac_vol[ids] .* 100.0
+        sys     = "vol%"
+    end
+
+    title  = "P: $(round(display_pressure(out.P_kbar); digits = 3)) $(pressure_unit_label()) T: $(round(out.T_C; digits = 3)) Mode [$(sys)]"
+    show_x = !isnothing(xval)
+    if show_x
+        title *= "<br>X: $(round(xval; digits = 3))"
+    end
+
+    layout = Layout(    font        = attr(size = 10),
+                        height      = 220,
+                        margin      = attr(autoexpand = false, l=8, r=8, b=8, t=(show_x ? 40 : 24)),
+                        autosize    = false,
+                        title       = attr(text=title, x=0.5, y=0.96),
+                        titlefont   = attr(size=12))
+
+    trace   = pie(; labels          = labels,
+                    customdata      = legacy_labels,
+                    values          = values,
+                    domain          = attr(x=[0.0, 0.95], y=[0.0, 0.9]),
+                    hoverinfo       = "label+percent",
+                    textposition    = "inside" #=,
+                    hovertext   = hover_text[ids] =# )
+    return plot(trace,layout)
+end
+
+
+function phase_composition_rows(out, ph)
+    p_id    = findfirst(out.ph .== ph)
+    n_SS    = out.n_SS
+
+    if p_id > n_SS
+        p_id       -= n_SS
+        comp        = out.PP_vec[p_id].Comp
+        comp_wt     = out.PP_vec[p_id].Comp_wt
+        comp_apfu   = out.PP_vec[p_id].Comp_apfu
+    else
+        comp        = out.SS_vec[p_id].Comp
+        comp_wt     = out.SS_vec[p_id].Comp_wt
+        comp_apfu   = out.SS_vec[p_id].Comp_apfu
+    end
+    oxi = out.oxides
+
+    return  [Dict(  "oxide"     => oxi[i],
+                    "mol%"      => round(comp[i]*100.0,digits=2),
+                    "wt%"       => round(comp_wt[i]*100.0,digits=2),
+                    "apfu"      => round(comp_apfu[i],digits=2))
+                                for i=1:length(oxi) ]
+end
+
+
+function system_chemistry_text(out)
+    all_ox  = ["CO2","Cl","MnO","Na2O","CaO","K2O","FeO","MgO","Al2O3","SiO2","H2O","TiO2","O","S","F","Cr2O3"];
+    all_acr = ["CO2","Cl","Mn","N","C","K","F","M","A","S","H","T","O","S","Fe","Cr"];
+
+    ids     = (out.bulk .!= 0.0)
+    act_ox  = out.oxides[ids]
+    act_bk  = out.bulk[ids]
+
+    sys_chem = []
+    id_sys   = []
+    for i=1:length(all_ox)
+        if all_ox[i] in act_ox
+            push!(sys_chem, all_acr[i])
+            push!(id_sys,findfirst(act_ox .== all_ox[i]))
+        end
+    end
+    sys_chem = join(sys_chem)
+    bk       = join(round.(act_bk[id_sys] .*100.0; digits = 3),"; ")
+
+    return sys_chem*" (mol%)"*" - ["*bk*"]"
+end

@@ -306,7 +306,7 @@ function svg_text_runs(text::AbstractString)
         scale = 1.0
         last  = 1
         for m in eachmatch(r"<(/?)(sub|sup|[a-z]+)[^>]*>", raw)
-            m.offset > last && push!(runs, (String(raw[last:m.offset-1]), dy, scale))
+            m.offset > last && push!(runs, (String(raw[last:prevind(raw, m.offset)]), dy, scale))
             closing, tag = m.captures[1] == "/", m.captures[2]
             if tag == "sub"
                 dy, scale = closing ? (0.0, 1.0) : (0.25, 0.7)

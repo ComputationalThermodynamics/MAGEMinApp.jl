@@ -1129,3 +1129,1010 @@ function register_svg_exports!(app, table)
     end
     return app
 end
+
+# --------------------------------------------------------- general figures --
+
+const PLOTLY_COLORWAY = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f",
+                         "#bcbd22", "#17becf"]
+
+"""
+    GAxis
+
+    A resolved axis of a general figure: name ("x", "y2", ...), kind (`:linear`, `:log`, `:category`), data range
+    `lo`→`hi` mapped to pixels `p0`→`p1`, categories, explicit ticks, title, side, pixel position of the axis line,
+    visibility, mirror flag, the pixel extent of the perpendicular domain and the font size.
+"""
+struct GAxis
+    name       :: String
+    kind       :: Symbol
+    lo         :: Float64
+    hi         :: Float64
+    p0         :: Float64
+    p1         :: Float64
+    categories :: Vector{String}
+    tickvals   :: Union{Nothing,Vector{Float64}}
+    ticklabels :: Union{Nothing,Vector{String}}
+    title      :: String
+    side       :: String
+    pos        :: Float64
+    visible    :: Bool
+    mirror     :: Bool
+    other0     :: Float64
+    other1     :: Float64
+    showlabels :: Bool
+end
+
+"""
+    gaxis_px(ax::GAxis, v)
+
+    Pixel position of value `v` (a number, or a category label on a category axis) on axis `ax`; `nothing` when it
+    has no position.
+"""
+function gaxis_px(ax::GAxis, v)
+    if ax.kind == :category
+        v isa AbstractString && (i = findfirst(==(v), ax.categories); return i === nothing ? nothing : gaxis_px(ax, Float64(i - 1)))
+        v isa Real || return nothing
+    end
+    v isa Real || return nothing
+    f = ax.kind == :log ? (v > 0 ? (log10(v) - log10(ax.lo)) / (log10(ax.hi) - log10(ax.lo)) : nothing) :
+                          (v - ax.lo) / (ax.hi - ax.lo)
+    f === nothing && return nothing
+    return ax.p0 + f * (ax.p1 - ax.p0)
+end
+
+"""
+    gaxis_inrange(ax::GAxis, v::Real)
+
+    Whether the data value `v` lies within the range of axis `ax`.
+"""
+gaxis_inrange(ax::GAxis, v::Real) = min(ax.lo, ax.hi) - 1e-9 * abs(ax.hi - ax.lo) <= v <=
+                                    max(ax.lo, ax.hi) + 1e-9 * abs(ax.hi - ax.lo)
+
+"""
+    gfig_keys(obj)
+
+    Keys of a layout or trace object (a `PlotlyBase` attribute, a `JSON3.Object` or a `Dict`) as symbols.
+"""
+gfig_keys(obj) = obj === nothing ? Symbol[] :
+                 hasproperty(obj, :fields) && getfield(obj, :fields) isa AbstractDict ? Symbol.(collect(keys(getfield(obj, :fields)))) :
+                 Symbol.(collect(keys(obj)))
+
+"""
+    gfig_axis_key(name::AbstractString)
+
+    Layout key of axis `name` ("x2" → `:xaxis2`, "y" → `:yaxis`).
+"""
+gfig_axis_key(name::AbstractString) = Symbol(name[1:1] * "axis" * name[2:end])
+
+"""
+    gfig_trace_type(tr)
+
+    Plotly type of trace `tr` ("scatter" when unset).
+"""
+gfig_trace_type(tr) = something(pstr(pget(tr, :type)), "scatter")
+
+"""
+    gfig_visible(tr)
+
+    Whether trace `tr` is drawn (not hidden nor legend-only).
+"""
+gfig_visible(tr) = (v = pget(tr, :visible; default = true); v === true || v == "true")
+
+"""
+    gfig_axis_ref(tr, which::Symbol)
+
+    Axis name ("x", "x2", "y", ...) trace `tr` is drawn on along `which` (`:x` or `:y`).
+"""
+gfig_axis_ref(tr, which::Symbol) = something(pstr(pget(tr, which == :x ? :xaxis : :yaxis)), string(which))
+
+"""
+    gfig_error(tr)
+
+    Symmetric error-bar half lengths of trace `tr` (`error_y` of type "data"), or `nothing`.
+"""
+function gfig_error(tr)
+    e = pget(tr, :error_y)
+    (e === nothing || pget(e, :visible; default = true) == false) && return nothing
+    a = pvec(e, :array)
+    isempty(a) && return nothing
+    return a
+end
+
+"""
+    gfig_bar_width(tr, positions::Vector{Float64}, bargap::Float64)
+
+    Width (data units along the position axis) of every bar of trace `tr` at `positions`: its `width` attribute,
+    otherwise the smallest spacing (1 for a single bar) reduced by `bargap`.
+"""
+function gfig_bar_width(tr, positions::Vector{Float64}, bargap::Float64)
+    w = pget(tr, :width)
+    w isa Real && return fill(Float64(w), length(positions))
+    w !== nothing && (v = pflatten(w); return [x isa Real ? Float64(x) : 0.8 for x in v])
+    p = sort(unique(positions))
+    d = length(p) > 1 ? minimum(diff(p)) : 1.0
+    return fill(d * (1 - bargap), length(positions))
+end
+
+"""
+    gfig_marker_path(symbol, cx, cy, r)
+
+    SVG path data of a Plotly marker `symbol` of radius `r` [px] at `(cx, cy)`; `nothing` for a circle.
+"""
+function gfig_marker_path(symbol, cx, cy, r)
+    s = symbol === nothing ? "circle" : replace(lowercase(string(symbol)), "-open" => "")
+    f(x, y) = "$(svg_num(cx + x)) $(svg_num(cy + y))"
+    s == "diamond"     && return "M$(f(0, -1.3r)) L$(f(1.3r, 0)) L$(f(0, 1.3r)) L$(f(-1.3r, 0)) Z"
+    s == "square"      && return "M$(f(-r, -r)) L$(f(r, -r)) L$(f(r, r)) L$(f(-r, r)) Z"
+    s == "triangle-up" && return "M$(f(0, -1.2r)) L$(f(1.1r, 0.7r)) L$(f(-1.1r, 0.7r)) Z"
+    s in ("x", "x-thin") && return "M$(f(-r, -r)) L$(f(r, r)) M$(f(r, -r)) L$(f(-r, r))"
+    s == "line-ns"     && return "M$(f(0, -r)) L$(f(0, r))"
+    return nothing
+end
+
+"""
+    gfig_title(t)
+
+    Text of a Plotly title given as a string or as an object with `text`; empty when absent.
+"""
+gfig_title(t) = t === nothing ? "" : t isa AbstractString ? String(t) : something(pstr(pget(t, :text)), "")
+
+"""
+    gfig_group_key(tr)
+
+    Key gathering traces into one layer: the legend group, else the name, else the trace type, axes, mode, colours and
+    fill (unnamed traces with the same styling).
+"""
+function gfig_group_key(tr)
+    lg = pstr(pget(tr, :legendgroup))
+    lg === nothing || return "lg:" * lg
+    nm = pstr(pget(tr, :name))
+    nm === nothing || return "nm:" * nm
+    return join(("sig", gfig_trace_type(tr), gfig_axis_ref(tr, :x), gfig_axis_ref(tr, :y),
+                 something(pstr(pget(tr, :mode)), ""), something(pstr(pget(pget(tr, :line), :color)), ""),
+                 something(pstr(pget(tr, :fill)), "")), "|")
+end
+
+"""
+    gfig_group_label(key::AbstractString, k::Int)
+
+    Layer name of the trace group `key` (its legend group or name; `Group_k` for unnamed traces).
+"""
+gfig_group_label(key::AbstractString, k::Int) = startswith(key, "sig") ? "Group_$(k)" : key[4:end]
+
+"""
+    gfig_named_runs(items)
+
+    Consecutive runs of `items` (shapes or annotations) sharing the same non-empty `name`, as `(name, indices)` pairs;
+    unnamed items form runs of one with an empty name.
+"""
+function gfig_named_runs(items)
+    runs = Tuple{String,Vector{Int}}[]
+    for (i, it) in enumerate(items)
+        nm = something(pstr(pget(it, :name)), "")
+        if !isempty(nm) && !isempty(runs) && runs[end][1] == nm
+            push!(runs[end][2], i)
+        else
+            push!(runs, (nm, [i]))
+        end
+    end
+    return runs
+end
+
+"""
+    gfig_pixel_point(axes, xref, yref, x, y, L, R, T, B)
+
+    Pixel position of a point given in the `xref`/`yref` frames ("paper", "x", "y2", ...) of a figure whose plot area is
+    `L`..`R` × `T`..`B`; `nothing` when the point cannot be placed.
+"""
+function gfig_pixel_point(axes, xref, yref, x, y, L, R, T, B)
+    (x isa Real && y isa Real) || return nothing
+    px = xref == "paper" ? L + x * (R - L) : (haskey(axes, xref) ? gaxis_px(axes[xref], x) : nothing)
+    py = yref == "paper" ? B - y * (B - T) : (haskey(axes, yref) ? gaxis_px(axes[yref], y) : nothing)
+    (px === nothing || py === nothing) && return nothing
+    return px, py
+end
+
+"""
+    gfig_text_box(text::AbstractString, fs::Real)
+
+    Approximate width and height [px] of the multi-line Plotly `text` at font size `fs`.
+"""
+function gfig_text_box(text::AbstractString, fs::Real)
+    lines = svg_text_runs(text)
+    w     = maximum((sum(length(r[1]) * (r[3] == 1.0 ? 1.0 : 0.7) for r in l; init = 0.0) for l in lines); init = 0.0)
+    return 0.56 * fs * w, 1.15 * fs * max(length(lines), 1)
+end
+
+"""
+    plotly_export_figure_svg(fig, path; config = nothing, underlay = nothing, width = nothing)
+
+    Write any Plotly figure `fig` to `path` as a layered SVG, with multiple and stacked axes (`domain`, `anchor`,
+    `overlaying`, `side`, `scaleanchor`), scatter lines (linear and step shapes), markers (per-point symbols),
+    `toself` fills, symmetric error bars, vertical and horizontal (stacked) bars, contour lines, heatmaps (cell
+    rectangles), pies, layout shapes (`rect`, `line`, `circle`, `path`, data/paper/pixel sizing), annotations,
+    colour bars and the legend. `underlay(io, xaxis, yaxis, seen)` replaces the drawing of the heatmap of the main
+    axes (e.g. with the true model cells). Returns `(path, bytes, n_paths, warnings)`.
+"""
+function plotly_export_figure_svg(fig, path::AbstractString; config = nothing, underlay = nothing, width = nothing)
+    layout   = pget(fig, :layout)
+    traces   = [tr for tr in pget(fig, :data, default = []) if gfig_visible(tr)]
+    warnings = String[]
+    dl       = pget(config, :toImageButtonOptions)
+    W        = Float64(something(width, pnum(pget(dl, :width)), pnum(pget(layout, :width)), 1000.0))
+    H        = Float64(something(pnum(pget(layout, :height)), pnum(pget(dl, :height)), 450.0))
+    mg       = pget(layout, :margin)
+    ml, mr   = something(pnum(pget(mg, :l)), 80.0), something(pnum(pget(mg, :r)), 80.0)
+    mt, mb   = something(pnum(pget(mg, :t)), 100.0), something(pnum(pget(mg, :b)), 80.0)
+    L, R, T, B = ml, W - mr, mt, H - mb
+    barmode  = something(pstr(pget(layout, :barmode)), "group")
+    bargap   = something(pnum(pget(layout, :bargap)), 0.2)
+
+    names = Set{String}()
+    for tr in traces
+        gfig_trace_type(tr) == "pie" && continue
+        push!(names, gfig_axis_ref(tr, :x), gfig_axis_ref(tr, :y))
+    end
+    for k in gfig_keys(layout)
+        m = match(r"^([xy])axis(\d*)$", string(k))
+        m === nothing || push!(names, m.captures[1] * m.captures[2])
+    end
+
+    vals    = Dict(n => Float64[] for n in names)
+    cats    = Dict(n => String[] for n in names)
+    stacked = Dict{Tuple{String,String,Float64},Float64}()
+    for tr in traces
+        t = gfig_trace_type(tr)
+        t == "pie" && continue
+        xn, yn = gfig_axis_ref(tr, :x), gfig_axis_ref(tr, :y)
+        xs, ys = pvec(tr, :x), pvec(tr, :y)
+        for (n, v) in ((xn, xs), (yn, ys)), e in v
+            e isa AbstractString ? (e in cats[n] || push!(cats[n], e)) : (e isa Real && push!(vals[n], e))
+        end
+        err = gfig_error(tr)
+        if err !== nothing
+            for (i, y) in enumerate(ys)
+                (y isa Real && i <= length(err) && err[i] isa Real) && push!(vals[yn], y + err[i], y - err[i])
+            end
+        end
+        if t == "bar"
+            h = pstr(pget(tr, :orientation)) == "h"
+            vn, pn = h ? (xn, yn) : (yn, xn)
+            push!(vals[vn], 0.0)
+            if barmode == "stack"
+                for (p, v) in zip(h ? ys : xs, h ? xs : ys)
+                    (p isa Real && v isa Real) || continue
+                    k = (pn, vn, Float64(p))
+                    stacked[k] = get(stacked, k, 0.0) + v
+                    push!(vals[vn], stacked[k])
+                end
+            end
+            p = Float64[v for v in (h ? ys : xs) if v isa Real]
+            if !isempty(p)
+                w = gfig_bar_width(tr, p, bargap)
+                append!(vals[pn], p .- w ./ 2, p .+ w ./ 2)
+            end
+        end
+        if t in ("heatmap", "contour")
+            for (n, v) in ((xn, xs), (yn, ys))
+                num = Float64[e for e in v if e isa Real]
+                length(num) > 1 && (d = (num[end] - num[1]) / (length(num) - 1); append!(vals[n], [num[1] - d / 2, num[end] + d / 2]))
+            end
+        end
+        t in ("scatter", "scattergl", "bar", "heatmap", "contour") || push!(warnings, "skipped a $t trace")
+    end
+
+    raw = Dict{String,Any}()
+    for n in names
+        al  = pget(layout, gfig_axis_key(n))
+        typ = pstr(pget(al, :type))
+        rng = pget(al, :range)
+        kind = typ == "log" ? :log : (typ == "category" || (typ === nothing && !isempty(cats[n]))) ? :category : :linear
+        if kind == :category
+            c   = isempty(cats[n]) ? ["1"] : cats[n]
+            lo, hi = -0.5, length(c) - 0.5
+            rng === nothing || (r = Float64.(pflatten(rng)); (lo, hi) = (r[1], r[2]))
+        elseif rng !== nothing
+            r = Float64.(pflatten(rng))
+            lo, hi = kind == :log ? (10.0^r[1], 10.0^r[2]) : (r[1], r[2])
+        else
+            v = kind == :log ? filter(>(0), vals[n]) : vals[n]
+            if isempty(v)
+                lo, hi = kind == :log ? (1.0, 10.0) : (0.0, 1.0)
+            elseif kind == :log
+                a, b = log10(minimum(v)), log10(maximum(v))
+                p = max(0.06 * (b - a), 0.1)
+                lo, hi = 10.0^(a - p), 10.0^(b + p)
+            else
+                a, b = minimum(v), maximum(v)
+                p = b > a ? 0.06 * (b - a) : max(abs(b), 1.0) * 0.1
+                lo, hi = a - p, b + p
+            end
+            pstr(pget(al, :rangemode)) == "tozero" && kind == :linear && (lo = min(lo, 0.0); hi = max(hi, 0.0))
+            pstr(pget(al, :autorange)) == "reversed" && ((lo, hi) = (hi, lo))
+        end
+        raw[n] = (al = al, kind = kind, lo = lo, hi = hi, cats = kind == :category ? (isempty(cats[n]) ? ["1"] : cats[n]) : String[])
+    end
+
+    dom(n) = (al = raw[n].al; ov = pstr(pget(al, :overlaying));
+              ov !== nothing && haskey(raw, ov) ? dom(ov) : (d = pget(al, :domain); d === nothing ? (0.0, 1.0) : Tuple(Float64.(pflatten(d)))))
+    pix = Dict{String,Tuple{Float64,Float64}}()
+    for n in names
+        d0, d1 = dom(n)
+        pix[n] = n[1] == 'x' ? (L + d0 * (R - L), L + d1 * (R - L)) : (B - d0 * (B - T), B - d1 * (B - T))
+    end
+    for n in names
+        n[1] == 'y' || continue
+        sa = pstr(pget(raw[n].al, :scaleanchor))
+        (sa === nothing || !haskey(raw, sa) || raw[n].kind != :linear || raw[sa].kind != :linear) && continue
+        ratio = something(pnum(pget(raw[n].al, :scaleratio)), 1.0)
+        rx, ry = raw[sa], raw[n]
+        ux = abs(pix[sa][2] - pix[sa][1]) / abs(rx.hi - rx.lo)
+        uy = abs(pix[n][2] - pix[n][1]) / abs(ry.hi - ry.lo) / ratio
+        if uy > ux
+            span = abs(pix[n][2] - pix[n][1]) / (ux * ratio)
+            c    = (ry.lo + ry.hi) / 2
+            s    = sign(ry.hi - ry.lo)
+            raw[n] = (al = ry.al, kind = ry.kind, lo = c - s * span / 2, hi = c + s * span / 2, cats = ry.cats)
+        else
+            span = abs(pix[sa][2] - pix[sa][1]) / (uy * ratio)
+            c    = (rx.lo + rx.hi) / 2
+            s    = sign(rx.hi - rx.lo)
+            raw[sa] = (al = rx.al, kind = rx.kind, lo = c - s * span / 2, hi = c + s * span / 2, cats = rx.cats)
+        end
+    end
+
+    axes = Dict{String,GAxis}()
+    for n in names
+        r      = raw[n]
+        al     = r.al
+        isx    = n[1] == 'x'
+        anchor = something(pstr(pget(al, :anchor)), isx ? "y" : "x")
+        side   = something(pstr(pget(al, :side)), isx ? "bottom" : "left")
+        other  = haskey(pix, anchor) ? pix[anchor] : (isx ? (B, T) : (L, R))
+        pos    = isx ? (side == "top" ? min(other...) : max(other...)) : (side == "right" ? max(other...) : min(other...))
+        tv     = pget(al, :tickvals)
+        tl     = pget(al, :ticktext)
+        title  = gfig_title(pget(al, :title))
+        vis    = pget(al, :visible; default = true) != false
+        axes[n] = GAxis(n, r.kind, r.lo, r.hi, pix[n][1], pix[n][2], r.cats,
+                        tv === nothing ? nothing : Float64.([x for x in pflatten(tv) if x isa Real]),
+                        tl === nothing ? nothing : String.(string.(pflatten(tl))),
+                        title, side, pos, vis, pget(al, :mirror; default = false) == true,
+                        min(other...), max(other...), pget(al, :showticklabels; default = true) != false)
+    end
+
+    seen    = Set{String}()
+    io      = IOBuffer()
+    n_paths = 0
+    legend_extra = 0.0
+    lg      = pget(layout, :legend)
+    named   = [k for (k, tr) in enumerate(traces) if !isempty(something(pstr(pget(tr, :name)), "")) &&
+               pget(tr, :showlegend; default = true) != false && gfig_trace_type(tr) != "pie"]
+    show_lg = pget(layout, :showlegend) === true || (pget(layout, :showlegend) != false && length(named) >= 2)
+    lg_h    = pstr(pget(lg, :orientation)) == "h"
+    lg_y    = something(pnum(pget(lg, :y)), lg_h ? -0.12 : 1.0)
+    if show_lg && lg_h && lg_y < 0
+        legend_extra = max(0.0, (B - lg_y * (B - T)) + 24 - H)
+    end
+    Hc = H + legend_extra
+    svg_open(io, SVGCanvas(W, Hc, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0))
+
+    function draw_shapes(layer)
+        shapes = [s for s in pget(layout, :shapes, default = []) if something(pstr(pget(s, :layer)), "above") == layer]
+        isempty(shapes) && return
+        svg_group_open(io, svg_id(seen, layer == "below" ? "Shapes_below" : "Shapes"))
+        sub  = Dict(r[2][1] => r for r in gfig_named_runs(shapes) if !isempty(r[1]) && length(r[2]) > 1)
+        ends = Set(r[2][end] for r in values(sub))
+        for (i, s) in enumerate(shapes)
+            haskey(sub, i) && svg_group_open(io, svg_id(seen, sub[i][1]))
+            draw_one_shape(i, s)
+            i in ends && svg_group_close(io)
+        end
+        svg_group_close(io)
+    end
+
+    function draw_one_shape(i, s)
+        typ  = something(pstr(pget(s, :type)), "rect")
+        xref = something(pstr(pget(s, :xref)), "x")
+        yref = something(pstr(pget(s, :yref)), "y")
+        fc, fo = svg_css_color(something(pstr(pget(s, :fillcolor)), "rgba(0,0,0,0)"))
+        ln   = pget(s, :line)
+        lc, lo = svg_css_color(something(pstr(pget(ln, :color)), "rgb(68,68,68)"))
+        lw   = something(pnum(pget(ln, :width)), 2.0)
+        fill = fo !== nothing && fo <= 0 ? "none" : fc
+        stroke = lw <= 0 || (lo !== nothing && lo <= 0) ? "none" : lc
+        id   = svg_id(seen, "Shape_$(i)")
+        if typ == "path"
+            d = pstr(pget(s, :path))
+            d === nothing && return
+            toks = split(replace(d, r"([MLZmlz])" => s" \1 "))
+            out  = String[]
+            k    = 1
+            while k <= length(toks)
+                tk = toks[k]
+                if tk in ("M", "L")
+                    p = gfig_pixel_point(axes, xref, yref, parse(Float64, toks[k+1]), parse(Float64, toks[k+2]), L, R, T, B)
+                    p === nothing || push!(out, "$(tk)$(svg_num(p[1])) $(svg_num(p[2]))")
+                    k += 3
+                else
+                    uppercase(tk) == "Z" && push!(out, "Z")
+                    k += 1
+                end
+            end
+            svg_path(io, id, join(out, " "); stroke = stroke, width = lw, fill = fill,
+                     fill_opacity = fo === nothing ? nothing : fo)
+            n_paths += 1
+            return
+        end
+        x0, x1 = pnum(pget(s, :x0)), pnum(pget(s, :x1))
+        y0, y1 = pnum(pget(s, :y0)), pnum(pget(s, :y1))
+        (x0 === nothing || x1 === nothing || y0 === nothing || y1 === nothing) && return
+        if pstr(pget(s, :xsizemode)) == "pixel"
+            a = gfig_pixel_point(axes, xref, yref, pnum(pget(s, :xanchor)), pnum(pget(s, :yanchor)), L, R, T, B)
+            a === nothing && return
+            p0, p1 = (a[1] + x0, a[2] - y0), (a[1] + x1, a[2] - y1)
+        else
+            p0 = gfig_pixel_point(axes, xref, yref, x0, y0, L, R, T, B)
+            p1 = gfig_pixel_point(axes, xref, yref, x1, y1, L, R, T, B)
+            (p0 === nothing || p1 === nothing) && return
+        end
+        if typ == "line"
+            svg_path(io, id, "M$(svg_num(p0[1])) $(svg_num(p0[2])) L$(svg_num(p1[1])) $(svg_num(p1[2]))";
+                     stroke = lc, width = lw, dash = svg_dasharray(pstr(pget(ln, :dash)), lw))
+        elseif typ == "circle"
+            cx, cy = (p0[1] + p1[1]) / 2, (p0[2] + p1[2]) / 2
+            rx, ry = abs(p1[1] - p0[1]) / 2, abs(p1[2] - p0[2]) / 2
+            println(io, "<ellipse id=\"$(svg_escape(id))\" cx=\"$(svg_num(cx))\" cy=\"$(svg_num(cy))\" rx=\"$(svg_num(rx))\" ry=\"$(svg_num(ry))\" fill=\"$(fill)\" stroke=\"$(stroke)\" stroke-width=\"$(svg_num(lw))\"" *
+                        (svg_dasharray(pstr(pget(ln, :dash)), lw) === nothing ? "" : " stroke-dasharray=\"$(svg_dasharray(pstr(pget(ln, :dash)), lw))\"") * "/>")
+        else
+            svg_path(io, id, "M$(svg_num(p0[1])) $(svg_num(p0[2])) L$(svg_num(p1[1])) $(svg_num(p0[2])) L$(svg_num(p1[1])) $(svg_num(p1[2])) L$(svg_num(p0[1])) $(svg_num(p1[2])) Z";
+                     stroke = stroke, width = lw, fill = fill, fill_opacity = fo)
+        end
+        n_paths += 1
+    end
+
+    draw_shapes("below")
+
+    colorbars = Any[]
+    bases     = Dict{Tuple{String,String,Float64},Float64}()
+    drawable = [k for (k, tr) in enumerate(traces) if gfig_trace_type(tr) != "pie" &&
+                haskey(axes, gfig_axis_ref(tr, :x)) && haskey(axes, gfig_axis_ref(tr, :y))]
+    gkeys    = Dict(k => gfig_group_key(traces[k]) for k in drawable)
+    order    = String[]
+    members  = Dict{String,Vector{Int}}()
+    for k in drawable
+        g = gkeys[k]
+        haskey(members, g) || (push!(order, g); members[g] = Int[])
+        push!(members[g], k)
+    end
+    draw_order = reduce(vcat, (members[g] for g in order); init = Int[])
+    open_key   = nothing
+    for k in draw_order
+        tr = traces[k]
+        t  = gfig_trace_type(tr)
+        gk = gkeys[k]
+        if open_key !== nothing && gk != open_key
+            svg_group_close(io)
+            open_key = nothing
+        end
+        if open_key === nothing && length(members[gk]) > 1
+            svg_group_open(io, svg_id(seen, gfig_group_label(gk, k)))
+            open_key = gk
+        end
+        xn, yn = gfig_axis_ref(tr, :x), gfig_axis_ref(tr, :y)
+        X, Y  = axes[xn], axes[yn]
+        name  = something(pstr(pget(tr, :name)), "")
+        id    = svg_id(seen, isempty(name) ? "Trace_$(k)" : name)
+        line  = pget(tr, :line)
+        mk    = pget(tr, :marker)
+        dflt  = PLOTLY_COLORWAY[mod1(k, length(PLOTLY_COLORWAY))]
+        xs, ys = pvec(tr, :x), pvec(tr, :y)
+
+        if t == "heatmap"
+            if underlay !== nothing && xn == "x" && yn == "y"
+                svg_group_open(io, id)
+                n_paths += underlay(io, X, Y, seen)
+                svg_group_close(io)
+            else
+                z    = [pflatten(row) for row in pget(tr, :z, default = [])]
+                stops = svg_colorscale(something(pget(tr, :colorscale), "Viridis"); reverse = pget(tr, :reversescale) == true)
+                zv   = Float64[v for row in z for v in row if v isa Real]
+                zmin = something(pnum(pget(tr, :zmin)), isempty(zv) ? 0.0 : minimum(zv))
+                zmax = something(pnum(pget(tr, :zmax)), isempty(zv) ? 1.0 : maximum(zv))
+                xe   = Float64[v for v in xs if v isa Real]
+                ye   = Float64[v for v in ys if v isa Real]
+                edges(c) = length(c) > 1 ? vcat(c[1] - (c[2] - c[1]) / 2, (c[1:end-1] .+ c[2:end]) ./ 2, c[end] + (c[end] - c[end-1]) / 2) : [c[1] - 0.5, c[1] + 0.5]
+                ex, ey = edges(xe), edges(ye)
+                svg_group_open(io, id; stroke = "none")
+                for (j, row) in enumerate(z), i in eachindex(row)
+                    v = row[i]
+                    v isa Real || continue
+                    rc = svg_color_at(stops, clamp((v - zmin) / max(zmax - zmin, 1e-300), 0, 1))
+                    a1, a2 = gaxis_px(X, ex[i]), gaxis_px(X, ex[i+1])
+                    b1, b2 = gaxis_px(Y, ey[j]), gaxis_px(Y, ey[j+1])
+                    println(io, "<rect x=\"$(svg_num(min(a1, a2)))\" y=\"$(svg_num(min(b1, b2)))\" width=\"$(svg_num(abs(a2 - a1) + 0.3))\" height=\"$(svg_num(abs(b2 - b1) + 0.3))\" fill=\"rgb($(round(Int, rc[1])),$(round(Int, rc[2])),$(round(Int, rc[3])))\"/>")
+                    n_paths += 1
+                end
+                svg_group_close(io)
+            end
+            if pget(tr, :showscale; default = true) != false
+                push!(colorbars, tr)
+            end
+            continue
+        end
+
+        if t == "contour"
+            z    = [Float64[v isa Real ? v : NaN for v in pflatten(row)] for row in pget(tr, :z, default = [])]
+            xe   = Float64[v for v in xs if v isa Real]
+            ye   = Float64[v for v in ys if v isa Real]
+            (isempty(z) || length(xe) < 2 || length(ye) < 2) && continue
+            Z    = [z[j][i] for i in eachindex(xe), j in eachindex(ye)]
+            cs   = pget(tr, :contours)
+            l0, dl, l1 = something(pnum(pget(cs, :start)), 0.0), something(pnum(pget(cs, :size)), 1.0), something(pnum(pget(cs, :end)), 0.0)
+            levels = collect(l0:dl:l1)
+            lc, _ = svg_css_color(something(pstr(pget(line, :color)), "#444444"))
+            lw    = something(pnum(pget(line, :width)), 1.0)
+            svg_group_open(io, id; stroke = lc, width = lw, fill = "none")
+            labels = Tuple{Float64,Float64,String}[]
+            for cl in CTR.levels(CTR.contours(xe, ye, Z, levels))
+                lev = CTR.level(cl)
+                for ln in CTR.lines(cl)
+                    xv, yv = CTR.coordinates(ln)
+                    pts = [(gaxis_px(X, a), gaxis_px(Y, b)) for (a, b) in zip(xv, yv) if gaxis_inrange(X, a) && gaxis_inrange(Y, b)]
+                    length(pts) < 2 && continue
+                    svg_path(io, svg_id(seen, id * "_$(svg_tick_label(lev))"),
+                             "M" * join(("$(svg_num(p[1])) $(svg_num(p[2]))" for p in pts), " L"))
+                    n_paths += 1
+                    length(pts) > 6 && push!(labels, (pts[length(pts) ÷ 2]..., svg_tick_label(lev)))
+                end
+            end
+            svg_group_close(io)
+            if pget(cs, :showlabels) == true && !isempty(labels)
+                svg_group_open(io, svg_id(seen, id * "_labels"); fill = lc, font_family = "Helvetica, Arial, sans-serif",
+                               font_size = 9, anchor = "middle")
+                for (a, b, s) in labels
+                    svg_text(io, a, b, s)
+                end
+                svg_group_close(io)
+            end
+            continue
+        end
+
+        if t == "bar"
+            h      = pstr(pget(tr, :orientation)) == "h"
+            PX, VX = h ? (Y, X) : (X, Y)
+            pos    = h ? ys : xs
+            val    = h ? xs : ys
+            pnum_  = [p isa Real ? Float64(p) : (p isa AbstractString ? (i = findfirst(==(p), PX.categories); i === nothing ? NaN : Float64(i - 1)) : NaN) for p in pos]
+            w      = gfig_bar_width(tr, pnum_, bargap)
+            mc     = pget(mk, :color)
+            fc, fo = svg_css_color(mc isa AbstractString ? mc : dflt)
+            ml_    = pget(mk, :line)
+            lc, _  = svg_css_color(something(pstr(pget(ml_, :color)), fc))
+            lw     = something(pnum(pget(ml_, :width)), 0.0)
+            svg_group_open(io, id; fill = fc, opacity = fo, stroke = lw > 0 ? lc : nothing, width = lw > 0 ? lw : nothing)
+            for (i, (p, v)) in enumerate(zip(pnum_, val))
+                (isfinite(p) && v isa Real) || continue
+                k0   = (PX.name, VX.name, p)
+                base = barmode == "stack" ? get(bases, k0, 0.0) : 0.0
+                top  = base + v
+                barmode == "stack" && (bases[k0] = top)
+                a1, a2 = gaxis_px(PX, p - w[min(i, end)] / 2), gaxis_px(PX, p + w[min(i, end)] / 2)
+                b1, b2 = gaxis_px(VX, base), gaxis_px(VX, top)
+                (a1 === nothing || a2 === nothing || b1 === nothing || b2 === nothing) && continue
+                x0, y0, ww, hh = h ? (min(b1, b2), min(a1, a2), abs(b2 - b1), abs(a2 - a1)) :
+                                     (min(a1, a2), min(b1, b2), abs(a2 - a1), abs(b2 - b1))
+                (ww > 0 && hh > 0) || continue
+                svg_rect(io, svg_id(seen, id * "_bar_$(i)"), x0, y0, ww, hh)
+                n_paths += 1
+            end
+            svg_group_close(io)
+            continue
+        end
+
+        t in ("scatter", "scattergl") || continue
+        mode  = something(pstr(pget(tr, :mode)), length(xs) > 20 ? "lines" : "lines+markers")
+        lcol  = something(pstr(pget(line, :color)), pget(mk, :color) isa AbstractString ? pstr(pget(mk, :color)) : nothing, dflt)
+        lc, lop = svg_css_color(lcol)
+        lw    = something(pnum(pget(line, :width)), 2.0)
+        shape = something(pstr(pget(line, :shape)), "linear")
+        op    = something(pnum(pget(tr, :opacity)), 1.0)
+        pts   = [(gaxis_px(X, a), gaxis_px(Y, b)) for (a, b) in zip(xs, ys)]
+        xlo, xhi = min(X.p0, X.p1), max(X.p0, X.p1)
+        ylo, yhi = min(Y.p0, Y.p1), max(Y.p0, Y.p1)
+        svg_group_open(io, id; fill = "none", opacity = op < 1 ? op : nothing)
+        fillm = pstr(pget(tr, :fill))
+        if fillm == "toself"
+            ok = [p for p in pts if p[1] !== nothing && p[2] !== nothing]
+            if length(ok) >= 3
+                fc, fo = svg_css_color(something(pstr(pget(tr, :fillcolor)), lcol))
+                d = "M" * join(("$(svg_num(clamp(p[1], xlo, xhi))) $(svg_num(clamp(p[2], ylo, yhi)))" for p in ok), " L") * " Z"
+                svg_path(io, svg_id(seen, id * "_fill"), d; fill = fc, fill_opacity = something(fo, 0.5) * (lw > 0 ? 1.0 : 1.0),
+                         stroke = lw > 0 ? lc : "none", width = lw > 0 ? lw : nothing)
+                n_paths += 1
+            end
+        elseif occursin("lines", mode) && lw > 0
+            segs = Vector{Vector{Tuple{Float64,Float64}}}()
+            cur  = Tuple{Float64,Float64}[]
+            prev = nothing
+            for p in pts
+                if p[1] === nothing || p[2] === nothing
+                    length(cur) > 1 && push!(segs, cur)
+                    cur, prev = Tuple{Float64,Float64}[], nothing
+                    continue
+                end
+                if prev !== nothing && shape in ("hv", "vh", "hvh", "vhv")
+                    if shape == "hv"
+                        push!(cur, (p[1], prev[2]))
+                    elseif shape == "vh"
+                        push!(cur, (prev[1], p[2]))
+                    elseif shape == "hvh"
+                        xm = (prev[1] + p[1]) / 2
+                        push!(cur, (xm, prev[2]), (xm, p[2]))
+                    else
+                        ym = (prev[2] + p[2]) / 2
+                        push!(cur, (prev[1], ym), (p[1], ym))
+                    end
+                end
+                push!(cur, (Float64(p[1]), Float64(p[2])))
+                prev = p
+            end
+            length(cur) > 1 && push!(segs, cur)
+            clipped = reduce(vcat, [svg_clip_polyline(s, xlo, xhi, ylo, yhi) for s in segs];
+                             init = Vector{Vector{Tuple{Float64,Float64}}}())
+            d = join(("M" * join(("$(svg_num(p[1])) $(svg_num(p[2]))" for p in s), " L") for s in clipped if length(s) > 1), " ")
+            if !isempty(d)
+                svg_path(io, svg_id(seen, id * "_line"), d; stroke = lc, width = lw,
+                         dash = svg_dasharray(pstr(pget(line, :dash)), lw))
+                n_paths += 1
+            end
+        end
+        err = gfig_error(tr)
+        if err !== nothing
+            e   = pget(tr, :error_y)
+            ec, _ = svg_css_color(something(pstr(pget(e, :color)), lcol))
+            ew  = something(pnum(pget(e, :thickness)), 1.5)
+            cap = something(pnum(pget(e, :width)), 4.0)
+            svg_group_open(io, svg_id(seen, id * "_errors"); stroke = ec, width = ew)
+            for (i, (a, b)) in enumerate(zip(xs, ys))
+                (i <= length(err) && err[i] isa Real && b isa Real) || continue
+                px = gaxis_px(X, a)
+                p1, p2 = gaxis_px(Y, b - err[i]), gaxis_px(Y, b + err[i])
+                (px === nothing || p1 === nothing || p2 === nothing) && continue
+                xlo <= px <= xhi || continue
+                q1, q2 = clamp(p1, ylo, yhi), clamp(p2, ylo, yhi)
+                svg_line(io, px, q1, px, q2)
+                cap > 0 && (svg_line(io, px - cap, q1, px + cap, q1); svg_line(io, px - cap, q2, px + cap, q2))
+                n_paths += 1
+            end
+            svg_group_close(io)
+        end
+        if occursin("markers", mode)
+            mcol  = pget(mk, :color)
+            msz   = pget(mk, :size)
+            msym  = pget(mk, :symbol)
+            mlin  = pget(mk, :line)
+            mlc   = pstr(pget(mlin, :color))
+            mlw   = something(pnum(pget(mlin, :width)), 0.0)
+            mop   = something(pnum(pget(mk, :opacity)), 1.0)
+            for (i, p) in enumerate(pts)
+                (p[1] === nothing || p[2] === nothing) && continue
+                (xlo - 0.5 <= p[1] <= xhi + 0.5 && ylo - 0.5 <= p[2] <= yhi + 0.5) || continue
+                col  = mcol isa AbstractString ? mcol : (mcol !== nothing && !(mcol isa Real) && length(mcol) >= i && mcol[i] isa AbstractString ? mcol[i] : lcol)
+                sz   = msz isa Real ? Float64(msz) : (msz !== nothing && length(msz) >= i && msz[i] isa Real ? Float64(msz[i]) : 6.0)
+                sym  = msym isa AbstractString ? msym : (msym !== nothing && length(msym) >= i ? string(msym[i]) : "circle")
+                fc, fo = svg_css_color(col)
+                open_ = occursin("open", sym) || occursin("line-", sym) || sym in ("x", "x-thin")
+                sc, _ = svg_css_color(something(mlc, col))
+                r    = sz / 2
+                pd   = gfig_marker_path(sym, p[1], p[2], r)
+                if pd === nothing
+                    svg_circle(io, svg_id(seen, id * "_pt_$(i)"), p[1], p[2], r; fill = open_ ? "none" : fc,
+                               stroke = open_ ? fc : (mlw > 0 ? sc : nothing), width = open_ ? 1.2 : (mlw > 0 ? mlw : nothing),
+                               opacity = mop * something(fo, 1.0) < 1 ? mop * something(fo, 1.0) : nothing)
+                else
+                    svg_path(io, svg_id(seen, id * "_pt_$(i)"), pd; fill = open_ ? "none" : fc,
+                             stroke = open_ ? (mlc === nothing ? fc : sc) : (mlw > 0 ? sc : "none"),
+                             width = open_ ? max(mlw, 1.2) : (mlw > 0 ? mlw : nothing))
+                end
+                n_paths += 1
+            end
+        end
+        svg_group_close(io)
+    end
+
+    open_key === nothing || svg_group_close(io)
+
+    for (k, tr) in enumerate(traces)
+        gfig_trace_type(tr) == "pie" || continue
+        vals_ = Float64[v isa Real ? v : 0.0 for v in pvec(tr, :values)]
+        labs  = string.(pvec(tr, :labels))
+        tot   = sum(vals_)
+        tot > 0 || continue
+        dm    = pget(tr, :domain)
+        dx    = Float64.(pflatten(something(pget(dm, :x), [0, 1])))
+        dy    = Float64.(pflatten(something(pget(dm, :y), [0, 1])))
+        x0, x1 = L + dx[1] * (R - L), L + dx[2] * (R - L)
+        y0, y1 = B - dy[2] * (B - T), B - dy[1] * (B - T)
+        r     = 0.45 * min(x1 - x0, y1 - y0)
+        cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+        cols  = pget(pget(tr, :marker), :colors)
+        pal   = cols === nothing ? PLOTLY_COLORWAY : string.(pflatten(cols))
+        id    = svg_id(seen, something(pstr(pget(tr, :name)), "Pie_$(k)"))
+        svg_group_open(io, id; stroke = "#ffffff", width = 1)
+        a = π / 2
+        labs_out = Tuple{Float64,Float64,String}[]
+        for (i, v) in enumerate(vals_)
+            v > 0 || continue
+            da = 2π * v / tot
+            a2 = a - da
+            p1 = (cx + r * cos(a), cy - r * sin(a))
+            p2 = (cx + r * cos(a2), cy - r * sin(a2))
+            fc, _ = svg_css_color(pal[mod1(i, length(pal))])
+            svg_path(io, svg_id(seen, id * "_" * (i <= length(labs) ? labs[i] : "slice_$i")),
+                     "M$(svg_num(cx)) $(svg_num(cy)) L$(svg_num(p1[1])) $(svg_num(p1[2])) A$(svg_num(r)) $(svg_num(r)) 0 $(da > π ? 1 : 0) 1 $(svg_num(p2[1])) $(svg_num(p2[2])) Z";
+                     fill = fc)
+            n_paths += 1
+            am = (a + a2) / 2
+            v / tot >= 0.04 && push!(labs_out, (cx + 0.62r * cos(am), cy - 0.62r * sin(am),
+                                                @sprintf("%s<br>%.0f%%", i <= length(labs) ? labs[i] : "", 100 * v / tot)))
+            a = a2
+        end
+        svg_group_close(io)
+        svg_group_open(io, svg_id(seen, id * "_labels"); fill = "#ffffff", font_family = "Helvetica, Arial, sans-serif",
+                       font_size = 9, anchor = "middle")
+        for (lx, ly, s) in labs_out
+            svg_text(io, lx, ly, s)
+        end
+        svg_group_close(io)
+        ttl = pstr(pget(pget(tr, :title), :text))
+        ttl === nothing || svg_text(io, cx, cy + r + 12, ttl; size = 11, anchor = "middle", fill = "#333333")
+    end
+
+    draw_shapes("above")
+
+    svg_group_open(io, svg_id(seen, "Axes"); stroke = "#333333", width = 1, fill = "none")
+    for n in sort(collect(names))
+        ax = axes[n]
+        ax.visible || continue
+        isx = n[1] == 'x'
+        isx ? svg_line(io, min(ax.p0, ax.p1), ax.pos, max(ax.p0, ax.p1), ax.pos) :
+              svg_line(io, ax.pos, min(ax.p0, ax.p1), ax.pos, max(ax.p0, ax.p1))
+        if ax.mirror
+            opp = isx ? (ax.pos == ax.other0 ? ax.other1 : ax.other0) : (ax.pos == ax.other0 ? ax.other1 : ax.other0)
+            isx ? svg_line(io, min(ax.p0, ax.p1), opp, max(ax.p0, ax.p1), opp) :
+                  svg_line(io, opp, min(ax.p0, ax.p1), opp, max(ax.p0, ax.p1))
+        end
+    end
+    svg_group_close(io)
+
+    svg_group_open(io, svg_id(seen, "Ticks"); stroke = "#333333", width = 1, fill = "none")
+    tick_sets = Dict{String,Tuple{Vector{Float64},Vector{String}}}()
+    for n in sort(collect(names))
+        ax = axes[n]
+        ax.visible || continue
+        lo, hi = min(ax.lo, ax.hi), max(ax.lo, ax.hi)
+        tv, tl = if ax.tickvals !== nothing
+            ax.tickvals, something(ax.ticklabels, svg_tick_label.(ax.tickvals))
+        elseif ax.kind == :category
+            nc = length(ax.categories); st_ = max(1, div(nc - 1, 9)); idx = sort(unique(vcat(1:st_:nc, nc)))
+            Float64.(idx .- 1), [ax.categories[i] for i in idx]
+        elseif ax.kind == :log
+            ks = [k for k in floor(Int, log10(lo)):ceil(Int, log10(hi)) if lo <= 10.0^k <= hi]
+            st_ = max(1, ceil(Int, length(ks) / 8))
+            ks  = ks[1:st_:end]
+            [10.0^k for k in ks], [abs(k) >= 3 ? "10<sup>$(k)</sup>" : svg_tick_label(10.0^k) for k in ks]
+        else
+            v = svg_nice_ticks(lo, hi)
+            v, svg_tick_label.(v)
+        end
+        keep = [i for i in eachindex(tv) if gaxis_inrange(ax, tv[i])]
+        tick_sets[n] = (tv[keep], tl[min.(keep, length(tl))])
+        isx = n[1] == 'x'
+        out = isx ? (ax.side == "top" ? -4.0 : 4.0) : (ax.side == "right" ? 4.0 : -4.0)
+        for v in tick_sets[n][1]
+            p = gaxis_px(ax, v)
+            p === nothing && continue
+            isx ? svg_line(io, p, ax.pos, p, ax.pos + out) : svg_line(io, ax.pos, p, ax.pos + out, p)
+        end
+    end
+    svg_group_close(io)
+
+    svg_group_open(io, svg_id(seen, "Tick_labels"); fill = "#333333", font_family = "Helvetica, Arial, sans-serif", font_size = 10)
+    for n in sort(collect(names))
+        ax = axes[n]
+        (ax.visible && ax.showlabels && haskey(tick_sets, n)) || continue
+        isx = n[1] == 'x'
+        for (v, s) in zip(tick_sets[n]...)
+            p = gaxis_px(ax, v)
+            p === nothing && continue
+            if isx
+                svg_text(io, p, ax.side == "top" ? ax.pos - 12 : ax.pos + 14, s; anchor = "middle")
+            else
+                svg_text(io, ax.side == "right" ? ax.pos + 7 : ax.pos - 7, p, s; anchor = ax.side == "right" ? "start" : "end")
+            end
+        end
+    end
+    svg_group_close(io)
+
+    svg_group_open(io, svg_id(seen, "Axis_titles"); fill = "#333333", font_family = "Helvetica, Arial, sans-serif", font_size = 12,
+                   anchor = "middle")
+    for n in sort(collect(names))
+        ax = axes[n]
+        (ax.visible && !isempty(ax.title)) || continue
+        mid = (ax.p0 + ax.p1) / 2
+        if n[1] == 'x'
+            svg_text(io, mid, ax.side == "top" ? ax.pos - 30 : ax.pos + 32, ax.title)
+        else
+            wl = haskey(tick_sets, n) ? maximum(length.(tick_sets[n][2]); init = 1) * 6.0 : 20.0
+            xp = ax.side == "right" ? ax.pos + wl + 18 : ax.pos - wl - 18
+            svg_text(io, xp, mid, ax.title; rotate = ax.side == "right" ? 90 : true)
+        end
+    end
+    svg_group_close(io)
+
+    function draw_one_label(i, a)
+        pget(a, :visible; default = true) == false && return
+        txt = pstr(pget(a, :text))
+        txt === nothing && return
+        p = gfig_pixel_point(axes, something(pstr(pget(a, :xref)), "x"), something(pstr(pget(a, :yref)), "y"),
+                             pnum(pget(a, :x)), pnum(pget(a, :y)), L, R, T, B)
+        p === nothing && return
+        fs  = something(pnum(pget(pget(a, :font), :size)), 12.0)
+        px  = p[1] + something(pnum(pget(a, :xshift)), 0.0)
+        py  = p[2] - something(pnum(pget(a, :yshift)), 0.0)
+        w, h = gfig_text_box(txt, fs)
+        xa  = something(pstr(pget(a, :xanchor)), "center")
+        ya  = something(pstr(pget(a, :yanchor)), "middle")
+        x0  = xa == "left" ? px : xa == "right" ? px - w : px - w / 2
+        y0  = ya == "top" ? py : ya == "bottom" ? py - h : py - h / 2
+        bg  = pstr(pget(a, :bgcolor))
+        if bg !== nothing
+            bc, bo = svg_css_color(bg)
+            rc, _  = svg_css_color(something(pstr(pget(a, :bordercolor)), "rgba(0,0,0,0)"))
+            svg_path(io, svg_id(seen, "Label_box_$(i)"),
+                     "M$(svg_num(x0 - 3)) $(svg_num(y0 - 2)) h$(svg_num(w + 6)) v$(svg_num(h + 4)) h$(svg_num(-w - 6)) Z";
+                     fill = bc, fill_opacity = bo, stroke = pget(a, :bordercolor) === nothing ? "none" : rc,
+                     width = something(pnum(pget(a, :borderwidth)), 1.0))
+        end
+        al  = something(pstr(pget(a, :align)), "center")
+        tx  = al == "left" ? x0 : al == "right" ? x0 + w : x0 + w / 2
+        svg_text(io, tx, y0, txt; id = svg_id(seen, "Label_$(lpad(i, 3, '0'))"), size = fs,
+                 anchor = al == "left" ? "start" : al == "right" ? "end" : "middle", top = true,
+                 fill = pstr(pget(pget(a, :font), :color)) === nothing ? nothing : svg_css_color(pstr(pget(pget(a, :font), :color)))[1])
+    end
+
+    anns = pget(layout, :annotations, default = [])
+    if !isempty(anns)
+        svg_group_open(io, svg_id(seen, "Labels"); fill = "#212121", font_family = "Helvetica, Arial, sans-serif")
+        asub  = Dict(r[2][1] => r for r in gfig_named_runs(anns) if !isempty(r[1]) && length(r[2]) > 1)
+        aends = Set(r[2][end] for r in values(asub))
+        for (i, a) in enumerate(anns)
+            haskey(asub, i) && svg_group_open(io, svg_id(seen, asub[i][1] * "_labels"))
+            draw_one_label(i, a)
+            i in aends && svg_group_close(io)
+        end
+        svg_group_close(io)
+    end
+
+    ttl = pget(layout, :title)
+    tt  = gfig_title(ttl)
+    if !isempty(tt)
+        svg_group_open(io, svg_id(seen, "Title"); fill = "#333333", font_family = "Helvetica, Arial, sans-serif",
+                       font_size = something(pnum(pget(pget(ttl, :font), :size)), 15.0))
+        svg_text(io, L, 22, tt; id = svg_id(seen, "Figure_title"), anchor = "start", top = false)
+        svg_group_close(io)
+    end
+
+    for (j, tr) in enumerate(colorbars)
+        cb    = pget(tr, :colorbar)
+        stops = svg_colorscale(something(pget(tr, :colorscale), "Viridis"); reverse = pget(tr, :reversescale) == true)
+        zmin, zmax = something(pnum(pget(tr, :zmin)), 0.0), something(pnum(pget(tr, :zmax)), 1.0)
+        len   = something(pnum(pget(cb, :len)), 1.0)
+        yc    = something(pnum(pget(cb, :y)), 0.5)
+        x     = L + something(pnum(pget(cb, :x)), 1.02) * (R - L) + 4
+        h     = len * (B - T)
+        y     = B - yc * (B - T) - h / 2
+        thick = something(pnum(pget(cb, :thickness)), 14.0)
+        svg_group_open(io, svg_id(seen, "Colorbar"); font_family = "Helvetica, Arial, sans-serif", font_size = 10, fill = "#333333")
+        svg_gradient_bar_stops(io, svg_id(seen, "Colorbar_bar"), x, y, thick, h, stops)
+        for (k2, v) in enumerate(svg_nice_ticks(min(zmin, zmax), max(zmin, zmax); target = 6))
+            t = zmax == zmin ? 0.0 : (v - zmin) / (zmax - zmin)
+            svg_text(io, x + thick + 4, y + h * (1 - t), svg_tick_label(v); id = svg_id(seen, "Colorbar_tick_$(k2)"), anchor = "start")
+        end
+        ct = pstr(pget(pget(cb, :title), :text))
+        ct === nothing || svg_text(io, x + thick + 40, y + h / 2, ct; id = svg_id(seen, "Colorbar_title"), size = 11,
+                                   anchor = "middle", rotate = 90)
+        svg_group_close(io)
+    end
+
+    if show_lg
+        entries = Any[]
+        groups  = Set{String}()
+        for k in named
+            tr = traces[k]
+            g  = something(pstr(pget(tr, :legendgroup)), "")
+            (!isempty(g) && g in groups) && continue
+            isempty(g) || push!(groups, g)
+            t   = gfig_trace_type(tr)
+            mk  = pget(tr, :marker)
+            col = t == "bar" ? (pget(mk, :color) isa AbstractString ? pstr(pget(mk, :color)) : PLOTLY_COLORWAY[mod1(k, 10)]) :
+                  something(pstr(pget(pget(tr, :line), :color)), pget(mk, :color) isa AbstractString ? pstr(pget(mk, :color)) : nothing,
+                            PLOTLY_COLORWAY[mod1(k, 10)])
+            mode = something(pstr(pget(tr, :mode)), "lines")
+            push!(entries, (label = pstr(pget(tr, :name)), color = col, kind = t == "bar" ? :box : (mode == "markers" ? :dot : :line),
+                            dash = pstr(pget(pget(tr, :line), :dash))))
+        end
+        lx = L + something(pnum(pget(lg, :x)), lg_h ? 0.0 : 1.02) * (R - L)
+        ly = B - lg_y * (B - T)
+        svg_group_open(io, svg_id(seen, "Legend"); font_family = "Helvetica, Arial, sans-serif", font_size = 10, fill = "#333333")
+        xx, yy = lx, lg_h ? ly + 8 : ly + 6
+        for e in entries
+            ec, _ = svg_css_color(e.color)
+            if e.kind == :box
+                svg_path(io, svg_id(seen, "Legend_swatch_" * e.label), "M$(svg_num(xx)) $(svg_num(yy - 5)) h14 v10 h-14 Z"; fill = ec, stroke = "none")
+            elseif e.kind == :dot
+                svg_circle(io, svg_id(seen, "Legend_swatch_" * e.label), xx + 7, yy, 4; fill = ec)
+            else
+                svg_path(io, svg_id(seen, "Legend_swatch_" * e.label), "M$(svg_num(xx)) $(svg_num(yy)) h18"; stroke = ec, width = 2,
+                         dash = svg_dasharray(e.dash, 2))
+            end
+            svg_text(io, xx + 22, yy, e.label; id = svg_id(seen, "Legend_text_" * e.label), anchor = "start")
+            if lg_h
+                xx += 34 + 0.56 * 10 * length(e.label)
+                if xx > W - 40
+                    xx, yy = lx, yy + 16
+                end
+            else
+                yy += 16
+            end
+        end
+        svg_group_close(io)
+    end
+
+    svg_close(io)
+    bytes = take!(io)
+    write(path, bytes)
+    return (path = String(path), bytes = length(bytes), n_paths = n_paths, warnings = unique(warnings))
+end
+
+"""
+    register_figure_svg_export!(app, graph_id, filename_fn; extra_states = (), underlay_fn = nothing)
+
+    Register the "Export svg" callback of graph `graph_id` (button row from [`svg_export_button_row`](@ref)) using the
+    general exporter [`plotly_export_figure_svg`](@ref): the on-screen figure is written to
+    `<output_dir><filename_fn(extra...)>.svg`. `underlay_fn(extra...)`, when given, returns the underlay function of the
+    exporter (or `nothing`), built from the values of `extra_states`.
+"""
+function register_figure_svg_export!(app, graph_id::AbstractString, filename_fn::Function; extra_states = (),
+                                     underlay_fn::Union{Nothing,Function} = nothing)
+    states = Any[State(graph_id, "figure"), State(graph_id, "config")]
+    for (cid, prop) in extra_states
+        push!(states, State(cid, prop))
+    end
+    callback!(
+        app,
+        Output(graph_id * "-svg-status", "children"),
+        Input(graph_id * "-svg-button", "n_clicks"),
+        states...,
+        prevent_initial_call = true,
+    ) do cb_args...
+        fig, config = cb_args[2], cb_args[3]
+        extra       = cb_args[4:end]
+        global output_dir
+        if fig === nothing || isempty(pget(fig, :data, default = []))
+            return pd_export_status("Nothing to export yet - compute/display the figure first."; ok = false)
+        end
+        try
+            mkpath(output_dir[1])
+            ul  = underlay_fn === nothing ? nothing : underlay_fn(extra...)
+            r   = plotly_export_figure_svg(fig, output_dir[1] * filename_fn(extra...) * ".svg"; config = config, underlay = ul)
+            msg = "Saved $(r.path) ($(round(r.bytes / 1024, digits = 1)) KB, $(r.n_paths) paths)."
+            isempty(r.warnings) || (msg *= " " * join(r.warnings, "; ") * ".")
+            return pd_export_status(msg; ok = true)
+        catch e
+            return pd_export_status("Export failed: " * sprint(showerror, e); ok = false)
+        end
+    end
+    return app
+end
