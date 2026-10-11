@@ -564,7 +564,7 @@ end
     Register the callbacks of the save/load configuration and simulation dialogs: open and close them with the list of
     saved files, write the current options (with all compositions) to JSON or the current run to JLD2, and restore
     every option, the database, the "Same as magma" switch and the composition tables from a saved configuration or
-    from the configuration of a loaded simulation.
+    from the configuration of a loaded simulation. Editing an injection table turns the "Same as magma" switch off.
 """
 function mageres_config_callbacks!(app)
     for (what, lister) in (("config", mageres_list_configs), ("sim", mageres_list_runs)), kind in ("save", "load")
@@ -697,14 +697,20 @@ function mageres_config_callbacks!(app)
 
         Input("load-config-button-mageres",    "n_clicks"),
         Input("mageres-sim-config-store",      "data"),
+        Input("table-bulk-rock-mageres-injection", "data_timestamp"),
+        Input("table-te-mageres-injection",        "data_timestamp"),
 
         State("load-config-filename-mageres",  "value"),
 
         prevent_initial_call = true,
-    ) do _n, sim_options, name
+    ) do _n, sim_options, _bulk_edit, _te_edit, name
         nf   = length(mageres_ui_fields())
         fail(msg) = (fill(no_update(), nf + 3)..., msg, "danger", true)
-        if pushed_button(callback_context()) == "mageres-sim-config-store"
+        trigger = pushed_button(callback_context())
+        if trigger in ("table-bulk-rock-mageres-injection", "table-te-mageres-injection")
+            return (fill(no_update(), nf + 1)..., Int[], no_update(), no_update(), no_update(), no_update())
+        end
+        if trigger == "mageres-sim-config-store"
             sim_options === nothing && return (fill(no_update(), nf + 3)..., no_update(), no_update(), no_update())
             o = mageres_options_from_dict(Dict{String,Any}(string(k) => v for (k, v) in sim_options))
             return ([getfield(o, f) for f in mageres_ui_fields()]..., o.database,
@@ -887,6 +893,20 @@ function Tab_MAGERes_Callbacks(app)
         Input(mageres_input_id(:thermodynamics), "value"),
     ) do thermodynamics
         return Tuple(mageres_row_style(f, thermodynamics) for f in MAGERES_CONSTANT_ONLY_FIELDS)
+    end
+
+    """
+        Show the optimizer choice only for the legacy solver with a database that has a nullspace optimizer.
+    """
+    callback!(
+        app,
+        Output(mageres_row_id(:optimizer),    "style"),
+
+        Input(mageres_input_id(:solver),      "value"),
+        Input("database-dropdown-mageres",    "value"),
+    ) do solver, database
+        show = solver == "lp" && database !== nothing && has_ns_optimizer(String(database))
+        return show ? Dict{String,String}() : Dict("display" => "none")
     end
 
     mageres_toggle_collapse(app, "button-simulation-mageres", "collapse-simulation-mageres")

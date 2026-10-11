@@ -296,7 +296,7 @@ function mageres_init_state(opts::MAGEResOptions = MAGEResOptions(); mm = nothin
     o  = deepcopy(opts)
     th = nothing
     if o.thermodynamics == "magemin"
-        mm === nothing && (mm = Initialize_MAGEMin(o.database; verbose = false, solver = 0))
+        mm === nothing && (mm = mageres_init_magemin(o))
         th = mageres_build_thermo(o, mm; progressbar = progressbar, callback_fn = callback_fn, stage_fn = stage_fn)
     end
     c     = MAGEResChamber(o)

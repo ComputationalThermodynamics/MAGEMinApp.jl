@@ -1128,6 +1128,7 @@ function Tab_Simulation_Callbacks(app)
         Output("gsub-row-id", "style"),
         Output("tepm-row-id", "style"),
         Output("pd3d-resolution-id", "style"),
+        Output("display-boost-option-id", "style"),
         Input("diagram-dropdown", "value"),
 
         prevent_initial_call = true,
@@ -1268,7 +1269,7 @@ function Tab_Simulation_Callbacks(app)
         tepmrow = Dict("display" => is3d ? "none"  : "block")
         res3d   = Dict("display" => is3d ? "block" : "none")
 
-        return Tstyle, Pstyle, Ts, Ps, test2, table2, PTx, testte2, tabte2, watsat, T1, T2, refine, refine2, mumu, gsub, tepmrow, res3d
+        return Tstyle, Pstyle, Ts, Ps, test2, table2, PTx, testte2, tabte2, watsat, T1, T2, refine, refine2, mumu, gsub, tepmrow, res3d, refine
     end
 
 

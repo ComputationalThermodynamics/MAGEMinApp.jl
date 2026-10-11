@@ -78,6 +78,8 @@ Base.@kwdef mutable struct MAGEResOptions
     dX_tol                    :: Float64         = 1e-3
     subsolidus_T_C            :: Float64         = 600.0
     boost_mode                :: Bool            = false
+    solver                    :: String          = "lp"
+    optimizer                 :: String          = "nlopt"
     Ra_crit                   :: Float64         = 1000.0
     Nu_exponent               :: Float64         = 1.0/3.0
     g                         :: Float64         = 9.81
@@ -158,6 +160,8 @@ const MAGERES_OPTION_GROUPS = [
         :crystal_size_mm   => "Crystal size (mm)",
         :hindered_exponent => "Hindered-settling exponent"],
     "Solver setup" => [
+        :solver          => "Solver",
+        :optimizer       => "Optimizer",
         :run_time_yr     => "Total time (yr)",
         :output_every_yr => "Save output every (yr)",
         :thermal_dt_yr   => "Timestep (yr)",
@@ -204,6 +208,8 @@ const MAGERES_KDS_MODELS        = ("OL", "CO", "Yak25")
 const MAGERES_ERUPTION_TRIGGERS = ("melt", "overpressure")
 const MAGERES_ZIRCON_METHODS    = ("SIMS_UTh", "LA_UPb", "TIMS_UPb")
 const MAGERES_ZRSAT_MODELS      = ("none", "WH", "B", "CB")
+const MAGERES_SOLVERS           = ("lp", "pge", "hyb")
+const MAGERES_OPTIMIZERS        = ("nlopt", "ns")
 
 """
     mageres_convert_option(T::Type, v)
@@ -290,6 +296,8 @@ function mageres_validate_options(o::MAGEResOptions)
         throw(ArgumentError("thermal_bc must be one of $(MAGERES_THERMAL_BCS)"))
     o.fluid_treatment in MAGERES_FLUID_TREATMENT ||
         throw(ArgumentError("fluid_treatment must be one of $(MAGERES_FLUID_TREATMENT)"))
+    o.solver in MAGERES_SOLVERS || throw(ArgumentError("solver must be one of $(MAGERES_SOLVERS)"))
+    o.optimizer in MAGERES_OPTIMIZERS || throw(ArgumentError("optimizer must be one of $(MAGERES_OPTIMIZERS)"))
     o.lens_n_segments >= 2 || throw(ArgumentError("lens_n_segments must be ≥ 2"))
     o.thermal_dt_yr > 0 || throw(ArgumentError("thermal_dt_yr must be > 0"))
     o.run_time_yr > 0 && o.output_every_yr > 0 || throw(ArgumentError("run_time_yr and output_every_yr must be > 0"))
@@ -358,6 +366,29 @@ function mageres_validate_options(o::MAGEResOptions)
         throw(ArgumentError("chamber depth must lie between the surface and the domain bottom depth"))
     return o
 end
+
+"""
+    mageres_solver_id(o::MAGEResOptions)
+
+    MAGEMin solver of the options `o`: 0 legacy ("lp"), 1 PGE ("pge"), 2 hybrid ("hyb").
+"""
+mageres_solver_id(o::MAGEResOptions) = o.solver == "pge" ? 1 : o.solver == "hyb" ? 2 : 0
+
+"""
+    mageres_optimizer_id(o::MAGEResOptions)
+
+    MAGEMin local optimizer of the options `o`: 1 (nullspace) for "ns" with the legacy solver on a database that
+    has a nullspace optimizer, 0 (NLopt) otherwise.
+"""
+mageres_optimizer_id(o::MAGEResOptions) = get_optimizer(o.database, o.optimizer, mageres_solver_id(o))
+
+"""
+    mageres_init_magemin(o::MAGEResOptions)
+
+    MAGEMin data of the options `o`, with their database, solver and optimizer.
+"""
+mageres_init_magemin(o::MAGEResOptions) =
+    Initialize_MAGEMin(o.database; verbose = false, solver = mageres_solver_id(o), optimizer = mageres_optimizer_id(o))
 
 """
     mageres_opening_share(mode::AbstractString)
