@@ -1250,7 +1250,7 @@ function Tab_Simulation()
                                                     (label = "NLopt",       value = "nlopt"),
                                                     (label = "Nullspace",   value = "ns")
                                                 ],
-                                                value="nlopt" ,
+                                                value="ns" ,
                                                 clearable   = false,
                                                 multi       = false),
                                             ]),

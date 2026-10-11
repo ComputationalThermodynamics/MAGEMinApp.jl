@@ -24,6 +24,30 @@ function Tab_MonteCarlo()
         dbc_row([
             dbc_collapse(
                 dbc_card(dbc_cardbody([
+                    dbc_row([
+                        dbc_col([
+                            html_h1("Mode", style = Dict("textAlign" => "center","font-size" => "100%", "marginTop" => 0, "marginBottom" => 0)),
+                        ], width=3),
+                        dbc_col([
+                            dcc_dropdown(   id      = "mc-mode",
+                                            options = [
+                                                (label = "Monte Carlo (random sampling)", value = "random"),
+                                                (label = "Linear between two bulks",      value = "linear"),
+                                            ],
+                                            value     = "random",
+                                            clearable = false,
+                                            style     = Dict("border" => "none"),
+                                        ),
+                        ], width=9),
+                    ], align="center"),
+                ])),
+                id      = "collapse-mc-mode",
+                is_open = true,
+            ),
+        ]),
+        dbc_row([
+            dbc_collapse(
+                dbc_card(dbc_cardbody([
                         html_h1("Bulk uncertainty", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                         html_hr(),
                         dbc_row([
@@ -123,11 +147,51 @@ function Tab_MonteCarlo()
         dbc_row([
             dbc_collapse(
                 dbc_card(dbc_cardbody([
+                        html_h1("Bulk variation", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                        html_hr(),
+                        dbc_row([
+                            dbc_col([
+                                html_h1("X = 1", style = Dict("textAlign" => "center","font-size" => "100%", "marginTop" => 0, "marginBottom" => 0)),
+                            ], width=3),
+                            dbc_col([
+                                dcc_dropdown(   id          = "mc-bulk2-dropdown",
+                                                options     = [],
+                                                value       = nothing,
+                                                clearable   = false,
+                                                placeholder = "Bulk-rock composition",
+                                                style       = Dict("border" => "none"),
+                                            ),
+                            ], width=9),
+                        ], align="center"),
+                        html_div("‎ "),
+                        dbc_row([
+                            dash_datatable(
+                                id          = "mc-bulk2-table",
+                                columns     = [
+                                    Dict("id" => "oxide", "name" => "oxide"),
+                                    Dict("id" => "x0",    "name" => "X = 0"),
+                                    Dict("id" => "x1",    "name" => "X = 1", "editable" => true),
+                                ],
+                                data        = [],
+                                editable    = false,
+                                style_cell  = (textAlign="center", fontSize="100%"),
+                                style_header= (fontWeight="bold",),
+                                page_size   = 16,
+                            ),
+                        ]),
+                    ])),
+                id      = "collapse-mc-linear",
+                is_open = false,
+            ),
+        ]),
+        dbc_row([
+            dbc_collapse(
+                dbc_card(dbc_cardbody([
                         html_h1("Run", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                         html_hr(),
                         dbc_row([
                             dbc_col([
-                                html_h1("Realizations", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                html_h1("Realizations", id = "mc-n-label", style = Dict("textAlign" => "center","font-size" => "100%")),
                                 dbc_input(  id      = "mc-n-realizations",
                                             type    = "number",
                                             min     = 1,
@@ -139,7 +203,7 @@ function Tab_MonteCarlo()
                                 dbc_input(  id          = "mc-seed",
                                             type        = "number",
                                             placeholder = "random"   ),
-                            ], width=6),
+                            ], width=6, id = "mc-seed-col"),
                         ]),
                         html_div("‎ "),
                         dbc_row([

@@ -257,7 +257,7 @@ function Tab_PTXpaths()
                                                 (label = "Legacy",      value = "lp"),
                                                 (label = "Hybrid",      value = "hyb")
                                             ],
-                                            value="hyb" ,
+                                            value="lp" ,
                                             clearable   = false,
                                             multi   = false),
                                         ]),
@@ -273,7 +273,7 @@ function Tab_PTXpaths()
                                                     (label = "NLopt",       value = "nlopt"),
                                                     (label = "Nullspace",   value = "ns")
                                                 ],
-                                                value="nlopt" ,
+                                                value="ns" ,
                                                 clearable   = false,
                                                 multi   = false),
                                             ]),

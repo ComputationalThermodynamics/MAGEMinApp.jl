@@ -162,6 +162,7 @@ function Tab_MonteCarlo_Callbacks(app)
         Output("mc-diagram",    "figure"),
         Output("mc-run-status", "children"),
         Output("mc-run-failed", "is_open"),
+        Output("mc-run-failed", "children"),
         Output("mc-canvas",     "is_open"),
 
         Input("mc-run-done",          "data"),
@@ -181,41 +182,41 @@ function Tab_MonteCarlo_Callbacks(app)
         bid = pushed_button( callback_context() )
 
         if bid == "mc-canvas-button"
-            return no_update(), no_update(), no_update(), true
+            return no_update(), no_update(), no_update(), no_update(), true
         end
 
         if bid in ("mc-show-labels-switch", "mc-show-boundaries-switch", "mc-smooth-lines-switch")
             if isnothing(mc_result)
-                return no_update(), no_update(), no_update(), no_update()
+                return no_update(), no_update(), no_update(), no_update(), no_update()
             end
             fig = mc_build_figure(mc_result, show_labels; phases = mc_shown_phases, max_lines = something(mc_shown_max, mc_default_max_lines), show_boundaries = show_bounds == true, smooth_lines = smooth_lines == true)
-            return fig, no_update(), no_update(), no_update()
+            return fig, no_update(), no_update(), no_update(), no_update()
         end
 
         if bid == "mc-phase-apply-button"
             if isnothing(mc_result)
-                return no_update(), no_update(), no_update(), no_update()
+                return no_update(), no_update(), no_update(), no_update(), no_update()
             end
             mc_shown_phases = Vector{String}(something(phase_sel, String[]))
             mc_shown_max    = mc_max_lines_value(max_lines)
             fig = mc_build_figure(mc_result, show_labels; phases = mc_shown_phases, max_lines = mc_shown_max, show_boundaries = show_bounds == true, smooth_lines = smooth_lines == true)
-            return fig, no_update(), no_update(), no_update()
+            return fig, no_update(), no_update(), no_update(), no_update()
         end
 
         if bid == "mc-run-done"
             if isnothing(mc_done) || startswith(mc_done, "failed")
-                return no_update(), no_update(), true, no_update()
+                return no_update(), no_update(), true, mc_failure_message(something(mc_done, "failed")), no_update()
             elseif startswith(mc_done, "ok:") && !isnothing(mc_result)
                 _, N_str, t_str = split(mc_done, ":")
                 mc_shown_phases = Vector{String}(mc_phases_to_draw(mc_result))
                 mc_shown_max    = mc_max_lines_value(max_lines)
                 fig    = mc_build_figure(mc_result, show_labels; phases = mc_shown_phases, max_lines = mc_shown_max, show_boundaries = show_bounds == true, smooth_lines = smooth_lines == true)
-                status = "Done: $N_str realizations in $t_str s."
-                return fig, status, false, true
+                status = "Done: $N_str $(mc_run_word(mc_result)) in $t_str s."
+                return fig, status, false, no_update(), true
             end
         end
 
-        return no_update(), no_update(), no_update(), no_update()
+        return no_update(), no_update(), no_update(), no_update(), no_update()
     end
 
     """
@@ -281,21 +282,22 @@ function Tab_MonteCarlo_Callbacks(app)
         grid   = parts.grid
 
         target_lbl = join(target, " ")
+        word       = mc_run_word(mc_result)
         if grid.n_present == 0
-            return "[$target_lbl] is absent from all $(grid.n_total) realizations.", no_update()
+            return "[$target_lbl] is absent from all $(grid.n_total) $word.", no_update()
         end
         mc_probability_last = (mc_res = mc_result, parts = parts)
 
         n_nodes   = length(grid.prob)
         n_nonzero = count(>(0), grid.prob)
-        status = "[$target_lbl]: present in $(grid.n_present)/$(grid.n_total) realizations; " *
-                 "P(field) > 0 at $n_nonzero of $n_nodes nodes (max $(round(maximum(grid.prob), digits = 2))). " *
+        status = "[$target_lbl]: present in $(grid.n_present)/$(grid.n_total) $word; " *
+                 "$(parts.field_label) > 0 at $n_nonzero of $n_nodes nodes (max $(round(maximum(grid.prob), digits = 2))). " *
                  "Phase boundary statistics at 2.5% (dotted), 50% (heavy), 97.5% (dashed); reference phase boundaries in black."
         if n_nonzero < 0.01 * n_nodes
             status *= " The target phases are almost never stable together, so the heatmap is nearly empty - try fewer phases."
         end
 
-        return status, mc_heatmap_figure(traces, mc_result.Xrange, mc_result.Yrange)
+        return status, mc_heatmap_figure(traces, mc_result.Xrange, mc_result.Yrange; title_prefix = mc_probability_prefix(mc_result))
     end
 
     """
@@ -409,7 +411,7 @@ function Tab_MonteCarlo_Callbacks(app)
             mkpath(output_dir[1])
             title = string(mc_diagram_title("")[:text])
             fname = isempty(title) ? "MC" : replace(title, r"[ /\\:]" => "_")
-            path  = output_dir[1] * fname * "_MC.svg"
+            path  = output_dir[1] * fname * (mc_is_linear(mc_result) ? "_Linear.svg" : "_MC.svg")
             r = mc_export_svg(mc_result, path; show_labels = show_labels == true, phases = mc_shown_phases,
                                max_lines = something(mc_shown_max, mc_default_max_lines),
                                show_boundaries = show_bounds == true, smooth_lines = smooth_lines == true)
@@ -457,7 +459,89 @@ function Tab_MonteCarlo_Callbacks(app)
         end
     end
 
+    callback!(
+        app,
+        Output("collapse-mc-sigma",  "is_open"),
+        Output("collapse-mc-linear", "is_open"),
+        Output("mc-n-label",         "children"),
+        Output("mc-seed-col",        "style"),
+        Output("mc-run-button-raw",  "children"),
+
+        Input("mc-mode", "value"),
+
+        prevent_initial_call = true,
+    ) do mode
+        linear = mode == "linear"
+        return !linear, linear, linear ? "Steps" : "Realizations",
+               linear ? Dict("display" => "none") : Dict{String,String}(),
+               linear ? "Run linear sweep" : "Run Monte Carlo"
+    end
+
+    callback!(
+        app,
+        Output("mc-bulk2-table",    "data"),
+        Output("mc-bulk2-table",    "columns"),
+        Output("mc-bulk2-dropdown", "options"),
+        Output("mc-bulk2-dropdown", "value"),
+
+        Input("mc-mode",           "value"),
+        Input("mc-bulk2-dropdown", "value"),
+        Input("database-dropdown", "value"),
+        Input("select-bulk-unit",  "value"),
+        Input("table-bulk-rock",   "data"),
+
+        State("mc-bulk2-table",    "data"),
+
+        prevent_initial_call = true,
+    ) do mode, test2, dtb, sys_unit, bulk1, table_data
+
+        mode == "linear" || return no_update(), no_update(), no_update(), no_update()
+
+        db_dtb = db[(db.db .== dtb), :]
+        isempty(db_dtb) && return no_update(), no_update(), no_update(), no_update()
+
+        bid     = pushed_button( callback_context() )
+        val     = (isnothing(test2) || !(test2 in db_dtb.test)) ? db_dtb.test[1] : test2
+        unit    = sys_unit == 2 ? "wt%" : "mol%"
+        oxides  = [String(r[:oxide]) for r in bulk1]
+        x0      = Dict(String(r[:oxide]) => r[:fraction] for r in bulk1)
+
+        kept = isempty(table_data) ? Dict{String,Any}() : Dict{String,Any}(String(r[:oxide]) => r[:x1] for r in table_data)
+        if bid in ("mc-mode", "table-bulk-rock") && Set(keys(kept)) == Set(oxides)
+            x1 = kept
+        else
+            row   = db_dtb[(db_dtb.test .== val), :]
+            has_2 = !isempty(row.frac2[1])
+            frac  = sys_unit == 2 ? (has_2 ? row.frac2_wt[1] : row.frac_wt[1]) : (has_2 ? row.frac2[1] : row.frac[1])
+            x1    = Dict(String(row.oxide[1][i]) => frac[i] for i in eachindex(row.oxide[1]))
+        end
+
+        data    = [Dict("oxide" => ox, "x0" => x0[ox], "x1" => get(x1, ox, 0.0)) for ox in oxides]
+        columns = [Dict("id" => "oxide", "name" => "oxide"),
+                   Dict("id" => "x0",    "name" => "X = 0 [$unit]"),
+                   Dict("id" => "x1",    "name" => "X = 1 [$unit]", "editable" => true)]
+        options = [Dict("label" => db_dtb.title[i], "value" => db_dtb.test[i]) for i in eachindex(db_dtb.test)]
+        return data, columns, options, val
+    end
+
     return app
+end
+
+function mc_failure_message(mc_done::AbstractString)
+    mc_done == "failed:nobulk2" && return "Select or enter the bulk-rock composition at X = 1 first."
+    mc_done == "failed:steps"   && return "A linear sweep needs at least 2 steps."
+    return "Monte Carlo needs a P-T phase diagram computed first (with a fixed, non water-saturated bulk)."
+end
+
+function mc_bulk2_from_table(table_data, oxi::Vector{String}, sys_unit)
+    isempty(table_data) && return nothing
+    tofloat(v) = v isa AbstractString ? something(tryparse(Float64, v), 0.0) : (isnothing(v) ? 0.0 : Float64(v))
+    lookup = Dict(String(r[:oxide]) => tofloat(get(r, :x1, 0.0)) for r in table_data)
+    vals   = [max(get(lookup, ox, 0.0), 0.0) for ox in oxi]
+    sum(vals) > 0.0 || return nothing
+    tbl    = [Dict(:oxide => oxi[i], :fraction => vals[i]) for i in eachindex(oxi)]
+    bulk_R, _, _ = get_bulkrock_prop(tbl, tbl; sys_unit = sys_unit)
+    return bulk_R
 end
 
 """
@@ -537,7 +621,7 @@ function mc_figure_parts(mc_res; show_labels::Bool = false, phases::Union{Nothin
         end
     end
 
-    t = mc_diagram_title("MC - ")
+    t = mc_diagram_title(mc_title_prefix(mc_res))
     return (sets = sets, reference = reference, annotations = annotations,
             xrange = collect(Float64.(mc_res.Xrange)), yrange = [display_pressure(Float64(y)) for y in mc_res.Yrange],
             ticks = 4, title = string(t[:text]),
@@ -566,13 +650,16 @@ function mc_build_figure(mc_res, show_labels; phases::Union{Nothing,Vector{Strin
                           max_lines::Int = mc_default_max_lines, show_boundaries::Bool = true, smooth_lines::Bool = false)
     parts  = mc_figure_parts(mc_res; show_labels = show_labels == true, phases = phases, max_lines = max_lines,
                               show_boundaries = show_boundaries, smooth_lines = smooth_lines)
-    traces = vcat(GenericTrace[mc_spaghetti_trace(set) for set in parts.sets], parts.reference)
+    linear    = mc_is_linear(mc_res)
+    spaghetti = linear ? reduce(vcat, [mc_gradient_traces(set, mc_res.x) for set in parts.sets]; init = GenericTrace[]) :
+                         GenericTrace[mc_spaghetti_trace(set) for set in parts.sets]
+    traces    = vcat(spaghetti, parts.reference, linear ? GenericTrace[mc_step_key_trace()] : GenericTrace[])
     xr, yr = parts.xrange, parts.yrange
     frame  = get_plot_frame(mc_res.Xrange, mc_res.Yrange, parts.ticks)
 
     mc_layout = Layout(
         images        = frame,
-        title         = mc_diagram_title("MC - "),
+        title         = mc_diagram_title(mc_title_prefix(mc_res)),
         width         = 720,
         height        = 700,
         autosize      = false,
@@ -604,7 +691,7 @@ end
     diagram has its phase legend, holds the colorbar (top) and the per-phase
     contour legend (below it).
 """
-function mc_heatmap_figure(traces, Xrange, Yrange)
+function mc_heatmap_figure(traces, Xrange, Yrange; title_prefix::String = "Probability - ")
     ticks = 4
     frame = get_plot_frame(Xrange, Yrange, ticks)
     y1    = display_pressure(Float64(Yrange[1]))
@@ -612,7 +699,7 @@ function mc_heatmap_figure(traces, Xrange, Yrange)
 
     heat_layout = Layout(
         images        = frame,
-        title         = mc_diagram_title("Probability - "),
+        title         = mc_diagram_title(title_prefix),
         width         = 720,
         height        = 700,
         autosize      = false,
@@ -650,12 +737,13 @@ function mc_spider_figure(mc_res, max_lines::Int)
     oxi    = String.(mc_res.oxides)
     n      = length(oxi)
     delta  = (mc_res.bulks .- reshape(mc_res.bulk_ref, 1, :)) .* 100.0
-    n_draw = min(size(delta, 1), max_lines)
+    linear = mc_is_linear(mc_res)
 
     traces = GenericTrace[]
-    for k in 1:n_draw
+    for k in mc_drawn_indices(mc_res, max_lines)
+        color = linear ? mc_step_color(mc_step_key_color, mc_res.x[k]) : "blue"
         push!(traces, scatter(x = delta[k, :], y = oxi, mode = "lines", hoverinfo = "skip", showlegend = false,
-                               opacity = 0.6, line = attr(color = "blue", width = 1)))
+                               opacity = linear ? 1.0 : 0.6, line = attr(color = color, width = 1)))
     end
     push!(traces, scatter(x = zeros(n), y = oxi, mode = "lines", hoverinfo = "skip", showlegend = false,
                            line = attr(color = "black", width = 1.5), name = "primary"))

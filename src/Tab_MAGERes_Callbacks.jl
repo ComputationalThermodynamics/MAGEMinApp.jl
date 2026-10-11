@@ -891,6 +891,7 @@ function Tab_MAGERes_Callbacks(app)
         [Output(mageres_row_id(f), "style") for f in MAGERES_CONSTANT_ONLY_FIELDS]...,
 
         Input(mageres_input_id(:thermodynamics), "value"),
+        prevent_initial_call = true,
     ) do thermodynamics
         return Tuple(mageres_row_style(f, thermodynamics) for f in MAGERES_CONSTANT_ONLY_FIELDS)
     end
@@ -904,6 +905,7 @@ function Tab_MAGERes_Callbacks(app)
 
         Input(mageres_input_id(:solver),      "value"),
         Input("database-dropdown-mageres",    "value"),
+        prevent_initial_call = true,
     ) do solver, database
         show = solver == "lp" && database !== nothing && has_ns_optimizer(String(database))
         return show ? Dict{String,String}() : Dict("display" => "none")

@@ -104,20 +104,7 @@ module MAGEMinApp
     include_dependency(joinpath(pkg_dir,"user_data","predefined_bulks.csv"))
     include_dependency(joinpath(pkg_dir,"user_data","mc_default_sigma.csv"))
     include(joinpath(pkg_dir,"src","appData.jl"))
-
-    # Pre-compile the layout-building functions at package build time, so the
-    # ~17s of JIT compilation they otherwise trigger isn't paid on first App() startup
-    @compile_workload begin
-        Tab_GeneralSetup()
-        Tab_Simulation()
-        Tab_PhaseDiagram()
-        Tab_PhaseDiagram3D()
-        Tab_TraceElement()
-        Tab_IntersecT()
-        Tab_PTXpaths()
-        ENABLE_MAGERES && Tab_MAGERes()
-        Tab_General_informations()
-    end
+    include(joinpath(pkg_dir,"src","Precompile_workload.jl"))
 
     """
         App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
@@ -126,17 +113,34 @@ module MAGEMinApp
     """
     function App(; host = HTTP.Sockets.localhost, port = 8050, max_num_user=10, debug=false)
         println(" 1/4 Initializing...")
-        vApp = "Running MAGEMinApp@$(AppData.GUI_version) - Julia 1.10+"
+        prefetch_messages!()
 
         cur_dir     = pwd()                 # directory from where you started the GUI
         pkg_dir     = pkgdir(MAGEMinApp)   # package dir
         cd(pkg_dir)
 
+        app         = build_app()
+
+        println(" 4/4 Loading user data...")
+        AppData.mineral_style[1] = load_mineral_style();
+        AppData.mineral_order[1] = load_mineral_order(sort(collect(keys(AppData.mineral_style[1]))));
+
+        try
+            run_server(app, host, port, debug=debug)
+        finally
+            cd(cur_dir) # go back to directory
+        end
+
+    end
+
+    function build_app(; verbose = true)
+        vApp = "Running MAGEMinApp@$(AppData.GUI_version) - Julia 1.10+"
+
         app         = dash(external_stylesheets = [dbc_themes.BOOTSTRAP], prevent_initial_callbacks=false)
         app.title   = "MAGEMinApp"
         app.layout  = html_div() do
 
-        println(" 2/4 Loading interface...")
+        verbose && println(" 2/4 Loading interface...")
         dbc_container(fluid=false, [
             dbc_col([
             dbc_row([
@@ -315,15 +319,14 @@ module MAGEMinApp
             Input("version-check-interval", "n_intervals"),
             prevent_initial_call=true,
         ) do n_intervals
-            message  = fetch_message()
-            message2 = fetch_message2()
+            message, message2 = take_messages()
 
             vApp = "Running MAGEMinApp@$(AppData.GUI_version) -> Last version @$(message2) - Julia 1.10+"
 
             return message, vApp
         end
 
-        println(" 3/4 Loading callbacks...")
+        verbose && println(" 3/4 Loading callbacks...")
         app = Tab_Simulation_Callbacks(app)
         app = Tab_PhaseDiagram_Callbacks(app)
         app = Tab_PhaseDiagram3D_Callbacks(app)
@@ -335,16 +338,11 @@ module MAGEMinApp
         app = Tab_IntersecT_Callbacks(app)
         app = Progress_Callbacks(app)
 
-        println(" 4/4 Loading user data...")
-        AppData.mineral_style[1] = load_mineral_style();
-        AppData.mineral_order[1] = load_mineral_order(sort(collect(keys(AppData.mineral_style[1]))));
+        return app
+    end
 
-        try
-            run_server(app, host, port, debug=debug)
-        finally
-            cd(cur_dir) # go back to directory
-        end
-
+    @compile_workload begin
+        precompile_page_load()
     end
 
     # this is the main function that will be called when you run the app

@@ -38,15 +38,15 @@ function Tab_PTXpaths_Callbacks(app)
     # Legacy solver, since it re-equilibrates the assemblage to differentiate
     # G_system rather than just fixing it and differentiating G0. There is no
     # boost-mode toggle in the P-T-X tab, so switching back to G0 always falls
-    # back to the tab's own default (Hybrid).
+    # back to the tab's own default (Legacy).
     callback!(
         app,
         Output("solver-dropdown-ptx", "value"),
         Input("scp-dropdown-ptx",     "value"),
 
         prevent_initial_call = true,
-    ) do scp
-        return scp == 1 ? "lp" : "hyb"
+    ) do _scp
+        return "lp"
     end;
 
     # show the optimizer choice for the legacy solver with the databases that have a nullspace optimizer
@@ -2280,7 +2280,7 @@ function Tab_PTXpaths_Callbacks(app)
     callback!(app,
         Output("classification-diagram-options-container-ptx", "style"),
         Input("ptx-main-tabs", "active_tab"),
-        prevent_initial_call = false,
+        prevent_initial_call = true,
     ) do active_tab
         if active_tab == "classification-diagrams-tab"
             return Dict("display" => "block")

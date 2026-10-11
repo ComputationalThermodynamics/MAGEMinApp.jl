@@ -130,6 +130,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("classification-canvas", "is_open"),
         Input("classification-canvas-button", "n_clicks"),
         State("classification-canvas", "is_open"),
+        prevent_initial_call = true,
     ) do n1, is_open
         return n1 > 0 ? is_open == 0 : is_open
     end;
@@ -205,6 +206,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("CaAmp-classification-canvas", "is_open"),
         Input("CaAmp-classification-canvas-button", "n_clicks"),
         State("CaAmp-classification-canvas", "is_open"),
+        prevent_initial_call = true,
     ) do n1, is_open
         return n1 > 0 ? is_open == 0 : is_open
     end;
@@ -280,6 +282,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("Cpx-classification-canvas", "is_open"),
         Input("Cpx-classification-canvas-button", "n_clicks"),
         State("Cpx-classification-canvas", "is_open"),
+        prevent_initial_call = true,
     ) do n1, is_open
         return n1 > 0 ? is_open == 0 : is_open
     end;
@@ -329,6 +332,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("Opx-classification-canvas", "is_open"),
         Input("Opx-classification-canvas-button", "n_clicks"),
         State("Opx-classification-canvas", "is_open"),
+        prevent_initial_call = true,
     ) do n1, is_open
         return n1 > 0 ? is_open == 0 : is_open
     end;
@@ -391,6 +395,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("Mica-classification-canvas", "is_open"),
         Input("Mica-classification-canvas-button", "n_clicks"),
         State("Mica-classification-canvas", "is_open"),
+        prevent_initial_call = true,
     ) do n1, is_open
         return n1 > 0 ? is_open == 0 : is_open
     end;
@@ -440,6 +445,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("Feldspar-classification-canvas", "is_open"),
         Input("Feldspar-classification-canvas-button", "n_clicks"),
         State("Feldspar-classification-canvas", "is_open"),
+        prevent_initial_call = true,
     ) do n1, is_open
         return n1 > 0 ? is_open == 0 : is_open
     end;
@@ -489,6 +495,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("Garnet-classification-canvas", "is_open"),
         Input("Garnet-classification-canvas-button", "n_clicks"),
         State("Garnet-classification-canvas", "is_open"),
+        prevent_initial_call = true,
     ) do n1, is_open
         return n1 > 0 ? is_open == 0 : is_open
     end;
@@ -551,6 +558,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("Oxide-classification-canvas", "is_open"),
         Input("Oxide-classification-canvas-button", "n_clicks"),
         State("Oxide-classification-canvas", "is_open"),
+        prevent_initial_call = true,
     ) do n1, is_open
         return n1 > 0 ? is_open == 0 : is_open
     end;
@@ -1518,6 +1526,8 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("mc-bulk-unit",           "value"),
         State("mc-n-realizations",      "value"),
         State("mc-seed",                "value"),
+        State("mc-mode",                "value"),
+        State("mc-bulk2-table",         "data"),
 
         prevent_initial_call = true,
 
@@ -1542,7 +1552,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             isoLineStyle, isoLineWidth, isoColorLine,           isoLabelSize,
             minIso,     stepIso,    maxIso,
             active_tab,
-            mc_sigma_data, mc_sigma_mode_str, mc_bulk_unit, mc_n_real, mc_seed_val
+            mc_sigma_data, mc_sigma_mode_str, mc_bulk_unit, mc_n_real, mc_seed_val, mc_mode, mc_bulk2_data
 
 
         diagType                        = diagram_type_2d(diagType)
@@ -1724,6 +1734,26 @@ function Tab_PhaseDiagram_Callbacks(app)
                 mc_done = "failed:diagram"
             elseif !@isdefined(gridded_fields)
                 mc_done = "failed:nodata"
+            elseif mc_mode == "linear"
+                bulk_R_mc = mc_bulk2_from_table(mc_bulk2_data, oxi, sys_unit)
+                N_mc      = mc_n_real isa Number ? Int64(round(mc_n_real)) : 0
+                if isnothing(bulk_R_mc)
+                    mc_done = "failed:nobulk2"
+                elseif N_mc < 2
+                    mc_done = "failed:steps"
+                else
+                    mc_opts = mc_ref_options(dtb, dataset, oxi, bufferType, Float64(bufferN1), Int64(scp), solver,
+                                              cpx, limOpx, Float64(limOpxVal), phase_selection, custW == true; optimizer = optimizer)
+                    refLvl_mc          = Int64(something(refLvl, 0)) + addedRefinementLvl
+                    bulks_mc, x_mc     = linear_bulks(bulk_L, bulk_R_mc, N_mc)
+
+                    t_mc = @elapsed mc_res = run_monte_carlo_pt(bulk_L, bulks_mc, Xrange, Yrange, sub, refLvl_mc, mc_opts; x = x_mc)
+
+                    global mc_result
+                    mc_result = mc_res
+
+                    mc_done = "ok:$N_mc:$(round(t_mc, digits=1))"
+                end
             else
                 sigma_mode   = mc_sigma_mode_str == "absolute" ? :absolute : :relative
                 mc_defaults  = mc_sigma_for_oxides(oxi)

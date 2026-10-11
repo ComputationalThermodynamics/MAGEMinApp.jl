@@ -56,7 +56,7 @@ function Tab_Simulation_Callbacks(app)
         Output( "grid-subdivision",     "value"     ),
         Input(  "gsub-id",              "value"     ),
 
-    prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
+    prevent_initial_call = true,
     ) do n_ref
 
         n_ref_info = "$(2^n_ref) × $(2^n_ref) grid"
@@ -612,6 +612,7 @@ function Tab_Simulation_Callbacks(app)
         Output("display-optimizer-id",  "style"),
         Input("solver-dropdown",        "value"),
         Input("database-dropdown",      "value"),
+        prevent_initial_call = true,
     ) do solver, dtb
 
         if solver == "lp" && has_ns_optimizer(dtb)

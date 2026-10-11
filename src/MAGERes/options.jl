@@ -79,7 +79,7 @@ Base.@kwdef mutable struct MAGEResOptions
     subsolidus_T_C            :: Float64         = 600.0
     boost_mode                :: Bool            = false
     solver                    :: String          = "lp"
-    optimizer                 :: String          = "nlopt"
+    optimizer                 :: String          = "ns"
     Ra_crit                   :: Float64         = 1000.0
     Nu_exponent               :: Float64         = 1.0/3.0
     g                         :: Float64         = 9.81

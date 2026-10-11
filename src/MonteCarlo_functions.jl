@@ -160,6 +160,17 @@ function sample_mc_bulks(bulk::Vector{Float64}, oxi::Vector{String}, sigma::Vect
     return sample_mc_bulks(bulk, sigma_rel, N; seed = seed)
 end
 
+function linear_bulks(bulk_L::Vector{Float64}, bulk_R::Vector{Float64}, N::Int)
+    @assert length(bulk_L) == length(bulk_R)
+    @assert N >= 2
+    x     = collect(range(0.0, 1.0, length = N))
+    bulks = Matrix{Float64}(undef, N, length(bulk_L))
+    for k in 1:N
+        bulks[k, :] .= bulk_L .* (1.0 - x[k]) .+ bulk_R .* x[k]
+    end
+    return bulks, x
+end
+
 """
     MC_ref_options
 
@@ -249,7 +260,8 @@ end
     its per-point results, and their phase-assemblage hashes.
 """
 function mc_run_amr_realization(dtb::String, MAGEMin_data, oxi::Vector{String}, bulk_k::Vector{Float64},
-                                 opts::MC_ref_options, Xrange, Yrange, sub::Int, refLvl_mc::Int, k::Int, N::Int)
+                                 opts::MC_ref_options, Xrange, Yrange, sub::Int, refLvl_mc::Int, k::Int, N::Int;
+                                 stage_label::String = "Realization")
 
     global Out_XY, Hash_XY, addedRefinementLvl, CompProgress
     saved_Out_XY             = Out_XY
@@ -264,7 +276,7 @@ function mc_run_amr_realization(dtb::String, MAGEMin_data, oxi::Vector{String}, 
 
     try
         CompProgress.title            = "Monte Carlo Progress"
-        CompProgress.stage            = "Realization $k/$N - initial grid"
+        CompProgress.stage            = "$stage_label $k/$N - initial grid"
         CompProgress.refinement_level = 0
         CompProgress.total_levels     = refLvl_mc
         CompProgress.tinit            = time()
@@ -280,7 +292,7 @@ function mc_run_amr_realization(dtb::String, MAGEMin_data, oxi::Vector{String}, 
                                              false, 0.3, 0, false, false, false)
 
         for irefine in 1:refLvl_mc
-            CompProgress.stage            = "Realization $k/$N - refine grid level ->"
+            CompProgress.stage            = "$stage_label $k/$N - refine grid level ->"
             CompProgress.refinement_level = irefine
             CompProgress.tinit            = time()
 
@@ -346,7 +358,16 @@ end
 function run_monte_carlo_pt(bulk_L::Vector{Float64}, sigma_input::Vector{Float64}, sigma_mode::Symbol, N::Int,
                              Xrange, Yrange, sub::Int, refLvl_mc::Int, opts::MC_ref_options;
                              seed::Union{Nothing,Integer} = nothing)
+    sigma_rel = mc_relative_sigma(bulk_L, sigma_input, sigma_mode)
+    bulks     = sample_mc_bulks(bulk_L, sigma_rel, N; seed = seed)
+    return run_monte_carlo_pt(bulk_L, bulks, Xrange, Yrange, sub, refLvl_mc, opts)
+end
 
+function run_monte_carlo_pt(bulk_L::Vector{Float64}, bulks::Matrix{Float64}, Xrange, Yrange, sub::Int, refLvl_mc::Int,
+                             opts::MC_ref_options; x::Union{Nothing,Vector{Float64}} = nothing)
+
+    N            = size(bulks, 1)
+    stage_label  = isnothing(x) ? "Realization" : "Step"
     MAGEMin_data = Initialize_MAGEMin(opts.dtb;
                                        verbose        = false,
                                        dataset        = opts.dataset,
@@ -363,9 +384,6 @@ function run_monte_carlo_pt(bulk_L::Vector{Float64}, sigma_input::Vector{Float64
         unsafe_store!(MAGEMin_data.gv[i].buffer, Cchar(0), nb + 1)
     end
 
-    sigma_rel = mc_relative_sigma(bulk_L, sigma_input, sigma_mode)
-    bulks     = sample_mc_bulks(bulk_L, sigma_rel, N; seed = seed)
-
     gridded_fields_all = Vector{Matrix{Int64}}(undef, N)
     id2phases_all       = Vector{Dict{Int,Vector{String}}}(undef, N)
 
@@ -374,12 +392,17 @@ function run_monte_carlo_pt(bulk_L::Vector{Float64}, sigma_input::Vector{Float64
             bulk_k = bulks[k, :]
             t_k = @elapsed begin
                 data_k, Out_XY_k, Hash_XY_k = mc_run_amr_realization(opts.dtb, MAGEMin_data, opts.oxi, bulk_k,
-                                                                      opts, Xrange, Yrange, sub, refLvl_mc, k, N)
+                                                                      opts, Xrange, Yrange, sub, refLvl_mc, k, N;
+                                                                      stage_label = stage_label)
                 gridded_fields_all[k] = get_gridded_map("#Phases", "major", opts.oxi, Out_XY_k, nothing, Hash_XY_k,
                                                          sub, refLvl_mc, "ph", data_k, Xrange, Yrange)[3]
                 id2phases_all[k] = mc_id_to_phases(Out_XY_k, Hash_XY_k)
             end
-            println("Computed Monte Carlo realization $k/$N in $(round(t_k, digits=3)) seconds")
+            if isnothing(x)
+                println("Computed Monte Carlo realization $k/$N in $(round(t_k, digits=3)) seconds")
+            else
+                println("Computed linear step $k/$N (X = $(round(x[k], digits=3))) in $(round(t_k, digits=3)) seconds")
+            end
         end
     finally
         for i in 1:Threads.maxthreadid()
@@ -388,7 +411,7 @@ function run_monte_carlo_pt(bulk_L::Vector{Float64}, sigma_input::Vector{Float64
     end
 
     return (bulks = bulks, gridded_fields = gridded_fields_all, id2phases = id2phases_all, Xrange = Xrange, Yrange = Yrange,
-            bulk_ref = bulk_L, oxides = opts.oxi)
+            bulk_ref = bulk_L, oxides = opts.oxi, mode = isnothing(x) ? :random : :linear, x = x)
 end
 
 """
@@ -927,16 +950,21 @@ function mc_probability_parts(mc_res, ref_gridded_fields, target::Vector{String}
         push!(reference, (ph = ph, label = display_ph_name(ph), x = rx, y = disp(ry)))
     end
 
+    linear = mc_is_linear(mc_res)
     return (grid = grid, x = grid.x, y = display_pressure(grid.y), prob = grid.prob, phases = phases, reference = reference,
             levels = Tuple(Float64.(levels)), xrange = collect(Float64.(mc_res.Xrange)),
             yrange = [display_pressure(Float64(v)) for v in mc_res.Yrange], ticks = 4,
-            title = string(mc_diagram_title("Probability - ")[:text]),
+            title = string(mc_diagram_title(mc_probability_prefix(mc_res))[:text]),
+            field_label = linear ? "fraction" : "P(field)", phase_label = linear ? "fraction of steps" : "P(phase)",
             xtitle = "Temperature [Celsius]", ytitle = "Pressure [$(pressure_unit_label())]",
             target = target, strict = strict)
 end
 
 const mc_level_dash  = Dict(0.025 => "dot", 0.5 => "solid", 0.975 => "dash")
 const mc_level_width = Dict(0.025 => 1.2,   0.5 => 2.0,     0.975 => 1.2)
+
+mc_title_prefix(mc_res)       = mc_is_linear(mc_res) ? "Linear - " : "MC - "
+mc_probability_prefix(mc_res) = mc_is_linear(mc_res) ? "Fraction of steps - " : "Probability - "
 
 """
     mc_probability_traces_from_parts(parts)
@@ -957,14 +985,14 @@ function mc_probability_traces_from_parts(parts)
     push!(traces, heatmap(x = repeat(parts.x, n), y = repeat(parts.y, inner = n), z = vec(permutedims(parts.prob)),
                            zmin = 0.0, zmax = 1.0,
                            colorscale = [[0.0, "rgb(255,255,255)"], [1.0, "rgb(200,30,30)"]],
-                           colorbar = attr(title = "P(field)", thickness = 12, len = 0.4, y = 1.0, yanchor = "top"),
-                           hovertemplate = "T: %{x:.1f}<br>P: %{y:.3g}<br>probability: %{z:.2f}<extra></extra>"))
+                           colorbar = attr(title = parts.field_label, thickness = 12, len = 0.4, y = 1.0, yanchor = "top"),
+                           hovertemplate = "T: %{x:.1f}<br>P: %{y:.3g}<br>$(parts.field_label == "P(field)" ? "probability" : "fraction"): %{z:.2f}<extra></extra>"))
 
     mid_level = parts.levels[cld(length(parts.levels), 2)]
     for lvl in parts.levels
         push!(traces, scatter(x = [nothing], y = [nothing], mode = "lines", hoverinfo = "skip",
                                showlegend = true, legendgroup = "levels",
-                               legendgrouptitle = attr(text = "P(phase)"),
+                               legendgrouptitle = attr(text = parts.phase_label),
                                line = attr(color = "#444444", width = get(mc_level_width, lvl, 1.2),
                                            dash = get(mc_level_dash, lvl, "solid")),
                                name = "$(mc_percent_label(lvl))"))
@@ -1103,13 +1131,12 @@ end
 function mc_spaghetti_sets(mc_res, Xrange, Yrange; max_realizations::Int = mc_default_max_lines,
                             phases::Union{Nothing,Vector{String}} = nothing, smooth::Bool = false)
     sets      = NamedTuple[]
-    n_draw    = min(length(mc_res.gridded_fields), max_realizations)
     draw_list = Vector{String}(mc_phases_to_draw(mc_res))
     isnothing(phases) || (draw_list = filter(in(phases), draw_list))
 
     for ph in draw_list
         lines = NamedTuple{(:k, :x, :y),Tuple{Int,Vector{Union{Float64,Nothing}},Vector{Union{Float64,Nothing}}}}[]
-        for k in 1:n_draw
+        for k in mc_drawn_indices(mc_res, max_realizations)
             xk, yk = mc_phase_boundary_xy(mc_res.gridded_fields[k], mc_res.id2phases[k], Xrange, Yrange, ph;
                                           smooth = smooth ? mc_smooth_sigma : 0.0, chaikin = smooth ? mc_smooth_chaikin : 0)
             isempty(xk) && continue
@@ -1140,6 +1167,57 @@ function mc_spaghetti_trace(set)
     end
     return scatter(x = x_all, y = y_all, mode = "lines", hoverinfo = "skip", showlegend = true,
                    line = attr(color = set.color, width = 0.5), name = set.label)
+end
+
+mc_is_linear(mc_res) = get(mc_res, :mode, :random) == :linear
+
+mc_run_word(mc_res) = mc_is_linear(mc_res) ? "steps" : "realizations"
+
+function mc_drawn_indices(mc_res, max_lines::Int)
+    N = length(mc_res.gridded_fields)
+    n = min(N, max_lines)
+    mc_is_linear(mc_res) || return collect(1:n)
+    return unique(round.(Int, range(1, N, length = n)))
+end
+
+function mc_step_color(color::AbstractString, x::Real)
+    r, g, b = try
+        svg_parse_color(color)[1:3]
+    catch
+        (128.0, 128.0, 128.0)
+    end
+    t = clamp(Float64(x), 0.0, 1.0)
+    if t < 0.5
+        w = 0.7 * (0.5 - t) / 0.5
+        r, g, b = r + (255 - r) * w, g + (255 - g) * w, b + (255 - b) * w
+    else
+        w = 0.5 * (t - 0.5) / 0.5
+        r, g, b = r * (1 - w), g * (1 - w), b * (1 - w)
+    end
+    return "rgb($(round(Int, r)),$(round(Int, g)),$(round(Int, b)))"
+end
+
+const mc_step_key_color = "#7f7f7f"
+
+function mc_gradient_traces(set, x::Vector{Float64})
+    traces = GenericTrace[scatter(x = [nothing], y = [nothing], mode = "lines", hoverinfo = "skip", showlegend = true,
+                                  legendgroup = set.ph, line = attr(color = set.color, width = 1.5), name = set.label)]
+    for l in set.lines
+        xk = round(x[l.k], digits = 3)
+        push!(traces, scatter(x = l.x, y = l.y, mode = "lines", showlegend = false, legendgroup = set.ph,
+                              line = attr(color = mc_step_color(set.color, x[l.k]), width = 0.75),
+                              name = set.label, hovertemplate = "$(set.label), X = $(xk)<extra></extra>"))
+    end
+    return traces
+end
+
+function mc_step_key_trace()
+    stops = collect(range(0.0, 1.0, length = 11))
+    return scatter(x = [nothing, nothing], y = [nothing, nothing], mode = "markers", hoverinfo = "skip", showlegend = false,
+                   marker = attr(color = [0.0, 1.0], cmin = 0.0, cmax = 1.0, showscale = true,
+                                 colorscale = [[t, mc_step_color(mc_step_key_color, t)] for t in stops],
+                                 colorbar = attr(title = attr(text = "X"), thickness = 12, len = 0.3, y = 0.0, yanchor = "bottom",
+                                                 tickvals = [0.0, 1.0], ticktext = ["0 (bulk 1)", "1 (bulk 2)"])))
 end
 
 """
@@ -1203,12 +1281,14 @@ function mc_export_svg(mc_res, path::AbstractString; show_labels::Bool = false,
 
     svg_open(io, c)
 
+    linear = mc_is_linear(mc_res)
     for set in parts.sets
-        svg_group_open(io, svg_id(seen, "MC_" * set.label); stroke = set.color, width = 0.5, fill = "none", rounded = true)
+        svg_group_open(io, svg_id(seen, "MC_" * set.label); stroke = set.color, width = linear ? 0.75 : 0.5, fill = "none", rounded = true)
         for l in set.lines
             d = svg_path_data(c, clipped(l.x, l.y))
             isempty(d) && continue
-            svg_path(io, svg_id(seen, "MC_$(set.label)_$(lpad(l.k, 3, '0'))"), d)
+            id = svg_id(seen, "MC_$(set.label)_$(lpad(l.k, 3, '0'))")
+            linear ? svg_path(io, id, d; stroke = mc_step_color(set.color, mc_res.x[l.k])) : svg_path(io, id, d)
             n_paths += 1
         end
         svg_group_close(io)
@@ -1242,6 +1322,18 @@ function mc_export_svg(mc_res, path::AbstractString; show_labels::Bool = false,
                      stroke = set.color, width = 1.5)
             svg_text(io, right + 42, y, set.label; id = svg_id(seen, "Legend_text_$(set.label)"), anchor = "start")
         end
+        svg_group_close(io)
+    end
+
+    if linear
+        key_top = top + 12 + length(parts.sets) * 19 + 24
+        key_h   = 100.0
+        stops   = [(t, svg_parse_color(mc_step_color(mc_step_key_color, t))) for t in range(0.0, 1.0, length = 11)]
+        svg_group_open(io, svg_id(seen, "Step_key"); font_family = font, font_size = 10, fill = ink)
+        svg_text(io, right + 16, key_top - 8, "X"; id = svg_id(seen, "Step_key_title"), size = 11, anchor = "start")
+        svg_gradient_bar_stops(io, svg_id(seen, "Step_key_bar"), right + 16, key_top, 12.0, key_h, stops)
+        svg_text(io, right + 33, key_top + 4, "1 (bulk 2)"; id = svg_id(seen, "Step_key_high"), anchor = "start")
+        svg_text(io, right + 33, key_top + key_h, "0 (bulk 1)"; id = svg_id(seen, "Step_key_low"), anchor = "start")
         svg_group_close(io)
     end
 
@@ -1327,7 +1419,7 @@ function mc_export_probability_svg(parts, path::AbstractString)
 
     bar_x, bar_w, bar_h = right + 16, 12.0, 0.4 * ph
     svg_group_open(io, svg_id(seen, "Colorbar"); font_family = font, font_size = 10, fill = ink)
-    svg_text(io, bar_x, top - 10, "P(field)"; id = svg_id(seen, "Colorbar_title"), size = 11, anchor = "start")
+    svg_text(io, bar_x, top - 10, parts.field_label; id = svg_id(seen, "Colorbar_title"), size = 11, anchor = "start")
     svg_gradient_bar(io, svg_id(seen, "Colorbar_bar"), bar_x, top, bar_w, bar_h, "rgb(255,255,255)", "rgb(200,30,30)")
     for (k, v) in enumerate(0.0:0.2:1.0)
         svg_text(io, bar_x + bar_w + 5, top + bar_h * (1 - v), svg_tick_label(v); id = svg_id(seen, "Colorbar_tick_$(k)"), anchor = "start")
@@ -1336,7 +1428,7 @@ function mc_export_probability_svg(parts, path::AbstractString)
 
     svg_group_open(io, svg_id(seen, "Legend"); font_family = font, font_size = 11, fill = ink)
     y = top + bar_h + 34
-    svg_text(io, right + 16, y, "P(phase)"; id = svg_id(seen, "Legend_key_title"), anchor = "start", size = 11, weight = "bold")
+    svg_text(io, right + 16, y, parts.phase_label; id = svg_id(seen, "Legend_key_title"), anchor = "start", size = 11, weight = "bold")
     for lvl in parts.levels
         y += 19
         w  = get(mc_level_width, lvl, 1.2)

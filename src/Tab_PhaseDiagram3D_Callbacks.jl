@@ -34,7 +34,7 @@ function Tab_PhaseDiagram3D_Callbacks(app)
         Input("diagram-dropdown",       "value"),
         Input("tabs",                   "active_tab"),
 
-        prevent_initial_call = false,
+        prevent_initial_call = true,
     ) do diagType, active_tab
         return (diagType == "ptx3d" || active_tab == "tab-3d-diagram") ? Dict{String,String}() : Dict("display" => "none")
     end
