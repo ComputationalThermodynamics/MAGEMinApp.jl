@@ -55,7 +55,8 @@ function compute_phaseDiagram3D(    Prange,     Trange,     nP,         nT,     
                                     bulk_L,     bulk_R,     oxi,
                                     bufferType, bufferN1,   bufferN2,
                                     seismicScheme, seismicWeightFactor,
-                                    seismic_cor, aspect_ratio, seismic_water, shallow_cor, fluid_as_melt, anelastic_correction )
+                                    seismic_cor, aspect_ratio, seismic_water, shallow_cor, fluid_as_melt, anelastic_correction;
+                                    optimizer   = "nlopt" )
     global CompProgress
 
     Pv = collect(range(Float64(Prange[1]), Float64(Prange[2]), length = nP))
@@ -95,6 +96,7 @@ function compute_phaseDiagram3D(    Prange,     Trange,     nP,         nT,     
                                         mbCpx               = mbCpx,
                                         buffer              = bufferType,
                                         solver              = sol,
+                                        optimizer           = get_optimizer(dtb, optimizer, sol),
                                         seismicScheme       = seismicScheme,
                                         seismicWeightFactor = seismicWeightFactor )
 
@@ -129,7 +131,7 @@ function compute_phaseDiagram3D(    Prange,     Trange,     nP,         nT,     
     prev_id = isnothing(PD3D[]) ? 0 : PD3D[].id
     date    = string(Dates.today()) * ", " * string(Dates.Time(Dates.now()))
     act_sol = String.(get_phase_infos(Out).act_sol)
-    params  = ( dataset = dataset, custW = custW, scp = scp, phase_selection = phase_selection,
+    params  = ( dataset = dataset, custW = custW, scp = scp, phase_selection = phase_selection, optimizer = optimizer,
                 cpx = cpx, limOpx = limOpx, limOpxVal = limOpxVal,
                 seismicScheme = seismicScheme, seismicWeightFactor = seismicWeightFactor,
                 seismic_cor = seismic_cor, aspect_ratio = aspect_ratio, seismic_water = seismic_water,
@@ -149,6 +151,7 @@ function pd3d_compute_point(st::PD3D_state, P::Float64, T::Float64, x::Float64)
                                         mbCpx               = mbCpx,
                                         buffer              = st.buffer,
                                         solver              = sol,
+                                        optimizer           = get_optimizer(st.dtb, get(q, :optimizer, "nlopt"), sol),
                                         seismicScheme       = q.seismicScheme,
                                         seismicWeightFactor = q.seismicWeightFactor )
     try
@@ -435,7 +438,7 @@ function pd3d_diagram_information(st::PD3D_state)
         ("Solution names",      join(st.act_sol, ", ")),
         ("Diagram type",        "Pressure-Temperature-Composition (3D)"),
         ("X axis",              pd3d_x_axis(st.oxi, st.bulk_L, st.bulk_R).info),
-        ("Solver",              get(solv, st.solver, st.solver)),
+        ("Solver",              get(solv, st.solver, st.solver) * (st.solver == "lp" && get_optimizer(st.dtb, get(st.params, :optimizer, "nlopt"), 0) == 1 ? ", nullspace optimizer" : "")),
         ("Oxide list",          join(replace.(st.oxi, "2" => "₂", "3" => "₃"), " ")),
     ]
     buf && push!(rows, ("Buffer", st.buffer))

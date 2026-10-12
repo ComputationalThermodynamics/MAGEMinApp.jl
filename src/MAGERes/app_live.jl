@@ -499,7 +499,7 @@ function mageres_resume_state(live::MAGEResLiveRun, t_end::Real; progressbar::Bo
         mageres_extend_zircon_bins!(st)
         (th.te === nothing || th.te.kds !== nothing) ||
             (th.te = mageres_with_fields(th.te, :kds => build_kds_database(st.opts.kds_mod)))
-        th.mm          = Initialize_MAGEMin(st.opts.database; verbose = false, solver = 0)
+        th.mm          = mageres_init_magemin(st.opts)
         th.progressbar = progressbar
         th.callback_fn = callback_fn
         th.stage_fn    = stage_fn

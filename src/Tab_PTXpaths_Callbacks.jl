@@ -38,15 +38,28 @@ function Tab_PTXpaths_Callbacks(app)
     # Legacy solver, since it re-equilibrates the assemblage to differentiate
     # G_system rather than just fixing it and differentiating G0. There is no
     # boost-mode toggle in the P-T-X tab, so switching back to G0 always falls
-    # back to the tab's own default (Hybrid).
+    # back to the tab's own default (Legacy).
     callback!(
         app,
         Output("solver-dropdown-ptx", "value"),
         Input("scp-dropdown-ptx",     "value"),
 
         prevent_initial_call = true,
-    ) do scp
-        return scp == 1 ? "lp" : "hyb"
+    ) do _scp
+        return "lp"
+    end;
+
+    # show the optimizer choice for the legacy solver with the databases that have a nullspace optimizer
+    callback!(
+        app,
+        Output("display-optimizer-ptx-id",  "style"),
+        Input("solver-dropdown-ptx",        "value"),
+        Input("database-dropdown-ptx",      "value"),
+    ) do solver, dtb
+        if solver == "lp" && has_ns_optimizer(dtb)
+            return Dict("display" => "block")
+        end
+        return Dict("display" => "none")
     end;
 
     # This callback owns only the phase-threshold-store-ptx list itself (which
@@ -1002,6 +1015,7 @@ function Tab_PTXpaths_Callbacks(app)
         State("dataset-dropdown-ptx",  "value"),
         State("buffer-dropdown-ptx",    "value"),
         State("solver-dropdown-ptx",    "value"),    
+        State("optimizer-dropdown-ptx", "value"),
         State("verbose-dropdown-ptx",   "value"),   
         State("table-bulk-rock-ptx",    "data"),  
         State("buffer-1-mul-id-ptx",    "value"),  
@@ -1017,7 +1031,7 @@ function Tab_PTXpaths_Callbacks(app)
         ) do    compute,    compute_sol,     
                 phase_selection,   pressure,   tolerance,
                 Tliq,       Tsol,
-                dtb,        dataset,        bufferType,     solver,
+                dtb,        dataset,        bufferType,     solver,     optimizer,
                 verbose,    bulk,           bufferN,
                 cpx,        limOpx,         limOpxVal,      test,       sysunit
 
@@ -1032,7 +1046,8 @@ function Tab_PTXpaths_Callbacks(app)
             Tliq = compute_Tliq(    sysunit,    pressure,   tolerance,  bulk_ini,   oxi,    phase_selection,
                                     dtb,        dataset,    bufferType, solver,
                                     verbose,    bulk,       bufferN,
-                                    cpx,        limOpx,     limOpxVal  )
+                                    cpx,        limOpx,     limOpxVal;
+                                    optimizer = optimizer  )
         elseif bid == "find-solidus-button"
             bufferN                 = Float64(bufferN)               # convert buffer_n to float
             bulk_ini, bulk_ini, oxi = get_bulkrock_prop(bulk, bulk)  
@@ -1040,7 +1055,8 @@ function Tab_PTXpaths_Callbacks(app)
             Tsol = compute_Tsol(    sysunit,    pressure,   tolerance,  bulk_ini,   oxi,    phase_selection,
                                     dtb,        dataset,    bufferType, solver,
                                     verbose,    bulk,       bufferN,
-                                    cpx,        limOpx,     limOpxVal  )
+                                    cpx,        limOpx,     limOpxVal;
+                                    optimizer = optimizer  )
         end
 
         return Tliq, Tsol
@@ -1293,6 +1309,7 @@ function Tab_PTXpaths_Callbacks(app)
         State("dataset-dropdown-ptx",  "value"),
         State("buffer-dropdown-ptx",    "value"),
         State("solver-dropdown-ptx",    "value"),
+        State("optimizer-dropdown-ptx", "value"),
         State("scp-dropdown-ptx",       "value"),
         State("verbose-dropdown-ptx",   "value"),
         State("table-bulk-rock-ptx",    "data"),
@@ -1345,7 +1362,7 @@ function Tab_PTXpaths_Callbacks(app)
 
         ) do    compute,    upsys,      display_mode,               ext_display_mode,   warr_naming,    phase_order_version,
                 sys_unit,   phase_selection, pure_phase_selection,  phase_list, nsteps,     PTdata,     mode,   assim,  var_buffer,
-                dtb,        dataset,    bufferType, solver,     scp,
+                dtb,        dataset,    bufferType, solver,     optimizer,  scp,
                 verbose,    bulk,       bulk2,      bufferN,
                 cpx,        limOpx,     limOpxVal,  test,   sysunit,
                 nCon,       nConRes,    nRes,       color_table,
@@ -1407,7 +1424,8 @@ function Tab_PTXpaths_Callbacks(app)
                                     bulkte_ini_te, bulkte_ass_te, elem_te,
                                     seismicScheme, seismicWeightFactor, seismicCorMode,
                                     aspectRatio, seismicWater, shallowCor, fluidAsMelt, anelasticCor,
-                                    calcUnit,   phase_thresholds,   Bool(reminimizeThreshold)   )
+                                    calcUnit,   phase_thresholds,   Bool(reminimizeThreshold);
+                                    optimizer = optimizer   )
 
             if isentropic_mode == true
                 entropy                 = string(round(Out_PTX[1].entropy[1],digits=3))
@@ -1796,6 +1814,7 @@ function Tab_PTXpaths_Callbacks(app)
         State("solidus-pressure-val-id",    "value"),
         State("dataset-dropdown-ptx",       "value"),
         State("solver-dropdown-ptx",        "value"),
+        State("optimizer-dropdown-ptx",     "value"),
         State("verbose-dropdown-ptx",       "value"),
         State("mb-cpx-switch-ptx",          "value"),
         State("limit-ca-opx-id-ptx",        "value"),
@@ -1804,7 +1823,7 @@ function Tab_PTXpaths_Callbacks(app)
         prevent_initial_call = false,
     ) do sys_unit,
         test, dtb, update, _o_liq_clicks, warr_naming, preset_ptx, tb_data, current_ss_selection, current_pp_selection,
-        Tliq_txt, bufferType, bufferN, pressure_val, dataset, solver, verbose, cpx, limOpx, limOpxVal
+        Tliq_txt, bufferType, bufferN, pressure_val, dataset, solver, optimizer, verbose, cpx, limOpx, limOpxVal
 
         global use_warr_names
         use_warr_names[1] = (warr_naming == "warr")
@@ -1836,7 +1855,8 @@ function Tab_PTXpaths_Callbacks(app)
                                                     limitCaOpx  = limitCaOpx,
                                                     CaOpxLim    = CaOpxLim,
                                                     buffer      = bufferType,
-                                                    solver      = sol )
+                                                    solver      = sol,
+                                                    optimizer   = get_optimizer(dtb, optimizer, sol) )
 
             sys_in = sys_unit == 1 ? "mol" : "wt"
             gv     = define_bulk_rock(gv, bulk_ini, oxi, sys_in, dtb)
@@ -2260,7 +2280,7 @@ function Tab_PTXpaths_Callbacks(app)
     callback!(app,
         Output("classification-diagram-options-container-ptx", "style"),
         Input("ptx-main-tabs", "active_tab"),
-        prevent_initial_call = false,
+        prevent_initial_call = true,
     ) do active_tab
         if active_tab == "classification-diagrams-tab"
             return Dict("display" => "block")

@@ -56,7 +56,7 @@ function Tab_Simulation_Callbacks(app)
         Output( "grid-subdivision",     "value"     ),
         Input(  "gsub-id",              "value"     ),
 
-    prevent_initial_call = false,         # we have to load at startup, so one minimzation is achieved
+    prevent_initial_call = true,
     ) do n_ref
 
         n_ref_info = "$(2^n_ref) × $(2^n_ref) grid"
@@ -204,6 +204,7 @@ function Tab_Simulation_Callbacks(app)
 
         State(  "buffer-dropdown",                  "value"       ),
         State(  "solver-dropdown",                  "value"       ),
+        State(  "optimizer-dropdown",               "value"       ),
         State(  "boost-mode-dropdown",              "value"       ),
         State(  "verbose-dropdown",                 "value"       ),
         State(  "scp-dropdown",                     "value"       ),
@@ -237,7 +238,7 @@ function Tab_Simulation_Callbacks(app)
         ptx_table,
         pmin, pmax, tmin, tmax, pfix, tfix,
         grid_sub, refinement, refinement_level,
-        buffer, solver, boost, verbose, scp,
+        buffer, solver, optimizer, boost, verbose, scp,
         test, test2,
         buffer1, buffer2,
         te_test, te_test2,
@@ -268,7 +269,7 @@ function Tab_Simulation_Callbacks(app)
         pressure_unit   = pressure_unit == "gpa" ? "gpa" : "kbar"
 
         println("Saving phase diagram options..."); t0 = time()
-        @save file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ssat_dtb P2O5sat_dtb ptx_table pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver boost verbose scp test test2 buffer1 buffer2 te_test te_test2 watsat watsat_val ss_selection pp_selection preset pressure_unit bulk_unit bulk_table bulk_table2 te_table te_table2
+        @save file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ssat_dtb P2O5sat_dtb ptx_table pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver optimizer boost verbose scp test test2 buffer1 buffer2 te_test te_test2 watsat watsat_val ss_selection pp_selection preset pressure_unit bulk_unit bulk_table bulk_table2 te_table te_table2
         println("Saved phase diagram options in $(round(time()-t0, digits=3)) seconds");
 
         field_list = [n for n in STATE_DIAGRAM_FIELDS if isdefined(MAGEMinApp, Symbol(n))]
@@ -336,6 +337,7 @@ function Tab_Simulation_Callbacks(app)
 
         Output(  "pressure-range-label-id",          "children"    ),
         Output(  "fixed-pressure-label-id",          "children"    ),
+        Output(  "optimizer-dropdown",               "value"       ),
 
         Input(   "load-state-diagram-button",        "n_clicks"    ),
         Input(   "pressure-unit-dropdown",           "value"       ),
@@ -358,7 +360,7 @@ function Tab_Simulation_Callbacks(app)
             was_gpa     = (pressure_unit_prev == "gpa")
             use_GPa[1]  = (pressure_unit == "gpa")
 
-            out = Any[no_update() for _ = 1:32]
+            out = Any[no_update() for _ = 1:33]
             if was_gpa != use_GPa[1]
                 factor   = use_GPa[1] ? (1.0/10.0) : 10.0
                 pmin_cur isa Number && (out[13] = round(pmin_cur * factor, digits=10))
@@ -373,7 +375,7 @@ function Tab_Simulation_Callbacks(app)
             return Tuple(out)
         end
 
-        failed_out    = Any[no_update() for _ = 1:32]
+        failed_out    = Any[no_update() for _ = 1:33]
         failed_out[1] = ""
         failed_out[2] = "failed"
 
@@ -388,8 +390,8 @@ function Tab_Simulation_Callbacks(app)
         try
             opts = state_read(file, "db", "dbte", "database", "diagram_type", "mb_cpx", "limit_ca_opx", "ca_opx_val", "tepm", "kds_dtb", "zrsat_dtb", "ssat_dtb", "P2O5sat_dtb",
                                     "pmin", "pmax", "tmin", "tmax", "pfix", "tfix", "grid_sub", "refinement", "refinement_level", "buffer", "boost", "verbose", "scp",
-                                    "buffer1", "buffer2", "watsat", "watsat_val", "ss_selection", "pp_selection", "preset", "pressure_unit";
-                                    optional = ("ss_selection", "pp_selection", "preset", "pressure_unit"))
+                                    "buffer1", "buffer2", "watsat", "watsat_val", "ss_selection", "pp_selection", "preset", "pressure_unit", "optimizer";
+                                    optional = ("ss_selection", "pp_selection", "preset", "pressure_unit", "optimizer"))
         catch e
             println("Failed to read saved state options from $file: ", sprint(showerror, e))
             return Tuple(failed_out)
@@ -397,7 +399,7 @@ function Tab_Simulation_Callbacks(app)
 
         db_s, dbte_s, database, diagram_type, mb_cpx, limit_ca_opx, ca_opx_val, tepm, kds_dtb, zrsat_dtb, ssat_dtb, P2O5sat_dtb,
         pmin, pmax, tmin, tmax, pfix, tfix, grid_sub, refinement, refinement_level, buffer, boost, verbose, scp,
-        buffer1, buffer2, watsat, watsat_val, ss_selection, pp_selection, preset, saved_unit = opts
+        buffer1, buffer2, watsat, watsat_val, ss_selection, pp_selection, preset, saved_unit, optimizer = opts
 
         global infos, layout, data, data_plot, data_reaction, iso_show, n_lbl, data_isopleth, data_isopleth_out, Out_XY, Hash_XY, Out_TE_XY, all_TE_ph, n_phase_XY, addedRefinementLvl, pChip_wat, pChip_T, loaded_state_has_diagram
 
@@ -440,7 +442,7 @@ function Tab_Simulation_Callbacks(app)
         to_disp(v) = v isa Number ? display_pressure(state_pressure_kbar(v, saved_unit)) : v
 
         state_id *= -1.0
-        return "success", "", database, diagram_type, mb_cpx, limit_ca_opx, ca_opx_val, tepm, kds_dtb, zrsat_dtb, ssat_dtb, P2O5sat_dtb, to_disp(pmin), to_disp(pmax), tmin, tmax, to_disp(pfix), tfix, grid_sub, refinement, refinement_level, buffer, boost, verbose, scp, buffer1, buffer2, watsat, watsat_val, state_id, no_update(), no_update()
+        return "success", "", database, diagram_type, mb_cpx, limit_ca_opx, ca_opx_val, tepm, kds_dtb, zrsat_dtb, ssat_dtb, P2O5sat_dtb, to_disp(pmin), to_disp(pmax), tmin, tmax, to_disp(pfix), tfix, grid_sub, refinement, refinement_level, buffer, boost, verbose, scp, buffer1, buffer2, watsat, watsat_val, state_id, no_update(), no_update(), optimizer == "ns" ? "ns" : "nlopt"
     end
 
     # update the dictionary of phase_selection_options
@@ -604,6 +606,21 @@ function Tab_Simulation_Callbacks(app)
     
 
 
+    # show the optimizer choice for the legacy solver with the databases that have a nullspace optimizer
+    callback!(
+        app,
+        Output("display-optimizer-id",  "style"),
+        Input("solver-dropdown",        "value"),
+        Input("database-dropdown",      "value"),
+        prevent_initial_call = true,
+    ) do solver, dtb
+
+        if solver == "lp" && has_ns_optimizer(dtb)
+            return Dict("display" => "block")
+        end
+        return Dict("display" => "none")
+    end
+
     # update available options
     callback!(
         app,
@@ -620,11 +637,7 @@ function Tab_Simulation_Callbacks(app)
             if boost == true
                 solver_opt    = "lp"
             else
-                if scp == 1
-                    solver_opt    = "lp"
-                else
-                    solver_opt    = "hyb"
-                end
+                return no_update()
             end
         elseif bid == "scp-dropdown"
             if scp == 1
@@ -1116,6 +1129,7 @@ function Tab_Simulation_Callbacks(app)
         Output("gsub-row-id", "style"),
         Output("tepm-row-id", "style"),
         Output("pd3d-resolution-id", "style"),
+        Output("display-boost-option-id", "style"),
         Input("diagram-dropdown", "value"),
 
         prevent_initial_call = true,
@@ -1256,7 +1270,7 @@ function Tab_Simulation_Callbacks(app)
         tepmrow = Dict("display" => is3d ? "none"  : "block")
         res3d   = Dict("display" => is3d ? "block" : "none")
 
-        return Tstyle, Pstyle, Ts, Ps, test2, table2, PTx, testte2, tabte2, watsat, T1, T2, refine, refine2, mumu, gsub, tepmrow, res3d
+        return Tstyle, Pstyle, Ts, Ps, test2, table2, PTx, testte2, tabte2, watsat, T1, T2, refine, refine2, mumu, gsub, tepmrow, res3d, refine
     end
 
 
@@ -1320,11 +1334,12 @@ function Tab_Simulation_Callbacks(app)
         State("database-dropdown",             "value"),
         State("buffer-dropdown",               "value"),
         State("solver-dropdown",               "value"),
+        State("optimizer-dropdown",            "value"),
         State("select-bulk-unit",              "value"),
 
         prevent_initial_call = true,
 
-    ) do n_clicks, bulk_data, ox1, ox2, ox1_min, ox1_max, ox2_min, ox2_max, fixP, fixT, dtb, bufferType, solver, sys_unit
+    ) do n_clicks, bulk_data, ox1, ox2, ox1_min, ox1_max, ox2_min, ox2_max, fixP, fixT, dtb, bufferType, solver, optimizer, sys_unit
 
         oxi     = [row["oxide"] for row in bulk_data]
         bulk    = [Float64(row["fraction"] isa String ? parse(Float64, row["fraction"]) : row["fraction"]) for row in bulk_data]
@@ -1346,7 +1361,8 @@ function Tab_Simulation_Callbacks(app)
             Float64(ox2_min)/100.0,    Float64(ox2_max)/100.0,
             dtb,    bufferType, solver,
             -1,  0.0,        nothing,
-            false,  "OFF",      0.0     )
+            false,  "OFF",      0.0;
+            optimizer = optimizer   )
 
         if ok
             warn_msg, warn_open = "", false

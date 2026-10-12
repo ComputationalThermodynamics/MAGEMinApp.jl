@@ -257,11 +257,28 @@ function Tab_PTXpaths()
                                                 (label = "Legacy",      value = "lp"),
                                                 (label = "Hybrid",      value = "hyb")
                                             ],
-                                            value="hyb" ,
+                                            value="lp" ,
                                             clearable   = false,
                                             multi   = false),
                                         ]),
                                     ]),
+                                    html_div([
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("Optimizer", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ],width=4),
+                                            dbc_col([ 
+                                                dcc_dropdown(   id      = "optimizer-dropdown-ptx",
+                                                options = [
+                                                    (label = "NLopt",       value = "nlopt"),
+                                                    (label = "Nullspace",   value = "ns")
+                                                ],
+                                                value="ns" ,
+                                                clearable   = false,
+                                                multi   = false),
+                                            ]),
+                                        ]),
+                                    ], style = Dict("display" => "none"), id  = "display-optimizer-ptx-id"), #none, block
 
                                     dbc_row([
                                         dbc_col([

@@ -376,11 +376,17 @@ end
     svg_tick_label(v)
 
     A tick value as text without floating-point noise or a trailing ".0"
-    (`10.4`, `550`, never `10.400000000000001` or `550.0`).
+    (`10.4`, `550`, never `10.400000000000001` or `550.0`). Values below 0.01 keep
+    three significant digits (`0.0002`, `1.25e-5`, never `0`), so the small values of
+    trace-element fields stay readable.
 """
 function svg_tick_label(v::Real)
-    r = round(Float64(v), digits = 3)
-    return isinteger(r) ? string(Int(r)) : string(r)
+    x = Float64(v)
+    x == 0.0 && return "0"
+    isfinite(x) || return string(x)
+    r = round(x, digits = max(3, 2 - floor(Int, log10(abs(x)))))
+    isinteger(r) && abs(r) < 1e15 && return string(Int(r))
+    return replace(string(r), r"\.0(?=e)" => "")
 end
 
 """

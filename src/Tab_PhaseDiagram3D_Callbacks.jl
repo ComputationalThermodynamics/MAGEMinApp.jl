@@ -34,7 +34,7 @@ function Tab_PhaseDiagram3D_Callbacks(app)
         Input("diagram-dropdown",       "value"),
         Input("tabs",                   "active_tab"),
 
-        prevent_initial_call = false,
+        prevent_initial_call = true,
     ) do diagType, active_tab
         return (diagType == "ptx3d" || active_tab == "tab-3d-diagram") ? Dict{String,String}() : Dict("display" => "none")
     end
@@ -114,6 +114,7 @@ function Tab_PhaseDiagram3D_Callbacks(app)
         State("buffer-1-mul-id",            "value"),
         State("buffer-2-mul-id",            "value"),
         State("solver-dropdown",            "value"),
+        State("optimizer-dropdown",         "value"),
         State("scp-dropdown",               "value"),
         State("sas-dropdown",               "value"),
         State("wf-id",                      "value"),
@@ -131,7 +132,7 @@ function Tab_PhaseDiagram3D_Callbacks(app)
     ) do    _compute,
             dtb,        dataset,    custW,      cpx,        limOpx,     limOpxVal,  ph_selection, pure_ph_selection,
             tmin,       tmax,       pmin,       pmax,       nP,         nT,         nX,
-            bufferType, bufferN1,   bufferN2,   solver,     scp,
+            bufferType, bufferN1,   bufferN2,   solver,     optimizer,  scp,
             sas,        wf,         seismicCorMode, aspectRatioVal, seismicWaterMode, shallowCorMode, fluidAsMeltMode, anelasticCorMode,
             bulk1,      bulk2,      sys_unit
 
@@ -147,7 +148,8 @@ function Tab_PhaseDiagram3D_Callbacks(app)
                                                 bufferType, Float64(bufferN1), Float64(bufferN2),
                                                 sas == 0 ? "VRH" : "HS", Float64(wf),
                                                 Bool(seismicCorMode), Float64(aspectRatioVal), Int64(seismicWaterMode),
-                                                Bool(shallowCorMode), Bool(fluidAsMeltMode), Bool(anelasticCorMode) )
+                                                Bool(shallowCorMode), Bool(fluidAsMeltMode), Bool(anelasticCorMode);
+                                                optimizer = optimizer )
         catch e
             msg = sprint(showerror, e)
             println("3D phase diagram computation failed: ", msg)

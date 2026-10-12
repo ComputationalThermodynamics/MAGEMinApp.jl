@@ -14,6 +14,11 @@ const MAGERES_DRAWER_FIELDS = (:database, :oxides, :magma_bulk, :host_bulk, :inj
 
 const MAGERES_ENUM_FIELDS = Dict{Symbol,Vector{Dict{String,Any}}}(
     :boost_mode       => [Dict("label" => "Off", "value" => false), Dict("label" => "On", "value" => true)],
+    :solver           => [Dict("label" => "PGE",    "value" => "pge"),
+                          Dict("label" => "Legacy", "value" => "lp"),
+                          Dict("label" => "Hybrid", "value" => "hyb")],
+    :optimizer        => [Dict("label" => "NLopt",     "value" => "nlopt"),
+                          Dict("label" => "Nullspace", "value" => "ns")],
     :show_grid        => [Dict("label" => "Shown", "value" => true), Dict("label" => "Hidden", "value" => false)],
     :show_outline     => [Dict("label" => "Shown", "value" => true), Dict("label" => "Hidden", "value" => false)],
     :show_isotherms   => [Dict("label" => "Shown", "value" => true), Dict("label" => "Hidden", "value" => false)],

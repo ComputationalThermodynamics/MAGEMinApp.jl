@@ -475,7 +475,7 @@ end
 
 
 
-function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2, PTpath, watsat, watsat_val)
+function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2, PTpath, watsat, watsat_val; optimizer = "nlopt")
 
     ptx_data    = copy(PTpath)
     np      = length(ptx_data)
@@ -509,7 +509,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     end
 
     if solver == "lp"
-        solv = "LP (legacy)"
+        solv = get_optimizer(dtb, optimizer, 0) == 1 ? "LP (legacy), nullspace optimizer" : "LP (legacy)"
     elseif solver == "pge"
         solv = "PGE (default)"
     elseif solver == "hyb"
@@ -1015,7 +1015,8 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                     seismic_cor = false, aspect_ratio = 0.3, seismic_water = 0,
                                     shallow_cor = false, fluid_as_melt = false, anelastic_correction = false;
                                     mumu_oxide1_idx     = 0,
-                                    mumu_oxide2_idx     = 0        )
+                                    mumu_oxide2_idx     = 0,
+                                    optimizer           = "nlopt"  )
         global CompProgress
 
         #________________________________________________________________________________________#
@@ -1039,7 +1040,8 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
             pChip_wat, pChip_T = get_wat_sat_function(         Yrange,     bulk_L,     oxi,    phase_selection,
                                                                 dtb,        bufferType, solver,
                                                                 verbose,    bufferN1,
-                                                                cpx,        limOpx,     limOpxVal, watsat_val)
+                                                                cpx,        limOpx,     limOpxVal, watsat_val;
+                                                                optimizer   = optimizer )
         else
             pChip_wat, pChip_T = nothing, nothing
         end
@@ -1054,6 +1056,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                                 mbCpx               = mbCpx,
                                                 buffer              = bufferType,
                                                 solver              = sol,
+                                                optimizer           = get_optimizer(dtb, optimizer, sol),
                                                 seismicScheme       = seismicScheme,
                                                 seismicWeightFactor = seismicWeightFactor,
                                                 mu_fix_idx          = mu_fix_idx    );
@@ -1125,7 +1128,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
 
         phase_infos = get_phase_infos(Out_XY)                                                                                
 
-        PT_infos = get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat,watsat_val)
+        PT_infos = get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat,watsat_val; optimizer = optimizer)
 
         data_plot, annotations, txt_list, assemblage_rows, list_compacted_idx, raw_field_id = get_diagram_labels(  Out_XY,
                                                                 Hash_XY,
@@ -1259,7 +1262,8 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                 seismic_cor = false, aspect_ratio = 0.3, seismic_water = 0,
                                 shallow_cor = false, fluid_as_melt = false, anelastic_correction = false;
                                 mumu_oxide1_idx     = 0,
-                                mumu_oxide2_idx     = 0       )
+                                mumu_oxide2_idx     = 0,
+                                optimizer           = "nlopt"  )
 
     global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, gridded_fields, phase_infos, X, Y, addedRefinementLvl, layout, n_lbl, pChip_wat, pChip_T, poly_phases, poly_pcoor, PT_infos
 
@@ -1275,6 +1279,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                             mbCpx               = mbCpx,
                                             buffer              = bufferType,
                                             solver              = sol,
+                                            optimizer           = get_optimizer(dtb, optimizer, sol),
                                             seismicScheme       = seismicScheme,
                                             seismicWeightFactor = seismicWeightFactor,
                                             mu_fix_idx          = mu_fix_idx    );
@@ -1313,7 +1318,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                                                                     Xrange,
                                                                                     Yrange )
     
-    PT_infos                           = get_phase_diagram_information(npoints,dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat,watsat_val)
+    PT_infos                           = get_phase_diagram_information(npoints,dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat,watsat_val; optimizer = optimizer)
                                                               
     data_plot, annotations, txt_list, assemblage_rows, list_compacted_idx, raw_field_id = get_diagram_labels(   Out_XY,
                                                             Hash_XY,

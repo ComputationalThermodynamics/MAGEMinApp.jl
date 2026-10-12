@@ -46,7 +46,8 @@ function compute_mumu_bounds(   fixP            :: Float64,
                                 verbose,
                                 bufferN         :: Float64,
                                 phase_selection,
-                                cpx,            limOpx,     limOpxVal   )
+                                cpx,            limOpx,     limOpxVal;
+                                optimizer       = "nlopt"   )
 
     mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb, solver, cpx, limOpx, limOpxVal )
 
@@ -56,7 +57,8 @@ function compute_mumu_bounds(   fixP            :: Float64,
                                             limitCaOpx  = limitCaOpx,
                                             CaOpxLim    = CaOpxLim,
                                             buffer      = bufferType,
-                                            solver      = sol    );
+                                            solver      = sol,
+                                            optimizer   = get_optimizer(dtb, optimizer, sol)    );
 
     sys_in  = "mol"
 
@@ -97,7 +99,8 @@ end
 function get_wat_sat_function(     Yrange,     bulk_ini,   oxi,    phase_selection,
                                     dtb,        bufferType, solver,
                                     verbose,    bufferN,
-                                    cpx,        limOpx,     limOpxVal, watsat_val)
+                                    cpx,        limOpx,     limOpxVal, watsat_val;
+                                    optimizer   = "nlopt")
    
     id_h2o      = findfirst(oxi .== "H2O")
     hydrated    = 1;
@@ -129,7 +132,8 @@ function get_wat_sat_function(     Yrange,     bulk_ini,   oxi,    phase_selecti
                                                 limitCaOpx  = limitCaOpx,
                                                 CaOpxLim    = CaOpxLim,
                                                 buffer      = bufferType,
-                                                solver      = sol    );
+                                                solver      = sol,
+                                                optimizer   = get_optimizer(dtb, optimizer, sol)    );
 
         sys_in      = "mol"
         gv          =  define_bulk_rock(gv, bulk_ini, oxi, sys_in, dtb);

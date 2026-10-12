@@ -49,3 +49,22 @@ function fetch_message2()
     end
 end
 
+
+const pending_messages = Ref{Union{Nothing,Task}}(nothing)
+
+function fetch_messages()
+    task     = Threads.@spawn fetch_message()
+    message2 = fetch_message2()
+    return fetch(task), message2
+end
+
+function prefetch_messages!()
+    pending_messages[] = Threads.@spawn fetch_messages()
+    return nothing
+end
+
+function take_messages()
+    task               = pending_messages[]
+    pending_messages[] = nothing
+    return isnothing(task) ? fetch_messages() : fetch(task)
+end

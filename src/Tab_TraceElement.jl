@@ -11,6 +11,7 @@
 
 function Tab_TraceElement()
     html_div([
+    dcc_store(id = "te-loaded-store", data = 0),
     # one column for the plots
         dbc_col([
 

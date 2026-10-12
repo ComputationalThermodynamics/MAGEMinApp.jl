@@ -494,7 +494,8 @@ end
 function compute_Tliq(          sysunit, pressure,   tolerance,  bulk_ini,   oxi,    phase_selection,
                                 dtb,        dataset,    bufferType, solver,
                                 verbose,    bulk,       bufferN,
-                                cpx,        limOpx,     limOpxVal       )
+                                cpx,        limOpx,     limOpxVal;
+                                optimizer   = "nlopt"   )
 
     if "liq" in phase_selection 
         
@@ -518,7 +519,8 @@ function compute_Tliq(          sysunit, pressure,   tolerance,  bulk_ini,   oxi
                                                 limitCaOpx  = limitCaOpx,
                                                 CaOpxLim    = CaOpxLim,
                                                 buffer      = bufferType,
-                                                solver      = sol    );
+                                                solver      = sol,
+                                                optimizer   = get_optimizer(dtb, optimizer, sol)    );
         if sysunit == 1
             sys_in = "mol"
         else
@@ -590,7 +592,8 @@ end
 function compute_Tsol(          sysunit,    pressure,   tolerance,  bulk_ini,   oxi,    phase_selection,
                                 dtb,        dataset,    bufferType, solver,
                                 verbose,    bulk,       bufferN,
-                                cpx,        limOpx,     limOpxVal       )
+                                cpx,        limOpx,     limOpxVal;
+                                optimizer   = "nlopt"   )
 
     if "liq" in phase_selection 
         
@@ -614,7 +617,8 @@ function compute_Tsol(          sysunit,    pressure,   tolerance,  bulk_ini,   
                                                 limitCaOpx  = limitCaOpx,
                                                 CaOpxLim    = CaOpxLim,
                                                 buffer      = bufferType,
-                                                solver      = sol    );
+                                                solver      = sol,
+                                                optimizer   = get_optimizer(dtb, optimizer, sol)    );
 
                          
         if sysunit == 1
@@ -727,7 +731,8 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                 bulkte_ini  = Float64[], bulkte_ass  = Float64[], elem_TE = String[],
                                 seismicScheme = "VRH",  seismicWeightFactor = 0.5, seismicCorMode = false,
                                 aspectRatio = 0.3, seismicWater = 0, shallowCor = false, fluidAsMelt = false, anelasticCor = false,
-                                calcUnit = "mol", phase_thresholds = [], reminimize_threshold = false )
+                                calcUnit = "mol", phase_thresholds = [], reminimize_threshold = false;
+                                optimizer = "nlopt" )
 
         global Out_PTX, ph_names_ptx, fracEvol, compo_matrix, removedBulk, assimFrac
         global Out_TE_PTX, all_TE_ph_ptx, C_ext_TE_PTX
@@ -826,7 +831,8 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                 pChip_wat, pChip_T = get_wat_sat_function(  Yrange,     bulk_ini,   oxi,    phase_selection,
                                                             dtb,        bufferType, solver,
                                                             verbose,    bufferN,
-                                                            cpx,        limOpx,     limOpxVal, Float64(watsat_val))
+                                                            cpx,        limOpx,     limOpxVal, Float64(watsat_val);
+                                                            optimizer = optimizer   )
             end
 
             # initialize single thread MAGEMin
@@ -838,6 +844,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                                     CaOpxLim    = CaOpxLim,
                                                     buffer      = bufferType,
                                                     solver      = sol,
+                                                    optimizer   = get_optimizer(dtb, optimizer, sol),
                                                     seismicScheme       = seismicScheme,
                                                     seismicWeightFactor = seismicWeightFactor    );
     
