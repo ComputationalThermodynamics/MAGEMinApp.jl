@@ -164,6 +164,20 @@ function to_str_vec(::Nothing)
     return String[]
 end
 
+"""
+    round_sig(x; sig = 3, mindigits = 2)
+
+    `x` rounded to `sig` significant digits, but never to fewer than `mindigits` decimals
+    (so `1234.567` stays `1234.57` while `0.00012345` becomes `0.000123` instead of `0.0`).
+    Used for the default colour and isopleth ranges, whose values can be tiny
+    (e.g. the weight of zircon in the trace-element tab).
+"""
+function round_sig(x::Real; sig::Int = 3, mindigits::Int = 2)
+    v = Float64(x)
+    (v == 0.0 || !isfinite(v)) && return v
+    return round(v, digits = max(mindigits, sig - 1 - floor(Int, log10(abs(v)))))
+end
+
 function display_iso_label(label::String)
     !use_warr_names[1] && return label
     idx = findfirst('_', label)

@@ -404,11 +404,12 @@ function pd_export_svg(parts, path::AbstractString)
                         init = Vector{Vector{Tuple{Float64,Float64}}}())
             d = svg_path_data(c, cl)
             isempty(d) && continue
-            svg_path(io, svg_id(seen, "$(idbase)_$(svg_tick_label(lvl))"), d)
+            lvl_txt = svg_tick_label(round_sig(lvl; sig = 4, mindigits = 0))
+            svg_path(io, svg_id(seen, "$(idbase)_$(lvl_txt)"), d)
             n_paths += 1
             for l in cl
                 lab = pd_contour_label(l, c)
-                lab === nothing || push!(labels, (lab[1], lab[2], lab[3], svg_tick_label(lvl)))
+                lab === nothing || push!(labels, (lab[1], lab[2], lab[3], lvl_txt))
             end
         end
         svg_group_close(io)
@@ -436,11 +437,13 @@ function pd_export_svg(parts, path::AbstractString)
     svg_gradient_bar_stops(io, svg_id(seen, "Colorbar_bar"), bar_x, bar_y, bar_w, bar_h, parts.stops)
     zticks = isnothing(get(parts, :ztick, nothing)) ? svg_nice_ticks(parts.zmin, parts.zmax) :
              collect(ceil(parts.zmin / parts.ztick - 1e-9) * parts.ztick : parts.ztick : parts.zmax + 1e-9)
+    zlabels = [svg_tick_label(v) for v in zticks]
     for (k, v) in enumerate(zticks)
         t = parts.zmax == parts.zmin ? 0.0 : (v - parts.zmin) / (parts.zmax - parts.zmin)
-        svg_text(io, bar_x + bar_w + 5, bar_y + bar_h * (1 - t), svg_tick_label(v); id = svg_id(seen, "Colorbar_tick_$(k)"), anchor = "start")
+        svg_text(io, bar_x + bar_w + 5, bar_y + bar_h * (1 - t), zlabels[k]; id = svg_id(seen, "Colorbar_tick_$(k)"), anchor = "start")
     end
-    isempty(parts.field_title) || svg_text(io, bar_x + bar_w + 42, bar_y + bar_h / 2, parts.field_title;
+    title_dx = max(42.0, 5.0 + 5.8 * maximum(length, zlabels; init = 0) + 14.0)
+    isempty(parts.field_title) || svg_text(io, bar_x + bar_w + title_dx, bar_y + bar_h / 2, parts.field_title;
                                             id = svg_id(seen, "Colorbar_title"), size = 11, anchor = "middle", rotate = 90)
     svg_group_close(io)
 

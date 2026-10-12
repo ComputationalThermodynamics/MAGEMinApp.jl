@@ -1666,8 +1666,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             data_grid       = show_hide_mesh_grid()
             active_tab      = "tab-phase-diagram" 
 
-            minColor        = round(minimum(skipmissing(gridded)),digits=2);
-            maxColor        = round(maximum(skipmissing(gridded)),digits=2);
+            minColor        = round_sig(minimum(skipmissing(gridded)));
+            maxColor        = round_sig(maximum(skipmissing(gridded)));
             update_ss_list  = 1
             update_reaction_list  = 1
             clear_selection = []
@@ -1720,8 +1720,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             infos           = get_computation_info(npoints, meant)
             data_reaction   = show_hide_reaction_lines(sub,refLvl,Xrange,Yrange)
             data_grid       = show_hide_mesh_grid()
-            minColor        = round(minimum(skipmissing(gridded)),digits=2);
-            maxColor        = round(maximum(skipmissing(gridded)),digits=2);
+            minColor        = round_sig(minimum(skipmissing(gridded)));
+            maxColor        = round_sig(maximum(skipmissing(gridded)));
             update_ss_list  = 1
             update_reaction_list  = 1
             clear_selection = []
@@ -1801,8 +1801,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             smooth,     colorm,     reverseColorMap, set_white,
             test,       refType                                 )
 
-            minColor        = round(minimum(skipmissing(gridded)),digits=2);
-            maxColor        = round(maximum(skipmissing(gridded)),digits=2);
+            minColor        = round_sig(minimum(skipmissing(gridded)));
+            maxColor        = round_sig(maximum(skipmissing(gridded)));
 
             active_tab      = "tab-phase-diagram"
 
@@ -1843,8 +1843,8 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     smooth,     colorm,     reverseColorMap, set_white,
                                                                     test,       refType                                 )
 
-            minColor        = round(minimum(skipmissing(gridded)),digits=2); 
-            maxColor        = round(maximum(skipmissing(gridded)),digits=2);  
+            minColor        = round_sig(minimum(skipmissing(gridded))); 
+            maxColor        = round_sig(maximum(skipmissing(gridded)));  
                                                                                                  
         elseif bid == "show-grid"
 

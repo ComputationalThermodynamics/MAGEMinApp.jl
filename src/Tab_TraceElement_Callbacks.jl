@@ -167,6 +167,7 @@ function Tab_TraceElement_Callbacks(app)
         Output("phase-assemblage-clipboard-id-te", "content"),
         Output("show-text-list-id-te",        "style"   ),
         Output("output-loading-id-te",        "children"),
+        Output("te-loaded-store",             "data"),
 
         Input("load-button-te",             "n_clicks"   ),
         Input("compute-display-te",         "n_clicks"   ),
@@ -293,10 +294,12 @@ function Tab_TraceElement_Callbacks(app)
         loading                         = ""
         field2plot[1]                   = 1
         clear_selection_te              = no_update()     # only touched when the assemblage list is (re)built or Clear is pushed
+        te_loaded                       = no_update()     # changes only when the trace-element data are (re)loaded
 
         if @isdefined(Out_TE_XY) && length(Out_XY) == length(Out_TE_XY)
             if bid == "load-button-te"
                 fieldType = "zrc"
+                te_loaded = string(rand())
                 global gridded_te, gridded_info_te, gridded_fields_te, X_te, Y_te, npoints_te, meant_te
                 global layout_te, n_lbl, addedRefinementLvl
                 global assemblage_rows_te, list_compacted_idx_te, raw_field_id_te, poly_phases_te, poly_pcoor_te
@@ -319,8 +322,8 @@ function Tab_TraceElement_Callbacks(app)
                                                                                                     Xrange,
                                                                                                     Yrange )
 
-                minColor     = round(minimum(skipmissing(gridded_te)),digits=2); 
-                maxColor     = round(maximum(skipmissing(gridded_te)),digits=2);  
+                minColor     = round_sig(minimum(skipmissing(gridded_te))); 
+                maxColor     = round_sig(maximum(skipmissing(gridded_te)));  
 
                 PT_infos_te  = get_phase_diagram_information(   npoints_te,
                                                                 dtb,
@@ -470,8 +473,8 @@ function Tab_TraceElement_Callbacks(app)
                                                                                     sub,        refLvl,
                                                                                     smooth,     colorm,     reverseColorMap, set_white,       refType                                 )
                                                                                     
-                minColor     = round(minimum(skipmissing(gridded_te)),digits=2); 
-                maxColor     = round(maximum(skipmissing(gridded_te)),digits=2);  
+                minColor     = round_sig(minimum(skipmissing(gridded_te))); 
+                maxColor     = round_sig(maximum(skipmissing(gridded_te)));  
 
             elseif bid == "fields-dropdown-zrc" || (bid == "update-accessory-fields" && type == "zrc")
 
@@ -480,8 +483,8 @@ function Tab_TraceElement_Callbacks(app)
                                                                                     dtb,        oxi,
                                                                                     sub,        refLvl,
                                                                                     smooth,     colorm,     reverseColorMap, set_white,       refType                                 )
-                minColor     = round(minimum(skipmissing(gridded_te)),digits=2); 
-                maxColor     = round(maximum(skipmissing(gridded_te)),digits=2);  
+                minColor     = round_sig(minimum(skipmissing(gridded_te))); 
+                maxColor     = round_sig(maximum(skipmissing(gridded_te)));  
 
             elseif bid == "fields-dropdown-fapt" || (bid == "update-accessory-fields" && type == "fapt")
 
@@ -490,8 +493,8 @@ function Tab_TraceElement_Callbacks(app)
                                                                                     dtb,        oxi,
                                                                                     sub,        refLvl,
                                                                                     smooth,     colorm,     reverseColorMap, set_white,       refType                                 )
-                minColor     = round(minimum(skipmissing(gridded_te)),digits=2);
-                maxColor     = round(maximum(skipmissing(gridded_te)),digits=2);
+                minColor     = round_sig(minimum(skipmissing(gridded_te)));
+                maxColor     = round_sig(maximum(skipmissing(gridded_te)));
 
             elseif bid == "fields-dropdown-co2sat" || (bid == "update-accessory-fields" && type == "co2sat")
 
@@ -500,8 +503,8 @@ function Tab_TraceElement_Callbacks(app)
                                                                                     dtb,        oxi,
                                                                                     sub,        refLvl,
                                                                                     smooth,     colorm,     reverseColorMap, set_white,       refType                                 )
-                minColor     = round(minimum(skipmissing(gridded_te)),digits=2);
-                maxColor     = round(maximum(skipmissing(gridded_te)),digits=2);
+                minColor     = round_sig(minimum(skipmissing(gridded_te)));
+                maxColor     = round_sig(maximum(skipmissing(gridded_te)));
 
             elseif bid == "fields-dropdown-sulf" || (bid == "update-accessory-fields" && type == "sulf")
 
@@ -510,8 +513,8 @@ function Tab_TraceElement_Callbacks(app)
                                                                                     dtb,        oxi,
                                                                                     sub,        refLvl,
                                                                                     smooth,     colorm,     reverseColorMap, set_white,       refType                                 )
-                minColor     = round(minimum(skipmissing(gridded_te)),digits=2);
-                maxColor     = round(maximum(skipmissing(gridded_te)),digits=2);
+                minColor     = round_sig(minimum(skipmissing(gridded_te)));
+                maxColor     = round_sig(maximum(skipmissing(gridded_te)));
 
             elseif bid == "fields-dropdown-mnz" || (bid == "update-accessory-fields" && type == "mnz")
 
@@ -520,8 +523,8 @@ function Tab_TraceElement_Callbacks(app)
                                                                                     dtb,        oxi,
                                                                                     sub,        refLvl,
                                                                                     smooth,     colorm,     reverseColorMap, set_white,       refType                                 )
-                minColor     = round(minimum(skipmissing(gridded_te)),digits=2);
-                maxColor     = round(maximum(skipmissing(gridded_te)),digits=2);
+                minColor     = round_sig(minimum(skipmissing(gridded_te)));
+                maxColor     = round_sig(maximum(skipmissing(gridded_te)));
 
             elseif bid == "show-grid-te"
 
@@ -730,9 +733,9 @@ function Tab_TraceElement_Callbacks(app)
                                                                             width    =  900,
                                                                             scale    =  2.0,       ).fields)
     
-            return grid, full_grid, fig_cap, config_cap, fig_te, config, fieldType, minColor, maxColor, isopleths_te, isoplethsHid_te, assemblage_rows_te, clear_selection_te, txt_list, show_text_list, loading
+            return grid, full_grid, fig_cap, config_cap, fig_te, config, fieldType, minColor, maxColor, isopleths_te, isoplethsHid_te, assemblage_rows_te, clear_selection_te, txt_list, show_text_list, loading, te_loaded
         else
-            return no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update()
+            return no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update()
             print("Compute a phase diagram with activated trace-element in the Setup tab first!\n")
         end
 
@@ -960,6 +963,78 @@ function Tab_TraceElement_Callbacks(app)
             end
         end
         return is_open    
+    end
+
+    """
+        Default range of the trace-element isopleths: min, step and max fitted to the range
+        of the selected field (ten steps), as for the isopleths of the Diagram sub-tab.
+        Refreshed when the field selection changes and each time the trace-element data are
+        (re)loaded; a range typed by the user is left alone until one of those happens.
+    """
+    callback!(
+        app,
+        Output("iso-min-id-te",  "value"),
+        Output("iso-step-id-te", "value"),
+        Output("iso-max-id-te",  "value"),
+
+        Input("field-type-te-dropdown",     "value"),
+        Input("fields-dropdown-zrc-te",     "value"),
+        Input("fields-dropdown-sulf-te",    "value"),
+        Input("fields-dropdown-fapt-te",    "value"),
+        Input("fields-dropdown-co2sat-te",  "value"),
+        Input("fields-dropdown-mnz-te",     "value"),
+        Input("input-calc-id-te",           "value"),
+        Input("normalization-iso-te",       "value"),
+        Input("te-loaded-store",            "data"),
+
+        State("input-cust-id-te",           "value"),
+        State("gsub-id",                    "value"),
+        State("refinement-levels",          "value"),
+
+        prevent_initial_call = true,
+    ) do field, field_zrc, field_sulf, field_fapt, field_co2sat, field_mnz, calc, norm_te, _loaded, cust, sub, refLvl
+
+        global Out_XY, Out_TE_XY, data, addedRefinementLvl
+
+        no_range = (no_update(), no_update(), no_update())
+        (@isdefined(Out_TE_XY) && @isdefined(Out_XY) && @isdefined(data)) || return no_range
+        (isempty(Out_XY) || length(Out_XY) != length(Out_TE_XY)) && return no_range
+
+        mod, name = if field == "te"
+            "calc", (isnothing(cust) || cust == "none") ? String(something(calc, "")) : String(cust)
+        elseif field == "zrc"
+            "zrc", field_zrc
+        elseif field == "sulf"
+            "sulf", field_sulf
+        elseif field == "fapt"
+            "fapt", field_fapt
+        elseif field == "co2sat"
+            "co2sat", field_co2sat
+        elseif field == "mnz"
+            "mnz", field_mnz
+        else
+            return no_range
+        end
+        (isnothing(name) || !(name isa AbstractString)) && return no_range
+
+        try
+            oxi      = String.(Out_XY[1].oxides)
+            lvl      = Int64(something(refLvl, 0)) + addedRefinementLvl
+            Xrange_t = (Float64(data.Xrange[1]), Float64(data.Xrange[2]))
+            Yrange_t = (Float64(data.Yrange[1]), Float64(data.Yrange[2]))
+            grid, _, _ = get_isopleth_map_te(mod, String(field), String(name), String(something(calc, "")), String(something(norm_te, "none")),
+                                             oxi, Out_TE_XY, Int64(something(sub, 3)), lvl, data, Xrange_t, Yrange_t)
+
+            vals = Float64[v for v in skipmissing(vec(grid)) if isfinite(v)]
+            isempty(vals) && return no_range
+            vmin, vmax = extrema(vals)
+            vmax > vmin || return no_range
+            step = round_sig((vmax - vmin) / 10)
+            step > 0 || return no_range
+            return round_sig(vmin; sig = 3), step, round_sig(vmax; sig = 3)
+        catch
+            return no_range
+        end
     end
 
     """

@@ -40,148 +40,145 @@ function Tab_MonteCarlo()
                                         ),
                         ], width=9),
                     ], align="center"),
+                    html_hr(),
+                    dbc_collapse(
+                        html_div([
+                            html_h1("Bulk uncertainty", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                            html_hr(),
+                            dbc_row([
+                                dbc_col([
+                                    dcc_dropdown(   id      = "mc-sigma-mode",
+                                                    options = [
+                                                        (label = "relative %",       value = "relative"),
+                                                        (label = "absolute [mol%]",  value = "absolute"),
+                                                    ],
+                                                    value     = "relative",
+                                                    clearable = false,
+                                                    style     = Dict("border" => "none"),
+                                                ),
+                                ], width=5),
+                                dbc_col([
+                                    dbc_button("Reset", id="mc-sigma-reset-button", color="light", n_clicks=0,
+                                        style = Dict( "textAlign" => "center", "font-size" => "90%",
+                                                      "border"    => "1px grey solid", "width" => "100%")),
+                                ], width=7),
+                            ]),
+                            # html_div("‎ "),
+                            dbc_row([
+                                dbc_col([
+                                    dbc_input(  id      = "mc-sigma-all-value",
+                                                type    = "number",
+                                                min     = 0.0,
+                                                value   = 5.0   ),
+                                ], width=5),
+                                dbc_col([
+                                    dbc_button("Apply to all oxides", id="mc-sigma-all-button", color="light", n_clicks=0,
+                                        style = Dict( "textAlign" => "center", "font-size" => "90%",
+                                                      "border"    => "1px grey solid", "width" => "100%")),
+                                ], width=7),
+                            ]),
+                            html_div("‎ "),
+                            dbc_row([
+                                dbc_col([
+                                    dbc_button("Load WDS from bulk", id="mc-sigma-wds-button", color="light", n_clicks=0,
+                                        style = Dict( "textAlign" => "center", "font-size" => "90%",
+                                                      "border"    => "1px grey solid", "width" => "100%")),
+                                    dbc_tooltip(
+                                        "Fills σ from the _wds columns of the currently selected bulk-rock composition (see examples/bulk-rock.csv). Oxides without WDS data keep their current σ.",
+                                        target="mc-sigma-wds-button"),
+                                ]),
+                            ]),
+                            dbc_alert(
+                                "",
+                                id      = "mc-sigma-wds-warning",
+                                color   = "warning",
+                                is_open = false,
+                                duration= 6000,
+                            ),
+                            html_div("‎ "),
+                            dbc_row([
+                                dbc_col([
+                                    html_h1("Unit", style = Dict("textAlign" => "center","font-size" => "100%", "marginTop" => 0, "marginBottom" => 0)),
+                                ], width=3),
+                                dbc_col([
+                                    dcc_dropdown(   id      = "mc-bulk-unit",
+                                    options = [
+                                        (label = "mol%",                value = 1),
+                                        (label = "wt%",                 value = 2),
+                                    ],
+                                    value       = 1,
+                                    style       = Dict("border" => "none"),
+                                    clearable   = false,
+                                    multi       = false),
+                                ], width=4),
+                            ], align="center"),
+                            dcc_store(id="mc-bulk-unit-prev", data=1),
+                            html_div("‎ "),
+                            dbc_row([
+                                dash_datatable(
+                                    id          = "mc-sigma-table",
+                                    columns     = [
+                                        Dict("id" => "oxide", "name" => "oxide"        ),
+                                        Dict("id" => "value", "name" => "value [mol%]" ),
+                                        Dict("id" => "sigma", "name" => "σ", "editable" => true),
+                                    ],
+                                    data        = [],
+                                    editable    = false,
+                                    style_cell  = (textAlign="center", fontSize="100%"),
+                                    style_header= (fontWeight="bold",),
+                                    page_size   = 16,
+                                ),
+                            ]),
+                            # html_div(
+                            #     "H2O default σ is high (25%) since it is usually estimated rather than measured. For a water-oversaturated bulk that value is only a placeholder large enough to guarantee a free fluid phase, not a real content — lower its σ towards 0 in that case, since perturbing it mostly changes fluid mode, not the solid assemblage.",
+                            #     style = Dict("textAlign" => "left", "font-size" => "75%", "color" => "grey", "marginTop" => 6),
+                            # ),
+
+                        ]),
+                        id      = "collapse-mc-sigma",
+                        is_open = true,
+                    ),
+                    dbc_collapse(
+                        html_div([
+                            html_h1("Bulk variation", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                            html_hr(),
+                            dbc_row([
+                                dbc_col([
+                                    html_h1("X = 1", style = Dict("textAlign" => "center","font-size" => "100%", "marginTop" => 0, "marginBottom" => 0)),
+                                ], width=3),
+                                dbc_col([
+                                    dcc_dropdown(   id          = "mc-bulk2-dropdown",
+                                                    options     = [],
+                                                    value       = nothing,
+                                                    clearable   = false,
+                                                    placeholder = "Bulk-rock composition",
+                                                    style       = Dict("border" => "none"),
+                                                ),
+                                ], width=9),
+                            ], align="center"),
+                            html_div("‎ "),
+                            dbc_row([
+                                dash_datatable(
+                                    id          = "mc-bulk2-table",
+                                    columns     = [
+                                        Dict("id" => "oxide", "name" => "oxide"),
+                                        Dict("id" => "x0",    "name" => "X = 0"),
+                                        Dict("id" => "x1",    "name" => "X = 1", "editable" => true),
+                                    ],
+                                    data        = [],
+                                    editable    = false,
+                                    style_cell  = (textAlign="center", fontSize="100%"),
+                                    style_header= (fontWeight="bold",),
+                                    page_size   = 16,
+                                ),
+                            ]),
+                        ]),
+                        id      = "collapse-mc-linear",
+                        is_open = false,
+                    ),
                 ])),
                 id      = "collapse-mc-mode",
                 is_open = true,
-            ),
-        ]),
-        dbc_row([
-            dbc_collapse(
-                dbc_card(dbc_cardbody([
-                        html_h1("Bulk uncertainty", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                        html_hr(),
-                        dbc_row([
-                            dbc_col([
-                                dcc_dropdown(   id      = "mc-sigma-mode",
-                                                options = [
-                                                    (label = "relative %",       value = "relative"),
-                                                    (label = "absolute [mol%]",  value = "absolute"),
-                                                ],
-                                                value     = "relative",
-                                                clearable = false,
-                                                style     = Dict("border" => "none"),
-                                            ),
-                            ], width=5),
-                            dbc_col([
-                                dbc_button("Reset", id="mc-sigma-reset-button", color="light", n_clicks=0,
-                                    style = Dict( "textAlign" => "center", "font-size" => "90%",
-                                                  "border"    => "1px grey solid", "width" => "100%")),
-                            ], width=7),
-                        ]),
-                        # html_div("‎ "),
-                        dbc_row([
-                            dbc_col([
-                                dbc_input(  id      = "mc-sigma-all-value",
-                                            type    = "number",
-                                            min     = 0.0,
-                                            value   = 5.0   ),
-                            ], width=5),
-                            dbc_col([
-                                dbc_button("Apply to all oxides", id="mc-sigma-all-button", color="light", n_clicks=0,
-                                    style = Dict( "textAlign" => "center", "font-size" => "90%",
-                                                  "border"    => "1px grey solid", "width" => "100%")),
-                            ], width=7),
-                        ]),
-                        html_div("‎ "),
-                        dbc_row([
-                            dbc_col([
-                                dbc_button("Load WDS from bulk", id="mc-sigma-wds-button", color="light", n_clicks=0,
-                                    style = Dict( "textAlign" => "center", "font-size" => "90%",
-                                                  "border"    => "1px grey solid", "width" => "100%")),
-                                dbc_tooltip(
-                                    "Fills σ from the _wds columns of the currently selected bulk-rock composition (see examples/bulk-rock.csv). Oxides without WDS data keep their current σ.",
-                                    target="mc-sigma-wds-button"),
-                            ]),
-                        ]),
-                        dbc_alert(
-                            "",
-                            id      = "mc-sigma-wds-warning",
-                            color   = "warning",
-                            is_open = false,
-                            duration= 6000,
-                        ),
-                        html_div("‎ "),
-                        dbc_row([
-                            dbc_col([
-                                html_h1("Unit", style = Dict("textAlign" => "center","font-size" => "100%", "marginTop" => 0, "marginBottom" => 0)),
-                            ], width=3),
-                            dbc_col([
-                                dcc_dropdown(   id      = "mc-bulk-unit",
-                                options = [
-                                    (label = "mol%",                value = 1),
-                                    (label = "wt%",                 value = 2),
-                                ],
-                                value       = 1,
-                                style       = Dict("border" => "none"),
-                                clearable   = false,
-                                multi       = false),
-                            ], width=4),
-                        ], align="center"),
-                        dcc_store(id="mc-bulk-unit-prev", data=1),
-                        html_div("‎ "),
-                        dbc_row([
-                            dash_datatable(
-                                id          = "mc-sigma-table",
-                                columns     = [
-                                    Dict("id" => "oxide", "name" => "oxide"        ),
-                                    Dict("id" => "value", "name" => "value [mol%]" ),
-                                    Dict("id" => "sigma", "name" => "σ", "editable" => true),
-                                ],
-                                data        = [],
-                                editable    = false,
-                                style_cell  = (textAlign="center", fontSize="100%"),
-                                style_header= (fontWeight="bold",),
-                                page_size   = 16,
-                            ),
-                        ]),
-                        # html_div(
-                        #     "H2O default σ is high (25%) since it is usually estimated rather than measured. For a water-oversaturated bulk that value is only a placeholder large enough to guarantee a free fluid phase, not a real content — lower its σ towards 0 in that case, since perturbing it mostly changes fluid mode, not the solid assemblage.",
-                        #     style = Dict("textAlign" => "left", "font-size" => "75%", "color" => "grey", "marginTop" => 6),
-                        # ),
-
-                    ])),
-                id      = "collapse-mc-sigma",
-                is_open = true,
-            ),
-        ]),
-        dbc_row([
-            dbc_collapse(
-                dbc_card(dbc_cardbody([
-                        html_h1("Bulk variation", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                        html_hr(),
-                        dbc_row([
-                            dbc_col([
-                                html_h1("X = 1", style = Dict("textAlign" => "center","font-size" => "100%", "marginTop" => 0, "marginBottom" => 0)),
-                            ], width=3),
-                            dbc_col([
-                                dcc_dropdown(   id          = "mc-bulk2-dropdown",
-                                                options     = [],
-                                                value       = nothing,
-                                                clearable   = false,
-                                                placeholder = "Bulk-rock composition",
-                                                style       = Dict("border" => "none"),
-                                            ),
-                            ], width=9),
-                        ], align="center"),
-                        html_div("‎ "),
-                        dbc_row([
-                            dash_datatable(
-                                id          = "mc-bulk2-table",
-                                columns     = [
-                                    Dict("id" => "oxide", "name" => "oxide"),
-                                    Dict("id" => "x0",    "name" => "X = 0"),
-                                    Dict("id" => "x1",    "name" => "X = 1", "editable" => true),
-                                ],
-                                data        = [],
-                                editable    = false,
-                                style_cell  = (textAlign="center", fontSize="100%"),
-                                style_header= (fontWeight="bold",),
-                                page_size   = 16,
-                            ),
-                        ]),
-                    ])),
-                id      = "collapse-mc-linear",
-                is_open = false,
             ),
         ]),
         dbc_row([
@@ -247,9 +244,9 @@ function Tab_MonteCarlo()
                             dbc_card(dbc_cardbody([
                                     html_h1("Diagram options", style = Dict("textAlign" => "center","font-size" => "110%")),
                                     html_hr(),
-                                    dbc_switch(label="Show phase labels", id="mc-show-labels-switch", value=false),
+                                    dbc_switch(label="Show phase labels", id="mc-show-labels-switch", value=true),
                                     dbc_switch(label="Display phase boundaries", id="mc-show-boundaries-switch", value=true),
-                                    dbc_switch(label="Smooth lines", id="mc-smooth-lines-switch", value=false),
+                                    dbc_switch(label="Smooth lines", id="mc-smooth-lines-switch", value=true),
                                     html_div("‎ "),
                                     dbc_button("Export SVG", id="mc-export-svg-button", color="light", n_clicks=0,
                                         style = Dict( "textAlign" => "center", "font-size" => "90%",

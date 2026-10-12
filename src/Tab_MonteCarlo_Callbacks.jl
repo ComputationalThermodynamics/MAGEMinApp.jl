@@ -461,6 +461,21 @@ function Tab_MonteCarlo_Callbacks(app)
 
     callback!(
         app,
+        Output("collapse-mc-status", "is_open"),
+
+        Input("trigger-update-reaction-line-list", "value"),
+
+        State("watsat-dropdown", "value"),
+
+        prevent_initial_call = true,
+    ) do _trigger, watsat
+        global pd_fig_meta
+        ready = @isdefined(gridded_fields) && !isnothing(pd_fig_meta) && pd_fig_meta.diagType == "pt" && watsat != "true"
+        return !ready
+    end
+
+    callback!(
+        app,
         Output("collapse-mc-sigma",  "is_open"),
         Output("collapse-mc-linear", "is_open"),
         Output("mc-n-label",         "children"),
