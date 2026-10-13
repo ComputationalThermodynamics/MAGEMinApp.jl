@@ -33,6 +33,20 @@ pd3d_export_button(label, id) = dbc_button(label, id = id, color = "light", n_cl
 
 pd3d_hidden_div(children, id) = html_div(children, id = id, style = Dict("display" => "none"))
 
+const PD3D_PTX_COLORS = [(label = c, value = c) for c in ("black", "dimgrey", "red", "blue", "green", "darkorange", "purple", "white")]
+
+function pd3d_axis_contour_block(a, title, color)
+    html_div([
+        html_h1(title, id = "pd3d-ptx-$a-title", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8, "fontWeight" => "bold")),
+        pd3d_option_row("Show",         pd3d_bool_dropdown("pd3d-ptx-$a-show", "true")),
+        pd3d_option_row("Min",          pd3d_number("pd3d-ptx-$a-min",  nothing)),
+        pd3d_option_row("Max",          pd3d_number("pd3d-ptx-$a-max",  nothing)),
+        pd3d_option_row("Step",         pd3d_number("pd3d-ptx-$a-step", nothing; min = 0)),
+        pd3d_option_row("Values",       dbc_input(id = "pd3d-ptx-$a-values", type = "text", value = "", debounce = true, placeholder = "e.g. 650, 812.5")),
+        pd3d_option_row("Colour",       dcc_dropdown(id = "pd3d-ptx-$a-color", options = PD3D_PTX_COLORS, value = color, clearable = false)),
+    ])
+end
+
 function pd3d_spec_selector(prefix; type = "ss", phase = "liq", ssfield = "mode", offield = "frac_M_vol", unit = "vol")
     dd(id, options, value) = dcc_dropdown(id = id, options = options, value = value, clearable = false)
     calc(id, value)        = dbc_input(id = id, type = "text", value = value, debounce = true)
@@ -106,6 +120,7 @@ function Tab_PhaseDiagram3D()
                                         options = [ Dict("label" => "Field isosurfaces / volume",      "value" => "field"),
                                                     Dict("label" => "Coloured surface (+ contours)",   "value" => "surface"),
                                                     Dict("label" => "Phase-in/out surfaces",           "value" => "phases"),
+                                                    Dict("label" => "P / T / X contour lines",         "value" => "ptx"),
                                                     Dict("label" => "Grid points (assemblage)",        "value" => "cloud") ],
                                         value   = ["field"]),
                         html_hr(),
@@ -201,6 +216,38 @@ function Tab_PhaseDiagram3D()
                                 pd3d_option_row("Number of levels", pd3d_number("pd3d-c-nlev", 8; min = 1, max = 40, step = 1)),
                                 pd3d_option_row("Line width",       pd3d_number("pd3d-c-lw", 3; min = 1, max = 12, step = 1)),
                                 pd3d_option_row("Label size",       pd3d_number("pd3d-c-lsize", 10; min = 6, max = 24, step = 1)),
+                            ])),
+                        ]),
+
+                        dbc_tab(label = "P-T-X lines", tab_id = "pd3d-tab-ptx", children = [
+                            dbc_card(dbc_cardbody([
+                                pd3d_hint("lines of constant P, T or X: a range (min / max / step) and / or single values separated by commas"),
+                                pd3d_option_row("Draw on",
+                                    dbc_checklist(  id      = "pd3d-ptx-targets",
+                                                    options = [ Dict("label" => "Coloured surface",       "value" => "surface"),
+                                                                Dict("label" => "Field isosurfaces",      "value" => "field"),
+                                                                Dict("label" => "Phase-in/out surfaces",  "value" => "phases") ],
+                                                    value   = ["surface", "field", "phases"])),
+                                pd3d_option_row("Render as",
+                                    dcc_dropdown(   id          = "pd3d-ptx-style",
+                                                    options     = [ (label = "tubes (visible from both sides)", value = "tube"), (label = "flat lines", value = "line") ],
+                                                    value       = "tube",
+                                                    clearable   = false)),
+                                pd3d_option_row("Tube radius [% of axis]", pd3d_number("pd3d-ptx-radius", 0.3; min = 0.05, max = 3, step = 0.05)),
+                                pd3d_option_row("Line width (flat)",   pd3d_number("pd3d-ptx-lw", 3; min = 1, max = 12, step = 1)),
+                                pd3d_option_row("Line style",
+                                    dcc_dropdown(   id          = "pd3d-ptx-dash",
+                                                    options     = [ (label = "solid", value = "solid"), (label = "dash", value = "dash"), (label = "dot", value = "dot") ],
+                                                    value       = "solid",
+                                                    clearable   = false)),
+                                pd3d_option_row("Show labels",  pd3d_bool_dropdown("pd3d-ptx-labels", "true")),
+                                pd3d_option_row("Label size",   pd3d_number("pd3d-ptx-lsize", 10; min = 6, max = 24, step = 1)),
+                                html_hr(),
+                                pd3d_axis_contour_block("p", "Pressure", "blue"),
+                                html_hr(),
+                                pd3d_axis_contour_block("t", "Temperature [°C]", "red"),
+                                html_hr(),
+                                pd3d_axis_contour_block("x", "Composition X (0 - 1)", "black"),
                             ])),
                         ]),
 
