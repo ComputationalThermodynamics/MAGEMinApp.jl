@@ -302,11 +302,12 @@ end
 """
     has_ns_optimizer(dtb)
 
-    True for the databases with a nullspace optimizer in MAGEMin: THERMOCALC and Stixrude & Lithgow-Bertelloni (sb11, sb21, sb24)
+    True for the databases with a nullspace optimizer in MAGEMin: THERMOCALC, Stixrude & Lithgow-Bertelloni (sb11, sb21, sb24),
+    MELTS (pMELTS, rMELTS) and Berman (po)
 """
 function has_ns_optimizer(  dtb         :: String )
 
-    return has_dataset_choice(dtb) || dtb in ("sb11", "sb21", "sb24")
+    return has_dataset_choice(dtb) || dtb in ("sb11", "sb21", "sb24", "pMELTS", "rMELTS", "po")
 
 end
 
