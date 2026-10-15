@@ -39,6 +39,62 @@ If "Seismic correction" is set to *false*, \$V_{p,cor}\$ and \$V_{s,cor}\$ are n
 """
 
 
+SlabGeotherms = raw"""
+**Slab geotherms**
+
+The "Slab geotherms" subtab (Phase diagram and Trace-element tabs) overlays the pressure-temperature paths followed by a point of the downgoing slab, for one or several convergence velocities. The curves are only drawn on P-T diagrams.
+
+#### Thermal model
+
+- Two plates are juxtaposed along the subduction interface $x = 0$: the upper plate of thickness $h$ on the $x > 0$ side and the subducting slab of thickness $d$ on the $x < 0$ side.
+- Initially the interface is at the surface temperature $T_0$, and the temperature increases linearly to the mantle temperature $T_1$ at $x = h$ and $x = -d$.
+- As the slab descends at the convergence velocity $v$, it is heated by conduction only. A point at distance $y$ along the slab has been subducting for $t = y / v$.
+
+The temperature is
+
+$$
+\begin{aligned}
+T(x,y) = T_1 &+ \frac{T_1 - T_0}{h}\left[\frac{x-h}{2}\left(\mathrm{erf}(-b) - \mathrm{erf}(-a)\right) - \sqrt{\frac{\kappa y}{\pi v}}\left(e^{-b^2} - e^{-a^2}\right)\right] \\
+&+ \frac{T_1 - T_0}{d}\left[\frac{x+d}{2}\left(\mathrm{erf}(-c) - \mathrm{erf}(-a)\right) - \sqrt{\frac{\kappa y}{\pi v}}\left(e^{-c^2} - e^{-a^2}\right)\right]
+\end{aligned}
+$$
+
+with
+
+$$
+a = \frac{x}{\sqrt{4 \kappa y / v}}, \qquad b = \frac{x-h}{\sqrt{4 \kappa y / v}}, \qquad c = \frac{x+d}{\sqrt{4 \kappa y / v}}
+$$
+
+#### Geometry and pressure
+
+- "Depth into slab" $o$ selects the point followed: $o = 0$ is the slab top (the plate interface), $o = d$ is the base of the slab lithosphere. It is used as $x = -o$.
+- For a slab dipping at angle $\delta$, a point at along-slab distance $y$ is at vertical depth $z = y \sin\delta + o \cos\delta$.
+- Pressure is lithostatic: $P = \rho g z$, with $g = 9.81$ m/s$^2$.
+
+#### Parameters (defaults)
+
+| Parameter | Default |
+|---|---|
+| Velocities $v$ | 1, 2, 5, 10 cm/yr |
+| Slab dip $\delta$ | 30° |
+| Depth into slab $o$ | 0 km |
+| Surface temperature $T_0$ | 0 °C |
+| Mantle temperature $T_1$ | 1300 °C |
+| Upper plate thickness $h$ | 20 km |
+| Slab thickness $d$ | 80 km |
+| Thermal diffusivity $\kappa$ | 1e-6 m$^2$/s |
+| Density $\rho$ | 3300 kg/m$^3$ |
+
+The last six are under "Advanced".
+
+#### Notes
+
+- Velocity and dip only enter through $y / v = (z - o\cos\delta) / (v \sin\delta)$: a steeper dip has the same effect as a faster convergence.
+- The model is purely conductive with constant $\kappa$: no shear heating, no mantle-wedge corner flow, no radiogenic or latent heat.
+- Each curve is labelled with its velocity, clipped to the diagram range, and included in "Export SVG".
+"""
+
+
 SiteFractionCalculator = """
 **Site Fraction calculator (isopleths)**
 
@@ -153,11 +209,9 @@ When having correct heat budget is important it is therefore recommanded to empl
 function Tab_General_informations()
     html_div([
         html_div("‎ "),
-        dbc_row([ 
-
-
-        dbc_col([
-            dbc_row([
+        dbc_tabs([
+            dbc_tab(label="Phases", children=[
+                html_div([
                 html_h1("Solution phase information", style = Dict("textAlign" => "center","font-size" => "130%", "marginTop" => 4)),
                 dash_datatable(
                     id="table-solution-phases",
@@ -182,8 +236,6 @@ function Tab_General_informations()
                     filter_action="native"
                 ),
                 html_div("‎ "),
-            ]),
-            dbc_row([
                 html_h1("End-members information", style = Dict("textAlign" => "center","font-size" => "130%", "marginTop" => 4)),
                 dash_datatable(
                     id="table-endmember-phases",
@@ -205,10 +257,10 @@ function Tab_General_informations()
                     page_size   = 16,
                     filter_action="native"
                 ),
-                html_div("‎ "),
+                ], style = Dict("padding" => "12px")),
             ]),
-            dbc_row([
-                html_div("‎ "),
+            dbc_tab(label="Bulk-rock CSV format", children=[
+                html_div([
                 html_h1("CSV bulk-rock input format — example", style = Dict("textAlign" => "center","font-size" => "130%", "marginTop" => 4)),
                 dash_datatable(
                     id          = "table-csv-bulk-format",
@@ -234,6 +286,7 @@ function Tab_General_informations()
                         Dict("if" => Dict("column_id" => "title"),    "fontWeight" => "bold"),
                         Dict("if" => Dict("column_id" => "SiO2_frac2"), "backgroundColor" => "#f0f4ff"),
                     ],
+                    style_table = Dict("overflowX" => "auto"),
                     editable    = false,
                     page_size   = 10,
                 ),
@@ -241,10 +294,10 @@ function Tab_General_informations()
                 dbc_card([
                     dcc_markdown(csvBulkRockFormat; mathjax=true, style = Dict("font-size" => "130%")),
                 ]),
-                html_div("\u200E "),
+                ], style = Dict("padding" => "12px")),
             ]),
-            dbc_row([
-
+            dbc_tab(label="Trace-element Kd", children=[
+                html_div([
                 html_h1("Trace-Elements partitioning coefficients (O. Laurent, 2012)", style = Dict("textAlign" => "center","font-size" => "130%", "marginTop" => 4)),
             dbc_tabs([
                 dbc_tab(label="SiO2 < 52 wt%", children=[
@@ -266,6 +319,7 @@ function Tab_General_informations()
                             style_data_conditional = [
                                 Dict("if" => Dict("column_id" => "Element"), "fontWeight" => "bold")
                             ],
+                            style_table = Dict("overflowX" => "auto"),
                             editable    = false,
                             page_size   = 32,
                             filter_action="native"
@@ -291,6 +345,7 @@ function Tab_General_informations()
                             style_data_conditional = [
                                 Dict("if" => Dict("column_id" => "Element"), "fontWeight" => "bold")
                             ],
+                            style_table = Dict("overflowX" => "auto"),
                             editable    = false,
                             page_size   = 32,
                             filter_action="native"
@@ -316,6 +371,7 @@ function Tab_General_informations()
                             style_data_conditional = [
                                 Dict("if" => Dict("column_id" => "Element"), "fontWeight" => "bold")
                             ],
+                            style_table = Dict("overflowX" => "auto"),
                             editable    = false,
                             page_size   = 32,
                             filter_action="native"
@@ -324,48 +380,46 @@ function Tab_General_informations()
                 ]),
 
             ]),
-
-        ]),
-
-        ],width=7),
-
-            dbc_col([ 
-
-                dbc_row([
-                    html_h1("Calculation details", style = Dict("textAlign" => "center","font-size" => "130%", "marginTop" => 4)),
-                    # html_hr(),
+                ], style = Dict("padding" => "12px")),
+            ]),
+            dbc_tab(label="Calculation details", children=[
+                html_div([
                     dbc_card([
-                        dcc_markdown(phase_deactivation;    mathjax=true, style = Dict("font-size" => "130%")),
-                    ]),
+                        dcc_markdown(phase_deactivation; mathjax=true, style = Dict("font-size" => "130%")),
+                    ], style = Dict("overflowX" => "auto")),
                     html_div("‎ "),
                     dbc_card([
-                        dcc_markdown(activity;              mathjax=true, style = Dict("font-size" => "130%")),
-                    ]),
+                        dcc_markdown(activity; mathjax=true, style = Dict("font-size" => "130%")),
+                    ], style = Dict("overflowX" => "auto")),
                     html_div("‎ "),
                     dbc_card([
-                        dcc_markdown(water_saturation;      mathjax=true, style = Dict("font-size" => "130%")),
-                    ]),
+                        dcc_markdown(water_saturation; mathjax=true, style = Dict("font-size" => "130%")),
+                    ], style = Dict("overflowX" => "auto")),
                     html_div("‎ "),
                     dbc_card([
-                        dcc_markdown(heatCapacity;          mathjax=true, style = Dict("font-size" => "130%")),
-                    ]),
+                        dcc_markdown(heatCapacity; mathjax=true, style = Dict("font-size" => "130%")),
+                    ], style = Dict("overflowX" => "auto")),
                     html_div("‎ "),
                     dbc_card([
-                        dcc_markdown(SiteFractionCalculator;          mathjax=true, style = Dict("font-size" => "130%")),
-                    ]),
-                    html_div("‎ "),
+                        dcc_markdown(SiteFractionCalculator; mathjax=true, style = Dict("font-size" => "130%")),
+                    ], style = Dict("overflowX" => "auto")),
+                ], style = Dict("padding" => "12px", "maxWidth" => "1100px", "margin" => "auto")),
+            ]),
+            dbc_tab(label="Seismic velocities", children=[
+                html_div([
                     dbc_card([
-                        dcc_markdown(SeismicVelocityMeltCorrection;          mathjax=true, style = Dict("font-size" => "130%")),
-                    ]),
-                ]),
-
-            ],width=5),
-
-
-
-
+                        dcc_markdown(SeismicVelocityMeltCorrection; mathjax=true, style = Dict("font-size" => "130%")),
+                    ], style = Dict("overflowX" => "auto")),
+                ], style = Dict("padding" => "12px", "maxWidth" => "1100px", "margin" => "auto")),
+            ]),
+            dbc_tab(label="Slab geotherms", children=[
+                html_div([
+                    dbc_card([
+                        dcc_markdown(SlabGeotherms; mathjax=true, style = Dict("font-size" => "130%")),
+                    ], style = Dict("overflowX" => "auto")),
+                ], style = Dict("padding" => "12px", "maxWidth" => "1100px", "margin" => "auto")),
+            ]),
         ]),
     ])
 
 end
-
