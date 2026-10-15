@@ -79,6 +79,8 @@ function pd3d_export_surfaces(st::PD3D_state, o)
         end
     end
 
+    haskey(o, :geotherm) && append!(surfs, subd_export_surfaces(st, o.geotherm))
+
     return surfs
 end
 

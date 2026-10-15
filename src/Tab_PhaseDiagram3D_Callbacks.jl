@@ -475,7 +475,7 @@ function Tab_PhaseDiagram3D_Callbacks(app)
                 surf_reverse    = surf_rev,
                 surf_opacity    = surf_opacity,
                 ptx             = ptx,
-                geotherm        = subduction_geotherm_traces_3d(st, subd_show, subd_vel, subd_dip, subd_depth, subd_T0, subd_T1, subd_h, subd_d,
+                geotherm        = subduction_geotherm_curves_3d(st, subd_show, subd_vel, subd_dip, subd_depth, subd_T0, subd_T1, subd_h, subd_d,
                                                                 subd_kappa, subd_rho, subd_render, subd_xvals, subd_opacity) )
 
         return pd3d_figure(st, o)
@@ -590,12 +590,13 @@ function Tab_PhaseDiagram3D_Callbacks(app)
             elseif bid == "pd3d-export-mesh"
                 dir = joinpath(output_dir[1], name * "_meshes")
                 n   = pd3d_export_meshes(st, o, dir)
-                return n == 0 ? "No surface to export: enable a layer with surfaces (field, coloured surface or phase-in/out)." :
+                return n == 0 ? "No surface to export: enable a layer with surfaces (field, coloured surface, phase-in/out or slab geotherms)." :
                                 "Saved $n surface(s) as PLY + STL in $(dir)"
             elseif bid == "pd3d-export-vtk"
                 path = joinpath(output_dir[1], name * ".vtk")
                 n    = pd3d_export_vtk(st, o, path)
-                return "Saved $(path) ($n fields, $(round(filesize(path) / 1e6, digits = 1)) MB)"
+                gpath = subd_export_vtk(st, get(o, :geotherm, (curves = NamedTuple[],)), joinpath(output_dir[1], name * "_geotherms.vtk"))
+                return "Saved $(path) ($n fields, $(round(filesize(path) / 1e6, digits = 1)) MB)" * (isnothing(gpath) ? "" : " and slab geotherms in $(gpath)")
             end
         catch e
             msg = sprint(showerror, e)

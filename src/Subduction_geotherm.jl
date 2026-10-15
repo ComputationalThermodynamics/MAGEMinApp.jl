@@ -83,7 +83,7 @@ function subduction_geotherm_traces(vels_str, dip, depth_km, T0, T1, h_km, d_km,
         push!(traces, scatter(; x = Tk, y = Pk, mode = "lines+text", text = lbl, hovertext = hov, hoverinfo = "text",
                                 textposition = "bottom right", textfont = attr(color = col, size = 11),
                                 line = attr(color = col, width = 2, dash = "dash"),
-                                name = "Geotherm $(subd_fmt(vcm)) cm/yr", showlegend = false))
+                                name = "Geotherm $(subd_fmt(vcm)) cm/yr", meta = vcm, showlegend = false))
     end
     return traces
 end
@@ -188,42 +188,115 @@ end
 
 subd_inputs_3d() = (ids = subd_3d_ids(); vcat(subd_inputs("-3d"), [Input(ids.render, "value"), Input(ids.xvals, "value"), Input(ids.opacity, "value")]))
 
-function subduction_geotherm_traces_3d(st, show, vels_str, dip, depth_km, T0, T1, h_km, d_km, kappa, rho, render, xvals_str, opacity)
-    show == "true" || return GenericTrace[]
+function subduction_geotherm_curves_3d(st, show, vels_str, dip, depth_km, T0, T1, h_km, d_km, kappa, rho, render, xvals_str, opacity)
+    none = (curves = NamedTuple[], xs = Float64[], wall = false, opacity = 0.25)
+    show == "true" || return none
     tr2d = subduction_geotherm_traces(vels_str, dip, depth_km, T0, T1, h_km, d_km, kappa, rho,
                                       (st.Tv[1], st.Tv[end]), (st.Pv[1], st.Pv[end]))
     x0, x1 = minmax(st.Xv[1], st.Xv[end])
-    xs     = filter(x -> x0 <= x <= x1, subd_parse_values(xvals_str))
-    isempty(xs) && (xs = [x0, x1])
     wall   = render != "lines"
-    wall && (xs = [x0, x1])
-    α      = clamp(subd_num(opacity, 0.25), 0.05, 1.0)
-    out    = GenericTrace[]
-    for t in tr2d
-        T, P = collect(Float64, t[:x]), display_pressure(collect(Float64, t[:y]))
-        n    = length(T)
-        col  = t[:line][:color]
-        name = replace(string(t[:name]), "Geotherm " => "")
-        grp  = "geotherm_" * name
-        hov  = t[:hovertext]
-        if wall && n >= 2
-            push!(out, mesh3d(x = vcat(P, P), y = vcat(T, T), z = vcat(fill(x0, n), fill(x1, n)),
-                              i = vcat([k - 1 for k in 1:n-1], [k for k in 1:n-1]),
-                              j = vcat([k for k in 1:n-1], [n + k for k in 1:n-1]),
-                              k = vcat([n + k - 1 for k in 1:n-1], [n + k - 1 for k in 1:n-1]),
-                              color = col, opacity = α, flatshading = true, hoverinfo = "skip",
-                              legendgroup = grp, showlegend = false, name = "Geotherm $name"))
+    xs     = wall ? Float64[] : filter(x -> x0 <= x <= x1, subd_parse_values(xvals_str))
+    isempty(xs) && (xs = [x0, x1])
+    curves = [(name = replace(string(t[:name]), "Geotherm " => ""), v = Float64(t[:meta]), color = string(t[:line][:color]),
+               T = collect(Float64, t[:x]), P = collect(Float64, t[:y]), hov = t[:hovertext]) for t in tr2d if length(t[:x]) >= 2]
+    return (curves = curves, xs = xs, wall = wall, opacity = clamp(subd_num(opacity, 0.25), 0.05, 1.0))
+end
+
+function subd_wall_mesh(c, x0, x1)
+    n     = length(c.T)
+    verts = vcat([(c.P[k], c.T[k], x0) for k in 1:n], [(c.P[k], c.T[k], x1) for k in 1:n])
+    faces = vcat([(k, k + 1, n + k) for k in 1:n-1], [(k + 1, n + k + 1, n + k) for k in 1:n-1])
+    return verts, faces
+end
+
+function subduction_geotherm_traces_3d(g)
+    out = GenericTrace[]
+    isempty(g.curves) && return out
+    x0, x1 = g.xs[1], g.xs[end]
+    for c in g.curves
+        P   = display_pressure(c.P)
+        n   = length(c.T)
+        grp = "geotherm_" * c.name
+        if g.wall
+            verts, faces = subd_wall_mesh(c, x0, x1)
+            push!(out, mesh3d(x = display_pressure([v[1] for v in verts]), y = [v[2] for v in verts], z = [v[3] for v in verts],
+                              i = [f[1] - 1 for f in faces], j = [f[2] - 1 for f in faces], k = [f[3] - 1 for f in faces],
+                              color = c.color, opacity = g.opacity, flatshading = true, hoverinfo = "skip",
+                              legendgroup = grp, showlegend = false, name = "Geotherm $(c.name)"))
         end
-        for (m, xv) in enumerate(xs)
-            push!(out, scatter3d(x = P, y = T, z = fill(xv, n), mode = "lines", line = attr(color = col, width = 5),
-                                 hovertext = hov, hoverinfo = "text", legendgroup = grp, showlegend = m == 1,
-                                 name = "Geotherm $name"))
+        for (m, xv) in enumerate(g.xs)
+            push!(out, scatter3d(x = P, y = c.T, z = fill(xv, n), mode = "lines", line = attr(color = c.color, width = 5),
+                                 hovertext = c.hov, hoverinfo = "text", legendgroup = grp, showlegend = m == 1,
+                                 name = "Geotherm $(c.name)"))
         end
-        push!(out, scatter3d(x = [P[end]], y = [T[end]], z = [xs[end]], mode = "text", text = [name],
-                             textposition = "top center", textfont = attr(color = col, size = 11),
+        push!(out, scatter3d(x = [P[end]], y = [c.T[end]], z = [g.xs[end]], mode = "text", text = [c.name],
+                             textposition = "top center", textfont = attr(color = c.color, size = 11),
                              hoverinfo = "skip", legendgroup = grp, showlegend = false))
     end
     return out
+end
+
+function subd_tube_mesh(st, c, xv; r = 0.003)
+    xs, ys, zs = Union{Float64,Nothing}[], Union{Float64,Nothing}[], Union{Float64,Nothing}[]
+    for k in 1:length(c.T)-1
+        append!(xs, (c.P[k], c.P[k+1], nothing)); append!(ys, (c.T[k], c.T[k+1], nothing)); append!(zs, (xv, xv, nothing))
+    end
+    spans = max.((abs(st.Pv[end] - st.Pv[1]), abs(st.Tv[end] - st.Tv[1]), abs(st.Xv[end] - st.Xv[1])), 1e-12)
+    X, Y, Z, _, I, J, K = pd3d_tube_mesh(xs, ys, zs, fill("", length(xs)), spans, r)
+    return [(X[q], Y[q], Z[q]) for q in eachindex(X)], [(I[q] + 1, J[q] + 1, K[q] + 1) for q in eachindex(I)]
+end
+
+function subd_export_surfaces(st, g)
+    surfs = NamedTuple[]
+    isempty(g.curves) && return surfs
+    for c in g.curves
+        col = pd3d_rgb(c.color)
+        if g.wall
+            verts, faces = subd_wall_mesh(c, g.xs[1], g.xs[end])
+            push!(surfs, (name = "geotherm_$(c.name)_wall", desc = "Slab geotherm wall: v = $(c.name), X = $(g.xs[1]) to $(g.xs[end])",
+                          verts = verts, faces = faces, rgb = fill(col, length(verts))))
+        else
+            for xv in g.xs
+                verts, faces = subd_tube_mesh(st, c, xv)
+                isempty(faces) && continue
+                push!(surfs, (name = "geotherm_$(c.name)_X$(round(xv, sigdigits = 4))", desc = "Slab geotherm tube: v = $(c.name), X = $(round(xv, sigdigits = 4))",
+                              verts = verts, faces = faces, rgb = fill(col, length(verts))))
+            end
+        end
+    end
+    return surfs
+end
+
+function subd_export_vtk(st, g, path)
+    isempty(g.curves) && return nothing
+    xs     = g.wall ? [g.xs[1], g.xs[end]] : g.xs
+    pts    = NTuple{3,Float32}[]
+    data   = NTuple{4,Float64}[]
+    lines  = Vector{Int}[]
+    for c in g.curves, xv in xs
+        ids = Int[]
+        for k in eachindex(c.T)
+            push!(ids, length(pts))
+            push!(pts, pd3d_unit_coords(st, (c.P[k], c.T[k], xv)))
+            push!(data, (c.T[k], c.P[k], xv, c.v))
+        end
+        push!(lines, ids)
+    end
+    open(path, "w") do io
+        println(io, "# vtk DataFile Version 3.0")
+        println(io, pd3d_ascii("MAGEMinApp slab geotherms $(st.dtb) $(st.date); same cube 0-$(Int(PD3D_EXPORT_SIZE)) as the grid export: x=P y=T z=X"))
+        println(io, "ASCII\nDATASET POLYDATA")
+        println(io, "POINTS $(length(pts)) float")
+        foreach(p -> println(io, p[1], " ", p[2], " ", p[3]), pts)
+        println(io, "LINES $(length(lines)) $(sum(length(l) + 1 for l in lines))")
+        foreach(l -> println(io, length(l), " ", join(l, " ")), lines)
+        println(io, "POINT_DATA $(length(pts))")
+        for (q, name) in enumerate(("T_C", "P_kbar", "X", "velocity_cm_yr"))
+            println(io, "SCALARS $name float 1\nLOOKUP_TABLE default")
+            foreach(d -> println(io, Float32(d[q])), data)
+        end
+    end
+    return path
 end
 
 function subd_parse_values(str)

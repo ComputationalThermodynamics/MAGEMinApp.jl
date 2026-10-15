@@ -91,7 +91,7 @@ The last six are under "Advanced".
 
 - Velocity and dip only enter through $y / v = (z - o\cos\delta) / (v \sin\delta)$: a steeper dip has the same effect as a faster convergence.
 - The model is purely conductive with constant $\kappa$: no shear heating, no mantle-wedge corner flow, no radiogenic or latent heat.
-- Each curve is labelled with its velocity and clipped to the diagram range. It is included in the 2D "Export SVG" and in the 3D interactive HTML export (not in the PLY/STL/VTK exports).
+- Each curve is labelled with its velocity and clipped to the diagram range. It is included in the 2D "Export SVG" and in all 3D exports: interactive HTML; PLY + STL (walls as surfaces, or tubes when rendered as lines); VTK, as a companion `<name>_geotherms.vtk` file of polylines in the same normalized cube as the grid, with T, P, X and velocity as point data.
 """
 
 
