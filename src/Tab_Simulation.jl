@@ -877,7 +877,7 @@ function Tab_Simulation()
                                                 id      = "refinement-levels",
                                                 type    = "number", 
                                                 min     = 0,  
-                                                value   = 3   ),
+                                                value   = 4   ),
                                         ]),
                                     ]),
                                     ], style = Dict("display" => "block"), id      = "display-refine-option-id"), #none, block
