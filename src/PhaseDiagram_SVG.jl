@@ -212,7 +212,7 @@ end
 """
 function pd_figure_parts(; data, gridded, heat_map, layout_g, reaction, data_isopleth, iso_show,
                           assemblage_rows, xtitle::AbstractString, ytitle::AbstractString, diagType::AbstractString,
-                          show_reaction::Bool, show_mesh::Bool, show_labels::Bool)
+                          show_reaction::Bool, show_mesh::Bool, show_labels::Bool, geotherms = GenericTrace[])
     global phase_infos
     convert_p = use_GPa[1] && diagType in ("pt", "px", "ptx")
     yconv(y::Real) = convert_p ? display_pressure(Float64(y)) : Float64(y)
@@ -285,7 +285,7 @@ function pd_figure_parts(; data, gridded, heat_map, layout_g, reaction, data_iso
 
     return (xrange = xr, yrange = yr, ticks = 4, title = title, xtitle = String(xtitle), ytitle = ytitle_disp,
             gridded = pd_fill_gridded(gridded, data), zmin = zmin, zmax = zmax, stops = stops, smooth = smooth, field_title = ftitle, ztick = ztick,
-            mesh = mesh, reaction = lines, isopleths = isopleths, annotations = annotations,
+            mesh = mesh, reaction = lines, isopleths = isopleths, geotherms = subd_svg_lines(geotherms, yconv), annotations = annotations,
             info = info, assemblages = assemblages)
 end
 
@@ -418,6 +418,29 @@ function pd_export_svg(parts, path::AbstractString)
                             font_size = iso.label_size, anchor = "middle")
             for (k, (x, y, ang, txt)) in enumerate(labels)
                 svg_text(io, x, y, txt; id = svg_id(seen, "$(idbase)_label_$(k)"), rotate = ang)
+            end
+            svg_group_close(io)
+        end
+    end
+
+    geo = get(parts, :geotherms, NamedTuple[])
+    if !isempty(geo)
+        svg_group_open(io, svg_id(seen, "Subduction_geotherms"); fill = "none", rounded = true)
+        ends = Tuple{Float64,Float64,String,String}[]
+        for g in geo
+            cl = clipped(g.x, g.y)
+            d  = svg_path_data(c, cl)
+            isempty(d) && continue
+            svg_path(io, svg_id(seen, "Geotherm_" * g.label), d; stroke = g.color, width = g.width, dash = svg_dasharray(g.dash, g.width))
+            n_paths += 1
+            last_pt = cl[end][end]
+            push!(ends, (svg_x(c, last_pt[1]), svg_y(c, last_pt[2]), g.label, g.color))
+        end
+        svg_group_close(io)
+        if !isempty(ends)
+            svg_group_open(io, svg_id(seen, "Subduction_geotherm_labels"); font_family = font, font_size = 10, anchor = "start")
+            for (x, y, txt, col) in ends
+                svg_text(io, x + 3, y + 10, txt; id = svg_id(seen, "Geotherm_label_" * txt), fill = col)
             end
             svg_group_close(io)
         end

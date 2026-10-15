@@ -1434,6 +1434,7 @@ function Tab_PhaseDiagram()
                                         is_open=true,
                                 ),
                             ]),
+                            subduction_geotherm_tab(""),
                             dbc_tab(label="Draw path", children=[
                                 dbc_row([
                                     dbc_collapse(

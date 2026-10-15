@@ -1409,6 +1409,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("pressure-unit-dropdown", "value"),
         Input("phase-assemblage-table-id", "selected_cells"),
         Input("clear-assemblage-highlight-button", "n_clicks"),
+        subd_inputs("")...,
 
         # STATES
         State("field-size-id",          "value"),
@@ -1536,6 +1537,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             minColor,   maxColor,
             colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  updateTitle,     loadstateid,       warr_naming, pressure_unit,
             assemblage_selected_cells, clearHighlight,
+            subd_show,  subd_vel,   subd_dip,   subd_depth, subd_T0,    subd_T1,    subd_h,     subd_d,     subd_kappa, subd_rho,
             # STATES
             field_size, customTitle, txt_list,
             custW,      diagType,   dtb,        dataset,    watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  ph_selection, pure_ph_selection, PTpath,
@@ -1990,6 +1992,11 @@ function Tab_PhaseDiagram_Callbacks(app)
                 end
             end
 
+        elseif bid in subd_input_ids("")
+            if !@isdefined(data_plot) || !@isdefined(layout)
+                return no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update()
+            end
+
         elseif bid == "clear-assemblage-highlight-button"
             if !@isdefined(data_plot) || !@isdefined(layout)
                 return no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update()
@@ -2040,6 +2047,11 @@ function Tab_PhaseDiagram_Callbacks(app)
                 if field2plot[i] == 1
                     data_all = vcat( data_all, eval(Symbol(fieldNames[i])) )
                 end
+            end
+
+            if @isdefined(data)
+                data_all = vcat(data_all, subduction_geotherm_update!("pd", subd_show, subd_vel, subd_dip, subd_depth, subd_T0, subd_T1, subd_h, subd_d, subd_kappa, subd_rho,
+                                                                      data.Xrange, data.Yrange, diagType))
             end
 
             data_all_disp, layout_disp = apply_pressure_display(data_all, layout, diagType)
@@ -2733,7 +2745,8 @@ function Tab_PhaseDiagram_Callbacks(app)
                                     data_isopleth = data_isopleth, iso_show = @isdefined(iso_show) ? iso_show : 0,
                                     assemblage_rows = @isdefined(assemblage_rows) ? assemblage_rows : Dict{String,String}[],
                                     xtitle = pd_fig_meta.xtitle, ytitle = pd_fig_meta.ytitle, diagType = pd_fig_meta.diagType,
-                                    show_reaction = show_reaction == "true", show_mesh = show_mesh == "true", show_labels = show_labels == "true")
+                                    show_reaction = show_reaction == "true", show_mesh = show_mesh == "true", show_labels = show_labels == "true",
+                                    geotherms = SUBD_TRACES["pd"])
             mkpath(output_dir[1])
             base = output_dir[1] * replace(isempty(parts.title) ? "phase_diagram" : parts.title, r"[ /\\:]" => "_")
             path = base * "_" * strip(replace(string(fieldname), r"[^A-Za-z0-9]+" => "_"), '_') * ".svg"

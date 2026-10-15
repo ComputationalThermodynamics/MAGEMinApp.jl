@@ -203,6 +203,7 @@ function Tab_TraceElement_Callbacks(app)
         Input("update-title-button",        "n_clicks"  ),
         Input("phase-assemblage-table-id-te", "selected_cells"),
         Input("clear-assemblage-highlight-button-te", "n_clicks"),
+        subd_inputs("-te")...,
 
         State("title-id",                   "value"     ),
         State("tepm-dropdown",              "value"     ),
@@ -270,6 +271,7 @@ function Tab_TraceElement_Callbacks(app)
                 colorMap,   smooth,     rangeColor, set_white, reverse,    minColor, maxColor,
                 updateTitle,
                 assemblage_selected_cells_te, clearHighlight_te,
+                subd_show,  subd_vel,   subd_dip,   subd_depth, subd_T0,    subd_T1,    subd_h,     subd_d,     subd_kappa, subd_rho,
                 customTitle,tepm,       varBuilder, norm, type, norm_te,
                 dtb,        diagType,   tmin,       tmax,       pmin,       pmax,       e1_tmin,    e1_tmax,    e2_tmin,    e2_tmax,  
                 bulk1,      bulk2,
@@ -645,6 +647,8 @@ function Tab_TraceElement_Callbacks(app)
                     end
                 end
 
+            elseif bid in subd_input_ids("-te")
+
             elseif bid == "clear-assemblage-highlight-button-te"
                 for k = 2:length(data_plot_te)-1
                     data_plot_te[k] = scatter(; x = nothing, y = nothing, fill = "toself", fillcolor = "transparent",
@@ -695,6 +699,11 @@ function Tab_TraceElement_Callbacks(app)
                     end
                 end
     
+                if @isdefined(data)
+                    data_all = vcat(data_all, subduction_geotherm_update!("te", subd_show, subd_vel, subd_dip, subd_depth, subd_T0, subd_T1, subd_h, subd_d, subd_kappa, subd_rho,
+                                                                          data.Xrange, data.Yrange, diagType))
+                end
+
                 data_all_disp, layout_te_disp = apply_pressure_display(data_all, layout_te, diagType)
                 fig_te = plot_diagram(data_all_disp,layout_te_disp)
             end
@@ -1069,7 +1078,8 @@ function Tab_TraceElement_Callbacks(app)
                                     data_isopleth = data_isopleth_te, iso_show = @isdefined(iso_show_te) ? iso_show_te : 0,
                                     assemblage_rows = @isdefined(assemblage_rows_te) ? assemblage_rows_te : Dict{String,String}[],
                                     xtitle = pd_fig_meta_te.xtitle, ytitle = pd_fig_meta_te.ytitle, diagType = pd_fig_meta_te.diagType,
-                                    show_reaction = show_reaction == "true", show_mesh = show_mesh == "true", show_labels = show_labels == "true")
+                                    show_reaction = show_reaction == "true", show_mesh = show_mesh == "true", show_labels = show_labels == "true",
+                                    geotherms = SUBD_TRACES["te"])
             mkpath(output_dir[1])
             base = output_dir[1] * replace(isempty(parts.title) ? "trace_element_diagram" : parts.title, r"[ /\\:]" => "_") * "_TE"
             r    = pd_export_svg(parts, base * ".svg")

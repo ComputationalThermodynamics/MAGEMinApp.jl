@@ -59,6 +59,7 @@ module MAGEMinApp
         end
     end
     include(joinpath(pkg_dir,"src","PhaseDiagram_SVG.jl"))
+    include(joinpath(pkg_dir,"src","Subduction_geotherm.jl"))
     include(joinpath(pkg_dir,"src","Plotly_SVG.jl"))
     include(joinpath(pkg_dir,"src","Classifications/Mineral_recalc_functions.jl"))
     include(joinpath(pkg_dir,"src","Classifications/Amphibole_functions.jl"))
@@ -333,6 +334,8 @@ module MAGEMinApp
         app = Tab_PhaseDiagram3D_Callbacks(app)
         app = Tab_MonteCarlo_Callbacks(app)
         app = Tab_TraceElement_Callbacks(app)
+        app = subduction_geotherm_callbacks!(app, "")
+        app = subduction_geotherm_callbacks!(app, "-te")
         app = Tab_PTXpaths_Callbacks(app)
         ENABLE_MAGERES && (app = Tab_MAGERes_Callbacks(app))
         app = Tab_GeneralSetup_Callbacks(app)

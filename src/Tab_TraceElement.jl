@@ -962,6 +962,7 @@ function Tab_TraceElement()
 
                                     ])),id="collapse-isopleths-te",is_open=true),
                             ]),
+                            subduction_geotherm_tab("-te"),
 
                         ])
 
