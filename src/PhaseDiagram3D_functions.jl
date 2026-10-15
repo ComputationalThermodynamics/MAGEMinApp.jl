@@ -891,6 +891,7 @@ function pd3d_figure(st::PD3D_state, o; logo_src = PD3D_LOGO_SRC)
         tr, msg = try pd3d_ptx_traces(st, o) catch e; GenericTrace[], "P-T-X lines failed: $(sprint(showerror, e))" end
         append!(traces, tr); push!(msgs, msg)
     end
+    append!(traces, get(o, :geotherm, GenericTrace[]))
     "cloud"  in o.layers && push!(traces, pd3d_cloud_trace(st, max(1, Int(something(o.stride, 1))), something(o.msize, 3)))
     isempty(traces) && push!(traces, scatter3d(x = [Pd[1]], y = [st.Tv[1]], z = [st.Xv[1]], mode = "markers", marker = attr(size = 0.1), showlegend = false, hoverinfo = "skip"))
 

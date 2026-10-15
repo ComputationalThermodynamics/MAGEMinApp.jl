@@ -403,6 +403,7 @@ function Tab_PhaseDiagram3D_Callbacks(app)
         Input("pd3d-ptx-x-step",            "value"),
         Input("pd3d-ptx-x-values",          "value"),
         Input("pd3d-ptx-x-color",           "value"),
+        subd_inputs_3d()...,
 
         prevent_initial_call = true,
     ) do    _computed,  layers,
@@ -417,7 +418,9 @@ function Tab_PhaseDiagram3D_Callbacks(app)
             ptx_targets, ptx_lw,    ptx_style,  ptx_radius, ptx_dash,   ptx_labels, ptx_lsize,
             p_show,     p_min,      p_max,      p_step,     p_values,   p_color,
             t_show,     t_min,      t_max,      t_step,     t_values,   t_color,
-            x_show,     x_min,      x_max,      x_step,     x_values,   x_color
+            x_show,     x_min,      x_max,      x_step,     x_values,   x_color,
+            subd_show,  subd_vel,   subd_dip,   subd_depth, subd_T0,    subd_T1,    subd_h,     subd_d,     subd_kappa, subd_rho,
+            subd_render, subd_xvals, subd_opacity
 
         st = PD3D[]
         isnothing(st) && return no_update()
@@ -471,7 +474,9 @@ function Tab_PhaseDiagram3D_Callbacks(app)
                 surf_colormap   = surf_cmap,
                 surf_reverse    = surf_rev,
                 surf_opacity    = surf_opacity,
-                ptx             = ptx )
+                ptx             = ptx,
+                geotherm        = subduction_geotherm_traces_3d(st, subd_show, subd_vel, subd_dip, subd_depth, subd_T0, subd_T1, subd_h, subd_d,
+                                                                subd_kappa, subd_rho, subd_render, subd_xvals, subd_opacity) )
 
         return pd3d_figure(st, o)
     end

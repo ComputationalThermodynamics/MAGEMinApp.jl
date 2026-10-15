@@ -169,3 +169,69 @@ function subduction_geotherm_callbacks!(app, sfx)
     end
     return app
 end
+
+subd_3d_ids() = (render = "subd-render-3d", xvals = "subd-xvals-3d", opacity = "subd-opacity-3d")
+
+function subduction_geotherm_tab_3d()
+    ids = subd_3d_ids()
+    return dbc_tab(label = "Slab geotherms", tab_id = "pd3d-tab-geotherm", children = [
+        dbc_card(dbc_cardbody([
+            subduction_geotherm_ui("-3d"),
+            html_hr(),
+            subd_row("Render as", dcc_dropdown(id = ids.render, options = [(label = "Wall across X", value = "wall"), (label = "Lines at X values", value = "lines")],
+                                               value = "wall", clearable = false)),
+            subd_row("X values", dbc_input(id = ids.xvals, type = "text", value = "", debounce = true, placeholder = "e.g. 0, 0.5, 1 (empty: X ends)")),
+            subd_row("Wall opacity", subd_number(ids.opacity, 0.25; min = 0.05, max = 1.0, step = 0.05)),
+        ])),
+    ])
+end
+
+subd_inputs_3d() = (ids = subd_3d_ids(); vcat(subd_inputs("-3d"), [Input(ids.render, "value"), Input(ids.xvals, "value"), Input(ids.opacity, "value")]))
+
+function subduction_geotherm_traces_3d(st, show, vels_str, dip, depth_km, T0, T1, h_km, d_km, kappa, rho, render, xvals_str, opacity)
+    show == "true" || return GenericTrace[]
+    tr2d = subduction_geotherm_traces(vels_str, dip, depth_km, T0, T1, h_km, d_km, kappa, rho,
+                                      (st.Tv[1], st.Tv[end]), (st.Pv[1], st.Pv[end]))
+    x0, x1 = minmax(st.Xv[1], st.Xv[end])
+    xs     = filter(x -> x0 <= x <= x1, subd_parse_values(xvals_str))
+    isempty(xs) && (xs = [x0, x1])
+    wall   = render != "lines"
+    wall && (xs = [x0, x1])
+    α      = clamp(subd_num(opacity, 0.25), 0.05, 1.0)
+    out    = GenericTrace[]
+    for t in tr2d
+        T, P = collect(Float64, t[:x]), display_pressure(collect(Float64, t[:y]))
+        n    = length(T)
+        col  = t[:line][:color]
+        name = replace(string(t[:name]), "Geotherm " => "")
+        grp  = "geotherm_" * name
+        hov  = t[:hovertext]
+        if wall && n >= 2
+            push!(out, mesh3d(x = vcat(P, P), y = vcat(T, T), z = vcat(fill(x0, n), fill(x1, n)),
+                              i = vcat([k - 1 for k in 1:n-1], [k for k in 1:n-1]),
+                              j = vcat([k for k in 1:n-1], [n + k for k in 1:n-1]),
+                              k = vcat([n + k - 1 for k in 1:n-1], [n + k - 1 for k in 1:n-1]),
+                              color = col, opacity = α, flatshading = true, hoverinfo = "skip",
+                              legendgroup = grp, showlegend = false, name = "Geotherm $name"))
+        end
+        for (m, xv) in enumerate(xs)
+            push!(out, scatter3d(x = P, y = T, z = fill(xv, n), mode = "lines", line = attr(color = col, width = 5),
+                                 hovertext = hov, hoverinfo = "text", legendgroup = grp, showlegend = m == 1,
+                                 name = "Geotherm $name"))
+        end
+        push!(out, scatter3d(x = [P[end]], y = [T[end]], z = [xs[end]], mode = "text", text = [name],
+                             textposition = "top center", textfont = attr(color = col, size = 11),
+                             hoverinfo = "skip", legendgroup = grp, showlegend = false))
+    end
+    return out
+end
+
+function subd_parse_values(str)
+    str === nothing && return Float64[]
+    vals = Float64[]
+    for tok in split(string(str), r"[,;\s]+"; keepempty = false)
+        v = tryparse(Float64, tok)
+        v !== nothing && push!(vals, v)
+    end
+    return sort(unique(vals))
+end

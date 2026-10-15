@@ -251,6 +251,8 @@ function Tab_PhaseDiagram3D()
                             ])),
                         ]),
 
+                        subduction_geotherm_tab_3d(),
+
                         dbc_tab(label = "Export", tab_id = "pd3d-tab-export", children = [
                             dbc_card(dbc_cardbody([
                                 pd3d_option_row("File name", dbc_input(id = "pd3d-export-name", type = "text", value = "MAGEMin_3D")),

@@ -336,6 +336,7 @@ module MAGEMinApp
         app = Tab_TraceElement_Callbacks(app)
         app = subduction_geotherm_callbacks!(app, "")
         app = subduction_geotherm_callbacks!(app, "-te")
+        app = subduction_geotherm_callbacks!(app, "-3d")
         app = Tab_PTXpaths_Callbacks(app)
         ENABLE_MAGERES && (app = Tab_MAGERes_Callbacks(app))
         app = Tab_GeneralSetup_Callbacks(app)
