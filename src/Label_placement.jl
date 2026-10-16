@@ -12,8 +12,13 @@
 const PD_PLOT_W   = 604.0
 const PD_PLOT_H   = 590.0
 const PD_LABEL_BG = "rgba(255,255,255,0.85)"
-const PD_LABEL_RINGS  = (18.0, 28.0, 40.0, 55.0, 75.0, 100.0, 130.0, 170.0, 220.0)
-const PD_LABEL_ANGLES = [-135.0 + 22.5 * k for k in 0:15]
+const PD_LABEL_RINGS  = (10.0, 14.0, 18.0, 23.0, 28.0, 34.0, 40.0, 48.0, 56.0, 65.0)
+const PD_LABEL_ANGLES = [-135.0 + 15.0 * k for k in 0:23]
+const PD_LABEL_W_OVERLAP = 3.0
+const PD_LABEL_W_HIT     = 20.0
+const PD_LABEL_W_CROSS   = 10.0
+const PD_LABEL_W_DEV     = 0.5
+const PD_LABEL_NUM_MAX_OVERLAP = 0.0
 
 mutable struct PDLabel
     field  :: Int
@@ -84,34 +89,33 @@ function pd_place_labels!(labels)
     obst    = [(l.anchor[1] - 3, l.anchor[2] - 3, l.anchor[1] + 3, l.anchor[2] + 3) for l in labels if l.kind == :arrow]
     obst_ow = [k for (k, l) in enumerate(labels) if l.kind == :arrow]
 
-    clear(b, k) = !any(j -> owners[j] != k && pd_overlap(b, boxes[j]) > 0, eachindex(boxes)) &&
-                  !any(j -> obst_ow[j] != k && pd_overlap(b, obst[j]; m = 0.0) > 0, eachindex(obst))
+    ovl(b, k) = sum((pd_overlap(b, boxes[j]) for j in eachindex(boxes) if owners[j] != k); init = 0.0) +
+                sum((pd_overlap(b, obst[j]; m = 0.0) for j in eachindex(obst) if obst_ow[j] != k); init = 0.0)
 
     for kind in (:full, :num), k in eachindex(labels)
         l = labels[k]
         l.kind == kind || continue
-        placed = false
+        best = (Inf, l.cands[1])
         for c in l.cands
             b = pd_box(c, l.w, l.h)
-            if pd_box_inside(b) && clear(b, k)
-                l.pos = c; push!(boxes, b); push!(owners, k); placed = true
-                break
-            end
+            pd_box_inside(b) || continue
+            o = ovl(b, k)
+            o < best[1] && (best = (o, c))
+            o == 0 && break
         end
-        if !placed
-            if kind == :full
-                l.pos = l.cands[1]; push!(boxes, pd_box(l.cands[1], l.w, l.h)); push!(owners, k)
-            else
-                l.kind = :arrow; l.fs = 9.0
-                l.w, l.h = pd_label_box(l.text, 9.0)
-                push!(obst, (l.anchor[1] - 3, l.anchor[2] - 3, l.anchor[1] + 3, l.anchor[2] + 3)); push!(obst_ow, k)
-            end
+        if kind == :full || best[1] <= PD_LABEL_NUM_MAX_OVERLAP * l.w * l.h
+            l.pos = best[2]; push!(boxes, pd_box(best[2], l.w, l.h)); push!(owners, k)
+        else
+            l.kind = :arrow; l.fs = 9.0
+            l.w, l.h = pd_label_box(l.text, 9.0)
+            push!(obst, (l.anchor[1] - 3, l.anchor[2] - 3, l.anchor[1] + 3, l.anchor[2] + 3)); push!(obst_ow, k)
         end
     end
 
     arrows = [k for k in eachindex(labels) if labels[k].kind == :arrow]
     crowd(k) = count(j -> j != k && hypot(labels[j].anchor[1] - labels[k].anchor[1], labels[j].anchor[2] - labels[k].anchor[2]) < 40.0, arrows)
     sort!(arrows, by = k -> -crowd(k))
+    nang = length(PD_LABEL_ANGLES)
 
     for k in arrows
         l    = labels[k]
@@ -121,12 +125,12 @@ function pd_place_labels!(labels)
             c = (a[1] + r * cosd(θ), a[2] + r * sind(θ))
             b = pd_box(c, l.w, l.h)
             pd_box_inside(b) || continue
-            ov  = sum((pd_overlap(b, boxes[j]) for j in eachindex(boxes) if owners[j] != k); init = 0.0) +
-                  sum((pd_overlap(b, obst[j]; m = 0.0) for j in eachindex(obst) if obst_ow[j] != k); init = 0.0)
-            hit = count(j -> owners[j] != k && pd_seg_hits_box(a, c, boxes[j]), eachindex(boxes))
-            crs = count(s -> pd_segs_cross(a, c, s[1], s[2]), leaders)
-            dev = min(m - 1, 16 - (m - 1))
-            sc  = ov == 0 ? r + 25.0 * hit + 12.0 * crs + 1.5 * dev : 1e4 + ov + r
+            sc = r + PD_LABEL_W_DEV * min(m - 1, nang - (m - 1))
+            sc >= best[1] && continue
+            sc += PD_LABEL_W_OVERLAP * ovl(b, k)
+            sc >= best[1] && continue
+            sc += PD_LABEL_W_HIT * count(j -> owners[j] != k && pd_seg_hits_box(a, c, boxes[j]), eachindex(boxes)) +
+                  PD_LABEL_W_CROSS * count(s -> pd_segs_cross(a, c, s[1], s[2]), leaders)
             sc < best[1] && (best = (sc, c, b))
         end
         l.pos = best[2]
