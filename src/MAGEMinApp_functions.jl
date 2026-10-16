@@ -1046,6 +1046,7 @@ function get_diagram_labels(    Out_XY      :: Vector{MAGEMin_C.gmin_struct{Floa
     raw_field_id    = Vector{Int64}(undef, n_hull)     # compacted field index -> raw gridded_fields id
     id          = 0
     coor        = []
+    cands       = Vector{Vector{NTuple{2,Float64}}}()
 
     int_vector  = [findfirst(x -> x == h, hull) for h in Hash_XY]
     for i = 1:length(int_vector)
@@ -1070,9 +1071,12 @@ function get_diagram_labels(    Out_XY      :: Vector{MAGEMin_C.gmin_struct{Floa
             maxY            = data.Yrange[1] + dy*(bnds[4]-1) + dy/2
             n_pix[id]       = Float64(sum(mask))
             area[id]        = n_pix[id]*dx*dy/fac
-            centers         = select_point(mask, range(minY, maxY, size(mask,2)+1) , range(minX, maxX, size(mask,1)+1) )
-            
+            Yb              = range(minY, maxY, size(mask,2)+1)
+            Xb              = range(minX, maxX, size(mask,1)+1)
+            centers         = select_point(mask, Yb, Xb)
+
             push!(coor,centers)
+            push!(cands, pd_field_candidates(mask, Yb, Xb, centers, data.Xrange, data.Yrange))
         end
     end
 
@@ -1083,7 +1087,6 @@ function get_diagram_labels(    Out_XY      :: Vector{MAGEMin_C.gmin_struct{Floa
     txt_list            = ""
     assemblage_rows     = Vector{Dict{String,String}}()   # one row per numbered txt_list entry, for the phase-assemblage table
     list_compacted_idx  = Vector{Int64}()                 # same order: compacted field index (1:n_trace, matches data_plot slot i+1)
-    cnt = 1;
     for i=1:n_trace
         traces[i+1] = scatter(; x           =  nothing,
                                 y           =  nothing,
@@ -1094,73 +1097,90 @@ function get_diagram_labels(    Out_XY      :: Vector{MAGEMin_C.gmin_struct{Floa
                                 hoverinfo   = "text",
                                 showlegend  = false,
                                 text        = ph_list[i]        );
-    
+    end
 
-        ctr     = coor[i]
-        if n_pix[i] > field_size
-            if area[i] < 0.004      # place an arrow
-                ax = -15
-                ay = -15
-
-                annotations[i] =   attr(    xref        = "x",
-                                            yref        = "y",
-                                            x           = ctr[1],
-                                            y           = ctr[2],
-                                            ax          = ax,
-                                            ay          = ay,
-                                            text        = string(cnt),
-                                            showarrow   = true,
-                                            arrowhead   = 1,
-                                            visible     = true,
-                                            font        = attr( size = 9, color = "#212121"),
-                                        )  
-                txt_list *= string(cnt)*") "*ph_list[i]*"\n"
-                push!(assemblage_rows, Dict("N" => string(cnt), "Assemblage" => ph_list[i]))
-                push!(list_compacted_idx, i)
-                cnt +=1
-            elseif area[i] > 0.03 # place full label
-                annotations[i] =   attr(    xref        = "x",
-                                            yref        = "y",
-                                            align       = "left",
-                                            valign      = "top",
-                                            x           = ctr[1],
-                                            y           = ctr[2],
-                                            text        = phd_list[i],
-                                            showarrow   = false,
-                                            visible     = true,
-                                            font        = attr( size = 10, color = "#212121"),  
-                                        )                     
-            else    # place number
-                annotations[i] =   attr(    xref        = "x",
-                                            yref        = "y",
-                                            align       = "left",
-                                            valign      = "top",
-                                            x           = ctr[1],
-                                            y           = ctr[2],
-                                            text        = string(cnt),
-                                            showarrow   = false,
-                                            visible     = true,
-                                            font        = attr( size = 10, color = "#212121"),
-                                        )  
-        
-                txt_list *= string(cnt)*") "*ph_list[i]*"\n"
-                push!(assemblage_rows, Dict("N" => string(cnt), "Assemblage" => ph_list[i]))
-                push!(list_compacted_idx, i)
-                cnt +=1
-            end
+    Xr, Yr      = data.Xrange, data.Yrange
+    shown       = [i for i in 1:n_trace if n_pix[i] > field_size]
+    n_num       = count(i -> area[i] <= 0.03, shown)
+    num_txt     = "8"^length(string(max(n_num, 1)))
+    labels      = PDLabel[]
+    for i in shown
+        anchor  = pd_to_px(coor[i][1], coor[i][2], Xr, Yr)
+        pxc     = [pd_to_px(c[1], c[2], Xr, Yr) for c in cands[i]]
+        if area[i] < 0.004
+            push!(labels, PDLabel(i, :arrow, num_txt, 9.0, anchor, pxc))
+        elseif area[i] > 0.03
+            push!(labels, PDLabel(i, :full, pd_label_text(phd_list[i]), 10.0, anchor, pxc))
         else
+            push!(labels, PDLabel(i, :num, num_txt, 10.0, anchor, pxc))
+        end
+    end
+    pd_place_labels!(labels)
+
+    for i=1:n_trace
+        annotations[i] = attr(  xref        = "x",
+                                yref        = "y",
+                                align       = "left",
+                                valign      = "top",
+                                x           = coor[i][1],
+                                y           = coor[i][2],
+                                text        = "",
+                                showarrow   = false,
+                                visible     = false,
+                                font        = attr( size = 10, color = "#212121"),
+                            )
+    end
+
+    for l in labels
+        l.kind == :full || continue
+        x, y = pd_to_data(l.pos[1], l.pos[2], Xr, Yr)
+        annotations[l.field] = attr(    xref        = "x",
+                                        yref        = "y",
+                                        align       = "left",
+                                        valign      = "top",
+                                        x           = x,
+                                        y           = y,
+                                        text        = l.text,
+                                        showarrow   = false,
+                                        visible     = true,
+                                        font        = attr( size = 10, color = "#212121"),
+                                    )
+    end
+
+    numbered = pd_number_order(labels, [k for k in eachindex(labels) if labels[k].kind != :full])
+    for (cnt, k) in enumerate(numbered)
+        l = labels[k]
+        i = l.field
+        if l.kind == :arrow
+            annotations[i] = attr(  xref        = "x",
+                                    yref        = "y",
+                                    x           = coor[i][1],
+                                    y           = coor[i][2],
+                                    ax          = l.pos[1] - l.anchor[1],
+                                    ay          = l.pos[2] - l.anchor[2],
+                                    text        = string(cnt),
+                                    showarrow   = true,
+                                    arrowhead   = 1,
+                                    visible     = true,
+                                    font        = attr( size = 9, color = "#212121"),
+                                )
+        else
+            x, y = pd_to_data(l.pos[1], l.pos[2], Xr, Yr)
             annotations[i] = attr(  xref        = "x",
                                     yref        = "y",
                                     align       = "left",
                                     valign      = "top",
-                                    x           = ctr[1],
-                                    y           = ctr[2],
-                                    text        = "",
+                                    x           = x,
+                                    y           = y,
+                                    text        = string(cnt),
                                     showarrow   = false,
-                                    visible     = false,
+                                    visible     = true,
                                     font        = attr( size = 10, color = "#212121"),
-                                )  
+                                )
         end
+        txt_list *= string(cnt)*") "*ph_list[i]*"\n"
+        push!(assemblage_rows, Dict("N" => string(cnt), "Assemblage" => ph_list[i]))
+        push!(list_compacted_idx, i)
     end
 
     annotations[n_trace+1] =   attr(    xref        = "paper",

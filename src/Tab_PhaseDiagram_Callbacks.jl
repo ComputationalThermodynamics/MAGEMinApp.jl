@@ -1410,6 +1410,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("phase-assemblage-table-id", "selected_cells"),
         Input("clear-assemblage-highlight-button", "n_clicks"),
         subd_inputs("")...,
+        Input("lbl-bg-id",              "value"),
 
         # STATES
         State("field-size-id",          "value"),
@@ -1538,6 +1539,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  updateTitle,     loadstateid,       warr_naming, pressure_unit,
             assemblage_selected_cells, clearHighlight,
             subd_show,  subd_vel,   subd_dip,   subd_depth, subd_T0,    subd_T1,    subd_h,     subd_d,     subd_kappa, subd_rho,
+            lbl_bg,
             # STATES
             field_size, customTitle, txt_list,
             custW,      diagType,   dtb,        dataset,    watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  ph_selection, pure_ph_selection, PTpath,
@@ -1992,7 +1994,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                 end
             end
 
-        elseif bid in subd_input_ids("")
+        elseif bid in subd_input_ids("") || bid == "lbl-bg-id"
             if !@isdefined(data_plot) || !@isdefined(layout)
                 return no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update()
             end
@@ -2024,6 +2026,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             end
             show_text_list  = Dict("display" => "none")  
         end
+        pd_apply_label_bg!(layout[:annotations], lbl_bg == "true")
 
         # check state of unchanged variables ["data_plot","data_reaction","data_grid"]
         if grid == "true"

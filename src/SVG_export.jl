@@ -932,6 +932,15 @@ end
     a small arrow head, in its own `Label_leader_NNN` group. Shared by the
     exporters so every diagram's labels look the same.
 """
+function svg_label_bg(io::IO, seen::Set{String}, f, x, y, txt, fsize, i)
+    haskey(f, :bgcolor) || return
+    w, h = pd_label_box(txt, Float64(fsize))
+    x0, y0, x1, y1 = x - w / 2, y - h / 2, x + w / 2, y + h / 2
+    svg_path(io, svg_id(seen, "Label_bg_$(lpad(i, 3, '0'))"),
+             "M$(svg_num(x0)) $(svg_num(y0)) L$(svg_num(x1)) $(svg_num(y0)) L$(svg_num(x1)) $(svg_num(y1)) L$(svg_num(x0)) $(svg_num(y1)) Z";
+             fill = "#ffffff", fill_opacity = 0.85)
+end
+
 function svg_annotation_layer(io::IO, c::SVGCanvas, seen::Set{String}, annotations; id::AbstractString = "Labels",
                                font::AbstractString = "Helvetica, Arial, sans-serif")
     isempty(annotations) && return
@@ -953,8 +962,10 @@ function svg_annotation_layer(io::IO, c::SVGCanvas, seen::Set{String}, annotatio
                 svg_group_close(io)
                 svg_polygon(io, [(px, py), (px - 4 * ux - 1.5 * uy, py - 4 * uy + 1.5 * ux), (px - 4 * ux + 1.5 * uy, py - 4 * uy - 1.5 * ux)], "#212121")
             end
+            svg_label_bg(io, seen, f, tx, ty, txt, fsize, i)
             svg_text(io, tx, ty, txt; id = svg_id(seen, "Label_$(lpad(i, 3, '0'))"), size = fsize)
         else
+            svg_label_bg(io, seen, f, px, py, txt, fsize, i)
             svg_text(io, px, py, txt; id = svg_id(seen, "Label_$(lpad(i, 3, '0'))"), size = fsize)
         end
     end

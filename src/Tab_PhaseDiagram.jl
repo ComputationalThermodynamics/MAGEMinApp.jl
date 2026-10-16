@@ -665,6 +665,19 @@ function Tab_PhaseDiagram()
                                         ]),
 
                                         dbc_row([
+                                            dbc_col([
+                                                html_h1("White label background", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ], width=5),
+                                            dbc_col([
+                                                dcc_dropdown(   id          = "lbl-bg-id",
+                                                                options     =  ["true","false"],
+                                                                value       = "false" ,
+                                                                clearable   =  false,
+                                                                multi       =  false),
+                                            ]),
+                                        ]),
+
+                                        dbc_row([
                                             dbc_col([ 
                                                 html_h1("Show reaction lines", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                             ], width=5),

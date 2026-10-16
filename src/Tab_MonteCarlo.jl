@@ -245,6 +245,7 @@ function Tab_MonteCarlo()
                                     html_h1("Diagram options", style = Dict("textAlign" => "center","font-size" => "110%")),
                                     html_hr(),
                                     dbc_switch(label="Show phase labels", id="mc-show-labels-switch", value=true),
+                                    dbc_switch(label="White label background", id="mc-label-bg-switch", value=false),
                                     dbc_switch(label="Display phase boundaries", id="mc-show-boundaries-switch", value=true),
                                     dbc_switch(label="Smooth lines", id="mc-smooth-lines-switch", value=true),
                                     html_div("‎ "),

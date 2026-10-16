@@ -60,6 +60,7 @@ module MAGEMinApp
     end
     include(joinpath(pkg_dir,"src","PhaseDiagram_SVG.jl"))
     include(joinpath(pkg_dir,"src","Subduction_geotherm.jl"))
+    include(joinpath(pkg_dir,"src","Label_placement.jl"))
     include(joinpath(pkg_dir,"src","Plotly_SVG.jl"))
     include(joinpath(pkg_dir,"src","Classifications/Mineral_recalc_functions.jl"))
     include(joinpath(pkg_dir,"src","Classifications/Amphibole_functions.jl"))

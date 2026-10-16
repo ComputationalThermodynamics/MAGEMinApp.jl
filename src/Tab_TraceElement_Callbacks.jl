@@ -204,6 +204,7 @@ function Tab_TraceElement_Callbacks(app)
         Input("phase-assemblage-table-id-te", "selected_cells"),
         Input("clear-assemblage-highlight-button-te", "n_clicks"),
         subd_inputs("-te")...,
+        Input("lbl-bg-id-te",               "value"     ),
 
         State("title-id",                   "value"     ),
         State("tepm-dropdown",              "value"     ),
@@ -272,6 +273,7 @@ function Tab_TraceElement_Callbacks(app)
                 updateTitle,
                 assemblage_selected_cells_te, clearHighlight_te,
                 subd_show,  subd_vel,   subd_dip,   subd_depth, subd_T0,    subd_T1,    subd_h,     subd_d,     subd_kappa, subd_rho,
+                lbl_bg,
                 customTitle,tepm,       varBuilder, norm, type, norm_te,
                 dtb,        diagType,   tmin,       tmax,       pmin,       pmax,       e1_tmin,    e1_tmax,    e2_tmin,    e2_tmax,  
                 bulk1,      bulk2,
@@ -647,7 +649,7 @@ function Tab_TraceElement_Callbacks(app)
                     end
                 end
 
-            elseif bid in subd_input_ids("-te")
+            elseif bid in subd_input_ids("-te") || bid == "lbl-bg-id-te"
 
             elseif bid == "clear-assemblage-highlight-button-te"
                 for k = 2:length(data_plot_te)-1
@@ -674,6 +676,7 @@ function Tab_TraceElement_Callbacks(app)
                 end
                 show_text_list  = Dict("display" => "none")  
             end  
+            pd_apply_label_bg!(layout_te[:annotations], lbl_bg == "true")
     
             # check state of unchanged variables ["data_plot","data_reaction","data_grid","data_isopleth_out_te"]
             if grid == "true"

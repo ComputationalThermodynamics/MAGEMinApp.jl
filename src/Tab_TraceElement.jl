@@ -513,6 +513,19 @@ function Tab_TraceElement()
                                     ]), 
                                 ]),
 
+                                dbc_row([
+                                    dbc_col([
+                                        html_h1("White label background", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                    ], width=5),
+                                    dbc_col([
+                                        dcc_dropdown(   id          = "lbl-bg-id-te",
+                                                        options     =  ["true","false"],
+                                                        value       = "false" ,
+                                                        clearable   =  false,
+                                                        multi       =  false),
+                                    ]),
+                                ]),
+
                                 html_div("‎ "),
                                 html_h1("Color options", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                 html_hr(),
