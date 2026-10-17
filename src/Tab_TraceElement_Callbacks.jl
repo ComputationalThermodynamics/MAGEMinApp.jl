@@ -1025,15 +1025,10 @@ function Tab_TraceElement_Callbacks(app)
             Xrange_t = (Float64(data.Xrange[1]), Float64(data.Xrange[2]))
             Yrange_t = (Float64(data.Yrange[1]), Float64(data.Yrange[2]))
             grid, _, _ = get_isopleth_map_te(mod, String(field), String(name), String(something(calc, "")), String(something(norm_te, "none")),
-                                             oxi, Out_TE_XY, Int64(something(sub, 3)), lvl, data, Xrange_t, Yrange_t)
+                                             oxi, Out_TE_XY, Int64(something(sub, 3)), lvl, data, Xrange_t, Yrange_t; absent = NaN)
 
-            vals = Float64[v for v in skipmissing(vec(grid)) if isfinite(v)]
-            isempty(vals) && return no_range
-            vmin, vmax = extrema(vals)
-            vmax > vmin || return no_range
-            step = round_sig((vmax - vmin) / 10)
-            step > 0 || return no_range
-            return round_sig(vmin; sig = 3), step, round_sig(vmax; sig = 3)
+            rng = iso_auto_range(Float64[v for v in skipmissing(vec(grid)) if v isa Real && isfinite(v)])
+            return rng === nothing ? no_range : rng
         catch
             return no_range
         end

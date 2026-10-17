@@ -1800,7 +1800,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
             mod     = "em_frac"
             name    = ss*"_"*em*"_frac_[mol]"
         else 
-            mod     = "ph_frac_wt"
+            mod     = "em_frac_wt"
             name    = ss*"_"*em*"_frac_[wt]"
         end
     elseif (phase == "ss" && ot == "oxComp")

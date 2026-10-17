@@ -2650,15 +2650,21 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("ox-dropdown",                  "value"),
         Input("of-dropdown",                  "value"),
         Input("other-dropdown",               "value"),
-        State("sys-unit-isopleth-dropdown",   "value"),
-        State("rm-exfluid-isopleth-dropdown", "value"),
+        Input("sys-unit-isopleth-dropdown",   "value"),
+        Input("rm-exfluid-isopleth-dropdown", "value"),
+        Input("input-calc-id",                "n_blur"),
+        Input("input-calc-id",                "n_submit"),
+        Input("input-calc-sf-id",             "n_blur"),
+        Input("input-calc-sf-id",             "n_submit"),
+        Input("input-calc-ox-id",             "n_blur"),
+        Input("input-calc-ox-id",             "n_submit"),
         State("input-calc-id",                "value"),
         State("input-calc-sf-id",             "value"),
         State("input-calc-ox-id",             "value"),
         State("gsub-id",                      "value"),
         State("refinement-levels",            "value"),
         prevent_initial_call = true,
-    ) do phase, ss, em, ox, of, ot, sys, rmf, calc, calc_sf, calc_ox, sub, refLvl
+    ) do phase, ss, em, ox, of, ot, sys, rmf, _cb, _cs, _sb, _ss, _ob, _os, calc, calc_sf, calc_ox, sub, refLvl
 
         global Out_XY, data, addedRefinementLvl
 
@@ -2687,7 +2693,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                 mod = sys == "mol" ? "ph_frac" : (sys == "vol" ? "ph_frac_vol" : "ph_frac_wt")
                 em  = ""
             elseif phase == "ss" && ot == "emMode"
-                mod = sys == "mol" ? "em_frac" : "ph_frac_wt"
+                mod = sys == "mol" ? "em_frac" : "em_frac_wt"
             elseif phase == "ss" && ot == "oxComp"
                 sys_cor = sys == "vol" ? "wt" : sys
                 mod = sys_cor == "mol" ? "ox_comp" : "ox_comp_wt"
@@ -2719,14 +2725,8 @@ function Tab_PhaseDiagram_Callbacks(app)
                 absent = NaN,
             )
 
-            finite_vals = filter(isfinite, Float64.(collect(skipmissing(vec(gridded)))))
-            isempty(finite_vals) && return no_range
-
-            vmin  = round(minimum(finite_vals), digits=4)
-            vmax  = round(maximum(finite_vals), digits=4)
-            vstep = max(round((vmax - vmin) / 10, digits=4), 1e-4)
-
-            return vmin, vstep, vmax
+            rng = iso_auto_range(filter(isfinite, Float64.(collect(skipmissing(vec(gridded))))))
+            return rng === nothing ? no_range : rng
 
         catch _
             return no_range

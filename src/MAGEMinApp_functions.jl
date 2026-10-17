@@ -178,6 +178,17 @@ function round_sig(x::Real; sig::Int = 3, mindigits::Int = 2)
     return round(v, digits = max(mindigits, sig - 1 - floor(Int, log10(abs(v)))))
 end
 
+function iso_auto_range(vals::AbstractVector{<:Real})
+    isempty(vals) && return nothing
+    vmin, vmax = Float64.(extrema(vals))
+    vmax > vmin || return nothing
+    e    = floor(Int, log10((vmax - vmin) / 10))
+    m    = (vmax - vmin) / 10 / 10.0^e
+    step = (m < 1.5 ? 1.0 : m < 3.5 ? 2.0 : m < 7.5 ? 5.0 : 10.0) * 10.0^e
+    d    = max(0, -e + 1)
+    return round(floor(vmin / step) * step, digits = d), round(step, digits = d), round(ceil(vmax / step) * step, digits = d)
+end
+
 function display_iso_label(label::String)
     !use_warr_names[1] && return label
     idx = findfirst('_', label)
@@ -2241,7 +2252,8 @@ function get_isopleth_map_te(   mod         ::String,
                                 refLvl      ::Int64,
                                 data        ::MAGEMinApp.AMR_data,
                                 Xrange      ::Tuple{Float64, Float64},
-                                Yrange      ::Tuple{Float64, Float64} )
+                                Yrange      ::Tuple{Float64, Float64};
+                                absent      ::Float64 = 0.0 )
 
     np          = length(data.points)
     len_ox      = length(oxi)
@@ -2253,32 +2265,32 @@ function get_isopleth_map_te(   mod         ::String,
             cmd = get_parsed_command( i;  varBuilder=calc, norm=norm_te) 
             field[i] = eval(cmd)
         end
-        field[isnan.(field)] .= 0.0
+        field[isnan.(field)] .= absent
     elseif mod == "zrc"
         for i=1:np
             field[i] = get_property(Out_TE_XY[i], acces_name);
         end
-        field[isnan.(field)] .= 0.0
+        field[isnan.(field)] .= absent
     elseif mod == "fapt"
         for i=1:np
             field[i] = get_property(Out_TE_XY[i], acces_name);
         end
-        field[isnan.(field)] .= 0.0
+        field[isnan.(field)] .= absent
     elseif mod == "sulf"
         for i=1:np
             field[i] = get_property(Out_TE_XY[i], acces_name);
         end
-        field[isnan.(field)] .= 0.0
+        field[isnan.(field)] .= absent
     elseif mod == "co2sat"
         for i=1:np
             field[i] = get_property(Out_TE_XY[i], acces_name);
         end
-        field[isnan.(field)] .= 0.0
+        field[isnan.(field)] .= absent
     elseif mod == "mnz"
         for i=1:np
             field[i] = get_property(Out_TE_XY[i], acces_name);
         end
-        field[isnan.(field)] .= 0.0
+        field[isnan.(field)] .= absent
     end
 
     n   = 2^(sub + refLvl)+1
