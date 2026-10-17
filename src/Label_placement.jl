@@ -46,6 +46,69 @@ function pd_label_box(text, fs)
     return 0.6 * fs * max(nch, 1) + 4.0, 1.25 * fs * length(lines) + 2.0
 end
 
+function pd_obb_overlap(a, b; pad::Float64 = 2.0)
+    axes = NTuple{2,Float64}[]
+    for bx in (a, b)
+        c, s = cosd(bx[3]), sind(bx[3])
+        push!(axes, (c, s), (-s, c))
+    end
+    dx, dy = b[1] - a[1], b[2] - a[2]
+    for (ux, uy) in axes
+        r = 0.0
+        for bx in (a, b)
+            c, s = cosd(bx[3]), sind(bx[3])
+            r += bx[4] / 2 * abs(c * ux + s * uy) + bx[5] / 2 * abs(-s * ux + c * uy)
+        end
+        abs(dx * ux + dy * uy) > r + pad && return false
+    end
+    return true
+end
+
+function pd_polyline_label(pts::AbstractVector, frac::Float64; min_len::Float64 = 40.0)
+    length(pts) < 2 && return nothing
+    seglen = [hypot(pts[k+1][1] - pts[k][1], pts[k+1][2] - pts[k][2]) for k in 1:length(pts)-1]
+    total  = sum(seglen)
+    total < min_len && return nothing
+    target, acc = total * frac, 0.0
+    for k in eachindex(seglen)
+        if acc + seglen[k] >= target
+            w   = seglen[k] == 0 ? 0.0 : (target - acc) / seglen[k]
+            x   = pts[k][1] + w * (pts[k+1][1] - pts[k][1])
+            y   = pts[k][2] + w * (pts[k+1][2] - pts[k][2])
+            ang = rad2deg(atan(pts[k+1][2] - pts[k][2], pts[k+1][1] - pts[k][1]))
+            ang > 90 && (ang -= 180)
+            ang < -90 && (ang += 180)
+            return (x, y, ang)
+        end
+        acc += seglen[k]
+    end
+    return nothing
+end
+
+const pd_iso_label_fracs = (0.5, 0.3, 0.7, 0.15, 0.85)
+
+"""
+    pd_place_line_label!(placed, pts, txt, fsize)
+
+    Position `(x, y, angle)` for the value label of one contour polyline `pts` (pixel
+    coordinates): the middle of the line, or the first of a few other points along it
+    whose label box does not overlap a label already in `placed`. `nothing` when the
+    line is too short or every candidate overlaps. Accepted boxes are added to `placed`.
+"""
+function pd_place_line_label!(placed::Vector, pts::AbstractVector, txt, fsize)
+    w, h = pd_label_box(txt, fsize)
+    for f in pd_iso_label_fracs
+        lab = pd_polyline_label(pts, f)
+        lab === nothing && return nothing
+        box = (lab[1], lab[2], lab[3], w, h)
+        if !any(b -> pd_obb_overlap(b, box), placed)
+            push!(placed, box)
+            return lab
+        end
+    end
+    return nothing
+end
+
 pd_to_px(x, y, Xr, Yr) = ((x - Xr[1]) / (Xr[2] - Xr[1]) * PD_PLOT_W, (Yr[2] - y) / (Yr[2] - Yr[1]) * PD_PLOT_H)
 pd_to_data(px, py, Xr, Yr) = (Xr[1] + px / PD_PLOT_W * (Xr[2] - Xr[1]), Yr[2] - py / PD_PLOT_H * (Yr[2] - Yr[1]))
 

@@ -262,6 +262,15 @@ function update_colormap_phaseDiagram_te(       xtitle,     ytitle,     type,   
 end
 
 
+function te_set_zrange!(zmin, zmax)
+    global data_plot_te, heat_map_export_te
+    for tr in (data_plot_te[1], heat_map_export_te)
+        tr[:zmin] = zmin
+        tr[:zmax] = zmax
+    end
+    return nothing
+end
+
 """
     update_displayed_field_phaseDiagram(   xtitle,     ytitle,     
                                                     Xrange,     Yrange,     fieldname,
@@ -387,9 +396,16 @@ function add_isopleth_phaseDiagram_te(      Xrange,     Yrange,
         name    = field_mnz
     else
         println("Wrong combination, needs debugging...")
+        return data_isopleth_te, isopleths_te
     end
 
     global data_isopleth_te, nIsopleths_te, data, Out_TE_XY, data_plot_te, X, Y, addedRefinementLvl
+
+    slot = next_isopleth_slot(data_isopleth_te.status)
+    if isnothing(slot)
+        println("Maximum number of isopleths ($(data_isopleth_te.n_iso_max)) reached, remove one first")
+        return data_isopleth_te, isopleths_te
+    end
 
     gridded_te, X, Y = get_isopleth_map_te(     mod, field, name, calc, norm_tes,
                                                 oxi,
@@ -398,12 +414,13 @@ function add_isopleth_phaseDiagram_te(      Xrange,     Yrange,
                                                 refLvl + addedRefinementLvl,
                                                 data,
                                                 Xrange,
-                                                Yrange )
+                                                Yrange;
+                                                absent       = NaN,
+                                                defined_only = true )
+    gridded_te = iso_undefined_to_missing(gridded_te)
 
-    data_isopleth_te.n_iso += 1
-
-    data_isopleth_te.isoT[data_isopleth_te.n_iso] = CTR.contours(X[1:size(gridded_te,1)],Y[1:size(gridded_te,1):end],Float64.(coalesce.(gridded_te, NaN)),[Float64(minIso + k * stepIso) for k in 0:floor(Int, (maxIso - minIso) / stepIso + 1e-9)])
-    data_isopleth_te.isoP[data_isopleth_te.n_iso]= contour(; pd_grid_xyz(gridded_te, data)...,
+    data_isopleth_te.isoT[slot] = CTR.contours(X[1:size(gridded_te,1)],Y[1:size(gridded_te,1):end],Float64.(coalesce.(gridded_te, NaN)),[Float64(minIso + k * stepIso) for k in 0:floor(Int, (maxIso - minIso) / stepIso + 1e-9)])
+    data_isopleth_te.isoP[slot]= contour(; pd_grid_xyz(gridded_te, data)...,
                                                             contours_coloring   = "lines",
                                                             colorscale          = [[0, isoColorLine], [1, isoColorLine]],
                                                             # connectgaps         = false,
@@ -424,7 +441,7 @@ function add_isopleth_phaseDiagram_te(      Xrange,     Yrange,
     xvals   = range(data.Xrange[1], stop = data.Xrange[2], length = n)
     yvals   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
     
-    data_isopleth_te.isoPexp[data_isopleth_te.n_iso] = contour(   x                   = xvals,
+    data_isopleth_te.isoPexp[slot] = contour(   x                   = xvals,
                                                                 y                   = yvals,
                                                                 z                   = gridded_te',
                                                                 contours_coloring   = "lines",
@@ -444,16 +461,17 @@ function add_isopleth_phaseDiagram_te(      Xrange,     Yrange,
                                                             )
                                                         );
 
-    data_isopleth_te.isoCap[data_isopleth_te.n_iso]   = scatter(    x           = [nothing],
+    data_isopleth_te.isoCap[slot]   = scatter(    x           = [nothing],
                                                                     y           = [nothing],
                                                                     mode        = "lines",
                                                                     line        =  attr(color=isoColorLine,dash=isoLineStyle,width=isoLineWidth),
                                                                     name        =  name,
                                                                     showlegend  =  true);
 
-    data_isopleth_te.status[data_isopleth_te.n_iso]     = 1
-    data_isopleth_te.label[data_isopleth_te.n_iso]      = name
-    data_isopleth_te.value[data_isopleth_te.n_iso]      = data_isopleth_te.n_iso
+    data_isopleth_te.status[slot]                       = 1
+    data_isopleth_te.label[slot]                        = name
+    data_isopleth_te.value[slot]                        = slot
+    data_isopleth_te.n_iso                              = count(!=(0), data_isopleth_te.status)
     data_isopleth_te.active                             = findall(data_isopleth_te.status .== 1)
     n_act                                               = length(data_isopleth_te.active)
 
@@ -509,9 +527,10 @@ end
 function remove_single_isopleth_phaseDiagram_te(isoplethsID)
     global data_isopleth_te
 
-    data_isopleth_te.n_iso                -= 1      
     data_isopleth_te.status[isoplethsID]   = 0;
+    data_isopleth_te.n_iso                 = count(!=(0), data_isopleth_te.status)
     data_isopleth_te.isoP[isoplethsID]     = contour()
+    data_isopleth_te.isoPexp[isoplethsID]  = contour()
     data_isopleth_te.isoCap[isoplethsID]   = scatter()
     data_isopleth_te.label[isoplethsID]    = ""
     data_isopleth_te.value[isoplethsID]    = 0
@@ -532,11 +551,12 @@ function remove_all_isopleth_phaseDiagram_te()
     data_isopleth_te.n_iso     = 0
     for i=1:data_isopleth_te.n_iso_max
         data_isopleth_te.isoP[i] = contour()
+        data_isopleth_te.isoPexp[i] = contour()
         data_isopleth_te.isoCap[i] = scatter()
     end
     data_isopleth_te.status   .= 0
-    data_isopleth_te.active   .= 0
-    data_isopleth_te.hidden   .= 0
+    data_isopleth_te.active    = Int64[]
+    data_isopleth_te.hidden    = Int64[]
 
     # clear isopleth dropdown menu
     isopleths_te = []              

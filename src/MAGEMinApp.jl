@@ -34,8 +34,8 @@ module MAGEMinApp
 
     pkg_dir = Base.pkgdir(MAGEMinApp)
 
-    const ENABLE_MAGERES = true
-    const ENABLE_MELTS   = true
+    const ENABLE_MAGERES = false
+    const ENABLE_MELTS   = false
 
     export App
     export build_intersect_model_df, make_measurements_df, list_intersect_phases, list_intersect_elements

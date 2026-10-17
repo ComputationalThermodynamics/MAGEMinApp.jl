@@ -152,6 +152,30 @@ function pd_isopleth_contours(data_isopleth, i::Int)
 end
 
 """
+    pd_finite_runs(xs, ys)
+
+    The pieces of a contour polyline between non-finite vertices. Contour.jl gives
+    NaN coordinates where a line would cross into an undefined (NaN) part of the
+    grid, e.g. where the phase of a composition isopleth is absent; splitting there
+    ends the line at the edge of the defined region. Pieces shorter than 2 points
+    are dropped.
+"""
+function pd_finite_runs(xs, ys)
+    runs = Vector{Vector{Tuple{Float64,Float64}}}()
+    cur  = Tuple{Float64,Float64}[]
+    for (x, y) in zip(xs, ys)
+        if isfinite(x) && isfinite(y)
+            push!(cur, (Float64(x), Float64(y)))
+        else
+            length(cur) > 1 && push!(runs, cur)
+            cur = Tuple{Float64,Float64}[]
+        end
+    end
+    length(cur) > 1 && push!(runs, cur)
+    return runs
+end
+
+"""
     pd_isopleth_sets(data_isopleth, xy_y)
 
     The active isopleths of a diagram as data: for each slot in
@@ -180,10 +204,10 @@ function pd_isopleth_sets(data_isopleth, xy_y; sigma::Real = 0.0)
             polys = Vector{Vector{Tuple{Float64,Float64}}}()
             for l in CTR.lines(lvl)
                 xs, ys = CTR.coordinates(l)
-                length(xs) > 1 || continue
-                line = [(Float64(x), Float64(y)) for (x, y) in zip(xs, ys)]
-                grid === nothing || (line = pd_smooth_isoline(line, Float64(CTR.level(lvl)), grid, sigma))
-                push!(polys, [(x, xy_y(y)) for (x, y) in line])
+                for line in pd_finite_runs(xs, ys)
+                    grid === nothing || (line = pd_smooth_isoline(line, Float64(CTR.level(lvl)), grid, sigma))
+                    push!(polys, [(x, xy_y(y)) for (x, y) in line])
+                end
             end
             isempty(polys) || push!(levels, (Float64(CTR.level(lvl)), polys))
         end
@@ -312,24 +336,7 @@ end
     hold a label.
 """
 function pd_contour_label(line::Vector{Tuple{Float64,Float64}}, c::SVGCanvas)
-    pts = [(svg_x(c, x), svg_y(c, y)) for (x, y) in line]
-    seglen = [hypot(pts[k+1][1] - pts[k][1], pts[k+1][2] - pts[k][2]) for k in 1:length(pts)-1]
-    total  = sum(seglen)
-    total < 40 && return nothing
-    half, acc = total / 2, 0.0
-    for k in eachindex(seglen)
-        if acc + seglen[k] >= half
-            w  = seglen[k] == 0 ? 0.0 : (half - acc) / seglen[k]
-            x  = pts[k][1] + w * (pts[k+1][1] - pts[k][1])
-            y  = pts[k][2] + w * (pts[k+1][2] - pts[k][2])
-            ang = rad2deg(atan(pts[k+1][2] - pts[k][2], pts[k+1][1] - pts[k][1]))
-            ang > 90 && (ang -= 180)
-            ang < -90 && (ang += 180)
-            return (x, y, ang)
-        end
-        acc += seglen[k]
-    end
-    return nothing
+    return pd_polyline_label([(svg_x(c, x), svg_y(c, y)) for (x, y) in line], 0.5)
 end
 
 """
@@ -420,6 +427,7 @@ function pd_export_svg(parts, path::AbstractString)
         svg_group_close(io)
     end
 
+    iso_placed = NTuple{5,Float64}[]
     for iso in parts.isopleths
         svg_group_open(io, svg_id(seen, "Isopleth_" * iso.name); stroke = iso.color, width = iso.width, fill = "none",
                         dash = svg_dasharray(iso.dash, iso.width), rounded = true)
@@ -434,7 +442,7 @@ function pd_export_svg(parts, path::AbstractString)
             svg_path(io, svg_id(seen, "$(idbase)_$(lvl_txt)"), d)
             n_paths += 1
             for l in cl
-                lab = pd_contour_label(l, c)
+                lab = pd_place_line_label!(iso_placed, [(svg_x(c, x), svg_y(c, y)) for (x, y) in l], lvl_txt, iso.label_size)
                 lab === nothing || push!(labels, (lab[1], lab[2], lab[3], lvl_txt))
             end
         end

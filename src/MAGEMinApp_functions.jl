@@ -178,10 +178,13 @@ function round_sig(x::Real; sig::Int = 3, mindigits::Int = 2)
     return round(v, digits = max(mindigits, sig - 1 - floor(Int, log10(abs(v)))))
 end
 
+grid_min(g) = (v = skipmissing(g); isempty(v) ? 0.0 : minimum(v))
+grid_max(g) = (v = skipmissing(g); isempty(v) ? 1.0 : maximum(v))
+
 function iso_auto_range(vals::AbstractVector{<:Real})
     isempty(vals) && return nothing
     vmin, vmax = Float64.(extrema(vals))
-    vmax > vmin || return nothing
+    vmax - vmin > 1e-9 * max(abs(vmin), abs(vmax)) || return nothing
     e    = floor(Int, log10((vmax - vmin) / 10))
     m    = (vmax - vmin) / 10 / 10.0^e
     step = (m < 1.5 ? 1.0 : m < 3.5 ? 2.0 : m < 7.5 ? 5.0 : 10.0) * 10.0^e
@@ -227,6 +230,15 @@ function sanitize_names(names::Vector{String})
     return [replace(replace(replace(replace(name, " " => "_"), "/" => "o"),"[" => ""),"]" => "") for name in names]
 end
 
+"""
+    set_min_to_white(colormap; reverseColorMap = false)
+
+    Colorscale stops of `colormap` with only the minimum of the range made white
+    (transparent): a white stop at 0 followed, a hair above it, by the colormap's own
+    first colour, so every value above the minimum keeps its colour. With
+    `reverseColorMap` (Plotly's `reversescale` flips the stops) the white stop is put
+    at 1 instead.
+"""
 function set_min_to_white(colormap; reverseColorMap = false)
 
     nc = length(colormap)
@@ -237,10 +249,14 @@ function set_min_to_white(colormap; reverseColorMap = false)
         cust_color = [ [(i-1)/(nc-1),"rgba($(rgb255(colormap[i].r)),$(rgb255(colormap[i].g)),$(rgb255(colormap[i].b)),1.0)"] for i = 1:nc]
     end
 
+    white = "rgba(255,255,255,0.0)"
+    eps   = 1e-4
     if reverseColorMap == false
-        cust_color[1][2] = "rgba(255,255,255,0.0)"
+        cust_color[1][1] = eps
+        pushfirst!(cust_color, [0.0, white])
     else
-        cust_color[end][2] = "rgba(255,255,255,0.0)"
+        cust_color[end][1] = 1.0 - eps
+        push!(cust_color, [1.0, white])
     end
 
     return cust_color
@@ -1059,15 +1075,19 @@ function get_diagram_labels(    Out_XY      :: Vector{MAGEMin_C.gmin_struct{Floa
     coor        = []
     cands       = Vector{Vector{NTuple{2,Float64}}}()
 
-    int_vector  = [findfirst(x -> x == h, hull) for h in Hash_XY]
-    for i = 1:length(int_vector)
+    hull_id     = Dict(h => k for (k, h) in enumerate(hull))
+    members     = [Int64[] for _ in 1:n_hull]
+    for (k, h) in enumerate(Hash_XY)
+        push!(members[hull_id[h]], k)
+    end
+    for i = 1:n_hull
 
-        field_tmp   = findall(int_vector .== i)
+        field_tmp   = members[i]
         np          = length(field_tmp)
         if np > 4
             id             += 1
-            ph_list[id]     = ph[field_tmp][1]
-            phd_list[id]    = phd[field_tmp][1]
+            ph_list[id]     = ph[field_tmp[1]]
+            phd_list[id]    = phd[field_tmp[1]]
             raw_field_id[id]= i
 
             mask, bnds      = reduce_matrix(ifelse.(gridded_fields .!= i, 0, 1))
@@ -1639,102 +1659,144 @@ end
 
 
 
+const te_chondrite_names = ["Rb", "Ba", "Th", "U", "Nb", "Ta", "La", "Ce", "Pb", "Pr", "Sr", "Nd", "Zr", "Hf", "Sm", "Eu", "Gd", "Tb", "Dy", "Y", "Ho", "Er", "Tm", "Yb", "Lu", "V", "Sc"]
+const te_chondrite_ppm   = [2.3, 2.41, 0.029, 0.0074, 0.24, 0.0136, 0.237, 0.613, 2.47, 0.0928, 7.25, 0.457, 3.82, 0.103, 0.148, 0.0563, 0.199, 0.0361, 0.246, 1.57, 0.0546, 0.160, 0.0247, 0.161, 0.0246, 56, 5.92]
+
+function te_chondrite_norm(el::AbstractString)
+    id = findfirst(==(el), te_chondrite_names)
+    return isnothing(id) ? 1.0 : te_chondrite_ppm[id]
+end
+
+struct TEFormula
+    fn          :: Any
+    terms       :: Vector{Tuple{String,String}}
+    needs_sol   :: Bool
+end
+
 """
-    parse use input
+    compile_te_formula(varBuilder)
+
+    Compiles a trace-element field formula such as `"[M_Dy] / [S_Yb]"` once into a
+    function of the vector of its bracketed term values, to be evaluated per point
+    with [`eval_te_formula`](@ref).
 """
-function get_parsed_command(    point       :: Int64;
-                                varBuilder  :: String = "M_Dy / M_Yb",
-                                norm        :: String = "none" )
-
-    # te_chondrite    = ["Rb", "Ba", "Th", "U", "Nb", "Ta", "La", "Ce", "Pb", "Pr", "Sr", "Nd", "Zr", "Hf", "Sm", "Eu", "Gd", "Tb", "Dy", "Y", "Ho", "Er", "Tm", "Yb", "Lu", "V", "Sc"]
-    ppm_chondrite   = [2.3, 2.41,0.029,0.0074,0.24,0.0136,0.237,0.613,2.47,0.0928,7.25,0.457,3.82,0.103,0.148,0.0563,0.199,0.0361,0.246,1.57,0.0546,0.160,0.0247,0.161,0.0246,56,5.92]
-
-    compute = true
-    if all(isnan, Out_TE_XY[point].Csol) && occursin("S_",varBuilder)
-        compute = false
-    end
-
-    if all(!isnan, Out_TE_XY[point].Cliq) && compute == true
-        # varBuilder         = "[M_Dy]/([g_Dy]*[S_Yb])"
-        pattern     = r"\[([^\]]+)\]"
-        matches     = eachmatch(pattern, varBuilder)
-        terms       = [match.captures[1] for match in matches]
-        n_terms     = length(terms)
-    
-
-        ref         = "Out_TE_XY["*string(point)*"]"
-        varBuilder_out     = varBuilder
-        
-        if ~isempty(terms)
-            for i = 1:n_terms
-                st = String.(split(terms[i], "_"))
-                if length(st) == 2
-                    id_el = findfirst(Out_TE_XY[point].elements  .== st[2])
-                    if isnothing(id_el)
-                        part1, part2 = "break", "break"
-                        print("wrong element name!\n")
-                    else
-
-                        if norm == "bulk"
-                            nrm = string(Out_TE_XY[point].C0[id_el])
-                        elseif norm == "chondrite"
-                            nrm = string(ppm_chondrite[id_el])
-                        else
-                            nrm = string(1.0)
-                        end
-    
-                        if st[1] == "S"
-                            part1 = ref*".Csol"
-                            part2 = "["*string(id_el)*"]"
-                        elseif st[1] == "M"
-                            part1 = ref*".Cliq"
-                            part2 = "["*string(id_el)*"]"
-                        elseif st[1] == "C0"
-                            part1 = ref*".C0"
-                            part2 = "["*string(id_el)*"]"
-                        else
-                            ph_te = Out_TE_XY[point].ph_TE
-                            if isnothing(ph_te)
-                                id_ph = nothing
-                            else
-                                id_ph = findfirst(ph_te .== st[1])
-                                if isnothing(id_ph) && use_warr_names[1]
-                                    id_ph = findfirst(ph -> MAGEMin_C.get_Warr_name(ph) == st[1], ph_te)
-                                end
-                            end
-                            if isnothing(id_ph)
-                                part1, part2 = "break", "break"
-                                # print("wrong phase name!\n")
-                            else
-                                part1 = ref*".Cmin"
-                                part2 = "["*string(id_ph)*","*string(id_el)*"]"
-                            end
-                        end
-
-                        left = "(("
-                        right = ")/"*nrm*")"
-    
-                        if part1 == "break" || part2 == "break"
-                            varBuilder_out = "NaN"
-                        else
-                            varBuilder_out = replace(varBuilder_out, "["*terms[i]*"]" => left*part1*part2*right)
-                        end
-                    end
-
-                else
-                    println("warning: underscore to split (M,S ph) and (element), has to be added")
-                end
-        
-            end
+function compile_te_formula(varBuilder::String)
+    terms   = unique([m.captures[1] for m in eachmatch(r"\[([^\]]+)\]", varBuilder)])
+    parsed  = Tuple{String,String}[]
+    expr    = varBuilder
+    for (k, term) in enumerate(terms)
+        st = String.(split(term, "_"))
+        if length(st) != 2
+            println("warning: underscore to split (M,S ph) and (element), has to be added")
+            return TEFormula(nothing, parsed, false)
         end
-      
-    else
-        varBuilder_out = "NaN"
+        push!(parsed, (st[1], st[2]))
+        expr = replace(expr, "[" * term * "]" => "(t[$k])")
     end
+    fn = try
+        eval(:( (t) -> $(Meta.parse(expr)) ))
+    catch
+        nothing
+    end
+    return TEFormula(fn, parsed, occursin("S_", varBuilder))
+end
 
-    command = Meta.parse(varBuilder_out)
+te_melt_present(te) = any(v -> isfinite(v) && v != 0.0, te.Cliq)
 
-    return command
+function te_term_value(te, kind::String, el::String, norm::String; defined_only::Bool = false)
+    id_el = findfirst(e -> string(e) == el, te.elements)
+    isnothing(id_el) && return nothing
+    defined_only && kind == "M" && !te_melt_present(te) && return nothing
+    nrm   = norm == "bulk" ? te.C0[id_el] : norm == "chondrite" ? te_chondrite_norm(el) : 1.0
+    if kind == "S"
+        v = te.Csol[id_el]
+    elseif kind == "M"
+        v = te.Cliq[id_el]
+    elseif kind == "C0"
+        v = te.C0[id_el]
+    else
+        ph_te = te.ph_TE
+        id_ph = isnothing(ph_te) ? nothing : findfirst(ph -> string(ph) == kind, ph_te)
+        if isnothing(id_ph) && !isnothing(ph_te) && use_warr_names[1]
+            id_ph = findfirst(ph -> MAGEMin_C.get_Warr_name(ph) == kind, ph_te)
+        end
+        isnothing(id_ph) && return nothing
+        v = te.Cmin[id_ph, id_el]
+    end
+    return v / nrm
+end
+
+"""
+    eval_te_formula(f, te, norm; strict_liq = true)
+
+    Evaluates a compiled trace-element formula on one `out_tepm` point. Returns `NaN`
+    when a term cannot be resolved at that point (unknown element, absent phase),
+    when no solid is present for an `S_` term, or when the melt composition is
+    undefined (any NaN with `strict_liq`, all NaN otherwise). With `defined_only`,
+    `M_` terms are also undefined where there is no melt (MAGEMin_C reports a zero
+    melt composition there), which is what range finding needs.
+"""
+function eval_te_formula(f::TEFormula, te, norm::String; strict_liq::Bool = true, defined_only::Bool = false)
+    f.fn === nothing && return NaN
+    (strict_liq ? any(isnan, te.Cliq) : all(isnan, te.Cliq)) && return NaN
+    (f.needs_sol && all(isnan, te.Csol)) && return NaN
+    t = Vector{Float64}(undef, length(f.terms))
+    for (k, (kind, el)) in enumerate(f.terms)
+        v = te_term_value(te, kind, el, norm; defined_only = defined_only)
+        isnothing(v) && return NaN
+        t[k] = v
+    end
+    return try
+        Base.invokelatest(f.fn, t)
+    catch
+        NaN
+    end
+end
+
+"""
+    te_field_values(type, fieldname, varBuilder, norm)
+
+    The values of a trace-element field at the computed points where it is
+    defined: a formula (`type == "te"`) evaluated with `defined_only`, or an
+    accessory-phase property, where melt-only quantities (`*_liq`) are skipped at
+    points without melt.
+"""
+function te_field_values(type::String, fieldname::String, varBuilder::String, norm::String)
+    global Out_TE_XY
+    vals = Float64[]
+    if type == "te"
+        f = compile_te_formula(varBuilder)
+        for te in Out_TE_XY
+            v = eval_te_formula(f, te, norm; defined_only = true)
+            (v isa Real && isfinite(v)) && push!(vals, Float64(v))
+        end
+    else
+        melt_only = endswith(fieldname, "_liq")
+        for te in Out_TE_XY
+            v = get_property(te, fieldname)
+            (v isa Real && isfinite(v)) || continue
+            (melt_only && !te_melt_present(te)) && continue
+            push!(vals, Float64(v))
+        end
+    end
+    return vals
+end
+
+"""
+    te_color_range(type, fieldname, varBuilder, norm, gridded)
+
+    Default colour range of a trace-element field: min/max over the points where it
+    is defined ([`te_field_values`](@ref)), falling back to the whole displayed grid
+    when it is defined nowhere.
+"""
+function te_color_range(type::String, fieldname::String, varBuilder::String, norm::String, gridded)
+    vals = try
+        te_field_values(type, fieldname, varBuilder, norm)
+    catch
+        Float64[]
+    end
+    isempty(vals) && return round_sig(grid_min(gridded)), round_sig(grid_max(gridded))
+    return round_sig(minimum(vals)), round_sig(maximum(vals))
 end
 
 """
@@ -1794,10 +1856,9 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
         end
         field[isnan.(field)] .= 0.0
     elseif type == "te"
-        global i
+        te_f = compile_te_formula(varBuilder)
         for i=1:np
-            cmd = get_parsed_command( i;  varBuilder, norm) 
-            field[i] = eval(cmd)
+            field[i] = eval_te_formula(te_f, Out_TE_XY[i], norm)
         end
         field[isnan.(field)] .= 0.0
     else
@@ -2253,17 +2314,17 @@ function get_isopleth_map_te(   mod         ::String,
                                 data        ::MAGEMinApp.AMR_data,
                                 Xrange      ::Tuple{Float64, Float64},
                                 Yrange      ::Tuple{Float64, Float64};
-                                absent      ::Float64 = 0.0 )
+                                absent      ::Float64 = 0.0,
+                                defined_only::Bool    = false )
 
     np          = length(data.points)
     len_ox      = length(oxi)
     field       = Vector{Union{Float64,Nothing}}(nothing,np);
 
     if mod == "calc"
-        global i
+        te_f = compile_te_formula(calc)
         for i=1:np
-            cmd = get_parsed_command( i;  varBuilder=calc, norm=norm_te) 
-            field[i] = eval(cmd)
+            field[i] = eval_te_formula(te_f, Out_TE_XY[i], norm_te; defined_only = defined_only)
         end
         field[isnan.(field)] .= absent
     elseif mod == "zrc"
@@ -2291,6 +2352,11 @@ function get_isopleth_map_te(   mod         ::String,
             field[i] = get_property(Out_TE_XY[i], acces_name);
         end
         field[isnan.(field)] .= absent
+    end
+    if defined_only && mod != "calc" && endswith(acces_name, "_liq")
+        for i=1:np
+            te_melt_present(Out_TE_XY[i]) || (field[i] = absent)
+        end
     end
 
     n   = 2^(sub + refLvl)+1

@@ -1520,81 +1520,6 @@ function _ptx_tick_labels(np::Int)
 end
 
 
-function get_parsed_command_ptx(step_id :: Int64;
-                                 varBuilder :: String = "[M_Dy] / [M_Yb]",
-                                 norm       :: String = "none")
-    global Out_TE_PTX
-
-    te_chondrite  = ["Rb","Ba","Th","U","Nb","Ta","La","Ce","Pb","Pr","Sr","Nd","Zr","Hf",
-                     "Sm","Eu","Gd","Tb","Dy","Y","Ho","Er","Tm","Yb","Lu","V","Sc"]
-    ppm_chondrite = [2.3, 2.41, 0.029, 0.0074, 0.24, 0.0136, 0.237, 0.613, 2.47, 0.0928,
-                     7.25, 0.457, 3.82, 0.103, 0.148, 0.0563, 0.199, 0.0361, 0.246, 1.57,
-                     0.0546, 0.160, 0.0247, 0.161, 0.0246, 56, 5.92]
-
-    res = Out_TE_PTX[step_id]
-
-    if all(isnan, res.Cliq)
-        return Meta.parse("NaN")
-    end
-    if all(isnan, res.Csol) && occursin("S_", varBuilder)
-        return Meta.parse("NaN")
-    end
-
-    pattern        = r"\[([^\]]+)\]"
-    terms          = [m.captures[1] for m in eachmatch(pattern, varBuilder)]
-    ref            = "Out_TE_PTX[" * string(step_id) * "]"
-    varBuilder_out = varBuilder
-
-    for term in terms
-        st = String.(split(term, "_"))
-        if length(st) != 2
-            varBuilder_out = "NaN"; break
-        end
-        id_el = findfirst(isequal(st[2]), string.(res.elements))
-        if isnothing(id_el)
-            varBuilder_out = "NaN"; break
-        end
-
-        if norm == "bulk"
-            nrm = string(res.C0[id_el])
-        elseif norm == "chondrite"
-            id_ch = findfirst(isequal(st[2]), te_chondrite)
-            nrm   = isnothing(id_ch) ? "1.0" : string(ppm_chondrite[id_ch])
-        else
-            nrm = "1.0"
-        end
-
-        if st[1] == "M"
-            part1 = ref * ".Cliq"; part2 = "[" * string(id_el) * "]"
-        elseif st[1] == "S"
-            part1 = ref * ".Csol"; part2 = "[" * string(id_el) * "]"
-        elseif st[1] == "C0"
-            part1 = ref * ".C0";   part2 = "[" * string(id_el) * "]"
-        else
-            ph_te = res.ph_TE
-            if isnothing(ph_te)
-                id_ph = nothing
-            else
-                id_ph = findfirst(isequal(st[1]), string.(ph_te))
-                if isnothing(id_ph) && use_warr_names[1]
-                    id_ph = findfirst(ph -> MAGEMin_C.get_Warr_name(ph) == st[1], ph_te)
-                end
-            end
-            if isnothing(id_ph)
-                varBuilder_out = "NaN"; break
-            end
-            part1 = ref * ".Cmin"
-            part2 = "[" * string(id_ph) * "," * string(id_el) * "]"
-        end
-
-        varBuilder_out = replace(varBuilder_out,
-                                 "[" * term * "]" => "((" * part1 * part2 * ")/" * nrm * ")")
-    end
-
-    return Meta.parse(varBuilder_out)
-end
-
-
 function get_te_fieldbuilder_plot(varBuilder::String, norm::String)
     global Out_PTX, Out_TE_PTX
 
@@ -1606,9 +1531,9 @@ function get_te_fieldbuilder_plot(varBuilder::String, norm::String)
     tick_vals, tick_text = _ptx_tick_labels(np)
 
     y_vals = Vector{Union{Float64,Missing}}(undef, np)
+    te_f   = compile_te_formula(varBuilder)
     for k = 1:np
-        cmd    = get_parsed_command_ptx(k; varBuilder=varBuilder, norm=norm)
-        val    = try eval(cmd) catch; NaN end
+        val    = eval_te_formula(te_f, Out_TE_PTX[k], norm; strict_liq = false)
         y_vals[k] = (val isa Number && isfinite(Float64(val))) ? Float64(val) : missing
     end
 

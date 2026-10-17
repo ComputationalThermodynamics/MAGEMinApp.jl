@@ -1673,8 +1673,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             data_grid       = show_hide_mesh_grid()
             active_tab      = "tab-phase-diagram" 
 
-            minColor        = round_sig(minimum(skipmissing(gridded)));
-            maxColor        = round_sig(maximum(skipmissing(gridded)));
+            minColor        = round_sig(grid_min(gridded));
+            maxColor        = round_sig(grid_max(gridded));
             update_ss_list  = 1
             update_reaction_list  = 1
             clear_selection = []
@@ -1727,8 +1727,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             infos           = get_computation_info(npoints, meant)
             data_reaction   = show_hide_reaction_lines(sub,refLvl,Xrange,Yrange)
             data_grid       = show_hide_mesh_grid()
-            minColor        = round_sig(minimum(skipmissing(gridded)));
-            maxColor        = round_sig(maximum(skipmissing(gridded)));
+            minColor        = round_sig(grid_min(gridded));
+            maxColor        = round_sig(grid_max(gridded));
             update_ss_list  = 1
             update_reaction_list  = 1
             clear_selection = []
@@ -1808,8 +1808,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             smooth,     colorm,     reverseColorMap, set_white,
             test,       refType                                 )
 
-            minColor        = round_sig(minimum(skipmissing(gridded)));
-            maxColor        = round_sig(maximum(skipmissing(gridded)));
+            minColor        = round_sig(grid_min(gridded));
+            maxColor        = round_sig(grid_max(gridded));
 
             active_tab      = "tab-phase-diagram"
 
@@ -1850,8 +1850,8 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     smooth,     colorm,     reverseColorMap, set_white,
                                                                     test,       refType                                 )
 
-            minColor        = round_sig(minimum(skipmissing(gridded))); 
-            maxColor        = round_sig(maximum(skipmissing(gridded)));  
+            minColor        = round_sig(grid_min(gridded)); 
+            maxColor        = round_sig(grid_max(gridded));  
                                                                                                  
         elseif bid == "show-full-grid"
 
@@ -2054,7 +2054,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                     layer    = eval(Symbol(fieldNames[i]))
                     if i == 2
                         layer = geom !== nothing ? pd_smooth_reaction(layer, geom) : layer
-                        layer === data_reaction && (layer = deepcopy(layer))
+                        layer === data_reaction && (layer = [GenericTrace(copy(tr.fields)) for tr in layer])
                         for tr in layer
                             tr[:visible] = grid == "true"
                             tr[:meta]    = "pd-reaction"
@@ -2142,14 +2142,13 @@ function Tab_PhaseDiagram_Callbacks(app)
     ) do n_clicks, dtb, title
 
         global data_isopleth
-        n = data_isopleth.n_iso
-        if n > 0
+        if @isdefined(data_isopleth) && !isempty(data_isopleth.active)
 
             isoT = data_isopleth.isoT[data_isopleth.active]
             lbl = data_isopleth.label[data_isopleth.active]
 
-            for i = 1:n
-                export_contours_to_txt(isoT[i], lbl[i], "isopleth_"*replace(title, " " => "_")*"_"*lbl[i]*".txt")
+            for i in eachindex(isoT)
+                export_contours_to_txt(isoT[i], lbl[i], output_dir[1]*"isopleth_"*replace(title, " " => "_")*"_"*lbl[i]*".txt")
             end
 
             return "success", ""

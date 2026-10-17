@@ -12,6 +12,7 @@
 const pd_smooth_chaikin       = 2
 const pd_smooth_sigma_default = 1.5
 const pd_smooth_tube          = 0.5
+const pd_smooth_simplify      = 0.02
 
 pd_smooth_geom = nothing
 
@@ -84,6 +85,42 @@ function pd_chaikin(P::Matrix{Float64}, iters::Int, ring::Bool)
         P = Q
     end
     return P
+end
+
+"""
+    pd_simplify(P, tol_x, tol_y)
+
+    Douglas-Peucker simplification of polyline `P` (rows = points): drops points
+    closer than 1 (in units of `tol_x`, `tol_y` along x and y) to the chord of their
+    kept neighbours. End points are always kept, so arcs still meet at their shared
+    nodes.
+"""
+function pd_simplify(P::Matrix{Float64}, tol_x::Float64, tol_y::Float64)
+    m = size(P, 1)
+    m <= 2 && return P
+    keep = falses(m)
+    keep[1] = keep[m] = true
+    stack = [(1, m)]
+    while !isempty(stack)
+        a, b = pop!(stack)
+        b - a < 2 && continue
+        ax, ay = P[a, 1] / tol_x, P[a, 2] / tol_y
+        bx, by = P[b, 1] / tol_x, P[b, 2] / tol_y
+        vx, vy = bx - ax, by - ay
+        L2     = vx^2 + vy^2
+        dmax, imax = 0.0, 0
+        for i in a+1:b-1
+            px, py = P[i, 1] / tol_x - ax, P[i, 2] / tol_y - ay
+            t  = L2 == 0 ? 0.0 : clamp((px * vx + py * vy) / L2, 0.0, 1.0)
+            d  = hypot(px - t * vx, py - t * vy)
+            d > dmax && (dmax = d; imax = i)
+        end
+        if dmax > 1.0
+            keep[imax] = true
+            push!(stack, (a, imax), (imax, b))
+        end
+    end
+    return P[keep, :]
 end
 
 function pd_smooth_geometry(F::AbstractMatrix{<:Integer}, Xrange, Yrange, id2phases::Dict{Int,Vector{String}};
@@ -170,6 +207,8 @@ function pd_smooth_geometry(F::AbstractMatrix{<:Integer}, Xrange, Yrange, id2pha
     end
     U = pd_relax_nodes(U0, nbr, active, slide, nx, ny, round(Int, 2 * sigma^2), pd_smooth_tube)
 
+    dgx = max(0, 5 - floor(Int, log10(x1 - x0)))
+    dgy = max(0, 5 - floor(Int, log10(y1 - y0)))
     pts = Vector{Matrix{Float64}}(undef, length(arcs))
     for (k, arc) in enumerate(arcs)
         P = Matrix{Float64}(undef, length(arc.nodes), 2)
@@ -182,6 +221,9 @@ function pd_smooth_geometry(F::AbstractMatrix{<:Integer}, Xrange, Yrange, id2pha
             P[:, 1] .= clamp.(P[:, 1], x0, x1)
             P[:, 2] .= clamp.(P[:, 2], y0, y1)
         end
+        P = pd_simplify(P, pd_smooth_simplify * dx, pd_smooth_simplify * dy)
+        P[:, 1] .= round.(P[:, 1]; digits = dgx)
+        P[:, 2] .= round.(P[:, 2]; digits = dgy)
         pts[k] = P
     end
 
@@ -274,15 +316,16 @@ function pd_smooth_geometry(F::AbstractMatrix{<:Integer}, Xrange, Yrange, id2pha
     return (polys = polys, phase_lines = phase_lines, sigma = Float64(sigma))
 end
 
-function pd_get_smooth_geometry(sigma::Real)
+function pd_get_smooth_geometry(sigma::Real; fields = nothing)
     global pd_smooth_geom, gridded_fields, Out_XY, Hash_XY, data
     (@isdefined(gridded_fields) && @isdefined(Out_XY) && @isdefined(Hash_XY) && @isdefined(data)) || return nothing
-    pd_smooth_geom !== nothing && pd_smooth_geom.sigma == Float64(sigma) && pd_smooth_geom.fields === gridded_fields &&
+    F = (fields === nothing || fields == gridded_fields) ? gridded_fields : fields
+    pd_smooth_geom !== nothing && pd_smooth_geom.sigma == Float64(sigma) && pd_smooth_geom.fields === F &&
         pd_smooth_geom.out === Out_XY && return pd_smooth_geom.geom
     try
-        t = @elapsed g = pd_smooth_geometry(gridded_fields, data.Xrange, data.Yrange, mc_id_to_phases(Out_XY, Hash_XY); sigma = sigma)
+        t = @elapsed g = pd_smooth_geometry(F, data.Xrange, data.Yrange, mc_id_to_phases(Out_XY, Hash_XY); sigma = sigma)
         println("Smoothed phase boundaries ($(length(g.polys)) fields) in $(round(t, digits = 3)) s")
-        pd_smooth_geom = (sigma = Float64(sigma), fields = gridded_fields, out = Out_XY, geom = g)
+        pd_smooth_geom = (sigma = Float64(sigma), fields = F, out = Out_XY, geom = g)
         return g
     catch e
         println("Could not smooth phase boundaries: ", sprint(showerror, e))
@@ -363,6 +406,7 @@ end
 function pd_isopleth_overlay(data_isopleth, Xr, Yr; sigma::Real = 0.0)
     traces = GenericTrace{Dict{Symbol,Any}}[]
     anns   = PlotlyBase.PlotlyAttribute[]
+    placed = NTuple{5,Float64}[]
     for iso in pd_isopleth_sets(data_isopleth, identity; sigma = sigma)
         x, y = Union{Float64,Nothing}[], Union{Float64,Nothing}[]
         for (lvl, polys) in iso.levels
@@ -370,19 +414,11 @@ function pd_isopleth_overlay(data_isopleth, Xr, Yr; sigma::Real = 0.0)
             for p in polys
                 isempty(x) || (push!(x, nothing); push!(y, nothing))
                 append!(x, first.(p)); append!(y, last.(p))
-                px  = [pd_to_px(a, b, Xr, Yr) for (a, b) in p]
-                seg = [hypot(px[k+1][1] - px[k][1], px[k+1][2] - px[k][2]) for k in 1:length(px)-1]
-                tot = sum(seg; init = 0.0)
-                tot < 40 && continue
-                acc, k = 0.0, 1
-                while acc + seg[k] < tot / 2
-                    acc += seg[k]; k += 1
-                end
-                w   = seg[k] == 0 ? 0.0 : (tot / 2 - acc) / seg[k]
-                ang = atand(px[k+1][2] - px[k][2], px[k+1][1] - px[k][1])
-                ang > 90 && (ang -= 180); ang < -90 && (ang += 180)
-                a = attr(xref = "x", yref = "y", x = p[k][1] + w * (p[k+1][1] - p[k][1]), y = p[k][2] + w * (p[k+1][2] - p[k][2]),
-                         text = txt, showarrow = false, textangle = ang, name = "pd-iso-label",
+                lab = pd_place_line_label!(placed, [pd_to_px(a, b, Xr, Yr) for (a, b) in p], txt, iso.label_size)
+                lab === nothing && continue
+                lx, ly = pd_to_data(lab[1], lab[2], Xr, Yr)
+                a = attr(xref = "x", yref = "y", x = lx, y = ly,
+                         text = txt, showarrow = false, textangle = lab[3], name = "pd-iso-label",
                          font = attr(size = iso.label_size, color = iso.color))
                 iso.label_bg && (a[:bgcolor] = "rgba(255,255,255,0.7)"; a[:borderpad] = 0)
                 push!(anns, a)

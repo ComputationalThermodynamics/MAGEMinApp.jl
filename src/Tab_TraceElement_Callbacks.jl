@@ -203,6 +203,8 @@ function Tab_TraceElement_Callbacks(app)
         Input("clear-assemblage-highlight-button-te", "n_clicks"),
         subd_inputs("-te")...,
         Input("lbl-bg-id-te",               "value"     ),
+        Input("smooth-boundaries-switch-te", "value"    ),
+        Input("smooth-boundaries-sigma-te",  "value"    ),
 
         State("title-id",                   "value"     ),
         State("tepm-dropdown",              "value"     ),
@@ -271,7 +273,7 @@ function Tab_TraceElement_Callbacks(app)
                 updateTitle,
                 assemblage_selected_cells_te, clearHighlight_te,
                 subd_show,  subd_vel,   subd_dip,   subd_depth, subd_T0,    subd_T1,    subd_h,     subd_d,     subd_kappa, subd_rho,
-                lbl_bg,
+                lbl_bg,     smooth_bnd, smooth_sigma,
                 customTitle,tepm,       varBuilder, norm, type, norm_te,
                 dtb,        diagType,   tmin,       tmax,       pmin,       pmax,       e1_tmin,    e1_tmax,    e2_tmin,    e2_tmax,  
                 bulk1,      bulk2,
@@ -324,8 +326,7 @@ function Tab_TraceElement_Callbacks(app)
                                                                                                     Xrange,
                                                                                                     Yrange )
 
-                minColor     = round_sig(minimum(skipmissing(gridded_te))); 
-                maxColor     = round_sig(maximum(skipmissing(gridded_te)));  
+                minColor, maxColor = te_color_range("zrc", fieldname_zrc, varBuilder, norm, gridded_te)
 
                 PT_infos_te  = get_phase_diagram_information(   npoints_te,
                                                                 dtb,
@@ -465,8 +466,8 @@ function Tab_TraceElement_Callbacks(app)
                                                                                     sub,        refLvl,
                                                                                     smooth,     colorm,     reverseColorMap, set_white,       refType                                 )
                                                                                     
-                minColor     = round_sig(minimum(skipmissing(gridded_te))); 
-                maxColor     = round_sig(maximum(skipmissing(gridded_te)));  
+                minColor, maxColor = te_color_range("te", fieldname_zrc, varBuilder, norm, gridded_te)
+                te_set_zrange!(minColor, maxColor)
 
             elseif bid == "fields-dropdown-zrc" || (bid == "update-accessory-fields" && type == "zrc")
 
@@ -475,8 +476,8 @@ function Tab_TraceElement_Callbacks(app)
                                                                                     dtb,        oxi,
                                                                                     sub,        refLvl,
                                                                                     smooth,     colorm,     reverseColorMap, set_white,       refType                                 )
-                minColor     = round_sig(minimum(skipmissing(gridded_te))); 
-                maxColor     = round_sig(maximum(skipmissing(gridded_te)));  
+                minColor, maxColor = te_color_range("zrc", fieldname_zrc, varBuilder, norm, gridded_te)
+                te_set_zrange!(minColor, maxColor)
 
             elseif bid == "fields-dropdown-fapt" || (bid == "update-accessory-fields" && type == "fapt")
 
@@ -485,8 +486,8 @@ function Tab_TraceElement_Callbacks(app)
                                                                                     dtb,        oxi,
                                                                                     sub,        refLvl,
                                                                                     smooth,     colorm,     reverseColorMap, set_white,       refType                                 )
-                minColor     = round_sig(minimum(skipmissing(gridded_te)));
-                maxColor     = round_sig(maximum(skipmissing(gridded_te)));
+                minColor, maxColor = te_color_range("fapt", fieldname_fapt, varBuilder, norm, gridded_te)
+                te_set_zrange!(minColor, maxColor)
 
             elseif bid == "fields-dropdown-co2sat" || (bid == "update-accessory-fields" && type == "co2sat")
 
@@ -495,8 +496,8 @@ function Tab_TraceElement_Callbacks(app)
                                                                                     dtb,        oxi,
                                                                                     sub,        refLvl,
                                                                                     smooth,     colorm,     reverseColorMap, set_white,       refType                                 )
-                minColor     = round_sig(minimum(skipmissing(gridded_te)));
-                maxColor     = round_sig(maximum(skipmissing(gridded_te)));
+                minColor, maxColor = te_color_range("co2sat", fieldname_co2sat, varBuilder, norm, gridded_te)
+                te_set_zrange!(minColor, maxColor)
 
             elseif bid == "fields-dropdown-sulf" || (bid == "update-accessory-fields" && type == "sulf")
 
@@ -505,8 +506,8 @@ function Tab_TraceElement_Callbacks(app)
                                                                                     dtb,        oxi,
                                                                                     sub,        refLvl,
                                                                                     smooth,     colorm,     reverseColorMap, set_white,       refType                                 )
-                minColor     = round_sig(minimum(skipmissing(gridded_te)));
-                maxColor     = round_sig(maximum(skipmissing(gridded_te)));
+                minColor, maxColor = te_color_range("sulf", fieldname_sulf, varBuilder, norm, gridded_te)
+                te_set_zrange!(minColor, maxColor)
 
             elseif bid == "fields-dropdown-mnz" || (bid == "update-accessory-fields" && type == "mnz")
 
@@ -515,8 +516,8 @@ function Tab_TraceElement_Callbacks(app)
                                                                                     dtb,        oxi,
                                                                                     sub,        refLvl,
                                                                                     smooth,     colorm,     reverseColorMap, set_white,       refType                                 )
-                minColor     = round_sig(minimum(skipmissing(gridded_te)));
-                maxColor     = round_sig(maximum(skipmissing(gridded_te)));
+                minColor, maxColor = te_color_range("mnz", fieldname_mnz, varBuilder, norm, gridded_te)
+                te_set_zrange!(minColor, maxColor)
 
             elseif bid == "show-grid-te"
 
@@ -623,11 +624,16 @@ function Tab_TraceElement_Callbacks(app)
                         compacted_idx   = list_compacted_idx_te[row]
                         raw_id          = raw_field_id_te[compacted_idx]
                         matches         = findall(==(raw_id), poly_phases_te)
+                        geom_hl         = smooth_bnd == true ? pd_get_smooth_geometry(something(smooth_sigma, pd_smooth_sigma_default); fields = gridded_fields_te) : nothing
                         if !isempty(matches)
                             px, py = Union{Float64,Nothing}[], Union{Float64,Nothing}[]
-                            for (idx, m) in enumerate(matches)
-                                idx > 1 && (push!(px, nothing); push!(py, nothing))
-                                append!(px, poly_pcoor_te[m][:,1]); append!(py, poly_pcoor_te[m][:,2])
+                            if geom_hl !== nothing
+                                px, py = pd_domain_rings(geom_hl, raw_id)
+                            else
+                                for (idx, m) in enumerate(matches)
+                                    idx > 1 && (push!(px, nothing); push!(py, nothing))
+                                    append!(px, poly_pcoor_te[m][:,1]); append!(py, poly_pcoor_te[m][:,2])
+                                end
                             end
                             data_plot_te[compacted_idx+1] = scatter(; x = px, y = py, fill = "toself", fillcolor = "transparent",
                                                                 line = attr(color = "red", width = 3), mode = "lines",
@@ -637,7 +643,7 @@ function Tab_TraceElement_Callbacks(app)
                     end
                 end
 
-            elseif bid in subd_input_ids("-te") || bid == "lbl-bg-id-te"
+            elseif bid in subd_input_ids("-te") || bid == "lbl-bg-id-te" || bid == "smooth-boundaries-switch-te" || bid == "smooth-boundaries-sigma-te"
 
             elseif bid == "clear-assemblage-highlight-button-te"
                 for k = 2:length(data_plot_te)-1
@@ -683,10 +689,18 @@ function Tab_TraceElement_Callbacks(app)
             else
                 data_all = eval(Symbol(fieldNames[1]))
                 np       = length(field2plot)
-    
+                geom     = smooth_bnd == true ? pd_get_smooth_geometry(something(smooth_sigma, pd_smooth_sigma_default); fields = gridded_fields_te) : nothing
+                iso_anns = PlotlyBase.PlotlyAttribute[]
+
                 for i=2:np
                     if field2plot[i] == 1
-                        data_all = vcat( data_all, eval(Symbol(fieldNames[i])) )
+                        layer = eval(Symbol(fieldNames[i]))
+                        if i == 2 && geom !== nothing
+                            layer = pd_smooth_reaction(layer, geom)
+                        elseif i == 4 && geom !== nothing
+                            layer, iso_anns = pd_isopleth_overlay(data_isopleth_te, data.Xrange, data.Yrange; sigma = geom.sigma)
+                        end
+                        data_all = vcat( data_all, layer )
                     end
                 end
     
@@ -695,7 +709,12 @@ function Tab_TraceElement_Callbacks(app)
                                                                           data.Xrange, data.Yrange, diagType))
                 end
 
-                data_all_disp, layout_te_disp = apply_pressure_display(data_all, layout_te, diagType)
+                layout_te_iso = layout_te
+                if !isempty(iso_anns)
+                    layout_te_iso = deepcopy(layout_te)
+                    layout_te_iso[:annotations] = vcat(layout_te_iso[:annotations], iso_anns)
+                end
+                data_all_disp, layout_te_disp = apply_pressure_display(data_all, layout_te_iso, diagType)
                 fig_te = plot_diagram(data_all_disp,layout_te_disp)
             end
     
@@ -1023,7 +1042,7 @@ function Tab_TraceElement_Callbacks(app)
             Xrange_t = (Float64(data.Xrange[1]), Float64(data.Xrange[2]))
             Yrange_t = (Float64(data.Yrange[1]), Float64(data.Yrange[2]))
             grid, _, _ = get_isopleth_map_te(mod, String(field), String(name), String(something(calc, "")), String(something(norm_te, "none")),
-                                             oxi, Out_TE_XY, Int64(something(sub, 3)), lvl, data, Xrange_t, Yrange_t; absent = NaN)
+                                             oxi, Out_TE_XY, Int64(something(sub, 3)), lvl, data, Xrange_t, Yrange_t; absent = NaN, defined_only = true)
 
             rng = iso_auto_range(Float64[v for v in skipmissing(vec(grid)) if v isa Real && isfinite(v)])
             return rng === nothing ? no_range : rng
@@ -1048,9 +1067,11 @@ function Tab_TraceElement_Callbacks(app)
         State("show-grid-te",      "value"),
         State("show-full-grid-te", "value"),
         State("show-lbl-id-te",    "value"),
+        State("smooth-boundaries-switch-te", "value"),
+        State("smooth-boundaries-sigma-te",  "value"),
 
         prevent_initial_call = true,
-    ) do _n, show_reaction, show_mesh, show_labels
+    ) do _n, show_reaction, show_mesh, show_labels, smooth_bnd, smooth_sigma
 
         global data, gridded_te, layout_te, data_reaction, data_isopleth_te, iso_show_te, heat_map_export_te, assemblage_rows_te, pd_fig_meta_te, output_dir
 
@@ -1059,8 +1080,11 @@ function Tab_TraceElement_Callbacks(app)
         end
 
         try
+            geom     = smooth_bnd == true ? pd_get_smooth_geometry(something(smooth_sigma, pd_smooth_sigma_default); fields = @isdefined(gridded_fields_te) ? gridded_fields_te : nothing) : nothing
+            reaction = @isdefined(data_reaction) ? data_reaction : nothing
+            (geom === nothing || reaction === nothing) || (reaction = pd_smooth_reaction(reaction, geom))
             parts = pd_figure_parts(data = data, gridded = gridded_te, heat_map = heat_map_export_te, layout_g = layout_te,
-                                    reaction = @isdefined(data_reaction) ? data_reaction : nothing,
+                                    reaction = reaction, iso_sigma = geom === nothing ? 0.0 : geom.sigma,
                                     data_isopleth = data_isopleth_te, iso_show = @isdefined(iso_show_te) ? iso_show_te : 0,
                                     assemblage_rows = @isdefined(assemblage_rows_te) ? assemblage_rows_te : Dict{String,String}[],
                                     xtitle = pd_fig_meta_te.xtitle, ytitle = pd_fig_meta_te.ytitle, diagType = pd_fig_meta_te.diagType,
