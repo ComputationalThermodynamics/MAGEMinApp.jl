@@ -1337,6 +1337,18 @@ function Tab_PhaseDiagram()
                                                         ]),
 
                                                     ]),
+                                                    dbc_row([
+                                                        dbc_col([
+                                                            html_h1("White background", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                        ]),
+                                                        dbc_col([
+                                                            dcc_dropdown(   id          = "iso-label-bg-id",
+                                                                            options     = ["true","false"],
+                                                                            value       = "false",
+                                                                            clearable   = false,
+                                                                            multi       = false),
+                                                        ]),
+                                                    ]),
                                                     dbc_row([    
                                                         dbc_col([
                                                             html_h1("Label size", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    

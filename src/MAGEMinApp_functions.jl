@@ -1899,7 +1899,8 @@ function get_isopleth_map(  mod         ::String,
                             refLvl      ::Int64,
                             data        ::MAGEMinApp.AMR_data,
                             Xrange      ::Tuple{Float64, Float64},
-                            Yrange      ::Tuple{Float64, Float64} )
+                            Yrange      ::Tuple{Float64, Float64};
+                            absent      ::Float64 = 0.0 )
 
     np          = length(data.points)
     len_ox      = length(oxi)
@@ -1977,7 +1978,7 @@ function get_isopleth_map(  mod         ::String,
                 fe      =  Out_XY[i].SS_vec[id[1]].Comp_apfu[fe_id];
                 field[i] = mg / (mg + fe);
             else
-                field[i] = 0.0
+                field[i] = absent
             end
         end 
     elseif mod == "ss_calc"
@@ -2005,7 +2006,7 @@ function get_isopleth_map(  mod         ::String,
             if ~isempty(id)
                 field[i] = Base.invokelatest(calc_fn, Out_XY[i].SS_vec[id[1]].Comp_apfu)
             else
-                field[i] = 0.0
+                field[i] = absent
             end
         end
     elseif mod == "ss_calc_sf"
@@ -2036,7 +2037,7 @@ function get_isopleth_map(  mod         ::String,
                 field[i] = Base.invokelatest(calc_fn, Out_XY[i].SS_vec[id].siteFractions)
 
             else
-                field[i] = 0.0
+                field[i] = absent
             end
         end
     elseif mod == "ss_calc_ox_mol" || mod == "ss_calc_ox_wt"
@@ -2065,7 +2066,7 @@ function get_isopleth_map(  mod         ::String,
                 x   = mod == "ss_calc_ox_mol" ? Out_XY[i].SS_vec[id].Comp : Out_XY[i].SS_vec[id].Comp_wt
                 field[i] = Base.invokelatest(calc_fn, x)
             else
-                field[i] = 0.0
+                field[i] = absent
             end
         end  
         elseif mod == "em_frac"
@@ -2075,7 +2076,7 @@ function get_isopleth_map(  mod         ::String,
                     idem     = findall(Out_XY[i].SS_vec[id[1]].emNames .== em)
                     field[i] = Out_XY[i].SS_vec[id[1]].emFrac[idem[1]]
                 else
-                    field[i] = 0.0
+                    field[i] = absent
                 end
             end 
         elseif mod == "em_frac_wt"
@@ -2085,7 +2086,7 @@ function get_isopleth_map(  mod         ::String,
                     idem     = findall(Out_XY[i].SS_vec[id[1]].emNames .== em)
                     field[i] = Out_XY[i].SS_vec[id[1]].emFrac_wt[idem[1]]
                 else
-                    field[i] = 0.0
+                    field[i] = absent
                 end
             end 
         elseif mod == "ox_comp"
@@ -2095,7 +2096,7 @@ function get_isopleth_map(  mod         ::String,
                 if ~isempty(id)  
                     field[i] = Out_XY[i].SS_vec[id[1]].Comp[ox_id]
                 else
-                    field[i] = 0.0
+                    field[i] = absent
                 end
             end 
         elseif mod == "ox_comp_wt"
@@ -2105,7 +2106,7 @@ function get_isopleth_map(  mod         ::String,
                 if ~isempty(id)  
                     field[i] = Out_XY[i].SS_vec[id[1]].Comp_wt[ox_id]
                 else
-                    field[i] = 0.0
+                    field[i] = absent
                 end
             end 
         elseif mod == "of_mod"

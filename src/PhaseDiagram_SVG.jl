@@ -140,13 +140,15 @@ end
     (`contours_start`, `contours_end`, `contours_size`).
 """
 function pd_isopleth_contours(data_isopleth, i::Int)
-    isassigned(data_isopleth.isoT, i) && return data_isopleth.isoT[i]
-    tr     = data_isopleth.isoPexp[i]
+    tr = isassigned(data_isopleth.isoPexp, i) ? data_isopleth.isoPexp[i] : nothing
+    if tr === nothing || !haskey(tr, :contours_start) || !haskey(tr, :z)
+        return data_isopleth.isoT[i]
+    end
     lo, hi = Float64(tr[:contours_start]), Float64(tr[:contours_end])
     step   = Float64(tr[:contours_size])
     z      = Float64.(coalesce.(permutedims(tr[:z]), NaN))
-    return CTR.contours(collect(Float64.(tr[:x])), collect(Float64.(tr[:y])), z,
-                        collect(range(lo, hi, Int(floor((hi - lo) / step) + 1))))
+    levels = step > 0 ? [lo + k * step for k in 0:floor(Int, (hi - lo) / step + 1e-9)] : [lo]
+    return CTR.contours(collect(Float64.(tr[:x])), collect(Float64.(tr[:y])), z, levels)
 end
 
 """
@@ -185,8 +187,13 @@ function pd_isopleth_sets(data_isopleth, xy_y; sigma::Real = 0.0)
             end
             isempty(polys) || push!(levels, (Float64(CTR.level(lvl)), polys))
         end
+        label_bg = try
+            data_isopleth.isoP[i][:meta] == "label-bg"
+        catch
+            false
+        end
         push!(sets, (name = display_iso_label(string(data_isopleth.label[i])), color = color, dash = dash,
-                     width = width, label_size = lsize, levels = levels))
+                     width = width, label_size = lsize, label_bg = label_bg, levels = levels))
     end
     return sets
 end
@@ -436,6 +443,10 @@ function pd_export_svg(parts, path::AbstractString)
             svg_group_open(io, svg_id(seen, "Isopleth_labels_" * iso.name); fill = iso.color, font_family = font,
                             font_size = iso.label_size, anchor = "middle")
             for (k, (x, y, ang, txt)) in enumerate(labels)
+                if get(iso, :label_bg, false)
+                    w, h = pd_label_box(txt, iso.label_size)
+                    println(io, "<rect id=\"$(svg_escape(svg_id(seen, "$(idbase)_label_bg_$(k)")))\" x=\"$(svg_num(x - w / 2))\" y=\"$(svg_num(y - h / 2))\" width=\"$(svg_num(w))\" height=\"$(svg_num(h))\" fill=\"#ffffff\" fill-opacity=\"0.7\" stroke=\"none\" transform=\"rotate($(svg_num(ang)) $(svg_num(x)) $(svg_num(y)))\"/>")
+                end
                 svg_text(io, x, y, txt; id = svg_id(seen, "$(idbase)_label_$(k)"), rotate = ang)
             end
             svg_group_close(io)

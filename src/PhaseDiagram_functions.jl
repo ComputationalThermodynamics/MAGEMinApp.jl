@@ -1776,7 +1776,8 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                             dtb,        oxi,
                                             isopleths,  phase,      ss,     em,   ox,  of,     ot,  sys,   rmf,  calc, cust, calc_sf, calc_ox, cust_sf, cust_ox,
                                             isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,       
-                                            minIso,     stepIso,    maxIso      )
+                                            minIso,     stepIso,    maxIso;
+                                            label_bg::Bool = false )
 
     isoLabelSize    = Int64(isoLabelSize)
 
@@ -1871,7 +1872,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
 
     data_isopleth.n_iso += 1
 
-    data_isopleth.isoT[data_isopleth.n_iso] = CTR.contours(X[1:size(gridded,1)],Y[1:size(gridded,1):end],Float64.(coalesce.(gridded, NaN)),collect(range(minIso, maxIso, Int(floor((maxIso-minIso)/stepIso)+1) )))
+    data_isopleth.isoT[data_isopleth.n_iso] = CTR.contours(X[1:size(gridded,1)],Y[1:size(gridded,1):end],Float64.(coalesce.(gridded, NaN)),[Float64(minIso + k * stepIso) for k in 0:floor(Int, (maxIso - minIso) / stepIso + 1e-9)])
     data_isopleth.isoP[data_isopleth.n_iso] = contour(; pd_grid_xyz(gridded, data)...,
                                                         contours_coloring   = "lines",
                                                         colorscale          = [[0, isoColorLine], [1, isoColorLine]],
@@ -1889,6 +1890,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                                                                                             color   = isoColorLine,  )
                                                         )
                                                     );
+    data_isopleth.isoP[data_isopleth.n_iso][:meta] = label_bg ? "label-bg" : ""
     n       = 2^(sub + refLvl + addedRefinementLvl)+1
     xvals   = range(data.Xrange[1], stop = data.Xrange[2], length = n)
     yvals   = range(data.Yrange[1], stop = data.Yrange[2], length = n)

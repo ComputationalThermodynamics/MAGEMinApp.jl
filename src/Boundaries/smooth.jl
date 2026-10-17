@@ -381,9 +381,11 @@ function pd_isopleth_overlay(data_isopleth, Xr, Yr; sigma::Real = 0.0)
                 w   = seg[k] == 0 ? 0.0 : (tot / 2 - acc) / seg[k]
                 ang = atand(px[k+1][2] - px[k][2], px[k+1][1] - px[k][1])
                 ang > 90 && (ang -= 180); ang < -90 && (ang += 180)
-                push!(anns, attr(xref = "x", yref = "y", x = p[k][1] + w * (p[k+1][1] - p[k][1]), y = p[k][2] + w * (p[k+1][2] - p[k][2]),
-                                 text = txt, showarrow = false, textangle = ang, name = "pd-iso-label",
-                                 font = attr(size = iso.label_size, color = iso.color), bgcolor = "rgba(255,255,255,0.7)", borderpad = 0))
+                a = attr(xref = "x", yref = "y", x = p[k][1] + w * (p[k+1][1] - p[k][1]), y = p[k][2] + w * (p[k+1][2] - p[k][2]),
+                         text = txt, showarrow = false, textangle = ang, name = "pd-iso-label",
+                         font = attr(size = iso.label_size, color = iso.color))
+                iso.label_bg && (a[:bgcolor] = "rgba(255,255,255,0.7)"; a[:borderpad] = 0)
+                push!(anns, a)
             end
         end
         push!(traces, scatter(; x = x, y = y, mode = "lines", hoverinfo = "skip", showlegend = false,

@@ -1533,6 +1533,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("show-grid",              "value"),
         State("show-lbl-id",            "value"),
         State("lbl-bg-id",              "value"),
+        State("iso-label-bg-id",        "value"),
 
         prevent_initial_call = true,
 
@@ -1560,7 +1561,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             minIso,     stepIso,    maxIso,
             active_tab,
             mc_sigma_data, mc_sigma_mode_str, mc_bulk_unit, mc_n_real, mc_seed_val, mc_mode, mc_bulk2_data,
-            grid,       lbl,        lbl_bg
+            grid,       lbl,        lbl_bg,     iso_lbl_bg
 
 
         diagType                        = diagram_type_2d(diagType)
@@ -1867,7 +1868,8 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     dtb,        oxi,
                                                                     isopleths,  phase,      ss,     em,  ox,   of,     ot, sys, rmf,    calc, cust, calc_sf, calc_ox, cust_sf, cust_ox,
                                                                     isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,   
-                                                                    minIso,     stepIso,    maxIso                      )
+                                                                    minIso,     stepIso,    maxIso;
+                                                                    label_bg = iso_lbl_bg == "true" )
             data_isopleth_out = data_isopleth.isoP[data_isopleth.active]
             data_isopleth_out_export = data_isopleth.isoPexp[data_isopleth.active]
             field2plot[4] = 1
@@ -2713,7 +2715,8 @@ function Tab_PhaseDiagram_Callbacks(app)
                 mod, ss, em, ox, of, ot, calc, calc_sf, calc_ox,
                 rmf_b, oxi, Out_XY,
                 Int64(something(sub, 3)), total_refLvl,
-                data, Xrange_t, Yrange_t,
+                data, Xrange_t, Yrange_t;
+                absent = NaN,
             )
 
             finite_vals = filter(isfinite, Float64.(collect(skipmissing(vec(gridded)))))
