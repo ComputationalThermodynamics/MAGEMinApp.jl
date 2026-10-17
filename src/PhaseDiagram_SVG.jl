@@ -160,9 +160,10 @@ end
     `xy_y` converts a y value to the display unit. `name` goes through
     `display_iso_label`, as the on-screen caption does.
 """
-function pd_isopleth_sets(data_isopleth, xy_y)
+function pd_isopleth_sets(data_isopleth, xy_y; sigma::Real = 0.0)
     sets = NamedTuple[]
     for i in data_isopleth.active
+        grid = sigma > 0 ? pd_isopleth_grid(data_isopleth, i) : nothing
         line  = data_isopleth.isoCap[i][:line]
         color = string(line[:color])
         dash  = haskey(line, :dash) ? line[:dash] : "solid"
@@ -177,7 +178,10 @@ function pd_isopleth_sets(data_isopleth, xy_y)
             polys = Vector{Vector{Tuple{Float64,Float64}}}()
             for l in CTR.lines(lvl)
                 xs, ys = CTR.coordinates(l)
-                length(xs) > 1 && push!(polys, [(Float64(x), xy_y(Float64(y))) for (x, y) in zip(xs, ys)])
+                length(xs) > 1 || continue
+                line = [(Float64(x), Float64(y)) for (x, y) in zip(xs, ys)]
+                grid === nothing || (line = pd_smooth_isoline(line, Float64(CTR.level(lvl)), grid, sigma))
+                push!(polys, [(x, xy_y(y)) for (x, y) in line])
             end
             isempty(polys) || push!(levels, (Float64(CTR.level(lvl)), polys))
         end
@@ -213,7 +217,7 @@ end
 function pd_figure_parts(; data, gridded, heat_map, layout_g, reaction, data_isopleth, iso_show,
                           assemblage_rows, xtitle::AbstractString, ytitle::AbstractString, diagType::AbstractString,
                           show_reaction::Bool, show_mesh::Bool, show_labels::Bool, geotherms = GenericTrace[],
-                          fills = Tuple{Vector{Matrix{Float64}},NTuple{4,Float64}}[])
+                          fills = Tuple{Vector{Matrix{Float64}},NTuple{4,Float64}}[], iso_sigma::Real = 0.0)
     global phase_infos
     convert_p = use_GPa[1] && diagType in ("pt", "px", "ptx")
     yconv(y::Real) = convert_p ? display_pressure(Float64(y)) : Float64(y)
@@ -254,7 +258,7 @@ function pd_figure_parts(; data, gridded, heat_map, layout_g, reaction, data_iso
         end
     end
 
-    isopleths = (iso_show == 1 && data_isopleth.n_iso > 0) ? pd_isopleth_sets(data_isopleth, yconv) : NamedTuple[]
+    isopleths = (iso_show == 1 && data_isopleth.n_iso > 0) ? pd_isopleth_sets(data_isopleth, yconv; sigma = iso_sigma) : NamedTuple[]
 
     annotations = PlotlyBase.PlotlyAttribute[]
     if show_labels && layout_g !== nothing && haskey(layout_g, :annotations)

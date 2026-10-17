@@ -2059,8 +2059,8 @@ function Tab_PhaseDiagram_Callbacks(app)
                             tr[:visible] = grid == "true"
                             tr[:meta]    = "pd-reaction"
                         end
-                    elseif i == 4 && fills_on
-                        layer, iso_anns = pd_isopleth_overlay(data_isopleth, data.Xrange, data.Yrange)
+                    elseif i == 4 && geom !== nothing
+                        layer, iso_anns = pd_isopleth_overlay(data_isopleth, data.Xrange, data.Yrange; sigma = geom.sigma)
                     end
                     data_all = vcat( data_all, layer )
                 end
@@ -2776,7 +2776,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                 end
             end
             parts = pd_figure_parts(data = data, gridded = gridded, heat_map = heat_map_export, layout_g = layout,
-                                    reaction = reaction, fills = fills,
+                                    reaction = reaction, fills = fills, iso_sigma = geom === nothing ? 0.0 : geom.sigma,
                                     data_isopleth = data_isopleth, iso_show = @isdefined(iso_show) ? iso_show : 0,
                                     assemblage_rows = @isdefined(assemblage_rows) ? assemblage_rows : Dict{String,String}[],
                                     xtitle = pd_fig_meta.xtitle, ytitle = pd_fig_meta.ytitle, diagType = pd_fig_meta.diagType,

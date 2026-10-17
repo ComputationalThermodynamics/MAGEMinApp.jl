@@ -360,10 +360,10 @@ function pd_domain_rings(geom, raw_id::Integer)
     return px, py
 end
 
-function pd_isopleth_overlay(data_isopleth, Xr, Yr)
+function pd_isopleth_overlay(data_isopleth, Xr, Yr; sigma::Real = 0.0)
     traces = GenericTrace{Dict{Symbol,Any}}[]
     anns   = PlotlyBase.PlotlyAttribute[]
-    for iso in pd_isopleth_sets(data_isopleth, identity)
+    for iso in pd_isopleth_sets(data_isopleth, identity; sigma = sigma)
         x, y = Union{Float64,Nothing}[], Union{Float64,Nothing}[]
         for (lvl, polys) in iso.levels
             txt = svg_tick_label(round_sig(lvl; sig = 4, mindigits = 0))
@@ -390,4 +390,67 @@ function pd_isopleth_overlay(data_isopleth, Xr, Yr)
                                 line = attr(color = iso.color, dash = iso.dash, width = iso.width)))
     end
     return traces, anns
+end
+
+function pd_isopleth_grid(data_isopleth, i::Int)
+    try
+        tr = data_isopleth.isoPexp[i]
+        xg = collect(Float64.(tr[:x]))
+        yg = collect(Float64.(tr[:y]))
+        Z  = Float64.(coalesce.(tr[:z], NaN))
+        lo, hi, st = Float64(tr[:contours_start]), Float64(tr[:contours_end]), Float64(tr[:contours_size])
+        (length(xg) > 1 && length(yg) > 1 && size(Z) == (length(yg), length(xg)) && st > 0) || return nothing
+        return (x = xg, y = yg, z = Z, step = st)
+    catch
+        return nothing
+    end
+end
+
+function pd_grid_value(g, u::Float64, v::Float64)
+    nx, ny = length(g.x), length(g.y)
+    i = clamp(floor(Int, u), 0, nx - 2)
+    j = clamp(floor(Int, v), 0, ny - 2)
+    a, b = u - i, v - j
+    return (1 - a) * (1 - b) * g.z[j+1, i+1] + a * (1 - b) * g.z[j+1, i+2] + (1 - a) * b * g.z[j+2, i+1] + a * b * g.z[j+2, i+2]
+end
+
+function pd_smooth_isoline(line::Vector{Tuple{Float64,Float64}}, lvl::Float64, g, sigma::Real)
+    m = length(line)
+    m < 3 && return line
+    x0, y0 = g.x[1], g.y[1]
+    dx, dy = (g.x[end] - x0) / (length(g.x) - 1), (g.y[end] - y0) / (length(g.y) - 1)
+    U0     = [((p[1] - x0) / dx, (p[2] - y0) / dy) for p in line]
+    closed = hypot(U0[1][1] - U0[end][1], U0[1][2] - U0[end][2]) < 1e-9
+    half   = 0.45 * g.step
+    ok(u, v) = (f = pd_grid_value(g, u, v); isfinite(f) && abs(f - lvl) <= half)
+    U = copy(U0)
+    V = copy(U0)
+    n = closed ? m - 1 : m
+    for _ in 1:round(Int, 2 * sigma^2)
+        for k in 1:n
+            if !closed && (k == 1 || k == m)
+                V[k] = U[k]; continue
+            end
+            pk, nk = closed ? (mod1(k - 1, n), mod1(k + 1, n)) : (k - 1, k + 1)
+            tu = 0.5 * U[k][1] + 0.25 * (U[pk][1] + U[nk][1])
+            tv = 0.5 * U[k][2] + 0.25 * (U[pk][2] + U[nk][2])
+            du, dv = tu - U0[k][1], tv - U0[k][2]
+            d = hypot(du, dv)
+            d > pd_smooth_tube && (du *= pd_smooth_tube / d; dv *= pd_smooth_tube / d)
+            s = 1.0
+            while s > 1 / 32 && !ok(U0[k][1] + s * du, U0[k][2] + s * dv)
+                s /= 2
+            end
+            V[k] = s > 1 / 32 ? (U0[k][1] + s * du, U0[k][2] + s * dv) : U0[k]
+        end
+        closed && (V[m] = V[1])
+        U, V = V, U
+    end
+    P = Matrix{Float64}(undef, m, 2)
+    for k in 1:m
+        P[k, 1] = x0 + U[k][1] * dx
+        P[k, 2] = y0 + U[k][2] * dy
+    end
+    P = pd_chaikin(P, pd_smooth_chaikin, closed)
+    return [(P[k, 1], P[k, 2]) for k in axes(P, 1)]
 end
