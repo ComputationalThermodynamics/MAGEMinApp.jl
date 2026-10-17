@@ -261,6 +261,7 @@ function Tab_PhaseDiagram()
                                         dcc_store(id = "pd-cs-grid"),
                                         dcc_store(id = "pd-cs-lbl"),
                                         dcc_store(id = "pd-cs-lbl-bg"),
+                                        dcc_store(id = "pd-cs-hover"),
                                         dbc_row([
                                             html_div(id="export-svg-status", children="",
                                                 style = Dict("textAlign" => "center", "font-size" => "75%", "color" => "grey",

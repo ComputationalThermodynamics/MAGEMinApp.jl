@@ -1434,16 +1434,50 @@ pd_heatmap_xyz(gridded::AbstractMatrix, data) = pd_grid_xyz(pd_fill_gridded(grid
 function pd_hover_layer(gridded_info::AbstractMatrix, data)
     nx, ny = size(gridded_info)
     xv, yv = pd_grid_axes(nx, ny, data)
-    return heatmap(;    x               = xv,
+    pid    = zeros(Int32, nx, ny)
+    asm    = String[]
+    idx    = Dict{String,Int}()
+    pa     = Dict{Int,Int}()
+    for i in eachindex(gridded_info)
+        s = gridded_info[i]
+        (s isa AbstractString && startswith(s, "#")) || continue
+        e = findnext('#', s, 2)
+        e === nothing && continue
+        k = tryparse(Int, s[2:e-1])
+        k === nothing && continue
+        pid[i] = k
+        haskey(pa, k) && continue
+        t     = strip(s[e+1:end])
+        pa[k] = get!(() -> (push!(asm, t); length(asm)), idx, t)
+    end
+    pav = zeros(Int, isempty(pa) ? 0 : maximum(keys(pa)))
+    for (k, a) in pa
+        pav[k] = a
+    end
+    tr = heatmap(;      x               = xv,
                         y               = yv,
-                        z               = pd_grid_rows(zeros(Int8, nx, ny)),
+                        z               = pd_grid_rows(pid),
                         transpose       = false,
                         type            = "heatmap",
                         showscale       = false,
                         opacity         = 0.0,
-                        hoverinfo       = "text",
-                        showlegend      = false,
-                        text            = pd_grid_rows(gridded_info) )
+                        hoverinfo       = "none",
+                        showlegend      = false )
+    tr.fields[:meta] = Dict("kind" => "pd-hover", "asm" => asm, "pa" => pav)
+    return tr
+end
+
+function pd_click_point_id(click_info)
+    click_info === nothing && return nothing
+    pts = get(click_info, :points, nothing)
+    (pts === nothing || isempty(pts)) && return nothing
+    p = pts[1]
+    z = get(p, :z, nothing)
+    z isa Real && z > 0 && return Int(z)
+    t = get(p, :text, nothing)
+    t isa AbstractString || return nothing
+    m = match(r"#([0-9]+)#", t)
+    return m === nothing ? nothing : parse(Int, m.captures[1])
 end
 
 """

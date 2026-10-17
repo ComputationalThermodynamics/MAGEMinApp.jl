@@ -30,16 +30,14 @@ function Tab_TraceElement_Callbacks(app)
 
         global point_id_te
 
-        sp  = click_info[:points][][:text]
-        tmp = match(r"#([^# ]+)#", sp)
+        pid = pd_click_point_id(click_info)
 
         customTitle = "Rare Earth Elements spectrum"
 
         layout_ree = get_layout_ree(norm, show_type, kds_db)
            
-        if tmp !== nothing
-            point_id_te = tmp.match
-            point_id_te = parse(Int64,replace.(point_id_te,r"#"=>""))
+        if pid !== nothing
+            point_id_te = pid
 
             data_ree_plot = get_data_ree_plot(point_id_te, norm, show_type, kds_db)
             fig_ree = plot(data_ree_plot,layout_ree)

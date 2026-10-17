@@ -1112,15 +1112,13 @@ function Tab_PhaseDiagram_Callbacks(app)
                 using_sample_point = false
             end
 
-            sp  = click_info[:points][][:text]
-            tmp = match(r"#([^# ]+)#", sp)
+            pid = pd_click_point_id(click_info)
 
-            if tmp === nothing
+            if pid === nothing
                 return no_update(), no_update(), no_update(), no_update(), no_update()
             end
 
-            point_id = tmp.match
-            point_id = parse(Int64,replace.(point_id,r"#"=>""))
+            point_id = pid
             out      = Out_XY[point_id]
 
             show_x = (diagType == "px" || diagType == "tx") && @isdefined(data) && point_id <= length(data.points)
@@ -2292,12 +2290,8 @@ function Tab_PhaseDiagram_Callbacks(app)
                 pop!(draw_path_ids)
             end
         elseif bid == "phase-diagram" && is_recording && !isnothing(click_info)
-            sp  = click_info[:points][][:text]
-            tmp = match(r"#([^# ]+)#", sp)
-            if tmp !== nothing
-                pid = parse(Int64, replace(tmp.match, r"#" => ""))
-                push!(draw_path_ids, pid)
-            end
+            pid = pd_click_point_id(click_info)
+            pid === nothing || push!(draw_path_ids, pid)
         end
 
         cols, rows = draw_path_table_data(diagType, draw_path_ids)
@@ -2858,6 +2852,44 @@ function Tab_PhaseDiagram_Callbacks(app)
         app,
         Output("pd-cs-lbl-bg",  "data"),
         Input("lbl-bg-id",      "value"),
+        prevent_initial_call = true,
+    )
+
+    callback!(
+        """
+        function(f1, f2) {
+            var install = function() {
+                ['phase-diagram', 'phase-diagram-te'].forEach(function(id) {
+                    var gd = document.querySelector('#' + id + ' .js-plotly-plot');
+                    if (!gd || !gd.on || gd.__pdTip) { return; }
+                    gd.__pdTip = true;
+                    var tip = document.createElement('div');
+                    tip.style.cssText = 'position:fixed;pointer-events:none;display:none;z-index:2000;background:#566573;' +
+                        'border:1px solid #f8f9f9;color:#ffffff;font:13px "Open Sans",verdana,arial,sans-serif;' +
+                        'padding:3px 6px;border-radius:3px;white-space:nowrap;';
+                    document.body.appendChild(tip);
+                    gd.on('plotly_hover', function(ev) {
+                        var p = ev.points && ev.points[0];
+                        var m = p && p.data && p.data.meta;
+                        if (!m || m.kind !== 'pd-hover' || !p.z) { tip.style.display = 'none'; return; }
+                        var a = m.pa[p.z - 1];
+                        tip.textContent = '#' + p.z + '# ' + (a ? m.asm[a - 1] : '');
+                        tip.style.left = (ev.event.clientX + 14) + 'px';
+                        tip.style.top  = (ev.event.clientY + 14) + 'px';
+                        tip.style.display = 'block';
+                    });
+                    gd.on('plotly_unhover', function() { tip.style.display = 'none'; });
+                });
+            };
+            install();
+            setTimeout(install, 500);
+            return window.dash_clientside.no_update;
+        }
+        """,
+        app,
+        Output("pd-cs-hover",       "data"),
+        Input("phase-diagram",      "figure"),
+        Input("phase-diagram-te",   "figure"),
         prevent_initial_call = true,
     )
 
