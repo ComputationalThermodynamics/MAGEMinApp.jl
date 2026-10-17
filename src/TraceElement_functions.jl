@@ -216,13 +216,11 @@ function update_colormap_phaseDiagram_te(       xtitle,     ytitle,     type,   
     if set_white == "true"
         colorm = set_min_to_white(colorm; reverseColorMap)
     end
-    data_plot_te[1] = heatmap(  x               =  X_te,
-                                y               =  Y_te,
-                                z               =  gridded_te,
+    data_plot_te[1] = heatmap(; pd_heatmap_xyz(gridded_te, data)...,
                                 zmin            =  minColor,
                                 zmax            =  maxColor,
                                 zsmooth         =  smooth,
-                                connectgaps     =  true,
+                                connectgaps     =  false,
                                 type            = "heatmap",
                                 colorscale      =  colorm,
                                 # colorbar_title  =  fieldname,
@@ -304,11 +302,9 @@ function  update_displayed_field_phaseDiagram_te(   xtitle,     ytitle,     type
         colorm = set_min_to_white(colorm; reverseColorMap)
     end
 
-    data_plot_te[1] = heatmap(  x               = X_te,
-                                y               = Y_te,
-                                z               = gridded_te,
+    data_plot_te[1] = heatmap(; pd_heatmap_xyz(gridded_te, data)...,
                                 zsmooth         = smooth,
-                                connectgaps     = true,
+                                connectgaps     = false,
                                 type            = "heatmap",
                                 colorscale      = colorm,
                                 # colorbar_title  = fieldname,
@@ -407,9 +403,7 @@ function add_isopleth_phaseDiagram_te(      Xrange,     Yrange,
     data_isopleth_te.n_iso += 1
 
     data_isopleth_te.isoT[data_isopleth_te.n_iso] = CTR.contours(X[1:size(gridded_te,1)],Y[1:size(gridded_te,1):end],Float64.(coalesce.(gridded_te, NaN)),collect(range(minIso, maxIso, Int(floor((maxIso-minIso)/stepIso)+1) )))
-    data_isopleth_te.isoP[data_isopleth_te.n_iso]= contour( x                   = X,
-                                                            y                   = Y,
-                                                            z                   = gridded_te,
+    data_isopleth_te.isoP[data_isopleth_te.n_iso]= contour(; pd_grid_xyz(gridded_te, data)...,
                                                             contours_coloring   = "lines",
                                                             colorscale          = [[0, isoColorLine], [1, isoColorLine]],
                                                             # connectgaps         = false,

@@ -19,6 +19,7 @@ const PD_LABEL_W_HIT     = 20.0
 const PD_LABEL_W_CROSS   = 10.0
 const PD_LABEL_W_DEV     = 0.5
 const PD_LABEL_NUM_MAX_OVERLAP = 0.0
+const PD_LABEL_MIN_SHAFT = 12.0
 
 mutable struct PDLabel
     field  :: Int
@@ -62,6 +63,8 @@ function pd_field_candidates(mask, Yb, Xb, center, Xr, Yr; k = 12, sep = 0.025)
 end
 
 pd_box(c, w, h) = (c[1] - w / 2, c[2] - h / 2, c[1] + w / 2, c[2] + h / 2)
+
+pd_box_edge(w, h, θ) = min(abs(cosd(θ)) > 1e-9 ? w / 2 / abs(cosd(θ)) : Inf, abs(sind(θ)) > 1e-9 ? h / 2 / abs(sind(θ)) : Inf)
 
 pd_box_inside(b) = b[1] >= 0.0 && b[2] >= 0.0 && b[3] <= PD_PLOT_W && b[4] <= PD_PLOT_H
 
@@ -122,6 +125,7 @@ function pd_place_labels!(labels)
         a    = l.anchor
         best = (Inf, a, pd_box(a, l.w, l.h))
         for r in PD_LABEL_RINGS, (m, θ) in enumerate(PD_LABEL_ANGLES)
+            r - pd_box_edge(l.w, l.h, θ) < PD_LABEL_MIN_SHAFT && continue
             c = (a[1] + r * cosd(θ), a[2] + r * sind(θ))
             b = pd_box(c, l.w, l.h)
             pd_box_inside(b) || continue

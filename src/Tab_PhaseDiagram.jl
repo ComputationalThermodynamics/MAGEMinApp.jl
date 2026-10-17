@@ -239,12 +239,28 @@ function Tab_PhaseDiagram()
                                 dbc_collapse(
                                     dbc_card(dbc_cardbody([
                                         dbc_row([
-                                            dbc_button("Export svg", 
+                                            dbc_switch(label="Clean boundaries", id="smooth-boundaries-switch", value=true),
+                                        ]),
+                                        dbc_row([
+                                            html_div("Smoothing (cells)", style = Dict("font-size" => "80%", "color" => "grey")),
+                                            dcc_slider( id      = "smooth-boundaries-sigma",
+                                                        min     = 0.0,
+                                                        max     = 5.0,
+                                                        step    = 0.25,
+                                                        value   = 2.5,
+                                                        marks   = Dict(string(i) => string(i) for i in 0:5),
+                                                        tooltip = Dict("placement" => "bottom")),
+                                        ]),
+                                        dbc_row([
+                                            dbc_button("Export svg",
                                                         id          = "export-layers", color="light",  n_clicks=0,
                                                         style       =  Dict( "textAlign"    => "center",
                                                                             "font-size"     => "100%",
                                                                             "border"        =>"1px grey solid")), 
                                         ]),
+                                        dcc_store(id = "pd-cs-grid"),
+                                        dcc_store(id = "pd-cs-lbl"),
+                                        dcc_store(id = "pd-cs-lbl-bg"),
                                         dbc_row([
                                             html_div(id="export-svg-status", children="",
                                                 style = Dict("textAlign" => "center", "font-size" => "75%", "color" => "grey",

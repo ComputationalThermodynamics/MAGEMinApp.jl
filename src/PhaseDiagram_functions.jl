@@ -1178,13 +1178,11 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
         minColor        = round(minimum(skipmissing(gridded)),digits=2); 
         maxColor        = round(maximum(skipmissing(gridded)),digits=2);    
         colorm, zr      = field_colorscale(fieldname, colorm, reverseColorMap, set_white, minColor, maxColor)
-        heat_map = heatmap( x               = X,
-                            y               = Y,
-                            z               = gridded,
+        heat_map = heatmap(; pd_heatmap_xyz(gridded, data)...,
                             zmin            =  zr.zmin,
                             zmax            =  zr.zmax,
                             zsmooth         = smooth,
-                            connectgaps     = true,
+                            connectgaps     = false,
                             type            = "heatmap",
                             colorscale      = colorm,
                             reversescale    = reverseColorMap,
@@ -1214,15 +1212,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
 
         # savefig(plot(heat_map_export,layout), "phase_diagram.svg"; width=720, height=900)
 
-        hover_lbl = heatmap(    x               = X,
-                                y               = Y,
-                                z               = X,
-                                type            = "heatmap",
-                                showscale       = false,
-                                opacity         = 0.0,
-                                hoverinfo       = "text",
-                                showlegend      = false,
-                                text            = gridded_info )
+        hover_lbl = pd_hover_layer(gridded_info, data)
 
 
         data_plot[1]    = heat_map
@@ -1339,12 +1329,10 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
     minColor        = round(minimum(skipmissing(gridded)),digits=2);
     maxColor        = round(maximum(skipmissing(gridded)),digits=2);
     colorm, zr      = field_colorscale(fieldname, colorm, reverseColorMap, set_white, minColor, maxColor)
-    data_plot[1] = heatmap( x               = X,
-                            y               = Y,
-                            z               = gridded,
+    data_plot[1] = heatmap(; pd_heatmap_xyz(gridded, data)...,
                             zmin            = zr.zmin,
                             zmax            = zr.zmax,
-                            connectgaps     = true,
+                            connectgaps     = false,
                             zsmooth         =  smooth,
                             type            = "heatmap",
                             colorscale      = colorm,
@@ -1369,15 +1357,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                 hoverinfo       = "skip",
                                 showlegend      = false,
                                 colorbar        = field_colorbar(fieldname),)
-    hover_lbl = heatmap(    x               = X,
-                            y               = Y,
-                            z               = X,
-                            type            = "heatmap",
-                            showscale       = false,
-                            opacity         = 0.0,
-                            hoverinfo       = "text",
-                            showlegend      = false,
-                            text            = gridded_info )
+    hover_lbl = pd_hover_layer(gridded_info, data)
 
     return vcat(data_plot,hover_lbl), layout, npoints, meant, txt_list, heat_map_export, assemblage_rows, list_compacted_idx, raw_field_id
 
@@ -1401,13 +1381,11 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
                                             test                                  )
     global PT_infos, layout, addedRefinementLvl
     colorm, zr = field_colorscale(fieldname, colorm, reverseColorMap, set_white, minColor, maxColor)
-    data_plot[1] = heatmap( x               =  X,
-                            y               =  Y,
-                            z               =  gridded,
+    data_plot[1] = heatmap(; pd_heatmap_xyz(gridded, data)...,
                             zmin            =  zr.zmin,
                             zmax            =  zr.zmax,
                             zsmooth         =  smooth,
-                            connectgaps     = true,
+                            connectgaps     = false,
                             type            = "heatmap",
                             colorscale      =  colorm,
                             # colorbar_title  =  fieldname,
@@ -1435,6 +1413,38 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
     return data_plot,layout, heat_map_export
 end
 
+
+function pd_grid_axes(nx::Int, ny::Int, data)
+    return collect(range(data.Xrange[1], stop = data.Xrange[2], length = nx)),
+           collect(range(data.Yrange[1], stop = data.Yrange[2], length = ny))
+end
+
+pd_select_anchor(data) = scatter(; x = [data.Xrange[1]], y = [data.Yrange[1]], mode = "markers", hoverinfo = "skip",
+                                    showlegend = false, marker = attr(size = 1, color = "rgba(0,0,0,0)"))
+
+pd_grid_rows(M::AbstractMatrix) = [M[:, j] for j in axes(M, 2)]
+
+function pd_grid_xyz(M::AbstractMatrix, data)
+    xv, yv = pd_grid_axes(size(M, 1), size(M, 2), data)
+    return (x = xv, y = yv, z = pd_grid_rows(M), transpose = false)
+end
+
+pd_heatmap_xyz(gridded::AbstractMatrix, data) = pd_grid_xyz(pd_fill_gridded(gridded, data), data)
+
+function pd_hover_layer(gridded_info::AbstractMatrix, data)
+    nx, ny = size(gridded_info)
+    xv, yv = pd_grid_axes(nx, ny, data)
+    return heatmap(;    x               = xv,
+                        y               = yv,
+                        z               = pd_grid_rows(zeros(Int8, nx, ny)),
+                        transpose       = false,
+                        type            = "heatmap",
+                        showscale       = false,
+                        opacity         = 0.0,
+                        hoverinfo       = "text",
+                        showlegend      = false,
+                        text            = pd_grid_rows(gridded_info) )
+end
 
 """
    This function creates a binary mask, then contours it to retriev the phase boundary
@@ -1579,12 +1589,10 @@ function  show_hide_reaction_lines(     sub,
         data_contour[i] = scatter(      x           = x, 
                                         y           = y, 
                                         hoverinfo   = "skip",
-                                        mode        = "markers+lines",
+                                        mode        = "lines",
                                         name        = opt[5],
                                         showscale   = false,
                                         showlegend  = false,
-                                        marker      = attr( size    = 10,  # Set the marker size here
-                                                            color   = "rgba(0,0,0,0)" ),
                                         line        = attr( color   = opt[3], 
                                                             dash    = opt[1],
                                                             width   = opt[2])                )
@@ -1659,12 +1667,10 @@ function  update_displayed_field_phaseDiagram(   xtitle,     ytitle,
 
     zlo, zhi   = is_integer_field(fieldname) ? extrema(skipmissing(gridded)) : (nothing, nothing)
     colorm, zr = field_colorscale(fieldname, colorm, reverseColorMap, set_white, zlo, zhi)
-    data_plot[1] = heatmap(; x               = X,
-                            y               = Y,
-                            z               = gridded,
+    data_plot[1] = heatmap(; pd_heatmap_xyz(gridded, data)...,
                             zr...,
                             zsmooth         = smooth,
-                            connectgaps     = true,
+                            connectgaps     = false,
                             type            = "heatmap",
                             colorscale      = colorm,
                             # colorbar_title  = fieldname,
@@ -1866,9 +1872,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
     data_isopleth.n_iso += 1
 
     data_isopleth.isoT[data_isopleth.n_iso] = CTR.contours(X[1:size(gridded,1)],Y[1:size(gridded,1):end],Float64.(coalesce.(gridded, NaN)),collect(range(minIso, maxIso, Int(floor((maxIso-minIso)/stepIso)+1) )))
-    data_isopleth.isoP[data_isopleth.n_iso] = contour(  x                   = X,
-                                                        y                   = Y,
-                                                        z                   = gridded,
+    data_isopleth.isoP[data_isopleth.n_iso] = contour(; pd_grid_xyz(gridded, data)...,
                                                         contours_coloring   = "lines",
                                                         colorscale          = [[0, isoColorLine], [1, isoColorLine]],
                                                         # connectgaps         = false,

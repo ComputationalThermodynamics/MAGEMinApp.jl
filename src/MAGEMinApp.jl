@@ -34,7 +34,7 @@ module MAGEMinApp
 
     pkg_dir = Base.pkgdir(MAGEMinApp)
 
-    const ENABLE_MAGERES = false
+    const ENABLE_MAGERES = true
     const ENABLE_MELTS   = true
 
     export App
@@ -104,6 +104,7 @@ module MAGEMinApp
     include(joinpath(pkg_dir,"src","Boundaries/poly.jl"))
     include(joinpath(pkg_dir,"src","Boundaries/purge.jl"))
     include(joinpath(pkg_dir,"src","Boundaries/utils.jl"))
+    include(joinpath(pkg_dir,"src","Boundaries/smooth.jl"))
     include_dependency(joinpath(pkg_dir,"user_data","predefined_bulks.csv"))
     include_dependency(joinpath(pkg_dir,"user_data","mc_default_sigma.csv"))
     include(joinpath(pkg_dir,"src","appData.jl"))

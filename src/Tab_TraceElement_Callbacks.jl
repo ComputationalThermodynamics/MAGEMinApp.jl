@@ -392,13 +392,11 @@ function Tab_TraceElement_Callbacks(app)
                                                 ),
                             )
                                 
-                heat_map = heatmap( x               =  X_te,
-                                    y               =  Y_te,
-                                    z               =  gridded_te,
+                heat_map = heatmap(; pd_heatmap_xyz(gridded_te, data)...,
                                     zmin            =  minColor,
                                     zmax            =  maxColor,
                                     zsmooth         =  smooth,
-                                    connectgaps     =  true,
+                                    connectgaps     =  false,
                                     type            = "heatmap",
                                     colorscale      =  colorm,
                                     reversescale    =  reverseColorMap,
@@ -443,15 +441,7 @@ function Tab_TraceElement_Callbacks(app)
                                                                 title = attr(   text = fieldname_zrc,
                                                                                 side = "right")         ),)
 
-                hover_lbl = heatmap(    x               = X_te,
-                                        y               = Y_te,
-                                        z               = X_te,
-                                        type            = "heatmap",
-                                        showscale       = false,
-                                        opacity         = 0.0,
-                                        hoverinfo       = "text",
-                                        showlegend      = false,
-                                        text            = gridded_info_te )
+                hover_lbl = pd_hover_layer(gridded_info_te, data)
 
 
                 data_plot_te[1]    = heat_map

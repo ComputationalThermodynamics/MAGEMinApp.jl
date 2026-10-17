@@ -212,7 +212,8 @@ end
 """
 function pd_figure_parts(; data, gridded, heat_map, layout_g, reaction, data_isopleth, iso_show,
                           assemblage_rows, xtitle::AbstractString, ytitle::AbstractString, diagType::AbstractString,
-                          show_reaction::Bool, show_mesh::Bool, show_labels::Bool, geotherms = GenericTrace[])
+                          show_reaction::Bool, show_mesh::Bool, show_labels::Bool, geotherms = GenericTrace[],
+                          fills = Tuple{Vector{Matrix{Float64}},NTuple{4,Float64}}[])
     global phase_infos
     convert_p = use_GPa[1] && diagType in ("pt", "px", "ptx")
     yconv(y::Real) = convert_p ? display_pressure(Float64(y)) : Float64(y)
@@ -285,7 +286,9 @@ function pd_figure_parts(; data, gridded, heat_map, layout_g, reaction, data_iso
 
     return (xrange = xr, yrange = yr, ticks = 4, title = title, xtitle = String(xtitle), ytitle = ytitle_disp,
             gridded = pd_fill_gridded(gridded, data), zmin = zmin, zmax = zmax, stops = stops, smooth = smooth, field_title = ftitle, ztick = ztick,
-            mesh = mesh, reaction = lines, isopleths = isopleths, geotherms = subd_svg_lines(geotherms, yconv), annotations = annotations,
+            mesh = mesh, reaction = lines,
+            fills = [([[(r[k, 1], yconv(r[k, 2])) for k in 1:size(r, 1)] for r in rings], col) for (rings, col) in fills],
+            isopleths = isopleths, geotherms = subd_svg_lines(geotherms, yconv), annotations = annotations,
             info = info, assemblages = assemblages)
 end
 
@@ -370,9 +373,21 @@ function pd_export_svg(parts, path::AbstractString)
     svg_open(io, c; xlink = true)
 
     png, _, _ = svg_field_png(parts.gridded, parts.zmin, parts.zmax, parts.stops; smooth = parts.smooth)
-    svg_group_open(io, svg_id(seen, "Field"))
+    fills = get(parts, :fills, [])
+    svg_group_open(io, svg_id(seen, "Field"); hidden = !isempty(fills))
     svg_image(io, svg_id(seen, "Field_raster"), c, png)
     svg_group_close(io)
+
+    if !isempty(fills)
+        svg_group_open(io, svg_id(seen, "Field_polygons"); width = 0.3)
+        for (k, (rings, col)) in enumerate(fills)
+            d   = join([svg_path_data(c, [r]) * " Z" for r in rings], " ")
+            rgb, op = svg_css_color(pd_rgba(col))
+            svg_path(io, svg_id(seen, "Field_$(k)"), d; fill = rgb, stroke = op === nothing ? rgb : "none", fill_opacity = op)
+            n_paths += 1
+        end
+        svg_group_close(io)
+    end
 
     if !isempty(parts.mesh)
         d = svg_path_data(c, [[(a, b), (cc, dd)] for (a, b, cc, dd) in parts.mesh])

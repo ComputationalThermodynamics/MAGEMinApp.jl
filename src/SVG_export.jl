@@ -227,8 +227,10 @@ svg_close(io::IO) = println(io, "</svg>")
     written.
 """
 function svg_group_open(io::IO, id::AbstractString; stroke = nothing, width = nothing, dash = nothing,
-                         fill = nothing, opacity = nothing, rounded = false, font_size = nothing, font_family = nothing, anchor = nothing)
+                         fill = nothing, opacity = nothing, rounded = false, font_size = nothing, font_family = nothing, anchor = nothing,
+                         hidden::Bool = false)
     attrs = String["id=\"$(svg_escape(id))\""]
+    hidden && push!(attrs, "style=\"display:none\"")
     fill    === nothing || push!(attrs, "fill=\"$(fill)\"")
     stroke  === nothing || push!(attrs, "stroke=\"$(stroke)\"")
     width   === nothing || push!(attrs, "stroke-width=\"$(svg_num(width))\"")
