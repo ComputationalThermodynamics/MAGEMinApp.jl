@@ -883,9 +883,8 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             # What "vol" actually changes is the MIXING WEIGHT: nCon/nRes are
             # given as volume percentages, so before blending bulk_S_val/
             # bulk_M_val (mol-basis) the target must be converted to the
-            # equivalent MOLE-fraction weight -- the same molar-volume-ratio
-            # trick already used by te_melt_wt_frac below, generalized to
-            # target either melt or solid. `t` is the desired volume fraction
+            # equivalent MOLE-fraction weight using the molar-volume ratio,
+            # targeting either melt or solid. `t` is the desired volume fraction
             # of whichever phase `target_is_melt` selects; `r` is the molar-
             # volume ratio of the OTHER phase to the TARGET phase (recovered,
             # again, from frac_*_vol vs frac_* without needing any molar-mass
@@ -899,7 +898,6 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
 
             frac_S_val(o) = calcUnit == "wt" ? o.frac_S_wt : calcUnit == "vol" ? o.frac_S_vol : o.frac_S
             frac_M_val(o) = calcUnit == "wt" ? o.frac_M_wt : calcUnit == "vol" ? o.frac_M_vol : o.frac_M
-            frac_F_val(o) = calcUnit == "wt" ? o.frac_F_wt : calcUnit == "vol" ? o.frac_F_vol : o.frac_F
             bulk_S_val(o) = calcUnit == "wt" ? o.bulk_S_wt : o.bulk_S
             bulk_M_val(o) = calcUnit == "wt" ? o.bulk_M_wt : o.bulk_M
             # wt2mol (like mol2wt) is a MAGEMin_C utility that always returns its
@@ -915,30 +913,11 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             # "mol" (see con_weight_mol above).
             to_mol(v)      = calcUnit == "wt" ? wt2mol(v, oxi) ./ 100.0 : v
 
-            # Trace-element partitioning (TE_prediction) always works on MAGEMin's
-            # weight-basis melt/solid split (out.frac_M_wt/frac_S_wt) internally,
-            # regardless of calcUnit -- so Csol/Cliq are always weight-basis
-            # concentrations. When re-mixing them for carry-forward using the
-            # SAME (w_S, w_M) weights applied to the major-element bulk above, those
-            # weights must therefore be WEIGHT fractions too. If calcUnit == "wt"
-            # they already are; if calcUnit == "mol" or "vol", convert the mole-
-            # basis (or volume-basis) mixing weights to the equivalent weight
-            # fraction using the ratio of the melt/solid sub-compositions' molar
-            # masses, which is recoverable from o.frac_M_wt/o.frac_M(_vol) vs
-            # o.frac_S_wt/o.frac_S(_vol) (all already computed by MAGEMin)
-            # without needing any per-oxide molar-mass table.
-            function te_melt_wt_frac(o, w_S, w_M)
-                calcUnit == "wt" && return w_M
-                r = calcUnit == "vol" ? (o.frac_M_wt * o.frac_S_vol) / (o.frac_M_vol * o.frac_S_wt) :
-                                         (o.frac_M_wt * o.frac_S)     / (o.frac_M     * o.frac_S_wt)
-                return (w_M * r) / (w_S + w_M * r)
-            end
-
             # Per-phase extraction thresholds (Advanced path definition panel): converts
             # a mol/wt/vol-basis threshold excess for a single phase into the equivalent
-            # MOL-basis amount to subtract from `bulk`, reusing the same ratio trick as
-            # te_melt_wt_frac above (moles per unit of the chosen fraction, recovered
-            # from that phase's own mol vs wt/vol fraction, no molar-mass table needed).
+            # MOL-basis amount to subtract from `bulk` (moles per unit of the chosen
+            # fraction, recovered from that phase's own mol vs wt/vol fraction, no
+            # molar-mass table needed).
             function phase_excess_mol_frac(pt, id, unit, threshold_pct)
                 prop = unit == "mol" ? sum(pt.ph_frac[id]) :
                        unit == "wt"  ? sum(pt.ph_frac_wt[id]) :
@@ -950,11 +929,72 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                 return excess * r
             end
 
+            mm_ox   = [MAGEMin_C.get_molar_mass(String(o)) for o in oxi]
+            function te_assim_wt_frac(bulk_mol, w)
+                calcUnit == "wt" && return w
+                M_sys = sum(bulk_mol ./ sum(bulk_mol) .* mm_ox)
+                M_ass = sum(bulk_assim ./ sum(bulk_assim) .* mm_ox)
+                return (w * M_ass) / (w * M_ass + (1.0 - w) * M_sys)
+            end
+
+            id_O_ptx = findfirst(oxi .== "O")
+            function sat_cor(te)
+                calcUnit == "vol" && return nothing
+                c = calcUnit == "wt" ? copy(te.bulk_cor_wt) : copy(te.bulk_cor_mol)
+                (c isa Vector{Float64} && length(c) == length(oxi)) || return nothing
+                isnothing(id_O_ptx) || (c[id_O_ptx] = 0.0)
+                return (all(isfinite, c) && any(>(0.0), c)) ? c : nothing
+            end
+            function sat_cor_wt(te)
+                c = copy(te.bulk_cor_wt)
+                isnothing(id_O_ptx) || (c[id_O_ptx] = 0.0)
+                return all(isfinite, c) ? sum(max.(c, 0.0)) : 0.0
+            end
+            fS_bulk(o) = calcUnit == "wt" ? o.frac_S_wt : o.frac_S
+            fM_bulk(o) = calcUnit == "wt" ? o.frac_M_wt : o.frac_M
+            function bulk_S_c(o, cor)
+                isnothing(cor) && return bulk_S_val(o)
+                v = max.(fS_bulk(o) .* bulk_S_val(o) .+ cor, 0.0)
+                return sum(v) > 0.0 ? v ./ sum(v) : bulk_S_val(o)
+            end
+            function bulk_M_c(o, cor)
+                isnothing(cor) && return bulk_M_val(o)
+                v = max.(fM_bulk(o) .* bulk_M_val(o) .- cor, 0.0)
+                return sum(v) > 0.0 ? v ./ sum(v) : bulk_M_val(o)
+            end
+            is_fluid_ph(name) = name in ("H2O", "fl", "aq17", "fluid")
+            function bulk_F_val(o)
+                v = zeros(length(oxi))
+                for i in eachindex(o.ph)
+                    is_fluid_ph(o.ph[i]) || continue
+                    w = calcUnit == "wt" ? o.ph_frac_wt[i] : o.ph_frac[i]
+                    c = i <= o.n_SS ? (calcUnit == "wt" ? o.SS_vec[i].Comp_wt : o.SS_vec[i].Comp) :
+                                      (calcUnit == "wt" ? o.PP_vec[i - o.n_SS].Comp_wt : o.PP_vec[i - o.n_SS].Comp)
+                    v .+= w .* c
+                end
+                return sum(v) > 0.0 ? v ./ sum(v) : v
+            end
+            fF_bulk(o) = calcUnit == "wt" ? o.frac_F_wt : o.frac_F
+            mix_shape(a, x, b, y) = (a + b) > 0.0 ? (a .* x .+ b .* y) ./ (a + b) : zeros(length(oxi))
+            function te_phase_conc(te, name)
+                name == "liq" && return te.Cliq
+                name in ("H2O", "fl", "aq17", "fluid") && return te.Cfl
+                if !isnothing(te.ph_TE)
+                    i = findfirst(==(name), te.ph_TE)
+                    isnothing(i) || return te.Cmin[i, :]
+                end
+                return te.Csol
+            end
+
             sys_in  = "mol"
             bulk    = copy(bulk_ini)
             bulk_assim_calc = (assim == "true" && calcUnit == "wt") ? mol2wt(bulk_assim, oxi) : bulk_assim
 
             if assim == "true"
+                 if te_enabled
+                     w_te       = te_assim_wt_frac(bulk, Add[1])
+                     bulkte_cur = (1.0 - w_te) .* bulkte_cur .+ w_te .* bulkte_ass_a
+                 end
                  bulk   .= to_mol( (1.0 - Add[1]) .* (calcUnit == "wt" ? mol2wt(bulk, oxi) : bulk) .+ Add[1] .* bulk_assim_calc )
             end
 
@@ -994,6 +1034,10 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
 
                     if assim == "true"
                         w_assim = step ./ (1.0 .+ step .* j)
+                        if te_enabled
+                            w_te       = te_assim_wt_frac(bulk, w_assim)
+                            bulkte_cur = (1.0 - w_te) .* bulkte_cur .+ w_te .* bulkte_ass_a
+                        end
                         bulk   .= to_mol( (1.0 .- w_assim) .* (calcUnit == "wt" ? mol2wt(bulk, oxi) : bulk) .+ w_assim .* bulk_assim_calc )
                     end
 
@@ -1053,145 +1097,92 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                     end
 
 
-                    # assimFrac must be known before the mode blocks so TE can use it
                     if assim == "true"
                         alpha        = step / (1.0 + step * j)
                         assimFrac[k] = k == 1 ? alpha : (1.0 - alpha) * assimFrac[k-1] + alpha
                     end
 
+                    cor   = nothing
+                    te_ok = false
                     if te_enabled
-                        TEvec = assim == "true" ?
-                                (1.0 - assimFrac[k]) .* bulkte_cur .+ assimFrac[k] .* bulkte_ass_a :
-                                bulkte_cur
+                        Out_TE_PTX[k] = TE_prediction(Out_PTX[k], bulkte_cur, KDs_dtb, dtb; ZrSat_model=zrsat_mod, SSat_model=ssat_mod, P2O5Sat_model=P2O5sat_mod, CO2Sat_model=co2sat_mod, MnzSat_model=mnzsat_mod)
+                        cor           = sat_cor(Out_TE_PTX[k])
+                        te_ok         = !all(isnan, Out_TE_PTX[k].Csol) && !all(isnan, Out_TE_PTX[k].Cliq)
+                        if !isnothing(cor)
+                            cor = min.(cor, fM_bulk(Out_PTX[k]) .* bulk_M_val(Out_PTX[k]))
+                            any(>(0.0), cor) || (cor = nothing)
+                        end
+                    end
+                    o  = Out_PTX[k]
+                    dS = isnothing(cor) ? 0.0 : sum(cor)
+                    fS = fS_bulk(o) + dS
+                    fM = fM_bulk(o) - dS
+                    fF = fF_bulk(o)
+                    cS, cM, cF = fS, fM, fF
+                    if calcUnit == "vol"
+                        fS, fM, fF = o.frac_S_vol, o.frac_M_vol, o.frac_F_vol
+                    end
+                    bS = bulk_S_c(o, cor)
+                    bM = bulk_M_c(o, cor)
+                    bF = bulk_F_val(o)
+                    if te_ok
+                        te     = Out_TE_PTX[k]
+                        dS_wt  = isnothing(cor) ? 0.0 : (calcUnit == "wt" ? sum(cor) : sat_cor_wt(te))
+                        mS     = o.frac_S_wt + dS_wt
+                        mM     = o.frac_M_wt - dS_wt
+                        mF     = o.frac_F_wt
+                        AS     = te.sol_wt_norm .* te.Csol
+                        AM     = te.liq_wt_norm .* te.Cliq
+                        AF     = te.fl_wt_norm  .* te.Cfl
+                        te_c(A, m) = m > 0.0 ? A ./ m : zeros(length(A))
                     end
 
-                    if mode == "fm"
-                        if frac_S_val(Out_PTX[k]) > 0.0
-                            if nCon > 0.0
-                                if frac_M_val(Out_PTX[k]) > nCon/100.0
-                                    # connectivity threshold reached: drain melt down to the
-                                    # (lower) residual threshold rather than back to nCon itself
-                                    w_con              = con_weight_mol(Out_PTX[k], nConRes/100.0, true)
-                                    bulk               .= to_mol( bulk_S_val(Out_PTX[k]) .*(1.0 - w_con) .+ bulk_M_val(Out_PTX[k]) .* w_con )
-                                    removedBulk[k+1,:] .= bulk_M_val(Out_PTX[k])
-                                    fracEvol[k+1,1]     = fracEvol[k,1] * (frac_S_val(Out_PTX[k]) + frac_F_val(Out_PTX[k]) + nConRes/100.0)
-                                    fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
-                                    fracEvol[k+1,3]     = 1.0 - (frac_S_val(Out_PTX[k]) + frac_F_val(Out_PTX[k]) + nConRes/100.0)
-                                    if te_enabled
-                                        Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb; ZrSat_model=zrsat_mod, SSat_model=ssat_mod, P2O5Sat_model=P2O5sat_mod, CO2Sat_model=co2sat_mod, MnzSat_model=mnzsat_mod)
-                                        if !all(isnan, Out_TE_PTX[k].Csol) && !all(isnan, Out_TE_PTX[k].Cliq)
-                                            w_M_te            = te_melt_wt_frac(Out_PTX[k], (100.0-nConRes)/100.0, nConRes/100.0)
-                                            bulkte_cur        = Out_TE_PTX[k].Csol .* (1.0 - w_M_te) .+ Out_TE_PTX[k].Cliq .* w_M_te
-                                            C_ext_TE_PTX[k+1] = copy(Out_TE_PTX[k].Cliq)
-                                        end
-                                    end
-                                else
-                                    removedBulk[k+1,:] .= zeros(length(bulk_ini))
-                                    fracEvol[k+1,1]     = fracEvol[k,1]
-                                    fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
-                                    fracEvol[k+1,3]     = 0.0
-                                    if te_enabled
-                                        Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb; ZrSat_model=zrsat_mod, SSat_model=ssat_mod, P2O5Sat_model=P2O5sat_mod, CO2Sat_model=co2sat_mod, MnzSat_model=mnzsat_mod)
-                                        # below connectivity: no bulk update, no extraction
-                                    end
-                                end
-                            else
-                                bulk               .= to_mol( bulk_S_val(Out_PTX[k]) )
-                                removedBulk[k+1,:] .= zeros(length(bulk_ini))
-                                fracEvol[k+1,1]     = fracEvol[k,1]
-                                fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
-                                fracEvol[k+1,3]     = 0.0
-                                if te_enabled
-                                    Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb; ZrSat_model=zrsat_mod, SSat_model=ssat_mod, P2O5Sat_model=P2O5sat_mod, CO2Sat_model=co2sat_mod, MnzSat_model=mnzsat_mod)
-                                    if !all(isnan, Out_TE_PTX[k].Csol)
-                                        bulkte_cur = copy(Out_TE_PTX[k].Csol)
-                                        # no C_ext_TE_PTX: mirrors removedBulk = zeros
-                                    end
-                                end
+                    keep_S, keep_M = 1.0, 1.0
+                    extract        = false
+                    if mode == "fm" && o.frac_S > 0.0 && o.frac_M > 0.0
+                        if nCon > 0.0
+                            if frac_M_val(o) > nCon/100.0
+                                w_con   = con_weight_mol(o, nConRes/100.0, true)
+                                keep_M  = cM > 0.0 ? clamp(w_con * cS / ((1.0 - w_con) * cM), 0.0, 1.0) : 0.0
+                                extract = true
                             end
                         else
-                            removedBulk[k+1,:] .= zeros(length(bulk_ini))
-                            fracEvol[k+1,1]     = fracEvol[k,1]
-                            fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
-                            fracEvol[k+1,3]     = 0.0
-                            if te_enabled
-                                Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb; ZrSat_model=zrsat_mod, SSat_model=ssat_mod, P2O5Sat_model=P2O5sat_mod, CO2Sat_model=co2sat_mod, MnzSat_model=mnzsat_mod)
-                                # no solid: no bulk update
-                            end
+                            keep_M  = 0.0
+                            extract = true
                         end
-                    elseif mode == "fc"
-                        if frac_M_val(Out_PTX[k]) > 0.0
-                            if nRes > 0.0
-                                if frac_S_val(Out_PTX[k]) > nRes/100.0
-                                    # nRes/100 plays two different roles below (the
-                                    # residual solid's target fraction in the carried-
-                                    # forward `bulk`, vs. the entrained melt's fraction
-                                    # in the extracted `removedBulk`) -- each needs its
-                                    # own mole-equivalent conversion, targeting whichever
-                                    # phase that occurrence of nRes/100 actually applies to
-                                    w_con_S            = con_weight_mol(Out_PTX[k], nRes/100.0, false)
-                                    w_con_M            = con_weight_mol(Out_PTX[k], nRes/100.0, true)
-                                    bulk               .= to_mol( bulk_M_val(Out_PTX[k]) .*(1.0 - w_con_S) .+ bulk_S_val(Out_PTX[k]) .* w_con_S )
-                                    removedBulk[k+1,:] .= bulk_M_val(Out_PTX[k]) .* w_con_M .+ bulk_S_val(Out_PTX[k]) .*(1.0 - w_con_M)
-                                    fracEvol[k+1,1]     = fracEvol[k,1] * (frac_M_val(Out_PTX[k]) - nRes/100.0)
-                                    fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
-                                    fracEvol[k+1,3]     = 1.0 - frac_M_val(Out_PTX[k]) - nRes/100.0
-                                    if te_enabled
-                                        Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb; ZrSat_model=zrsat_mod, SSat_model=ssat_mod, P2O5Sat_model=P2O5sat_mod, CO2Sat_model=co2sat_mod, MnzSat_model=mnzsat_mod)
-                                        if !all(isnan, Out_TE_PTX[k].Cliq) && !all(isnan, Out_TE_PTX[k].Csol)
-                                            w_M_te            = te_melt_wt_frac(Out_PTX[k], nRes/100.0, (100.0-nRes)/100.0)
-                                            w_M_ext_te        = te_melt_wt_frac(Out_PTX[k], (100.0-nRes)/100.0, nRes/100.0)
-                                            bulkte_cur        = Out_TE_PTX[k].Cliq .* w_M_te .+ Out_TE_PTX[k].Csol .* (1.0 - w_M_te)
-                                            C_ext_TE_PTX[k+1] = Out_TE_PTX[k].Cliq .* w_M_ext_te .+ Out_TE_PTX[k].Csol .* (1.0 - w_M_ext_te)
-                                        end
-                                    end
-                                else
-                                    bulk               .= to_mol( bulk_M_val(Out_PTX[k]) )
-                                    removedBulk[k+1,:] .= bulk_S_val(Out_PTX[k])
-                                    fracEvol[k+1,1]     = fracEvol[k,1] * (frac_M_val(Out_PTX[k]) - frac_S_val(Out_PTX[k]))
-                                    fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
-                                    fracEvol[k+1,3]     = 1.0 - (frac_M_val(Out_PTX[k]) - frac_S_val(Out_PTX[k]))
-                                    if te_enabled
-                                        Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb; ZrSat_model=zrsat_mod, SSat_model=ssat_mod, P2O5Sat_model=P2O5sat_mod, CO2Sat_model=co2sat_mod, MnzSat_model=mnzsat_mod)
-                                        if !all(isnan, Out_TE_PTX[k].Cliq) && !all(isnan, Out_TE_PTX[k].Csol)
-                                            bulkte_cur        = copy(Out_TE_PTX[k].Cliq)
-                                            C_ext_TE_PTX[k+1] = copy(Out_TE_PTX[k].Csol)
-                                        end
-                                    end
-                                end
-                            else
-                                bulk               .= to_mol( bulk_M_val(Out_PTX[k]) )
-                                removedBulk[k+1,:] .= bulk_S_val(Out_PTX[k])
-                                fracEvol[k+1,1]     = fracEvol[k,1] * frac_M_val(Out_PTX[k])
-                                fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
-                                fracEvol[k+1,3]     = 1.0 - frac_M_val(Out_PTX[k])
-                                if te_enabled
-                                    Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb; ZrSat_model=zrsat_mod, SSat_model=ssat_mod, P2O5Sat_model=P2O5sat_mod, CO2Sat_model=co2sat_mod, MnzSat_model=mnzsat_mod)
-                                    if !all(isnan, Out_TE_PTX[k].Cliq) && !all(isnan, Out_TE_PTX[k].Csol)
-                                        bulkte_cur        = copy(Out_TE_PTX[k].Cliq)
-                                        C_ext_TE_PTX[k+1] = copy(Out_TE_PTX[k].Csol)
-                                    end
-                                end
-                            end
+                    elseif mode == "fm" && o.frac_S > 0.0 && nCon <= 0.0
+                        keep_M  = 0.0
+                        extract = cF > 0.0
+                    elseif mode == "fc" && o.frac_M > 0.0
+                        if nRes > 0.0 && frac_S_val(o) > nRes/100.0
+                            w_con_S = con_weight_mol(o, nRes/100.0, false)
+                            keep_S  = cS > 0.0 ? clamp(w_con_S * cM / ((1.0 - w_con_S) * cS), 0.0, 1.0) : 0.0
                         else
-                            removedBulk[k+1,:] .= zeros(length(bulk_ini))
-                            fracEvol[k+1,1]     = fracEvol[k,1]
-                            fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
-                            fracEvol[k+1,3]     = 0.0
-                            if te_enabled
-                                Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb; ZrSat_model=zrsat_mod, SSat_model=ssat_mod, P2O5Sat_model=P2O5sat_mod, CO2Sat_model=co2sat_mod, MnzSat_model=mnzsat_mod)
-                                # no melt: no bulk update
-                            end
+                            keep_S  = 0.0
+                        end
+                        extract = true
+                    end
+
+                    if extract
+                        ret_mass           = keep_S * fS + keep_M * fM
+                        rem_mass           = (1.0 - keep_S) * fS + (1.0 - keep_M) * fM + fF
+                        rem_c              = (1.0 - keep_S) * cS + (1.0 - keep_M) * cM + cF
+                        bulk               .= to_mol( mix_shape(keep_S * cS, bS, keep_M * cM, bM) )
+                        removedBulk[k+1,:] .= (rem_c > 0.0) ? ((1.0 - keep_S) * cS .* bS .+ (1.0 - keep_M) * cM .* bM .+ cF .* bF) ./ rem_c : zeros(length(bulk_ini))
+                        fracEvol[k+1,1]     = fracEvol[k,1] * ret_mass
+                        fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
+                        fracEvol[k+1,3]     = rem_mass
+                        if te_ok
+                            m_ret             = keep_S * mS + keep_M * mM
+                            m_rem             = (1.0 - keep_S) * mS + (1.0 - keep_M) * mM + mF
+                            bulkte_cur        = te_c(keep_S .* AS .+ keep_M .* AM, m_ret)
+                            C_ext_TE_PTX[k+1] = te_c((1.0 - keep_S) .* AS .+ (1.0 - keep_M) .* AM .+ AF, m_rem)
                         end
                     else
                         removedBulk[k+1,:] .= zeros(length(bulk_ini))
                         fracEvol[k+1,1]     = fracEvol[k,1]
                         fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
                         fracEvol[k+1,3]     = 0.0
-                        if te_enabled
-                            Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb; ZrSat_model=zrsat_mod, SSat_model=ssat_mod, P2O5Sat_model=P2O5sat_mod, CO2Sat_model=co2sat_mod, MnzSat_model=mnzsat_mod)
-                            # not fc/fm: no bulk update
-                        end
                     end
 
                     # Per-phase extraction thresholds (Advanced path definition panel):
@@ -1220,6 +1211,8 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                         existing_mass  = fracEvol[k,1] > 0.0 ? clamp(1.0 - fracEvol[k+1,1]/fracEvol[k,1], 0.0, 1.0) : 0.0
 
                         total_excess_calc     = 0.0                                  # calcUnit-basis fraction of the CURRENT system removed by thresholding this step
+                        te_thr_mass           = 0.0
+                        te_thr_C              = te_ok ? zeros(length(bulkte_cur)) : Float64[]
                         combined_extra_shape  = zeros(Float64, length(bulk_ini))     # sums to total_excess_calc once the loop below is done
 
                         for entry in phase_thresholds
@@ -1248,6 +1241,16 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                 bulk[bulk .< 0.0] .= 0.0
                                 bulk            ./= sum(bulk)
 
+                                if te_ok
+                                    e_wt = excess_mol_frac * sum(pt.ph_frac_wt[id_ph]) / sum(pt.ph_frac[id_ph])
+                                    if e_wt < 1.0
+                                        C_ph        = te_phase_conc(Out_TE_PTX[k], match_name)
+                                        bulkte_cur  = max.((bulkte_cur .- e_wt .* C_ph) ./ (1.0 - e_wt), 0.0)
+                                        te_thr_mass += e_wt
+                                        te_thr_C   .+= e_wt .* C_ph
+                                    end
+                                end
+
                                 # removedBulk/fracEvol are tracked in `calcUnit` basis (mol
                                 # or wt) throughout the rest of this function; convert this
                                 # mol-basis excess the same way, reusing the molar-mass
@@ -1272,6 +1275,12 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                 combined_extra_shape .+= removed_contrib
                                 total_excess_calc     += excess_calc
                             end
+                        end
+
+                        if te_ok && te_thr_mass > 0.0
+                            prev_C = C_ext_TE_PTX[k+1]
+                            C_ext_TE_PTX[k+1] = all(isnan, prev_C) ? te_thr_C ./ te_thr_mass :
+                                                (prev_C .* existing_mass .+ te_thr_C) ./ (existing_mass + te_thr_mass)
                         end
 
                         if total_excess_calc > 0.0
@@ -1351,6 +1360,15 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             end
 
             fracEvol[fracEvol .< 0.0] .= 0.0
+            if ~isnothing(pChip_wat) && isentropic_mode == false && Temp[np] > pChip_T(Pres[np])
+                tmp_bulk              = deepcopy(bulk)
+                tmp_bulk            ./= sum(tmp_bulk[id_dry_ptx])
+                tmp_bulk[id_h2o_ptx]  = pChip_wat(Pres[np])
+                tmp_bulk            ./= sum(tmp_bulk)
+                gv = define_bulk_rock(gv, tmp_bulk, oxi, sys_in, dtb)
+            else
+                gv = define_bulk_rock(gv, bulk, oxi, sys_in, dtb)
+            end
 
             
             if isentropic_mode == true
@@ -1395,13 +1413,7 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
 
             # TE prediction for the final point (no bulk update needed after the last step)
             if te_enabled
-                if assim == "true"
-                    f_ass   = assimFrac[k]
-                    TEvec   = (1.0 - f_ass) .* bulkte_cur .+ f_ass .* bulkte_ass_a
-                else
-                    TEvec   = bulkte_cur
-                end
-                Out_TE_PTX[k] = TE_prediction(Out_PTX[k], TEvec, KDs_dtb, dtb;
+                Out_TE_PTX[k] = TE_prediction(Out_PTX[k], bulkte_cur, KDs_dtb, dtb;
                                                ZrSat_model   = zrsat_mod,
                                                SSat_model    = ssat_mod,
                                                P2O5Sat_model = P2O5sat_mod,

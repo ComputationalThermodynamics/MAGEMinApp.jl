@@ -28,47 +28,16 @@ end
 """
     pd_fill_gridded(gridded, data)
 
-    The colour field `gridded` (`[ix, iy]`) with every gap filled from the AMR mesh.
-    `get_gridded_map` writes the field only at the mesh *points* (the computed
-    nodes); everything inside a cell is left `missing` and the screen relies on
-    Plotly's `connectgaps` to bridge it. On a refined diagram that is close to half of
-    the nodes (47.5% of a 129 x 129 metabasite density diagram), so how the gaps
-    are filled decides how the whole image looks. Here every cell of `data.cells` is
-    filled by bilinear interpolation of its four corner values, the most faithful
-    reading of the mesh: a coarse cell in a smooth region becomes a smooth gradient,
-    and the fine cells along a phase boundary keep their jump to one cell. Cells are
-    painted from the coarsest to the finest so the true values at a fine cell's
-    corners (which sit on a coarse cell's edge) win; a cell with an undefined corner
-    is skipped and any node still `missing` is filled by [`svg_fill_gaps`](@ref).
+    The colour field `gridded` (`[ix, iy]`) with every gap filled. `get_gridded_map`
+    writes the field only at the AMR mesh *points* (the computed nodes); everything
+    inside a cell is `missing`. The computed nodes are kept and the gaps take the
+    harmonic interpolation of them ([`svg_fill_gaps`](@ref)), the converged form of
+    Plotly's `connectgaps`: smooth across coarse cells, while phase boundaries, where
+    the mesh is fine, keep their jump to one cell. `data` is kept for the call
+    signature (screen and SVG export share this function).
 """
 function pd_fill_gridded(gridded::AbstractMatrix, data)
-    nx, ny = size(gridded)
-    x0, y0 = data.Xrange[1], data.Yrange[1]
-    dx, dy = (data.Xrange[2] - x0) / (nx - 1), (data.Yrange[2] - y0) / (ny - 1)
-    node(p) = (round(Int, (p[1] - x0) / dx) + 1, round(Int, (p[2] - y0) / dy) + 1)
-
-    F     = Matrix{Union{Float64,Missing}}(gridded)
-    boxes = Tuple{Int,Int,Int,Int,Int}[]
-    for cell in data.cells
-        ij = [node(data.points[k]) for k in cell]
-        ilo, ihi = minimum(first, ij), maximum(first, ij)
-        jlo, jhi = minimum(last, ij), maximum(last, ij)
-        (ihi > ilo && jhi > jlo) && push!(boxes, (ihi - ilo, ilo, ihi, jlo, jhi))
-    end
-    sort!(boxes, by = b -> -b[1])
-
-    for (_, ilo, ihi, jlo, jhi) in boxes
-        v = (gridded[ilo, jlo], gridded[ihi, jlo], gridded[ilo, jhi], gridded[ihi, jhi])
-        any(x -> x === missing || !isfinite(x), v) && continue
-        for j in jlo:jhi
-            u = (j - jlo) / (jhi - jlo)
-            for i in ilo:ihi
-                t = (i - ilo) / (ihi - ilo)
-                F[i, j] = (1 - t) * (1 - u) * v[1] + t * (1 - u) * v[2] + (1 - t) * u * v[3] + t * u * v[4]
-            end
-        end
-    end
-    return svg_fill_gaps(F)
+    return svg_fill_gaps(gridded)
 end
 
 """

@@ -1205,11 +1205,11 @@ function Tab_PTXpaths_Callbacks(app)
 
         if bid == "ptx-plot"
             # active phase set may have changed entirely - drop any stale selection
-            return phase_order_rows(AppData.mineral_order[1], visible), [], version
+            return phase_order_rows(AppData.mineral_order[1], visible), [], no_update()
 
         elseif bid in ("phase-order-up-id", "phase-order-down-id")
             if isnothing(selected) || isempty(selected) || isnothing(data) || isempty(data)
-                return phase_order_rows(AppData.mineral_order[1], visible), [], version
+                return phase_order_rows(AppData.mineral_order[1], visible), [], no_update()
             end
 
             row_index = selected[1]["row"] + 1
@@ -1249,7 +1249,7 @@ function Tab_PTXpaths_Callbacks(app)
             return phase_order_rows(AppData.mineral_order[1], visible), [], version + 1
         end
 
-        return phase_order_rows(AppData.mineral_order[1], visible), [], version
+        return phase_order_rows(AppData.mineral_order[1], visible), [], no_update()
     end
 
 
@@ -2579,13 +2579,14 @@ function Tab_PTXpaths_Callbacks(app)
         Output("tepm-section-ptx",      "style"),
         Output("te-tab-ptx",            "disabled"),
         Output("te-export-buttons-ptx", "style"),
+        Output("tepm-options-ptx",      "style"),
         Input("tepm-dropdown-ptx",      "value"),
         prevent_initial_call = true,
     ) do tepm
         if tepm == "true"
-            return Dict("display" => "block"), false, Dict("display" => "block")
+            return Dict("display" => "block"), false, Dict("display" => "block"), Dict("display" => "block")
         else
-            return Dict("display" => "none"), true, Dict("display" => "none")
+            return Dict("display" => "none"), true, Dict("display" => "none"), Dict("display" => "none")
         end
     end
 

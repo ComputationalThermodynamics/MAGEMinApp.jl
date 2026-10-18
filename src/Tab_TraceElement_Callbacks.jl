@@ -294,7 +294,7 @@ function Tab_TraceElement_Callbacks(app)
         fieldNames                      = ["data_plot_te","data_reaction","data_grid","data_isopleth_out_te"]
         fieldNames_exp                  = ["data_plot_te","data_reaction","data_grid","data_isopleth_out_export_te"]
         field2plot                      = zeros(Int64,4)
-        fieldType                       = type
+        fieldType                       = no_update()
         loading                         = ""
         field2plot[1]                   = 1
         clear_selection_te              = no_update()     # only touched when the assemblage list is (re)built or Clear is pushed
@@ -419,7 +419,7 @@ function Tab_TraceElement_Callbacks(app)
                 yvals   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
                 heat_map_export_te = heatmap(   x               = xvals,
                                                 y               = yvals,
-                                                z               = gridded_te',
+                                                z               = pd_fill_gridded(gridded_te, data)',
                                                 zmin            = minColor,
                                                 zmax            = maxColor,
                                                 zsmooth         = smooth,

@@ -239,7 +239,7 @@ function update_colormap_phaseDiagram_te(       xtitle,     ytitle,     type,   
     yvals   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
     heat_map_export_te = heatmap(  x               = xvals,
                                 y               = yvals,
-                                z               = gridded_te',
+                                z               = pd_fill_gridded(gridded_te, data)',
                                 zmin            =  minColor,
                                 zmax            =  maxColor,
                                 zsmooth         =  smooth,
@@ -335,7 +335,7 @@ function  update_displayed_field_phaseDiagram_te(   xtitle,     ytitle,     type
     yvals   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
     heat_map_export_te = heatmap(  x               = xvals,
                                 y               = yvals,
-                                z               = gridded_te',
+                                z               = pd_fill_gridded(gridded_te, data)',
                                 zsmooth         = smooth,
                                 connectgaps     = true,
                                 type            = "heatmap",

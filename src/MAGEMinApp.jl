@@ -25,7 +25,7 @@ module MAGEMinApp
     using MAGEMin_C
     using StaticArrays: SVector
     using SparseArrays: sparse
-    using LinearAlgebra: norm, dot, ⋅
+    using LinearAlgebra: norm, dot, ⋅, cholesky, Symmetric
     using IntersecT
     using PrecompileTools: @compile_workload
 
