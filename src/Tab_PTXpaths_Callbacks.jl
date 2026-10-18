@@ -1205,11 +1205,11 @@ function Tab_PTXpaths_Callbacks(app)
 
         if bid == "ptx-plot"
             # active phase set may have changed entirely - drop any stale selection
-            return phase_order_rows(AppData.mineral_order[1], visible), [], version
+            return phase_order_rows(AppData.mineral_order[1], visible), [], no_update()
 
         elseif bid in ("phase-order-up-id", "phase-order-down-id")
             if isnothing(selected) || isempty(selected) || isnothing(data) || isempty(data)
-                return phase_order_rows(AppData.mineral_order[1], visible), [], version
+                return phase_order_rows(AppData.mineral_order[1], visible), [], no_update()
             end
 
             row_index = selected[1]["row"] + 1
@@ -1249,7 +1249,7 @@ function Tab_PTXpaths_Callbacks(app)
             return phase_order_rows(AppData.mineral_order[1], visible), [], version + 1
         end
 
-        return phase_order_rows(AppData.mineral_order[1], visible), [], version
+        return phase_order_rows(AppData.mineral_order[1], visible), [], no_update()
     end
 
 
@@ -1955,12 +1955,6 @@ function Tab_PTXpaths_Callbacks(app)
         # remember the (de)activated phases per database, so switching databases (or
         # reloading the page) restores the last selection made for that database
         cache = AppData.phase_selection_cache_ptx[1]
-        if bid == "database-dropdown-ptx"
-            prev_dtb = AppData.phase_selection_last_dtb_ptx[1]
-            if prev_dtb != "" && prev_dtb != dtb
-                cache[prev_dtb] = Dict("ss" => to_str_vec(current_ss_selection), "pp" => to_str_vec(current_pp_selection))
-            end
-        end
 
         preset_style = dtb == "all" ? Dict("display" => "block") : Dict("display" => "none")
 
@@ -1997,7 +1991,6 @@ function Tab_PTXpaths_Callbacks(app)
             isempty(pure_phase_selection_value) && (pure_phase_selection_value = pp_disp)
             preset_value_out = no_update()
         end
-        AppData.phase_selection_last_dtb_ptx[1] = dtb
 
         dataset_options = [Dict(    "label"     => "ds$(db_in.dataset_opt[i])",
                                     "value"     => db_in.dataset_opt[i] )
@@ -2586,13 +2579,14 @@ function Tab_PTXpaths_Callbacks(app)
         Output("tepm-section-ptx",      "style"),
         Output("te-tab-ptx",            "disabled"),
         Output("te-export-buttons-ptx", "style"),
+        Output("tepm-options-ptx",      "style"),
         Input("tepm-dropdown-ptx",      "value"),
         prevent_initial_call = true,
     ) do tepm
         if tepm == "true"
-            return Dict("display" => "block"), false, Dict("display" => "block")
+            return Dict("display" => "block"), false, Dict("display" => "block"), Dict("display" => "block")
         else
-            return Dict("display" => "none"), true, Dict("display" => "none")
+            return Dict("display" => "none"), true, Dict("display" => "none"), Dict("display" => "none")
         end
     end
 

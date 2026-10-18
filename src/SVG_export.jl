@@ -227,8 +227,10 @@ svg_close(io::IO) = println(io, "</svg>")
     written.
 """
 function svg_group_open(io::IO, id::AbstractString; stroke = nothing, width = nothing, dash = nothing,
-                         fill = nothing, opacity = nothing, rounded = false, font_size = nothing, font_family = nothing, anchor = nothing)
+                         fill = nothing, opacity = nothing, rounded = false, font_size = nothing, font_family = nothing, anchor = nothing,
+                         hidden::Bool = false)
     attrs = String["id=\"$(svg_escape(id))\""]
+    hidden && push!(attrs, "style=\"display:none\"")
     fill    === nothing || push!(attrs, "fill=\"$(fill)\"")
     stroke  === nothing || push!(attrs, "stroke=\"$(stroke)\"")
     width   === nothing || push!(attrs, "stroke-width=\"$(svg_num(width))\"")
@@ -799,33 +801,108 @@ end
 """
     svg_fill_gaps(field)
 
-    `field` with its `missing`/non-finite nodes filled, like Plotly's `connectgaps`:
-    repeatedly, every gap node that has defined 4-neighbours takes their mean, until
-    none is left (a field with no defined node at all is returned unchanged).
+    `field` with its `missing`/non-finite nodes filled, like Plotly's `connectgaps`: the
+    defined nodes are kept and the gap nodes take the harmonic (Laplace) interpolation of
+    them, i.e. the solution of the 5-point discrete Laplace equation with the defined
+    nodes as fixed values and no-flux domain edges. This is the converged limit of
+    repeatedly averaging the 4-neighbours, solved directly with one sparse Cholesky
+    factorization. The factorization only depends on which nodes are defined, so it is
+    cached ([`laplace_fill_factor`](@ref)) and re-filling another field on the same mesh
+    costs one back-substitution. A field with no defined node is returned unchanged.
 """
 function svg_fill_gaps(field::AbstractMatrix)
     nx, ny = size(field)
-    F      = Matrix{Union{Float64,Missing}}(undef, nx, ny)
-    for i in eachindex(F)
+    vals   = Matrix{Float64}(undef, nx, ny)
+    known  = falses(nx, ny)
+    @inbounds for i in eachindex(field)
         v = field[i]
-        F[i] = (v === missing || (v isa Real && !isfinite(v))) ? missing : Float64(v)
-    end
-    all(ismissing, F) && return F
-    while any(ismissing, F)
-        G = copy(F)
-        for j in 1:ny, i in 1:nx
-            ismissing(F[i, j]) || continue
-            acc, cnt = 0.0, 0
-            for (di, dj) in ((1, 0), (-1, 0), (0, 1), (0, -1))
-                ii, jj = i + di, j + dj
-                (1 <= ii <= nx && 1 <= jj <= ny && !ismissing(F[ii, jj])) || continue
-                acc += F[ii, jj]; cnt += 1
-            end
-            cnt > 0 && (G[i, j] = acc / cnt)
+        if v isa Real && isfinite(v)
+            vals[i]  = v
+            known[i] = true
+        else
+            vals[i]  = NaN
         end
-        F = G
     end
-    return F
+    nk = count(known)
+    nk == 0 && return Matrix{Union{Float64,Missing}}(missing, nx, ny)
+    nk < length(vals) && laplace_fill!(vals, laplace_fill_factor(known))
+    return convert(Matrix{Union{Float64,Missing}}, vals)
+end
+
+struct LaplaceFill{T}
+    known   :: BitMatrix
+    unknown :: Vector{Int}
+    factor  :: T
+    rhs_ptr :: Vector{Int}
+    rhs_idx :: Vector{Int}
+end
+
+function laplace_fill!(vals::Matrix{Float64}, lf::LaplaceFill)
+    n = length(lf.unknown)
+    b = Vector{Float64}(undef, n)
+    @inbounds for u in 1:n
+        acc = 0.0
+        for k in lf.rhs_ptr[u]:(lf.rhs_ptr[u+1] - 1)
+            acc += vals[lf.rhs_idx[k]]
+        end
+        b[u] = acc
+    end
+    x = lf.factor \ b
+    @inbounds for u in 1:n
+        vals[lf.unknown[u]] = x[u]
+    end
+    return vals
+end
+
+const LAPLACE_FILL_CACHE = Dict{UInt64, LaplaceFill}()
+
+"""
+    laplace_fill_factor(known)
+
+    Cholesky factorization of the 5-point Laplacian restricted to the gap nodes of the
+    mask `known` (`true` = defined node), with the lists of defined neighbours each gap
+    node takes its right-hand side from. Cached on the mask (a handful of entries).
+"""
+function laplace_fill_factor(known::BitMatrix)
+    key = hash(known, hash(size(known)))
+    hit = get(LAPLACE_FILL_CACHE, key, nothing)
+    (hit !== nothing && hit.known == known) && return hit
+
+    nx, ny  = size(known)
+    unknown = findall(!, vec(known))
+    uid     = zeros(Int, nx * ny)
+    uid[unknown] .= eachindex(unknown)
+    n       = length(unknown)
+
+    I       = Vector{Int}(undef, 0); sizehint!(I, 5n)
+    J       = Vector{Int}(undef, 0); sizehint!(J, 5n)
+    V       = Vector{Float64}(undef, 0); sizehint!(V, 5n)
+    rhs_ptr = Vector{Int}(undef, n + 1)
+    rhs_idx = Vector{Int}(undef, 0); sizehint!(rhs_idx, 2n)
+    rhs_ptr[1] = 1
+    @inbounds for u in 1:n
+        li   = unknown[u]
+        i    = (li - 1) % nx + 1
+        j    = (li - 1) ÷ nx + 1
+        deg  = 0
+        for (di, dj) in ((1, 0), (-1, 0), (0, 1), (0, -1))
+            ii, jj = i + di, j + dj
+            (1 <= ii <= nx && 1 <= jj <= ny) || continue
+            deg += 1
+            q    = ii + (jj - 1) * nx
+            if known[q]
+                push!(rhs_idx, q)
+            else
+                push!(I, u); push!(J, uid[q]); push!(V, -1.0)
+            end
+        end
+        push!(I, u); push!(J, u); push!(V, Float64(deg))
+        rhs_ptr[u+1] = length(rhs_idx) + 1
+    end
+    entry = LaplaceFill(copy(known), unknown, cholesky(Symmetric(sparse(I, J, V, n, n))), rhs_ptr, rhs_idx)
+    length(LAPLACE_FILL_CACHE) >= 8 && empty!(LAPLACE_FILL_CACHE)
+    LAPLACE_FILL_CACHE[key] = entry
+    return entry
 end
 
 """
@@ -932,6 +1009,15 @@ end
     a small arrow head, in its own `Label_leader_NNN` group. Shared by the
     exporters so every diagram's labels look the same.
 """
+function svg_label_bg(io::IO, seen::Set{String}, f, x, y, txt, fsize, i)
+    haskey(f, :bgcolor) || return
+    w, h = pd_label_box(txt, Float64(fsize))
+    x0, y0, x1, y1 = x - w / 2, y - h / 2, x + w / 2, y + h / 2
+    svg_path(io, svg_id(seen, "Label_bg_$(lpad(i, 3, '0'))"),
+             "M$(svg_num(x0)) $(svg_num(y0)) L$(svg_num(x1)) $(svg_num(y0)) L$(svg_num(x1)) $(svg_num(y1)) L$(svg_num(x0)) $(svg_num(y1)) Z";
+             fill = "#ffffff", fill_opacity = 0.85)
+end
+
 function svg_annotation_layer(io::IO, c::SVGCanvas, seen::Set{String}, annotations; id::AbstractString = "Labels",
                                font::AbstractString = "Helvetica, Arial, sans-serif")
     isempty(annotations) && return
@@ -953,8 +1039,10 @@ function svg_annotation_layer(io::IO, c::SVGCanvas, seen::Set{String}, annotatio
                 svg_group_close(io)
                 svg_polygon(io, [(px, py), (px - 4 * ux - 1.5 * uy, py - 4 * uy + 1.5 * ux), (px - 4 * ux + 1.5 * uy, py - 4 * uy - 1.5 * ux)], "#212121")
             end
+            svg_label_bg(io, seen, f, tx, ty, txt, fsize, i)
             svg_text(io, tx, ty, txt; id = svg_id(seen, "Label_$(lpad(i, 3, '0'))"), size = fsize)
         else
+            svg_label_bg(io, seen, f, px, py, txt, fsize, i)
             svg_text(io, px, py, txt; id = svg_id(seen, "Label_$(lpad(i, 3, '0'))"), size = fsize)
         end
     end

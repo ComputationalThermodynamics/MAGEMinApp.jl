@@ -28,47 +28,16 @@ end
 """
     pd_fill_gridded(gridded, data)
 
-    The colour field `gridded` (`[ix, iy]`) with every gap filled from the AMR mesh.
-    `get_gridded_map` writes the field only at the mesh *points* (the computed
-    nodes); everything inside a cell is left `missing` and the screen relies on
-    Plotly's `connectgaps` to bridge it. On a refined diagram that is close to half of
-    the nodes (47.5% of a 129 x 129 metabasite density diagram), so how the gaps
-    are filled decides how the whole image looks. Here every cell of `data.cells` is
-    filled by bilinear interpolation of its four corner values, the most faithful
-    reading of the mesh: a coarse cell in a smooth region becomes a smooth gradient,
-    and the fine cells along a phase boundary keep their jump to one cell. Cells are
-    painted from the coarsest to the finest so the true values at a fine cell's
-    corners (which sit on a coarse cell's edge) win; a cell with an undefined corner
-    is skipped and any node still `missing` is filled by [`svg_fill_gaps`](@ref).
+    The colour field `gridded` (`[ix, iy]`) with every gap filled. `get_gridded_map`
+    writes the field only at the AMR mesh *points* (the computed nodes); everything
+    inside a cell is `missing`. The computed nodes are kept and the gaps take the
+    harmonic interpolation of them ([`svg_fill_gaps`](@ref)), the converged form of
+    Plotly's `connectgaps`: smooth across coarse cells, while phase boundaries, where
+    the mesh is fine, keep their jump to one cell. `data` is kept for the call
+    signature (screen and SVG export share this function).
 """
 function pd_fill_gridded(gridded::AbstractMatrix, data)
-    nx, ny = size(gridded)
-    x0, y0 = data.Xrange[1], data.Yrange[1]
-    dx, dy = (data.Xrange[2] - x0) / (nx - 1), (data.Yrange[2] - y0) / (ny - 1)
-    node(p) = (round(Int, (p[1] - x0) / dx) + 1, round(Int, (p[2] - y0) / dy) + 1)
-
-    F     = Matrix{Union{Float64,Missing}}(gridded)
-    boxes = Tuple{Int,Int,Int,Int,Int}[]
-    for cell in data.cells
-        ij = [node(data.points[k]) for k in cell]
-        ilo, ihi = minimum(first, ij), maximum(first, ij)
-        jlo, jhi = minimum(last, ij), maximum(last, ij)
-        (ihi > ilo && jhi > jlo) && push!(boxes, (ihi - ilo, ilo, ihi, jlo, jhi))
-    end
-    sort!(boxes, by = b -> -b[1])
-
-    for (_, ilo, ihi, jlo, jhi) in boxes
-        v = (gridded[ilo, jlo], gridded[ihi, jlo], gridded[ilo, jhi], gridded[ihi, jhi])
-        any(x -> x === missing || !isfinite(x), v) && continue
-        for j in jlo:jhi
-            u = (j - jlo) / (jhi - jlo)
-            for i in ilo:ihi
-                t = (i - ilo) / (ihi - ilo)
-                F[i, j] = (1 - t) * (1 - u) * v[1] + t * (1 - u) * v[2] + (1 - t) * u * v[3] + t * u * v[4]
-            end
-        end
-    end
-    return svg_fill_gaps(F)
+    return svg_fill_gaps(gridded)
 end
 
 """
@@ -140,13 +109,39 @@ end
     (`contours_start`, `contours_end`, `contours_size`).
 """
 function pd_isopleth_contours(data_isopleth, i::Int)
-    isassigned(data_isopleth.isoT, i) && return data_isopleth.isoT[i]
-    tr     = data_isopleth.isoPexp[i]
+    tr = isassigned(data_isopleth.isoPexp, i) ? data_isopleth.isoPexp[i] : nothing
+    if tr === nothing || !haskey(tr, :contours_start) || !haskey(tr, :z)
+        return data_isopleth.isoT[i]
+    end
     lo, hi = Float64(tr[:contours_start]), Float64(tr[:contours_end])
     step   = Float64(tr[:contours_size])
     z      = Float64.(coalesce.(permutedims(tr[:z]), NaN))
-    return CTR.contours(collect(Float64.(tr[:x])), collect(Float64.(tr[:y])), z,
-                        collect(range(lo, hi, Int(floor((hi - lo) / step) + 1))))
+    levels = step > 0 ? [lo + k * step for k in 0:floor(Int, (hi - lo) / step + 1e-9)] : [lo]
+    return CTR.contours(collect(Float64.(tr[:x])), collect(Float64.(tr[:y])), z, levels)
+end
+
+"""
+    pd_finite_runs(xs, ys)
+
+    The pieces of a contour polyline between non-finite vertices. Contour.jl gives
+    NaN coordinates where a line would cross into an undefined (NaN) part of the
+    grid, e.g. where the phase of a composition isopleth is absent; splitting there
+    ends the line at the edge of the defined region. Pieces shorter than 2 points
+    are dropped.
+"""
+function pd_finite_runs(xs, ys)
+    runs = Vector{Vector{Tuple{Float64,Float64}}}()
+    cur  = Tuple{Float64,Float64}[]
+    for (x, y) in zip(xs, ys)
+        if isfinite(x) && isfinite(y)
+            push!(cur, (Float64(x), Float64(y)))
+        else
+            length(cur) > 1 && push!(runs, cur)
+            cur = Tuple{Float64,Float64}[]
+        end
+    end
+    length(cur) > 1 && push!(runs, cur)
+    return runs
 end
 
 """
@@ -160,9 +155,10 @@ end
     `xy_y` converts a y value to the display unit. `name` goes through
     `display_iso_label`, as the on-screen caption does.
 """
-function pd_isopleth_sets(data_isopleth, xy_y)
+function pd_isopleth_sets(data_isopleth, xy_y; sigma::Real = 0.0)
     sets = NamedTuple[]
     for i in data_isopleth.active
+        grid = sigma > 0 ? pd_isopleth_grid(data_isopleth, i) : nothing
         line  = data_isopleth.isoCap[i][:line]
         color = string(line[:color])
         dash  = haskey(line, :dash) ? line[:dash] : "solid"
@@ -177,12 +173,20 @@ function pd_isopleth_sets(data_isopleth, xy_y)
             polys = Vector{Vector{Tuple{Float64,Float64}}}()
             for l in CTR.lines(lvl)
                 xs, ys = CTR.coordinates(l)
-                length(xs) > 1 && push!(polys, [(Float64(x), xy_y(Float64(y))) for (x, y) in zip(xs, ys)])
+                for line in pd_finite_runs(xs, ys)
+                    grid === nothing || (line = pd_smooth_isoline(line, Float64(CTR.level(lvl)), grid, sigma))
+                    push!(polys, [(x, xy_y(y)) for (x, y) in line])
+                end
             end
             isempty(polys) || push!(levels, (Float64(CTR.level(lvl)), polys))
         end
+        label_bg = try
+            data_isopleth.isoP[i][:meta] == "label-bg"
+        catch
+            false
+        end
         push!(sets, (name = display_iso_label(string(data_isopleth.label[i])), color = color, dash = dash,
-                     width = width, label_size = lsize, levels = levels))
+                     width = width, label_size = lsize, label_bg = label_bg, levels = levels))
     end
     return sets
 end
@@ -212,7 +216,8 @@ end
 """
 function pd_figure_parts(; data, gridded, heat_map, layout_g, reaction, data_isopleth, iso_show,
                           assemblage_rows, xtitle::AbstractString, ytitle::AbstractString, diagType::AbstractString,
-                          show_reaction::Bool, show_mesh::Bool, show_labels::Bool)
+                          show_reaction::Bool, show_mesh::Bool, show_labels::Bool, geotherms = GenericTrace[],
+                          fills = Tuple{Vector{Matrix{Float64}},NTuple{4,Float64}}[], iso_sigma::Real = 0.0)
     global phase_infos
     convert_p = use_GPa[1] && diagType in ("pt", "px", "ptx")
     yconv(y::Real) = convert_p ? display_pressure(Float64(y)) : Float64(y)
@@ -253,7 +258,7 @@ function pd_figure_parts(; data, gridded, heat_map, layout_g, reaction, data_iso
         end
     end
 
-    isopleths = (iso_show == 1 && data_isopleth.n_iso > 0) ? pd_isopleth_sets(data_isopleth, yconv) : NamedTuple[]
+    isopleths = (iso_show == 1 && data_isopleth.n_iso > 0) ? pd_isopleth_sets(data_isopleth, yconv; sigma = iso_sigma) : NamedTuple[]
 
     annotations = PlotlyBase.PlotlyAttribute[]
     if show_labels && layout_g !== nothing && haskey(layout_g, :annotations)
@@ -285,7 +290,9 @@ function pd_figure_parts(; data, gridded, heat_map, layout_g, reaction, data_iso
 
     return (xrange = xr, yrange = yr, ticks = 4, title = title, xtitle = String(xtitle), ytitle = ytitle_disp,
             gridded = pd_fill_gridded(gridded, data), zmin = zmin, zmax = zmax, stops = stops, smooth = smooth, field_title = ftitle, ztick = ztick,
-            mesh = mesh, reaction = lines, isopleths = isopleths, annotations = annotations,
+            mesh = mesh, reaction = lines,
+            fills = [([[(r[k, 1], yconv(r[k, 2])) for k in 1:size(r, 1)] for r in rings], col) for (rings, col) in fills],
+            isopleths = isopleths, geotherms = subd_svg_lines(geotherms, yconv), annotations = annotations,
             info = info, assemblages = assemblages)
 end
 
@@ -298,24 +305,7 @@ end
     hold a label.
 """
 function pd_contour_label(line::Vector{Tuple{Float64,Float64}}, c::SVGCanvas)
-    pts = [(svg_x(c, x), svg_y(c, y)) for (x, y) in line]
-    seglen = [hypot(pts[k+1][1] - pts[k][1], pts[k+1][2] - pts[k][2]) for k in 1:length(pts)-1]
-    total  = sum(seglen)
-    total < 40 && return nothing
-    half, acc = total / 2, 0.0
-    for k in eachindex(seglen)
-        if acc + seglen[k] >= half
-            w  = seglen[k] == 0 ? 0.0 : (half - acc) / seglen[k]
-            x  = pts[k][1] + w * (pts[k+1][1] - pts[k][1])
-            y  = pts[k][2] + w * (pts[k+1][2] - pts[k][2])
-            ang = rad2deg(atan(pts[k+1][2] - pts[k][2], pts[k+1][1] - pts[k][1]))
-            ang > 90 && (ang -= 180)
-            ang < -90 && (ang += 180)
-            return (x, y, ang)
-        end
-        acc += seglen[k]
-    end
-    return nothing
+    return pd_polyline_label([(svg_x(c, x), svg_y(c, y)) for (x, y) in line], 0.5)
 end
 
 """
@@ -370,9 +360,21 @@ function pd_export_svg(parts, path::AbstractString)
     svg_open(io, c; xlink = true)
 
     png, _, _ = svg_field_png(parts.gridded, parts.zmin, parts.zmax, parts.stops; smooth = parts.smooth)
-    svg_group_open(io, svg_id(seen, "Field"))
+    fills = get(parts, :fills, [])
+    svg_group_open(io, svg_id(seen, "Field"); hidden = !isempty(fills))
     svg_image(io, svg_id(seen, "Field_raster"), c, png)
     svg_group_close(io)
+
+    if !isempty(fills)
+        svg_group_open(io, svg_id(seen, "Field_polygons"); width = 0.3)
+        for (k, (rings, col)) in enumerate(fills)
+            d   = join([svg_path_data(c, [r]) * " Z" for r in rings], " ")
+            rgb, op = svg_css_color(pd_rgba(col))
+            svg_path(io, svg_id(seen, "Field_$(k)"), d; fill = rgb, stroke = op === nothing ? rgb : "none", fill_opacity = op)
+            n_paths += 1
+        end
+        svg_group_close(io)
+    end
 
     if !isempty(parts.mesh)
         d = svg_path_data(c, [[(a, b), (cc, dd)] for (a, b, cc, dd) in parts.mesh])
@@ -394,6 +396,7 @@ function pd_export_svg(parts, path::AbstractString)
         svg_group_close(io)
     end
 
+    iso_placed = NTuple{5,Float64}[]
     for iso in parts.isopleths
         svg_group_open(io, svg_id(seen, "Isopleth_" * iso.name); stroke = iso.color, width = iso.width, fill = "none",
                         dash = svg_dasharray(iso.dash, iso.width), rounded = true)
@@ -408,7 +411,7 @@ function pd_export_svg(parts, path::AbstractString)
             svg_path(io, svg_id(seen, "$(idbase)_$(lvl_txt)"), d)
             n_paths += 1
             for l in cl
-                lab = pd_contour_label(l, c)
+                lab = pd_place_line_label!(iso_placed, [(svg_x(c, x), svg_y(c, y)) for (x, y) in l], lvl_txt, iso.label_size)
                 lab === nothing || push!(labels, (lab[1], lab[2], lab[3], lvl_txt))
             end
         end
@@ -417,7 +420,34 @@ function pd_export_svg(parts, path::AbstractString)
             svg_group_open(io, svg_id(seen, "Isopleth_labels_" * iso.name); fill = iso.color, font_family = font,
                             font_size = iso.label_size, anchor = "middle")
             for (k, (x, y, ang, txt)) in enumerate(labels)
+                if get(iso, :label_bg, false)
+                    w, h = pd_label_box(txt, iso.label_size)
+                    println(io, "<rect id=\"$(svg_escape(svg_id(seen, "$(idbase)_label_bg_$(k)")))\" x=\"$(svg_num(x - w / 2))\" y=\"$(svg_num(y - h / 2))\" width=\"$(svg_num(w))\" height=\"$(svg_num(h))\" fill=\"#ffffff\" fill-opacity=\"0.7\" stroke=\"none\" transform=\"rotate($(svg_num(ang)) $(svg_num(x)) $(svg_num(y)))\"/>")
+                end
                 svg_text(io, x, y, txt; id = svg_id(seen, "$(idbase)_label_$(k)"), rotate = ang)
+            end
+            svg_group_close(io)
+        end
+    end
+
+    geo = get(parts, :geotherms, NamedTuple[])
+    if !isempty(geo)
+        svg_group_open(io, svg_id(seen, "Subduction_geotherms"); fill = "none", rounded = true)
+        ends = Tuple{Float64,Float64,String,String}[]
+        for g in geo
+            cl = clipped(g.x, g.y)
+            d  = svg_path_data(c, cl)
+            isempty(d) && continue
+            svg_path(io, svg_id(seen, "Geotherm_" * g.label), d; stroke = g.color, width = g.width, dash = svg_dasharray(g.dash, g.width))
+            n_paths += 1
+            last_pt = cl[end][end]
+            push!(ends, (svg_x(c, last_pt[1]), svg_y(c, last_pt[2]), g.label, g.color))
+        end
+        svg_group_close(io)
+        if !isempty(ends)
+            svg_group_open(io, svg_id(seen, "Subduction_geotherm_labels"); font_family = font, font_size = 10, anchor = "start")
+            for (x, y, txt, col) in ends
+                svg_text(io, x + 3, y + 10, txt; id = svg_id(seen, "Geotherm_label_" * txt), fill = col)
             end
             svg_group_close(io)
         end

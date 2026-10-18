@@ -239,12 +239,29 @@ function Tab_PhaseDiagram()
                                 dbc_collapse(
                                     dbc_card(dbc_cardbody([
                                         dbc_row([
-                                            dbc_button("Export svg", 
+                                            dbc_switch(label="Clean boundaries", id="smooth-boundaries-switch", value=true),
+                                        ]),
+                                        dbc_row([
+                                            html_div("Smoothing (cells)", style = Dict("font-size" => "80%", "color" => "grey")),
+                                            dcc_slider( id      = "smooth-boundaries-sigma",
+                                                        min     = 0.0,
+                                                        max     = 5.0,
+                                                        step    = 0.25,
+                                                        value   = 2.5,
+                                                        marks   = Dict(string(i) => string(i) for i in 0:5),
+                                                        tooltip = Dict("placement" => "bottom")),
+                                        ]),
+                                        dbc_row([
+                                            dbc_button("Export svg",
                                                         id          = "export-layers", color="light",  n_clicks=0,
                                                         style       =  Dict( "textAlign"    => "center",
                                                                             "font-size"     => "100%",
                                                                             "border"        =>"1px grey solid")), 
                                         ]),
+                                        dcc_store(id = "pd-cs-grid"),
+                                        dcc_store(id = "pd-cs-lbl"),
+                                        dcc_store(id = "pd-cs-lbl-bg"),
+                                        dcc_store(id = "pd-cs-hover"),
                                         dbc_row([
                                             html_div(id="export-svg-status", children="",
                                                 style = Dict("textAlign" => "center", "font-size" => "75%", "color" => "grey",
@@ -662,6 +679,19 @@ function Tab_PhaseDiagram()
                                                                 clearable   =  false,
                                                                 multi       =  false),
                                             ]), 
+                                        ]),
+
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("White label background", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ], width=5),
+                                            dbc_col([
+                                                dcc_dropdown(   id          = "lbl-bg-id",
+                                                                options     =  ["true","false"],
+                                                                value       = "false" ,
+                                                                clearable   =  false,
+                                                                multi       =  false),
+                                            ]),
                                         ]),
 
                                         dbc_row([
@@ -1308,6 +1338,18 @@ function Tab_PhaseDiagram()
                                                         ]),
 
                                                     ]),
+                                                    dbc_row([
+                                                        dbc_col([
+                                                            html_h1("White background", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                        ]),
+                                                        dbc_col([
+                                                            dcc_dropdown(   id          = "iso-label-bg-id",
+                                                                            options     = ["true","false"],
+                                                                            value       = "false",
+                                                                            clearable   = false,
+                                                                            multi       = false),
+                                                        ]),
+                                                    ]),
                                                     dbc_row([    
                                                         dbc_col([
                                                             html_h1("Label size", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),    
@@ -1434,6 +1476,7 @@ function Tab_PhaseDiagram()
                                         is_open=true,
                                 ),
                             ]),
+                            subduction_geotherm_tab(""),
                             dbc_tab(label="Draw path", children=[
                                 dbc_row([
                                     dbc_collapse(

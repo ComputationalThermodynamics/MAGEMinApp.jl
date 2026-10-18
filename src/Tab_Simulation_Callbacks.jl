@@ -13,7 +13,13 @@ const STATE_DIAGRAM_FIELDS = [  "infos", "layout", "data", "data_plot", "data_re
                                 "Out_XY", "Hash_XY", "Out_TE_XY", "all_TE_ph", "n_phase_XY", "addedRefinementLvl", "pChip_wat", "pChip_T",
                                 "assemblage_rows", "list_compacted_idx", "raw_field_id", "PT_infos" ]
 
+const STATE_EXTRA_FIELDS = [ "dataset", "sas", "wf", "seismic_cor", "aspect_ratio", "seismic_water", "shallow_cor", "fluid_as_melt", "anelastic_cor",
+                             "mumu_oxide1", "mumu_oxide2", "mumu_ox1_min", "mumu_ox1_max", "mumu_ox2_min", "mumu_ox2_max",
+                             "mumu_mu1_min", "mumu_mu1_max", "mumu_mu2_min", "mumu_mu2_max",
+                             "fields", "colormap", "reverse_cmap", "set_min_white" ]
+
 global loaded_state_has_diagram = false
+global state_pending_dataset = Ref{Any}(nothing)
 
 state_dir() = joinpath(@__DIR__, "..", "saved_states")
 
@@ -47,6 +53,19 @@ state_plain_rows(rows) = isnothing(rows) ? nothing : [Dict{String,Any}(String(k)
 state_load_triggered() = any(t -> startswith(String(t.prop_id), "load-state-diagram-button."), callback_context().triggered)
 
 state_pressure_kbar(v, saved_unit) =saved_unit == "gpa" ? Float64(v) * 10.0 : Float64(v)
+
+function state_convert_bulk_table(rows, from_unit, to_unit)
+    isnothing(rows) && return nothing
+    (isnothing(from_unit) || isnothing(to_unit)) && return nothing
+    from_unit == to_unit && return rows
+    oxi   = [String(r["oxide"]) for r in rows]
+    frac  = [r["fraction"] isa String ? parse(Float64, r["fraction"]) : Float64(r["fraction"]) for r in rows]
+    total = sum(frac)
+    total > 0 || return nothing
+    conv  = to_unit == 2 ? mol2wt(frac ./ total, oxi) : wt2mol(frac ./ total, oxi)
+    conv  = conv ./ sum(conv) .* total
+    return [Dict{String,Any}("oxide" => o, "fraction" => round(c, digits=10)) for (o, c) in zip(oxi, conv)]
+end
 
 function Tab_Simulation_Callbacks(app)
 
@@ -230,6 +249,30 @@ function Tab_Simulation_Callbacks(app)
         State(  "table-te-rock",                    "data"        ),
         State(  "table-te-2-rock",                  "data"        ),
 
+        State(  "dataset-dropdown",                 "value"       ),
+        State(  "sas-dropdown",                     "value"       ),
+        State(  "wf-id",                            "value"       ),
+        State(  "seismic-cor-dropdown",             "value"       ),
+        State(  "aspect-ratio-id",                  "value"       ),
+        State(  "seismic-water-dropdown",           "value"       ),
+        State(  "shallow-cor-dropdown",             "value"       ),
+        State(  "fluid-as-melt-dropdown",           "value"       ),
+        State(  "anelastic-cor-dropdown",           "value"       ),
+        State(  "mumu-oxide1-dropdown",             "value"       ),
+        State(  "mumu-oxide2-dropdown",             "value"       ),
+        State(  "mumu-oxide1-min-id",               "value"       ),
+        State(  "mumu-oxide1-max-id",               "value"       ),
+        State(  "mumu-oxide2-min-id",               "value"       ),
+        State(  "mumu-oxide2-max-id",               "value"       ),
+        State(  "mumu-mu1-min-id",                  "value"       ),
+        State(  "mumu-mu1-max-id",                  "value"       ),
+        State(  "mumu-mu2-min-id",                  "value"       ),
+        State(  "mumu-mu2-max-id",                  "value"       ),
+        State(  "fields-dropdown",                  "value"       ),
+        State(  "colormaps_cross",                  "value"       ),
+        State(  "reverse-colormap",                 "value"       ),
+        State(  "set-min-white",                    "value"       ),
+
         prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
     ) do click, filename,
 
@@ -244,7 +287,11 @@ function Tab_Simulation_Callbacks(app)
         te_test, te_test2,
         watsat, watsat_val,
         ss_selection, pp_selection, preset,
-        pressure_unit, bulk_unit, bulk_table, bulk_table2, te_table, te_table2
+        pressure_unit, bulk_unit, bulk_table, bulk_table2, te_table, te_table2,
+        dataset, sas, wf, seismic_cor, aspect_ratio, seismic_water, shallow_cor, fluid_as_melt, anelastic_cor,
+        mumu_oxide1, mumu_oxide2, mumu_ox1_min, mumu_ox1_max, mumu_ox2_min, mumu_ox2_max,
+        mumu_mu1_min, mumu_mu1_max, mumu_mu2_min, mumu_mu2_max,
+        fields, colormap, reverse_cmap, set_min_white
 
         global db, dbte
 
@@ -269,7 +316,7 @@ function Tab_Simulation_Callbacks(app)
         pressure_unit   = pressure_unit == "gpa" ? "gpa" : "kbar"
 
         println("Saving phase diagram options..."); t0 = time()
-        @save file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ssat_dtb P2O5sat_dtb ptx_table pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver optimizer boost verbose scp test test2 buffer1 buffer2 te_test te_test2 watsat watsat_val ss_selection pp_selection preset pressure_unit bulk_unit bulk_table bulk_table2 te_table te_table2
+        @save file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ssat_dtb P2O5sat_dtb ptx_table pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver optimizer boost verbose scp test test2 buffer1 buffer2 te_test te_test2 watsat watsat_val ss_selection pp_selection preset pressure_unit bulk_unit bulk_table bulk_table2 te_table te_table2 dataset sas wf seismic_cor aspect_ratio seismic_water shallow_cor fluid_as_melt anelastic_cor mumu_oxide1 mumu_oxide2 mumu_ox1_min mumu_ox1_max mumu_ox2_min mumu_ox2_max mumu_mu1_min mumu_mu1_max mumu_mu2_min mumu_mu2_max fields colormap reverse_cmap set_min_white
         println("Saved phase diagram options in $(round(time()-t0, digits=3)) seconds");
 
         field_list = [n for n in STATE_DIAGRAM_FIELDS if isdefined(MAGEMinApp, Symbol(n))]
@@ -401,6 +448,8 @@ function Tab_Simulation_Callbacks(app)
         pmin, pmax, tmin, tmax, pfix, tfix, grid_sub, refinement, refinement_level, buffer, boost, verbose, scp,
         buffer1, buffer2, watsat, watsat_val, ss_selection, pp_selection, preset, saved_unit, optimizer = opts
 
+        state_pending_dataset[] = (database = database, dataset = first(state_read(file, "dataset"; optional = ("dataset",))))
+
         global infos, layout, data, data_plot, data_reaction, iso_show, n_lbl, data_isopleth, data_isopleth_out, Out_XY, Hash_XY, Out_TE_XY, all_TE_ph, n_phase_XY, addedRefinementLvl, pChip_wat, pChip_T, loaded_state_has_diagram
 
         base_path       = state_base_path(filename)
@@ -443,6 +492,45 @@ function Tab_Simulation_Callbacks(app)
 
         state_id *= -1.0
         return "success", "", database, diagram_type, mb_cpx, limit_ca_opx, ca_opx_val, tepm, kds_dtb, zrsat_dtb, ssat_dtb, P2O5sat_dtb, to_disp(pmin), to_disp(pmax), tmin, tmax, to_disp(pfix), tfix, grid_sub, refinement, refinement_level, buffer, boost, verbose, scp, buffer1, buffer2, watsat, watsat_val, state_id, no_update(), no_update(), optimizer == "ns" ? "ns" : "nlopt"
+    end
+
+    callback!(
+        app,
+        Output("sas-dropdown",                  "value"),
+        Output("wf-id",                         "value"),
+        Output("seismic-cor-dropdown",          "value"),
+        Output("aspect-ratio-id",               "value"),
+        Output("seismic-water-dropdown",        "value"),
+        Output("shallow-cor-dropdown",          "value"),
+        Output("fluid-as-melt-dropdown",        "value"),
+        Output("anelastic-cor-dropdown",        "value"),
+        Output("mumu-oxide1-dropdown",          "value"),
+        Output("mumu-oxide2-dropdown",          "value"),
+        Output("mumu-oxide1-min-id",            "value"),
+        Output("mumu-oxide1-max-id",            "value"),
+        Output("mumu-oxide2-min-id",            "value"),
+        Output("mumu-oxide2-max-id",            "value"),
+        Output("fields-dropdown",               "value"),
+        Output("colormaps_cross",               "value"),
+        Output("reverse-colormap",              "value"),
+        Output("set-min-white",                 "value"),
+
+        Input(  "load-state-diagram-button",    "n_clicks"),
+        State(  "load-state-filename-id",       "value"),
+
+        prevent_initial_call = true,
+    ) do n_clicks, filename
+
+        file = state_options_file(filename)
+        isnothing(file) && return ntuple(_ -> no_update(), 18)
+
+        extra = Dict(zip(STATE_EXTRA_FIELDS, state_read(file, STATE_EXTRA_FIELDS...; optional = STATE_EXTRA_FIELDS)))
+        pick(k) = isnothing(extra[k]) ? no_update() : extra[k]
+
+        return pick("sas"), pick("wf"), pick("seismic_cor"), pick("aspect_ratio"), pick("seismic_water"), pick("shallow_cor"),
+               pick("fluid_as_melt"), pick("anelastic_cor"), pick("mumu_oxide1"), pick("mumu_oxide2"),
+               pick("mumu_ox1_min"), pick("mumu_ox1_max"), pick("mumu_ox2_min"), pick("mumu_ox2_max"),
+               pick("fields"), pick("colormap"), pick("reverse_cmap"), pick("set_min_white")
     end
 
     # update the dictionary of phase_selection_options
@@ -498,12 +586,6 @@ function Tab_Simulation_Callbacks(app)
         # remember the (de)activated phases per database, so switching databases (or
         # reloading the page) restores the last selection made for that database
         cache = AppData.phase_selection_cache[1]
-        if bid == "database-dropdown"
-            prev_dtb = AppData.phase_selection_last_dtb[1]
-            if prev_dtb != "" && prev_dtb != dtb
-                cache[prev_dtb] = Dict("ss" => to_str_vec(current_ss_selection), "pp" => to_str_vec(current_pp_selection))
-            end
-        end
 
         preset_style = dtb == "all" ? Dict("display" => "block") : Dict("display" => "none")
 
@@ -545,13 +627,22 @@ function Tab_Simulation_Callbacks(app)
             isempty(pure_phase_selection_value) && (pure_phase_selection_value = pp_disp)
             preset_value_out = no_update()
         end
-        AppData.phase_selection_last_dtb[1] = dtb
 
 
         dataset_options = [Dict(    "label"     => "ds$(db_in.dataset_opt[i])",
                                     "value"     => db_in.dataset_opt[i] )
                                 for i = 1:length(db_in.dataset_opt) ]
-        dataset_value    = keep_dataset(bid in ("database-dropdown", ""), current_dataset, db_in)
+        pend = state_pending_dataset[]
+        if !isnothing(pend) && bid == "database-dropdown" && pend.database != dtb
+            state_pending_dataset[] = nothing
+            pend = nothing
+        end
+        if !isnothing(pend) && pend.database == dtb && bid in ("database-dropdown", "load-state-id") &&
+           !isnothing(pend.dataset) && pend.dataset in db_in.dataset_opt
+            dataset_value = pend.dataset
+        else
+            dataset_value = keep_dataset(bid in ("database-dropdown", ""), current_dataset, db_in)
+        end
 
 
         return phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value, dataset_options, dataset_value, style, preset_style, preset_value_out
@@ -627,11 +718,20 @@ function Tab_Simulation_Callbacks(app)
         Output("solver-dropdown",       "value"),
         Input("boost-mode-dropdown",    "value"),
         Input("scp-dropdown",           "value"),
+        Input("load-state-diagram-button", "n_clicks"),
+        State("load-state-filename-id", "value"),
 
         prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
-    ) do boost, scp
-    
-        bid         = pushed_button( callback_context() ) 
+    ) do boost, scp, n_clicks_load, filename
+
+        bid         = pushed_button( callback_context() )
+
+        if bid == "load-state-diagram-button"
+            file = state_options_file(filename)
+            isnothing(file) && return no_update()
+            solver_s = state_read(file, "solver"; optional = ("solver",))[1]
+            return solver_s in ("pge", "lp", "hyb") ? solver_s : no_update()
+        end
 
         if bid == "boost-mode-dropdown"
             if boost == true
@@ -1321,7 +1421,9 @@ function Tab_Simulation_Callbacks(app)
         Output("mumu-bounds-warning",          "is_open"),
 
         Input("compute-mumu-bounds-button",    "n_clicks"),
+        Input("load-state-diagram-button",     "n_clicks"),
 
+        State("load-state-filename-id",        "value"),
         State("table-bulk-rock",               "data"),
         State("mumu-oxide1-dropdown",          "value"),
         State("mumu-oxide2-dropdown",          "value"),
@@ -1339,7 +1441,15 @@ function Tab_Simulation_Callbacks(app)
 
         prevent_initial_call = true,
 
-    ) do n_clicks, bulk_data, ox1, ox2, ox1_min, ox1_max, ox2_min, ox2_max, fixP, fixT, dtb, bufferType, solver, optimizer, sys_unit
+    ) do n_clicks, n_clicks_load, filename, bulk_data, ox1, ox2, ox1_min, ox1_max, ox2_min, ox2_max, fixP, fixT, dtb, bufferType, solver, optimizer, sys_unit
+
+        if state_load_triggered()
+            file = state_options_file(filename)
+            isnothing(file) && return ntuple(_ -> no_update(), 6)
+            mu = state_read(file, "mumu_mu1_min", "mumu_mu1_max", "mumu_mu2_min", "mumu_mu2_max";
+                            optional = ("mumu_mu1_min", "mumu_mu1_max", "mumu_mu2_min", "mumu_mu2_max"))
+            return (Tuple(isnothing(v) ? no_update() : v for v in mu)..., no_update(), no_update())
+        end
 
         oxi     = [row["oxide"] for row in bulk_data]
         bulk    = [Float64(row["fraction"] isa String ? parse(Float64, row["fraction"]) : row["fraction"]) for row in bulk_data]
@@ -1449,7 +1559,7 @@ function Tab_Simulation_Callbacks(app)
             catch
                 return ntuple(_ -> no_update(), 4)
             end
-            saved_unit != sys_unit && (saved_table = nothing)
+            saved_table = state_convert_bulk_table(saved_table, saved_unit, sys_unit)
         else
             # catching up some special cases
             if test > length(db[(db.db .== dtb), :].test) - 1
@@ -1513,7 +1623,7 @@ function Tab_Simulation_Callbacks(app)
             catch
                 return ntuple(_ -> no_update(), 3)
             end
-            saved_unit != sys_unit && (saved_table = nothing)
+            saved_table = state_convert_bulk_table(saved_table, saved_unit, sys_unit)
         else
             # catching up some special cases
             if test > length(db[(db.db .== dtb), :].test) - 1

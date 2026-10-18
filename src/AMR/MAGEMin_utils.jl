@@ -106,7 +106,7 @@ function get_wat_sat_function(     Yrange,     bulk_ini,   oxi,    phase_selecti
     hydrated    = 1;
     watsat_val  = watsat_val/100.0
 
-    if bulk_ini[id_h2o] == 0.0
+    if isnothing(id_h2o) || bulk_ini[id_h2o] == 0.0
         hydrated = 0;
     end
 
@@ -387,7 +387,7 @@ function multi_point_mumu(     target_mu1      :: Vector{Float64},
     trial_seed[oxide1_idx]  = 100.0
     trial_seed[oxide2_idx]  = 100.0
 
-    count = 0
+    count = Threads.Atomic{Int}(0)
 
     @showprogress desc="Computing $n points..." @threads :static for i in eachindex(target_mu1)
 
@@ -404,8 +404,7 @@ function multi_point_mumu(     target_mu1      :: Vector{Float64},
         results[i]  = out
         status[i]   = conv ? 0 : 5
 
-        count += 1
-        update_progress(count, n, time())
+        update_progress(Threads.atomic_add!(count, 1) + 1, n, time())
     end
 
     return results, status

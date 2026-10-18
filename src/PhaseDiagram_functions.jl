@@ -28,6 +28,11 @@ mutable struct isopleth_data
 end
 
 
+function next_isopleth_slot(status::Vector{Int64})
+    last = something(findlast(!=(0), status), 0)
+    return last < length(status) ? last + 1 : findfirst(==(0), status)
+end
+
 """
     Function to recover Zenodo link for MAGEMin packages
 """
@@ -60,11 +65,6 @@ function retrieve_statement()
     return statement
 end
 
-
-function get_system_comp_acronyme(bulk,oxides)
-
-    return acronym
-end
 
 """ 
     inside range function
@@ -506,6 +506,8 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         dgtype = "Polymetamorphic T-T path, fixed pressure"
     elseif diagType == "mumu"
         dgtype = "μ-μ (chemical potential), fixed pressure and temperature"
+    else
+        dgtype = diagType
     end
 
     if solver == "lp"
@@ -514,6 +516,8 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         solv = "PGE (default)"
     elseif solver == "hyb"
         solv = "Hybrid (PGE&LP)"
+    else
+        solv = solver
     end
 
 
@@ -701,6 +705,8 @@ function diagram_type(diagType, tmin, tmax, pmin, pmax, e1_tmin, e1_tmax, e2_tmi
             ytitle = "μ($(mumu_oxide2_name)) [J/mol]"
             Xrange          = (Float64(0.0),Float64(1.0))
             Yrange          = (Float64(0.0),Float64(1.0))
+    else
+        error("Unknown diagram type: $diagType")
     end
     return xtitle, ytitle, Xrange, Yrange
 end
@@ -717,11 +723,13 @@ function apply_pressure_display(data_in, layout_in, diagType)
         return data_in, layout_in
     end
 
-    data_out = deepcopy(data_in)
-    for tr in data_out
+    data_out = map(data_in) do tr
         if haskey(tr, :y) && tr[:y] isa AbstractArray && all(v -> v isa Union{Missing,Nothing,Real}, tr[:y])
-            tr[:y] = display_pressure(tr[:y])
+            tr_out      = tr isa GenericTrace ? GenericTrace(copy(tr.fields)) : deepcopy(tr)
+            tr_out[:y]  = display_pressure(tr[:y])
+            return tr_out
         end
+        return tr
     end
 
     layout_out = deepcopy(layout_in)
@@ -1061,53 +1069,53 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                                 seismicWeightFactor = seismicWeightFactor,
                                                 mu_fix_idx          = mu_fix_idx    );
 
-        #________________________________________________________________________________________#
-        # initial optimization on regular grid
-        CompProgress.stage = "Compute initial grid "
-        CompProgress.refinement_level = 0
-        CompProgress.total_levels = refLvl
-        CompProgress.tinit =  time()
-        CompProgress.total_points = length(data.npoints)
+        try
+            #________________________________________________________________________________________#
+            # initial optimization on regular grid
+            CompProgress.stage = "Compute initial grid "
+            CompProgress.refinement_level = 0
+            CompProgress.total_levels = refLvl
+            CompProgress.tinit =  time()
+            CompProgress.total_points = length(data.npoints)
 
-        Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(  dtb, data, MAGEMin_data, custW,  diagType, PTpath,
-                                                        phase_selection, fixT, fixP,
-                                                        e1_liq,     e2_liq,     e1_remain_wat,  e2_remain_wat,     e1_remain,  e2_remain,
-                                                        oxi, bulk_L, bulk_R,
-                                                        bufferType, bufferN1, bufferN2,
-                                                        scp, boost, refType,
-                                                        pChip_wat, pChip_T,
-                                                        seismic_cor, aspect_ratio, seismic_water, shallow_cor, fluid_as_melt, anelastic_correction;
-                                                        mumu_oxide1_idx=mumu_oxide1_idx, mumu_oxide2_idx=mumu_oxide2_idx    )
+            Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin(  dtb, data, MAGEMin_data, custW,  diagType, PTpath,
+                                                            phase_selection, fixT, fixP,
+                                                            e1_liq,     e2_liq,     e1_remain_wat,  e2_remain_wat,     e1_remain,  e2_remain,
+                                                            oxi, bulk_L, bulk_R,
+                                                            bufferType, bufferN1, bufferN2,
+                                                            scp, boost, refType,
+                                                            pChip_wat, pChip_T,
+                                                            seismic_cor, aspect_ratio, seismic_water, shallow_cor, fluid_as_melt, anelastic_correction;
+                                                            mumu_oxide1_idx=mumu_oxide1_idx, mumu_oxide2_idx=mumu_oxide2_idx    )
 
 
-        #________________________________________________________________________________________#     
-        # Refine the mesh along phase boundaries
-        # if diagType != "tt"
-            CompProgress.stage = "refine grid level ->"
-            for irefine = 1:refLvl
-                # update computational progress 
-                CompProgress.refinement_level = irefine
-                CompProgress.tinit =  time()
+            #________________________________________________________________________________________#     
+            # Refine the mesh along phase boundaries
+            # if diagType != "tt"
+                CompProgress.stage = "refine grid level ->"
+                for irefine = 1:refLvl
+                    # update computational progress 
+                    CompProgress.refinement_level = irefine
+                    CompProgress.tinit =  time()
                 
-                data    = select_cells_to_split_and_keep(data)
-                data    = perform_AMR(data)
-                CompProgress.total_points = length(data.npoints)
-                t = @elapsed Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(              dtb, data, MAGEMin_data, custW,  diagType, PTpath,
-                                                                                        phase_selection, fixT, fixP,
-                                                                                        e1_liq,     e2_liq,     e1_remain_wat,  e2_remain_wat,     e1_remain,  e2_remain,
-                                                                                        oxi, bulk_L, bulk_R,
-                                                                                        bufferType, bufferN1, bufferN2,
-                                                                                        scp, boost, refType,
-                                                                                        pChip_wat, pChip_T,
-                                                                                        seismic_cor, aspect_ratio, seismic_water, shallow_cor, fluid_as_melt, anelastic_correction;
-                                                                                        mumu_oxide1_idx=mumu_oxide1_idx, mumu_oxide2_idx=mumu_oxide2_idx    ) # recompute points that have not been computed before
+                    data    = select_cells_to_split_and_keep(data)
+                    data    = perform_AMR(data)
+                    CompProgress.total_points = length(data.npoints)
+                    t = @elapsed Out_XY, Hash_XY, n_phase_XY = refine_MAGEMin(              dtb, data, MAGEMin_data, custW,  diagType, PTpath,
+                                                                                            phase_selection, fixT, fixP,
+                                                                                            e1_liq,     e2_liq,     e1_remain_wat,  e2_remain_wat,     e1_remain,  e2_remain,
+                                                                                            oxi, bulk_L, bulk_R,
+                                                                                            bufferType, bufferN1, bufferN2,
+                                                                                            scp, boost, refType,
+                                                                                            pChip_wat, pChip_T,
+                                                                                            seismic_cor, aspect_ratio, seismic_water, shallow_cor, fluid_as_melt, anelastic_correction;
+                                                                                            mumu_oxide1_idx=mumu_oxide1_idx, mumu_oxide2_idx=mumu_oxide2_idx    ) # recompute points that have not been computed before
 
-                println("Computed $(length(data.npoints)) new points in $t seconds")
-            end
-        # end
-
-        for i = 1:Threads.maxthreadid()
-            finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i],MAGEMin_data.splx_data[i])
+                    println("Computed $(length(data.npoints)) new points in $t seconds")
+                end
+            # end
+        finally
+            finalize_MAGEMin_data(MAGEMin_data)
         end
 
         #________________________________________________________________________________________#
@@ -1175,16 +1183,14 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                             fixedrange    = true,
                                     ),
                 )
-        minColor        = round(minimum(skipmissing(gridded)),digits=2); 
-        maxColor        = round(maximum(skipmissing(gridded)),digits=2);    
+        minColor        = round(grid_min(gridded),digits=2); 
+        maxColor        = round(grid_max(gridded),digits=2);    
         colorm, zr      = field_colorscale(fieldname, colorm, reverseColorMap, set_white, minColor, maxColor)
-        heat_map = heatmap( x               = X,
-                            y               = Y,
-                            z               = gridded,
+        heat_map = heatmap(; pd_heatmap_xyz(gridded, data)...,
                             zmin            =  zr.zmin,
                             zmax            =  zr.zmax,
                             zsmooth         = smooth,
-                            connectgaps     = true,
+                            connectgaps     = false,
                             type            = "heatmap",
                             colorscale      = colorm,
                             reversescale    = reverseColorMap,
@@ -1199,7 +1205,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
         yvals   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
         heat_map_export = heatmap(  x               = xvals,
                                     y               = yvals,
-                                    z               = gridded',
+                                    z               = pd_fill_gridded(gridded, data)',
                                     zmin            = zr.zmin,
                                     zmax            = zr.zmax,
                                     zsmooth         = smooth,
@@ -1214,15 +1220,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
 
         # savefig(plot(heat_map_export,layout), "phase_diagram.svg"; width=720, height=900)
 
-        hover_lbl = heatmap(    x               = X,
-                                y               = Y,
-                                z               = X,
-                                type            = "heatmap",
-                                showscale       = false,
-                                opacity         = 0.0,
-                                hoverinfo       = "text",
-                                showlegend      = false,
-                                text            = gridded_info )
+        hover_lbl = pd_hover_layer(gridded_info, data)
 
 
         data_plot[1]    = heat_map
@@ -1231,6 +1229,13 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
 end
 
 
+
+function finalize_MAGEMin_data(MAGEMin_data)
+    for i = 1:Threads.maxthreadid()
+        finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i],MAGEMin_data.splx_data[i])
+    end
+    return nothing
+end
 
 """
     refine_phaseDiagram(            xtitle,     ytitle,
@@ -1284,23 +1289,23 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                             seismicWeightFactor = seismicWeightFactor,
                                             mu_fix_idx          = mu_fix_idx    );
 
-    data    = select_cells_to_split_and_keep(data; bid = bid)
-    data    = perform_AMR(data)
-    t = @elapsed Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin( dtb, data,  MAGEMin_data, custW,  diagType, PTpath,
-                                                                            phase_selection, fixT, fixP,
-                                                                            e1_liq,     e2_liq,     e1_remain_wat,  e2_remain_wat,     e1_remain,  e2_remain,
-                                                                            oxi, bulk_L, bulk_R,
-                                                                            bufferType, bufferN1, bufferN2,
-                                                                            scp, boost, refType,
-                                                                            pChip_wat,  pChip_T,
-                                                                            seismic_cor, aspect_ratio, seismic_water, shallow_cor, fluid_as_melt, anelastic_correction;
-                                                                            mumu_oxide1_idx=mumu_oxide1_idx, mumu_oxide2_idx=mumu_oxide2_idx    ) # recompute points that have not been computed before
+    try
+        data    = select_cells_to_split_and_keep(data; bid = bid)
+        data    = perform_AMR(data)
+        t = @elapsed Out_XY, Hash_XY, n_phase_XY  = refine_MAGEMin( dtb, data,  MAGEMin_data, custW,  diagType, PTpath,
+                                                                                phase_selection, fixT, fixP,
+                                                                                e1_liq,     e2_liq,     e1_remain_wat,  e2_remain_wat,     e1_remain,  e2_remain,
+                                                                                oxi, bulk_L, bulk_R,
+                                                                                bufferType, bufferN1, bufferN2,
+                                                                                scp, boost, refType,
+                                                                                pChip_wat,  pChip_T,
+                                                                                seismic_cor, aspect_ratio, seismic_water, shallow_cor, fluid_as_melt, anelastic_correction;
+                                                                                mumu_oxide1_idx=mumu_oxide1_idx, mumu_oxide2_idx=mumu_oxide2_idx    ) # recompute points that have not been computed before
 
-    println("Computed $(length(data.npoints)) new points in $(round(t, digits=3)) seconds")
-    addedRefinementLvl += 1;
-
-    for i = 1:Threads.maxthreadid()
-        finalize_MAGEMin(MAGEMin_data.gv[i],MAGEMin_data.DB[i],MAGEMin_data.z_b[i],MAGEMin_data.splx_data[i])
+        println("Computed $(length(data.npoints)) new points in $(round(t, digits=3)) seconds")
+        addedRefinementLvl += 1;
+    finally
+        finalize_MAGEMin_data(MAGEMin_data)
     end
 
     #________________________________________________________________________________________#                   
@@ -1336,15 +1341,13 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
         xanchor = "center",
         yanchor = "top"
     )
-    minColor        = round(minimum(skipmissing(gridded)),digits=2);
-    maxColor        = round(maximum(skipmissing(gridded)),digits=2);
+    minColor        = round(grid_min(gridded),digits=2);
+    maxColor        = round(grid_max(gridded),digits=2);
     colorm, zr      = field_colorscale(fieldname, colorm, reverseColorMap, set_white, minColor, maxColor)
-    data_plot[1] = heatmap( x               = X,
-                            y               = Y,
-                            z               = gridded,
+    data_plot[1] = heatmap(; pd_heatmap_xyz(gridded, data)...,
                             zmin            = zr.zmin,
                             zmax            = zr.zmax,
-                            connectgaps     = true,
+                            connectgaps     = false,
                             zsmooth         =  smooth,
                             type            = "heatmap",
                             colorscale      = colorm,
@@ -1357,7 +1360,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
     yvals   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
     heat_map_export = heatmap(  x               = xvals,
                                 y               = yvals,
-                                z               = gridded',
+                                z               = pd_fill_gridded(gridded, data)',
                                 zmin            = zr.zmin,
                                 zmax            = zr.zmax,
                                 zsmooth         = smooth,
@@ -1369,15 +1372,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                 hoverinfo       = "skip",
                                 showlegend      = false,
                                 colorbar        = field_colorbar(fieldname),)
-    hover_lbl = heatmap(    x               = X,
-                            y               = Y,
-                            z               = X,
-                            type            = "heatmap",
-                            showscale       = false,
-                            opacity         = 0.0,
-                            hoverinfo       = "text",
-                            showlegend      = false,
-                            text            = gridded_info )
+    hover_lbl = pd_hover_layer(gridded_info, data)
 
     return vcat(data_plot,hover_lbl), layout, npoints, meant, txt_list, heat_map_export, assemblage_rows, list_compacted_idx, raw_field_id
 
@@ -1401,13 +1396,11 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
                                             test                                  )
     global PT_infos, layout, addedRefinementLvl
     colorm, zr = field_colorscale(fieldname, colorm, reverseColorMap, set_white, minColor, maxColor)
-    data_plot[1] = heatmap( x               =  X,
-                            y               =  Y,
-                            z               =  gridded,
+    data_plot[1] = heatmap(; pd_heatmap_xyz(gridded, data)...,
                             zmin            =  zr.zmin,
                             zmax            =  zr.zmax,
                             zsmooth         =  smooth,
-                            connectgaps     = true,
+                            connectgaps     = false,
                             type            = "heatmap",
                             colorscale      =  colorm,
                             # colorbar_title  =  fieldname,
@@ -1421,7 +1414,7 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
     yvals   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
     heat_map_export = heatmap(  x               = xvals,
                                 y               = yvals,
-                                z               = gridded',
+                                z               = pd_fill_gridded(gridded, data)',
                                 zmin            =  zr.zmin,
                                 zmax            =  zr.zmax,
                                 zsmooth         =  smooth,
@@ -1435,6 +1428,72 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
     return data_plot,layout, heat_map_export
 end
 
+
+function pd_grid_axes(nx::Int, ny::Int, data)
+    return collect(range(data.Xrange[1], stop = data.Xrange[2], length = nx)),
+           collect(range(data.Yrange[1], stop = data.Yrange[2], length = ny))
+end
+
+pd_select_anchor(data) = scatter(; x = [data.Xrange[1]], y = [data.Yrange[1]], mode = "markers", hoverinfo = "skip",
+                                    showlegend = false, marker = attr(size = 1, color = "rgba(0,0,0,0)"))
+
+pd_grid_rows(M::AbstractMatrix) = [M[:, j] for j in axes(M, 2)]
+
+function pd_grid_xyz(M::AbstractMatrix, data)
+    xv, yv = pd_grid_axes(size(M, 1), size(M, 2), data)
+    return (x = xv, y = yv, z = pd_grid_rows(M), transpose = false)
+end
+
+pd_heatmap_xyz(gridded::AbstractMatrix, data) = pd_grid_xyz(pd_fill_gridded(gridded, data), data)
+
+function pd_hover_layer(gridded_info::AbstractMatrix, data)
+    nx, ny = size(gridded_info)
+    xv, yv = pd_grid_axes(nx, ny, data)
+    pid    = zeros(Int32, nx, ny)
+    asm    = String[]
+    idx    = Dict{String,Int}()
+    pa     = Dict{Int,Int}()
+    for i in eachindex(gridded_info)
+        s = gridded_info[i]
+        (s isa AbstractString && startswith(s, "#")) || continue
+        e = findnext('#', s, 2)
+        e === nothing && continue
+        k = tryparse(Int, s[2:e-1])
+        k === nothing && continue
+        pid[i] = k
+        haskey(pa, k) && continue
+        t     = strip(s[e+1:end])
+        pa[k] = get!(() -> (push!(asm, t); length(asm)), idx, t)
+    end
+    pav = zeros(Int, isempty(pa) ? 0 : maximum(keys(pa)))
+    for (k, a) in pa
+        pav[k] = a
+    end
+    tr = heatmap(;      x               = xv,
+                        y               = yv,
+                        z               = pd_grid_rows(pid),
+                        transpose       = false,
+                        type            = "heatmap",
+                        showscale       = false,
+                        opacity         = 0.0,
+                        hoverinfo       = "none",
+                        showlegend      = false )
+    tr.fields[:meta] = Dict("kind" => "pd-hover", "asm" => asm, "pa" => pav)
+    return tr
+end
+
+function pd_click_point_id(click_info)
+    click_info === nothing && return nothing
+    pts = get(click_info, :points, nothing)
+    (pts === nothing || isempty(pts)) && return nothing
+    p = pts[1]
+    z = get(p, :z, nothing)
+    z isa Real && z > 0 && return Int(z)
+    t = get(p, :text, nothing)
+    t isa AbstractString || return nothing
+    m = match(r"#([0-9]+)#", t)
+    return m === nothing ? nothing : parse(Int, m.captures[1])
+end
 
 """
    This function creates a binary mask, then contours it to retriev the phase boundary
@@ -1531,8 +1590,8 @@ function  show_hide_reaction_lines(     sub,
     phase       = Vector{Int}(undef,length(data.points));
     mask        = Matrix{Int}(undef,n,n);
 
-    phase_contours = ()
-    for ph in phase_infos.act_ss
+    phase_contours = Tuple{Any,Any}[]
+    for ph in vcat(phase_infos.act_ss, phase_infos.act_pp)
         phase_boundary = get_phase_boundary(    ph,
                                                 n,
                                                 phase,
@@ -1540,18 +1599,7 @@ function  show_hide_reaction_lines(     sub,
                                                 data,
                                                 Out_XY )
 
-        phase_contours = (phase_contours..., (ph, phase_boundary))
-    end
-
-    for ph in phase_infos.act_pp
-        phase_boundary = get_phase_boundary(    ph,
-                                                n,
-                                                phase,
-                                                mask,
-                                                data,
-                                                Out_XY )
-
-        phase_contours = (phase_contours..., (ph, phase_boundary))
+        push!(phase_contours, (ph, phase_boundary))
     end
 
 
@@ -1567,8 +1615,8 @@ function  show_hide_reaction_lines(     sub,
             opt = phase_infos.reac_pp[i - n_ss]
         end
 
-        x       = []
-        y       = []
+        x       = Union{Float64,Missing}[]
+        y       = Union{Float64,Missing}[]
 
         for j=1:length(phase_contours[i][2].contours[1].lines)
             ctr     = phase_contours[i][2].contours[1].lines[j].vertices
@@ -1579,12 +1627,10 @@ function  show_hide_reaction_lines(     sub,
         data_contour[i] = scatter(      x           = x, 
                                         y           = y, 
                                         hoverinfo   = "skip",
-                                        mode        = "markers+lines",
+                                        mode        = "lines",
                                         name        = opt[5],
                                         showscale   = false,
                                         showlegend  = false,
-                                        marker      = attr( size    = 10,  # Set the marker size here
-                                                            color   = "rgba(0,0,0,0)" ),
                                         line        = attr( color   = opt[3], 
                                                             dash    = opt[1],
                                                             width   = opt[2])                )
@@ -1604,21 +1650,27 @@ end
 """
 function  show_hide_mesh_grid()
 
-    np             = length(data.cells)
-    grid_plot      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, np);
+    np  = length(data.cells)
+    x   = Vector{Union{Float64,Nothing}}(undef, 5*np)
+    y   = Vector{Union{Float64,Nothing}}(undef, 5*np)
     for i = 1:np
-
-        grid_plot[i] = scatter(     x           = [data.points[data.cells[i][j]][1] for j=1:4],
-                                    y           = [data.points[data.cells[i][j]][2] for j=1:4],
-                                    mode        = "lines",
-                                    # line_color  = "#FFFFFF",
-                                    line_color  = "#333333",
-                                    line_width  = 0.2,
-                                    hoverinfo   = "skip",
-                                    showlegend  = false     )
+        for j = 1:4
+            x[5*(i-1)+j] = data.points[data.cells[i][j]][1]
+            y[5*(i-1)+j] = data.points[data.cells[i][j]][2]
+        end
+        x[5*i] = nothing
+        y[5*i] = nothing
     end
 
-    return grid_plot
+    grid_plot = scatter(    x           = x,
+                            y           = y,
+                            mode        = "lines",
+                            line_color  = "#333333",
+                            line_width  = 0.2,
+                            hoverinfo   = "skip",
+                            showlegend  = false     )
+
+    return GenericTrace{Dict{Symbol, Any}}[grid_plot]
 end
 
 
@@ -1659,12 +1711,10 @@ function  update_displayed_field_phaseDiagram(   xtitle,     ytitle,
 
     zlo, zhi   = is_integer_field(fieldname) ? extrema(skipmissing(gridded)) : (nothing, nothing)
     colorm, zr = field_colorscale(fieldname, colorm, reverseColorMap, set_white, zlo, zhi)
-    data_plot[1] = heatmap(; x               = X,
-                            y               = Y,
-                            z               = gridded,
+    data_plot[1] = heatmap(; pd_heatmap_xyz(gridded, data)...,
                             zr...,
                             zsmooth         = smooth,
-                            connectgaps     = true,
+                            connectgaps     = false,
                             type            = "heatmap",
                             colorscale      = colorm,
                             # colorbar_title  = fieldname,
@@ -1680,7 +1730,7 @@ function  update_displayed_field_phaseDiagram(   xtitle,     ytitle,
     yvals   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
     heat_map_export = heatmap(; x               = xvals,
                                 y               = yvals,
-                                z               = gridded',
+                                z               = pd_fill_gridded(gridded, data)',
                                 zr...,
                                 zsmooth         = smooth,
                                 connectgaps     = true,
@@ -1761,6 +1811,8 @@ function initialize_g_isopleth_te(; n_iso_max = 32)
     return data_isopleth_te
 end
 
+iso_undefined_to_missing(g) = map(v -> (v isa Real && !isfinite(v)) ? missing : v, g)
+
 """
 
     add_isopleth_phaseDiagram
@@ -1770,7 +1822,8 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                             dtb,        oxi,
                                             isopleths,  phase,      ss,     em,   ox,  of,     ot,  sys,   rmf,  calc, cust, calc_sf, calc_ox, cust_sf, cust_ox,
                                             isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,       
-                                            minIso,     stepIso,    maxIso      )
+                                            minIso,     stepIso,    maxIso;
+                                            label_bg::Bool = false )
 
     isoLabelSize    = Int64(isoLabelSize)
 
@@ -1793,7 +1846,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
             mod     = "em_frac"
             name    = ss*"_"*em*"_frac_[mol]"
         else 
-            mod     = "ph_frac_wt"
+            mod     = "em_frac_wt"
             name    = ss*"_"*em*"_frac_[wt]"
         end
     elseif (phase == "ss" && ot == "oxComp")
@@ -1850,9 +1903,16 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
         name    = of
     else
         println("Wrong combination, needs debugging...")
+        return data_isopleth, isopleths
     end
 
     global data_isopleth, nIsopleths, data, Out_XY, data_plot, X, Y, addedRefinementLvl
+
+    slot = next_isopleth_slot(data_isopleth.status)
+    if isnothing(slot)
+        println("Maximum number of isopleths ($(data_isopleth.n_iso_max)) reached, remove one first")
+        return data_isopleth, isopleths
+    end
 
     gridded, X, Y = get_isopleth_map(   mod, ss, em, ox, of, ot, calc, calc_sf, calc_ox, rmf, 
                                         oxi,
@@ -1861,14 +1921,12 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                         refLvl + addedRefinementLvl,
                                         data,
                                         Xrange,
-                                        Yrange )
+                                        Yrange;
+                                        absent = NaN )
+    gridded = iso_undefined_to_missing(gridded)
 
-    data_isopleth.n_iso += 1
-
-    data_isopleth.isoT[data_isopleth.n_iso] = CTR.contours(X[1:size(gridded,1)],Y[1:size(gridded,1):end],Float64.(coalesce.(gridded, NaN)),collect(range(minIso, maxIso, Int(floor((maxIso-minIso)/stepIso)+1) )))
-    data_isopleth.isoP[data_isopleth.n_iso] = contour(  x                   = X,
-                                                        y                   = Y,
-                                                        z                   = gridded,
+    data_isopleth.isoT[slot] = CTR.contours(X[1:size(gridded,1)],Y[1:size(gridded,1):end],Float64.(coalesce.(gridded, NaN)),[Float64(minIso + k * stepIso) for k in 0:floor(Int, (maxIso - minIso) / stepIso + 1e-9)])
+    data_isopleth.isoP[slot] = contour(; pd_grid_xyz(gridded, data)...,
                                                         contours_coloring   = "lines",
                                                         colorscale          = [[0, isoColorLine], [1, isoColorLine]],
                                                         # connectgaps         = false,
@@ -1885,11 +1943,12 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                                                                                             color   = isoColorLine,  )
                                                         )
                                                     );
+    data_isopleth.isoP[slot][:meta] = label_bg ? "label-bg" : ""
     n       = 2^(sub + refLvl + addedRefinementLvl)+1
     xvals   = range(data.Xrange[1], stop = data.Xrange[2], length = n)
     yvals   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
 
-    data_isopleth.isoPexp[data_isopleth.n_iso] = contour(   x                   = xvals,
+    data_isopleth.isoPexp[slot] = contour(   x                   = xvals,
                                                             y                   = yvals,
                                                             z                   = gridded',
                                                             contours_coloring   = "lines",
@@ -1910,16 +1969,17 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                                         );
 
 
-    data_isopleth.isoCap[data_isopleth.n_iso]   = scatter(  x           = [nothing],
+    data_isopleth.isoCap[slot]   = scatter(  x           = [nothing],
                                                             y           = [nothing],
                                                             mode        = "lines",
                                                             line        =  attr(color=isoColorLine,dash=isoLineStyle,width=isoLineWidth),
                                                             name        =  name,
                                                             showlegend  =  true);
 
-    data_isopleth.status[data_isopleth.n_iso]   = 1
-    data_isopleth.label[data_isopleth.n_iso]    = name
-    data_isopleth.value[data_isopleth.n_iso]    = data_isopleth.n_iso
+    data_isopleth.status[slot]                  = 1
+    data_isopleth.label[slot]                   = name
+    data_isopleth.value[slot]                   = slot
+    data_isopleth.n_iso                         = count(!=(0), data_isopleth.status)
     data_isopleth.active                        = findall(data_isopleth.status .== 1)
     n_act                                       = length(data_isopleth.active)
 
@@ -1928,6 +1988,12 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
 
     return data_isopleth, isopleths
 
+end
+
+function isopleth_dropdown_options(data_isopleth)
+    isopleths    = [Dict("label" => data_isopleth.label[i], "value" => data_isopleth.value[i]) for i in findall(==(1), data_isopleth.status)]
+    isoplethsHid = [Dict("label" => data_isopleth.label[i], "value" => data_isopleth.value[i]) for i in findall(==(2), data_isopleth.status)]
+    return isopleths, isoplethsHid
 end
 
 function hide_single_isopleth_phaseDiagram(isoplethsID)
@@ -1976,9 +2042,10 @@ end
 function remove_single_isopleth_phaseDiagram(isoplethsID)
     global data_isopleth
 
-    data_isopleth.n_iso                -= 1      
     data_isopleth.status[isoplethsID]   = 0;
+    data_isopleth.n_iso                 = count(!=(0), data_isopleth.status)
     data_isopleth.isoP[isoplethsID]     = contour()
+    data_isopleth.isoPexp[isoplethsID]  = contour()
     data_isopleth.isoCap[isoplethsID]   = scatter()
     data_isopleth.label[isoplethsID]    = ""
     data_isopleth.value[isoplethsID]    = 0
@@ -1999,11 +2066,12 @@ function remove_all_isopleth_phaseDiagram()
     data_isopleth.n_iso     = 0
     for i=1:data_isopleth.n_iso_max
         data_isopleth.isoP[i] = contour()
+        data_isopleth.isoPexp[i] = contour()
         data_isopleth.isoCap[i] = scatter()
     end
     data_isopleth.status   .= 0
-    data_isopleth.active   .= 0
-    data_isopleth.hidden   .= 0
+    data_isopleth.active    = Int64[]
+    data_isopleth.hidden    = Int64[]
 
     # clear isopleth dropdown menu
     isopleths = []        
@@ -2246,14 +2314,22 @@ end
 
 # ─── Thermobarometric intersection helpers ────────────────────────────────────
 
-function _eval_thermobar_formula(formula_str, oxide_names, oxide_vals)
-    pairs = sort(collect(zip(oxide_names, oxide_vals)), by = x -> -length(x[1]))
+function _compile_thermobar_formula(formula_str, oxide_names)
     expr  = formula_str
-    for (name, val) in pairs
-        expr = replace(expr, name => string(val))
+    for j in sortperm(oxide_names, by = n -> -length(n))
+        expr = replace(expr, oxide_names[j] => "(x[$j])")
     end
     try
-        return Float64(eval(Meta.parse(expr)))
+        return eval(:( (x) -> $(Meta.parse(expr)) ))
+    catch
+        return nothing
+    end
+end
+
+function _eval_thermobar_formula(fn, oxide_vals)
+    fn === nothing && return NaN
+    try
+        return Float64(Base.invokelatest(fn, oxide_vals))
     catch
         return NaN
     end
@@ -2264,6 +2340,7 @@ function _get_thermobar_gridded(ph, formula_str, comp_unit, sub, refLvl)
 
     np    = length(data.points)
     field = Vector{Union{Float64,Missing}}(missing, np)
+    fn    = _compile_thermobar_formula(formula_str, Out_XY[1].oxides)
 
     for i in 1:np
         ph_list = Out_XY[i].ph
@@ -2291,7 +2368,7 @@ function _get_thermobar_gridded(ph, formula_str, comp_unit, sub, refLvl)
                 comp = Out_XY[i].PP_vec[pp_idx].Comp_wt
             end
         end
-        val     = _eval_thermobar_formula(formula_str, Out_XY[i].oxides, comp)
+        val     = _eval_thermobar_formula(fn, comp)
         field[i] = isnan(val) ? missing : val
     end
 
@@ -2406,6 +2483,7 @@ function get_thermobar_contour_plot(formula_store, color_store, comp_unit, csv_d
         g_float = Float64.(coalesce.(gridded, NaN))
 
         target_vals = Float64[]
+        target_fn   = _compile_thermobar_formula(formula, diag_oxides)
 
         for (si, sample) in enumerate(csv)
             sample_ph = get(sample, "mineral_name", "")
@@ -2413,7 +2491,7 @@ function get_thermobar_contour_plot(formula_store, color_store, comp_unit, csv_d
                 continue
             end
             ox_vals = [begin v = get(sample, ox, NaN); (v isa Number && isfinite(Float64(v))) ? Float64(v) : NaN end for ox in diag_oxides]
-            target  = _eval_thermobar_formula(formula, diag_oxides, ox_vals)
+            target  = _eval_thermobar_formula(target_fn, ox_vals)
             if isnan(target) || ismissing(target)
                 continue
             end
@@ -2480,18 +2558,14 @@ function export_contours_to_txt(cont, name, filename)
     open(filename, "w") do io
         println(io, "isocontour: $name")
         for i=1:length(cont.contours)
+            lines = reduce(vcat, [pd_finite_runs(first.(line.vertices), last.(line.vertices)) for line in cont.contours[i].lines];
+                           init = Vector{Vector{Tuple{Float64,Float64}}}())
             println(io, "level: $(cont.contours[i].level)")
-            println(io, "Number of lines: $(length(cont.contours[i].lines))")
-            l = 0
-            for line in cont.contours[i].lines
-                l += 1
-                println(io, "Line: $(l); $(length(line.vertices)) vertices:")
-
-                x = [line.vertices[j][1] for j in 1:length(line.vertices)]
-                y = [line.vertices[j][2] for j in 1:length(line.vertices)]
-
-                println(io, "x = [" * join(x, ", ") * "]")
-                println(io, "y = [" * join(y, ", ") * "]")
+            println(io, "Number of lines: $(length(lines))")
+            for (l, line) in enumerate(lines)
+                println(io, "Line: $(l); $(length(line)) vertices:")
+                println(io, "x = [" * join(first.(line), ", ") * "]")
+                println(io, "y = [" * join(last.(line), ", ") * "]")
             end
             println(io) # blank line between contours
         end

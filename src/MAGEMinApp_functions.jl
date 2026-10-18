@@ -178,6 +178,20 @@ function round_sig(x::Real; sig::Int = 3, mindigits::Int = 2)
     return round(v, digits = max(mindigits, sig - 1 - floor(Int, log10(abs(v)))))
 end
 
+grid_min(g) = (v = skipmissing(g); isempty(v) ? 0.0 : minimum(v))
+grid_max(g) = (v = skipmissing(g); isempty(v) ? 1.0 : maximum(v))
+
+function iso_auto_range(vals::AbstractVector{<:Real})
+    isempty(vals) && return nothing
+    vmin, vmax = Float64.(extrema(vals))
+    vmax - vmin > 1e-9 * max(abs(vmin), abs(vmax)) || return nothing
+    e    = floor(Int, log10((vmax - vmin) / 10))
+    m    = (vmax - vmin) / 10 / 10.0^e
+    step = (m < 1.5 ? 1.0 : m < 3.5 ? 2.0 : m < 7.5 ? 5.0 : 10.0) * 10.0^e
+    d    = max(0, -e + 1)
+    return round(floor(vmin / step) * step, digits = d), round(step, digits = d), round(ceil(vmax / step) * step, digits = d)
+end
+
 function display_iso_label(label::String)
     !use_warr_names[1] && return label
     idx = findfirst('_', label)
@@ -216,6 +230,15 @@ function sanitize_names(names::Vector{String})
     return [replace(replace(replace(replace(name, " " => "_"), "/" => "o"),"[" => ""),"]" => "") for name in names]
 end
 
+"""
+    set_min_to_white(colormap; reverseColorMap = false)
+
+    Colorscale stops of `colormap` with only the minimum of the range made white
+    (transparent): a white stop at 0 followed, a hair above it, by the colormap's own
+    first colour, so every value above the minimum keeps its colour. With
+    `reverseColorMap` (Plotly's `reversescale` flips the stops) the white stop is put
+    at 1 instead.
+"""
 function set_min_to_white(colormap; reverseColorMap = false)
 
     nc = length(colormap)
@@ -226,10 +249,14 @@ function set_min_to_white(colormap; reverseColorMap = false)
         cust_color = [ [(i-1)/(nc-1),"rgba($(rgb255(colormap[i].r)),$(rgb255(colormap[i].g)),$(rgb255(colormap[i].b)),1.0)"] for i = 1:nc]
     end
 
+    white = "rgba(255,255,255,0.0)"
+    eps   = 1e-4
     if reverseColorMap == false
-        cust_color[1][2] = "rgba(255,255,255,0.0)"
+        cust_color[1][1] = eps
+        pushfirst!(cust_color, [0.0, white])
     else
-        cust_color[end][2] = "rgba(255,255,255,0.0)"
+        cust_color[end][1] = 1.0 - eps
+        push!(cust_color, [1.0, white])
     end
 
     return cust_color
@@ -302,11 +329,12 @@ end
 """
     has_ns_optimizer(dtb)
 
-    True for the databases with a nullspace optimizer in MAGEMin: THERMOCALC and Stixrude & Lithgow-Bertelloni (sb11, sb21, sb24)
+    True for the databases with a nullspace optimizer in MAGEMin: THERMOCALC, Stixrude & Lithgow-Bertelloni (sb11, sb21, sb24),
+    MELTS (pMELTS, rMELTS) and Berman (po)
 """
 function has_ns_optimizer(  dtb         :: String )
 
-    return has_dataset_choice(dtb) || dtb in ("sb11", "sb21", "sb24")
+    return has_dataset_choice(dtb) || dtb in ("sb11", "sb21", "sb24", "pMELTS", "rMELTS", "po")
 
 end
 
@@ -1045,16 +1073,21 @@ function get_diagram_labels(    Out_XY      :: Vector{MAGEMin_C.gmin_struct{Floa
     raw_field_id    = Vector{Int64}(undef, n_hull)     # compacted field index -> raw gridded_fields id
     id          = 0
     coor        = []
+    cands       = Vector{Vector{NTuple{2,Float64}}}()
 
-    int_vector  = [findfirst(x -> x == h, hull) for h in Hash_XY]
-    for i = 1:length(int_vector)
+    hull_id     = Dict(h => k for (k, h) in enumerate(hull))
+    members     = [Int64[] for _ in 1:n_hull]
+    for (k, h) in enumerate(Hash_XY)
+        push!(members[hull_id[h]], k)
+    end
+    for i = 1:n_hull
 
-        field_tmp   = findall(int_vector .== i)
+        field_tmp   = members[i]
         np          = length(field_tmp)
         if np > 4
             id             += 1
-            ph_list[id]     = ph[field_tmp][1]
-            phd_list[id]    = phd[field_tmp][1]
+            ph_list[id]     = ph[field_tmp[1]]
+            phd_list[id]    = phd[field_tmp[1]]
             raw_field_id[id]= i
 
             mask, bnds      = reduce_matrix(ifelse.(gridded_fields .!= i, 0, 1))
@@ -1069,9 +1102,12 @@ function get_diagram_labels(    Out_XY      :: Vector{MAGEMin_C.gmin_struct{Floa
             maxY            = data.Yrange[1] + dy*(bnds[4]-1) + dy/2
             n_pix[id]       = Float64(sum(mask))
             area[id]        = n_pix[id]*dx*dy/fac
-            centers         = select_point(mask, range(minY, maxY, size(mask,2)+1) , range(minX, maxX, size(mask,1)+1) )
-            
+            Yb              = range(minY, maxY, size(mask,2)+1)
+            Xb              = range(minX, maxX, size(mask,1)+1)
+            centers         = select_point(mask, Yb, Xb)
+
             push!(coor,centers)
+            push!(cands, pd_field_candidates(mask, Yb, Xb, centers, data.Xrange, data.Yrange))
         end
     end
 
@@ -1082,7 +1118,6 @@ function get_diagram_labels(    Out_XY      :: Vector{MAGEMin_C.gmin_struct{Floa
     txt_list            = ""
     assemblage_rows     = Vector{Dict{String,String}}()   # one row per numbered txt_list entry, for the phase-assemblage table
     list_compacted_idx  = Vector{Int64}()                 # same order: compacted field index (1:n_trace, matches data_plot slot i+1)
-    cnt = 1;
     for i=1:n_trace
         traces[i+1] = scatter(; x           =  nothing,
                                 y           =  nothing,
@@ -1093,73 +1128,90 @@ function get_diagram_labels(    Out_XY      :: Vector{MAGEMin_C.gmin_struct{Floa
                                 hoverinfo   = "text",
                                 showlegend  = false,
                                 text        = ph_list[i]        );
-    
+    end
 
-        ctr     = coor[i]
-        if n_pix[i] > field_size
-            if area[i] < 0.004      # place an arrow
-                ax = -15
-                ay = -15
-
-                annotations[i] =   attr(    xref        = "x",
-                                            yref        = "y",
-                                            x           = ctr[1],
-                                            y           = ctr[2],
-                                            ax          = ax,
-                                            ay          = ay,
-                                            text        = string(cnt),
-                                            showarrow   = true,
-                                            arrowhead   = 1,
-                                            visible     = true,
-                                            font        = attr( size = 9, color = "#212121"),
-                                        )  
-                txt_list *= string(cnt)*") "*ph_list[i]*"\n"
-                push!(assemblage_rows, Dict("N" => string(cnt), "Assemblage" => ph_list[i]))
-                push!(list_compacted_idx, i)
-                cnt +=1
-            elseif area[i] > 0.03 # place full label
-                annotations[i] =   attr(    xref        = "x",
-                                            yref        = "y",
-                                            align       = "left",
-                                            valign      = "top",
-                                            x           = ctr[1],
-                                            y           = ctr[2],
-                                            text        = phd_list[i],
-                                            showarrow   = false,
-                                            visible     = true,
-                                            font        = attr( size = 10, color = "#212121"),  
-                                        )                     
-            else    # place number
-                annotations[i] =   attr(    xref        = "x",
-                                            yref        = "y",
-                                            align       = "left",
-                                            valign      = "top",
-                                            x           = ctr[1],
-                                            y           = ctr[2],
-                                            text        = string(cnt),
-                                            showarrow   = false,
-                                            visible     = true,
-                                            font        = attr( size = 10, color = "#212121"),
-                                        )  
-        
-                txt_list *= string(cnt)*") "*ph_list[i]*"\n"
-                push!(assemblage_rows, Dict("N" => string(cnt), "Assemblage" => ph_list[i]))
-                push!(list_compacted_idx, i)
-                cnt +=1
-            end
+    Xr, Yr      = data.Xrange, data.Yrange
+    shown       = [i for i in 1:n_trace if n_pix[i] > field_size]
+    n_num       = count(i -> area[i] <= 0.03, shown)
+    num_txt     = "8"^length(string(max(n_num, 1)))
+    labels      = PDLabel[]
+    for i in shown
+        anchor  = pd_to_px(coor[i][1], coor[i][2], Xr, Yr)
+        pxc     = [pd_to_px(c[1], c[2], Xr, Yr) for c in cands[i]]
+        if area[i] < 0.004
+            push!(labels, PDLabel(i, :arrow, num_txt, 9.0, anchor, pxc))
+        elseif area[i] > 0.03
+            push!(labels, PDLabel(i, :full, pd_label_text(phd_list[i]), 10.0, anchor, pxc))
         else
+            push!(labels, PDLabel(i, :num, num_txt, 10.0, anchor, pxc))
+        end
+    end
+    pd_place_labels!(labels)
+
+    for i=1:n_trace
+        annotations[i] = attr(  xref        = "x",
+                                yref        = "y",
+                                align       = "left",
+                                valign      = "top",
+                                x           = coor[i][1],
+                                y           = coor[i][2],
+                                text        = "",
+                                showarrow   = false,
+                                visible     = false,
+                                font        = attr( size = 10, color = "#212121"),
+                            )
+    end
+
+    for l in labels
+        l.kind == :full || continue
+        x, y = pd_to_data(l.pos[1], l.pos[2], Xr, Yr)
+        annotations[l.field] = attr(    xref        = "x",
+                                        yref        = "y",
+                                        align       = "left",
+                                        valign      = "top",
+                                        x           = x,
+                                        y           = y,
+                                        text        = l.text,
+                                        showarrow   = false,
+                                        visible     = true,
+                                        font        = attr( size = 10, color = "#212121"),
+                                    )
+    end
+
+    numbered = pd_number_order(labels, [k for k in eachindex(labels) if labels[k].kind != :full])
+    for (cnt, k) in enumerate(numbered)
+        l = labels[k]
+        i = l.field
+        if l.kind == :arrow
+            annotations[i] = attr(  xref        = "x",
+                                    yref        = "y",
+                                    x           = coor[i][1],
+                                    y           = coor[i][2],
+                                    ax          = l.pos[1] - l.anchor[1],
+                                    ay          = l.pos[2] - l.anchor[2],
+                                    text        = string(cnt),
+                                    showarrow   = true,
+                                    arrowhead   = 1,
+                                    visible     = true,
+                                    font        = attr( size = 9, color = "#212121"),
+                                )
+        else
+            x, y = pd_to_data(l.pos[1], l.pos[2], Xr, Yr)
             annotations[i] = attr(  xref        = "x",
                                     yref        = "y",
                                     align       = "left",
                                     valign      = "top",
-                                    x           = ctr[1],
-                                    y           = ctr[2],
-                                    text        = "",
+                                    x           = x,
+                                    y           = y,
+                                    text        = string(cnt),
                                     showarrow   = false,
-                                    visible     = false,
+                                    visible     = true,
                                     font        = attr( size = 10, color = "#212121"),
-                                )  
+                                )
         end
+        txt_list *= string(cnt)*") "*ph_list[i]*"\n"
+        push!(assemblage_rows, Dict("N" => string(cnt), "Assemblage" => ph_list[i]))
+        push!(list_compacted_idx, i)
     end
 
     annotations[n_trace+1] =   attr(    xref        = "paper",
@@ -1607,102 +1659,144 @@ end
 
 
 
+const te_chondrite_names = ["Rb", "Ba", "Th", "U", "Nb", "Ta", "La", "Ce", "Pb", "Pr", "Sr", "Nd", "Zr", "Hf", "Sm", "Eu", "Gd", "Tb", "Dy", "Y", "Ho", "Er", "Tm", "Yb", "Lu", "V", "Sc"]
+const te_chondrite_ppm   = [2.3, 2.41, 0.029, 0.0074, 0.24, 0.0136, 0.237, 0.613, 2.47, 0.0928, 7.25, 0.457, 3.82, 0.103, 0.148, 0.0563, 0.199, 0.0361, 0.246, 1.57, 0.0546, 0.160, 0.0247, 0.161, 0.0246, 56, 5.92]
+
+function te_chondrite_norm(el::AbstractString)
+    id = findfirst(==(el), te_chondrite_names)
+    return isnothing(id) ? 1.0 : te_chondrite_ppm[id]
+end
+
+struct TEFormula
+    fn          :: Any
+    terms       :: Vector{Tuple{String,String}}
+    needs_sol   :: Bool
+end
+
 """
-    parse use input
+    compile_te_formula(varBuilder)
+
+    Compiles a trace-element field formula such as `"[M_Dy] / [S_Yb]"` once into a
+    function of the vector of its bracketed term values, to be evaluated per point
+    with [`eval_te_formula`](@ref).
 """
-function get_parsed_command(    point       :: Int64;
-                                varBuilder  :: String = "M_Dy / M_Yb",
-                                norm        :: String = "none" )
-
-    # te_chondrite    = ["Rb", "Ba", "Th", "U", "Nb", "Ta", "La", "Ce", "Pb", "Pr", "Sr", "Nd", "Zr", "Hf", "Sm", "Eu", "Gd", "Tb", "Dy", "Y", "Ho", "Er", "Tm", "Yb", "Lu", "V", "Sc"]
-    ppm_chondrite   = [2.3, 2.41,0.029,0.0074,0.24,0.0136,0.237,0.613,2.47,0.0928,7.25,0.457,3.82,0.103,0.148,0.0563,0.199,0.0361,0.246,1.57,0.0546,0.160,0.0247,0.161,0.0246,56,5.92]
-
-    compute = true
-    if all(isnan, Out_TE_XY[point].Csol) && occursin("S_",varBuilder)
-        compute = false
-    end
-
-    if all(!isnan, Out_TE_XY[point].Cliq) && compute == true
-        # varBuilder         = "[M_Dy]/([g_Dy]*[S_Yb])"
-        pattern     = r"\[([^\]]+)\]"
-        matches     = eachmatch(pattern, varBuilder)
-        terms       = [match.captures[1] for match in matches]
-        n_terms     = length(terms)
-    
-
-        ref         = "Out_TE_XY["*string(point)*"]"
-        varBuilder_out     = varBuilder
-        
-        if ~isempty(terms)
-            for i = 1:n_terms
-                st = String.(split(terms[i], "_"))
-                if length(st) == 2
-                    id_el = findfirst(Out_TE_XY[point].elements  .== st[2])
-                    if isnothing(id_el)
-                        part1, part2 = "break", "break"
-                        print("wrong element name!\n")
-                    else
-
-                        if norm == "bulk"
-                            nrm = string(Out_TE_XY[point].C0[id_el])
-                        elseif norm == "chondrite"
-                            nrm = string(ppm_chondrite[id_el])
-                        else
-                            nrm = string(1.0)
-                        end
-    
-                        if st[1] == "S"
-                            part1 = ref*".Csol"
-                            part2 = "["*string(id_el)*"]"
-                        elseif st[1] == "M"
-                            part1 = ref*".Cliq"
-                            part2 = "["*string(id_el)*"]"
-                        elseif st[1] == "C0"
-                            part1 = ref*".C0"
-                            part2 = "["*string(id_el)*"]"
-                        else
-                            ph_te = Out_TE_XY[point].ph_TE
-                            if isnothing(ph_te)
-                                id_ph = nothing
-                            else
-                                id_ph = findfirst(ph_te .== st[1])
-                                if isnothing(id_ph) && use_warr_names[1]
-                                    id_ph = findfirst(ph -> MAGEMin_C.get_Warr_name(ph) == st[1], ph_te)
-                                end
-                            end
-                            if isnothing(id_ph)
-                                part1, part2 = "break", "break"
-                                # print("wrong phase name!\n")
-                            else
-                                part1 = ref*".Cmin"
-                                part2 = "["*string(id_ph)*","*string(id_el)*"]"
-                            end
-                        end
-
-                        left = "(("
-                        right = ")/"*nrm*")"
-    
-                        if part1 == "break" || part2 == "break"
-                            varBuilder_out = "NaN"
-                        else
-                            varBuilder_out = replace(varBuilder_out, "["*terms[i]*"]" => left*part1*part2*right)
-                        end
-                    end
-
-                else
-                    println("warning: underscore to split (M,S ph) and (element), has to be added")
-                end
-        
-            end
+function compile_te_formula(varBuilder::String)
+    terms   = unique([m.captures[1] for m in eachmatch(r"\[([^\]]+)\]", varBuilder)])
+    parsed  = Tuple{String,String}[]
+    expr    = varBuilder
+    for (k, term) in enumerate(terms)
+        st = String.(split(term, "_"))
+        if length(st) != 2
+            println("warning: underscore to split (M,S ph) and (element), has to be added")
+            return TEFormula(nothing, parsed, false)
         end
-      
-    else
-        varBuilder_out = "NaN"
+        push!(parsed, (st[1], st[2]))
+        expr = replace(expr, "[" * term * "]" => "(t[$k])")
     end
+    fn = try
+        eval(:( (t) -> $(Meta.parse(expr)) ))
+    catch
+        nothing
+    end
+    return TEFormula(fn, parsed, occursin("S_", varBuilder))
+end
 
-    command = Meta.parse(varBuilder_out)
+te_melt_present(te) = any(v -> isfinite(v) && v != 0.0, te.Cliq)
 
-    return command
+function te_term_value(te, kind::String, el::String, norm::String; defined_only::Bool = false)
+    id_el = findfirst(e -> string(e) == el, te.elements)
+    isnothing(id_el) && return nothing
+    defined_only && kind == "M" && !te_melt_present(te) && return nothing
+    nrm   = norm == "bulk" ? te.C0[id_el] : norm == "chondrite" ? te_chondrite_norm(el) : 1.0
+    if kind == "S"
+        v = te.Csol[id_el]
+    elseif kind == "M"
+        v = te.Cliq[id_el]
+    elseif kind == "C0"
+        v = te.C0[id_el]
+    else
+        ph_te = te.ph_TE
+        id_ph = isnothing(ph_te) ? nothing : findfirst(ph -> string(ph) == kind, ph_te)
+        if isnothing(id_ph) && !isnothing(ph_te) && use_warr_names[1]
+            id_ph = findfirst(ph -> MAGEMin_C.get_Warr_name(ph) == kind, ph_te)
+        end
+        isnothing(id_ph) && return nothing
+        v = te.Cmin[id_ph, id_el]
+    end
+    return v / nrm
+end
+
+"""
+    eval_te_formula(f, te, norm; strict_liq = true)
+
+    Evaluates a compiled trace-element formula on one `out_tepm` point. Returns `NaN`
+    when a term cannot be resolved at that point (unknown element, absent phase),
+    when no solid is present for an `S_` term, or when the melt composition is
+    undefined (any NaN with `strict_liq`, all NaN otherwise). With `defined_only`,
+    `M_` terms are also undefined where there is no melt (MAGEMin_C reports a zero
+    melt composition there), which is what range finding needs.
+"""
+function eval_te_formula(f::TEFormula, te, norm::String; strict_liq::Bool = true, defined_only::Bool = false)
+    f.fn === nothing && return NaN
+    (strict_liq ? any(isnan, te.Cliq) : all(isnan, te.Cliq)) && return NaN
+    (f.needs_sol && all(isnan, te.Csol)) && return NaN
+    t = Vector{Float64}(undef, length(f.terms))
+    for (k, (kind, el)) in enumerate(f.terms)
+        v = te_term_value(te, kind, el, norm; defined_only = defined_only)
+        isnothing(v) && return NaN
+        t[k] = v
+    end
+    return try
+        Base.invokelatest(f.fn, t)
+    catch
+        NaN
+    end
+end
+
+"""
+    te_field_values(type, fieldname, varBuilder, norm)
+
+    The values of a trace-element field at the computed points where it is
+    defined: a formula (`type == "te"`) evaluated with `defined_only`, or an
+    accessory-phase property, where melt-only quantities (`*_liq`) are skipped at
+    points without melt.
+"""
+function te_field_values(type::String, fieldname::String, varBuilder::String, norm::String)
+    global Out_TE_XY
+    vals = Float64[]
+    if type == "te"
+        f = compile_te_formula(varBuilder)
+        for te in Out_TE_XY
+            v = eval_te_formula(f, te, norm; defined_only = true)
+            (v isa Real && isfinite(v)) && push!(vals, Float64(v))
+        end
+    else
+        melt_only = endswith(fieldname, "_liq")
+        for te in Out_TE_XY
+            v = get_property(te, fieldname)
+            (v isa Real && isfinite(v)) || continue
+            (melt_only && !te_melt_present(te)) && continue
+            push!(vals, Float64(v))
+        end
+    end
+    return vals
+end
+
+"""
+    te_color_range(type, fieldname, varBuilder, norm, gridded)
+
+    Default colour range of a trace-element field: min/max over the points where it
+    is defined ([`te_field_values`](@ref)), falling back to the whole displayed grid
+    when it is defined nowhere.
+"""
+function te_color_range(type::String, fieldname::String, varBuilder::String, norm::String, gridded)
+    vals = try
+        te_field_values(type, fieldname, varBuilder, norm)
+    catch
+        Float64[]
+    end
+    isempty(vals) && return round_sig(grid_min(gridded)), round_sig(grid_max(gridded))
+    return round_sig(minimum(vals)), round_sig(maximum(vals))
 end
 
 """
@@ -1762,10 +1856,9 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
         end
         field[isnan.(field)] .= 0.0
     elseif type == "te"
-        global i
+        te_f = compile_te_formula(varBuilder)
         for i=1:np
-            cmd = get_parsed_command( i;  varBuilder, norm) 
-            field[i] = eval(cmd)
+            field[i] = eval_te_formula(te_f, Out_TE_XY[i], norm)
         end
         field[isnan.(field)] .= 0.0
     else
@@ -1878,7 +1971,8 @@ function get_isopleth_map(  mod         ::String,
                             refLvl      ::Int64,
                             data        ::MAGEMinApp.AMR_data,
                             Xrange      ::Tuple{Float64, Float64},
-                            Yrange      ::Tuple{Float64, Float64} )
+                            Yrange      ::Tuple{Float64, Float64};
+                            absent      ::Float64 = 0.0 )
 
     np          = length(data.points)
     len_ox      = length(oxi)
@@ -1956,7 +2050,7 @@ function get_isopleth_map(  mod         ::String,
                 fe      =  Out_XY[i].SS_vec[id[1]].Comp_apfu[fe_id];
                 field[i] = mg / (mg + fe);
             else
-                field[i] = 0.0
+                field[i] = absent
             end
         end 
     elseif mod == "ss_calc"
@@ -1984,7 +2078,7 @@ function get_isopleth_map(  mod         ::String,
             if ~isempty(id)
                 field[i] = Base.invokelatest(calc_fn, Out_XY[i].SS_vec[id[1]].Comp_apfu)
             else
-                field[i] = 0.0
+                field[i] = absent
             end
         end
     elseif mod == "ss_calc_sf"
@@ -2015,7 +2109,7 @@ function get_isopleth_map(  mod         ::String,
                 field[i] = Base.invokelatest(calc_fn, Out_XY[i].SS_vec[id].siteFractions)
 
             else
-                field[i] = 0.0
+                field[i] = absent
             end
         end
     elseif mod == "ss_calc_ox_mol" || mod == "ss_calc_ox_wt"
@@ -2044,7 +2138,7 @@ function get_isopleth_map(  mod         ::String,
                 x   = mod == "ss_calc_ox_mol" ? Out_XY[i].SS_vec[id].Comp : Out_XY[i].SS_vec[id].Comp_wt
                 field[i] = Base.invokelatest(calc_fn, x)
             else
-                field[i] = 0.0
+                field[i] = absent
             end
         end  
         elseif mod == "em_frac"
@@ -2054,7 +2148,7 @@ function get_isopleth_map(  mod         ::String,
                     idem     = findall(Out_XY[i].SS_vec[id[1]].emNames .== em)
                     field[i] = Out_XY[i].SS_vec[id[1]].emFrac[idem[1]]
                 else
-                    field[i] = 0.0
+                    field[i] = absent
                 end
             end 
         elseif mod == "em_frac_wt"
@@ -2064,7 +2158,7 @@ function get_isopleth_map(  mod         ::String,
                     idem     = findall(Out_XY[i].SS_vec[id[1]].emNames .== em)
                     field[i] = Out_XY[i].SS_vec[id[1]].emFrac_wt[idem[1]]
                 else
-                    field[i] = 0.0
+                    field[i] = absent
                 end
             end 
         elseif mod == "ox_comp"
@@ -2074,7 +2168,7 @@ function get_isopleth_map(  mod         ::String,
                 if ~isempty(id)  
                     field[i] = Out_XY[i].SS_vec[id[1]].Comp[ox_id]
                 else
-                    field[i] = 0.0
+                    field[i] = absent
                 end
             end 
         elseif mod == "ox_comp_wt"
@@ -2084,7 +2178,7 @@ function get_isopleth_map(  mod         ::String,
                 if ~isempty(id)  
                     field[i] = Out_XY[i].SS_vec[id[1]].Comp_wt[ox_id]
                 else
-                    field[i] = 0.0
+                    field[i] = absent
                 end
             end 
         elseif mod == "of_mod"
@@ -2219,44 +2313,50 @@ function get_isopleth_map_te(   mod         ::String,
                                 refLvl      ::Int64,
                                 data        ::MAGEMinApp.AMR_data,
                                 Xrange      ::Tuple{Float64, Float64},
-                                Yrange      ::Tuple{Float64, Float64} )
+                                Yrange      ::Tuple{Float64, Float64};
+                                absent      ::Float64 = 0.0,
+                                defined_only::Bool    = false )
 
     np          = length(data.points)
     len_ox      = length(oxi)
     field       = Vector{Union{Float64,Nothing}}(nothing,np);
 
     if mod == "calc"
-        global i
+        te_f = compile_te_formula(calc)
         for i=1:np
-            cmd = get_parsed_command( i;  varBuilder=calc, norm=norm_te) 
-            field[i] = eval(cmd)
+            field[i] = eval_te_formula(te_f, Out_TE_XY[i], norm_te; defined_only = defined_only)
         end
-        field[isnan.(field)] .= 0.0
+        field[isnan.(field)] .= absent
     elseif mod == "zrc"
         for i=1:np
             field[i] = get_property(Out_TE_XY[i], acces_name);
         end
-        field[isnan.(field)] .= 0.0
+        field[isnan.(field)] .= absent
     elseif mod == "fapt"
         for i=1:np
             field[i] = get_property(Out_TE_XY[i], acces_name);
         end
-        field[isnan.(field)] .= 0.0
+        field[isnan.(field)] .= absent
     elseif mod == "sulf"
         for i=1:np
             field[i] = get_property(Out_TE_XY[i], acces_name);
         end
-        field[isnan.(field)] .= 0.0
+        field[isnan.(field)] .= absent
     elseif mod == "co2sat"
         for i=1:np
             field[i] = get_property(Out_TE_XY[i], acces_name);
         end
-        field[isnan.(field)] .= 0.0
+        field[isnan.(field)] .= absent
     elseif mod == "mnz"
         for i=1:np
             field[i] = get_property(Out_TE_XY[i], acces_name);
         end
-        field[isnan.(field)] .= 0.0
+        field[isnan.(field)] .= absent
+    end
+    if defined_only && mod != "calc" && endswith(acces_name, "_liq")
+        for i=1:np
+            te_melt_present(Out_TE_XY[i]) || (field[i] = absent)
+        end
     end
 
     n   = 2^(sub + refLvl)+1

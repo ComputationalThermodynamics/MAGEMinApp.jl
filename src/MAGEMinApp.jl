@@ -25,7 +25,7 @@ module MAGEMinApp
     using MAGEMin_C
     using StaticArrays: SVector
     using SparseArrays: sparse
-    using LinearAlgebra: norm, dot, ⋅
+    using LinearAlgebra: norm, dot, ⋅, cholesky, Symmetric
     using IntersecT
     using PrecompileTools: @compile_workload
 
@@ -35,6 +35,7 @@ module MAGEMinApp
     pkg_dir = Base.pkgdir(MAGEMinApp)
 
     const ENABLE_MAGERES = false
+    const ENABLE_MELTS   = false
 
     export App
     export build_intersect_model_df, make_measurements_df, list_intersect_phases, list_intersect_elements
@@ -58,6 +59,8 @@ module MAGEMinApp
         end
     end
     include(joinpath(pkg_dir,"src","PhaseDiagram_SVG.jl"))
+    include(joinpath(pkg_dir,"src","Subduction_geotherm.jl"))
+    include(joinpath(pkg_dir,"src","Label_placement.jl"))
     include(joinpath(pkg_dir,"src","Plotly_SVG.jl"))
     include(joinpath(pkg_dir,"src","Classifications/Mineral_recalc_functions.jl"))
     include(joinpath(pkg_dir,"src","Classifications/Amphibole_functions.jl"))
@@ -101,6 +104,7 @@ module MAGEMinApp
     include(joinpath(pkg_dir,"src","Boundaries/poly.jl"))
     include(joinpath(pkg_dir,"src","Boundaries/purge.jl"))
     include(joinpath(pkg_dir,"src","Boundaries/utils.jl"))
+    include(joinpath(pkg_dir,"src","Boundaries/smooth.jl"))
     include_dependency(joinpath(pkg_dir,"user_data","predefined_bulks.csv"))
     include_dependency(joinpath(pkg_dir,"user_data","mc_default_sigma.csv"))
     include(joinpath(pkg_dir,"src","appData.jl"))
@@ -332,6 +336,9 @@ module MAGEMinApp
         app = Tab_PhaseDiagram3D_Callbacks(app)
         app = Tab_MonteCarlo_Callbacks(app)
         app = Tab_TraceElement_Callbacks(app)
+        app = subduction_geotherm_callbacks!(app, "")
+        app = subduction_geotherm_callbacks!(app, "-te")
+        app = subduction_geotherm_callbacks!(app, "-3d")
         app = Tab_PTXpaths_Callbacks(app)
         ENABLE_MAGERES && (app = Tab_MAGERes_Callbacks(app))
         app = Tab_GeneralSetup_Callbacks(app)

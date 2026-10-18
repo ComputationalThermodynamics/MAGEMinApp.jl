@@ -131,6 +131,7 @@ const DB_MENU_GROUPS = [
     "- BERMAN EOS DATABASE -" => ["po"],
     "- MANTLE DATABASE -"     => ["mtl", "sb11", "sb21", "sb24"],
     "- CUSTOM DATABASE -"     => ["ume", "mpe", "mbe", "all"],
+    (ENABLE_MELTS ? ["- MELTS DATABASE -" => ["pMELTS", "rMELTS"]] : [])...,
 ]
 
 """

@@ -1262,9 +1262,9 @@ end
 """
 function mc_export_svg(mc_res, path::AbstractString; show_labels::Bool = false,
                         phases::Union{Nothing,Vector{String}} = nothing, max_lines::Int = mc_default_max_lines,
-                        show_boundaries::Bool = true, smooth_lines::Bool = false)
+                        show_boundaries::Bool = true, smooth_lines::Bool = false, label_bg::Bool = false)
     parts = mc_figure_parts(mc_res; show_labels = show_labels, phases = phases, max_lines = max_lines,
-                             show_boundaries = show_boundaries, smooth_lines = smooth_lines)
+                             show_boundaries = show_boundaries, smooth_lines = smooth_lines, label_bg = label_bg)
     xr, yr = parts.xrange, parts.yrange
     c      = SVGCanvas(758.0, 700.0, 64.0, 140.0, 48.0, 62.0, xr[1], xr[2], yr[1], yr[2])
     pw, ph = svg_plot_width(c), svg_plot_height(c)

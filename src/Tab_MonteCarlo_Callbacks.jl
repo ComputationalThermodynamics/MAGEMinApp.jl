@@ -168,6 +168,7 @@ function Tab_MonteCarlo_Callbacks(app)
         Input("mc-run-done",          "data"),
         Input("mc-canvas-button",     "n_clicks"),
         Input("mc-show-labels-switch","value"),
+        Input("mc-label-bg-switch",   "value"),
         Input("mc-show-boundaries-switch","value"),
         Input("mc-smooth-lines-switch","value"),
         Input("mc-phase-apply-button","n_clicks"),
@@ -176,7 +177,7 @@ function Tab_MonteCarlo_Callbacks(app)
         State("mc-max-lines",         "value"),
 
         prevent_initial_call = true,
-    ) do mc_done, _n_canvas, show_labels, show_bounds, smooth_lines, _n_apply, phase_sel, max_lines
+    ) do mc_done, _n_canvas, show_labels, label_bg, show_bounds, smooth_lines, _n_apply, phase_sel, max_lines
 
         global mc_result, mc_shown_phases, mc_shown_max
         bid = pushed_button( callback_context() )
@@ -185,11 +186,11 @@ function Tab_MonteCarlo_Callbacks(app)
             return no_update(), no_update(), no_update(), no_update(), true
         end
 
-        if bid in ("mc-show-labels-switch", "mc-show-boundaries-switch", "mc-smooth-lines-switch")
+        if bid in ("mc-show-labels-switch", "mc-label-bg-switch", "mc-show-boundaries-switch", "mc-smooth-lines-switch")
             if isnothing(mc_result)
                 return no_update(), no_update(), no_update(), no_update(), no_update()
             end
-            fig = mc_build_figure(mc_result, show_labels; phases = mc_shown_phases, max_lines = something(mc_shown_max, mc_default_max_lines), show_boundaries = show_bounds == true, smooth_lines = smooth_lines == true)
+            fig = mc_build_figure(mc_result, show_labels; phases = mc_shown_phases, max_lines = something(mc_shown_max, mc_default_max_lines), show_boundaries = show_bounds == true, smooth_lines = smooth_lines == true, label_bg = label_bg == true)
             return fig, no_update(), no_update(), no_update(), no_update()
         end
 
@@ -199,7 +200,7 @@ function Tab_MonteCarlo_Callbacks(app)
             end
             mc_shown_phases = Vector{String}(something(phase_sel, String[]))
             mc_shown_max    = mc_max_lines_value(max_lines)
-            fig = mc_build_figure(mc_result, show_labels; phases = mc_shown_phases, max_lines = mc_shown_max, show_boundaries = show_bounds == true, smooth_lines = smooth_lines == true)
+            fig = mc_build_figure(mc_result, show_labels; phases = mc_shown_phases, max_lines = mc_shown_max, show_boundaries = show_bounds == true, smooth_lines = smooth_lines == true, label_bg = label_bg == true)
             return fig, no_update(), no_update(), no_update(), no_update()
         end
 
@@ -210,7 +211,7 @@ function Tab_MonteCarlo_Callbacks(app)
                 _, N_str, t_str = split(mc_done, ":")
                 mc_shown_phases = Vector{String}(mc_phases_to_draw(mc_result))
                 mc_shown_max    = mc_max_lines_value(max_lines)
-                fig    = mc_build_figure(mc_result, show_labels; phases = mc_shown_phases, max_lines = mc_shown_max, show_boundaries = show_bounds == true, smooth_lines = smooth_lines == true)
+                fig    = mc_build_figure(mc_result, show_labels; phases = mc_shown_phases, max_lines = mc_shown_max, show_boundaries = show_bounds == true, smooth_lines = smooth_lines == true, label_bg = label_bg == true)
                 status = "Done: $N_str $(mc_run_word(mc_result)) in $t_str s."
                 return fig, status, false, no_update(), true
             end
@@ -397,9 +398,10 @@ function Tab_MonteCarlo_Callbacks(app)
         State("mc-show-labels-switch",     "value"),
         State("mc-show-boundaries-switch", "value"),
         State("mc-smooth-lines-switch",    "value"),
+        State("mc-label-bg-switch",        "value"),
 
         prevent_initial_call = true,
-    ) do _n, show_labels, show_bounds, smooth_lines
+    ) do _n, show_labels, show_bounds, smooth_lines, label_bg
 
         global mc_result, mc_shown_phases, mc_shown_max, output_dir
 
@@ -414,7 +416,7 @@ function Tab_MonteCarlo_Callbacks(app)
             path  = output_dir[1] * fname * (mc_is_linear(mc_result) ? "_Linear.svg" : "_MC.svg")
             r = mc_export_svg(mc_result, path; show_labels = show_labels == true, phases = mc_shown_phases,
                                max_lines = something(mc_shown_max, mc_default_max_lines),
-                               show_boundaries = show_bounds == true, smooth_lines = smooth_lines == true)
+                               show_boundaries = show_bounds == true, smooth_lines = smooth_lines == true, label_bg = label_bg == true)
             return "Saved $(r.path) ($(round(r.bytes / 1024, digits = 1)) KB, $(r.n_paths) paths)."
         catch e
             return "Export failed: " * sprint(showerror, e)
@@ -611,7 +613,8 @@ end
     everywhere else).
 """
 function mc_figure_parts(mc_res; show_labels::Bool = false, phases::Union{Nothing,Vector{String}} = nothing,
-                          max_lines::Int = mc_default_max_lines, show_boundaries::Bool = true, smooth_lines::Bool = false)
+                          max_lines::Int = mc_default_max_lines, show_boundaries::Bool = true, smooth_lines::Bool = false,
+                          label_bg::Bool = false)
     global gridded_fields, layout
 
     sets = mc_spaghetti_sets(mc_res, mc_res.Xrange, mc_res.Yrange; max_realizations = max_lines, phases = phases,
@@ -634,6 +637,7 @@ function mc_figure_parts(mc_res; show_labels::Bool = false, phases::Union{Nothin
                 ann[:y] = display_pressure(Float64(ann[:y]))
             end
         end
+        pd_apply_label_bg!(annotations, label_bg)
     end
 
     t = mc_diagram_title(mc_title_prefix(mc_res))
@@ -662,9 +666,10 @@ end
     tick styling (`get_plot_frame`).
 """
 function mc_build_figure(mc_res, show_labels; phases::Union{Nothing,Vector{String}} = nothing,
-                          max_lines::Int = mc_default_max_lines, show_boundaries::Bool = true, smooth_lines::Bool = false)
+                          max_lines::Int = mc_default_max_lines, show_boundaries::Bool = true, smooth_lines::Bool = false,
+                          label_bg::Bool = false)
     parts  = mc_figure_parts(mc_res; show_labels = show_labels == true, phases = phases, max_lines = max_lines,
-                              show_boundaries = show_boundaries, smooth_lines = smooth_lines)
+                              show_boundaries = show_boundaries, smooth_lines = smooth_lines, label_bg = label_bg)
     linear    = mc_is_linear(mc_res)
     spaghetti = linear ? reduce(vcat, [mc_gradient_traces(set, mc_res.x) for set in parts.sets]; init = GenericTrace[]) :
                          GenericTrace[mc_spaghetti_trace(set) for set in parts.sets]

@@ -42,10 +42,7 @@ function pd3d_export_surfaces(st::PD3D_state, o)
             cs, zr      = field_colorscale(intf, colorm, rev, "false", lo, hi)
             stops       = svg_colorscale(cs; reverse = rev)
             cmin, cmax  = Float64(get(zr, :zmin, lo)), Float64(get(zr, :zmax, hi))
-            imin        = isnothing(o.isomin) ? lo : Float64(o.isomin)
-            imax        = isnothing(o.isomax) ? hi : Float64(o.isomax)
-            ns          = isnothing(o.nsurf)  ? 5  : Int(o.nsurf)
-            levels      = ns == 1 ? [(imin + imax) / 2] : collect(range(imin, imax, length = ns))
+            levels      = pd3d_field_levels(o, lo, hi)
             label       = pd3d_spec_label(o.f...)
             for (k, lev) in enumerate(levels)
                 verts, faces, _ = pd3d_mesh(st, A, lev)
@@ -81,6 +78,8 @@ function pd3d_export_surfaces(st::PD3D_state, o)
                             verts = verts, faces = faces, rgb = fill(col, length(verts)) ))
         end
     end
+
+    haskey(o, :geotherm) && append!(surfs, subd_export_surfaces(st, o.geotherm))
 
     return surfs
 end

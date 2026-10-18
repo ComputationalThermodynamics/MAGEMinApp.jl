@@ -313,6 +313,36 @@ function Tab_PhaseDiagram3D_Callbacks(app)
 
     callback!(
         app,
+        Output("pd3d-ptx-p-min",            "value"),
+        Output("pd3d-ptx-p-max",            "value"),
+        Output("pd3d-ptx-p-step",           "value"),
+        Output("pd3d-ptx-t-min",            "value"),
+        Output("pd3d-ptx-t-max",            "value"),
+        Output("pd3d-ptx-t-step",           "value"),
+        Output("pd3d-ptx-x-min",            "value"),
+        Output("pd3d-ptx-x-max",            "value"),
+        Output("pd3d-ptx-x-step",           "value"),
+        Output("pd3d-ptx-p-title",          "children"),
+
+        Input("pd3d-computed",              "data"),
+        Input("pressure-unit-dropdown",     "value"),
+
+        prevent_initial_call = true,
+    ) do _computed, pressure_unit
+        global use_GPa
+        use_GPa[1] = (pressure_unit == "gpa")
+        title      = "Pressure [$(pressure_unit_label())]"
+        st         = PD3D[]
+        isnothing(st) && return ntuple(_ -> no_update(), 9)..., title
+        P, T, X    = pd3d_ptx_defaults(st)
+        new_diag   = any(t -> startswith(String(t.prop_id), "pd3d-computed."), callback_context().triggered)
+        keep       = no_update()
+        return P..., (new_diag ? T : (keep, keep, keep))..., (new_diag ? X : (keep, keep, keep))..., title
+    end
+
+
+    callback!(
+        app,
         Output("pd3d-graph",                "figure"),
 
         Input("pd3d-computed",              "data"),
@@ -348,6 +378,32 @@ function Tab_PhaseDiagram3D_Callbacks(app)
         Input("pd3d-reset-view",            "n_clicks"),
         Input("pressure-unit-dropdown",     "value"),
         Input("mineral-naming-dropdown",    "value"),
+        Input("pd3d-ptx-targets",           "value"),
+        Input("pd3d-ptx-lw",                "value"),
+        Input("pd3d-ptx-style",             "value"),
+        Input("pd3d-ptx-radius",            "value"),
+        Input("pd3d-ptx-dash",              "value"),
+        Input("pd3d-ptx-labels",            "value"),
+        Input("pd3d-ptx-lsize",             "value"),
+        Input("pd3d-ptx-p-show",            "value"),
+        Input("pd3d-ptx-p-min",             "value"),
+        Input("pd3d-ptx-p-max",             "value"),
+        Input("pd3d-ptx-p-step",            "value"),
+        Input("pd3d-ptx-p-values",          "value"),
+        Input("pd3d-ptx-p-color",           "value"),
+        Input("pd3d-ptx-t-show",            "value"),
+        Input("pd3d-ptx-t-min",             "value"),
+        Input("pd3d-ptx-t-max",             "value"),
+        Input("pd3d-ptx-t-step",            "value"),
+        Input("pd3d-ptx-t-values",          "value"),
+        Input("pd3d-ptx-t-color",           "value"),
+        Input("pd3d-ptx-x-show",            "value"),
+        Input("pd3d-ptx-x-min",             "value"),
+        Input("pd3d-ptx-x-max",             "value"),
+        Input("pd3d-ptx-x-step",            "value"),
+        Input("pd3d-ptx-x-values",          "value"),
+        Input("pd3d-ptx-x-color",           "value"),
+        subd_inputs_3d()...,
 
         prevent_initial_call = true,
     ) do    _computed,  layers,
@@ -358,7 +414,13 @@ function Tab_PhaseDiagram3D_Callbacks(app)
             contours,   spec_c,     nlev,       lw,         lsize,
             phases,     eps,        phase_opacity,
             stride,     msize,
-            reverseT,   reverseP,   camera,     reset_view, pressure_unit, warr_naming
+            reverseT,   reverseP,   camera,     reset_view, pressure_unit, warr_naming,
+            ptx_targets, ptx_lw,    ptx_style,  ptx_radius, ptx_dash,   ptx_labels, ptx_lsize,
+            p_show,     p_min,      p_max,      p_step,     p_values,   p_color,
+            t_show,     t_min,      t_max,      t_step,     t_values,   t_color,
+            x_show,     x_min,      x_max,      x_step,     x_values,   x_color,
+            subd_show,  subd_vel,   subd_dip,   subd_depth, subd_T0,    subd_T1,    subd_h,     subd_d,     subd_kappa, subd_rho,
+            subd_render, subd_xvals, subd_opacity
 
         st = PD3D[]
         isnothing(st) && return no_update()
@@ -366,6 +428,21 @@ function Tab_PhaseDiagram3D_Callbacks(app)
         global use_GPa, use_warr_names
         use_GPa[1]        = (pressure_unit == "gpa")
         use_warr_names[1] = (warr_naming == "warr")
+
+        ptx_axis(show, lo, hi, vmin, vmax, step, values, color; conv = identity) = begin
+            lev, trunc = show == "true" ? pd3d_levels(lo, hi, vmin, vmax, step, values) : (Float64[], false)
+            (levels = conv(lev), color = something(color, "black"), trunc = trunc)
+        end
+        ptx = ( targets = ptx_targets,
+                lw      = Float64(something(ptx_lw, 3)),
+                style   = something(ptx_style, "tube"),
+                radius  = Float64(something(ptx_radius, 0.3)),
+                dash    = something(ptx_dash, "solid"),
+                labels  = ptx_labels == "true",
+                lsize   = Float64(something(ptx_lsize, 10)),
+                p       = ptx_axis(p_show, display_pressure(st.Pv[1]), display_pressure(st.Pv[end]), p_min, p_max, p_step, p_values, p_color; conv = to_kbar_pressure),
+                t       = ptx_axis(t_show, st.Tv[1], st.Tv[end], t_min, t_max, t_step, t_values, t_color),
+                x       = ptx_axis(x_show, st.Xv[1], st.Xv[end], x_min, x_max, x_step, x_values, x_color) )
 
         o = (   layers          = something(layers, String[]),
                 f               = pd3d_spec(spec_f),
@@ -396,7 +473,10 @@ function Tab_PhaseDiagram3D_Callbacks(app)
                 uirev           = "$(st.id)-$(camera)-$(reset_view)",
                 surf_colormap   = surf_cmap,
                 surf_reverse    = surf_rev,
-                surf_opacity    = surf_opacity )
+                surf_opacity    = surf_opacity,
+                ptx             = ptx,
+                geotherm        = subduction_geotherm_curves_3d(st, subd_show, subd_vel, subd_dip, subd_depth, subd_T0, subd_T1, subd_h, subd_d,
+                                                                subd_kappa, subd_rho, subd_render, subd_xvals, subd_opacity) )
 
         return pd3d_figure(st, o)
     end
@@ -425,7 +505,7 @@ function Tab_PhaseDiagram3D_Callbacks(app)
 
         if bid == "pd3d-layers"
             added = setdiff(something(layers, String[]), something(layers_prev, String[]))
-            tabs  = Dict("field" => "pd3d-tab-field", "surface" => "pd3d-tab-surface", "phases" => "pd3d-tab-phases", "cloud" => "pd3d-tab-phases")
+            tabs  = Dict("field" => "pd3d-tab-field", "surface" => "pd3d-tab-surface", "phases" => "pd3d-tab-phases", "cloud" => "pd3d-tab-phases", "ptx" => "pd3d-tab-ptx")
             tab   = isempty(added) ? no_update() : get(tabs, first(added), no_update())
             return no_update(), no_update(), tab, no_update(), no_update(), layers
         end
@@ -510,12 +590,13 @@ function Tab_PhaseDiagram3D_Callbacks(app)
             elseif bid == "pd3d-export-mesh"
                 dir = joinpath(output_dir[1], name * "_meshes")
                 n   = pd3d_export_meshes(st, o, dir)
-                return n == 0 ? "No surface to export: enable a layer with surfaces (field, coloured surface or phase-in/out)." :
+                return n == 0 ? "No surface to export: enable a layer with surfaces (field, coloured surface, phase-in/out or slab geotherms)." :
                                 "Saved $n surface(s) as PLY + STL in $(dir)"
             elseif bid == "pd3d-export-vtk"
                 path = joinpath(output_dir[1], name * ".vtk")
                 n    = pd3d_export_vtk(st, o, path)
-                return "Saved $(path) ($n fields, $(round(filesize(path) / 1e6, digits = 1)) MB)"
+                gpath = subd_export_vtk(st, get(o, :geotherm, (curves = NamedTuple[],)), joinpath(output_dir[1], name * "_geotherms.vtk"))
+                return "Saved $(path) ($n fields, $(round(filesize(path) / 1e6, digits = 1)) MB)" * (isnothing(gpath) ? "" : " and slab geotherms in $(gpath)")
             end
         catch e
             msg = sprint(showerror, e)

@@ -1112,15 +1112,13 @@ function Tab_PhaseDiagram_Callbacks(app)
                 using_sample_point = false
             end
 
-            sp  = click_info[:points][][:text]
-            tmp = match(r"#([^# ]+)#", sp)
+            pid = pd_click_point_id(click_info)
 
-            if tmp === nothing
+            if pid === nothing
                 return no_update(), no_update(), no_update(), no_update(), no_update()
             end
 
-            point_id = tmp.match
-            point_id = parse(Int64,replace.(point_id,r"#"=>""))
+            point_id = pid
             out      = Out_XY[point_id]
 
             show_x = (diagType == "px" || diagType == "tx") && @isdefined(data) && point_id <= length(data.points)
@@ -1375,9 +1373,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("mc-run-done",               "data"),
 
         Input("update-reaction-line",       "n_clicks"),
-        Input("show-grid",                  "value"), 
         Input("show-full-grid",             "value"), 
-        Input("show-lbl-id",                "value"),
      
         Input("button-add-isopleth",        "n_clicks"),
         Input("button-remove-isopleth",     "n_clicks"),
@@ -1409,6 +1405,9 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("pressure-unit-dropdown", "value"),
         Input("phase-assemblage-table-id", "selected_cells"),
         Input("clear-assemblage-highlight-button", "n_clicks"),
+        subd_inputs("")...,
+        Input("smooth-boundaries-switch", "value"),
+        Input("smooth-boundaries-sigma",  "value"),
 
         # STATES
         State("field-size-id",          "value"),
@@ -1529,13 +1528,20 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("mc-mode",                "value"),
         State("mc-bulk2-table",         "data"),
 
+        State("show-grid",              "value"),
+        State("show-lbl-id",            "value"),
+        State("lbl-bg-id",              "value"),
+        State("iso-label-bg-id",        "value"),
+
         prevent_initial_call = true,
 
-    ) do    reac_up,    grid,       full_grid,  lbl,     addIso,     removeIso,  removeAllIso,    isoShow,   isoHide,   isoShowAll,    isoHideAll,
+    ) do    reac_up,    full_grid,  addIso,     removeIso,  removeAllIso,    isoShow,   isoHide,   isoShowAll,    isoHideAll,
             n_clicks_mesh, n_clicks_refine, uni_n_clicks_refine, n_clicks_mc,
             minColor,   maxColor,
             colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  updateTitle,     loadstateid,       warr_naming, pressure_unit,
             assemblage_selected_cells, clearHighlight,
+            subd_show,  subd_vel,   subd_dip,   subd_depth, subd_T0,    subd_T1,    subd_h,     subd_d,     subd_kappa, subd_rho,
+            smooth_bnd, smooth_sigma,
             # STATES
             field_size, customTitle, txt_list,
             custW,      diagType,   dtb,        dataset,    watsat,     watsat_val, cpx,        limOpx,     limOpxVal,  ph_selection, pure_ph_selection, PTpath,
@@ -1552,7 +1558,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             isoLineStyle, isoLineWidth, isoColorLine,           isoLabelSize,
             minIso,     stepIso,    maxIso,
             active_tab,
-            mc_sigma_data, mc_sigma_mode_str, mc_bulk_unit, mc_n_real, mc_seed_val, mc_mode, mc_bulk2_data
+            mc_sigma_data, mc_sigma_mode_str, mc_bulk_unit, mc_n_real, mc_seed_val, mc_mode, mc_bulk2_data,
+            grid,       lbl,        lbl_bg,     iso_lbl_bg
 
 
         diagType                        = diagram_type_2d(diagType)
@@ -1666,8 +1673,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             data_grid       = show_hide_mesh_grid()
             active_tab      = "tab-phase-diagram" 
 
-            minColor        = round_sig(minimum(skipmissing(gridded)));
-            maxColor        = round_sig(maximum(skipmissing(gridded)));
+            minColor        = round_sig(grid_min(gridded));
+            maxColor        = round_sig(grid_max(gridded));
             update_ss_list  = 1
             update_reaction_list  = 1
             clear_selection = []
@@ -1720,8 +1727,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             infos           = get_computation_info(npoints, meant)
             data_reaction   = show_hide_reaction_lines(sub,refLvl,Xrange,Yrange)
             data_grid       = show_hide_mesh_grid()
-            minColor        = round_sig(minimum(skipmissing(gridded)));
-            maxColor        = round_sig(maximum(skipmissing(gridded)));
+            minColor        = round_sig(grid_min(gridded));
+            maxColor        = round_sig(grid_max(gridded));
             update_ss_list  = 1
             update_reaction_list  = 1
             clear_selection = []
@@ -1801,8 +1808,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             smooth,     colorm,     reverseColorMap, set_white,
             test,       refType                                 )
 
-            minColor        = round_sig(minimum(skipmissing(gridded)));
-            maxColor        = round_sig(maximum(skipmissing(gridded)));
+            minColor        = round_sig(grid_min(gridded));
+            maxColor        = round_sig(grid_max(gridded));
 
             active_tab      = "tab-phase-diagram"
 
@@ -1820,6 +1827,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                             sub, refLvl + addedRefinementLvl, refType, data, Xrange_s, Yrange_s )
             poly_phases, poly_pcoor     = compute_assemblage_boundaries(gridded_fields, Xrange_s, Yrange_s)
             data_grid                   = show_hide_mesh_grid()
+            isopleths, isoplethsHid     = isopleth_dropdown_options(data_isopleth)
             data_isopleth_out_export    = data_isopleth.isoPexp[data_isopleth.active]
             update_ss_list              = 1
             update_reaction_list        = 1
@@ -1843,15 +1851,9 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     smooth,     colorm,     reverseColorMap, set_white,
                                                                     test,       refType                                 )
 
-            minColor        = round_sig(minimum(skipmissing(gridded))); 
-            maxColor        = round_sig(maximum(skipmissing(gridded)));  
+            minColor        = round_sig(grid_min(gridded)); 
+            maxColor        = round_sig(grid_max(gridded));  
                                                                                                  
-        elseif bid == "show-grid"
-
-            if grid == "true"
-                field2plot[2] = 1
-            end
-
         elseif bid == "show-full-grid"
 
             if full_grid == "true"
@@ -1865,7 +1867,8 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     dtb,        oxi,
                                                                     isopleths,  phase,      ss,     em,  ox,   of,     ot, sys, rmf,    calc, cust, calc_sf, calc_ox, cust_sf, cust_ox,
                                                                     isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,   
-                                                                    minIso,     stepIso,    maxIso                      )
+                                                                    minIso,     stepIso,    maxIso;
+                                                                    label_bg = iso_lbl_bg == "true" )
             data_isopleth_out = data_isopleth.isoP[data_isopleth.active]
             data_isopleth_out_export = data_isopleth.isoPexp[data_isopleth.active]
             field2plot[4] = 1
@@ -1976,11 +1979,16 @@ function Tab_PhaseDiagram_Callbacks(app)
                     compacted_idx   = list_compacted_idx[row]
                     raw_id          = raw_field_id[compacted_idx]
                     matches         = findall(==(raw_id), poly_phases)
+                    geom_hl         = smooth_bnd == true ? pd_get_smooth_geometry(something(smooth_sigma, pd_smooth_sigma_default)) : nothing
                     if !isempty(matches)
                         px, py = Union{Float64,Nothing}[], Union{Float64,Nothing}[]
-                        for (n, m) in enumerate(matches)
-                            n > 1 && (push!(px, nothing); push!(py, nothing))
-                            append!(px, poly_pcoor[m][:,1]); append!(py, poly_pcoor[m][:,2])
+                        if geom_hl !== nothing
+                            px, py = pd_domain_rings(geom_hl, raw_id)
+                        else
+                            for (n, m) in enumerate(matches)
+                                n > 1 && (push!(px, nothing); push!(py, nothing))
+                                append!(px, poly_pcoor[m][:,1]); append!(py, poly_pcoor[m][:,2])
+                            end
                         end
                         data_plot[compacted_idx+1] = scatter(; x = px, y = py, fill = "toself", fillcolor = "transparent",
                                                             line = attr(color = "red", width = 3), mode = "lines",
@@ -1988,6 +1996,11 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                             text = data_plot[compacted_idx+1][:text])
                     end
                 end
+            end
+
+        elseif bid in subd_input_ids("") || bid == "smooth-boundaries-switch" || bid == "smooth-boundaries-sigma"
+            if !@isdefined(data_plot) || !@isdefined(layout)
+                return no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update()
             end
 
         elseif bid == "clear-assemblage-highlight-button"
@@ -2005,21 +2018,15 @@ function Tab_PhaseDiagram_Callbacks(app)
             fig = plot()
         end
 
-        if lbl == "true"
-            for i=1:n_lbl
-                layout[:annotations][i][:visible] = true
-            end
-            show_text_list  = Dict("display" => "block")  
-
-        else
-            for i=1:n_lbl
-                layout[:annotations][i][:visible] = false
-            end
-            show_text_list  = Dict("display" => "none")  
+        for i=1:n_lbl
+            layout[:annotations][i][:visible] = lbl == "true"
+            layout[:annotations][i][:name]    = "pd-label"
         end
+        show_text_list  = Dict("display" => lbl == "true" ? "block" : "none")
+        pd_apply_label_bg!(layout[:annotations], lbl_bg == "true")
 
         # check state of unchanged variables ["data_plot","data_reaction","data_grid"]
-        if grid == "true"
+        if @isdefined(data_reaction) && !isempty(data_reaction)
             field2plot[2] = 1
         end
         if full_grid == "true"
@@ -2035,14 +2042,43 @@ function Tab_PhaseDiagram_Callbacks(app)
         else
             data_all = eval(Symbol(fieldNames[1]))
             np       = length(field2plot)
+            geom     = smooth_bnd == true ? pd_get_smooth_geometry(something(smooth_sigma, pd_smooth_sigma_default)) : nothing
+
+            fills_on = geom !== nothing && is_integer_field(fieldname) && @isdefined(heat_map_export) && @isdefined(gridded)
+            iso_anns = PlotlyBase.PlotlyAttribute[]
+            if fills_on
+                data_all = vcat(data_all[1:1], pd_fill_traces(geom, heat_map_export, gridded), data_all[2:end])
+            end
 
             for i=2:np
                 if field2plot[i] == 1
-                    data_all = vcat( data_all, eval(Symbol(fieldNames[i])) )
+                    layer    = eval(Symbol(fieldNames[i]))
+                    if i == 2
+                        layer = geom !== nothing ? pd_smooth_reaction(layer, geom) : layer
+                        layer === data_reaction && (layer = [GenericTrace(copy(tr.fields)) for tr in layer])
+                        for tr in layer
+                            tr[:visible] = grid == "true"
+                            tr[:meta]    = "pd-reaction"
+                        end
+                    elseif i == 4 && geom !== nothing
+                        layer, iso_anns = pd_isopleth_overlay(data_isopleth, data.Xrange, data.Yrange; sigma = geom.sigma)
+                    end
+                    data_all = vcat( data_all, layer )
                 end
             end
 
-            data_all_disp, layout_disp = apply_pressure_display(data_all, layout, diagType)
+            if @isdefined(data)
+                data_all = vcat(data_all, subduction_geotherm_update!("pd", subd_show, subd_vel, subd_dip, subd_depth, subd_T0, subd_T1, subd_h, subd_d, subd_kappa, subd_rho,
+                                                                      data.Xrange, data.Yrange, diagType))
+                data_all = vcat(data_all, pd_select_anchor(data))
+            end
+
+            layout_iso = layout
+            if !isempty(iso_anns)
+                layout_iso = deepcopy(layout)
+                layout_iso[:annotations] = vcat(layout_iso[:annotations], iso_anns)
+            end
+            data_all_disp, layout_disp = apply_pressure_display(data_all, layout_iso, diagType)
             fig = plot_diagram(data_all_disp,layout_disp)
 
         end
@@ -2107,14 +2143,13 @@ function Tab_PhaseDiagram_Callbacks(app)
     ) do n_clicks, dtb, title
 
         global data_isopleth
-        n = data_isopleth.n_iso
-        if n > 0
+        if @isdefined(data_isopleth) && !isempty(data_isopleth.active)
 
             isoT = data_isopleth.isoT[data_isopleth.active]
             lbl = data_isopleth.label[data_isopleth.active]
 
-            for i = 1:n
-                export_contours_to_txt(isoT[i], lbl[i], "isopleth_"*replace(title, " " => "_")*"_"*lbl[i]*".txt")
+            for i in eachindex(isoT)
+                export_contours_to_txt(isoT[i], lbl[i], output_dir[1]*"isopleth_"*replace(title, " " => "_")*"_"*lbl[i]*".txt")
             end
 
             return "success", ""
@@ -2255,12 +2290,8 @@ function Tab_PhaseDiagram_Callbacks(app)
                 pop!(draw_path_ids)
             end
         elseif bid == "phase-diagram" && is_recording && !isnothing(click_info)
-            sp  = click_info[:points][][:text]
-            tmp = match(r"#([^# ]+)#", sp)
-            if tmp !== nothing
-                pid = parse(Int64, replace(tmp.match, r"#" => ""))
-                push!(draw_path_ids, pid)
-            end
+            pid = pd_click_point_id(click_info)
+            pid === nothing || push!(draw_path_ids, pid)
         end
 
         cols, rows = draw_path_table_data(diagType, draw_path_ids)
@@ -2613,15 +2644,21 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("ox-dropdown",                  "value"),
         Input("of-dropdown",                  "value"),
         Input("other-dropdown",               "value"),
-        State("sys-unit-isopleth-dropdown",   "value"),
-        State("rm-exfluid-isopleth-dropdown", "value"),
+        Input("sys-unit-isopleth-dropdown",   "value"),
+        Input("rm-exfluid-isopleth-dropdown", "value"),
+        Input("input-calc-id",                "n_blur"),
+        Input("input-calc-id",                "n_submit"),
+        Input("input-calc-sf-id",             "n_blur"),
+        Input("input-calc-sf-id",             "n_submit"),
+        Input("input-calc-ox-id",             "n_blur"),
+        Input("input-calc-ox-id",             "n_submit"),
         State("input-calc-id",                "value"),
         State("input-calc-sf-id",             "value"),
         State("input-calc-ox-id",             "value"),
         State("gsub-id",                      "value"),
         State("refinement-levels",            "value"),
         prevent_initial_call = true,
-    ) do phase, ss, em, ox, of, ot, sys, rmf, calc, calc_sf, calc_ox, sub, refLvl
+    ) do phase, ss, em, ox, of, ot, sys, rmf, _cb, _cs, _sb, _ss, _ob, _os, calc, calc_sf, calc_ox, sub, refLvl
 
         global Out_XY, data, addedRefinementLvl
 
@@ -2650,7 +2687,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                 mod = sys == "mol" ? "ph_frac" : (sys == "vol" ? "ph_frac_vol" : "ph_frac_wt")
                 em  = ""
             elseif phase == "ss" && ot == "emMode"
-                mod = sys == "mol" ? "em_frac" : "ph_frac_wt"
+                mod = sys == "mol" ? "em_frac" : "em_frac_wt"
             elseif phase == "ss" && ot == "oxComp"
                 sys_cor = sys == "vol" ? "wt" : sys
                 mod = sys_cor == "mol" ? "ox_comp" : "ox_comp_wt"
@@ -2678,17 +2715,12 @@ function Tab_PhaseDiagram_Callbacks(app)
                 mod, ss, em, ox, of, ot, calc, calc_sf, calc_ox,
                 rmf_b, oxi, Out_XY,
                 Int64(something(sub, 3)), total_refLvl,
-                data, Xrange_t, Yrange_t,
+                data, Xrange_t, Yrange_t;
+                absent = NaN,
             )
 
-            finite_vals = filter(isfinite, Float64.(collect(skipmissing(vec(gridded)))))
-            isempty(finite_vals) && return no_range
-
-            vmin  = round(minimum(finite_vals), digits=4)
-            vmax  = round(maximum(finite_vals), digits=4)
-            vstep = max(round((vmax - vmin) / 10, digits=4), 1e-4)
-
-            return vmin, vstep, vmax
+            rng = iso_auto_range(filter(isfinite, Float64.(collect(skipmissing(vec(gridded))))))
+            return rng === nothing ? no_range : rng
 
         catch _
             return no_range
@@ -2717,9 +2749,11 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("show-full-grid",   "value"),
         State("show-lbl-id",      "value"),
         State("fields-dropdown",  "value"),
+        State("smooth-boundaries-switch", "value"),
+        State("smooth-boundaries-sigma",  "value"),
 
         prevent_initial_call = true,
-    ) do _n, show_reaction, show_mesh, show_labels, fieldname
+    ) do _n, show_reaction, show_mesh, show_labels, fieldname, smooth_bnd, smooth_sigma
 
         global data, gridded, layout, data_reaction, data_isopleth, iso_show, heat_map_export, assemblage_rows, pd_fig_meta, output_dir
 
@@ -2728,12 +2762,23 @@ function Tab_PhaseDiagram_Callbacks(app)
         end
 
         try
+            geom     = smooth_bnd == true ? pd_get_smooth_geometry(something(smooth_sigma, pd_smooth_sigma_default)) : nothing
+            reaction = @isdefined(data_reaction) ? data_reaction : nothing
+            fills    = Tuple{Vector{Matrix{Float64}},NTuple{4,Float64}}[]
+            if geom !== nothing
+                reaction === nothing || (reaction = pd_smooth_reaction(reaction, geom))
+                if is_integer_field(fieldname)
+                    cols  = pd_fill_colors(heat_map_export, pd_domain_values(geom, gridded))
+                    fills = [(p.rings, c) for (p, c) in zip(geom.polys, cols) if c !== nothing]
+                end
+            end
             parts = pd_figure_parts(data = data, gridded = gridded, heat_map = heat_map_export, layout_g = layout,
-                                    reaction = @isdefined(data_reaction) ? data_reaction : nothing,
+                                    reaction = reaction, fills = fills, iso_sigma = geom === nothing ? 0.0 : geom.sigma,
                                     data_isopleth = data_isopleth, iso_show = @isdefined(iso_show) ? iso_show : 0,
                                     assemblage_rows = @isdefined(assemblage_rows) ? assemblage_rows : Dict{String,String}[],
                                     xtitle = pd_fig_meta.xtitle, ytitle = pd_fig_meta.ytitle, diagType = pd_fig_meta.diagType,
-                                    show_reaction = show_reaction == "true", show_mesh = show_mesh == "true", show_labels = show_labels == "true")
+                                    show_reaction = show_reaction == "true", show_mesh = show_mesh == "true", show_labels = show_labels == "true",
+                                    geotherms = SUBD_TRACES["pd"])
             mkpath(output_dir[1])
             base = output_dir[1] * replace(isempty(parts.title) ? "phase_diagram" : parts.title, r"[ /\\:]" => "_")
             path = base * "_" * strip(replace(string(fieldname), r"[^A-Za-z0-9]+" => "_"), '_') * ".svg"
@@ -2750,6 +2795,103 @@ function Tab_PhaseDiagram_Callbacks(app)
             return pd_export_status("Export failed: " * sprint(showerror, e); ok = false)
         end
     end
+
+    callback!(
+        """
+        function(v) {
+            var gd = document.querySelector('#phase-diagram .js-plotly-plot');
+            if (!gd || !gd.data) { return window.dash_clientside.no_update; }
+            var idx = [];
+            gd.data.forEach(function(t, i) { if (t.meta === 'pd-reaction') { idx.push(i); } });
+            if (idx.length) { Plotly.restyle(gd, {visible: v === 'true'}, idx); }
+            return v;
+        }
+        """,
+        app,
+        Output("pd-cs-grid",    "data"),
+        Input("show-grid",      "value"),
+        prevent_initial_call = true,
+    )
+
+    callback!(
+        """
+        function(v) {
+            var on = v === 'true';
+            var el = document.getElementById('show-text-list-id');
+            if (el) { el.style.display = on ? 'block' : 'none'; }
+            var gd = document.querySelector('#phase-diagram .js-plotly-plot');
+            if (!gd || !gd.layout || !gd.layout.annotations) { return window.dash_clientside.no_update; }
+            var upd = {};
+            gd.layout.annotations.forEach(function(a, i) { if (a.name === 'pd-label') { upd['annotations[' + i + '].visible'] = on; } });
+            if (Object.keys(upd).length) { Plotly.relayout(gd, upd); }
+            return v;
+        }
+        """,
+        app,
+        Output("pd-cs-lbl",     "data"),
+        Input("show-lbl-id",    "value"),
+        prevent_initial_call = true,
+    )
+
+    callback!(
+        """
+        function(v) {
+            var on = v === 'true';
+            var gd = document.querySelector('#phase-diagram .js-plotly-plot');
+            if (!gd || !gd.layout || !gd.layout.annotations) { return window.dash_clientside.no_update; }
+            var upd = {};
+            gd.layout.annotations.forEach(function(a, i) {
+                if (a.name !== 'pd-label' || !a.text) { return; }
+                upd['annotations[' + i + '].bgcolor']   = on ? '$(PD_LABEL_BG)' : null;
+                upd['annotations[' + i + '].borderpad'] = on ? 1 : null;
+            });
+            if (Object.keys(upd).length) { Plotly.relayout(gd, upd); }
+            return v;
+        }
+        """,
+        app,
+        Output("pd-cs-lbl-bg",  "data"),
+        Input("lbl-bg-id",      "value"),
+        prevent_initial_call = true,
+    )
+
+    callback!(
+        """
+        function(f1, f2) {
+            var install = function() {
+                ['phase-diagram', 'phase-diagram-te'].forEach(function(id) {
+                    var gd = document.querySelector('#' + id + ' .js-plotly-plot');
+                    if (!gd || !gd.on || gd.__pdTip) { return; }
+                    gd.__pdTip = true;
+                    var tip = document.createElement('div');
+                    tip.style.cssText = 'position:fixed;pointer-events:none;display:none;z-index:2000;background:#566573;' +
+                        'border:1px solid #f8f9f9;color:#ffffff;font:13px "Open Sans",verdana,arial,sans-serif;' +
+                        'padding:3px 6px;border-radius:3px;white-space:nowrap;';
+                    document.body.appendChild(tip);
+                    gd.on('plotly_hover', function(ev) {
+                        var p = ev.points && ev.points[0];
+                        var m = p && p.data && p.data.meta;
+                        if (!m || m.kind !== 'pd-hover' || !p.z) { tip.style.display = 'none'; return; }
+                        var a = m.pa[p.z - 1];
+                        tip.textContent = '#' + p.z + '# ' + (a ? m.asm[a - 1] : '');
+                        tip.style.left = (ev.event.clientX + 14) + 'px';
+                        tip.style.top  = (ev.event.clientY + 14) + 'px';
+                        tip.style.display = 'block';
+                    });
+                    gd.on('plotly_unhover', function() { tip.style.display = 'none'; });
+                });
+            };
+            install();
+            setTimeout(install, 500);
+            return window.dash_clientside.no_update;
+        }
+        """,
+        app,
+        Output("pd-cs-hover",       "data"),
+        Input("phase-diagram",      "figure"),
+        Input("phase-diagram-te",   "figure"),
+        prevent_initial_call = true,
+    )
 
     register_svg_exports!(app, PD_CLASSIFICATION_SVG_EXPORTS)
 

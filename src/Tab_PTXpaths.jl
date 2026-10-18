@@ -15,436 +15,572 @@ function Tab_PTXpaths()
                         dbc_button("Configuration",id="button-config"),
                         dbc_collapse(
                             dbc_card(dbc_cardbody([
-                                dbc_row([
-                                    dbc_col([ 
-                                        html_h1("Thermodynamic database", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 2)),
-                                    ],width=4),
-                                    dbc_col([ 
-                                        dcc_dropdown(   id      = "database-dropdown-ptx",
-                                                        # options = [
-                                                        #     Dict(   "label" => dba.database[i],
-                                                        #             "value" => dba.acronym[i]  )
-                                                        #                 for i=1:size(dba,1)
-                                                        # ],
-                                                        options     = dtb_dict,
-                                                        value       ="mp" ,
-                                                        clearable   = false,
-                                                        multi       = false),
-                                        ]),
-                                    ]),
-                                    html_div([
-                                        dbc_row([
-                                            dbc_col([ 
-                                                html_h1("Dataset", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
-                                            ],width=4),
-                                            dbc_col([ 
-                                                dcc_dropdown(   id      = "dataset-dropdown-ptx",
-                                                                options = [Dict(    "label"     => "ds$(AppData.db_inf.dataset_opt[i])",
-                                                                                    "value"     => AppData.db_inf.dataset_opt[i] )
-                                                                                for i = 1:length(AppData.db_inf.dataset_opt) ],
-                                                                value       = AppData.db_inf.db_dataset,
-                                                                clearable   = false,
-                                                                multi       = false),
-                                            ]),
-                                        ]),
-                                    ], style = Dict("display" => "none"), id  = "dataset-ptx-display-id"), #none, block
-
-                                    html_div([
-                                        dbc_row([
-                                            dbc_col([
-                                                html_h1("Preset", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
-                                            ],width=4),
-                                            dbc_col([
-                                                dcc_dropdown(   id      = "preset-dropdown-ptx",
-                                                                options     = TC_PRESET_OPTIONS,
-                                                                value       = "none",
-                                                                clearable   = false,
-                                                                multi       = false),
-                                            ]),
-                                        ]),
-                                    ], style = Dict("display" => "none"), id  = "preset-dropdown-ptx-container"), #none, block
-
+                                    dbc_tabs([
+                                    dbc_tab(    tab_id      = "ptx-tab-general",
+                                                label       = "General",
+                                                children    = [
+                                        html_div("‎ "),
                                     dbc_row([
-                                        dbc_col([
-                                            html_h1("Phase selection", style = Dict("textAlign" => "center","font-size" => "120%")),
-                                        ],width=4),
-
                                         dbc_col([ 
-                                            dbc_row([  
-                                                html_h1("Solution phase", style = Dict("textAlign" => "center","font-size" => "100%")),
-                                            ]),
-                            
-                                            dbc_row([  
-                                                dbc_button( "", id="button-phase-selection-PTX", color="light", className="me-2", n_clicks=0,
-                                                                style       = Dict( "textAlign"     => "center",
-                                                                                    "font-size"     => "100%",
-                                                                                    "border"        =>"1px grey solid",
-                                                                                    "width"         => "40px" )), 
-                                            ],justify="center"),                                        
-                                            dbc_row([  
-                                                dbc_collapse(
-                                                    dbc_card(dbc_cardbody([
-                    
-                                                            dbc_col([ 
-                    
-                                                                dcc_checklist(
-                                                                    id      = "phase-selection-PTX",
-                                                                    options = [Dict(    "label"     => " "*i,
-                                                                                        "value"     => i )
-                                                                                    for i in AppData.db_inf.ss_name ],
-                                                                    value = AppData.db_inf.ss_name,
-                                                                    # inline = true,
-                                                                ),
-                        
-                                                            ]),
-                    
-                                                        ])),
-                                                        id="collapse-phase-selection-PTX",
-                                                        is_open=false,
-                                                ),
+                                            html_h1("Thermodynamic database", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 2)),
+                                        ],width=4),
+                                        dbc_col([ 
+                                            dcc_dropdown(   id      = "database-dropdown-ptx",
+                                                            # options = [
+                                                            #     Dict(   "label" => dba.database[i],
+                                                            #             "value" => dba.acronym[i]  )
+                                                            #                 for i=1:size(dba,1)
+                                                            # ],
+                                                            options     = dtb_dict,
+                                                            value       ="mp" ,
+                                                            clearable   = false,
+                                                            multi       = false),
                                             ]),
                                         ]),
-
-                                        dbc_col([ 
-                                            dbc_row([  
-                                                html_h1("Pure phase", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                        html_div([
+                                            dbc_row([
+                                                dbc_col([ 
+                                                    html_h1("Dataset", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                                ],width=4),
+                                                dbc_col([ 
+                                                    dcc_dropdown(   id      = "dataset-dropdown-ptx",
+                                                                    options = [Dict(    "label"     => "ds$(AppData.db_inf.dataset_opt[i])",
+                                                                                        "value"     => AppData.db_inf.dataset_opt[i] )
+                                                                                    for i = 1:length(AppData.db_inf.dataset_opt) ],
+                                                                    value       = AppData.db_inf.db_dataset,
+                                                                    clearable   = false,
+                                                                    multi       = false),
+                                                ]),
                                             ]),
-                                    
-                                            dbc_row([  
-                                                dbc_button( "", id="button-pure-phase-selection-PTX", color="light", className="me-2", n_clicks=0,
+                                        ], style = Dict("display" => "none"), id  = "dataset-ptx-display-id"), #none, block
+
+                                        html_div([
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("Preset", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                                ],width=4),
+                                                dbc_col([
+                                                    dcc_dropdown(   id      = "preset-dropdown-ptx",
+                                                                    options     = TC_PRESET_OPTIONS,
+                                                                    value       = "none",
+                                                                    clearable   = false,
+                                                                    multi       = false),
+                                                ]),
+                                            ]),
+                                        ], style = Dict("display" => "none"), id  = "preset-dropdown-ptx-container"), #none, block
+
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Phase selection", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            ],width=4),
+
+                                            dbc_col([ 
+                                                dbc_row([  
+                                                    html_h1("Solution phase", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                ]),
+                            
+                                                dbc_row([  
+                                                    dbc_button( "", id="button-phase-selection-PTX", color="light", className="me-2", n_clicks=0,
                                                                     style       = Dict( "textAlign"     => "center",
                                                                                         "font-size"     => "100%",
                                                                                         "border"        =>"1px grey solid",
                                                                                         "width"         => "40px" )), 
                                                 ],justify="center"),                                        
-                                                dbc_row([ 
-                                                dbc_collapse(
-                                                    dbc_card(dbc_cardbody([
+                                                dbc_row([  
+                                                    dbc_collapse(
+                                                        dbc_card(dbc_cardbody([
                     
-                                                            dbc_col([ 
+                                                                dbc_col([ 
                     
-                                                                dcc_checklist(
-                                                                    id      = "pure-phase-selection-PTX",
-                                                                    options = [],
-                                                                    value = "",
-                                                                    # inline = true,
-                                                                ),
+                                                                    dcc_checklist(
+                                                                        id      = "phase-selection-PTX",
+                                                                        options = [Dict(    "label"     => " "*i,
+                                                                                            "value"     => i )
+                                                                                        for i in AppData.db_inf.ss_name ],
+                                                                        value = AppData.db_inf.ss_name,
+                                                                        # inline = true,
+                                                                    ),
                         
-                                                            ]),
+                                                                ]),
                     
-                                                        ])),
-                                                        id="collapse-pure-phase-selection-PTX",
-                                                        is_open=false,
-                                                ),
+                                                            ])),
+                                                            id="collapse-phase-selection-PTX",
+                                                            is_open=false,
+                                                    ),
+                                                ]),
                                             ]),
-                                        ]),
 
-                                    ],style = Dict("marginTop" => "2px", "marginBottom" => "2px")),
+                                            dbc_col([ 
+                                                dbc_row([  
+                                                    html_h1("Pure phase", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                ]),
+                                    
+                                                dbc_row([  
+                                                    dbc_button( "", id="button-pure-phase-selection-PTX", color="light", className="me-2", n_clicks=0,
+                                                                        style       = Dict( "textAlign"     => "center",
+                                                                                            "font-size"     => "100%",
+                                                                                            "border"        =>"1px grey solid",
+                                                                                            "width"         => "40px" )), 
+                                                    ],justify="center"),                                        
+                                                    dbc_row([ 
+                                                    dbc_collapse(
+                                                        dbc_card(dbc_cardbody([
+                    
+                                                                dbc_col([ 
+                    
+                                                                    dcc_checklist(
+                                                                        id      = "pure-phase-selection-PTX",
+                                                                        options = [],
+                                                                        value = "",
+                                                                        # inline = true,
+                                                                    ),
+                        
+                                                                ]),
+                    
+                                                            ])),
+                                                            id="collapse-pure-phase-selection-PTX",
+                                                            is_open=false,
+                                                    ),
+                                                ]),
+                                            ]),
+
+                                        ],style = Dict("marginTop" => "2px", "marginBottom" => "2px")),
 
 
                                     
-                                    #clinopyroxene for metabasite
-                                    html_div([
-                                        html_div("‎ "),  
+                                        #clinopyroxene for metabasite
+                                        html_div([
+                                            html_div("‎ "),  
+                                            dbc_row([
+                                                dbc_col([ 
+                                                    html_h1("Clinopyroxene", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                                ],width=4),
+                                                dbc_col([ 
+                                                    html_div("Omph"),
+                                                ],width=3),
+                                                dbc_col([ 
+                                                    dbc_row(dbc_switch(label="", id="mb-cpx-switch-ptx", value=false),justify="center"),
+                                                ]),
+                                                dbc_col([ 
+                                                    html_div("Aug"),
+                                                ]),
+                                            ]),
+                                        ], style = Dict("display" => "none"), id      = "switch-cpx-id-ptx"), #none, block
+
+                                        #clinopyroxene for metabasite
+                                        html_div([
+                                            html_div("‎ "),  
+                                            dbc_row([
+                                                dbc_col([ 
+                                                ],width=4),
+
+                                                dbc_col([ 
+                                                    dcc_checklist(
+                                                        id      ="limit-ca-opx-id-ptx",
+                                                        options = [
+                                                            Dict("label" => " Limit Ca-opx", "value" => "CAOPX"),
+                                                        ],
+                                                        value   = [""],
+                                                        inline  = true,
+                                                    ),
+                                                    dbc_tooltip("This activate a smaller range for compositional variable of opx for the igneous database sets",target="limit-ca-opx-id-ptx"),
+
+                                                ]),
+                                                dbc_col([ 
+                                                    html_div([
+                                                    dbc_input(
+                                                        id      = "ca-opx-val-id-ptx",
+                                                        type    = "number", 
+                                                        min     = 0.0, 
+                                                        max     = 1.0, 
+                                                        value   = 0.5   ),
+                                                    ], style = Dict("marginTop" => -5)),
+                                                ],width=3),
+
+                                            ]),
+                                        ], style = Dict("display" => "none"), id      = "switch-opx-id-ptx"), #none, block
+
+                                        # buffer
                                         dbc_row([
                                             dbc_col([ 
-                                                html_h1("Clinopyroxene", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                                html_h1("Buffer", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                             ],width=4),
                                             dbc_col([ 
-                                                html_div("Omph"),
-                                            ],width=3),
-                                            dbc_col([ 
-                                                dbc_row(dbc_switch(label="", id="mb-cpx-switch-ptx", value=false),justify="center"),
-                                            ]),
-                                            dbc_col([ 
-                                                html_div("Aug"),
-                                            ]),
-                                        ]),
-                                    ], style = Dict("display" => "none"), id      = "switch-cpx-id-ptx"), #none, block
-
-                                    #clinopyroxene for metabasite
-                                    html_div([
-                                        html_div("‎ "),  
-                                        dbc_row([
-                                            dbc_col([ 
-                                            ],width=4),
-
-                                            dbc_col([ 
-                                                dcc_checklist(
-                                                    id      ="limit-ca-opx-id-ptx",
-                                                    options = [
-                                                        Dict("label" => " Limit Ca-opx", "value" => "CAOPX"),
-                                                    ],
-                                                    value   = [""],
-                                                    inline  = true,
-                                                ),
-                                                dbc_tooltip("This activate a smaller range for compositional variable of opx for the igneous database sets",target="limit-ca-opx-id-ptx"),
-
-                                            ]),
-                                            dbc_col([ 
-                                                html_div([
-                                                dbc_input(
-                                                    id      = "ca-opx-val-id-ptx",
-                                                    type    = "number", 
-                                                    min     = 0.0, 
-                                                    max     = 1.0, 
-                                                    value   = 0.5   ),
-                                                ], style = Dict("marginTop" => -5)),
-                                            ],width=3),
-
-                                        ]),
-                                    ], style = Dict("display" => "none"), id      = "switch-opx-id-ptx"), #none, block
-
-                                    # buffer
-                                    dbc_row([
-                                        dbc_col([ 
-                                            html_h1("Buffer", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                        ],width=4),
-                                        dbc_col([ 
-                                            dcc_dropdown(   id      = "buffer-dropdown-ptx",
-                                            options = [
-                                                (label = "no buffer",value = "none"),
-                                                (label = "QFM",      value = "qfm"),
-                                                (label = "MW",       value = "mw"), 
-                                                (label = "IW",       value = "iw"), 
-                                                (label = "QIF",      value = "qif"),
-                                                (label = "CCO",      value = "cco"),
-                                                (label = "HM",       value = "hm"), 
-                                                (label = "NNO",      value = "nno"), 
-                                                (label = "aH2O",     value = "aH2O"), 
-                                                (label = "aO2",      value = "aO2"), 
-                                                (label = "aFeO",     value = "aFeO"), 
-                                                (label = "aMgO",     value = "aMgO"), 
-                                                (label = "aAl2O3",   value = "aAl2O3"), 
-                                                (label = "aTiO2",    value = "aTiO2"), 
-                                            ],
-                                            value="none" ,
-                                            clearable   = false,
-                                            multi       = false),
-                                        ]),
-                                    ]),
-
-                                    # buffer
-
-                                    html_div([
-                                        dbc_row([
-                                            dbc_col([ 
-                                                html_h1("Variable buffer", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                            ],width=4),
-                                            dbc_col([ 
-                                                dcc_dropdown(   id      = "variable-buffer-ptx-id",
+                                                dcc_dropdown(   id      = "buffer-dropdown-ptx",
                                                 options = [
-                                                    (label = "true",       value = true ),
-                                                    (label = "false",      value = false),
+                                                    (label = "no buffer",value = "none"),
+                                                    (label = "QFM",      value = "qfm"),
+                                                    (label = "MW",       value = "mw"), 
+                                                    (label = "IW",       value = "iw"), 
+                                                    (label = "QIF",      value = "qif"),
+                                                    (label = "CCO",      value = "cco"),
+                                                    (label = "HM",       value = "hm"), 
+                                                    (label = "NNO",      value = "nno"), 
+                                                    (label = "aH2O",     value = "aH2O"), 
+                                                    (label = "aO2",      value = "aO2"), 
+                                                    (label = "aFeO",     value = "aFeO"), 
+                                                    (label = "aMgO",     value = "aMgO"), 
+                                                    (label = "aAl2O3",   value = "aAl2O3"), 
+                                                    (label = "aTiO2",    value = "aTiO2"), 
                                                 ],
-                                                value       = false ,
+                                                value="none" ,
                                                 clearable   = false,
                                                 multi       = false),
                                             ]),
                                         ]),
-                                    ], style = Dict("display" => "none"), id  = "variable-buffer-display-id"), #none, block
 
+                                        # buffer
 
-                                    #solver
-                                    dbc_row([
-                                        dbc_col([ 
-                                            html_h1("Solver", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                        ],width=4),
-                                        dbc_col([ 
-                                            dcc_dropdown(   id      = "solver-dropdown-ptx",
-                                            options = [
-                                                (label = "PGE",         value = "pge"),
-                                                (label = "Legacy",      value = "lp"),
-                                                (label = "Hybrid",      value = "hyb")
-                                            ],
-                                            value="lp" ,
-                                            clearable   = false,
-                                            multi   = false),
-                                        ]),
+                                        html_div([
+                                            dbc_row([
+                                                dbc_col([ 
+                                                    html_h1("Variable buffer", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                ],width=4),
+                                                dbc_col([ 
+                                                    dcc_dropdown(   id      = "variable-buffer-ptx-id",
+                                                    options = [
+                                                        (label = "true",       value = true ),
+                                                        (label = "false",      value = false),
+                                                    ],
+                                                    value       = false ,
+                                                    clearable   = false,
+                                                    multi       = false),
+                                                ]),
+                                            ]),
+                                        ], style = Dict("display" => "none"), id  = "variable-buffer-display-id"), #none, block
                                     ]),
-                                    html_div([
+                                    dbc_tab(    tab_id      = "ptx-tab-te",
+                                                label       = "Trace elements",
+                                                children    = [
+                                        html_div("‎ "),
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("TE predictive model", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                ], width=6),
+                                                dbc_col([
+                                                    dcc_dropdown(   id      = "tepm-dropdown-ptx",
+                                                    options = [
+                                                        (label = "true",         value = "true"),
+                                                        (label = "false",        value = "false"),
+                                                    ],
+                                                    value       = "false",
+                                                    clearable   = false,
+                                                    multi       = false),
+                                                ]),
+                                            ]),
+                                        html_div([
+                                dbc_row([
+                                    dbc_col([
+                                        html_h1("Kd's database", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
+                                    ],width=6),
+                                    dbc_col([
+                                        dcc_dropdown(   id      = "kds-dropdown-ptx",
+                                                        options = [Dict("label" => "OL", "value" => "OL"),
+                                                                   Dict("label" => "CO", "value" => "CO"),
+                                                                   Dict("label" => "Yak25", "value" => "Yak25")],
+                                                        value   = "OL",
+                                                        clearable = false,
+                                                        multi   = false),
+                                    ]),
+                                ]),
+
+                                dbc_row([
+                                    dbc_col([
+                                        html_h1("Zr saturation", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
+                                    ],width=6),
+                                    dbc_col([
+                                        dcc_dropdown(   id      = "zrsat-dropdown-ptx",
+                                                        options = [
+                                                            (label = "none",                        value = "none"),
+                                                            (label = "Watson & Harrison (1983)",    value = "WH"),
+                                                            (label = "Boehnke et al. (2013)",       value = "B"),
+                                                            (label = "Crisp and Berry (2022)",      value = "CB"),
+                                                        ],
+                                                        value   = "none",
+                                                        clearable = false,
+                                                        multi   = false),
+                                    ]),
+                                ]),
+
+                                dbc_row([
+                                    dbc_col([
+                                        html_h1("S saturation", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
+                                    ],width=6),
+                                    dbc_col([
+                                        dcc_dropdown(   id      = "ssat-dropdown-ptx",
+                                                        options = [
+                                                            (label = "none",                value = "none"),
+                                                            (label = "Liu et al., 2007",    value = "Liu07"),
+                                                            (label = "O'Neill, 2021",       value = "Oneill21"),
+                                                        ],
+                                                        value   = "none",
+                                                        clearable = false,
+                                                        multi   = false),
+                                    ]),
+                                ]),
+
+                                dbc_row([
+                                    dbc_col([
+                                        html_h1("P₂O₅ saturation", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
+                                    ],width=6),
+                                    dbc_col([
+                                        dcc_dropdown(   id      = "P2O5sat-dropdown-ptx",
+                                                        options = [
+                                                            (label = "none",                            value = "none"),
+                                                            (label = "Klein et al., 2026",              value = "Klein26"),
+                                                            (label = "Tollari et al., 2006",            value = "Tollari06"),
+                                                            (label = "Bea et al., 1992 (after HW84)",   value = "HWBea92"),
+                                                        ],
+                                                        value   = "none",
+                                                        clearable = false,
+                                                        multi   = false),
+                                    ]),
+                                ]),
+
+                                dbc_row([
+                                    dbc_col([
+                                        html_h1("CO₂ saturation", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
+                                    ],width=6),
+                                    dbc_col([
+                                        dcc_dropdown(   id      = "co2sat-dropdown-ptx",
+                                                        options = [
+                                                            (label = "none",            value = "none"),
+                                                            (label = "Sun & Yao, 2026", value = "SY26"),
+                                                        ],
+                                                        value   = "none",
+                                                        clearable = false,
+                                                        multi   = false),
+                                    ]),
+                                ]),
+
+                                dbc_row([
+                                    dbc_col([
+                                        html_h1("Monazite saturation", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
+                                    ],width=6),
+                                    dbc_col([
+                                        dcc_dropdown(   id      = "mnzsat-dropdown-ptx",
+                                                        options = [
+                                                            (label = "none",                  value = "none"),
+                                                            (label = "Stepanov et al., 2012", value = "Stepanov12"),
+                                                            (label = "Montel, 1993",          value = "Montel93"),
+                                                            (label = "Maimaiti et al., 2019", value = "Maimaiti19"),
+                                                        ],
+                                                        value   = "none",
+                                                        clearable = false,
+                                                        multi   = false),
+                                    ]),
+                                ]),
+                                        ], style = Dict("display" => "none"), id = "tepm-options-ptx"), #none, block
+                                    ]),
+                                    dbc_tab(    tab_id      = "ptx-tab-seismic",
+                                                label       = "Seismic properties",
+                                                children    = [
+                                        html_div("‎ "),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Seismic averaging scheme", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ]),
+                                            dbc_col([
+                                                dcc_dropdown(   id      = "sas-dropdown-ptx",
+                                                options = [
+                                                    (label = "VRH",         value =  0),
+                                                    (label = "HS",          value =  1),
+                                                ],
+                                                value       = 0,
+                                                clearable   = false,
+                                                multi       = false),
+                                            ]),
+                                        ]),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Weight factor", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ]),
+                                            dbc_col([
+                                                dbc_input(
+                                                    id      = "wf-id-ptx",
+                                                    type    = "number",
+                                                    min     = 0.0,
+                                                    max     = 1.0,
+                                                    value   = 0.5   ),
+                                            ]),
+                                        ]),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Seismic correction", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ]),
+                                            dbc_col([
+                                                dcc_dropdown(   id      = "seismic-cor-dropdown-ptx",
+                                                options = [
+                                                    (label = "true",         value = true),
+                                                    (label = "false",        value = false),
+                                                ],
+                                                value       = false,
+                                                clearable   =  false,
+                                                multi       =  false),
+                                            ]),
+                                        ]),
+                                        html_div([
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("Aspect ratio", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                                ]),
+                                                dbc_col([
+                                                    dbc_row([
+                                                    dbc_col([
+                                                            dbc_input(
+                                                                id      ="aspect-ratio-id-ptx",
+                                                                type    ="number",
+                                                                min     = 0.0,
+                                                                max     = 1.0,
+                                                                value   = 0.3   ),
+                                                        ]),
+                                                    ]),
+                                                ]),
+                                            ]),
+                                        ], style = Dict("display" => "none"), id      = "aspect-ratio-row-id-ptx"), #none, block
+                                        html_div([
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("Anelastic correction", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                                ]),
+                                                dbc_col([
+                                                    dcc_dropdown(   id      = "anelastic-cor-dropdown-ptx",
+                                                    options = [
+                                                        (label = "true",         value = true),
+                                                        (label = "false",        value = false),
+                                                    ],
+                                                    value       = false,
+                                                    clearable   =  false,
+                                                    multi       =  false),
+                                                ]),
+                                            ]),
+                                        ], style = Dict("display" => "none"), id      = "anelastic-toggle-row-id-ptx"), #none, block
+                                        html_div([
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("Anelastic model", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                                ]),
+                                                dbc_col([
+                                                    dcc_dropdown(   id      = "seismic-water-dropdown-ptx",
+                                                    options = [
+                                                        (label = "Dry mantle",             value =  0),
+                                                        (label = "Damp mantle",            value =  1),
+                                                        (label = "Wet mantle (saturated)", value =  2),
+                                                    ],
+                                                    value       = 0,
+                                                    clearable   =  false,
+                                                    multi       =  false),
+                                                ]),
+                                            ]),
+                                        ], style = Dict("display" => "none"), id      = "anelastic-cor-row-id-ptx"), #none, block
+                                        html_div([
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("Shallow correction", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                                ]),
+                                                dbc_col([
+                                                    dcc_dropdown(   id      = "shallow-cor-dropdown-ptx",
+                                                    options = [
+                                                        (label = "true",         value = true),
+                                                        (label = "false",        value = false),
+                                                    ],
+                                                    value       = false,
+                                                    clearable   =  false,
+                                                    multi       =  false),
+                                                ]),
+                                            ]),
+                                        ], style = Dict("display" => "none"), id      = "shallow-cor-row-id-ptx"), #none, block
+                                        html_div([
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("Fluid as melt", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                                ]),
+                                                dbc_col([
+                                                    dcc_dropdown(   id      = "fluid-as-melt-dropdown-ptx",
+                                                    options = [
+                                                        (label = "true",         value = true),
+                                                        (label = "false",        value = false),
+                                                    ],
+                                                    value       = false,
+                                                    clearable   =  false,
+                                                    multi       =  false),
+                                                ]),
+                                            ]),
+                                        ], style = Dict("display" => "none"), id      = "fluid-as-melt-row-id-ptx"), #none, block
+                                    ]),
+                                    dbc_tab(    tab_id      = "ptx-tab-solver",
+                                                label       = "Solver",
+                                                children    = [
+                                        html_div("‎ "),
+                                        #solver
                                         dbc_row([
                                             dbc_col([ 
-                                                html_h1("Optimizer", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                html_h1("Solver", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                             ],width=4),
                                             dbc_col([ 
-                                                dcc_dropdown(   id      = "optimizer-dropdown-ptx",
+                                                dcc_dropdown(   id      = "solver-dropdown-ptx",
                                                 options = [
-                                                    (label = "NLopt",       value = "nlopt"),
-                                                    (label = "Nullspace",   value = "ns")
+                                                    (label = "PGE",         value = "pge"),
+                                                    (label = "Legacy",      value = "lp"),
+                                                    (label = "Hybrid",      value = "hyb")
                                                 ],
-                                                value="ns" ,
+                                                value="lp" ,
                                                 clearable   = false,
                                                 multi   = false),
                                             ]),
                                         ]),
-                                    ], style = Dict("display" => "none"), id  = "display-optimizer-ptx-id"), #none, block
-
-                                    dbc_row([
-                                        dbc_col([
-                                            html_h1("Specific Cp", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                        ],width=4),
-                                        dbc_col([
-                                            dcc_dropdown(   id      = "scp-dropdown-ptx",
-                                            options = [
-                                                (label = "G0 (no latent heat)",         value =  0),
-                                                (label = "G_system (with latent heat)", value =  1),
-                                            ],
-                                            value       = 0,
-                                            clearable   = false,
-                                            multi       = false),
-                                        ]),
-                                    ]),
-                                    #verbose
-                                    dbc_row([
-                                        dbc_col([
-                                            html_h1("Verbose", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                        ],width=4),
-                                        dbc_col([
-                                            dcc_dropdown(   id      = "verbose-dropdown-ptx",
-                                            options = [
-                                                (label = "none",        value = -1),
-                                                (label = "light",       value =  0),
-                                                (label = "full",        value =  1),
-                                            ],
-                                            value       = -1,
-                                            clearable   = false,
-                                            multi       = false),
-                                        ]),
-                                    ]),
-
-                                    html_hr(),
-                                    dbc_row([
-                                        dbc_col([
-                                            html_h1("Seismic averaging scheme", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
-                                        ]),
-                                        dbc_col([
-                                            dcc_dropdown(   id      = "sas-dropdown-ptx",
-                                            options = [
-                                                (label = "VRH",         value =  0),
-                                                (label = "HS",          value =  1),
-                                            ],
-                                            value       = 0,
-                                            clearable   = false,
-                                            multi       = false),
-                                        ]),
-                                    ]),
-                                    dbc_row([
-                                        dbc_col([
-                                            html_h1("Weight factor", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
-                                        ]),
-                                        dbc_col([
-                                            dbc_input(
-                                                id      = "wf-id-ptx",
-                                                type    = "number",
-                                                min     = 0.0,
-                                                max     = 1.0,
-                                                value   = 0.5   ),
-                                        ]),
-                                    ]),
-                                    dbc_row([
-                                        dbc_col([
-                                            html_h1("Seismic correction", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
-                                        ]),
-                                        dbc_col([
-                                            dcc_dropdown(   id      = "seismic-cor-dropdown-ptx",
-                                            options = [
-                                                (label = "true",         value = true),
-                                                (label = "false",        value = false),
-                                            ],
-                                            value       = false,
-                                            clearable   =  false,
-                                            multi       =  false),
-                                        ]),
-                                    ]),
-                                    html_div([
-                                        dbc_row([
-                                            dbc_col([
-                                                html_h1("Aspect ratio", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
-                                            ]),
-                                            dbc_col([
-                                                dbc_row([
-                                                dbc_col([
-                                                        dbc_input(
-                                                            id      ="aspect-ratio-id-ptx",
-                                                            type    ="number",
-                                                            min     = 0.0,
-                                                            max     = 1.0,
-                                                            value   = 0.3   ),
-                                                    ]),
+                                        html_div([
+                                            dbc_row([
+                                                dbc_col([ 
+                                                    html_h1("Optimizer", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                ],width=4),
+                                                dbc_col([ 
+                                                    dcc_dropdown(   id      = "optimizer-dropdown-ptx",
+                                                    options = [
+                                                        (label = "NLopt",       value = "nlopt"),
+                                                        (label = "Nullspace",   value = "ns")
+                                                    ],
+                                                    value="ns" ,
+                                                    clearable   = false,
+                                                    multi   = false),
                                                 ]),
                                             ]),
-                                        ]),
-                                    ], style = Dict("display" => "none"), id      = "aspect-ratio-row-id-ptx"), #none, block
-                                    html_div([
+                                        ], style = Dict("display" => "none"), id  = "display-optimizer-ptx-id"), #none, block
+
                                         dbc_row([
                                             dbc_col([
-                                                html_h1("Anelastic correction", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
-                                            ]),
+                                                html_h1("Specific Cp", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ],width=4),
                                             dbc_col([
-                                                dcc_dropdown(   id      = "anelastic-cor-dropdown-ptx",
+                                                dcc_dropdown(   id      = "scp-dropdown-ptx",
                                                 options = [
-                                                    (label = "true",         value = true),
-                                                    (label = "false",        value = false),
-                                                ],
-                                                value       = false,
-                                                clearable   =  false,
-                                                multi       =  false),
-                                            ]),
-                                        ]),
-                                    ], style = Dict("display" => "none"), id      = "anelastic-toggle-row-id-ptx"), #none, block
-                                    html_div([
-                                        dbc_row([
-                                            dbc_col([
-                                                html_h1("Anelastic model", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
-                                            ]),
-                                            dbc_col([
-                                                dcc_dropdown(   id      = "seismic-water-dropdown-ptx",
-                                                options = [
-                                                    (label = "Dry mantle",             value =  0),
-                                                    (label = "Damp mantle",            value =  1),
-                                                    (label = "Wet mantle (saturated)", value =  2),
+                                                    (label = "G0 (no latent heat)",         value =  0),
+                                                    (label = "G_system (with latent heat)", value =  1),
                                                 ],
                                                 value       = 0,
-                                                clearable   =  false,
-                                                multi       =  false),
+                                                clearable   = false,
+                                                multi       = false),
                                             ]),
                                         ]),
-                                    ], style = Dict("display" => "none"), id      = "anelastic-cor-row-id-ptx"), #none, block
-                                    html_div([
+                                        #verbose
                                         dbc_row([
                                             dbc_col([
-                                                html_h1("Shallow correction", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
-                                            ]),
+                                                html_h1("Verbose", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ],width=4),
                                             dbc_col([
-                                                dcc_dropdown(   id      = "shallow-cor-dropdown-ptx",
+                                                dcc_dropdown(   id      = "verbose-dropdown-ptx",
                                                 options = [
-                                                    (label = "true",         value = true),
-                                                    (label = "false",        value = false),
+                                                    (label = "none",        value = -1),
+                                                    (label = "light",       value =  0),
+                                                    (label = "full",        value =  1),
                                                 ],
-                                                value       = false,
-                                                clearable   =  false,
-                                                multi       =  false),
+                                                value       = -1,
+                                                clearable   = false,
+                                                multi       = false),
                                             ]),
                                         ]),
-                                    ], style = Dict("display" => "none"), id      = "shallow-cor-row-id-ptx"), #none, block
-                                    html_div([
-                                        dbc_row([
-                                            dbc_col([
-                                                html_h1("Fluid as melt", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
-                                            ]),
-                                            dbc_col([
-                                                dcc_dropdown(   id      = "fluid-as-melt-dropdown-ptx",
-                                                options = [
-                                                    (label = "true",         value = true),
-                                                    (label = "false",        value = false),
-                                                ],
-                                                value       = false,
-                                                clearable   =  false,
-                                                multi       =  false),
-                                            ]),
-                                        ]),
-                                    ], style = Dict("display" => "none"), id      = "fluid-as-melt-row-id-ptx"), #none, block
+                                    ]),
+                                    ], id = "ptx-config-tabs"),
 
                                 ])),
                                 id="collapse-config",
@@ -713,111 +849,9 @@ function Tab_PTXpaths()
                         ]),
                     ], id="classification-diagram-options-container-ptx", style = Dict("display" => "none"))
 
-                dbc_row([dbc_button("Trace Elements",id="button-te-ptx"),
+                dbc_row([dbc_button("Trace-element composition",id="button-te-ptx"),
                 dbc_collapse(
                     dbc_card(dbc_cardbody([
-
-                        dbc_row([
-                            dbc_col([
-                                html_h1("Kd's database", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
-                            ],width=6),
-                            dbc_col([
-                                dcc_dropdown(   id      = "kds-dropdown-ptx",
-                                                options = [Dict("label" => "OL", "value" => "OL"),
-                                                           Dict("label" => "CO", "value" => "CO"),
-                                                           Dict("label" => "Yak25", "value" => "Yak25")],
-                                                value   = "OL",
-                                                clearable = false,
-                                                multi   = false),
-                            ]),
-                        ]),
-
-                        dbc_row([
-                            dbc_col([
-                                html_h1("Zr saturation", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
-                            ],width=6),
-                            dbc_col([
-                                dcc_dropdown(   id      = "zrsat-dropdown-ptx",
-                                                options = [
-                                                    (label = "none",                        value = "none"),
-                                                    (label = "Watson & Harrison (1983)",    value = "WH"),
-                                                    (label = "Boehnke et al. (2013)",       value = "B"),
-                                                    (label = "Crisp and Berry (2022)",      value = "CB"),
-                                                ],
-                                                value   = "none",
-                                                clearable = false,
-                                                multi   = false),
-                            ]),
-                        ]),
-
-                        dbc_row([
-                            dbc_col([
-                                html_h1("S saturation", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
-                            ],width=6),
-                            dbc_col([
-                                dcc_dropdown(   id      = "ssat-dropdown-ptx",
-                                                options = [
-                                                    (label = "none",                value = "none"),
-                                                    (label = "Liu et al., 2007",    value = "Liu07"),
-                                                    (label = "O'Neill, 2021",       value = "Oneill21"),
-                                                ],
-                                                value   = "none",
-                                                clearable = false,
-                                                multi   = false),
-                            ]),
-                        ]),
-
-                        dbc_row([
-                            dbc_col([
-                                html_h1("P₂O₅ saturation", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
-                            ],width=6),
-                            dbc_col([
-                                dcc_dropdown(   id      = "P2O5sat-dropdown-ptx",
-                                                options = [
-                                                    (label = "none",                            value = "none"),
-                                                    (label = "Klein et al., 2026",              value = "Klein26"),
-                                                    (label = "Tollari et al., 2006",            value = "Tollari06"),
-                                                    (label = "Bea et al., 1992 (after HW84)",   value = "HWBea92"),
-                                                ],
-                                                value   = "none",
-                                                clearable = false,
-                                                multi   = false),
-                            ]),
-                        ]),
-
-                        dbc_row([
-                            dbc_col([
-                                html_h1("CO₂ saturation", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
-                            ],width=6),
-                            dbc_col([
-                                dcc_dropdown(   id      = "co2sat-dropdown-ptx",
-                                                options = [
-                                                    (label = "none",            value = "none"),
-                                                    (label = "Sun & Yao, 2026", value = "SY26"),
-                                                ],
-                                                value   = "none",
-                                                clearable = false,
-                                                multi   = false),
-                            ]),
-                        ]),
-
-                        dbc_row([
-                            dbc_col([
-                                html_h1("Monazite saturation", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
-                            ],width=6),
-                            dbc_col([
-                                dcc_dropdown(   id      = "mnzsat-dropdown-ptx",
-                                                options = [
-                                                    (label = "none",                  value = "none"),
-                                                    (label = "Stepanov et al., 2012", value = "Stepanov12"),
-                                                    (label = "Montel, 1993",          value = "Montel93"),
-                                                    (label = "Maimaiti et al., 2019", value = "Maimaiti19"),
-                                                ],
-                                                value   = "none",
-                                                clearable = false,
-                                                multi   = false),
-                            ]),
-                        ]),
 
                         html_div("‎ "),
                         dcc_upload(
@@ -985,21 +1019,6 @@ function Tab_PTXpaths()
                                             ]),
                                         ]),
 
-                                        dbc_row([
-                                            dbc_col([
-                                                html_h1("TE predictive model", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                            ], width=6),
-                                            dbc_col([
-                                                dcc_dropdown(   id      = "tepm-dropdown-ptx",
-                                                options = [
-                                                    (label = "true",         value = "true"),
-                                                    (label = "false",        value = "false"),
-                                                ],
-                                                value       = "false",
-                                                clearable   = false,
-                                                multi       = false),
-                                            ]),
-                                        ]),
                                         # unit basis for assimilation blending and melt/solid extraction mass balance
                                         # -- only meaningful for fractional melting/crystallization, so only shown then
                                         html_div([

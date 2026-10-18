@@ -88,6 +88,19 @@ function Tab_TraceElement()
                             dbc_collapse(
                                 dbc_card(dbc_cardbody([
                                     dbc_row([
+                                        dbc_switch(label="Clean boundaries", id="smooth-boundaries-switch-te", value=true),
+                                    ]),
+                                    dbc_row([
+                                        html_div("Smoothing (cells)", style = Dict("font-size" => "80%", "color" => "grey")),
+                                        dcc_slider( id      = "smooth-boundaries-sigma-te",
+                                                    min     = 0.0,
+                                                    max     = 5.0,
+                                                    step    = 0.25,
+                                                    value   = 2.5,
+                                                    marks   = Dict(string(i) => string(i) for i in 0:5),
+                                                    tooltip = Dict("placement" => "bottom")),
+                                    ]),
+                                    dbc_row([
                                         dbc_button("Export svg", 
                                                     id          = "export-layers-te", color="light",  n_clicks=0,
                                                     style       =  Dict( "textAlign"    => "center",
@@ -511,6 +524,19 @@ function Tab_TraceElement()
                                                         clearable   =  false,
                                                         multi       =  false),
                                     ]), 
+                                ]),
+
+                                dbc_row([
+                                    dbc_col([
+                                        html_h1("White label background", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                    ], width=5),
+                                    dbc_col([
+                                        dcc_dropdown(   id          = "lbl-bg-id-te",
+                                                        options     =  ["true","false"],
+                                                        value       = "false" ,
+                                                        clearable   =  false,
+                                                        multi       =  false),
+                                    ]),
                                 ]),
 
                                 html_div("‎ "),
@@ -962,6 +988,7 @@ function Tab_TraceElement()
 
                                     ])),id="collapse-isopleths-te",is_open=true),
                             ]),
+                            subduction_geotherm_tab("-te"),
 
                         ])
 

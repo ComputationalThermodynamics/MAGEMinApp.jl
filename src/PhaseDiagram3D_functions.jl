@@ -586,12 +586,208 @@ function pd3d_contours(verts, faces, C, levels, lw)
     return traces, (lx, ly, lz, lt)
 end
 
+const PD3D_MESH_CACHE     = Dict{Any,Any}()
+const PD3D_MESH_CACHE_ID  = Ref(0)
+const PD3D_MESH_CACHE_MAX = 200
+
+function pd3d_cached(f, st::PD3D_state, key)
+    if PD3D_MESH_CACHE_ID[] != st.id || length(PD3D_MESH_CACHE) >= PD3D_MESH_CACHE_MAX
+        empty!(PD3D_MESH_CACHE)
+        PD3D_MESH_CACHE_ID[] = st.id
+    end
+    return get!(f, PD3D_MESH_CACHE, key)
+end
+
+pd3d_mesh_cached(st::PD3D_state, spec, iso::Real) = pd3d_cached(st, (:mesh, spec, Float64(iso))) do
+    pd3d_mesh(st, pd3d_field(st, spec...), iso)
+end
+
 function pd3d_surface_mesh(st::PD3D_state, o)
-    A            = pd3d_field(st, o.a...)
-    verts, faces = pd3d_isosurface(st, A, o.iso)
-    Bv           = pd3d_interp(st, pd3d_field(st, o.b...), verts)
-    verts, faces, (Bv,) = pd3d_compact(verts, faces, (Bv,))
-    return verts, faces, Bv
+    return pd3d_cached(st, (:surface, o.a, Float64(o.iso), o.b)) do
+        A            = pd3d_field(st, o.a...)
+        verts, faces = pd3d_isosurface(st, A, o.iso)
+        Bv           = pd3d_interp(st, pd3d_field(st, o.b...), verts)
+        verts, faces, (Bv,) = pd3d_compact(verts, faces, (Bv,))
+        (verts, faces, Bv)
+    end
+end
+
+function pd3d_field_levels(o, lo, hi)
+    imin = isnothing(o.isomin) ? lo : Float64(o.isomin)
+    imax = isnothing(o.isomax) ? hi : Float64(o.isomax)
+    ns   = isnothing(o.nsurf)  ? 5  : Int(o.nsurf)
+    return ns == 1 ? [(imin + imax) / 2] : collect(range(imin, imax, length = ns))
+end
+
+const PD3D_PTX_MAX_LEVELS = 200
+
+function pd3d_levels(lo, hi, vmin, vmax, step, values_str)
+    lo, hi = minmax(Float64(lo), Float64(hi))
+    tol    = 1e-9 * max(hi - lo, eps())
+    lev    = Float64[]
+    trunc  = false
+    if all(v -> v isa Real && isfinite(v), (vmin, vmax, step)) && step > 0 && vmax >= vmin
+        n     = floor(Int, (vmax - vmin) / step + 1e-9) + 1
+        trunc = n > PD3D_PTX_MAX_LEVELS
+        append!(lev, Float64(vmin) .+ Float64(step) .* (0:min(n, PD3D_PTX_MAX_LEVELS) - 1))
+    end
+    if values_str isa AbstractString
+        for s in split(values_str, r"[,;\s]+"; keepempty = false)
+            v = tryparse(Float64, s)
+            isnothing(v) || isfinite(v) && push!(lev, v)
+        end
+    end
+    sort!(filter!(v -> lo - tol <= v <= hi + tol, lev))
+    out = Float64[]
+    for v in lev
+        (isempty(out) || v - out[end] > tol) && push!(out, clamp(v, lo, hi))
+    end
+    trunc |= length(out) > PD3D_PTX_MAX_LEVELS
+    return first(out, PD3D_PTX_MAX_LEVELS), trunc
+end
+
+function pd3d_nice_range(lo, hi; n = 6)
+    lo, hi = minmax(Float64(lo), Float64(hi))
+    hi - lo <= 0 && return lo, hi, 1.0
+    raw  = (hi - lo) / n
+    mag  = 10.0^floor(log10(raw))
+    step = first(m * mag for m in (1, 2, 5, 10) if m * mag >= raw)
+    vmin = ceil(lo / step - 1e-9) * step
+    vmax = floor(hi / step + 1e-9) * step
+    return round(vmin, sigdigits = 12), round(vmax, sigdigits = 12), round(step, sigdigits = 12)
+end
+
+function pd3d_ptx_defaults(st::PD3D_state)
+    P = pd3d_nice_range(display_pressure(st.Pv[1]), display_pressure(st.Pv[end]))
+    T = pd3d_nice_range(st.Tv[1], st.Tv[end])
+    xlo, xhi = minmax(st.Xv[1], st.Xv[end])
+    X = (ceil(xlo * 10 - 1e-9) / 10, floor(xhi * 10 + 1e-9) / 10, 0.1)
+    return P, T, X
+end
+
+function pd3d_ptx_lines(meshes, k, levels, shown)
+    xs, ys, zs, tx = Union{Float64,Nothing}[], Union{Float64,Nothing}[], Union{Float64,Nothing}[], String[]
+    lx, ly, lz, lt = Float64[], Float64[], Float64[], String[]
+    prep = map(meshes) do (verts, faces)
+        C = [v[k] for v in verts]
+        (verts, faces, C, [min(C[f[1]], C[f[2]], C[f[3]]) for f in faces], [max(C[f[1]], C[f[2]], C[f[3]]) for f in faces])
+    end
+    for (level, lbl) in zip(levels, shown)
+        n0 = length(xs)
+        for (verts, faces, C, fmin, fmax) in prep, (i, f) in enumerate(faces)
+            (fmin[i] < level <= fmax[i]) || continue
+            pts = NTuple{3,Float64}[]
+            for (a, b) in ((f[1], f[2]), (f[2], f[3]), (f[3], f[1]))
+                ca, cb = C[a], C[b]
+                if (ca >= level) != (cb >= level)
+                    t = (level - ca) / (cb - ca)
+                    push!(pts, Tuple(verts[a] .+ t .* (verts[b] .- verts[a])))
+                end
+            end
+            length(pts) == 2 || continue
+            append!(xs, [display_pressure(pts[1][1]), display_pressure(pts[2][1]), nothing])
+            append!(ys, [pts[1][2], pts[2][2], nothing])
+            append!(zs, [pts[1][3], pts[2][3], nothing])
+            append!(tx, [lbl, lbl, ""])
+        end
+        length(xs) > n0 || continue
+        m = n0 + 3 * ((length(xs) - n0) ÷ 6) + 1
+        push!(lx, xs[m]); push!(ly, ys[m]); push!(lz, zs[m]); push!(lt, lbl)
+    end
+    return (xs, ys, zs, tx), (lx, ly, lz, lt)
+end
+
+function pd3d_ptx_meshes(st::PD3D_state, o)
+    meshes  = Tuple{Any,Any}[]
+    targets = something(o.ptx.targets, String[])
+    if "surface" in targets && "surface" in o.layers
+        verts, faces, _ = pd3d_surface_mesh(st, o)
+        isempty(faces) || push!(meshes, (verts, faces))
+    end
+    if "field" in targets && "field" in o.layers && o.mode == "isosurface"
+        A      = pd3d_field(st, o.f...)
+        lo, hi = pd3d_range(A)
+        if any(isfinite, A) && lo < hi
+            for lev in pd3d_field_levels(o, lo, hi)
+                verts, faces, _ = pd3d_mesh_cached(st, o.f, lev)
+                isempty(faces) || push!(meshes, (verts, faces))
+            end
+        end
+    end
+    if "phases" in targets && "phases" in o.layers
+        for ph in something(o.phases, String[])
+            verts, faces, _ = pd3d_mesh_cached(st, ("ph_frac_vol", ph, ""), o.eps)
+            isempty(faces) || push!(meshes, (verts, faces))
+        end
+    end
+    return meshes
+end
+
+pd3d_cross(a, b) = [a[2] * b[3] - a[3] * b[2], a[3] * b[1] - a[1] * b[3], a[1] * b[2] - a[2] * b[1]]
+
+function pd3d_tube_mesh(xs, ys, zs, tx, spans, r)
+    X, Y, Z, T = Float64[], Float64[], Float64[], String[]
+    I, J, K    = Int[], Int[], Int[]
+    s          = collect(spans)
+    for a in 1:3:length(xs) - 2
+        p0 = [xs[a],   ys[a],   zs[a]]   ./ s
+        p1 = [xs[a+1], ys[a+1], zs[a+1]] ./ s
+        d  = p1 .- p0
+        n  = sqrt(sum(abs2, d))
+        n > 1e-12 || continue
+        d ./= n
+        ref = abs(d[1]) < 0.9 ? [1.0, 0.0, 0.0] : [0.0, 1.0, 0.0]
+        u   = pd3d_cross(d, ref); u ./= sqrt(sum(abs2, u))
+        w   = pd3d_cross(d, u)
+        base = length(X)
+        for p in (p0, p1), j in 0:3
+            ang = j * pi / 2 + pi / 4
+            q   = (p .+ r .* (cos(ang) .* u .+ sin(ang) .* w)) .* s
+            push!(X, q[1]); push!(Y, q[2]); push!(Z, q[3]); push!(T, tx[a])
+        end
+        for j in 0:3
+            jn = (j + 1) % 4
+            push!(I, base + j);  push!(J, base + jn);     push!(K, base + 4 + j)
+            push!(I, base + jn); push!(J, base + 4 + jn); push!(K, base + 4 + j)
+        end
+    end
+    return X, Y, Z, T, I, J, K
+end
+
+function pd3d_ptx_traces(st::PD3D_state, o)
+    q      = o.ptx
+    traces = GenericTrace[]
+    meshes = pd3d_ptx_meshes(st, o)
+    isempty(meshes) && return traces, "P-T-X lines: no surface to draw them on (check the targets and layers)"
+    parts  = String[]
+    Pd     = display_pressure(st.Pv)
+    spans  = max.((abs(Pd[end] - Pd[1]), abs(st.Tv[end] - st.Tv[1]), abs(st.Xv[end] - st.Xv[1])), 1e-12)
+    for (ax, k, name) in ((q.p, 1, "P"), (q.t, 2, "T"), (q.x, 3, "X"))
+        isempty(ax.levels) && continue
+        shown      = k == 1 ? display_pressure(ax.levels) : ax.levels
+        lbls       = [string(round(v, sigdigits = 6)) for v in shown]
+        (xyz, lab) = pd3d_ptx_lines(meshes, k, ax.levels, lbls)
+        any(!isnothing, xyz[1]) || (push!(parts, "$name 0 visible"); continue)
+        unit = k == 1 ? " $(pressure_unit_label())" : (k == 2 ? " °C" : "")
+        text = [isempty(t) ? "" : "$name = $t$unit" for t in xyz[4]]
+        if q.style == "tube"
+            X, Y, Z, T, I, J, K = pd3d_tube_mesh(xyz[1], xyz[2], xyz[3], text, spans, q.radius / 100)
+            push!(traces, mesh3d(x = X, y = Y, z = Z, i = I, j = J, k = K, text = T, hoverinfo = "text",
+                                 color = ax.color, flatshading = true, lighting = attr(ambient = 0.8, diffuse = 0.4, specular = 0.0),
+                                 name = "$name contours", legendgroup = "ptx_$name", showlegend = true))
+        else
+            push!(traces, scatter3d(x = xyz[1], y = xyz[2], z = xyz[3], text = text,
+                                    mode = "lines", line = attr(color = ax.color, width = q.lw, dash = q.dash),
+                                    hoverinfo = "text", name = "$name contours", legendgroup = "ptx_$name", showlegend = true))
+        end
+        if q.labels && !isempty(lab[1])
+            push!(traces, scatter3d(x = lab[1], y = lab[2], z = lab[3], text = lab[4], mode = "text",
+                                    textposition = "top center", legendgroup = "ptx_$name", showlegend = false, hoverinfo = "skip",
+                                    textfont = attr(color = ax.color, size = q.lsize)))
+        end
+        push!(parts, "$name $(length(ax.levels))" * (ax.trunc ? " (truncated)" : ""))
+    end
+    return traces, isempty(parts) ? "P-T-X lines: no level selected" : "P-T-X lines: " * join(parts, ", ") * " levels"
 end
 
 pd3d_phase_color(ph) = string(get(AppData.mineral_style[1], ph, Any["grey"])[1])
@@ -632,8 +828,7 @@ end
 function pd3d_phase_traces(st::PD3D_state, phases, eps, opacity, Pd)
     traces = GenericTrace[]
     for ph in phases
-        A = pd3d_field(st, "ph_frac_vol", ph, "")
-        verts, faces, _ = pd3d_mesh(st, A, eps)
+        verts, faces, _ = pd3d_mesh_cached(st, ("ph_frac_vol", ph, ""), eps)
         isempty(faces) && continue
         col  = pd3d_phase_color(ph)
         name = display_ph_name(ph)
@@ -692,6 +887,11 @@ function pd3d_figure(st::PD3D_state, o; logo_src = PD3D_LOGO_SRC)
         append!(traces, tr); push!(msgs, msg)
     end
     "phases" in o.layers && append!(traces, pd3d_phase_traces(st, something(o.phases, String[]), o.eps, o.phase_opacity, Pd))
+    if "ptx" in o.layers
+        tr, msg = try pd3d_ptx_traces(st, o) catch e; GenericTrace[], "P-T-X lines failed: $(sprint(showerror, e))" end
+        append!(traces, tr); push!(msgs, msg)
+    end
+    haskey(o, :geotherm) && append!(traces, subduction_geotherm_traces_3d(o.geotherm))
     "cloud"  in o.layers && push!(traces, pd3d_cloud_trace(st, max(1, Int(something(o.stride, 1))), something(o.msize, 3)))
     isempty(traces) && push!(traces, scatter3d(x = [Pd[1]], y = [st.Tv[1]], z = [st.Xv[1]], mode = "markers", marker = attr(size = 0.1), showlegend = false, hoverinfo = "skip"))
 

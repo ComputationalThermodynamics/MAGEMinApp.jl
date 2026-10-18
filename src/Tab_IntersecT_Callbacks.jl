@@ -89,8 +89,7 @@ function _add_ix_iso_from_field(field::Vector{Float64}, label_base::String,
 
     name = "$(label_base) [$(round(minIso,digits=3)):$(round(stepIso,digits=3)):$(round(maxIso,digits=3))]"
 
-    ix_isopleths.n_iso += 1
-    idx = ix_isopleths.n_iso
+    idx = next_isopleth_slot(ix_isopleths.status)
     ix_isopleths.isoP[idx] = contour(
         x                 = X,
         y                 = Y,
@@ -118,6 +117,7 @@ function _add_ix_iso_from_field(field::Vector{Float64}, label_base::String,
     ix_isopleths.status[idx] = 1
     ix_isopleths.label[idx]  = name
     ix_isopleths.value[idx]  = idx
+    ix_isopleths.n_iso       = count(!=(0), ix_isopleths.status)
     ix_isopleths.active      = findall(ix_isopleths.status .== 1)
     ix_isopleths.hidden      = findall(ix_isopleths.status .== 2)
 
@@ -177,8 +177,8 @@ end
 function remove_ix_isopleth(iso_id)
     global ix_isopleths
     isnothing(ix_isopleths) && return [], []
-    ix_isopleths.n_iso              -= 1
     ix_isopleths.status[iso_id]      = 0
+    ix_isopleths.n_iso               = count(!=(0), ix_isopleths.status)
     ix_isopleths.isoP[iso_id]        = contour()
     ix_isopleths.isoCap[iso_id]      = scatter()
     ix_isopleths.label[iso_id]       = ""
