@@ -473,11 +473,12 @@ function mageres_bulk_upload_callback!(app, suffix::AbstractString)
         Input("upload-bulk-mageres-$(suffix)",    "contents"),
 
         State("upload-bulk-mageres-$(suffix)",    "filename"),
+        State(mageres_input_id(:optimizer),       "value"),
 
         prevent_initial_call = true,
-    ) do contents, filename
+    ) do contents, filename, optimizer
         contents === nothing && return no_update(), no_update(), no_update()
-        status, msg = parse_bulk_rock(contents, filename)
+        status, msg = parse_bulk_rock(contents, filename; ns = optimizer == "ns")
         return status == 1 ? (true, false, "") : (false, true, msg)
     end
     return app

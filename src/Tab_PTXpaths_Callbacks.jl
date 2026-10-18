@@ -814,15 +814,16 @@ function Tab_PTXpaths_Callbacks(app)
         State("upload-bulk-ptx",                    "filename"  ),
         State("transfer-bulk-name",                 "value"     ),
         State("transfer-bulk-id",                   "value"     ),
+        State("optimizer-dropdown-ptx",             "value"     ),
 
         prevent_initial_call=true,
-    ) do bulk, contents, filename, transfer_bulk_name, transfer_bulk_id
+    ) do bulk, contents, filename, transfer_bulk_name, transfer_bulk_id, optimizer
 
         bid         = pushed_button( callback_context() ) 
         
         if bid == "upload-bulk-ptx"
             if !(contents isa Nothing)
-                status, msg = parse_bulk_rock(contents, filename)
+                status, msg = parse_bulk_rock(contents, filename; ns = optimizer == "ns")
                 if status == 1
                     return "success", false, ""
                 else
