@@ -1955,12 +1955,6 @@ function Tab_PTXpaths_Callbacks(app)
         # remember the (de)activated phases per database, so switching databases (or
         # reloading the page) restores the last selection made for that database
         cache = AppData.phase_selection_cache_ptx[1]
-        if bid == "database-dropdown-ptx"
-            prev_dtb = AppData.phase_selection_last_dtb_ptx[1]
-            if prev_dtb != "" && prev_dtb != dtb
-                cache[prev_dtb] = Dict("ss" => to_str_vec(current_ss_selection), "pp" => to_str_vec(current_pp_selection))
-            end
-        end
 
         preset_style = dtb == "all" ? Dict("display" => "block") : Dict("display" => "none")
 
@@ -1997,7 +1991,6 @@ function Tab_PTXpaths_Callbacks(app)
             isempty(pure_phase_selection_value) && (pure_phase_selection_value = pp_disp)
             preset_value_out = no_update()
         end
-        AppData.phase_selection_last_dtb_ptx[1] = dtb
 
         dataset_options = [Dict(    "label"     => "ds$(db_in.dataset_opt[i])",
                                     "value"     => db_in.dataset_opt[i] )

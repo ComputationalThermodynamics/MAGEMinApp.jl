@@ -1990,6 +1990,12 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
 
 end
 
+function isopleth_dropdown_options(data_isopleth)
+    isopleths    = [Dict("label" => data_isopleth.label[i], "value" => data_isopleth.value[i]) for i in findall(==(1), data_isopleth.status)]
+    isoplethsHid = [Dict("label" => data_isopleth.label[i], "value" => data_isopleth.value[i]) for i in findall(==(2), data_isopleth.status)]
+    return isopleths, isoplethsHid
+end
+
 function hide_single_isopleth_phaseDiagram(isoplethsID)
     global data_isopleth
 

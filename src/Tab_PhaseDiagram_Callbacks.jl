@@ -1827,6 +1827,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                             sub, refLvl + addedRefinementLvl, refType, data, Xrange_s, Yrange_s )
             poly_phases, poly_pcoor     = compute_assemblage_boundaries(gridded_fields, Xrange_s, Yrange_s)
             data_grid                   = show_hide_mesh_grid()
+            isopleths, isoplethsHid     = isopleth_dropdown_options(data_isopleth)
             data_isopleth_out_export    = data_isopleth.isoPexp[data_isopleth.active]
             update_ss_list              = 1
             update_reaction_list        = 1

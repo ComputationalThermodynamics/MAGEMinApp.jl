@@ -65,7 +65,5 @@ AppData = ( contribs            = contribs,
             mineral_order       = [mineral_order],
             # per-database phase (de)activation memory, reset when the app is restarted
             phase_selection_cache        = [Dict{String,Any}()],
-            phase_selection_last_dtb     = [""],
             phase_selection_cache_ptx    = [Dict{String,Any}()],
-            phase_selection_last_dtb_ptx = [""],
             )
