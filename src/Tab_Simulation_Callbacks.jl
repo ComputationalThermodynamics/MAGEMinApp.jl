@@ -1512,11 +1512,12 @@ function Tab_Simulation_Callbacks(app)
         Output("output-data-uploadn-failed", "children"),
         Input("upload-bulk", "contents"),
         State("upload-bulk", "filename"),
+        State("optimizer-dropdown", "value"),
         prevent_initial_call=true,
-    ) do contents, filename
+    ) do contents, filename, optimizer
 
         if !(contents isa Nothing)
-            status, msg = parse_bulk_rock(contents, filename)
+            status, msg = parse_bulk_rock(contents, filename; ns = optimizer == "ns")
             if status == 1
                 return "success", false, ""
             else
