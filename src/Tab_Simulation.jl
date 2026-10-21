@@ -216,185 +216,26 @@ function Tab_Simulation()
                                                 (label = "T-T diagram (poly-metamorphic)",          value = "tt"),
                                                 (label = "μ-μ diagram (chemical potential)",        value = "mumu"),
                                                 (label = "P-T-X 3D diagram",                        value = "ptx3d"),
+                                                (label = "- S-V-H diagrams -", value = "sep-sections",         disabled = true),
+                                                (label = "P-S diagram (fixed composition)",         value = "ps"),
+                                                (label = "P-V diagram (fixed composition)",         value = "pv"),
+                                                (label = "T-S diagram (fixed composition)",         value = "ts"),
+                                                (label = "T-V diagram (fixed composition)",         value = "tv"),
+                                                (label = "S-V diagram (fixed composition)",         value = "sv"),
+                                                (label = "P-H diagram (fixed composition)",         value = "ph"),
+                                                (label = "S-H diagram (fixed composition)",         value = "sh"),
+                                                (label = "V-H diagram (fixed composition)",         value = "vh"),
+                                                (label = "S-X diagram (fixed pressure)",            value = "sx"),
+                                                (label = "H-X diagram (fixed pressure)",            value = "hx"),
+                                                (label = "V-X diagram (fixed temperature)",         value = "vx"),
+
                                             ],
                                             value="pt" ,
                                             clearable   = false,
                                             multi   = false),
                                         ]),
                                     ]),
-                                    html_div([
                                         html_div("‎ "),
-                                        dbc_row([
-                                            dbc_col([
-                                                html_h1("μ oxide 1", style = Dict("textAlign" => "center","font-size" => "120%")),
-                                            ]),
-                                            dbc_col([
-                                                dcc_dropdown(   id      = "mumu-oxide1-dropdown",
-                                                options = [ Dict("label" => ox, "value" => ox)
-                                                            for ox in db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1] ],
-                                                value       = "MgO",
-                                                clearable   = false,
-                                                multi       = false),
-                                                dbc_row([
-                                                    dbc_col([
-                                                        html_h1("min [mol%]", style = Dict("textAlign" => "center","font-size" => "100%")),
-                                                        dbc_input(id = "mumu-oxide1-min-id", type = "number", min = 0.0, max = 100.0, value = 0.1),
-                                                    ]),
-                                                    dbc_col([
-                                                        html_h1("max [mol%]", style = Dict("textAlign" => "center","font-size" => "100%")),
-                                                        dbc_input(id = "mumu-oxide1-max-id", type = "number", min = 0.0, max = 100.0, value = 20.0),
-                                                    ]),
-                                                ]),
-                                            ]),
-                                        ]),
-                                        html_div("‎ "),
-                                        dbc_row([
-                                            dbc_col([
-                                                html_h1("μ oxide 2", style = Dict("textAlign" => "center","font-size" => "120%")),
-                                            ]),
-                                            dbc_col([
-                                                dcc_dropdown(   id      = "mumu-oxide2-dropdown",
-                                                options = [ Dict("label" => ox, "value" => ox)
-                                                            for ox in db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1] ],
-                                                value       = "O",
-                                                clearable   = false,
-                                                multi       = false),
-                                                dbc_row([
-                                                    dbc_col([
-                                                        html_h1("min [mol%]", style = Dict("textAlign" => "center","font-size" => "100%")),
-                                                        dbc_input(id = "mumu-oxide2-min-id", type = "number", min = 0.0, max = 100.0, value = 0.1),
-                                                    ]),
-                                                    dbc_col([
-                                                        html_h1("max [mol%]", style = Dict("textAlign" => "center","font-size" => "100%")),
-                                                        dbc_input(id = "mumu-oxide2-max-id", type = "number", min = 0.0, max = 100.0, value = 2.0),
-                                                    ]),
-                                                ]),
-                                            ]),
-                                        ]),
-                                        html_div("‎ "),
-                                        dbc_row([
-                                            dbc_col([
-                                                html_h1("μ bounds", style = Dict("textAlign" => "center","font-size" => "120%")),
-                                            ]),
-                                            dbc_col([
-                                                dbc_button("Compute μ bounds", id="compute-mumu-bounds-button", color="light", n_clicks=0,
-                                                style       = Dict( "textAlign"     => "center",
-                                                                    "font-size"     => "100%",
-                                                                    "border"        =>"1px grey solid",
-                                                                    "width"         => "100%" )),
-                                                html_div("‎ "),
-                                                dbc_row([
-                                                    dbc_col([
-                                                        html_h1("min [μ1, J/mol]", style = Dict("textAlign" => "center","font-size" => "100%")),
-                                                        dbc_input(id = "mumu-mu1-min-id", type = "number", value = 0.0),
-                                                    ]),
-                                                    dbc_col([
-                                                        html_h1("max [μ1, J/mol]", style = Dict("textAlign" => "center","font-size" => "100%")),
-                                                        dbc_input(id = "mumu-mu1-max-id", type = "number", value = 1.0),
-                                                    ]),
-                                                ]),
-                                                html_div("‎ "),
-                                                dbc_row([
-                                                    dbc_col([
-                                                        html_h1("min [μ2, J/mol]", style = Dict("textAlign" => "center","font-size" => "100%")),
-                                                        dbc_input(id = "mumu-mu2-min-id", type = "number", value = 0.0),
-                                                    ]),
-                                                    dbc_col([
-                                                        html_h1("max [μ2, J/mol]", style = Dict("textAlign" => "center","font-size" => "100%")),
-                                                        dbc_input(id = "mumu-mu2-max-id", type = "number", value = 1.0),
-                                                    ]),
-                                                ]),
-                                            ]),
-                                        ]),
-                                        html_div("‎ "),
-                                        dbc_alert(
-                                            "",
-                                            id      = "mumu-bounds-warning",
-                                            color   = "warning",
-                                            is_open = false,
-                                            duration= 6000,
-                                        ),
-                                    ], style = Dict("display" => "none"), id = "mumu-setup-id"), #none, block
-                                    html_div([
-                                        dbc_row([
-                                            dbc_col([ 
-                                                html_h1("Solidus H₂O-saturated", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
-                                            ]),
-                                            dbc_col([ 
-                                                dcc_dropdown(   id      = "watsat-dropdown",
-                                                options = [
-                                                    (label = "true",         value = "true"),
-                                                    (label = "false",        value = "false"),
-                                                ],
-                                                value       = "false" ,
-                                                clearable   =  false,
-                                                multi       =  false),
-                                            ]),
-                                        ]),
-
-                                        html_div([
-                                            dbc_row([
-                                                dbc_col([
-                                                    html_h1("Additional H₂O [mol%]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
-                                                ]),
-                                                dbc_col([ 
-                                                    dbc_input(
-                                                        id      = "watsat-val-id",
-                                                        type    = "number", 
-                                                        min     =  0.0, 
-                                                        max     =  100.0, 
-                                                        value   =  0.0  ),
-                                                ]),
-                                            ]),
-                                            
-                                        ], style = Dict("display" => "none"), id  = "watsat-display-id"), #none, block
-
-
-                                    ], style = Dict("display" => "block"), id      = "subsolsat-id"), #none, block
-                                    #buffer
-                                    dbc_row([
-                                        dbc_col([ 
-                                            html_h1("Buffer", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
-                                        ]),
-                                        dbc_col([ 
-                                            dcc_dropdown(   id      = "buffer-dropdown",
-                                            options = [
-                                                (label = "no buffer",value = "none"),
-                                                (label = "QFM",      value = "qfm"),
-                                                (label = "MW",       value = "mw"), 
-                                                (label = "IW",       value = "iw"), 
-                                                (label = "QIF",      value = "qif"),
-                                                (label = "CCO",      value = "cco"),
-                                                (label = "HM",       value = "hm"), 
-                                                (label = "NNO",      value = "nno"), 
-                                                (label = "aH2O",     value = "aH2O"), 
-                                                (label = "aO2",      value = "aO2"), 
-                                                (label = "aFeO",     value = "aFeO"), 
-                                                (label = "aMgO",     value = "aMgO"), 
-                                                (label = "aAl2O3",   value = "aAl2O3"), 
-                                                (label = "aTiO2",    value = "aTiO2"), 
-                                            ],
-                                            value="none" ,
-                                            clearable   = false,
-                                            multi       = false),
-                                        ]),
-                                    ]),
-                                    dbc_row([
-                                        dbc_col([ 
-                                            html_h1("Latent heat", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
-                                        ]),
-                                        dbc_col([ 
-                                            dcc_dropdown(   id      = "scp-dropdown",
-                                            options = [
-                                                (label = "G0 (no latent heat)",         value =  0),
-                                                (label = "G_system (with latent heat)", value =  1),
-                                            ],
-                                            value       = 0,
-                                            clearable   = false,
-                                            multi       = false),
-                                        ]),
-                                    ]),
-                                    html_hr(),
                                     # PT path
                                     html_div([
                                         dbc_row([                                            
@@ -409,8 +250,8 @@ function Tab_Simulation()
                                                         columns=[Dict("name" => "P [kbar]", "id"    => "col-1", "deletable" => false, "renamable" => false, "type" => "numeric"),
                                                                     Dict("name" => "T [°C]", "id"   => "col-2", "deletable" => false, "renamable" => false, "type" => "numeric")],
                                                         data=[
-                                                            Dict("col-1" => 5.0, "col-2"    => 500.0),
-                                                            Dict("col-1" => 10.0, "col-2"   => 800.0),
+                                                            Dict("col-1" => 1.0, "col-2"    => 500.0),
+                                                            Dict("col-1" => 16.0, "col-2"   => 900.0),
                                                         ],
                                                         style_cell      = (textAlign="center", fontSize="140%",),
                                                         style_header    = (fontWeight="bold",),
@@ -778,6 +619,325 @@ function Tab_Simulation()
                                         ], width=10),
                                         ]),
                                     ], style = Dict("display" => "none"), id      = "event2-temperature-id"), #none, block
+                                    html_div([
+                                        html_div("‎ "),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("μ oxide 1", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            ]),
+                                            dbc_col([
+                                                dcc_dropdown(   id      = "mumu-oxide1-dropdown",
+                                                options = [ Dict("label" => ox, "value" => ox)
+                                                            for ox in db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1] ],
+                                                value       = "MgO",
+                                                clearable   = false,
+                                                multi       = false),
+                                                dbc_row([
+                                                    dbc_col([
+                                                        html_h1("min [mol%]", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                        dbc_input(id = "mumu-oxide1-min-id", type = "number", min = 0.0, max = 100.0, value = 0.1),
+                                                    ]),
+                                                    dbc_col([
+                                                        html_h1("max [mol%]", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                        dbc_input(id = "mumu-oxide1-max-id", type = "number", min = 0.0, max = 100.0, value = 20.0),
+                                                    ]),
+                                                ]),
+                                            ]),
+                                        ]),
+                                        html_div("‎ "),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("μ oxide 2", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            ]),
+                                            dbc_col([
+                                                dcc_dropdown(   id      = "mumu-oxide2-dropdown",
+                                                options = [ Dict("label" => ox, "value" => ox)
+                                                            for ox in db[(db.db .== "ig") .& (db.test .== 0), :].oxide[1] ],
+                                                value       = "O",
+                                                clearable   = false,
+                                                multi       = false),
+                                                dbc_row([
+                                                    dbc_col([
+                                                        html_h1("min [mol%]", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                        dbc_input(id = "mumu-oxide2-min-id", type = "number", min = 0.0, max = 100.0, value = 0.1),
+                                                    ]),
+                                                    dbc_col([
+                                                        html_h1("max [mol%]", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                        dbc_input(id = "mumu-oxide2-max-id", type = "number", min = 0.0, max = 100.0, value = 2.0),
+                                                    ]),
+                                                ]),
+                                            ]),
+                                        ]),
+                                        html_div("‎ "),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("μ bounds", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            ]),
+                                            dbc_col([
+                                                dbc_button("Compute μ bounds", id="compute-mumu-bounds-button", color="light", n_clicks=0,
+                                                style       = Dict( "textAlign"     => "center",
+                                                                    "font-size"     => "100%",
+                                                                    "border"        =>"1px grey solid",
+                                                                    "width"         => "100%" )),
+                                                html_div("‎ "),
+                                                dbc_row([
+                                                    dbc_col([
+                                                        html_h1("min [μ1, J/mol]", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                        dbc_input(id = "mumu-mu1-min-id", type = "number", value = 0.0),
+                                                    ]),
+                                                    dbc_col([
+                                                        html_h1("max [μ1, J/mol]", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                        dbc_input(id = "mumu-mu1-max-id", type = "number", value = 1.0),
+                                                    ]),
+                                                ]),
+                                                html_div("‎ "),
+                                                dbc_row([
+                                                    dbc_col([
+                                                        html_h1("min [μ2, J/mol]", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                        dbc_input(id = "mumu-mu2-min-id", type = "number", value = 0.0),
+                                                    ]),
+                                                    dbc_col([
+                                                        html_h1("max [μ2, J/mol]", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                        dbc_input(id = "mumu-mu2-max-id", type = "number", value = 1.0),
+                                                    ]),
+                                                ]),
+                                            ]),
+                                        ]),
+                                        html_div("‎ "),
+                                        dbc_alert(
+                                            "",
+                                            id      = "mumu-bounds-warning",
+                                            color   = "warning",
+                                            is_open = false,
+                                            duration= 6000,
+                                        ),
+                                    ], style = Dict("display" => "none"), id = "mumu-setup-id"), #none, block
+                                    html_div([
+                                        # html_div("‎ "),
+                                        html_div([
+                                        dbc_row([
+                                            dbc_col([], width=6),
+                                            dbc_col([
+                                                dbc_row([
+                                                    dbc_col([ html_h1("min", style = Dict("textAlign" => "center","font-size" => "100%")) ]),
+                                                    dbc_col([ html_h1("max", style = Dict("textAlign" => "center","font-size" => "100%")) ]),
+                                                ]),
+                                            ]),
+                                        ]),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Pressure [kbar]", id = "sec-p-unit-label-id", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ], width=6),
+                                            dbc_col([
+                                                dbc_row([
+                                                    dbc_col([ dbc_input(id = "sec-p1-id", type = "number", min = 0.001, value = 1.0) ]),
+                                                    dbc_col([ dbc_input(id = "sec-p2-id", type = "number", min = 0.001, value = 16.0) ]),
+                                                ]),
+                                            ]),
+                                        ]),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Temperature [°C]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ], width=6),
+                                            dbc_col([
+                                                dbc_row([
+                                                    dbc_col([ dbc_input(id = "sec-t1-id", type = "number", min = 0.0,   value = 500.0) ]),
+                                                    dbc_col([ dbc_input(id = "sec-t2-id", type = "number", min = 0.0,   value = 900.0) ]),
+                                                ]),
+                                            ]),
+                                        ]),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Ranges from box", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ], width=6),
+                                            dbc_col([
+                                                dcc_dropdown(   id          = "sec-range-mode-id",
+                                                                options     = [
+                                                                    (label = "inscribed (no blank area)",   value = "inscribed"),
+                                                                    (label = "bounding (whole image)",      value = "bounding"),
+                                                                    (label = "manual",                      value = "manual"),
+                                                                ],
+                                                                value       = "inscribed",
+                                                                clearable   = false,
+                                                                multi       = false),
+                                            ], style = Dict("marginTop" => 8)),
+                                        ]),
+                                        html_div([
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("S [J/K/mol]", id = "sec-xaxis-label-id", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ], width=6),
+                                            dbc_col([
+                                                dbc_row([
+                                                    dbc_col([ dbc_input(id = "sec-xmin-id", type = "number", debounce = true) ]),
+                                                    dbc_col([ dbc_input(id = "sec-xmax-id", type = "number", debounce = true) ]),
+                                                ]),
+                                            ]),
+                                        ]),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("V [cm³/mol]", id = "sec-yaxis-label-id", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ], width=6),
+                                            dbc_col([
+                                                dbc_row([
+                                                    dbc_col([ dbc_input(id = "sec-ymin-id", type = "number", debounce = true) ]),
+                                                    dbc_col([ dbc_input(id = "sec-ymax-id", type = "number", debounce = true) ]),
+                                                ]),
+                                            ]),
+                                        ]),
+                                        ], style = Dict("display" => "none"), id = "sec-manual-id"),
+                                        ], id = "sec-corners-id"),
+                                        html_div("‎ "),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Diagram ranges", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                            ], width=6),
+                                            dbc_col([
+                                                dbc_button("Show diagram ranges", id="compute-section-ranges-button", color="light", n_clicks=0,
+                                                style       = Dict( "textAlign"     => "center",
+                                                                    "font-size"     => "100%",
+                                                                    "border"        =>"1px grey solid",
+                                                                    "width"         => "100%" )),
+                                            ]),
+                                        ]),
+                                        html_div("", id = "section-ranges-text-id", style = Dict("textAlign" => "center", "font-size" => "95%", "marginTop" => 6)),
+                                        html_div([
+                                            dcc_graph(  id      = "section-image-graph-id",
+                                                        figure  = Dict(),
+                                                        config  = PlotConfig(displayModeBar = false, responsive = true),
+                                                        style   = Dict("height" => "340px", "width" => "100%")),
+                                        ], id = "section-image-wrap-id", style = Dict("display" => "none", "position" => "relative", "clear" => "both", "marginBottom" => 10)),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Search limits", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ], width=6),
+                                            dbc_col([
+                                                dbc_button("Advanced", id = "sec-adv-btn", color = "light", n_clicks = 0,
+                                                            style = Dict("textAlign" => "center", "font-size" => "100%", "border" => "1px grey solid", "width" => "100%", "marginTop" => 8)),
+                                            ]),
+                                        ]),
+                                        dbc_collapse(html_div([
+                                            dbc_row([
+                                                dbc_col([], width=6),
+                                                dbc_col([
+                                                    dbc_row([
+                                                        dbc_col([ html_h1("min", style = Dict("textAlign" => "center","font-size" => "100%")) ]),
+                                                        dbc_col([ html_h1("max", style = Dict("textAlign" => "center","font-size" => "100%")) ]),
+                                                    ]),
+                                                ]),
+                                            ]),
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("Pressure [kbar]", id = "sec-search-p-label-id", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                                ], width=6),
+                                                dbc_col([
+                                                    dbc_row([
+                                                        dbc_col([ dbc_input(id = "sec-search-pmin-id", type = "number", placeholder = "0.001", debounce = true) ]),
+                                                        dbc_col([ dbc_input(id = "sec-search-pmax-id", type = "number", placeholder = "34", debounce = true) ]),
+                                                    ]),
+                                                ]),
+                                            ]),
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("Temperature [°C]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                                ], width=6),
+                                                dbc_col([
+                                                    dbc_row([
+                                                        dbc_col([ dbc_input(id = "sec-search-tmin-id", type = "number", placeholder = "25", debounce = true) ]),
+                                                        dbc_col([ dbc_input(id = "sec-search-tmax-id", type = "number", placeholder = "1700", debounce = true) ]),
+                                                    ]),
+                                                ]),
+                                            ]),
+
+                                        ]), id = "sec-adv-collapse", is_open = false),
+
+                                        dbc_alert(
+                                            "",
+                                            id      = "section-ranges-warning",
+                                            color   = "warning",
+                                            is_open = false,
+                                            duration= 6000,
+                                        ),
+                                    ], style = Dict("display" => "none"), id = "section-setup-id"), #none, block
+                                    html_div([
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("Solidus H₂O-saturated", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ]),
+                                            dbc_col([ 
+                                                dcc_dropdown(   id      = "watsat-dropdown",
+                                                options = [
+                                                    (label = "true",         value = "true"),
+                                                    (label = "false",        value = "false"),
+                                                ],
+                                                value       = "false" ,
+                                                clearable   =  false,
+                                                multi       =  false),
+                                            ]),
+                                        ]),
+
+                                        html_div([
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("Additional H₂O [mol%]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                                ]),
+                                                dbc_col([ 
+                                                    dbc_input(
+                                                        id      = "watsat-val-id",
+                                                        type    = "number", 
+                                                        min     =  0.0, 
+                                                        max     =  100.0, 
+                                                        value   =  0.0  ),
+                                                ]),
+                                            ]),
+                                            
+                                        ], style = Dict("display" => "none"), id  = "watsat-display-id"), #none, block
+
+
+                                    ], style = Dict("display" => "block"), id      = "subsolsat-id"), #none, block
+                                    #buffer
+                                    dbc_row([
+                                        dbc_col([ 
+                                            html_h1("Buffer", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                        ]),
+                                        dbc_col([ 
+                                            dcc_dropdown(   id      = "buffer-dropdown",
+                                            options = [
+                                                (label = "no buffer",value = "none"),
+                                                (label = "QFM",      value = "qfm"),
+                                                (label = "MW",       value = "mw"), 
+                                                (label = "IW",       value = "iw"), 
+                                                (label = "QIF",      value = "qif"),
+                                                (label = "CCO",      value = "cco"),
+                                                (label = "HM",       value = "hm"), 
+                                                (label = "NNO",      value = "nno"), 
+                                                (label = "aH2O",     value = "aH2O"), 
+                                                (label = "aO2",      value = "aO2"), 
+                                                (label = "aFeO",     value = "aFeO"), 
+                                                (label = "aMgO",     value = "aMgO"), 
+                                                (label = "aAl2O3",   value = "aAl2O3"), 
+                                                (label = "aTiO2",    value = "aTiO2"), 
+                                            ],
+                                            value="none" ,
+                                            clearable   = false,
+                                            multi       = false),
+                                        ]),
+                                    ]),
+                                    dbc_row([
+                                        dbc_col([ 
+                                            html_h1("Latent heat", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                        ]),
+                                        dbc_col([ 
+                                            dcc_dropdown(   id      = "scp-dropdown",
+                                            options = [
+                                                (label = "G0 (no latent heat)",         value =  0),
+                                                (label = "G_system (with latent heat)", value =  1),
+                                            ],
+                                            value       = 0,
+                                            clearable   = false,
+                                            multi       = false),
+                                        ]),
+                                    ]),
                                     html_hr(),
                                     #subdivision
                                     html_div([

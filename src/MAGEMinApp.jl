@@ -36,6 +36,7 @@ module MAGEMinApp
 
     const ENABLE_MAGERES = false
     const ENABLE_MELTS   = false
+    const ENABLE_IGM     = false
 
     export App
     export build_intersect_model_df, make_measurements_df, list_intersect_phases, list_intersect_elements

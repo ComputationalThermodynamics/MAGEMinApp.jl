@@ -475,7 +475,7 @@ end
 
 
 
-function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2, PTpath, watsat, watsat_val; optimizer = "nlopt")
+function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2, PTpath, watsat, watsat_val; optimizer = "nlopt", sec_Pbox = nothing, sec_Tbox = nothing, sec_limits = nothing)
 
     ptx_data    = copy(PTpath)
     np      = length(ptx_data)
@@ -506,6 +506,14 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         dgtype = "Polymetamorphic T-T path, fixed pressure"
     elseif diagType == "mumu"
         dgtype = "μ-μ (chemical potential), fixed pressure and temperature"
+    elseif diagType == "sx"
+        dgtype = "Entropy-Composition, fixed pressure"
+    elseif diagType == "hx"
+        dgtype = "Enthalpy-Composition, fixed pressure"
+    elseif diagType == "vx"
+        dgtype = "Volume-Composition, fixed temperature"
+    elseif diagType in SECTION_TYPES
+        dgtype = Dict("ps" => "Pressure-Entropy", "pv" => "Pressure-Volume", "ts" => "Temperature-Entropy", "tv" => "Temperature-Volume", "sv" => "Entropy-Volume", "ph" => "Pressure-Enthalpy", "sh" => "Entropy-Enthalpy", "vh" => "Volume-Enthalpy")[diagType] * ", fixed composition"
     else
         dgtype = diagType
     end
@@ -541,12 +549,16 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         PD_infos[1] *= "Buffer <br>"
     end            
     
-    if diagType == "pt"
+    if diagType == "pt" || diagType in SECTION_TYPES
         PD_infos[1] *= "X comp [mol] <br>"
         if bufferType != "none"
             PD_infos[1] *= "Buffer factor <br>"
+        end
+        if diagType in SECTION_TYPES && !isnothing(sec_Pbox)
+            PD_infos[1] *= "P-T box <br>"
+            PD_infos[1] *= "Search box <br>"
         end       
-    elseif diagType == "px"
+    elseif diagType == "px" || diagType == "vx"
         PD_infos[1] *= "X0 comp [mol] <br>"
         if bufferType != "none"
             PD_infos[1] *= "Buffer factor <br>"
@@ -556,7 +568,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
             PD_infos[1] *= "Buffer factor <br>"
         end        
         PD_infos[1] *= "Fixed Temp <br>"
-    elseif diagType == "tx"
+    elseif diagType == "tx" || section_x_fixed_P(diagType)
         PD_infos[1] *= "X0 comp [mol] <br>"
         if bufferType != "none"
             PD_infos[1] *= "Buffer factor <br>"
@@ -589,6 +601,10 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         PD_infos[1] *= "Fixed Pres [$(pressure_unit_label())] <br>"
         PD_infos[1] *= "Fixed Temp <br>"
     end
+    if diagType in SECTION_X_TYPES && !isnothing(sec_Pbox)
+        PD_infos[1] *= (section_x_fixed_P(diagType) ? "T bounds <br>" : "P bounds <br>")
+        PD_infos[1] *= "Search box <br>"
+    end
     oxi_string = replace.(oxi,"2"=>"₂", "3"=>"₃");
 
     PD_infos[1] *= "_____________________________________________________________________________________________________"
@@ -611,12 +627,18 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     if bufferType != "none"
         PD_infos[2] *= bufferType *"<br>"
     end            
-    if diagType == "pt"
+    if diagType == "pt" || diagType in SECTION_TYPES
         PD_infos[2] *= join(round.(bulk_L,digits=6), " ") *"<br>"
         if bufferType != "none"
             PD_infos[2] *= string(bufferN1) *"<br>"
+        end
+        if diagType in SECTION_TYPES && !isnothing(sec_Pbox)
+            sP, sT = section_search_box(sec_Pbox, sec_Tbox; limits = sec_limits)
+            r(x)   = round(x, sigdigits = 5)
+            PD_infos[2] *= "$(r(display_pressure(minimum(sec_Pbox)))) - $(r(display_pressure(maximum(sec_Pbox)))) $(pressure_unit_label()), $(r(minimum(sec_Tbox))) - $(r(maximum(sec_Tbox))) °C<br>"
+            PD_infos[2] *= "$(r(display_pressure(sP[1]))) - $(r(display_pressure(sP[2]))) $(pressure_unit_label()), $(r(sT[1])) - $(r(sT[2])) °C<br>"
         end       
-    elseif diagType == "px"
+    elseif diagType == "px" || diagType == "vx"
         PD_infos[2] *= join(round.(bulk_L,digits=6), " ") *"<br>"
         if bufferType != "none"
             PD_infos[2] *= string(bufferN1) *"<br>"
@@ -626,7 +648,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
             PD_infos[2] *= string(bufferN2) *"<br>"
         end        
         PD_infos[2] *= join(fixT, " ") *"<br>"
-    elseif diagType == "tx"
+    elseif diagType == "tx" || section_x_fixed_P(diagType)
         PD_infos[2] *= join(round.(bulk_L,digits=6), " ") *"<br>"
         if bufferType != "none"
             PD_infos[2] *= string(bufferN1) *"<br>"
@@ -663,6 +685,17 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         PD_infos[2] *= join(fixT, " ") *"<br>"
     end
 
+    if diagType in SECTION_X_TYPES && !isnothing(sec_Pbox)
+        sPx, sTx = section_search_box(sec_Pbox, sec_Tbox; limits = sec_limits)
+        rx(x)    = round(x, sigdigits = 5)
+        if section_x_fixed_P(diagType)
+            PD_infos[2] *= "$(rx(minimum(sec_Tbox))) - $(rx(maximum(sec_Tbox))) °C<br>"
+            PD_infos[2] *= "$(rx(sTx[1])) - $(rx(sTx[2])) °C<br>"
+        else
+            PD_infos[2] *= "$(rx(display_pressure(minimum(sec_Pbox)))) - $(rx(display_pressure(maximum(sec_Pbox)))) $(pressure_unit_label())<br>"
+            PD_infos[2] *= "$(rx(display_pressure(sPx[1]))) - $(rx(display_pressure(sPx[2]))) $(pressure_unit_label())<br>"
+        end
+    end
     PD_infos[2] *= "_"
 
     return PD_infos
@@ -674,8 +707,17 @@ end
 
     returns axis titles and axis ranges
 """
-function diagram_type(diagType, tmin, tmax, pmin, pmax, e1_tmin, e1_tmax, e2_tmin, e2_tmax; mumu_oxide1_name = "", mumu_oxide2_name = "")
-    if diagType == "pt"
+function diagram_type(diagType, tmin, tmax, pmin, pmax, e1_tmin, e1_tmax, e2_tmin, e2_tmax; mumu_oxide1_name = "", mumu_oxide2_name = "", S_range = (0.0, 1.0), V_range = (0.0, 1.0))
+    if diagType in SECTION_X_TYPES
+        prop   = section_x_prop(diagType)
+        ytitle = section_axis_title(prop)
+        Yrange = prop === :S ? (Float64(S_range[1]), Float64(S_range[2])) : prop === :V ? (Float64(V_range[1]), Float64(V_range[2])) : (0.0, 1.0)
+        return "Composition [X0 -> X1]", ytitle, (0.0, 1.0), Yrange
+    elseif diagType in SECTION_TYPES
+        ax     = MAGEMin_C.SECTION_XY[Symbol(diagType)]
+        ax_range(c) = c === :P ? (Float64(pmin), Float64(pmax)) : c === :T ? (Float64(tmin), Float64(tmax)) : c === :S ? (Float64(S_range[1]), Float64(S_range[2])) : c === :H ? (0.0, 1.0) : (Float64(V_range[1]), Float64(V_range[2]))
+        return section_axis_title(ax[1]), section_axis_title(ax[2]), ax_range(ax[1]), ax_range(ax[2])
+    elseif diagType == "pt"
         xtitle = "Temperature [Celsius]"
         ytitle = "Pressure [$(pressure_unit_label())]"
         Xrange          = (Float64(tmin),Float64(tmax))
@@ -719,7 +761,7 @@ end
     underlying `data_plot`/`layout` globals always remain in kbar.
 """
 function apply_pressure_display(data_in, layout_in, diagType)
-    if !use_GPa[1] || !(diagType in ("pt","px","ptx"))
+    if !use_GPa[1] || !pressure_on_y_axis(diagType)
         return data_in, layout_in
     end
 
@@ -802,6 +844,12 @@ function field_colorbar(fieldname)
                 tickness        =  0.5,
                 x               =  1.005,
                 y               =  0.5,
+                outlinewidth    =  1,
+                outlinecolor    = "black",
+                ticks           = "inside",
+                ticklen         =  5,
+                tickwidth       =  1,
+                tickcolor       = "black",
                 title           = attr(text = fieldname, side = "right") )
     if is_integer_field(fieldname)
         cb[:tickmode] = "linear"
@@ -965,7 +1013,7 @@ function tepm_function( diagType    :: String,
     TEvec         = Vector{Float64}(undef, length(bulkte_L));
     for i = 1:np
 
-        if diagType != "pt"
+        if !(diagType == "pt" || diagType in SECTION_TYPES)
             TEvec .= bulkte_L*(1.0 - Out_XY[i].X[1]) + bulkte_R*Out_XY[i].X[1];
         else
             TEvec .= bulkte_L
@@ -1024,7 +1072,10 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                     shallow_cor = false, fluid_as_melt = false, anelastic_correction = false;
                                     mumu_oxide1_idx     = 0,
                                     mumu_oxide2_idx     = 0,
-                                    optimizer           = "nlopt"  )
+                                    optimizer           = "nlopt",
+                                    sec_Pbox            = nothing,
+                                    sec_Tbox            = nothing,
+                                    sec_limits          = nothing  )
         global CompProgress
 
         #________________________________________________________________________________________#
@@ -1086,7 +1137,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                                             scp, boost, refType,
                                                             pChip_wat, pChip_T,
                                                             seismic_cor, aspect_ratio, seismic_water, shallow_cor, fluid_as_melt, anelastic_correction;
-                                                            mumu_oxide1_idx=mumu_oxide1_idx, mumu_oxide2_idx=mumu_oxide2_idx    )
+                                                            mumu_oxide1_idx=mumu_oxide1_idx, mumu_oxide2_idx=mumu_oxide2_idx, sec_Pbox=sec_Pbox, sec_Tbox=sec_Tbox, sec_limits=sec_limits    )
 
 
             #________________________________________________________________________________________#     
@@ -1109,7 +1160,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
                                                                                             scp, boost, refType,
                                                                                             pChip_wat, pChip_T,
                                                                                             seismic_cor, aspect_ratio, seismic_water, shallow_cor, fluid_as_melt, anelastic_correction;
-                                                                                            mumu_oxide1_idx=mumu_oxide1_idx, mumu_oxide2_idx=mumu_oxide2_idx    ) # recompute points that have not been computed before
+                                                                                            mumu_oxide1_idx=mumu_oxide1_idx, mumu_oxide2_idx=mumu_oxide2_idx, sec_Pbox=sec_Pbox, sec_Tbox=sec_Tbox, sec_limits=sec_limits    ) # recompute points that have not been computed before
 
                     println("Computed $(length(data.npoints)) new points in $t seconds")
                 end
@@ -1136,7 +1187,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
 
         phase_infos = get_phase_infos(Out_XY)                                                                                
 
-        PT_infos = get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat,watsat_val; optimizer = optimizer)
+        PT_infos = get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat,watsat_val; optimizer = optimizer, sec_Pbox = sec_Pbox, sec_Tbox = sec_Tbox, sec_limits = sec_limits)
 
         data_plot, annotations, txt_list, assemblage_rows, list_compacted_idx, raw_field_id = get_diagram_labels(  Out_XY,
                                                                 Hash_XY,
@@ -1268,7 +1319,10 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                 shallow_cor = false, fluid_as_melt = false, anelastic_correction = false;
                                 mumu_oxide1_idx     = 0,
                                 mumu_oxide2_idx     = 0,
-                                optimizer           = "nlopt"  )
+                                optimizer           = "nlopt",
+                                sec_Pbox            = nothing,
+                                sec_Tbox            = nothing,
+                                sec_limits          = nothing  )
 
     global data, Hash_XY, Out_XY, n_phase_XY, data_plot, gridded, gridded_info, gridded_fields, phase_infos, X, Y, addedRefinementLvl, layout, n_lbl, pChip_wat, pChip_T, poly_phases, poly_pcoor, PT_infos
 
@@ -1300,7 +1354,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                                                                 scp, boost, refType,
                                                                                 pChip_wat,  pChip_T,
                                                                                 seismic_cor, aspect_ratio, seismic_water, shallow_cor, fluid_as_melt, anelastic_correction;
-                                                                                mumu_oxide1_idx=mumu_oxide1_idx, mumu_oxide2_idx=mumu_oxide2_idx    ) # recompute points that have not been computed before
+                                                                                mumu_oxide1_idx=mumu_oxide1_idx, mumu_oxide2_idx=mumu_oxide2_idx, sec_Pbox=sec_Pbox, sec_Tbox=sec_Tbox, sec_limits=sec_limits    ) # recompute points that have not been computed before
 
         println("Computed $(length(data.npoints)) new points in $(round(t, digits=3)) seconds")
         addedRefinementLvl += 1;
@@ -1323,7 +1377,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                                                                     Xrange,
                                                                                     Yrange )
     
-    PT_infos                           = get_phase_diagram_information(npoints,dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat,watsat_val; optimizer = optimizer)
+    PT_infos                           = get_phase_diagram_information(npoints,dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat,watsat_val; optimizer = optimizer, sec_Pbox = sec_Pbox, sec_Tbox = sec_Tbox, sec_limits = sec_limits)
                                                               
     data_plot, annotations, txt_list, assemblage_rows, list_compacted_idx, raw_field_id = get_diagram_labels(   Out_XY,
                                                             Hash_XY,
@@ -1504,15 +1558,13 @@ function get_phase_boundary(    ph     :: String,
                                 phase  :: Vector{Int},
                                 mask   :: Matrix{Int},
                                 data,
-                                Out_XY )
+                                Out_XY;
+                                multiplicity :: Bool = false )
 
     np_grid = length(data.points)
 
     for i=1:np_grid
-        phase[i] = 0;
-        if (ph in Out_XY[i].ph)
-            phase[i] = 1;
-        end
+        phase[i] = multiplicity ? count(==(ph), Out_XY[i].ph) : Int(ph in Out_XY[i].ph)
     end
 
     dx  = (data.Xrange[2]-data.Xrange[1])/(n-1)
@@ -1564,7 +1616,8 @@ function get_phase_boundary(    ph     :: String,
         end
     end
 
-    phase_boundary    = CTR.contours(x,y,mask,[0.5])
+    nmax              = multiplicity ? max(1, maximum(phase[1:np_grid]; init = 1)) : 1
+    phase_boundary    = CTR.contours(x,y,mask,[k - 0.5 for k in 1:nmax])
     # phase_boundary  = cl.contours[1].lines[1].vertices
 
     return phase_boundary
@@ -1597,7 +1650,8 @@ function  show_hide_reaction_lines(     sub,
                                                 phase,
                                                 mask,
                                                 data,
-                                                Out_XY )
+                                                Out_XY;
+                                                multiplicity = true )
 
         push!(phase_contours, (ph, phase_boundary))
     end
@@ -1618,8 +1672,8 @@ function  show_hide_reaction_lines(     sub,
         x       = Union{Float64,Missing}[]
         y       = Union{Float64,Missing}[]
 
-        for j=1:length(phase_contours[i][2].contours[1].lines)
-            ctr     = phase_contours[i][2].contours[1].lines[j].vertices
+        for lvl in phase_contours[i][2].contours, ln in lvl.lines
+            ctr     = ln.vertices
             append!(x, (ctr[k][1] for k in 1:size(ctr,1))); push!(x, missing)
             append!(y, (ctr[k][2] for k in 1:size(ctr,1))); push!(y, missing)
         end
@@ -2082,6 +2136,7 @@ end
 
 
 function _draw_path_point_label(diagType, id)
+    diagType = section_x_fixed_P(diagType) ? "tx" : diagType == "vx" ? "px" : diagType
     global Out_XY, data
     P = round(display_pressure(Out_XY[id].P_kbar), digits=2)
     T = round(Out_XY[id].T_C,    digits=2)
@@ -2094,6 +2149,7 @@ function _draw_path_point_label(diagType, id)
 end
 
 function draw_path_table_data(diagType, path_ids)
+    diagType = section_x_fixed_P(diagType) ? "tx" : diagType == "vx" ? "px" : diagType
     global Out_XY, data
 
     p_col = "P[$(pressure_unit_label())]"
@@ -2200,7 +2256,10 @@ function field_dropdown_options()
         (label = "Variance",                value = "Variance"),
         (label = "Number of stable phases", value = "#Phases"),
         (label = "G system",                value = "G_system"),
+        (label = "Pressure [kbar]",         value = "P_kbar"),
+        (label = "Temperature [°C]",        value = "T_C"),
         (label = "Entropy",                 value = "entropy"),
+        (label = "Volume [cm³/mol]",        value = "V"),
         (label = "Enthalpy",                value = "enthalpy"),
         (label = "Specific cp",             value = "s_cp"),
         (label = "Thermal expansivity",     value = "alpha"),

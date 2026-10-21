@@ -232,6 +232,12 @@ function update_colormap_phaseDiagram_te(       xtitle,     ytitle,     type,   
                                                             tickness        =  0.5,
                                                             x               =  1.005,
                                                             y               =  0.5,
+                                                            outlinewidth    =  1,
+                                                            outlinecolor    = "black",
+                                                            ticks           = "inside",
+                                                            ticklen         =  5,
+                                                            tickwidth       =  1,
+                                                            tickcolor       = "black",
                                                                 title = attr(   text = fieldname,
                                                                                 side = "right")         ),)
     n       = 2^(sub + refLvl + addedRefinementLvl)+1
@@ -256,6 +262,12 @@ function update_colormap_phaseDiagram_te(       xtitle,     ytitle,     type,   
                                                             tickness        =  0.5,
                                                             x               =  1.005,
                                                             y               =  0.5,
+                                                            outlinewidth    =  1,
+                                                            outlinecolor    = "black",
+                                                            ticks           = "inside",
+                                                            ticklen         =  5,
+                                                            tickwidth       =  1,
+                                                            tickcolor       = "black",
                                                                 title = attr(   text = fieldname,
                                                                                 side = "right")         ),)
     return data_plot_te, layout_te, heat_map_export_te
@@ -327,6 +339,12 @@ function  update_displayed_field_phaseDiagram_te(   xtitle,     ytitle,     type
                                                             tickness        =  0.5,
                                                             x               =  1.005,
                                                             y               =  0.5,
+                                                            outlinewidth    =  1,
+                                                            outlinecolor    = "black",
+                                                            ticks           = "inside",
+                                                            ticklen         =  5,
+                                                            tickwidth       =  1,
+                                                            tickcolor       = "black",
                                                                 title = attr(   text = fieldname,
                                                                                 side = "right")         ),)
 
@@ -352,6 +370,12 @@ function  update_displayed_field_phaseDiagram_te(   xtitle,     ytitle,     type
                                                             tickness        =  0.5,
                                                             x               =  1.005,
                                                             y               =  0.5,
+                                                            outlinewidth    =  1,
+                                                            outlinecolor    = "black",
+                                                            ticks           = "inside",
+                                                            ticklen         =  5,
+                                                            tickwidth       =  1,
+                                                            tickcolor       = "black",
                                                                 title = attr(   text = fieldname,
                                                                                 side = "right")         ),)         
 

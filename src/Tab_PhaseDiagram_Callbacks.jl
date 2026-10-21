@@ -1478,6 +1478,19 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("mumu-mu1-max-id",           "value"),
         State("mumu-mu2-min-id",           "value"),
         State("mumu-mu2-max-id",           "value"),
+        State("sec-p1-id",                 "value"),
+        State("sec-t1-id",                 "value"),
+        State("sec-p2-id",                 "value"),
+        State("sec-t2-id",                 "value"),
+        State("sec-search-pmin-id",        "value"),
+        State("sec-search-pmax-id",        "value"),
+        State("sec-search-tmin-id",        "value"),
+        State("sec-search-tmax-id",        "value"),
+        State("sec-range-mode-id",         "value"),
+        State("sec-xmin-id",               "value"),
+        State("sec-xmax-id",               "value"),
+        State("sec-ymin-id",               "value"),
+        State("sec-ymax-id",               "value"),
 
         State("tepm-dropdown",          "value"),
         State("kds-dropdown",           "value"),
@@ -1552,6 +1565,9 @@ function Tab_PhaseDiagram_Callbacks(app)
             bulk1,      bulk2,      sys_unit,
             bufferN1,   bufferN2,
             mumu_oxide1, mumu_oxide2, mumu_mu1_min, mumu_mu1_max, mumu_mu2_min, mumu_mu2_max,
+            sec_p1,     sec_t1,     sec_p2,     sec_t2,
+            sec_spmin,  sec_spmax,  sec_stmin,  sec_stmax,
+            sec_mode,   sec_xmin,   sec_xmax,   sec_ymin,   sec_ymax,
             tepm,       kds_mod,    zrsat_mod,  ssat_mod,   co2sat_mod, P2O5sat_mod,    mnzsat_mod,     bulkte1,    bulkte2,
             test,
             isopleths,  isoplethsID,isoplethsHid,  isoplethsHidID,  phase,      ss,         em,     ox,    of,     ot, sys, rmf, calc, cust, calc_sf, calc_ox, cust_sf, cust_ox,
@@ -1598,6 +1614,54 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             Xrange = (Float64(mumu_mu1_min), Float64(mumu_mu1_max))
             Yrange = (Float64(mumu_mu2_min), Float64(mumu_mu2_max))
+        end
+
+        sec_Pbox, sec_Tbox, sec_limits = nothing, nothing, nothing
+        numP(x)     = x isa Number ? to_kbar_pressure(Float64(x)) : nothing
+        numT(x)     = x isa Number ? Float64(x) : nothing
+        if diagType in SECTION_TYPES
+            sec_mode    = section_range_mode(sec_mode)
+            sec_Pbox    = extrema((to_kbar_pressure(Float64(something(sec_p1, 1.0))), to_kbar_pressure(Float64(something(sec_p2, 10.0)))))
+            sec_Tbox    = extrema((Float64(something(sec_t1, 500.0)), Float64(something(sec_t2, 800.0))))
+            sec_limits  = section_limits(sec_Pbox, sec_Tbox, (numP(sec_spmin), numP(sec_spmax), numT(sec_stmin), numT(sec_stmax)), sec_mode)
+            xtitle, ytitle, Xrange, Yrange = diagram_type(diagType, 0.0, 1.0, 0.0, 1.0, e1_tmin, e1_tmax, e2_tmin, e2_tmax)
+            if bid == "compute-button"
+                if sec_mode == "manual"
+                    rx, ry, ok_sec = section_manual_ranges(diagType, sec_xmin, sec_xmax, sec_ymin, sec_ymax)
+                else
+                    rx, ry, _, ok_sec = section_box_ranges( diagType, sec_Pbox, sec_Tbox, bulk_L, oxi, dtb, bufferType, solver,
+                                                            Float64(bufferN1), phase_selection, cpx, limOpx, Float64(limOpxVal);
+                                                            mode = sec_mode, optimizer = optimizer, dataset = dataset )
+                end
+                if ok_sec
+                    Xrange, Yrange = rx, ry
+                else
+                    println("Section diagram: no valid ranges ($(sec_mode)): boundary minimizations failed, the box is degenerate or the manual ranges are incomplete; check the P-T box.")
+                end
+            elseif @isdefined(data)
+                Xrange, Yrange = (Float64(data.Xrange[1]), Float64(data.Xrange[2])), (Float64(data.Yrange[1]), Float64(data.Yrange[2]))
+            end
+        elseif diagType in SECTION_X_TYPES
+            sec_limits  = (numP(sec_spmin), numP(sec_spmax), numT(sec_stmin), numT(sec_stmax))
+            if section_x_fixed_P(diagType)
+                sec_Pbox, sec_Tbox = (Float64(fixP), Float64(fixP)), (Float64(tmin), Float64(tmax))
+            else
+                sec_Pbox, sec_Tbox = (Float64(pmin), Float64(pmax)), (Float64(fixT), Float64(fixT))
+            end
+            xtitle, ytitle, Xrange, Yrange = diagram_type(diagType, tmin, tmax, pmin, pmax, e1_tmin, e1_tmax, e2_tmin, e2_tmax)
+            if bid == "compute-button"
+                yr, ok_sec = section_x_ranges(  diagType, section_x_fixed_P(diagType) ? Float64(fixP) : Float64(fixT),
+                                                section_x_fixed_P(diagType) ? sec_Tbox : sec_Pbox,
+                                                bulk_L, bulk_R, Float64(bufferN1), Float64(bufferN2), oxi, dtb, bufferType, solver,
+                                                phase_selection, cpx, limOpx, Float64(limOpxVal); optimizer = optimizer, dataset = dataset )
+                if ok_sec
+                    Yrange = yr
+                else
+                    println("Section diagram: the bounds do not span a range (a corner minimization failed or equal values); check the bounds.")
+                end
+            elseif @isdefined(data)
+                Xrange, Yrange = (Float64(data.Xrange[1]), Float64(data.Xrange[2])), (Float64(data.Yrange[1]), Float64(data.Yrange[2]))
+            end
         end
 
         global pd_fig_meta
@@ -1654,7 +1718,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                                                         seismicScheme, seismicWeightFactor,
                                                                                                         seismicCor, aspectRatio, seismicWater, shallowCor, fluidAsMelt, anelasticCor;
                                                                                                         mumu_oxide1_idx=mumu_oxide1_idx, mumu_oxide2_idx=mumu_oxide2_idx,
-                                                                                                        optimizer=optimizer        )
+                                                                                                        optimizer=optimizer, sec_Pbox=sec_Pbox, sec_Tbox=sec_Tbox, sec_limits=sec_limits        )
             if tepm == "true"
                 if dtb != "um" && dtb != "ume" && dtb != "mtl"
                     t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
@@ -1711,7 +1775,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                                     seismicScheme, seismicWeightFactor,
                                                                                     seismicCor, aspectRatio, seismicWater, shallowCor, fluidAsMelt, anelasticCor;
                                                                                     mumu_oxide1_idx=mumu_oxide1_idx, mumu_oxide2_idx=mumu_oxide2_idx,
-                                                                                    optimizer=optimizer     )
+                                                                                    optimizer=optimizer, sec_Pbox=sec_Pbox, sec_Tbox=sec_Tbox, sec_limits=sec_limits     )
 
             if tepm == "true"
                 if dtb != "um" && dtb != "ume" && dtb != "mtl"
@@ -2579,6 +2643,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             xtitle = "Composition [X]";   ytitle = "Temperature [°C]"
         elseif diagType == "tt"
             xtitle = "Event 2 T [°C]";    ytitle = "Event 1 T [°C]"
+        elseif @isdefined(pd_fig_meta) && !isnothing(pd_fig_meta)
+            xtitle = pd_fig_meta.xtitle;  ytitle = pd_fig_meta.ytitle
         else
             xtitle = "X";                 ytitle = "Y"
         end

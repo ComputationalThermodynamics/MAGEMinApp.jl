@@ -88,6 +88,334 @@ end
 
 
 """
+    SECTION_TYPES
+
+    Diagram types computed at fixed entropy, volume and/or enthalpy with MAGEMin_C's `multi_point_section`:
+    "ps" (S-P), "pv" (V-P), "ts" (T-S), "tv" (T-V), "sv" (S-V), "ph" (H-P), "sh" (S-H) and "vh" (V-H). Axes follow
+    `MAGEMin_C.SECTION_XY`; on screen S is in J/K/mol, V in cm³/mol and H in kJ/mol (per mol of bulk oxides).
+"""
+const SECTION_TYPES     = ("ps", "pv", "ts", "tv", "sv", "ph", "sh", "vh")
+
+"""
+    SECTION_X_TYPES
+
+    Section diagrams on the bulk mixing axis X (bulk(X) = (1 - X) bulk1 + X bulk2, as for T-X / P-X):
+    "sx" (S-X at fixed pressure, temperature solved), "hx" (H-X at fixed pressure, temperature solved)
+    and "vx" (V-X at fixed temperature, pressure solved). Each point is a P-S (`:ps`), P-H (`:ph`) or
+    T-V (`:tv`) section at its own bulk.
+"""
+const SECTION_X_TYPES   = ("sx", "hx", "vx")
+
+section_x_fixed_P(diagType) = diagType in ("sx", "hx")
+section_x_prop(diagType)    = diagType == "sx" ? :S : diagType == "hx" ? :H : :V
+section_x_mode(diagType)    = diagType == "sx" ? :ps : diagType == "hx" ? :ph : :tv
+section_axis_title(c::Symbol) = c === :P ? "Pressure [$(pressure_unit_label())]" : c === :T ? "Temperature [Celsius]" :
+                                c === :S ? "Entropy [J/K/mol]" : c === :H ? "Enthalpy [kJ/mol]" : "Volume [cm³/mol]"
+pressure_on_y_axis(diagType) = diagType in ("pt", "px", "ptx") || (diagType in SECTION_TYPES && MAGEMin_C.SECTION_XY[Symbol(diagType)][2] === :P)
+const SECTION_VOID_HASH = hash("section-void")
+
+function mask_section_void!(field, hashes)
+    length(hashes) == length(field) || return field
+    for i in eachindex(field)
+        hashes[i] == SECTION_VOID_HASH && (field[i] = missing)
+    end
+    return field
+end
+
+section_from_display(c::Symbol, v) = c === :S ? Float64(v)/1000.0 : Float64(v)
+section_to_display(c::Symbol, v)   = c === :S ? Float64(v)*1000.0 : Float64(v)
+
+"""
+    section_search_box(Pc, Tc; limits = nothing, widen = 3.0)
+
+    Search box of the free pressure/temperature of a section diagram with P-T box `Pc = (P1, P2)`
+    [kbar] and `Tc = (T1, T2)` [°C]. `limits = (Pmin, Pmax, Tmin, Tmax)` [kbar, °C] sets the bounds;
+    an entry `nothing` is automatic: the box widened by `widen` times its span on that side,
+    with P >= 0.001 kbar and T >= 25 °C. The search box always contains the P-T box.
+"""
+function section_search_box(Pc, Tc; limits = nothing, widen = 3.0)
+    Plo, Phi = extrema(Float64.(Pc))
+    Tlo, Thi = extrema(Float64.(Tc))
+    dP, dT   = max(Phi - Plo, 1.0), max(Thi - Tlo, 50.0)
+    lim      = isnothing(limits) ? (nothing, nothing, nothing, nothing) : limits
+    pick(v, auto) = isnothing(v) ? auto : Float64(v)
+    Pmin     = min(Plo, max(0.001, pick(lim[1], Plo - widen*dP)))
+    Pmax     = max(Phi, pick(lim[2], Phi + widen*dP))
+    Tmin     = min(Tlo, max(0.0, pick(lim[3], max(25.0, Tlo - widen*dT))))
+    Tmax     = max(Thi, pick(lim[4], Thi + widen*dT))
+    return (Pmin, Pmax), (Tmin, Tmax)
+end
+
+"""
+    SECTION_RANGE_MODES
+
+    How the axis ranges of a section diagram (`SECTION_TYPES`) follow from its P-T box:
+    "inscribed" (largest rectangle inside the image of the box, every target reachable),
+    "bounding" (bounding box of the image) or "manual" (ranges entered by the user).
+"""
+const SECTION_RANGE_MODES = ("inscribed", "bounding", "manual")
+
+section_range_mode(mode) = mode in SECTION_RANGE_MODES ? String(mode) : "inscribed"
+section_widen(mode)      = section_range_mode(mode) == "manual" ? 3.0 : 0.25
+
+"""
+    section_limits(Pbox, Tbox, limits, mode)
+
+    Search box of a section diagram as a fully numeric `(Pmin, Pmax, Tmin, Tmax)` [kbar, °C]: the
+    user `limits` (entries `nothing` are automatic) around the P-T box, widened by
+    [`section_widen`](@ref) of the range `mode`.
+"""
+function section_limits(Pbox, Tbox, limits, mode)
+    sP, sT = section_search_box(Pbox, Tbox; limits = limits, widen = section_widen(mode))
+    return (sP[1], sP[2], sT[1], sT[2])
+end
+
+function section_box_boundary(Pbox, Tbox, n::Int64)
+    Plo, Phi = extrema(Float64.(Pbox))
+    Tlo, Thi = extrema(Float64.(Tbox))
+    s        = collect(range(0.0, 1.0, length = n + 1))[1:n]
+    P        = vcat(fill(Plo, n), Plo .+ s .* (Phi - Plo), fill(Phi, n), Phi .- s .* (Phi - Plo))
+    T        = vcat(Tlo .+ s .* (Thi - Tlo), fill(Thi, n), Thi .- s .* (Thi - Tlo), fill(Tlo, n))
+    return P, T
+end
+
+"""
+    section_inscribed_rect(xs, ys; n = 200)
+
+    Largest axis-aligned rectangle inside the closed polygon `(xs, ys)`, in coordinates normalized
+    by the polygon extents. The polygon is rasterized on an `n × n` grid (even-odd rule at the cell
+    centres) and the largest all-inside block is found row by row with a histogram stack; its bounds
+    are the centres of its outer cells. Returns `(xrange, yrange, ok)`.
+"""
+function section_inscribed_rect(xs::Vector{Float64}, ys::Vector{Float64}; n::Int64 = 200)
+    xlo, xhi = extrema(xs)
+    ylo, yhi = extrema(ys)
+    (length(xs) >= 3 && xhi > xlo && yhi > ylo) || return (xlo, xhi), (ylo, yhi), false
+    u        = (xs .- xlo) ./ (xhi - xlo)
+    v        = (ys .- ylo) ./ (yhi - ylo)
+    m        = length(u)
+    inside   = falses(n, n)
+    xc       = Float64[]
+    for iy in 1:n
+        yc = (iy - 0.5) / n
+        empty!(xc)
+        for k in 1:m
+            k2 = k == m ? 1 : k + 1
+            (v[k] > yc) != (v[k2] > yc) || continue
+            push!(xc, u[k] + (yc - v[k]) * (u[k2] - u[k]) / (v[k2] - v[k]))
+        end
+        sort!(xc)
+        for j in 1:2:length(xc)-1
+            i0 = max(1, ceil(Int64, xc[j] * n + 0.5))
+            i1 = min(n, floor(Int64, xc[j+1] * n + 0.5))
+            i0 <= i1 && (inside[iy, i0:i1] .= true)
+        end
+    end
+    h        = zeros(Int64, n)
+    stack    = Int64[]
+    best     = 0
+    br       = (1, 1, 1, 1)
+    for iy in 1:n
+        for ix in 1:n
+            h[ix] = inside[iy, ix] ? h[ix] + 1 : 0
+        end
+        empty!(stack)
+        for ix in 1:n+1
+            cur = ix <= n ? h[ix] : 0
+            while !isempty(stack) && h[stack[end]] >= cur
+                top    = pop!(stack)
+                left   = isempty(stack) ? 1 : stack[end] + 1
+                area   = h[top] * (ix - left)
+                if area > best
+                    best = area
+                    br   = (left, ix - 1, iy - h[top] + 1, iy)
+                end
+            end
+            push!(stack, ix)
+        end
+    end
+    (br[2] > br[1] && br[4] > br[3]) || return (xlo, xhi), (ylo, yhi), false
+    cx(i) = xlo + (i - 0.5) / n * (xhi - xlo)
+    cy(i) = ylo + (i - 0.5) / n * (yhi - ylo)
+    return (cx(br[1]), cx(br[2])), (cy(br[3]), cy(br[4])), true
+end
+
+"""
+    section_box_image(diagType, Pbox, Tbox, bulk_ref, oxi, dtb, bufferType, solver, bufferN, phase_selection, cpx, limOpx, limOpxVal; optimizer="nlopt", dataset=nothing, n_edge=16)
+
+    Image of the boundary of the P-T box `Pbox` [kbar] x `Tbox` [°C] in the axes of a section diagram
+    (`SECTION_TYPES`): point minimizations at `n_edge` points per edge, counter-clockwise from
+    (Pmin, Tmin). Points that failed (status >= 3) are dropped. A jump across a univariant reaction is
+    closed by the straight segment between its two sides, the two-phase states the section solver
+    reaches. Returns `(xs, ys)` in display units (S in J/K/mol, V in cm³/mol, H in kJ/mol, P in kbar).
+"""
+function section_box_image( diagType        :: String,
+                            Pbox, Tbox,
+                            bulk_ref        :: Vector{Float64},
+                            oxi             :: Vector{String},
+                            dtb             :: String,
+                            bufferType      :: String,
+                            solver          :: String,
+                            bufferN         :: Float64,
+                            phase_selection,
+                            cpx,            limOpx,     limOpxVal;
+                            optimizer       = "nlopt",
+                            dataset         = nothing,
+                            n_edge          :: Int64 = 16 )
+
+    mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb, solver, cpx, limOpx, limOpxVal )
+    ax      = MAGEMin_C.SECTION_XY[Symbol(diagType)]
+    P, T    = section_box_boundary(Pbox, Tbox, n_edge)
+    outs    = nothing
+    MAGEMin_data = nothing
+    try
+        MAGEMin_data = Initialize_MAGEMin(  dtb;
+                                            verbose     = false,
+                                            dataset     = dataset,
+                                            mbCpx       = mbCpx,
+                                            limitCaOpx  = limitCaOpx,
+                                            CaOpxLim    = CaOpxLim,
+                                            buffer      = bufferType,
+                                            solver      = sol,
+                                            optimizer   = get_optimizer(dtb, optimizer, sol)    )
+        outs    = multi_point_minimization( P, T, MAGEMin_data;
+                                            X           = bulk_ref,
+                                            B           = fill(bufferN, length(P)),
+                                            Xoxides     = oxi,
+                                            sys_in      = "mol",
+                                            rm_list     = phase_selection,
+                                            name_solvus = true,
+                                            progressbar = false )
+    finally
+        isnothing(MAGEMin_data) || Finalize_MAGEMin(MAGEMin_data)
+    end
+    good    = [o for o in outs if o.status < 3]
+    xs      = [section_to_display(ax[1], MAGEMin_C.section_value(o, ax[1])) for o in good]
+    ys      = [section_to_display(ax[2], MAGEMin_C.section_value(o, ax[2])) for o in good]
+    return xs, ys
+end
+
+"""
+    section_box_ranges(diagType, Pbox, Tbox, bulk_ref, oxi, dtb, bufferType, solver, bufferN, phase_selection, cpx, limOpx, limOpxVal; mode="inscribed", optimizer="nlopt", dataset=nothing)
+
+    Axis ranges of a section diagram (`SECTION_TYPES`) from the image of its P-T box
+    ([`section_box_image`](@ref)): the largest inscribed rectangle (`mode = "inscribed"`) or the
+    bounding box (`"bounding"`). Returns `(Xrange, Yrange, (xs, ys), ok)` in display units, with
+    `(xs, ys)` the image polygon; `ok` is false when too few boundary points converged or the
+    rectangle is degenerate.
+"""
+function section_box_ranges(diagType        :: String,
+                            Pbox, Tbox,
+                            bulk_ref        :: Vector{Float64},
+                            oxi             :: Vector{String},
+                            dtb             :: String,
+                            bufferType      :: String,
+                            solver          :: String,
+                            bufferN         :: Float64,
+                            phase_selection,
+                            cpx,            limOpx,     limOpxVal;
+                            mode            = "inscribed",
+                            optimizer       = "nlopt",
+                            dataset         = nothing  )
+
+    xs, ys  = section_box_image(diagType, Pbox, Tbox, bulk_ref, oxi, dtb, bufferType, solver, bufferN, phase_selection,
+                                cpx, limOpx, limOpxVal; optimizer = optimizer, dataset = dataset)
+    length(xs) >= 3 || return (NaN, NaN), (NaN, NaN), (xs, ys), false
+    if section_range_mode(mode) == "bounding"
+        rx, ry  = extrema(xs), extrema(ys)
+        ok      = rx[2] > rx[1] && ry[2] > ry[1]
+    else
+        rx, ry, ok = section_inscribed_rect(xs, ys)
+    end
+    return rx, ry, (xs, ys), ok
+end
+
+"""
+    section_manual_ranges(diagType, xmin, xmax, ymin, ymax)
+
+    Axis ranges of a section diagram entered by the user in display units (P in the display pressure
+    unit). Returns `(Xrange, Yrange, ok)` with P in kbar.
+"""
+function section_manual_ranges(diagType::String, xmin, xmax, ymin, ymax)
+    all(v -> v isa Number, (xmin, xmax, ymin, ymax)) || return (NaN, NaN), (NaN, NaN), false
+    ax      = MAGEMin_C.SECTION_XY[Symbol(diagType)]
+    cv(v, c) = c === :P ? to_kbar_pressure(Float64(v)) : Float64(v)
+    rx      = extrema((cv(xmin, ax[1]), cv(xmax, ax[1])))
+    ry      = extrema((cv(ymin, ax[2]), cv(ymax, ax[2])))
+    return rx, ry, rx[2] > rx[1] && ry[2] > ry[1]
+end
+
+"""
+    section_x_ranges(diagType, fixv, bnd, bulk_L, bulk_R, bufferN1, bufferN2, oxi, dtb, bufferType, solver, phase_selection, cpx, limOpx, limOpxVal; optimizer="nlopt", dataset=nothing)
+
+    Y-axis range of an S-X or H-X (`fixv` = fixed P [kbar], `bnd` = (T_lo, T_hi) [°C]) or V-X (`fixv` =
+    fixed T [°C], `bnd` = (P_lo, P_hi) [kbar]) diagram by the corner approach: point minimizations at
+    X = 0 and 1 at both bounds of the free variable; the range spans the four corner values (S and H
+    rise with T, V falls with P). Returns `(Yrange, ok)` in display units (S in J/K/mol, V in cm³/mol,
+    H in kJ/mol).
+"""
+function section_x_ranges(  diagType        :: String,
+                            fixv            :: Float64,
+                            bnd,
+                            bulk_L          :: Vector{Float64},
+                            bulk_R          :: Vector{Float64},
+                            bufferN1        :: Float64,
+                            bufferN2        :: Float64,
+                            oxi             :: Vector{String},
+                            dtb             :: String,
+                            bufferType      :: String,
+                            solver          :: String,
+                            phase_selection,
+                            cpx,            limOpx,     limOpxVal;
+                            optimizer       = "nlopt",
+                            dataset         = nothing  )
+
+    mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb, solver, cpx, limOpx, limOpxVal )
+    gv, z_b, DB, splx_data = init_MAGEMin(  dtb;
+                                            verbose     = -1,
+                                            dataset     = dataset,
+                                            mbCpx       = mbCpx,
+                                            limitCaOpx  = limitCaOpx,
+                                            CaOpxLim    = CaOpxLim,
+                                            buffer      = bufferType,
+                                            solver      = sol,
+                                            optimizer   = get_optimizer(dtb, optimizer, sol)    );
+    prop    = section_x_prop(diagType)
+    lo, hi  = extrema(Float64.(bnd))
+    vals    = Dict{Tuple{Float64,Float64},Float64}()
+    ok      = true
+    try
+        for X in (0.0, 1.0), f in (lo, hi)
+            gv      = define_bulk_rock(gv, bulk_L .* (1.0 - X) .+ bulk_R .* X, oxi, "mol", dtb)
+            P, T    = section_x_fixed_P(diagType) ? (fixv, f) : (f, fixv)
+            o       = deepcopy(point_wise_minimization(P, T, gv, z_b, DB, splx_data;
+                                                       buffer_n = bufferN1*(1.0 - X) + bufferN2*X, rm_list = phase_selection, name_solvus = true))
+            ok     &= o.status < 3
+            vals[(X, f)] = section_to_display(prop, MAGEMin_C.section_value(o, prop))
+        end
+    finally
+        LibMAGEMin.FreeDatabases(gv, DB, z_b, pointer_from_objref(splx_data))
+    end
+    yr  = extrema(collect(values(vals)))
+    return yr, ok && yr[2] > yr[1]
+end
+
+function section_x_column_seeds(grid, gX, X::Float64, target::Float64, prop::Symbol)
+    isempty(grid) && return MAGEMin_C.gmin_struct{Float64,Int64}[]
+    dx      = minimum(abs.(gX .- X))
+    col     = [k for k in eachindex(grid) if abs(gX[k] - X) <= dx + 1e-12 && grid[k].status < 3]
+    isempty(col) && return MAGEMin_C.gmin_struct{Float64,Int64}[]
+    v       = [MAGEMin_C.section_value(grid[k], prop) for k in col]
+    below   = [col[k] for k in eachindex(col) if v[k] <= target]
+    above   = [col[k] for k in eachindex(col) if v[k] >  target]
+    sd      = Int[]
+    isempty(below) || push!(sd, below[argmax([MAGEMin_C.section_value(grid[k], prop) for k in below])])
+    isempty(above) || push!(sd, above[argmin([MAGEMin_C.section_value(grid[k], prop) for k in above])])
+    isempty(sd) && (sd = col[partialsortperm(abs.(v .- target), 1:min(2, length(col)))])
+    return [grid[k] for k in sd]
+end
+
+"""
     get_wat_sat_function(     Yrange,     bulk_ini,   oxi,    phase_selection,
                                 dtb,        bufferType, solver,
                                 verbose,    bufferN,
@@ -470,12 +798,23 @@ function refine_MAGEMin(dtb,data,
                         fluid_as_melt   :: Bool,
                         anelastic_correction :: Bool;
                         mumu_oxide1_idx     :: Int64                   = 0,
-                        mumu_oxide2_idx     :: Int64                   = 0    )
-    global Out_XY, addedRefinementLvl;
+                        mumu_oxide2_idx     :: Int64                   = 0,
+                        sec_Pbox            = nothing,
+                        sec_Tbox            = nothing,
+                        sec_limits          = nothing    )
+    global Out_XY, addedRefinementLvl, Sec_status_XY, Sec_seed_grid, Sec_seed_X;
+
+    if isempty(Out_XY) || !@isdefined(Sec_status_XY)
+        Sec_status_XY = Int64[]
+    end
+    if isempty(Out_XY) && diagType in SECTION_X_TYPES
+        Sec_seed_grid = MAGEMin_C.gmin_struct{Float64,Int64}[]
+        Sec_seed_X    = Float64[]
+    end
 
     new_Ws = get_custom_Ws(custW)
 
-    if isempty(data.split_cell_list)
+    if isempty(data.split_cell_list) && isempty(Out_XY)
         Out_XY_new      = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef,length(data.points))
         n_new_points    = length(data.points)
         npoints         = data.points
@@ -501,7 +840,118 @@ function refine_MAGEMin(dtb,data,
             Gvec = nothing;
         end
 
-        if diagType == "mumu"
+        if diagType in SECTION_TYPES
+
+            sec     = Symbol(diagType)
+            ax      = MAGEMin_C.SECTION_XY[sec]
+            xs      = [section_from_display(ax[1], npoints[i][1]) for i = 1:n_new_points]
+            ys      = [section_from_display(ax[2], npoints[i][2]) for i = 1:n_new_points]
+            xr      = section_from_display.(ax[1], data.Xrange)
+            yr      = section_from_display.(ax[2], data.Yrange)
+            seeds   = nothing
+            if !isempty(data.split_cell_list)
+                seeds = [ [Out_XY[j] for j in data.npoints_ig[i] if j <= length(Sec_status_XY) && Sec_status_XY[j] == 0] for i = 1:n_new_points ]
+            end
+
+            search_P, search_T = section_search_box(sec_Pbox, sec_Tbox; limits = sec_limits)
+            Out_XY_new, sec_info = MAGEMin_C.multi_point_section(  sec, xs, ys, MAGEMin_data;
+                                                        Pbox        = search_P,
+                                                        Tbox        = search_T,
+                                                        seed_Pbox   = extrema(Float64.(sec_Pbox)),
+                                                        seed_Tbox   = extrema(Float64.(sec_Tbox)),
+                                                        seeds       = seeds,
+                                                        xrange      = xr,
+                                                        yrange      = yr,
+                                                        X           = bulk_L,
+                                                        B           = bufferN1,
+                                                        Xoxides     = oxi,
+                                                        sys_in      = "mol",
+                                                        rm_list     = phase_selection,
+                                                        W           = new_Ws,
+                                                        scp         = scp,
+                                                        name_solvus = true,
+                                                        progressbar = true,
+                                                        callback_fn = update_progress,
+                                                        seismic_cor = seismic_cor, aspect_ratio = aspect_ratio, seismic_water = seismic_water,
+                                                        shallow_correction = shallow_cor, fluid_as_melt = fluid_as_melt, anelastic_cor = anelastic_correction )
+            append!(Sec_status_XY, [x.status for x in sec_info])
+
+            n_void = count(x -> x.status != 0, sec_info)
+            if n_void > 0
+                println("Section diagram: $n_void / $n_new_points point(s) not reached within P $(round.(search_P, sigdigits = 4)) kbar, T $(round.(search_T, sigdigits = 4)) °C or not resolved (left blank).")
+            end
+
+        elseif diagType in SECTION_X_TYPES
+
+            mode    = section_x_mode(diagType)
+            prop    = section_x_prop(diagType)
+            fixv    = section_x_fixed_P(diagType) ? fixP : fixT
+            bnd     = section_x_fixed_P(diagType) ? extrema(Float64.(sec_Tbox)) : extrema(Float64.(sec_Pbox))
+            search_P, search_T = section_search_box(sec_Pbox, sec_Tbox; limits = sec_limits)
+            Xmix    = [Float64(npoints[i][1]) for i = 1:n_new_points]
+            yv      = [section_from_display(prop, npoints[i][2]) for i = 1:n_new_points]
+            Xvec_s  = [bulk_L .* (1.0 - X) .+ bulk_R .* X for X in Xmix]
+            Bvec_s  = [bufferN1*(1.0 - X) + bufferN2*X for X in Xmix]
+
+            if isempty(data.split_cell_list) || !@isdefined(Sec_seed_grid) || isempty(Sec_seed_grid)
+                Xn      = sort(unique(Float64.(first.(data.points))))
+                length(Xn) > 65 && (Xn = collect(range(Xn[1], Xn[end], length = 65)))
+                fn      = collect(range(bnd[1], bnd[2], length = length(Xn)))
+                gX      = vec([x for x in Xn, f in fn])
+                gF      = vec([f for x in Xn, f in fn])
+                gP      = section_x_fixed_P(diagType) ? fill(fixv, length(gF)) : gF
+                gT      = section_x_fixed_P(diagType) ? gF : fill(fixv, length(gF))
+                println("Section diagram: seed grid of $(length(gX)) points (X x $(section_x_fixed_P(diagType) ? "T" : "P") between the bounds)")
+                Sec_seed_grid = multi_point_minimization(   gP, gT, MAGEMin_data;
+                                                            X = [bulk_L .* (1.0 - x) .+ bulk_R .* x for x in gX], B = [bufferN1*(1.0 - x) + bufferN2*x for x in gX],
+                                                            Xoxides = oxi, sys_in = "mol", rm_list = phase_selection, name_solvus = true, W = new_Ws, scp = scp,
+                                                            seismic_cor = seismic_cor, aspect_ratio = aspect_ratio, seismic_water = seismic_water,
+                                                            shallow_correction = shallow_cor, fluid_as_melt = fluid_as_melt, anelastic_cor = anelastic_correction)
+                Sec_seed_X    = gX
+            end
+
+            seeds = Vector{Vector{MAGEMin_C.gmin_struct{Float64,Int64}}}(undef, n_new_points)
+            for i = 1:n_new_points
+                sd = MAGEMin_C.gmin_struct{Float64,Int64}[]
+                if !isempty(data.split_cell_list)
+                    sd = [Out_XY[j] for j in data.npoints_ig[i] if j <= length(Sec_status_XY) && Sec_status_XY[j] == 0]
+                end
+                isempty(sd) && (sd = section_x_column_seeds(Sec_seed_grid, Sec_seed_X, Xmix[i], yv[i], prop))
+                seeds[i] = sd
+            end
+
+            xs, ys  = section_x_fixed_P(diagType) ? (yv, fill(fixv, n_new_points)) : (fill(fixv, n_new_points), yv)
+            yr      = section_from_display.(prop, data.Yrange)
+            Out_XY_new, sec_info = MAGEMin_C.multi_point_section(  mode, xs, ys, MAGEMin_data;
+                                                        Pbox        = search_P,
+                                                        Tbox        = search_T,
+                                                        seeds       = seeds,
+                                                        xrange      = section_x_fixed_P(diagType) ? yr : (fixv - 1.0, fixv + 1.0),
+                                                        yrange      = section_x_fixed_P(diagType) ? (fixv - 1.0, fixv + 1.0) : yr,
+                                                        retry_xy    = (Xmix, yv),
+                                                        X           = Xvec_s,
+                                                        B           = Bvec_s,
+                                                        Xoxides     = oxi,
+                                                        sys_in      = "mol",
+                                                        rm_list     = phase_selection,
+                                                        W           = new_Ws,
+                                                        scp         = scp,
+                                                        name_solvus = true,
+                                                        progressbar = true,
+                                                        callback_fn = update_progress,
+                                                        seismic_cor = seismic_cor, aspect_ratio = aspect_ratio, seismic_water = seismic_water,
+                                                        shallow_correction = shallow_cor, fluid_as_melt = fluid_as_melt, anelastic_cor = anelastic_correction )
+            for i = 1:n_new_points
+                Out_XY_new[i].X .= Xmix[i]
+            end
+            append!(Sec_status_XY, [x.status for x in sec_info])
+
+            n_void = count(x -> x.status != 0, sec_info)
+            if n_void > 0
+                println("Section diagram: $n_void / $n_new_points point(s) not reached within $(section_x_fixed_P(diagType) ? "T $(round.(search_T, sigdigits = 4)) °C" : "P $(round.(search_P, sigdigits = 4)) kbar") or not resolved (left blank).")
+            end
+
+        elseif diagType == "mumu"
 
             target_mu1 = zeros(Float64,n_new_points)
             target_mu2 = zeros(Float64,n_new_points)
@@ -796,7 +1246,15 @@ function refine_MAGEMin(dtb,data,
         end
     end
 
-    if diagType == "tx" || diagType == "px" || diagType == "ptx"
+    if (diagType in SECTION_TYPES || diagType in SECTION_X_TYPES) && length(Sec_status_XY) == n_points
+        for i=1:n_points
+            if Sec_status_XY[i] != 0
+                Hash_XY[i] = SECTION_VOID_HASH
+            end
+        end
+    end
+
+    if diagType == "tx" || diagType == "px" || diagType == "ptx" || diagType in SECTION_X_TYPES
         for i=1:n_points
             Out_XY[i].X .= data.points[i][1]
         end

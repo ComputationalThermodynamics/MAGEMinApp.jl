@@ -828,7 +828,7 @@ function save_equilibrium_to_file(  out::MAGEMin_C.gmin_struct{Float64, Int64}, 
     for i=1:out.n_PP
         file *= @sprintf("%6s",display_ph_name(out.ph[i+out.n_SS]))
         file *= @sprintf("%+15.5f %+13.5f %+17.5f %+17.5f %+12.5f %+12.5f %+12.8f %+12.6f %+12.4f %+12.2f %+12.2f %+13.2f %+12.2f",
-                        out.ph_frac_wt[i],
+                        out.ph_frac_wt[i+out.n_SS],
                         out.PP_vec[i].G,
                         out.PP_vec[i].V,
                         out.PP_vec[i].V*out.ph_frac[i+out.n_SS]*out.PP_vec[i].f,
@@ -844,13 +844,15 @@ function save_equilibrium_to_file(  out::MAGEMin_C.gmin_struct{Float64, Int64}, 
         file *= @sprintf("\n")  
     end
 
-    file *= @sprintf("%6s %14s %+13.5f %17s %+17.5f %+12.5f %+12.5f %12s %+12.6f %+12.4f %+12.5f %+12.5f %+13.5f %+12.5f\n",
+    v_part  = sum((out.SS_vec[i].V*out.ph_frac[i]*out.SS_vec[i].f for i in 1:out.n_SS); init = 0.0) +
+              sum((out.PP_vec[i].V*out.ph_frac[i+out.n_SS]*out.PP_vec[i].f for i in 1:out.n_PP); init = 0.0)
+    file *= @sprintf("%6s %14s %+13.5f %+17.5f %+17.5f %12s %+12.5f %12s %+12.6f %+12.4f %+12.5f %+12.5f %+13.5f %+12.5f\n",
                     "SYS",
                     " ",
                     out.G_system,
-                    " ",    
-                    0, #V
-                    0, #cp
+                    out.V,
+                    v_part,
+                    " ",
                     out.rho,
                     " ",  
                     out.entropy[1],
@@ -1084,7 +1086,7 @@ function get_diagram_labels(    Out_XY      :: Vector{MAGEMin_C.gmin_struct{Floa
 
         field_tmp   = members[i]
         np          = length(field_tmp)
-        if np > 4
+        if np > 4 && hull[i] != SECTION_VOID_HASH
             id             += 1
             ph_list[id]     = ph[field_tmp[1]]
             phd_list[id]    = phd[field_tmp[1]]
@@ -1540,6 +1542,8 @@ function get_gridded_map(   fieldname   ::String,
         end
     end
 
+    mask_section_void!(field, Hash_XY)
+
     n   = 2^(sub + refLvl)+1
     dx  = (data.Xrange[2]-data.Xrange[1])/(n-1)
     dy  = (data.Yrange[2]-data.Yrange[1])/(n-1)
@@ -1925,6 +1929,8 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
         end
     end
 
+    mask_section_void!(field, Hash_XY)
+
     n   = 2^(sub + refLvl)+1
     dx  = (data.Xrange[2]-data.Xrange[1])/(n-1)
     dy  = (data.Yrange[2]-data.Yrange[1])/(n-1)
@@ -2231,6 +2237,8 @@ function get_isopleth_map(  mod         ::String,
         end 
     end
 
+    isdefined(@__MODULE__, :Hash_XY) && mask_section_void!(field, Hash_XY)
+
     n   = 2^(sub + refLvl)+1
     dx  = (data.Xrange[2]-data.Xrange[1])/(n-1)
     dy  = (data.Yrange[2]-data.Yrange[1])/(n-1)
@@ -2319,7 +2327,7 @@ function get_isopleth_map_te(   mod         ::String,
 
     np          = length(data.points)
     len_ox      = length(oxi)
-    field       = Vector{Union{Float64,Nothing}}(nothing,np);
+    field       = Vector{Union{Float64,Nothing,Missing}}(nothing,np);
 
     if mod == "calc"
         te_f = compile_te_formula(calc)
@@ -2358,6 +2366,8 @@ function get_isopleth_map_te(   mod         ::String,
             te_melt_present(Out_TE_XY[i]) || (field[i] = absent)
         end
     end
+
+    isdefined(@__MODULE__, :Hash_XY) && mask_section_void!(field, Hash_XY)
 
     n   = 2^(sub + refLvl)+1
     dx  = (data.Xrange[2]-data.Xrange[1])/(n-1)
@@ -2436,132 +2446,6 @@ end
 
 
 """
-    convertBulk4App(bulk_in, bulk_in_ox, sys_in, db; ns = false, oxMinGuard = true)
-
-    App-side copy of MAGEMin_C's `convertBulk4MAGEMin` (MAGEMin v2.1.0) used when loading bulk-rock files.
-    Converts `bulk_in` (`sys_in` = "mol" or "wt") to MAGEMin's oxide order for `db`, normalized to 100 mol%.
-    With `ns = false` core oxides below 1e-4 are raised to 1e-4, as in MAGEMin_C. With `ns = true`
-    (nullspace optimizer) only SiO2 is raised to 1e-4; every other oxide is kept as given, values within
-    ±2e-5 being set to 0 when `oxMinGuard` is true.
-"""
-function convertBulk4App(   bulk_in     :: AbstractVector{Float64},
-                            bulk_in_ox  :: AbstractVector{<:AbstractString},
-                            sys_in      :: AbstractString,
-                            db          :: AbstractString;
-                            ns          :: Bool = false,
-                            oxMinGuard  :: Bool = true )
-
-    bulk_in_ox      = String.(bulk_in_ox)
-    sys_in          = String(sys_in)
-    db              = String(db)
-    bulk_in         = MAGEMin_C.normalize(bulk_in)
-
-    ref_ox          = ["SiO2"; "Al2O3"; "CaO"; "MgO"; "FeO"; "Fe2O3"; "K2O"; "Na2O"; "TiO2"; "O"; "Cr2O3"; "MnO"; "H2O"; "CO2"; "S"; "Fe"];
-    ref_MolarMass   = [60.08; 101.96; 56.08; 40.30; 71.85; 159.69; 94.2; 61.98; 79.88; 16.0; 151.99; 70.937; 18.015; 44.01; 32.06; 55.85];
-
-    MAGEMin_ox      = get_oxide_list(db)
-
-    keep_mask       = in(MAGEMin_ox).(bulk_in_ox) .| in(["Fe", "FeO", "Fe2O3"]).(bulk_in_ox)
-    bulk_in_ox      = bulk_in_ox[keep_mask]
-    bulk_in         = bulk_in[keep_mask]
-
-    MAGEMin_bulk    = zeros(length(MAGEMin_ox))
-
-    ox_indices      = findfirst.(isequal.(bulk_in_ox), Ref(ref_ox))
-
-    if sys_in == "wt"
-        bulk = bulk_in ./ ref_MolarMass[ox_indices]
-    elseif sys_in == "mol"
-        bulk = copy(bulk_in)
-    else
-        println("System unit not implemented -> use 'mol' or 'wt' -> falling back to 'mol'")
-        bulk = copy(bulk_in)
-    end
-
-    Xox_cp = copy(bulk_in_ox)
-    (db == "sb24") && (MAGEMin_C.FeO2Fe_O!(bulk, Xox_cp))
-    bulk = MAGEMin_C.normalize(bulk)
-
-    for i in eachindex(MAGEMin_ox)
-        idx = findfirst(isequal(MAGEMin_ox[i]), Xox_cp)
-        if !isnothing(idx)
-            MAGEMin_bulk[i] = bulk[idx]
-        end
-    end
-
-    idx_Fe2O3 = findfirst(isequal("Fe2O3"), Xox_cp)
-    if !isnothing(idx_Fe2O3) && db != "sb24"
-        idx_FeO = findfirst(isequal("FeO"), MAGEMin_ox)
-        idx_O   = findfirst(isequal("O"), MAGEMin_ox)
-        if !isnothing(idx_FeO)
-            MAGEMin_bulk[idx_FeO] += bulk[idx_Fe2O3] * 2.0
-        end
-        if !isnothing(idx_O)
-            MAGEMin_bulk[idx_O] += bulk[idx_Fe2O3]
-        end
-    end
-
-    MAGEMin_bulk .= MAGEMin_C.normalize(MAGEMin_bulk)
-
-    idx_FeO_ox  = findfirst(isequal("FeO"), MAGEMin_ox)
-    idx_O_ox    = findfirst(isequal("O"),   MAGEMin_ox)
-    if !isnothing(idx_FeO_ox) && !isnothing(idx_O_ox) && MAGEMin_bulk[idx_O_ox] > 0.0 && MAGEMin_bulk[idx_FeO_ox] < (oxMinGuard ? 2e-5 : eps(Float64))
-        @warn "FeO is absent from the bulk-rock composition: O (ferric iron) is set to 0.0" maxlog=1
-        MAGEMin_bulk[idx_O_ox] = 0.0
-        MAGEMin_bulk .= MAGEMin_C.normalize(MAGEMin_bulk)
-    end
-
-    oxide_config = Dict(
-        "sb11"   => (core=["SiO2", "Al2O3", "FeO", "MgO"],
-                   optional=[ "CaO", "Na2O"]),
-        "sb21"   => (core=["SiO2", "Al2O3", "FeO", "MgO"],
-                   optional=[ "CaO", "Na2O"]),
-        "sb24"   => (core=["SiO2", "Al2O3", "MgO", "O", "Fe"],
-                   optional=["CaO", "Na2O", "Cr2O3"]),
-        "xMELTS" => (core=["FeO"],
-                   optional=["SiO2","Al2O3","CaO","MgO","K2O","Na2O","TiO2","O","MnO","Cr2O3","H2O","CO2"]),
-        "rMELTS" => (core=["FeO"],
-                   optional=["SiO2","Al2O3","CaO","MgO","K2O","Na2O","TiO2","O","MnO","Cr2O3","H2O","CO2"]),
-        "pMELTS" => (core=["FeO"],
-                   optional=["SiO2","Al2O3","CaO","MgO","K2O","Na2O","TiO2","O","MnO","Cr2O3","H2O"]),
-        "po"     => (core=["SiO2", "Al2O3", "MgO", "FeO"],
-                   optional=["K2O", "Na2O", "H2O", "CaO", "TiO2", "O"]),
-    )
-
-    if is_db(db) && get_db(db).research_group == "tc"
-        EM_db   = get_db(db).EM_database
-        c       = findall(ox -> MAGEMin_C.LibMAGEMin.is_core_oxide("tc", EM_db, ox) == 1, MAGEMin_ox)
-        d       = setdiff(eachindex(MAGEMin_ox), c)
-    else
-        config  = get(oxide_config, db, (core=MAGEMin_ox, optional=String[]))
-        c       = findall(in(config.core).(MAGEMin_ox))
-        d       = findall(in(config.optional).(MAGEMin_ox))
-    end
-
-    if ns
-        c       = findall(isequal("SiO2"), MAGEMin_ox)
-        d       = setdiff(eachindex(MAGEMin_ox), c)
-    end
-
-    id0 = findall(MAGEMin_bulk[c] .< 1e-4)
-    if !isempty(id0)
-        MAGEMin_bulk[c[id0]] .= 1e-4
-    end
-
-    if oxMinGuard
-        id1 = findall(MAGEMin_bulk[d] .< 2e-5 .&& MAGEMin_bulk[d] .> -2e-5)
-        if !isempty(id1)
-            MAGEMin_bulk[d[id1]] .= 0.0
-        end
-    end
-
-    MAGEMin_bulk .= MAGEMin_C.normalize(MAGEMin_bulk) .* 100.0
-
-    return MAGEMin_bulk, MAGEMin_ox
-end
-
-
-"""
     function to parse bulk-rock composition file
 """
 function bulk_file_to_db(datain; ns::Bool = false)
@@ -2599,7 +2483,7 @@ function bulk_file_to_db(datain; ns::Bool = false)
         frac 		= parse.(Float64,frac);
 
         idx 		= findall(datain[1,:] .== "frac2")[1];
-        bulkrock, MAGEMin_ox    = convertBulk4App(frac,oxide,String(sysUnit),String(dbin); ns = ns)
+        bulkrock, MAGEMin_ox    = MAGEMin_C.convertBulk4MAGEMin(frac,oxide,String(sysUnit),String(dbin); ns = ns)
         bulkrock   .= round.(bulkrock; digits = 4)
 
 
@@ -2608,7 +2492,7 @@ function bulk_file_to_db(datain; ns::Bool = false)
             frac2 		= strip.(convert.(String,frac2));
             frac2 		= replace.(frac2,r"\]"=>"",r"\["=>"");
             frac2		= parse.(Float64,frac2);
-            bulkrock2, MAGEMin_ox   = convertBulk4App(frac2,oxide,String(sysUnit),String(dbin); ns = ns)
+            bulkrock2, MAGEMin_ox   = MAGEMin_C.convertBulk4MAGEMin(frac2,oxide,String(sysUnit),String(dbin); ns = ns)
             bulkrock2  .= round.(bulkrock2; digits = 4)
         else
             bulkrock2   = deepcopy(bulkrock)
@@ -2735,7 +2619,7 @@ function bulk_csv_to_db(datain; ns::Bool = false)
             error("Row $i ('$title'): no oxide values found. At least one oxide column must be non-empty")
         end
 
-        bulkrock, MAGEMin_ox = convertBulk4App(frac, oxide, sysUnit, dbin; ns = ns)
+        bulkrock, MAGEMin_ox = MAGEMin_C.convertBulk4MAGEMin(frac, oxide, sysUnit, dbin; ns = ns)
         bulkrock .= round.(bulkrock; digits = 4)
 
         frac2 = copy(frac)
@@ -2757,7 +2641,7 @@ function bulk_csv_to_db(datain; ns::Bool = false)
             
             end
         end
-        bulkrock2, _ = convertBulk4App(frac2, oxide, sysUnit, dbin; ns = ns)
+        bulkrock2, _ = MAGEMin_C.convertBulk4MAGEMin(frac2, oxide, sysUnit, dbin; ns = ns)
         bulkrock2   .= round.(bulkrock2; digits = 4)
 
         # Per-oxide WDS 1-sigma, converted to absolute mol% (matching the Uncertainty

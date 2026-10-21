@@ -129,7 +129,7 @@ end
 const DB_MENU_GROUPS = [
     "- PUBLISHED DATABASE -"  => ["mp", "mb", "ig", "igd", "igad", "um"],
     "- BERMAN EOS DATABASE -" => ["po"],
-    "- MANTLE DATABASE -"     => ["mtl", "sb11", "sb21", "sb24"],
+    "- MANTLE DATABASE -"     => [(ENABLE_IGM ? ["igm"] : String[])..., "mtl", "sb11", "sb21", "sb24"],
     "- CUSTOM DATABASE -"     => ["ume", "mpe", "mbe", "all"],
     (ENABLE_MELTS ? ["- MELTS DATABASE -" => ["pMELTS", "rMELTS"]] : [])...,
 ]
@@ -143,6 +143,7 @@ const DB_MENU_GROUPS = [
 const DB_MENU_LABELS = Dict(
     "ig"   => "Igneous (Green et al., 2025, after H18)",
     "igd"  => "Igneous dry (Su et al., 2026, after T21)",
+    "igm"  => "Igneous mantle (Rinaldi et al., 2026)",
     "ume"  => "Ultramafic extended (Evans & Frost., 2021)",
     "mpe"  => "Metapelite extended (White et al., 2014, Green et al., 2016, Evans & Frost., 2021)",
     "mbe"  => "Metabasite extended (Green et al., 2016, Diener et al., 2007)",
@@ -160,7 +161,7 @@ db_menu_label(dtb::String) = get(DB_MENU_LABELS, dtb, get_db_label(dtb))
     are not in `DB_MENU_GROUPS`, so they stay out of the selector until the library
     grows them and they turn up in `get_db_list()` on their own.
 """
-const DB_STAGED = ("igm", "cs")
+const DB_STAGED = ENABLE_IGM ? ("cs",) : ("igm", "cs")
 
 function get_dtbulk_list()
 

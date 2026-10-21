@@ -35,9 +35,37 @@ end
     Plotly's `connectgaps`: smooth across coarse cells, while phase boundaries, where
     the mesh is fine, keep their jump to one cell. `data` is kept for the call
     signature (screen and SVG export share this function).
+
+    Cells of the section-diagram void field (`SECTION_VOID_HASH`: targets outside the image
+    of the P-T box or not resolved), grown by one cell, stay `missing`, i.e. blank, so the
+    raster does not reach past the traced edge of the image.
 """
 function pd_fill_gridded(gridded::AbstractMatrix, data)
-    return svg_fill_gaps(gridded)
+    filled  = svg_fill_gaps(gridded)
+    void    = pd_void_mask(size(filled))
+    isnothing(void) || (filled[void] .= missing)
+    return filled
+end
+
+function pd_void_field_id()
+    (@isdefined(Hash_XY) && @isdefined(gridded_fields)) || return nothing
+    return findfirst(==(SECTION_VOID_HASH), unique(Hash_XY))
+end
+
+function pd_void_mask(sz)
+    k = pd_void_field_id()
+    (isnothing(k) || size(gridded_fields) != sz) && return nothing
+    void    = gridded_fields .== k
+    grown   = copy(void)
+    nx, ny  = sz
+    for j in 1:ny, i in 1:nx
+        void[i, j] || continue
+        for (di, dj) in ((-1, 0), (1, 0), (0, -1), (0, 1))
+            ii, jj = i + di, j + dj
+            (1 <= ii <= nx && 1 <= jj <= ny) && (grown[ii, jj] = true)
+        end
+    end
+    return grown
 end
 
 """
@@ -219,7 +247,7 @@ function pd_figure_parts(; data, gridded, heat_map, layout_g, reaction, data_iso
                           show_reaction::Bool, show_mesh::Bool, show_labels::Bool, geotherms = GenericTrace[],
                           fills = Tuple{Vector{Matrix{Float64}},NTuple{4,Float64}}[], iso_sigma::Real = 0.0)
     global phase_infos
-    convert_p = use_GPa[1] && diagType in ("pt", "px", "ptx")
+    convert_p = use_GPa[1] && pressure_on_y_axis(diagType)
     yconv(y::Real) = convert_p ? display_pressure(Float64(y)) : Float64(y)
     yconv(y)       = y
     xr = collect(Float64.(data.Xrange))
@@ -468,9 +496,17 @@ function pd_export_svg(parts, path::AbstractString)
     zticks = isnothing(get(parts, :ztick, nothing)) ? svg_nice_ticks(parts.zmin, parts.zmax) :
              collect(ceil(parts.zmin / parts.ztick - 1e-9) * parts.ztick : parts.ztick : parts.zmax + 1e-9)
     zlabels = [svg_tick_label(v) for v in zticks]
-    for (k, v) in enumerate(zticks)
-        t = parts.zmax == parts.zmin ? 0.0 : (v - parts.zmin) / (parts.zmax - parts.zmin)
-        svg_text(io, bar_x + bar_w + 5, bar_y + bar_h * (1 - t), zlabels[k]; id = svg_id(seen, "Colorbar_tick_$(k)"), anchor = "start")
+    zy      = [bar_y + bar_h * (1 - (parts.zmax == parts.zmin ? 0.0 : (v - parts.zmin) / (parts.zmax - parts.zmin))) for v in zticks]
+    svg_group_open(io, svg_id(seen, "Colorbar_outline"); stroke = ink, width = 0.75, fill = "none")
+    svg_rect(io, svg_id(seen, "Colorbar_frame"), bar_x, bar_y, bar_w, bar_h)
+    svg_group_close(io)
+    svg_group_open(io, svg_id(seen, "Colorbar_ticks"); stroke = ink, width = 0.75)
+    for y in zy
+        svg_line(io, bar_x + bar_w - 4, y, bar_x + bar_w, y)
+    end
+    svg_group_close(io)
+    for (k, y) in enumerate(zy)
+        svg_text(io, bar_x + bar_w + 5, y, zlabels[k]; id = svg_id(seen, "Colorbar_tick_$(k)"), anchor = "start")
     end
     title_dx = max(42.0, 5.0 + 5.8 * maximum(length, zlabels; init = 0) + 14.0)
     isempty(parts.field_title) || svg_text(io, bar_x + bar_w + title_dx, bar_y + bar_h / 2, parts.field_title;

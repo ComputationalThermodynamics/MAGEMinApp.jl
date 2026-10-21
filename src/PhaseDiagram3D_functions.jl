@@ -39,7 +39,7 @@ const PD3D_KB_PER_POINT         = 32.0
 
 diagram_type_2d(diagType) = diagType == "ptx3d" ? (isdefined(MAGEMinApp, :pd_fig_meta) ? pd_fig_meta.diagType : "pt") : diagType
 
-pd3d_field_options() = [o for o in field_dropdown_options() if o.value != "Hash"]
+pd3d_field_options() = [o for o in field_dropdown_options() if !(o.value in ("Hash", "P_kbar", "T_C"))]
 
 function pd3d_estimate(nP, nT, nX)
     any(isnothing, (nP, nT, nX)) && return ""

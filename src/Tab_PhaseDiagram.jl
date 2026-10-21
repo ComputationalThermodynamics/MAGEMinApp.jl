@@ -1196,6 +1196,7 @@ function Tab_PhaseDiagram()
                                                         options = [
                                                                 (label = "G system",                value = "G_system"),    
                                                                 (label = "Entropy",                 value = "entropy"),
+                                                                (label = "Volume [cm³/mol]",        value = "V"),
                                                                 (label = "Enthalpy",                value = "enthalpy"),
                                                                 (label = "Specific cp",             value = "s_cp"),
                                                                 (label = "Thermal expansivity",     value = "alpha"),
