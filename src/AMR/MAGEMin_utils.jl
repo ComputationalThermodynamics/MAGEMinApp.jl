@@ -91,10 +91,11 @@ end
     SECTION_TYPES
 
     Diagram types computed at fixed entropy, volume and/or enthalpy with MAGEMin_C's `multi_point_section`:
-    "ps" (S-P), "pv" (V-P), "ts" (T-S), "tv" (T-V), "sv" (S-V), "ph" (H-P), "sh" (S-H) and "vh" (V-H). Axes follow
-    `MAGEMin_C.SECTION_XY`; on screen S is in J/K/mol, V in cm³/mol and H in kJ/mol (per mol of bulk oxides).
+    "ps" (S-P), "pv" (V-P), "ts" (T-S), "tv" (T-V), "sv" (S-V), "ph" (H-P), "sh" (S-H), "vh" (V-H) and "rh" (ρ-H). Axes
+    follow `MAGEMin_C.SECTION_XY`; on screen S is in J/K/mol, V in cm³/mol, H in kJ/mol (per mol of bulk oxides) and ρ
+    (system density) in kg/m³.
 """
-const SECTION_TYPES     = ("ps", "pv", "ts", "tv", "sv", "ph", "sh", "vh")
+const SECTION_TYPES     = ("ps", "pv", "ts", "tv", "sv", "ph", "sh", "vh", "rh")
 
 """
     SECTION_X_TYPES
@@ -110,7 +111,7 @@ section_x_fixed_P(diagType) = diagType in ("sx", "hx")
 section_x_prop(diagType)    = diagType == "sx" ? :S : diagType == "hx" ? :H : :V
 section_x_mode(diagType)    = diagType == "sx" ? :ps : diagType == "hx" ? :ph : :tv
 section_axis_title(c::Symbol) = c === :P ? "Pressure [$(pressure_unit_label())]" : c === :T ? "Temperature [Celsius]" :
-                                c === :S ? "Entropy [J/K/mol]" : c === :H ? "Enthalpy [kJ/mol]" : "Volume [cm³/mol]"
+                                c === :S ? "Entropy [J/K/mol]" : c === :H ? "Enthalpy [kJ/mol]" : c === :rho ? "Density [kg/m³]" : "Volume [cm³/mol]"
 pressure_on_y_axis(diagType) = diagType in ("pt", "px", "ptx") || (diagType in SECTION_TYPES && MAGEMin_C.SECTION_XY[Symbol(diagType)][2] === :P)
 const SECTION_VOID_HASH = hash("section-void")
 
@@ -147,13 +148,124 @@ function section_search_box(Pc, Tc; limits = nothing, widen = 3.0)
 end
 
 """
+    section_fresh_seeds(seeds, MAGEMin_data; X = nothing, B = nothing, Xoxides = String[], rm_list = nothing, W = nothing, scp = 0, kwargs...)
+
+    Fresh point-wise minimizations at the P-T of each group of section results in `seeds` (one vector per target),
+    for the bulk `X` (mol), buffer offset `B` and phase selection `rm_list`. Returns one vector of results per group.
+"""
+function section_fresh_seeds(seeds, MAGEMin_data; X = nothing, B = nothing, Xoxides = String[], rm_list = nothing, W = nothing, scp = 0, kwargs...)
+    Ps      = Float64[s.P_kbar for sd in seeds for s in sd]
+    Ts      = Float64[s.T_C    for sd in seeds for s in sd]
+    isempty(Ps) && return [similar(sd, 0) for sd in seeds]
+    Bv      = isnothing(B) ? nothing : fill(Float64(B isa Number ? B : first(B)), length(Ps))
+    out     = MAGEMin_C.multi_point_minimization(Ps, Ts, MAGEMin_data; X = X, B = Bv, Xoxides = Xoxides, sys_in = "mol",
+                                                 rm_list = rm_list, W = W, scp = scp, name_solvus = true, progressbar = false)
+    off     = cumsum(vcat(0, length.(seeds)))
+    return [out[off[m] + 1:off[m + 1]] for m in eachindex(seeds)]
+end
+
+"""
+    section_fill_holes!(sec, npoints, outs, infos, MAGEMin_data, data; Pbox, Tbox, xrange, yrange, n_near = 8, min_ok = 6, n_seeds = 4, max_rounds = 3, tried, kwargs...)
+
+    Re-solve the isolated failures of a section diagram after one AMR level: points (new, or failed at an earlier
+    level) that failed while at least `min_ok` of their `n_near` nearest points (distances scaled by the diagram
+    ranges) converged. Each is solved again from its `n_seeds` nearest converged points, with the 2-D log-P
+    stepping of `MAGEMin_C.multi_point_section` (`log_P_2d`), their phase compositions as initial guess
+    (`warm`) and up to 32 iterations, and replaced when it converges (new points in
+    `outs`/`infos`, earlier points in `Out_XY`/`Sec_status_XY`). Points that still fail are solved once more
+    from fresh minimizations at the P-T of the same neighbours ([`section_fresh_seeds`](@ref)). Recovered points
+    count as converged neighbours in the next of up to `max_rounds` rounds, which reaches small clusters of
+    failures; a point is tried again only when its converged neighbours changed. Failures at the border of the
+    reachable domain have fewer converged neighbours and are left as they are. `tried` maps the coordinates of
+    each point already tried to those of its converged neighbours; passing the same `Dict` at every AMR level
+    skips the failures whose neighbourhood did not change.
+
+    Returns the number of recovered points.
+"""
+function section_fill_holes!(   sec         :: Symbol,
+                                npoints,
+                                outs,
+                                infos,
+                                MAGEMin_data,
+                                data;
+                                Pbox, Tbox, xrange, yrange,
+                                n_near      :: Int64 = 8,
+                                min_ok      :: Int64 = 6,
+                                n_seeds     :: Int64 = 4,
+                                max_rounds  :: Int64 = 3,
+                                tried       :: Dict{NTuple{2, Float64}, Vector{NTuple{2, Float64}}} = Dict{NTuple{2, Float64}, Vector{NTuple{2, Float64}}}(),
+                                kwargs... )
+
+    ax      = MAGEMin_C.SECTION_XY[sec]
+    n_old   = length(Out_XY)
+    coords  = vcat([Float64.(data.points[j][1:2]) for j in 1:n_old], [Float64.(p[1:2]) for p in npoints])
+    ok      = vcat([j <= length(Sec_status_XY) && Sec_status_XY[j] == 0 for j in 1:n_old], [i.status == 0 for i in infos])
+    res     = vcat([Out_XY[j] for j in 1:n_old], collect(outs))
+    sx      = max(data.Xrange[2] - data.Xrange[1], eps())
+    sy      = max(data.Yrange[2] - data.Yrange[1], eps())
+    n_fill  = 0
+    for _ in 1:max_rounds
+        holes   = Int[]
+        seeds   = Vector{Vector{MAGEMin_C.gmin_struct{Float64, Int64}}}()
+        for g in eachindex(coords)
+            ok[g] && continue
+            c   = coords[g]
+            d   = [((q[1] - c[1]) / sx)^2 + ((q[2] - c[2]) / sy)^2 for q in coords]
+            d[g] = Inf
+            nn  = partialsortperm(d, 1:min(n_near, length(d) - 1))
+            good = [j for j in nn if ok[j]]
+            length(good) >= min_ok || continue
+            key     = (c[1], c[2])
+            near    = [(coords[j][1], coords[j][2]) for j in good]
+            get(tried, key, NTuple{2, Float64}[]) == near && continue
+            tried[key] = near
+            push!(holes, g)
+            push!(seeds, res[good[1:min(n_seeds, length(good))]])
+        end
+        isempty(holes) && break
+        xs      = [section_from_display(ax[1], coords[g][1]) for g in holes]
+        ys      = [section_from_display(ax[2], coords[g][2]) for g in holes]
+        fill_solve(idx, sds) = MAGEMin_C.multi_point_section(sec, xs[idx], ys[idx], MAGEMin_data; Pbox = Pbox, Tbox = Tbox, seeds = sds, xrange = xrange, yrange = yrange,
+                                                sys_in = "mol", name_solvus = true, log_P_2d = true, warm = true, maxit = 32, retry_passes = 0, progressbar = false, kwargs...)
+        o2, i2  = fill_solve(eachindex(holes), seeds)
+        rest    = [k for k in eachindex(holes) if i2[k].status != 0]
+        if !isempty(rest)
+            fresh   = section_fresh_seeds([seeds[k] for k in rest], MAGEMin_data; kwargs...)
+            o3, i3  = fill_solve(rest, fresh)
+            for (m, k) in enumerate(rest)
+                i3[m].status == 0 || continue
+                o2[k], i2[k] = o3[m], i3[m]
+            end
+        end
+        n_round = 0
+        for (k, g) in enumerate(holes)
+            i2[k].status == 0 || continue
+            if g > n_old
+                outs[g - n_old]  = o2[k]
+                infos[g - n_old] = i2[k]
+            else
+                Out_XY[g]        = o2[k]
+                Sec_status_XY[g] = 0
+            end
+            ok[g], res[g] = true, o2[k]
+            n_round += 1
+        end
+        n_fill += n_round
+        n_round == 0 && break
+    end
+    return n_fill
+end
+
+"""
     SECTION_RANGE_MODES
 
     How the axis ranges of a section diagram (`SECTION_TYPES`) follow from its P-T box:
     "inscribed" (largest rectangle inside the image of the box, every target reachable),
-    "bounding" (bounding box of the image) or "manual" (ranges entered by the user).
+    "reachable" (largest rectangle inside the image of the search box, inset by 2 %, so every target is
+    reachable within the search limits), "bounding" (bounding box of the image) or "manual" (ranges entered
+    by the user).
 """
-const SECTION_RANGE_MODES = ("inscribed", "bounding", "manual")
+const SECTION_RANGE_MODES = ("inscribed", "reachable", "bounding", "manual")
 
 section_range_mode(mode) = mode in SECTION_RANGE_MODES ? String(mode) : "inscribed"
 section_widen(mode)      = section_range_mode(mode) == "manual" ? 3.0 : 0.25
@@ -315,6 +427,7 @@ function section_box_ranges(diagType        :: String,
                             phase_selection,
                             cpx,            limOpx,     limOpxVal;
                             mode            = "inscribed",
+                            limits          = nothing,
                             optimizer       = "nlopt",
                             dataset         = nothing  )
 
@@ -324,6 +437,14 @@ function section_box_ranges(diagType        :: String,
     if section_range_mode(mode) == "bounding"
         rx, ry  = extrema(xs), extrema(ys)
         ok      = rx[2] > rx[1] && ry[2] > ry[1]
+    elseif section_range_mode(mode) == "reachable"
+        lim     = section_limits(Pbox, Tbox, something(limits, (nothing, nothing, nothing, nothing)), mode)
+        sxs, sys = section_box_image(diagType, (lim[1], lim[2]), (lim[3], lim[4]), bulk_ref, oxi, dtb, bufferType, solver, bufferN, phase_selection,
+                                     cpx, limOpx, limOpxVal; optimizer = optimizer, dataset = dataset)
+        length(sxs) >= 3 || return (NaN, NaN), (NaN, NaN), (xs, ys), false
+        rx, ry, ok = section_inscribed_rect(sxs, sys)
+        inset(r) = (r[1] + 0.02*(r[2] - r[1]), r[2] - 0.02*(r[2] - r[1]))
+        ok && ((rx, ry) = (inset(rx), inset(ry)))
     else
         rx, ry, ok = section_inscribed_rect(xs, ys)
     end
@@ -802,10 +923,13 @@ function refine_MAGEMin(dtb,data,
                         sec_Pbox            = nothing,
                         sec_Tbox            = nothing,
                         sec_limits          = nothing    )
-    global Out_XY, addedRefinementLvl, Sec_status_XY, Sec_seed_grid, Sec_seed_X;
+    global Out_XY, addedRefinementLvl, Sec_status_XY, Sec_seed_grid, Sec_seed_X, Sec_fill_tried;
 
     if isempty(Out_XY) || !@isdefined(Sec_status_XY)
         Sec_status_XY = Int64[]
+    end
+    if isempty(Out_XY) || !@isdefined(Sec_fill_tried)
+        Sec_fill_tried = Dict{NTuple{2, Float64}, Vector{NTuple{2, Float64}}}()
     end
     if isempty(Out_XY) && diagType in SECTION_X_TYPES
         Sec_seed_grid = MAGEMin_C.gmin_struct{Float64,Int64}[]
@@ -874,6 +998,12 @@ function refine_MAGEMin(dtb,data,
                                                         callback_fn = update_progress,
                                                         seismic_cor = seismic_cor, aspect_ratio = aspect_ratio, seismic_water = seismic_water,
                                                         shallow_correction = shallow_cor, fluid_as_melt = fluid_as_melt, anelastic_cor = anelastic_correction )
+            n_fill = section_fill_holes!(   sec, npoints, Out_XY_new, sec_info, MAGEMin_data, data;
+                                            Pbox = search_P, Tbox = search_T, xrange = xr, yrange = yr, tried = Sec_fill_tried,
+                                            X = bulk_L, B = bufferN1, Xoxides = oxi, rm_list = phase_selection, W = new_Ws, scp = scp,
+                                            seismic_cor = seismic_cor, aspect_ratio = aspect_ratio, seismic_water = seismic_water,
+                                            shallow_correction = shallow_cor, fluid_as_melt = fluid_as_melt, anelastic_cor = anelastic_correction )
+            n_fill > 0 && println("Section diagram: $n_fill isolated point(s) recovered from their converged neighbours.")
             append!(Sec_status_XY, [x.status for x in sec_info])
 
             n_void = count(x -> x.status != 0, sec_info)

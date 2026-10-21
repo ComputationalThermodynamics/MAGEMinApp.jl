@@ -225,6 +225,7 @@ function Tab_Simulation()
                                                 (label = "P-H diagram (fixed composition)",         value = "ph"),
                                                 (label = "S-H diagram (fixed composition)",         value = "sh"),
                                                 (label = "V-H diagram (fixed composition)",         value = "vh"),
+                                                (label = "ρ-H diagram (fixed composition)",         value = "rh"),
                                                 (label = "S-X diagram (fixed pressure)",            value = "sx"),
                                                 (label = "H-X diagram (fixed pressure)",            value = "hx"),
                                                 (label = "V-X diagram (fixed temperature)",         value = "vx"),
@@ -754,6 +755,7 @@ function Tab_Simulation()
                                                 dcc_dropdown(   id          = "sec-range-mode-id",
                                                                 options     = [
                                                                     (label = "inscribed (no blank area)",   value = "inscribed"),
+                                                                    (label = "inscribed (reachable space)", value = "reachable"),
                                                                     (label = "bounding (whole image)",      value = "bounding"),
                                                                     (label = "manual",                      value = "manual"),
                                                                 ],
@@ -1238,6 +1240,94 @@ function Tab_Simulation()
 
                                     ], style = Dict("display" => "none"), id      = "tepm-options-id"), #none, block
                                                 ]),
+                                    dbc_tab(    tab_id      = "pd-tab-o18",
+                                                label       = "Oxygen isotopes",
+                                                children    = [
+                                    html_div("‎ "),
+                                    dbc_row([
+                                        dbc_col([
+                                            html_h1("δ18O model", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                        ]),
+                                        dbc_col([
+                                            dcc_dropdown(   id      = "o18-dropdown",
+                                            options = [
+                                                (label = "true",         value = "true"),
+                                                (label = "false",        value = "false"),
+                                            ],
+                                            value       = "false" ,
+                                            clearable   =  false,
+                                            multi       =  false),
+                                        ]),
+                                    ]),
+                                    html_div([
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Database", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ]),
+                                            dbc_col([
+                                                html_h1("DBOxygen 2.0.3 (Vho et al., 2019)", style = Dict("textAlign" => "center","font-size" => "100%",  "marginTop" => 8)),
+                                            ]),
+                                        ]),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Anchor phase", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ]),
+                                            dbc_col([
+                                                dbc_input(  id          = "o18-anchor-id",
+                                                            type        = "text",
+                                                            placeholder = "none: the bulk δ18O is used",
+                                                            value       = ""    ),
+                                            ]),
+                                        ]),
+                                        html_div([
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Anchor δ18O [‰]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ]),
+                                            dbc_col([
+                                                dbc_input(  id      = "o18-anchor-delta-id",
+                                                            type    = "number",
+                                                            value   = 10.0  ),
+                                            ]),
+                                        ]),
+                                        ], style = Dict("display" => "none"), id = "o18-anchor-delta-row"),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Melt model", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ]),
+                                            dbc_col([
+                                                dcc_dropdown(   id          = "o18-melt-dropdown",
+                                                                options     = O18_MELT_MODELS,
+                                                                value       = "norm",
+                                                                clearable   = false,
+                                                                multi       = false),
+                                            ]),
+                                        ]),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Unmapped phases", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ]),
+                                            dbc_col([
+                                                dcc_dropdown(   id          = "o18-unmapped-dropdown",
+                                                                options     = O18_UNMAPPED,
+                                                                value       = "exclude",
+                                                                clearable   = false,
+                                                                multi       = false),
+                                            ]),
+                                        ]),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("1/T² above [°C]", style = Dict("textAlign" => "center","font-size" => "120%",  "marginTop" => 8)),
+                                            ]),
+                                            dbc_col([
+                                                dbc_input(  id      = "o18-tmax-id",
+                                                            type    = "number",
+                                                            min     = 0.0,
+                                                            value   = 900.0 ),
+                                            ]),
+                                        ]),
+                                    ], style = Dict("display" => "none"), id = "o18-options-id"),
+                                                ]),
                                     dbc_tab(    tab_id      = "pd-tab-seismic",
                                                 label       = "Seismic properties",
                                                 children    = [
@@ -1624,6 +1714,21 @@ function Tab_Simulation()
                                                                     ]),
                                                                     ], style = Dict("display" => "none"), id      = "buffer-1-id"), #none, block
 
+                                                                    html_div([
+                                                                    html_div("‎ "),
+                                                                    dbc_row([
+                                                                        dbc_col([ 
+                                                                            html_h1("δ18O [‰]", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                                                        ]),
+                                                                        dbc_col([ 
+                                                                                dbc_input(
+                                                                                id      = "o18-delta-id",
+                                                                                type    = "number", 
+                                                                                value   = 6.0   ),
+                                                                        ]),
+                                                                    ]),
+                                                                    ], style = Dict("display" => "none"), id      = "o18-bulk-1-id"),
+
                                                                 ], style = Dict("display" => "block"), id      = "table-1-id"), #none, block
                                                             ]),
                                                         
@@ -1661,6 +1766,21 @@ function Tab_Simulation()
                                                                         ]),
                                                                     ]),
                                                                     ], style = Dict("display" => "none"), id      = "buffer-2-id"), #none, block
+
+                                                                    html_div([
+                                                                    html_div("‎ "),
+                                                                    dbc_row([
+                                                                        dbc_col([ 
+                                                                            html_h1("δ18O [‰]", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                                                        ]),
+                                                                        dbc_col([ 
+                                                                                dbc_input(
+                                                                                id      = "o18-delta2-id",
+                                                                                type    = "number", 
+                                                                                value   = 6.0   ),
+                                                                        ]),
+                                                                    ]),
+                                                                    ], style = Dict("display" => "none"), id      = "o18-bulk-2-id"),
 
                                                             ], style = Dict("display" => "none"), id      = "table-2-id"), #none, block
                                                         ]),

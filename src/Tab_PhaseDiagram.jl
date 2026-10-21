@@ -233,11 +233,33 @@ function Tab_PhaseDiagram()
 
                             dbc_col([
                                 html_div("‎ "),
-                                html_div("‎ "), 
+                                html_div("‎ "),
 
-                                dbc_row([dbc_button("Export figure",id="export-figure"),
+                                dbc_row([dbc_button("Figure options",id="export-figure"),
                                 dbc_collapse(
                                     dbc_card(dbc_cardbody([
+                                        dbc_row([
+                                            html_div([
+                                                dbc_button("Record pie chart", id="pd-pie-record", color="light", size="sm", n_clicks=0,
+                                                            style = Dict("flex" => "1", "border" => "1px grey solid", "font-size" => "80%")),
+                                                dbc_button("Stop record",      id="pd-pie-stop",   color="light", size="sm", n_clicks=0,
+                                                            style = Dict("flex" => "1", "border" => "1px grey solid", "font-size" => "80%")),
+                                                dbc_button("Delete all",       id="pd-pie-clear",  color="light", size="sm", n_clicks=0,
+                                                            style = Dict("flex" => "1", "border" => "1px grey solid", "font-size" => "80%")),
+                                            ], style = Dict("display" => "flex", "gap" => "4px", "padding" => "0px")),
+                                            html_div("Pie radius (px)", style = Dict("font-size" => "80%", "color" => "grey", "marginTop" => 4)),
+                                            dcc_slider( id      = "pd-pie-radius",
+                                                        min     = 10,
+                                                        max     = 60,
+                                                        step    = 1,
+                                                        value   = 25,
+                                                        marks   = Dict(string(i) => string(i) for i in 10:10:60),
+                                                        tooltip = Dict("placement" => "bottom")),
+                                            dcc_store(id = "pd-pie-mode", data = false),
+                                            dcc_store(id = "pd-pie-list", data = []),
+                                            dcc_store(id = "pd-pie-cs"),
+                                        ], style = Dict("marginBottom" => 10)),
+                                        html_hr(style = Dict("marginTop" => 0, "marginBottom" => 10)),
                                         dbc_row([
                                             dbc_switch(label="Clean boundaries", id="smooth-boundaries-switch", value=true),
                                         ]),
@@ -353,6 +375,20 @@ function Tab_PhaseDiagram()
 
                                             html_div([
                                             ], style = Dict("display" => "none"), id      = "test-show-id"),
+
+                                            html_div([
+                                                html_div("‎ "),
+                                                html_hr(),
+                                                html_h1("δ18O", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
+                                                dcc_graph(  id      = "o18-point-pd",
+                                                            figure  = plot(Layout(height = 320, plot_bgcolor = "#FFF", paper_bgcolor = "#FFF")),
+                                                            config  = PlotConfig(displaylogo = false)),
+                                                dbc_card([
+                                                    dcc_markdown(   id          = "o18-point-info-pd",
+                                                                    children    = "",
+                                                                    style       = Dict("white-space" => "pre"))
+                                                ]),
+                                            ], style = Dict("display" => "none"), id = "o18-point-section-id"),
 
                                             html_div("‎ "),
                                             html_hr(),
@@ -633,12 +669,13 @@ function Tab_PhaseDiagram()
                                         ], width=5),
                                         dbc_col([
                                             dcc_dropdown(   id      = "fields-dropdown",
-                                                            options = field_dropdown_options(),
+                                                            options = vcat(field_dropdown_options(), [(label = "δ18O", value = "o18")]),
                                                             value="Variance" ,
                                                             clearable   = false,
                                                             multi       = false),
                                         ]), 
                                     ]),
+                                    html_div(o18_selector("-pd"), style = Dict("display" => "none"), id = "show-o18-pd-id"),
                                     html_div("‎ "),
                                     html_h1("Diagram options", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                     html_hr(),
@@ -976,6 +1013,7 @@ function Tab_PhaseDiagram()
                                                         (label = "Pure phase",          value = "pp"),
                                                         (label = "Solution phase",      value = "ss"),
                                                         (label = "Other",               value = "of"),
+                                                        (label = "δ18O",                value = "o18"),
                                                     ],
                                                     value       = "pp",
                                                     clearable   = false,
@@ -984,6 +1022,7 @@ function Tab_PhaseDiagram()
 
                                             ]),
                                         ]),
+                                        html_div(o18_selector("-iso"), style = Dict("display" => "none"), id = "o18-iso-id"),
                                             html_div([
                                                 dbc_row([
 
@@ -1194,6 +1233,8 @@ function Tab_PhaseDiagram()
                                                     dbc_col([
                                                         dcc_dropdown(   id      = "of-dropdown",
                                                         options = [
+                                                                (label = "Pressure",                value = "P_kbar"),
+                                                                (label = "Temperature [°C]",        value = "T_C"),
                                                                 (label = "G system",                value = "G_system"),    
                                                                 (label = "Entropy",                 value = "entropy"),
                                                                 (label = "Volume [cm³/mol]",        value = "V"),

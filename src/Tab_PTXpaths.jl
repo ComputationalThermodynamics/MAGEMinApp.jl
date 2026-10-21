@@ -1,6 +1,8 @@
 function Tab_PTXpaths()
     html_div([
         dcc_store(id="te-ptx-computed-store", data=false),
+        dcc_store(id="o18-ptx-computed-store", data=false),
+        dcc_store(id="rad-ptx-computed-store", data=false),
     # dummy store used solely to persist phase (de)selection into AppData.phase_selection_cache_ptx as it changes
         dcc_store(id="phase-selection-cache-store-ptx", data=0),
         dcc_store(id="ptx-compute-version-store", data=0),
@@ -372,6 +374,109 @@ function Tab_PTXpaths()
                                 ]),
                                         ], style = Dict("display" => "none"), id = "tepm-options-ptx"), #none, block
                                     ]),
+                                    dbc_tab(    tab_id      = "ptx-tab-o18",
+                                                label       = "Oxygen isotopes",
+                                                children    = [
+                                        html_div("‎ "),
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("δ18O model", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                ], width=6),
+                                                dbc_col([
+                                                    dcc_dropdown(   id      = "o18-dropdown-ptx",
+                                                    options = [
+                                                        (label = "true",         value = "true"),
+                                                        (label = "false",        value = "false"),
+                                                    ],
+                                                    value       = "false",
+                                                    clearable   = false,
+                                                    multi       = false),
+                                                ]),
+                                            ]),
+                                        html_div([
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("Melt model", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                ], width=6),
+                                                dbc_col([
+                                                    dcc_dropdown(   id          = "o18-melt-dropdown-ptx",
+                                                                    options     = O18_MELT_MODELS,
+                                                                    value       = "norm",
+                                                                    clearable   = false,
+                                                                    multi       = false),
+                                                ]),
+                                            ]),
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("Unmapped phases", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                ], width=6),
+                                                dbc_col([
+                                                    dcc_dropdown(   id          = "o18-unmapped-dropdown-ptx",
+                                                                    options     = O18_UNMAPPED,
+                                                                    value       = "exclude",
+                                                                    clearable   = false,
+                                                                    multi       = false),
+                                                ]),
+                                            ]),
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("1/T² above [°C]", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                ], width=6),
+                                                dbc_col([
+                                                    dbc_input(  id      = "o18-tmax-ptx",
+                                                                type    = "number",
+                                                                min     = 0.0,
+                                                                value   = 900.0 ),
+                                                ]),
+                                            ]),
+                                        ], style = Dict("display" => "none"), id = "o18-options-ptx"),
+                                    ]),
+                                    dbc_tab(    tab_id      = "ptx-tab-rad",
+                                                label       = "Radiogenic isotopes",
+                                                children    = [
+                                        html_div("‎ "),
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("Radiogenic isotopes", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                ], width=6),
+                                                dbc_col([
+                                                    dcc_dropdown(   id      = "rad-dropdown-ptx",
+                                                    options = [
+                                                        (label = "true",         value = "true"),
+                                                        (label = "false",        value = "false"),
+                                                    ],
+                                                    value       = "false",
+                                                    clearable   = false,
+                                                    multi       = false),
+                                                ]),
+                                            ]),
+                                        html_div([
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("Systems", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                ], width=6),
+                                                dbc_col([
+                                                    dcc_checklist(  id          = "rad-systems-ptx",
+                                                                    options     = [(label = " " * RADIOGENIC_SYSTEMS[s].ratio, value = s) for s in RADIOGENIC_ORDER],
+                                                                    value       = ["Sr", "Nd"],
+                                                                    inline      = true),
+                                                ]),
+                                            ]),
+                                            html_div("‎ "),
+                                            dash_datatable(
+                                                id          = "rad-table-ptx",
+                                                columns     = [ Dict("id" => "ratio",   "name" => "ratio",        "editable" => false),
+                                                                Dict("id" => "R0",      "name" => "initial",      "editable" => true, "type" => "numeric"),
+                                                                Dict("id" => "R_ass",   "name" => "assimilant",   "editable" => true, "type" => "numeric") ],
+                                                data        = rad_default_table(),
+                                                style_cell  = (textAlign="center", fontSize="120%",),
+                                                style_header= (fontWeight="bold",),
+                                                editable    = true,
+                                            ),
+                                            html_div("Requires the trace-element model (Kd database with the element) and changes only through assimilation: phases share the system ratio (no mass-dependent fractionation).",
+                                                     style = Dict("color" => "grey", "marginTop" => 8)),
+                                        ], style = Dict("display" => "none"), id = "rad-options-ptx"),
+                                    ]),
                                     dbc_tab(    tab_id      = "ptx-tab-seismic",
                                                 label       = "Seismic properties",
                                                 children    = [
@@ -737,6 +842,21 @@ function Tab_PTXpaths()
                                                                 ], style = Dict("display" => "none"), id  = "buffer-1-id-ptx"), #none, block
                                                                 ], style = Dict("display" => "none"), id  = "variable-buffer-display-id2"), #none, block
 
+                                                                html_div([
+                                                                html_div("‎ "),
+                                                                dbc_row([
+                                                                    dbc_col([ 
+                                                                        html_h1("δ18O [‰]", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                                                    ]),
+                                                                    dbc_col([ 
+                                                                            dbc_input(
+                                                                            id      = "o18-delta-ptx",
+                                                                            type    = "number", 
+                                                                            value   = 6.0   ),
+                                                                    ]),
+                                                                ]),
+                                                                ], style = Dict("display" => "none"), id  = "o18-bulk-1-id-ptx"),
+
 
                                                             ], style = Dict("display" => "block"), id      = "table-1-id-ptx"), #none, block
 
@@ -774,6 +894,21 @@ function Tab_PTXpaths()
                                                                         ]),
                                                                     ]),
                                                                     ], style = Dict("display" => "none"), id      = "buffer-2-id-ptx"), #none, block
+
+                                                                html_div([
+                                                                html_div("‎ "),
+                                                                dbc_row([
+                                                                    dbc_col([ 
+                                                                        html_h1("δ18O assimilant [‰]", style = Dict("textAlign" => "center","font-size" => "120%")),
+                                                                    ]),
+                                                                    dbc_col([ 
+                                                                            dbc_input(
+                                                                            id      = "o18-delta-assim-ptx",
+                                                                            type    = "number", 
+                                                                            value   = 6.0   ),
+                                                                    ]),
+                                                                ]),
+                                                                ], style = Dict("display" => "none"), id  = "o18-bulk-2-id-ptx"),
 
                                                             ], style = Dict("display" => "none"), id      = "table-2-id-ptx"), #none, block
                                                         ]),
@@ -1792,70 +1927,6 @@ function Tab_PTXpaths()
                                                 multi       =  false    ),
                                             ]),
                                         ]),
-                                        dbc_row([
-                                            dbc_col([ 
-                                                html_h1("Color options", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                            ], width=6),
-                                            dbc_col([ 
-                                                dbc_button("Modify phase colors",id="style-canvas-button", color="light",  n_clicks=0,
-                                                style       = Dict( "textAlign"     => "center",
-                                                                    "font-size"     => "100%",
-                                                                    "border"        =>"1px grey solid",
-                                                                    "width"         => "100%" )), 
-                                            ]),
-                                        ]),
-
-
-                                        dbc_row([    
-                                            dbc_offcanvas(
-                                                [
-                                                    dbc_col([ 
-                                                        dbc_row([
-                                                            dbc_button("Save colors/styles",id="save-color-style", color="light", className="me-2", n_clicks=0,
-                                                            style       = Dict( "textAlign"     => "center",
-                                                                                "font-size"     => "100%",
-                                                                                "background-color" => "#d3f2ce",
-                                                                                "border"        =>"1px grey solid")), 
-                                                            dbc_alert(
-                                                            "Successfully saved colors/styles",
-                                                            id      ="color-style-save",
-                                                            is_open =false,
-                                                            duration=4000,
-                                                        ),
-                                                        html_div("‎ "),
-                                                        ]),
-                                                    ], width=11),
-                                                    dbc_row([
-                                                        html_h1("Recompute PTX path to apply changes!", style=Dict("textAlign" => "center", "font-size" => "120%")),  # Add header here
-                                                    ]),
-                                                    dbc_row([
-                                                        dbc_col([ 
-                                                           html_div(create_color_table(AppData.mineral_style[1]), id="ph-names-container")
-                                                        ], width=8),
-                                                        dbc_col([ 
-                                                           html_div(create_color_selec(AppData.mineral_style[1]), id="ph-selec-container")
-                                                        ], width=2),
-
-                                                        dbc_col([ 
-                                                            dbc_input(
-                                                                type    = "color",
-                                                                id      = "colorpicker-mineral-id",
-                                                                value   =  "white",
-                                                                style   =  Dict("height" => "$((24 + 6) * (length(collect(keys(AppData.mineral_style[1])))+1))px", "padding" => "0", "margin" => "0" )
-                                                            )
-                                                        ], width=1),
-                        
-                                                    ])
-                                                ],
-            
-                                                id          = "style-canvas",
-                                                title       = "Color/style options",
-                                                is_open     = false,
-                                                placement   = "start",
-                                                style   = Dict( "width"             => "320px",
-                                                                "background-color"  => "rgba(255, 255, 255, 1.0)"),
-                                            ),
-                                        ]),
 
                                         dbc_row([
                                             dbc_col([
@@ -2238,6 +2309,121 @@ svg_export_button_row("te-fieldbuilder-ptx"),
                                                     ),
                                                 ]),
                                             ], width=12),
+                                        ]),
+                                    ])),
+                                ], width=12),
+                            ]),
+                        ]),
+                        dbc_tab(label="δ18O", id="o18-tab-ptx", disabled=true, children=[
+                            dbc_row([
+                                dbc_col([
+                                    dbc_card(dbc_cardbody([
+                                        dbc_row([
+                                            html_h1("δ18O evolution along path", style = Dict("textAlign" => "center","font-size" => "200%", "marginTop" => 8)),
+                                            html_hr(),
+                                        ]),
+                                        dbc_row([
+                                            dbc_col([
+                                                dcc_dropdown(id="o18-evol-phase-ptx",
+                                                    options=[], value=["sys"],
+                                                    placeholder="Select phases...",
+                                                    clearable=false, multi=true),
+                                            ], width=12),
+                                        ]),
+svg_export_button_row("o18-evol-ptx"),
+                                        dbc_row([
+                                            dcc_graph(
+                                                id     = "o18-evol-ptx",
+                                                figure = plot(GenericTrace[], Layout()),
+                                                config = PlotConfig(displayModeBar=false),
+                                                style  = Dict("height" => "360px"),
+                                            ),
+                                        ]),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Step", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ], width=2),
+                                            dbc_col([
+                                                dbc_input(id="o18-step-ptx", type="number", min=1, value=1),
+                                            ], width=2),
+                                            dbc_col([
+                                                html_div("Click a point of the evolution plot or enter a step", style = Dict("color" => "grey", "marginTop" => 8)),
+                                            ], width=8),
+                                        ]),
+                                        dbc_row([
+                                            dbc_col([
+                                                dcc_graph(  id      = "o18-step-plot-ptx",
+                                                            figure  = plot(GenericTrace[], Layout()),
+                                                            config  = PlotConfig(displayModeBar=false)),
+                                            ], width=7),
+                                            dbc_col([
+                                                dbc_card([
+                                                    dcc_markdown(id="o18-step-info-ptx", children="", style=Dict("white-space" => "pre")),
+                                                ]),
+                                            ], width=5),
+                                        ]),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Save δ18O table", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ], width=3),
+                                            dbc_col([
+                                                dbc_input(id="Filename-o18-ptx-id", type="text", style = Dict("textAlign" => "center"), value="filename"),
+                                            ], width=4),
+                                            dbc_col([
+                                                dbc_button("csv file", id="save-o18-csv-ptx-button", color="light", n_clicks=0,
+                                                    style = Dict("textAlign" => "center", "font-size" => "100%", "border" => "1px grey solid")),
+                                            ], width=2),
+                                            dbc_col([
+                                                dbc_alert("δ18O table saved in the output directory", id="data-o18-csv-ptx-save", is_open=false, duration=4000),
+                                                dbc_alert("Provide a valid filename (without extension)", color="danger", id="data-o18-csv-ptx-failed", is_open=false, duration=4000),
+                                            ], width=3),
+                                        ]),
+                                    ])),
+                                ], width=12),
+                            ]),
+                        ]),
+                        dbc_tab(label="Radiogenic isotopes", id="rad-tab-ptx", disabled=true, children=[
+                            dbc_row([
+                                dbc_col([
+                                    dbc_card(dbc_cardbody([
+                                        dbc_row([
+                                            html_h1("Radiogenic isotopes along path", style = Dict("textAlign" => "center","font-size" => "200%", "marginTop" => 8)),
+                                            html_hr(),
+                                        ]),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("x axis", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                dcc_dropdown(id="rad-x-ptx", options=[], value="step", clearable=false, multi=false),
+                                            ], width=4),
+                                            dbc_col([
+                                                html_h1("y axis", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                dcc_dropdown(id="rad-y-ptx", options=[], value=[], clearable=false, multi=true),
+                                            ], width=8),
+                                        ]),
+svg_export_button_row("rad-plot-ptx"),
+                                        dbc_row([
+                                            dcc_graph(
+                                                id     = "rad-plot-ptx",
+                                                figure = plot(GenericTrace[], Layout()),
+                                                config = PlotConfig(displayModeBar=false),
+                                                style  = Dict("height" => "380px"),
+                                            ),
+                                        ]),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Save table", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ], width=3),
+                                            dbc_col([
+                                                dbc_input(id="Filename-rad-ptx-id", type="text", style = Dict("textAlign" => "center"), value="filename"),
+                                            ], width=4),
+                                            dbc_col([
+                                                dbc_button("csv file", id="save-rad-csv-ptx-button", color="light", n_clicks=0,
+                                                    style = Dict("textAlign" => "center", "font-size" => "100%", "border" => "1px grey solid")),
+                                            ], width=2),
+                                            dbc_col([
+                                                dbc_alert("Table saved in the output directory", id="data-rad-csv-ptx-save", is_open=false, duration=4000),
+                                                dbc_alert("Provide a valid filename (without extension)", color="danger", id="data-rad-csv-ptx-failed", is_open=false, duration=4000),
+                                            ], width=3),
                                         ]),
                                     ])),
                                 ], width=12),

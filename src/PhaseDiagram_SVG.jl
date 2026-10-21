@@ -245,7 +245,8 @@ end
 function pd_figure_parts(; data, gridded, heat_map, layout_g, reaction, data_isopleth, iso_show,
                           assemblage_rows, xtitle::AbstractString, ytitle::AbstractString, diagType::AbstractString,
                           show_reaction::Bool, show_mesh::Bool, show_labels::Bool, geotherms = GenericTrace[],
-                          fills = Tuple{Vector{Matrix{Float64}},NTuple{4,Float64}}[], iso_sigma::Real = 0.0)
+                          fills = Tuple{Vector{Matrix{Float64}},NTuple{4,Float64}}[], iso_sigma::Real = 0.0,
+                          pies = Any[], pie_radius::Real = 25)
     global phase_infos
     convert_p = use_GPa[1] && pressure_on_y_axis(diagType)
     yconv(y::Real) = convert_p ? display_pressure(Float64(y)) : Float64(y)
@@ -321,7 +322,18 @@ function pd_figure_parts(; data, gridded, heat_map, layout_g, reaction, data_iso
             mesh = mesh, reaction = lines,
             fills = [([[(r[k, 1], yconv(r[k, 2])) for k in 1:size(r, 1)] for r in rings], col) for (rings, col) in fills],
             isopleths = isopleths, geotherms = subd_svg_lines(geotherms, yconv), annotations = annotations,
-            info = info, assemblages = assemblages)
+            info = info, assemblages = assemblages, pies = pd_svg_pies(pies, convert_p), pie_radius = Float64(pie_radius))
+end
+
+function pd_svg_pies(pies, convert_p::Bool)
+    out = NamedTuple[]
+    for p in pies
+        y = Float64(p["y"])
+        convert_p && p["py"] == true && (y = display_pressure(y))
+        push!(out, (x = Float64(p["x"]), y = y, phases = String.(collect(p["phases"])),
+                    values = Float64.(collect(p["values"])), colors = String.(collect(p["colors"]))))
+    end
+    return out
 end
 
 """
@@ -482,6 +494,24 @@ function pd_export_svg(parts, path::AbstractString)
     end
 
     svg_annotation_layer(io, c, seen, parts.annotations; font = font)
+
+    pies = get(parts, :pies, NamedTuple[])
+    if !isempty(pies)
+        r = get(parts, :pie_radius, 25.0)
+        svg_group_open(io, svg_id(seen, "Mini_pie_charts"); stroke = "#ffffff", width = 0.6)
+        for (k, p) in enumerate(pies)
+            (min(xr...) <= p.x <= max(xr...) && min(yr...) <= p.y <= max(yr...)) || continue
+            svg_group_open(io, svg_id(seen, "Pie_$(k)"))
+            for (w, poly) in enumerate(pd_pie_wedges(svg_x(c, p.x), svg_y(c, p.y), r, p.values))
+                d = "M" * join(["$(svg_num(x)) $(svg_num(y))" for (x, y) in poly], " L") * " Z"
+                rgb, op = svg_css_color(p.colors[w])
+                svg_path(io, svg_id(seen, "Pie_$(k)_" * display_ph_name(p.phases[w])), d; fill = rgb, fill_opacity = op)
+                n_paths += 1
+            end
+            svg_group_close(io)
+        end
+        svg_group_close(io)
+    end
 
     nt = parts.ticks + 1
     svg_layout_layers(io, c, seen; xticks = [xr[1] + k * (xr[2] - xr[1]) / nt for k in 0:nt],

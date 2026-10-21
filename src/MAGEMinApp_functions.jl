@@ -1529,6 +1529,15 @@ function get_gridded_map(   fieldname   ::String,
                     field[i] = Out_XY[i].rho_S - Out_XY[i].rho_M
                 end
             end
+        elseif fieldname == "P_kbar"
+            for i=1:np
+                field[i] = display_pressure(Out_XY[i].P_kbar);
+            end
+        elseif is_o18_field(fieldname)
+            name = o18_field_name(fieldname)
+            for i=1:np
+                field[i] = o18_value(Out_O18_XY[i], name);
+            end
         else
             for i=1:np
                 field[i] = Float64(get_property(Out_XY[i], fieldname));
@@ -1916,6 +1925,15 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
                     field[i] = Out_XY[i].rho_S - Out_XY[i].rho_M
                 end
             end
+        elseif fieldname == "P_kbar"
+            for i=1:np
+                field[i] = display_pressure(Out_XY[i].P_kbar);
+            end
+        elseif is_o18_field(fieldname)
+            name = o18_field_name(fieldname)
+            for i=1:np
+                field[i] = o18_value(Out_O18_XY[i], name);
+            end
         else
             for i=1:np
                 field[i] = Float64(get_property(Out_XY[i], fieldname));
@@ -2187,6 +2205,12 @@ function get_isopleth_map(  mod         ::String,
                     field[i] = absent
                 end
             end 
+        elseif mod == "o18"
+            name = o18_field_name(of)
+            for i=1:np
+                v        = o18_value(Out_O18_XY[i], name)
+                field[i] = isfinite(v) ? v : absent
+            end
         elseif mod == "of_mod"
             if of == "s_cp"
                 for i=1:np
@@ -2223,6 +2247,10 @@ function get_isopleth_map(  mod         ::String,
                     if (Out_XY[i].frac_M > 0.0 && Out_XY[i].frac_S > 0.0)
                         field[i] = Out_XY[i].rho_S - Out_XY[i].rho_M
                     end
+                end
+            elseif of == "P_kbar"
+                for i=1:np
+                    field[i] = display_pressure(Out_XY[i].P_kbar);
                 end
             else
                 for i=1:np

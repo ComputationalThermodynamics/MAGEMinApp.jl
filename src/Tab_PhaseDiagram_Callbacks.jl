@@ -669,6 +669,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             fileout = output_dir[1]*fname*datab
             out     = using_sample_point ? SamplePoint.out : Out_XY[point_id]
             MAGEMin_data2dataframe(out,dtb,fileout; use_Warr2021=use_warr_names[1], use_GPA=use_GPa[1])
+            (!using_sample_point && o18_available()) && o18_export_csv([point_id], fileout*"_O18.csv")
 
             return  "success", ""
         else
@@ -720,6 +721,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             fileout = output_dir[1]*fname*datab
 
             MAGEMin_data2dataframe(Out_XY,dtb,fileout; use_Warr2021=use_warr_names[1], use_GPA=use_GPa[1])
+            o18_available() && o18_export_csv(collect(eachindex(Out_O18_XY)), fileout*"_O18.csv")
             return "success", ""
         else
             return  "", "failed"
@@ -1399,6 +1401,9 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("set-min-white",          "value"),
         Input("reverse-colormap",       "value"),
         Input("fields-dropdown",        "value"),
+        Input("fields-dropdown-o18-q-pd",   "value"),
+        Input("fields-dropdown-o18-p1-pd",  "value"),
+        Input("fields-dropdown-o18-p2-pd",  "value"),
         Input("update-title-button",    "n_clicks"),
         Input("load-state-id",          "value"),
         Input("mineral-naming-dropdown","value"),
@@ -1501,6 +1506,14 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("mnzsat-dropdown",        "value"),
         State("table-te-rock",          "data" ),            # bulk-rock 1
         State("table-te-2-rock",        "data" ),  
+        State("o18-dropdown",           "value"),
+        State("o18-delta-id",           "value"),
+        State("o18-delta2-id",          "value"),
+        State("o18-anchor-id",          "value"),
+        State("o18-anchor-delta-id",    "value"),
+        State("o18-melt-dropdown",      "value"),
+        State("o18-unmapped-dropdown",  "value"),
+        State("o18-tmax-id",            "value"),
 
         State("test-dropdown",          "value"),           # test number
 
@@ -1510,6 +1523,9 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("hidden-isopleth-dropdown",      "options"),
         State("hidden-isopleth-dropdown",      "value"),
         State("phase-dropdown",         "value"),
+        State("fields-dropdown-o18-q-iso",  "value"),
+        State("fields-dropdown-o18-p1-iso", "value"),
+        State("fields-dropdown-o18-p2-iso", "value"),
         State("ss-dropdown",            "value"),
         State("em-dropdown",            "value"),
         State("ox-dropdown",            "value"),
@@ -1551,7 +1567,7 @@ function Tab_PhaseDiagram_Callbacks(app)
     ) do    reac_up,    full_grid,  addIso,     removeIso,  removeAllIso,    isoShow,   isoHide,   isoShowAll,    isoHideAll,
             n_clicks_mesh, n_clicks_refine, uni_n_clicks_refine, n_clicks_mc,
             minColor,   maxColor,
-            colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  updateTitle,     loadstateid,       warr_naming, pressure_unit,
+            colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  o18_q,      o18_p1,     o18_p2,     updateTitle,     loadstateid,       warr_naming, pressure_unit,
             assemblage_selected_cells, clearHighlight,
             subd_show,  subd_vel,   subd_dip,   subd_depth, subd_T0,    subd_T1,    subd_h,     subd_d,     subd_kappa, subd_rho,
             smooth_bnd, smooth_sigma,
@@ -1569,8 +1585,9 @@ function Tab_PhaseDiagram_Callbacks(app)
             sec_spmin,  sec_spmax,  sec_stmin,  sec_stmax,
             sec_mode,   sec_xmin,   sec_xmax,   sec_ymin,   sec_ymax,
             tepm,       kds_mod,    zrsat_mod,  ssat_mod,   co2sat_mod, P2O5sat_mod,    mnzsat_mod,     bulkte1,    bulkte2,
+            o18,        o18_delta,  o18_delta2, o18_anchor, o18_anchor_delta,   o18_melt,   o18_unmapped,   o18_tmax,
             test,
-            isopleths,  isoplethsID,isoplethsHid,  isoplethsHidID,  phase,      ss,         em,     ox,    of,     ot, sys, rmf, calc, cust, calc_sf, calc_ox, cust_sf, cust_ox,
+            isopleths,  isoplethsID,isoplethsHid,  isoplethsHidID,  phase,      o18_q_iso,  o18_p1_iso, o18_p2_iso, ss,         em,     ox,    of,     ot, sys, rmf, calc, cust, calc_sf, calc_ox, cust_sf, cust_ox,
             isoLineStyle, isoLineWidth, isoColorLine,           isoLabelSize,
             minIso,     stepIso,    maxIso,
             active_tab,
@@ -1579,6 +1596,10 @@ function Tab_PhaseDiagram_Callbacks(app)
 
 
         diagType                        = diagram_type_2d(diagType)
+        o18_field_sel                   = fieldname == "o18"
+        fieldname                       = o18_main_fieldname(fieldname, o18_q, o18_p1, o18_p2)
+        compute_field                   = is_o18_field(fieldname) ? "Variance" : fieldname
+        phase == "o18" && (of = "o18:" * o18_fieldname(o18_q_iso, o18_p1_iso, o18_p2_iso))
         global use_GPa
         use_GPa[1]                      = (pressure_unit == "gpa")                                                                          # keep in sync with the dropdown for this callback's invocation
         phase_selection                 = remove_phases(string_vec_diff(to_str_vec(ph_selection),to_str_vec(pure_ph_selection),dtb),dtb)
@@ -1631,7 +1652,8 @@ function Tab_PhaseDiagram_Callbacks(app)
                 else
                     rx, ry, _, ok_sec = section_box_ranges( diagType, sec_Pbox, sec_Tbox, bulk_L, oxi, dtb, bufferType, solver,
                                                             Float64(bufferN1), phase_selection, cpx, limOpx, Float64(limOpxVal);
-                                                            mode = sec_mode, optimizer = optimizer, dataset = dataset )
+                                                            mode = sec_mode, optimizer = optimizer, dataset = dataset,
+                                                            limits = (numP(sec_spmin), numP(sec_spmax), numT(sec_stmin), numT(sec_stmax)) )
                 end
                 if ok_sec
                     Xrange, Yrange = rx, ry
@@ -1684,7 +1706,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             loading                     = ""  
             smooth                      = "best"
             # declare set of global variables needed to generate, refine and display phase diagrams
-            global fig, data, Hash_XY, Out_TE_XY, all_TE_ph, n_phase_XY, gridded, gridded_info, gridded_fields, phase_infos, X, Y, meant, npoints
+            global fig, data, Hash_XY, Out_TE_XY, all_TE_ph, Out_O18_XY, all_O18_ph, n_phase_XY, gridded, gridded_info, gridded_fields, phase_infos, X, Y, meant, npoints
             global addedRefinementLvl   = 0;
             global n_lbl                = 0;
             global iso_show             = 1;
@@ -1704,7 +1726,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             end
 
             data_plot, layout, npoints, meant, txt_list, heat_map_export, assemblage_rows, list_compacted_idx, raw_field_id  =  compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_size,
-                                                                                                        Xrange,     Yrange,     fieldname,  customTitle,
+                                                                                                        Xrange,     Yrange,     compute_field,  customTitle,
                                                                                                         dtb,        dataset,    custW,      diagType,   verbose,    scp,        solver,     boost, phase_selection,
                                                                                                         fixT,       fixP,
                                                                                                         e1_liq,     e2_liq,     e1_remain_wat,  e2_remain_wat,     e1_remain,  e2_remain,
@@ -1731,14 +1753,25 @@ function Tab_PhaseDiagram_Callbacks(app)
                 end
             end
 
+            t = @elapsed Out_O18_XY, all_O18_ph = o18_diagram(  o18, diagType, o18_delta, o18_delta2, o18_anchor, o18_anchor_delta, o18_melt, o18_unmapped, o18_tmax,
+                                                                bulk_L, bulk_R, oxi)
+            o18 == "true" && println("Computed oxygen isotope fractionation in $t s")
+            if is_o18_field(fieldname) && o18_available()
+                data_plot, layout, heat_map_export = update_displayed_field_phaseDiagram(   xtitle,     ytitle,     Xrange,     Yrange,     fieldname,
+                                                                                            dtb,        oxi,        sub,        refLvl,
+                                                                                            smooth,     colorm,     reverseColorMap, set_white,
+                                                                                            test,       refType )
+            else
+                fieldname = compute_field
+            end
+
             infos           = get_computation_info(npoints, meant)
 
             data_reaction   = show_hide_reaction_lines(sub,refLvl,Xrange,Yrange)
             data_grid       = show_hide_mesh_grid()
             active_tab      = "tab-phase-diagram" 
 
-            minColor        = round_sig(grid_min(gridded));
-            maxColor        = round_sig(grid_max(gridded));
+            minColor, maxColor = field_color_range(fieldname, gridded)
             update_ss_list  = 1
             update_reaction_list  = 1
             clear_selection = []
@@ -1761,7 +1794,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             CompProgress.tinit = time()
 
             data_plot, layout, npoints, meant, txt_list, heat_map_export, assemblage_rows, list_compacted_idx, raw_field_id   =  refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
-                                                                                    Xrange,     Yrange,     fieldname,  customTitle,
+                                                                                    Xrange,     Yrange,     compute_field,  customTitle,
                                                                                     dtb,        dataset,    custW,      diagType,   watsat,     watsat_val, verbose,    scp,    solver,  boost, phase_selection,
                                                                                     fixT,       fixP,
                                                                                     e1_liq,     e2_liq,     e1_remain_wat,  e2_remain_wat,e1_remain,  e2_remain,
@@ -1788,11 +1821,22 @@ function Tab_PhaseDiagram_Callbacks(app)
                 end
             end
 
+            t = @elapsed Out_O18_XY, all_O18_ph = o18_diagram(  o18, diagType, o18_delta, o18_delta2, o18_anchor, o18_anchor_delta, o18_melt, o18_unmapped, o18_tmax,
+                                                                bulk_L, bulk_R, oxi)
+            o18 == "true" && println("Computed oxygen isotope fractionation in $t s")
+            if is_o18_field(fieldname) && o18_available()
+                data_plot, layout, heat_map_export = update_displayed_field_phaseDiagram(   xtitle,     ytitle,     Xrange,     Yrange,     fieldname,
+                                                                                            dtb,        oxi,        sub,        refLvl,
+                                                                                            smooth,     colorm,     reverseColorMap, set_white,
+                                                                                            test,       refType )
+            else
+                fieldname = compute_field
+            end
+
             infos           = get_computation_info(npoints, meant)
             data_reaction   = show_hide_reaction_lines(sub,refLvl,Xrange,Yrange)
             data_grid       = show_hide_mesh_grid()
-            minColor        = round_sig(grid_min(gridded));
-            maxColor        = round_sig(grid_max(gridded));
+            minColor, maxColor = field_color_range(fieldname, gridded)
             update_ss_list  = 1
             update_reaction_list  = 1
             clear_selection = []
@@ -1865,6 +1909,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             Yrange_s    = (data.Yrange[1], data.Yrange[2])
             oxi_s       = String.(Out_XY[1].oxides)
 
+            is_o18_field(fieldname) && !o18_available() && (fieldname = compute_field)
             data_plot,layout,heat_map_export =  update_displayed_field_phaseDiagram( xtitle,     ytitle,
             Xrange_s,   Yrange_s,   fieldname,
             dtb,        oxi_s,
@@ -1872,8 +1917,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             smooth,     colorm,     reverseColorMap, set_white,
             test,       refType                                 )
 
-            minColor        = round_sig(grid_min(gridded));
-            maxColor        = round_sig(grid_max(gridded));
+            minColor, maxColor = field_color_range(fieldname, gridded)
 
             active_tab      = "tab-phase-diagram"
 
@@ -1887,7 +1931,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             global gridded_info, gridded_fields, poly_phases, poly_pcoor
             phase_infos     = get_phase_infos(Out_XY)
-            _, gridded_info, gridded_fields, _, _, _, _ = get_gridded_map( fieldname, "major", oxi_s, Out_XY, nothing, Hash_XY,
+            _, gridded_info, gridded_fields, _, _, _, _ = get_gridded_map( compute_field, "major", oxi_s, Out_XY, nothing, Hash_XY,
                                                                             sub, refLvl + addedRefinementLvl, refType, data, Xrange_s, Yrange_s )
             poly_phases, poly_pcoor     = compute_assemblage_boundaries(gridded_fields, Xrange_s, Yrange_s)
             data_grid                   = show_hide_mesh_grid()
@@ -1906,7 +1950,12 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                                 smooth,     colorm,     reverseColorMap, set_white,
                                                                                 test                                                    )
 
-        elseif bid == "fields-dropdown"
+        elseif bid == "fields-dropdown" || (o18_field_sel && bid in ("fields-dropdown-o18-q-pd", "fields-dropdown-o18-p1-pd", "fields-dropdown-o18-p2-pd"))
+
+            if is_o18_field(fieldname) && !o18_available()
+                println("δ18O is not available: activate the δ18O model in Setup -> Oxygen isotopes and compute the phase diagram")
+                fieldname = compute_field
+            end
 
             data_plot,layout,heat_map_export =  update_displayed_field_phaseDiagram( xtitle,     ytitle,     
                                                                     Xrange,     Yrange,     fieldname,
@@ -1915,8 +1964,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     smooth,     colorm,     reverseColorMap, set_white,
                                                                     test,       refType                                 )
 
-            minColor        = round_sig(grid_min(gridded)); 
-            maxColor        = round_sig(grid_max(gridded));  
+            minColor, maxColor = field_color_range(fieldname, gridded)
                                                                                                  
         elseif bid == "show-full-grid"
 
@@ -2066,6 +2114,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             if !@isdefined(data_plot) || !@isdefined(layout)
                 return no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update(), no_update()
             end
+
+        elseif bid in ("fields-dropdown-o18-q-pd", "fields-dropdown-o18-p1-pd", "fields-dropdown-o18-p2-pd")
 
         elseif bid == "clear-assemblage-highlight-button"
             if !@isdefined(data_plot) || !@isdefined(layout)
@@ -2712,6 +2762,9 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("other-dropdown",               "value"),
         Input("sys-unit-isopleth-dropdown",   "value"),
         Input("rm-exfluid-isopleth-dropdown", "value"),
+        Input("fields-dropdown-o18-q-iso",    "value"),
+        Input("fields-dropdown-o18-p1-iso",   "value"),
+        Input("fields-dropdown-o18-p2-iso",   "value"),
         Input("input-calc-id",                "n_blur"),
         Input("input-calc-id",                "n_submit"),
         Input("input-calc-sf-id",             "n_blur"),
@@ -2724,7 +2777,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("gsub-id",                      "value"),
         State("refinement-levels",            "value"),
         prevent_initial_call = true,
-    ) do phase, ss, em, ox, of, ot, sys, rmf, _cb, _cs, _sb, _ss, _ob, _os, calc, calc_sf, calc_ox, sub, refLvl
+    ) do phase, ss, em, ox, of, ot, sys, rmf, o18_q, o18_p1, o18_p2, _cb, _cs, _sb, _ss, _ob, _os, calc, calc_sf, calc_ox, sub, refLvl
 
         global Out_XY, data, addedRefinementLvl
 
@@ -2768,6 +2821,9 @@ function Tab_PhaseDiagram_Callbacks(app)
                 mod = "ss_calc_ox_" * sys_cor
             elseif phase == "of"
                 mod = "of_mod"; em = ""; ss = ""
+            elseif phase == "o18"
+                o18_available() || return no_range
+                mod = "o18"; em = ""; ss = ""; of = "o18:" * o18_fieldname(o18_q, o18_p1, o18_p2)
             else
                 return no_range
             end
@@ -2817,9 +2873,11 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("fields-dropdown",  "value"),
         State("smooth-boundaries-switch", "value"),
         State("smooth-boundaries-sigma",  "value"),
+        State("pd-pie-list",      "data"),
+        State("pd-pie-radius",    "value"),
 
         prevent_initial_call = true,
-    ) do _n, show_reaction, show_mesh, show_labels, fieldname, smooth_bnd, smooth_sigma
+    ) do _n, show_reaction, show_mesh, show_labels, fieldname, smooth_bnd, smooth_sigma, pies, pie_radius
 
         global data, gridded, layout, data_reaction, data_isopleth, iso_show, heat_map_export, assemblage_rows, pd_fig_meta, output_dir
 
@@ -2844,7 +2902,8 @@ function Tab_PhaseDiagram_Callbacks(app)
                                     assemblage_rows = @isdefined(assemblage_rows) ? assemblage_rows : Dict{String,String}[],
                                     xtitle = pd_fig_meta.xtitle, ytitle = pd_fig_meta.ytitle, diagType = pd_fig_meta.diagType,
                                     show_reaction = show_reaction == "true", show_mesh = show_mesh == "true", show_labels = show_labels == "true",
-                                    geotherms = SUBD_TRACES["pd"])
+                                    geotherms = SUBD_TRACES["pd"],
+                                    pies = isnothing(pies) ? Any[] : collect(Any, pies), pie_radius = something(pie_radius, 25))
             mkpath(output_dir[1])
             base = output_dir[1] * replace(isempty(parts.title) ? "phase_diagram" : parts.title, r"[ /\\:]" => "_")
             path = base * "_" * strip(replace(string(fieldname), r"[^A-Za-z0-9]+" => "_"), '_') * ".svg"
@@ -2922,6 +2981,119 @@ function Tab_PhaseDiagram_Callbacks(app)
     )
 
     callback!(
+        app,
+        Output("pd-pie-mode",   "data"),
+        Output("pd-pie-record", "color"),
+        Input("pd-pie-record",  "n_clicks"),
+        Input("pd-pie-stop",    "n_clicks"),
+        prevent_initial_call = true,
+    ) do _, _
+        on = pushed_button( callback_context() ) == "pd-pie-record"
+        return on, on ? "danger" : "light"
+    end
+
+    callback!(
+        app,
+        Output("pd-pie-list",           "data"),
+        Input("phase-diagram",          "clickData"),
+        Input("pd-pie-clear",           "n_clicks"),
+        Input("compute-button",         "value"),
+        Input("load-state-id",          "value"),
+        State("pd-pie-mode",            "data"),
+        State("pd-pie-list",            "data"),
+        State("diagram-dropdown",       "value"),
+        State("database-dropdown",      "value"),
+        State("pressure-unit-dropdown", "value"),
+        prevent_initial_call = true,
+    ) do click_info, _, _, _, recording, pies, diagType, dtb, punit
+
+        bid = pushed_button( callback_context() )
+        bid == "phase-diagram" || return Any[]
+        recording == true || return no_update()
+
+        pid = pd_click_point_id(click_info)
+        (pid === nothing || !@isdefined(Out_XY) || pid > length(Out_XY)) && return no_update()
+
+        p   = click_info[:points][1]
+        (get(p, :x, nothing) isa Real && get(p, :y, nothing) isa Real) || return no_update()
+        dt  = isnothing(pd_fig_meta) ? diagram_type_2d(diagType) : pd_fig_meta.diagType
+        py  = pressure_on_y_axis(dt)
+        y   = py && punit == "gpa" ? Float64(p[:y]) * 10.0 : Float64(p[:y])
+
+        entry = pd_minipie_entry(Out_XY[pid], Float64(p[:x]), y, py, dtb)
+        return vcat(isnothing(pies) ? Any[] : collect(Any, pies), [entry])
+    end
+
+    callback!(
+        """
+        function(pies, radius, fig, punit) {
+            var host = document.getElementById('phase-diagram');
+            if (!host) { return window.dash_clientside.no_update; }
+            host.__pdPieState = {pies: pies || [], r: radius || 25, gpa: punit === 'gpa'};
+            var isPie = function(t) { return t.meta && t.meta.kind === 'pd-minipie'; };
+            var build = function(gd) {
+                var st = host.__pdPieState, xa = gd._fullLayout.xaxis, ya = gd._fullLayout.yaxis, out = [];
+                if (!xa || !ya || !xa.l2p || !ya.l2p) { return out; }
+                st.pies.forEach(function(p, k) {
+                    var y   = (p.py && st.gpa) ? p.y / 10 : p.y;
+                    var cx  = xa.l2p(p.x), cy = ya.l2p(y);
+                    if (!isFinite(cx) || !isFinite(cy)) { return; }
+                    var tot = p.values.reduce(function(a, b) { return a + b; }, 0);
+                    if (!(tot > 0)) { return; }
+                    var a0 = 0;
+                    p.values.forEach(function(v, i) {
+                        var a1 = a0 + 2 * Math.PI * v / tot;
+                        var n  = Math.max(2, Math.ceil(72 * (a1 - a0) / (2 * Math.PI)));
+                        var xs = [], ys = [];
+                        if (p.values.length > 1) { xs.push(p.x); ys.push(y); }
+                        for (var j = 0; j <= n; j++) {
+                            var a = a0 + (a1 - a0) * j / n;
+                            xs.push(xa.p2l(cx + st.r * Math.sin(a)));
+                            ys.push(ya.p2l(cy - st.r * Math.cos(a)));
+                        }
+                        if (p.values.length > 1) { xs.push(p.x); ys.push(y); }
+                        out.push({type: 'scatter', mode: 'lines', x: xs, y: ys, fill: 'toself', fillcolor: p.colors[i],
+                                  line: {color: '#ffffff', width: 0.6}, hoveron: 'fills', hoverinfo: 'name',
+                                  name: p.labels[i] + ' ' + v.toFixed(1) + ' wt%', hoverlabel: {namelength: -1},
+                                  showlegend: false, meta: {kind: 'pd-minipie', pie: k}});
+                        a0 = a1;
+                    });
+                });
+                return out;
+            };
+            var redraw = function(gd) {
+                if (!gd || !gd.data || !gd._fullLayout) { return; }
+                var idx = [];
+                gd.data.forEach(function(t, i) { if (isPie(t)) { idx.push(i); } });
+                var traces = build(gd);
+                gd.__pdPieN = traces.length;
+                if (idx.length) { Plotly.deleteTraces(gd, idx); }
+                if (traces.length) { Plotly.addTraces(gd, traces); }
+            };
+            var gd = host.querySelector('.js-plotly-plot');
+            if (!gd || !gd.on) { return window.dash_clientside.no_update; }
+            if (!gd.__pdPieHook) {
+                gd.__pdPieHook = true;
+                gd.on('plotly_relayout', function() { redraw(gd); });
+                gd.on('plotly_afterplot', function() {
+                    var n = gd.data ? gd.data.filter(isPie).length : 0;
+                    if (n !== (gd.__pdPieN || 0) || (n === 0 && host.__pdPieState.pies.length)) { redraw(gd); }
+                });
+            }
+            redraw(gd);
+            return window.dash_clientside.no_update;
+        }
+        """,
+        app,
+        Output("pd-pie-cs",              "data"),
+        Input("pd-pie-list",             "data"),
+        Input("pd-pie-radius",           "value"),
+        Input("phase-diagram",           "figure"),
+        Input("pressure-unit-dropdown",  "value"),
+        prevent_initial_call = true,
+    )
+
+    callback!(
         """
         function(f1, f2) {
             var install = function() {
@@ -2961,5 +3133,91 @@ function Tab_PhaseDiagram_Callbacks(app)
 
     register_svg_exports!(app, PD_CLASSIFICATION_SVG_EXPORTS)
 
+    callback!(
+        app,
+        Output("show-o18-pd-id",    "style"),
+        Input("fields-dropdown",    "value"),
+        prevent_initial_call = false,
+    ) do field
+        return field == "o18" ? Dict("display" => "block") : Dict("display" => "none")
+    end
+
+    for suffix in ("-pd", "-iso")
+        callback!(
+            app,
+            Output("o18-p1-row" * suffix,           "style"),
+            Output("o18-p2-row" * suffix,           "style"),
+            Input("fields-dropdown-o18-q" * suffix, "value"),
+            prevent_initial_call = false,
+        ) do q
+            return o18_phase_rows_style(q)
+        end
+    end
+
+    callback!(
+        app,
+        Output("o18-iso-id",        "style"),
+        Input("phase-dropdown",     "value"),
+        prevent_initial_call = false,
+    ) do phase
+        return phase == "o18" ? Dict("display" => "block") : Dict("display" => "none")
+    end
+
+    callback!(
+        app,
+        Output("fields-dropdown-o18-p1-pd",     "options"),
+        Output("fields-dropdown-o18-p2-pd",     "options"),
+        Output("fields-dropdown-o18-p1-iso",    "options"),
+        Output("fields-dropdown-o18-p2-iso",    "options"),
+        Output("fields-dropdown-o18-p1-pd",     "value"),
+        Output("fields-dropdown-o18-p2-pd",     "value"),
+        Output("fields-dropdown-o18-p1-iso",    "value"),
+        Output("fields-dropdown-o18-p2-iso",    "value"),
+        Input("trigger-update-ss-list",         "value"),
+        Input("load-state-id",                  "value"),
+        Input("mineral-naming-dropdown",        "value"),
+        State("fields-dropdown-o18-p1-pd",      "value"),
+        State("fields-dropdown-o18-p2-pd",      "value"),
+        State("fields-dropdown-o18-p1-iso",     "value"),
+        State("fields-dropdown-o18-p2-iso",     "value"),
+
+        prevent_initial_call = true,
+    ) do _update, _load, warr_naming, p1, p2, p1_iso, p2_iso
+
+        global use_warr_names
+        use_warr_names[1] = (warr_naming == "warr")
+
+        opts    = o18_phase_options()
+        isempty(opts) && return ntuple(_ -> no_update(), 8)
+        names   = [o["value"] for o in opts]
+        d1, d2  = o18_default_phases()
+        keep(v, d) = v in names ? v : d
+
+        return opts, opts, opts, opts, keep(p1, d1), keep(p2, d2), keep(p1_iso, d1), keep(p2_iso, d2)
+    end
+
+    callback!(
+        app,
+        Output("o18-point-section-id",      "style"     ),
+        Output("o18-point-pd",              "figure"    ),
+        Output("o18-point-info-pd",         "children"  ),
+        Input("phase-diagram",              "clickData" ),
+        Input("mineral-naming-dropdown",    "value"     ),
+
+        prevent_initial_call = true,
+    ) do click_info, warr_naming
+
+        global use_warr_names
+        use_warr_names[1] = (warr_naming == "warr")
+
+        hidden  = Dict("display" => "none")
+        o18_available() || return hidden, no_update(), no_update()
+        pid     = pd_click_point_id(click_info)
+        (pid === nothing || pid > length(Out_O18_XY)) && return no_update(), no_update(), no_update()
+
+        return Dict("display" => "block"), get_o18_point_plot(pid), get_o18_point_info(pid)
+    end
+
     return app
+
 end

@@ -38,6 +38,71 @@ function Tab_GeneralSetup()
                             html_div(id="warr-naming-dummy", style=Dict("display"=>"none")),
                             html_div("‎ "),
                             dbc_row([
+                                dbc_col([ 
+                                    html_h1("Color options", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                ], width=4),
+                                dbc_col([ 
+                                    dbc_button("Modify phase colors",id="style-canvas-button", color="light",  n_clicks=0,
+                                    style       = Dict( "textAlign"     => "center",
+                                                        "font-size"     => "100%",
+                                                        "border"        =>"1px grey solid",
+                                                        "width"         => "100%" )), 
+                                ]),
+                            ]),
+
+
+                            dbc_row([    
+                                dbc_offcanvas(
+                                    [
+                                        dbc_col([ 
+                                            dbc_row([
+                                                dbc_button("Save colors/styles",id="save-color-style", color="light", className="me-2", n_clicks=0,
+                                                style       = Dict( "textAlign"     => "center",
+                                                                    "font-size"     => "100%",
+                                                                    "background-color" => "#d3f2ce",
+                                                                    "border"        =>"1px grey solid")), 
+                                                dbc_alert(
+                                                "Successfully saved colors/styles",
+                                                id      ="color-style-save",
+                                                is_open =false,
+                                                duration=4000,
+                                            ),
+                                            html_div("‎ "),
+                                            ]),
+                                        ], width=11),
+                                        dbc_row([
+                                            html_h1("Recompute PTX path to apply changes!", style=Dict("textAlign" => "center", "font-size" => "120%")),  # Add header here
+                                        ]),
+                                        dbc_row([
+                                            dbc_col([ 
+                                               html_div(create_color_table(AppData.mineral_style[1]), id="ph-names-container")
+                                            ], width=8),
+                                            dbc_col([ 
+                                               html_div(create_color_selec(AppData.mineral_style[1]), id="ph-selec-container")
+                                            ], width=2),
+
+                                            dbc_col([ 
+                                                dbc_input(
+                                                    type    = "color",
+                                                    id      = "colorpicker-mineral-id",
+                                                    value   =  "white",
+                                                    style   =  Dict("height" => "$((24 + 6) * (length(collect(keys(AppData.mineral_style[1])))+1))px", "padding" => "0", "margin" => "0" )
+                                                )
+                                            ], width=1),
+            
+                                        ])
+                                    ],
+
+                                    id          = "style-canvas",
+                                    title       = "Color/style options",
+                                    is_open     = false,
+                                    placement   = "start",
+                                    style   = Dict( "width"             => "320px",
+                                                    "background-color"  => "rgba(255, 255, 255, 1.0)"),
+                                ),
+                            ]),
+                            html_div("‎ "),
+                            dbc_row([
                                 dbc_col([
                                     html_h1("Pressure unit", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                 ], width=4),

@@ -206,6 +206,81 @@ heatCapacity = """
 When having correct heat budget is important it is therefore recommanded to employ the second approach.*
 """
 
+OxygenIsotopes = """
+**Oxygen isotope fractionation (δ¹⁸O)**
+
+When "δ18O model" is set to *true* (Setup → Oxygen isotopes), the δ¹⁸O of every stable phase is computed at each point of the phase diagram from the MAGEMin equilibrium (phases, compositions, end-member fractions, T). The calculation does not depend on the trace-element model. Results are displayed in the phase diagram tab ("Field" → δ18O, isopleths → δ18O, and the δ18O panel of the clicked point).
+
+#### Fractionation factors
+
+- Quartz-referenced fractionation factors of the internally consistent database DBOxygen 2.0.3 (Vho et al., 2019), 153 minerals and pure H₂O:
+
+\$\$1000 \\ln \\alpha_{Qz-i} = A_i \\frac{10^6}{T^2} + B_i \\frac{10^3}{T} + C_i \\qquad (T \\text{ in K}, \\; C_i = 0)\$\$
+
+- The fractionation between two phases follows by difference: \$\\Delta^{18}O_{i-j} = \\delta^{18}O_i - \\delta^{18}O_j \\approx 1000 \\ln \\alpha_{Qz-j} - 1000 \\ln \\alpha_{Qz-i}\$.
+- DBOxygen is calibrated between 0 and 900 °C. Above the "1/T² above" temperature (default 900 °C) every fractionation is continued as \$1/T^2\$ from its value at that temperature, the high-temperature limit of isotope exchange theory. This avoids the overestimate obtained by extrapolating the \$B/T\$ term.
+- The pressure effect is neglected (< 0.2 ‰ at 1 GPa, Vho et al., 2019).
+
+#### Solid solutions
+
+- Each MAGEMin end-member is mapped onto one or a combination of DBOxygen phases (e.g. py → pyrope, ann → annite, ordered end-members split between their end-members).
+- The parameters of a solution phase are the oxygen-weighted mean of its end-member parameters (Vho et al., 2019, Eq. 7-11):
+
+\$\$A_i = \\sum_k w_k A_k, \\qquad w_k = \\frac{X_k N_{O,k}}{\\sum_k X_k N_{O,k}}\$\$
+
+with \$X_k\$ the end-member fraction and \$N_{O,k}\$ its number of oxygens (same for \$B\$ and \$C\$).
+
+#### Melt
+
+DBOxygen does not include melts. Three options are available:
+
+- **CIPW norm (default)**: the melt is treated as the mixture of its CIPW normative minerals (Q, Or, Ab, An, Ne, Lc, Ac, Di/Hd, En/Fs, Fo/Fa, Wo, Mt, Hm, Il, Ru), each weighted by its share of the melt oxygen (normative-mineral approach, Bindeman, 2008). Dissolved H₂O is treated as water. This works for every melt model and stays consistent with the DBOxygen minerals.
+- **Oxide index**: oxygen isotope index of the melt from its oxide composition, \$1000 \\ln \\alpha_{Qz-melt} = (1 - I_{melt}) \\, 11.83 \\cdot 10^6 / T^2\$ (Zhao & Zheng, 2003).
+- **Melt end-members**: the end-members of the melt model are mapped onto normative minerals (q4L → quartz, abL → albite, ...).
+
+#### Mass balance
+
+Each phase is written as \$\\delta^{18}O_i = \\delta^{18}O_{Qz} - 1000 \\ln \\alpha_{Qz-i}\$, where \$\\delta^{18}O_{Qz}\$ is the value of a (virtual) quartz in equilibrium with the assemblage. Oxygen mass balance (Vho et al., 2019, Eq. 20),
+
+\$\$\\delta^{18}O_{sys} = \\sum_i f_i \\, \\delta^{18}O_i, \\qquad f_i = \\frac{n_{O,i}}{\\sum_i n_{O,i}}\$\$
+
+gives \$\\delta^{18}O_{Qz} = \\delta^{18}O_{sys} + \\sum_i f_i \\, 1000 \\ln \\alpha_{Qz-i}\$, with \$f_i\$ the fraction of the system oxygen held by phase \$i\$ (from the phase fractions and oxide compositions).
+
+- **Bulk δ¹⁸O**: set below each bulk-rock composition. For diagrams with a compositional axis (X) the system δ¹⁸O is the oxygen-weighted mixture of bulk 1 and bulk 2.
+- **Anchor phase**: when a phase is given, its δ¹⁸O is set to "Anchor δ18O" and the system value is calculated instead (e.g. from a measured garnet or zircon). Points where the anchor phase is not stable are undefined.
+
+#### PTX paths
+
+With "δ18O model" set to *true* in the PTX path tab (Oxygen isotopes), δ¹⁸O is followed along the path as an open system. The starting δ¹⁸O is set below the bulk-rock composition and the δ¹⁸O of the assimilant below the assimilant composition.
+
+- At each step the stable assemblage is computed and δ¹⁸O is partitioned among the phases as above, using the current bulk δ¹⁸O.
+- Material extracted at the step (fractional melting or crystallization, fluid, per-phase thresholds) leaves with its own δ¹⁸O (oxygen-weighted mean of the extracted melt, solids and fluid), and the δ¹⁸O of the material carried to the next step is updated by mass balance:
+
+\$\$\\delta^{18}O_{ret} = \\frac{N_{O} \\, \\delta^{18}O_{sys} - N_{O,ext} \\, \\delta^{18}O_{ext}}{N_{O} - N_{O,ext}}\$\$
+
+- Assimilation mixes the δ¹⁸O of the system and of the assimilant weighted by their oxygen.
+- The δ18O results tab shows the evolution of the δ¹⁸O of phases, melt, fluid, solid, system and of the extracted material (per step and cumulative), the δ¹⁸O of the phases at a selected step, and exports the table as csv.
+- Water added to reach saturation and activity buffers are assumed to carry the δ¹⁸O of the system.
+
+#### Unmapped phases
+
+Phases or end-members without a DBOxygen analogue (e.g. sapphirine, scapolite, carpholite, ferropericlase, CO₂ in fluids, aqueous species other than H₂O) are either excluded from the oxygen budget ("exclude", default) or given parameters from their oxide index ("oxide index", Zhao & Zheng, 2003). The excluded oxygen fraction and all warnings are reported in the δ18O panel of each point and in the exported tables.
+
+#### Displayed fields
+
+- δ¹⁸O of a phase, Δ¹⁸O between two phases (independent of the bulk δ¹⁸O, useful for thermometry), δ¹⁸O of the melt, fluid, solid, system and virtual quartz, and the oxygen fraction of a phase.
+- Regions where the selected phase is absent are left blank.
+- "Save all" / "Save point" (csv) also write a `_O18.csv` table with the δ¹⁸O of every phase.
+
+#### References
+
+- Vho, A., Lanari, P. & Rubatto, D. (2019). An internally-consistent database for oxygen isotope fractionation between minerals. *Journal of Petrology* 60, 2101-2129. doi:10.1093/petrology/egaa001
+- Vho, A., Lanari, P., Rubatto, D. & Hermann, J. (2020). Tracing fluid transfers in subduction zones: an integrated thermodynamic and δ¹⁸O fractionation modelling approach. *Solid Earth* 11, 307-328. doi:10.5194/se-11-307-2020
+- Zhao, Z.-F. & Zheng, Y.-F. (2003). Calculation of oxygen isotope fractionation in magmatic rocks. *Chemical Geology* 193, 59-80. doi:10.1016/S0009-2541(02)00226-7
+- Bindeman, I. (2008). Oxygen isotopes in mantle and crustal magmas as revealed by single crystal analysis. *Reviews in Mineralogy and Geochemistry* 69, 445-478. doi:10.2138/rmg.2008.69.12
+"""
+
+
 function Tab_General_informations()
     html_div([
         html_div("‎ "),
@@ -409,6 +484,13 @@ function Tab_General_informations()
                 html_div([
                     dbc_card([
                         dcc_markdown(SeismicVelocityMeltCorrection; mathjax=true, style = Dict("font-size" => "130%")),
+                    ], style = Dict("overflowX" => "auto")),
+                ], style = Dict("padding" => "12px", "maxWidth" => "1100px", "margin" => "auto")),
+            ]),
+            dbc_tab(label="δ18O", children=[
+                html_div([
+                    dbc_card([
+                        dcc_markdown(OxygenIsotopes; mathjax=true, style = Dict("font-size" => "130%")),
                     ], style = Dict("overflowX" => "auto")),
                 ], style = Dict("padding" => "12px", "maxWidth" => "1100px", "margin" => "auto")),
             ]),

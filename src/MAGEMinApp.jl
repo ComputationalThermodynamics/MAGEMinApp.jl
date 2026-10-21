@@ -34,7 +34,7 @@ module MAGEMinApp
 
     pkg_dir = Base.pkgdir(MAGEMinApp)
 
-    const ENABLE_MAGERES = false
+    const ENABLE_MAGERES = true
     const ENABLE_MELTS   = false
     const ENABLE_IGM     = false
 
@@ -72,6 +72,8 @@ module MAGEMinApp
     include(joinpath(pkg_dir,"src","Classifications/Garnet_functions.jl"))
     include(joinpath(pkg_dir,"src","Classifications/FeTiOxide_functions.jl"))
     include(joinpath(pkg_dir,"src","TraceElement_functions.jl"))
+    include(joinpath(pkg_dir,"src","OxygenIsotope_functions.jl"))
+    include(joinpath(pkg_dir,"src","Radiogenic_functions.jl"))
     include(joinpath(pkg_dir,"src","Tab_Simulation.jl"))
     include(joinpath(pkg_dir,"src","Tab_GeneralSetup.jl"))
     include(joinpath(pkg_dir,"src","Tab_PhaseDiagram.jl"))

@@ -513,7 +513,7 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
     elseif diagType == "vx"
         dgtype = "Volume-Composition, fixed temperature"
     elseif diagType in SECTION_TYPES
-        dgtype = Dict("ps" => "Pressure-Entropy", "pv" => "Pressure-Volume", "ts" => "Temperature-Entropy", "tv" => "Temperature-Volume", "sv" => "Entropy-Volume", "ph" => "Pressure-Enthalpy", "sh" => "Entropy-Enthalpy", "vh" => "Volume-Enthalpy")[diagType] * ", fixed composition"
+        dgtype = Dict("ps" => "Pressure-Entropy", "pv" => "Pressure-Volume", "ts" => "Temperature-Entropy", "tv" => "Temperature-Volume", "sv" => "Entropy-Volume", "ph" => "Pressure-Enthalpy", "sh" => "Entropy-Enthalpy", "vh" => "Volume-Enthalpy", "rh" => "Density-Enthalpy")[diagType] * ", fixed composition"
     else
         dgtype = diagType
     end
@@ -836,6 +836,19 @@ end
 
 is_integer_field(fieldname) = fieldname in ("Variance", "#Phases")
 
+"""
+    field_colorbar_title(fieldname)
+
+    Colorbar title of a phase-diagram field: δ18O label, pressure in the display unit, temperature with its unit,
+    otherwise the field name.
+"""
+function field_colorbar_title(fieldname)
+    is_o18_field(fieldname) && return o18_field_label(fieldname)
+    fieldname == "P_kbar"   && return "Pressure [$(pressure_unit_label())]"
+    fieldname == "T_C"      && return "Temperature [°C]"
+    return fieldname
+end
+
 function field_colorbar(fieldname)
     cb = attr(  lenmode         = "fraction",
                 len             =  0.75,
@@ -850,7 +863,7 @@ function field_colorbar(fieldname)
                 ticklen         =  5,
                 tickwidth       =  1,
                 tickcolor       = "black",
-                title           = attr(text = fieldname, side = "right") )
+                title           = attr(text = field_colorbar_title(fieldname), side = "right") )
     if is_integer_field(fieldname)
         cb[:tickmode] = "linear"
         cb[:tick0]    = 0
@@ -1013,7 +1026,7 @@ function tepm_function( diagType    :: String,
     TEvec         = Vector{Float64}(undef, length(bulkte_L));
     for i = 1:np
 
-        if !(diagType == "pt" || diagType in SECTION_TYPES)
+        if diagType in ("tx", "px", "ptx") || diagType in SECTION_X_TYPES
             TEvec .= bulkte_L*(1.0 - Out_XY[i].X[1]) + bulkte_R*Out_XY[i].X[1];
         else
             TEvec .= bulkte_L
@@ -1450,7 +1463,7 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
                                             test                                  )
     global PT_infos, layout, addedRefinementLvl
     colorm, zr = field_colorscale(fieldname, colorm, reverseColorMap, set_white, minColor, maxColor)
-    data_plot[1] = heatmap(; pd_heatmap_xyz(gridded, data)...,
+    data_plot[1] = heatmap(; pd_grid_xyz(o18_gridded_display(gridded, data, fieldname), data)...,
                             zmin            =  zr.zmin,
                             zmax            =  zr.zmax,
                             zsmooth         =  smooth,
@@ -1468,7 +1481,7 @@ function update_colormap_phaseDiagram(      xtitle,     ytitle,
     yvals   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
     heat_map_export = heatmap(  x               = xvals,
                                 y               = yvals,
-                                z               = pd_fill_gridded(gridded, data)',
+                                z               = o18_gridded_display(gridded, data, fieldname)',
                                 zmin            =  zr.zmin,
                                 zmax            =  zr.zmax,
                                 zsmooth         =  smooth,
@@ -1765,7 +1778,7 @@ function  update_displayed_field_phaseDiagram(   xtitle,     ytitle,
 
     zlo, zhi   = is_integer_field(fieldname) ? extrema(skipmissing(gridded)) : (nothing, nothing)
     colorm, zr = field_colorscale(fieldname, colorm, reverseColorMap, set_white, zlo, zhi)
-    data_plot[1] = heatmap(; pd_heatmap_xyz(gridded, data)...,
+    data_plot[1] = heatmap(; pd_grid_xyz(o18_gridded_display(gridded, data, fieldname), data)...,
                             zr...,
                             zsmooth         = smooth,
                             connectgaps     = false,
@@ -1784,7 +1797,7 @@ function  update_displayed_field_phaseDiagram(   xtitle,     ytitle,
     yvals   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
     heat_map_export = heatmap(; x               = xvals,
                                 y               = yvals,
-                                z               = pd_fill_gridded(gridded, data)',
+                                z               = o18_gridded_display(gridded, data, fieldname)',
                                 zr...,
                                 zsmooth         = smooth,
                                 connectgaps     = true,
@@ -1955,6 +1968,12 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
         ss      = ""
         mod     = "of_mod"
         name    = of
+    elseif phase == "o18"
+        o18_available() || (println("δ18O is not available: activate the δ18O model in Setup -> Oxygen isotopes and compute the phase diagram"); return data_isopleth, isopleths)
+        ss      = ""
+        em      = ""
+        mod     = "o18"
+        name    = o18_field_label(of)
     else
         println("Wrong combination, needs debugging...")
         return data_isopleth, isopleths
@@ -2256,7 +2275,7 @@ function field_dropdown_options()
         (label = "Variance",                value = "Variance"),
         (label = "Number of stable phases", value = "#Phases"),
         (label = "G system",                value = "G_system"),
-        (label = "Pressure [kbar]",         value = "P_kbar"),
+        (label = "Pressure",                value = "P_kbar"),
         (label = "Temperature [°C]",        value = "T_C"),
         (label = "Entropy",                 value = "entropy"),
         (label = "Volume [cm³/mol]",        value = "V"),
@@ -2311,6 +2330,8 @@ directly from one `Out_XY` point instead of gridding it over the AMR mesh.
 function get_other_field_value(pt, of::String)::Float64
     if of == "#Phases"
         return Float64(length(pt.ph))
+    elseif of == "P_kbar"
+        return display_pressure(pt.P_kbar)
     elseif of == "Variance"
         return Float64(length(pt.oxides) - length(pt.ph) + 2.0)
     elseif of == "s_cp"
@@ -2668,6 +2689,35 @@ function phase_pie_figure(out, dtb, pie_unit, xval)
                     textposition    = "inside" #=,
                     hovertext   = hover_text[ids] =# )
     return plot(trace,layout)
+end
+
+
+function pd_minipie_entry(out, x::Real, y::Real, py::Bool, dtb)
+    ids    = [i for i in sortperm(out.ph_frac_wt; rev = true) if out.ph_frac_wt[i] > 0.0]
+    legacy = Vector{String}(out.ph[ids])
+    return Dict("x"      => Float64(x),
+                "y"      => Float64(y),
+                "py"     => py,
+                "phases" => legacy,
+                "labels" => display_ph_names_tagged(legacy, dtb),
+                "values" => round.(out.ph_frac_wt[ids] .* 100.0; digits = 4),
+                "colors" => [get_phase_color(ph; default = "#808080") for ph in legacy])
+end
+
+
+function pd_pie_wedges(cx::Real, cy::Real, r::Real, values::AbstractVector; nseg::Int = 72)
+    total  = sum(values)
+    wedges = Vector{Vector{Tuple{Float64,Float64}}}()
+    total > 0 || return wedges
+    a0 = 0.0
+    for v in values
+        a1  = a0 + 2π * v / total
+        n   = max(2, ceil(Int, nseg * (a1 - a0) / 2π))
+        arc = [(cx + r * sin(a), cy - r * cos(a)) for a in range(a0, a1; length = n + 1)]
+        push!(wedges, length(values) == 1 ? arc : vcat([(Float64(cx), Float64(cy))], arc))
+        a0  = a1
+    end
+    return wedges
 end
 
 
