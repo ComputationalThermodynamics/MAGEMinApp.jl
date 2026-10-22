@@ -113,7 +113,7 @@ function compute_phaseDiagram3D(    Prange,     Trange,     nP,         nT,     
             CompProgress.refinement_level = iX
             offset = (iX - 1) * n_plane
             ids    = offset+1:offset+n_plane
-            t = @elapsed Out[ids] = multi_point_minimization(P[ids], T[ids], MAGEMin_data;
+            t = @elapsed Out[ids] = locked_multi_point_minimization(P[ids], T[ids], MAGEMin_data;
                                                 X = X[ids], B = B[ids], Xoxides = oxi, sys_in = "mol", scp = scp,
                                                 rm_list = phase_selection, name_solvus = true, W = new_Ws,
                                                 callback_fn = (c, n, tl) -> update_progress(offset + c, N, tl),
@@ -157,7 +157,7 @@ function pd3d_compute_point(st::PD3D_state, P::Float64, T::Float64, x::Float64)
     try
         set_magemin_buffer!(MAGEMin_data, st.buffer)
         x = clamp(x, 0.0, 1.0)
-        return multi_point_minimization([P], [T], MAGEMin_data;
+        return locked_multi_point_minimization([P], [T], MAGEMin_data;
                                         X = [st.bulk_L .* (1.0 - x) .+ st.bulk_R .* x], B = [st.bufferN1 * (1.0 - x) + st.bufferN2 * x],
                                         Xoxides = st.oxi, sys_in = "mol", scp = q.scp, rm_list = q.phase_selection, name_solvus = true,
                                         W = get_custom_Ws(q.custW), progressbar = false,

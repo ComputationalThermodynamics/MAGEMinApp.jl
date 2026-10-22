@@ -1564,7 +1564,11 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         prevent_initial_call = true,
 
-    ) do    reac_up,    full_grid,  addIso,     removeIso,  removeAllIso,    isoShow,   isoHide,   isoShowAll,    isoHideAll,
+    ) do args...
+        lock(() -> pd_main_update(args...), MINIMIZATION_LOCK)
+    end
+
+    function pd_main_update(reac_up,    full_grid,  addIso,     removeIso,  removeAllIso,    isoShow,   isoHide,   isoShowAll,    isoHideAll,
             n_clicks_mesh, n_clicks_refine, uni_n_clicks_refine, n_clicks_mc,
             minColor,   maxColor,
             colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  o18_q,      o18_p1,     o18_p2,     updateTitle,     loadstateid,       warr_naming, pressure_unit,
@@ -1592,7 +1596,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             minIso,     stepIso,    maxIso,
             active_tab,
             mc_sigma_data, mc_sigma_mode_str, mc_bulk_unit, mc_n_real, mc_seed_val, mc_mode, mc_bulk2_data,
-            grid,       lbl,        lbl_bg,     iso_lbl_bg
+            grid,       lbl,        lbl_bg,     iso_lbl_bg)
 
 
         diagType                        = diagram_type_2d(diagType)
@@ -2875,9 +2879,10 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("smooth-boundaries-sigma",  "value"),
         State("pd-pie-list",      "data"),
         State("pd-pie-radius",    "value"),
+        State("pd-pie-unit",      "value"),
 
         prevent_initial_call = true,
-    ) do _n, show_reaction, show_mesh, show_labels, fieldname, smooth_bnd, smooth_sigma, pies, pie_radius
+    ) do _n, show_reaction, show_mesh, show_labels, fieldname, smooth_bnd, smooth_sigma, pies, pie_radius, pie_unit
 
         global data, gridded, layout, data_reaction, data_isopleth, iso_show, heat_map_export, assemblage_rows, pd_fig_meta, output_dir
 
@@ -2903,7 +2908,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                     xtitle = pd_fig_meta.xtitle, ytitle = pd_fig_meta.ytitle, diagType = pd_fig_meta.diagType,
                                     show_reaction = show_reaction == "true", show_mesh = show_mesh == "true", show_labels = show_labels == "true",
                                     geotherms = SUBD_TRACES["pd"],
-                                    pies = isnothing(pies) ? Any[] : collect(Any, pies), pie_radius = something(pie_radius, 25))
+                                    pies = isnothing(pies) ? Any[] : collect(Any, pies), pie_radius = something(pie_radius, 20), pie_unit = something(pie_unit, "wt"))
             mkpath(output_dir[1])
             base = output_dir[1] * replace(isempty(parts.title) ? "phase_diagram" : parts.title, r"[ /\\:]" => "_")
             path = base * "_" * strip(replace(string(fieldname), r"[^A-Za-z0-9]+" => "_"), '_') * ".svg"
@@ -2982,6 +2987,70 @@ function Tab_PhaseDiagram_Callbacks(app)
 
     callback!(
         app,
+        Output("style-canvas-pd",           "is_open"),
+        Input("style-canvas-button-pd",     "n_clicks"),
+        State("style-canvas-pd",            "is_open"),
+        prevent_initial_call = true,
+    ) do n, is_open
+        return n > 0 ? is_open != true && is_open != 1 : is_open
+    end
+
+    callback!(
+        app,
+        Output("colorpicker-mineral-id-pd", "value"),
+        Input("color-table-change-id-pd",   "selected_cells"),
+        State("color-table-id-pd",          "data"),
+        prevent_initial_call = true,
+    ) do selected, data
+        (isnothing(selected) || isempty(selected)) && return no_update()
+        return data[selected[1]["row"] + 1]["Color"]
+    end
+
+    callback!(
+        app,
+        Output("color-table-id-pd",         "data"),
+        Output("color-table-id-pd",         "style_data_conditional"),
+        Output("color-table-change-id-pd",  "data"),
+        Output("colorpicker-mineral-id-pd", "style"),
+        Input("style-canvas-pd",            "is_open"),
+        Input("colorpicker-mineral-id-pd",  "value"),
+        State("color-table-change-id-pd",   "selected_cells"),
+        State("color-table-id-pd",          "data"),
+        State("color-table-id-pd",          "style_data_conditional"),
+        prevent_initial_call = true,
+    ) do is_open, color, selected, data, style
+        bid = pushed_button( callback_context() )
+        if bid == "colorpicker-mineral-id-pd"
+            (isnothing(selected) || isempty(selected) || isnothing(data)) && return no_update(), no_update(), no_update(), no_update()
+            k       = selected[1]["row"] + 1
+            dataout = [Dict(String(c) => v for (c, v) in pairs(r)) for r in data]
+            styleout = [Dict(String(c) => v for (c, v) in pairs(r)) for r in something(style, [])]
+            dataout[k]["Color"] = color
+            k <= length(styleout) && (styleout[k]["background-color"] = color)
+            get!(AppData.mineral_style[1], dataout[k]["LegacyMineral"], Any["grey", "solid", 1])[1] = color
+            return dataout, styleout, no_update(), no_update()
+        end
+        is_open == true || return no_update(), no_update(), no_update(), no_update()
+        phases = @isdefined(phase_infos) && !isnothing(phase_infos) ? vcat(phase_infos.act_ss, phase_infos.act_pp) : String[]
+        phases = isempty(phases) ? sort(collect(keys(AppData.mineral_style[1]))) : String.(phases)
+        dataout  = [Dict("Mineral" => display_ph_name(ph), "LegacyMineral" => ph, "Color" => get_phase_color(ph)) for ph in phases]
+        styleout = [Dict("if" => Dict("row_index" => i - 1, "column_id" => "Color"), "background-color" => r["Color"]) for (i, r) in enumerate(dataout)]
+        return dataout, styleout, [Dict("Change" => " ") for _ in dataout], Dict("height" => "$((24 + 6) * (length(dataout) + 1))px", "padding" => "0", "margin" => "0")
+    end
+
+    callback!(
+        app,
+        Output("color-style-save-pd",       "is_open"),
+        Input("save-color-style-pd",        "n_clicks"),
+        prevent_initial_call = true,
+    ) do n_clicks
+        n_clicks == 0 && return false
+        save_style(AppData.mineral_style[1])
+        return true
+    end
+
+    callback!(
+        app,
         Output("pd-pie-mode",   "data"),
         Output("pd-pie-record", "color"),
         Input("pd-pie-record",  "n_clicks"),
@@ -2999,15 +3068,20 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("pd-pie-clear",           "n_clicks"),
         Input("compute-button",         "value"),
         Input("load-state-id",          "value"),
+        Input("style-canvas-pd",        "is_open"),
         State("pd-pie-mode",            "data"),
         State("pd-pie-list",            "data"),
         State("diagram-dropdown",       "value"),
         State("database-dropdown",      "value"),
         State("pressure-unit-dropdown", "value"),
         prevent_initial_call = true,
-    ) do click_info, _, _, _, recording, pies, diagType, dtb, punit
+    ) do click_info, _, _, _, canvas_open, recording, pies, diagType, dtb, punit
 
         bid = pushed_button( callback_context() )
+        if bid == "style-canvas-pd"
+            (canvas_open == true || canvas_open == 1 || isnothing(pies) || isempty(pies)) && return no_update()
+            return pd_minipie_recolor(pies)
+        end
         bid == "phase-diagram" || return Any[]
         recording == true || return no_update()
 
@@ -3026,10 +3100,10 @@ function Tab_PhaseDiagram_Callbacks(app)
 
     callback!(
         """
-        function(pies, radius, fig, punit) {
+        function(pies, radius, fig, punit, unit) {
             var host = document.getElementById('phase-diagram');
             if (!host) { return window.dash_clientside.no_update; }
-            host.__pdPieState = {pies: pies || [], r: radius || 25, gpa: punit === 'gpa'};
+            host.__pdPieState = {pies: pies || [], r: radius || 20, gpa: punit === 'gpa', unit: unit || 'wt'};
             var isPie = function(t) { return t.meta && t.meta.kind === 'pd-minipie'; };
             var build = function(gd) {
                 var st = host.__pdPieState, xa = gd._fullLayout.xaxis, ya = gd._fullLayout.yaxis, out = [];
@@ -3038,28 +3112,79 @@ function Tab_PhaseDiagram_Callbacks(app)
                     var y   = (p.py && st.gpa) ? p.y / 10 : p.y;
                     var cx  = xa.l2p(p.x), cy = ya.l2p(y);
                     if (!isFinite(cx) || !isFinite(cy)) { return; }
-                    var tot = p.values.reduce(function(a, b) { return a + b; }, 0);
+                    var vals = st.unit === 'mol' ? (p.values_mol || p.values) : (st.unit === 'vol' ? (p.values_vol || p.values) : p.values);
+                    var ulab = st.unit === 'mol' ? ' mol%' : (st.unit === 'vol' ? ' vol%' : ' wt%');
+                    var tot = vals.reduce(function(a, b) { return a + b; }, 0);
                     if (!(tot > 0)) { return; }
                     var a0 = 0;
-                    p.values.forEach(function(v, i) {
+                    vals.forEach(function(v, i) {
                         var a1 = a0 + 2 * Math.PI * v / tot;
                         var n  = Math.max(2, Math.ceil(72 * (a1 - a0) / (2 * Math.PI)));
                         var xs = [], ys = [];
-                        if (p.values.length > 1) { xs.push(p.x); ys.push(y); }
+                        if (vals.length > 1) { xs.push(p.x); ys.push(y); }
                         for (var j = 0; j <= n; j++) {
                             var a = a0 + (a1 - a0) * j / n;
                             xs.push(xa.p2l(cx + st.r * Math.sin(a)));
                             ys.push(ya.p2l(cy - st.r * Math.cos(a)));
                         }
-                        if (p.values.length > 1) { xs.push(p.x); ys.push(y); }
+                        if (vals.length > 1) { xs.push(p.x); ys.push(y); }
                         out.push({type: 'scatter', mode: 'lines', x: xs, y: ys, fill: 'toself', fillcolor: p.colors[i],
-                                  line: {color: '#ffffff', width: 0.6}, hoveron: 'fills', hoverinfo: 'name',
-                                  name: p.labels[i] + ' ' + v.toFixed(1) + ' wt%', hoverlabel: {namelength: -1},
+                                  line: {color: '#000000', width: 0.6}, hoveron: 'fills', hoverinfo: 'name',
+                                  name: p.labels[i] + ' ' + v.toFixed(1) + ulab, hoverlabel: {namelength: -1},
                                   showlegend: false, meta: {kind: 'pd-minipie', pie: k}});
                         a0 = a1;
                     });
                 });
                 return out;
+            };
+            var isLeg = function(o) { return o && o.name === 'pd-pie-legend'; };
+            var legendItems = function() {
+                var seen = {}, items = [];
+                host.__pdPieState.pies.forEach(function(p) {
+                    p.phases.forEach(function(ph, i) {
+                        var it = {ph: ph, name: (p.names || p.labels)[i], color: p.colors[i], rank: p.ranks ? p.ranks[i] : 1e6};
+                        if (seen[ph] === undefined) { seen[ph] = items.length; items.push(it); } else { items[seen[ph]] = it; }
+                    });
+                });
+                items.sort(function(a, b) { return a.rank - b.rank || (a.ph < b.ph ? -1 : 1); });
+                return items;
+            };
+            var legendUpdate = function(gd) {
+                var fl = gd._fullLayout;
+                if (!fl || !fl._size) { return; }
+                var items = legendItems();
+                var gr    = gd.getBoundingClientRect();
+                var pbot  = gr.top + fl._size.t + fl._size.h;
+                var xt    = gd.querySelector('.g-xtitle');
+                var a     = xt ? xt.getBoundingClientRect().bottom - pbot : 45;
+                var b     = Infinity;
+                (fl.annotations || []).forEach(function(an, k) {
+                    if (an.xref !== 'paper' || an.yref !== 'paper' || an.y !== 0 || !(an.yshift < -100)) { return; }
+                    var el = gd.querySelector('.annotation[data-index="' + k + '"]');
+                    if (el) { b = Math.min(b, el.getBoundingClientRect().top - pbot); }
+                });
+                if (!isFinite(b) || b - a < 30) { b = a + 40; }
+                var tpx   = Math.round(a + Math.max(2, (b - a - 28) / 2)) + 12;
+                var sig   = items.map(function(it) { return it.ph + ':' + it.color + ':' + it.name; }).join('|') + '@' + fl._size.w + 'x' + fl._size.h + ':' + tpx;
+                var anns  = (gd.layout.annotations || []), shps = (gd.layout.shapes || []);
+                var shown = anns.some(isLeg);
+                if (sig === gd.__pdLegSig && shown === (items.length > 0)) { return; }
+                gd.__pdLegSig = sig;
+                var newAnn = anns.filter(function(a) { return !isLeg(a); });
+                var newShp = shps.filter(function(a) { return !isLeg(a); });
+                if (items.length) {
+                    var w = fl._size.w, h = fl._size.h;
+                    var bw = Math.min(50, w / items.length), x0 = (w - bw * items.length) / 2;
+                    var top = -tpx / h, bot = -(tpx + 15) / h;
+                    items.forEach(function(it, i) {
+                        var a = (x0 + i * bw) / w, b = (x0 + (i + 1) * bw) / w;
+                        newShp.push({type: 'rect', xref: 'paper', yref: 'paper', x0: a, x1: b, y0: bot, y1: top,
+                                     line: {color: '#000000', width: 1}, fillcolor: it.color, layer: 'above', name: 'pd-pie-legend'});
+                        newAnn.push({xref: 'paper', yref: 'paper', x: (a + b) / 2, y: top, xanchor: 'center', yanchor: 'bottom',
+                                     text: it.name, showarrow: false, font: {size: 10, color: '#000000'}, name: 'pd-pie-legend'});
+                    });
+                }
+                Plotly.relayout(gd, {annotations: newAnn, shapes: newShp});
             };
             var redraw = function(gd) {
                 if (!gd || !gd.data || !gd._fullLayout) { return; }
@@ -3069,6 +3194,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                 gd.__pdPieN = traces.length;
                 if (idx.length) { Plotly.deleteTraces(gd, idx); }
                 if (traces.length) { Plotly.addTraces(gd, traces); }
+                legendUpdate(gd);
             };
             var gd = host.querySelector('.js-plotly-plot');
             if (!gd || !gd.on) { return window.dash_clientside.no_update; }
@@ -3077,7 +3203,8 @@ function Tab_PhaseDiagram_Callbacks(app)
                 gd.on('plotly_relayout', function() { redraw(gd); });
                 gd.on('plotly_afterplot', function() {
                     var n = gd.data ? gd.data.filter(isPie).length : 0;
-                    if (n !== (gd.__pdPieN || 0) || (n === 0 && host.__pdPieState.pies.length)) { redraw(gd); }
+                    var legShown = (gd.layout.annotations || []).some(isLeg);
+                    if (n !== (gd.__pdPieN || 0) || (n === 0 && host.__pdPieState.pies.length) || legShown !== (host.__pdPieState.pies.length > 0)) { redraw(gd); }
                 });
             }
             redraw(gd);
@@ -3090,6 +3217,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("pd-pie-radius",           "value"),
         Input("phase-diagram",           "figure"),
         Input("pressure-unit-dropdown",  "value"),
+        Input("pd-pie-unit",             "value"),
         prevent_initial_call = true,
     )
 

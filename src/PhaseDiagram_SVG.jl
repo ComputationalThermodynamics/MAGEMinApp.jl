@@ -246,7 +246,7 @@ function pd_figure_parts(; data, gridded, heat_map, layout_g, reaction, data_iso
                           assemblage_rows, xtitle::AbstractString, ytitle::AbstractString, diagType::AbstractString,
                           show_reaction::Bool, show_mesh::Bool, show_labels::Bool, geotherms = GenericTrace[],
                           fills = Tuple{Vector{Matrix{Float64}},NTuple{4,Float64}}[], iso_sigma::Real = 0.0,
-                          pies = Any[], pie_radius::Real = 25)
+                          pies = Any[], pie_radius::Real = 20, pie_unit = "wt")
     global phase_infos
     convert_p = use_GPa[1] && pressure_on_y_axis(diagType)
     yconv(y::Real) = convert_p ? display_pressure(Float64(y)) : Float64(y)
@@ -322,16 +322,16 @@ function pd_figure_parts(; data, gridded, heat_map, layout_g, reaction, data_iso
             mesh = mesh, reaction = lines,
             fills = [([[(r[k, 1], yconv(r[k, 2])) for k in 1:size(r, 1)] for r in rings], col) for (rings, col) in fills],
             isopleths = isopleths, geotherms = subd_svg_lines(geotherms, yconv), annotations = annotations,
-            info = info, assemblages = assemblages, pies = pd_svg_pies(pies, convert_p), pie_radius = Float64(pie_radius))
+            info = info, assemblages = assemblages, pies = pd_svg_pies(pies, convert_p; unit = pie_unit), pie_radius = Float64(pie_radius))
 end
 
-function pd_svg_pies(pies, convert_p::Bool)
+function pd_svg_pies(pies, convert_p::Bool; unit = "wt")
     out = NamedTuple[]
     for p in pies
         y = Float64(p["y"])
         convert_p && p["py"] == true && (y = display_pressure(y))
         push!(out, (x = Float64(p["x"]), y = y, phases = String.(collect(p["phases"])),
-                    values = Float64.(collect(p["values"])), colors = String.(collect(p["colors"]))))
+                    values = Float64.(collect(p[unit == "mol" && haskey(p, "values_mol") ? "values_mol" : (unit == "vol" && haskey(p, "values_vol") ? "values_vol" : "values")])), colors = String.(collect(p["colors"]))))
     end
     return out
 end
@@ -387,7 +387,9 @@ function pd_export_svg(parts, path::AbstractString)
     ncol       = 3
     list_rows  = cld(length(parts.assemblages), ncol)
     list_h     = list_rows * 10.5
-    height     = 48.0 + ph + 62.0 + (info_h > 0 ? info_h + 24 : 0) + (list_h > 0 ? list_h + 30 : 0) + 10
+    legend     = pd_pie_legend(get(parts, :pies, NamedTuple[]))
+    legend_h   = isempty(legend) ? 0.0 : 40.0
+    height     = 48.0 + ph + 62.0 + legend_h + (info_h > 0 ? info_h + 24 : 0) + (list_h > 0 ? list_h + 30 : 0) + 10
     c          = SVGCanvas(758.0, height, ml, mr, mt, height - mt - ph, xr[1], xr[2], yr[1], yr[2])
     left, right, top, bottom = c.ml, c.ml + pw, c.mt, c.mt + ph
     seen   = Set{String}()
@@ -498,7 +500,7 @@ function pd_export_svg(parts, path::AbstractString)
     pies = get(parts, :pies, NamedTuple[])
     if !isempty(pies)
         r = get(parts, :pie_radius, 25.0)
-        svg_group_open(io, svg_id(seen, "Mini_pie_charts"); stroke = "#ffffff", width = 0.6)
+        svg_group_open(io, svg_id(seen, "Mini_pie_charts"); stroke = "#000000", width = 0.6)
         for (k, p) in enumerate(pies)
             (min(xr...) <= p.x <= max(xr...) && min(yr...) <= p.y <= max(yr...)) || continue
             svg_group_open(io, svg_id(seen, "Pie_$(k)"))
@@ -555,7 +557,22 @@ function pd_export_svg(parts, path::AbstractString)
         svg_group_close(io)
     end
 
-    y_info = bottom + 62
+    if !isempty(legend)
+        bw  = min(50.0, pw / length(legend))
+        x0  = left + (pw - bw * length(legend)) / 2
+        ytp = bottom + 62 + 12
+        svg_group_open(io, svg_id(seen, "Mini_pie_legend"); font_family = font, font_size = 10, fill = "#000000")
+        for (k, it) in enumerate(legend)
+            rgb, op = svg_css_color(it.color)
+            xa = x0 + (k - 1) * bw
+            svg_path(io, svg_id(seen, "Pie_legend_box_" * it.label), "M$(svg_num(xa)) $(svg_num(ytp)) L$(svg_num(xa + bw)) $(svg_num(ytp)) L$(svg_num(xa + bw)) $(svg_num(ytp + 16)) L$(svg_num(xa)) $(svg_num(ytp + 16)) Z";
+                     fill = rgb, fill_opacity = op, stroke = "#000000", width = 0.75)
+            svg_text(io, xa + bw / 2, ytp - 7, it.label; id = svg_id(seen, "Pie_legend_label_" * it.label), anchor = "middle")
+        end
+        svg_group_close(io)
+    end
+
+    y_info = bottom + 62 + legend_h
     svg_info_layer(io, seen, parts.info; left = left, y = y_info, pw = pw, font = font, ink = ink, line_h = line_h)
 
     if !isempty(parts.assemblages)

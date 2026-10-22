@@ -66,31 +66,74 @@ end
 """
 rad_epsilon(name::String, R::Float64) = (R / RADIOGENIC_SYSTEMS[name].chur - 1.0) * 1e4
 
-"""
-    rad_default_table()
+rad_num(v, d) = v isa Real ? Float64(v) : (v isa AbstractString && !isnothing(tryparse(Float64, v)) ? parse(Float64, v) : d)
 
-    Rows of the PTX radiogenic isotope table (initial and assimilant ratios of each system).
-"""
-rad_default_table() = [Dict("system" => s, "ratio" => RADIOGENIC_SYSTEMS[s].ratio, "R0" => RADIOGENIC_SYSTEMS[s].R0, "R_ass" => RADIOGENIC_SYSTEMS[s].R_ass) for s in RADIOGENIC_ORDER]
-
-"""
-    rad_ptx_options(model, selected, table)
-
-    Radiogenic systems of a PTX path from the PTX tab inputs, `nothing` when the model is off.
-"""
-function rad_ptx_options(model, selected, table)
+function rad_options(model, selected, r1, r2)
     model == "true" || return nothing
-    num(v, d) = v isa Real ? Float64(v) : (v isa AbstractString && !isnothing(tryparse(Float64, v)) ? parse(Float64, v) : d)
-    rows = Dict(String(get(r, :system, get(r, "system", ""))) => r for r in something(table, []))
-    sys  = NamedTuple[]
-    for s in RADIOGENIC_ORDER
-        s in String.(something(selected, String[])) || continue
-        r = get(rows, s, Dict())
-        g(k) = get(r, Symbol(k), get(r, k, nothing))
-        push!(sys, (name = s, element = RADIOGENIC_SYSTEMS[s].element, R0 = num(g("R0"), RADIOGENIC_SYSTEMS[s].R0), R_ass = num(g("R_ass"), RADIOGENIC_SYSTEMS[s].R_ass)))
+    sel = String.(something(selected, String[]))
+    r1  = something(r1, fill(nothing, length(RADIOGENIC_ORDER)))
+    r2  = something(r2, fill(nothing, length(RADIOGENIC_ORDER)))
+    sys = NamedTuple[]
+    for (k, s) in enumerate(RADIOGENIC_ORDER)
+        s in sel || continue
+        push!(sys, (name = s, element = RADIOGENIC_SYSTEMS[s].element,
+                    R0 = rad_num(r1[k], RADIOGENIC_SYSTEMS[s].R0), R_ass = rad_num(r2[k], RADIOGENIC_SYSTEMS[s].R_ass)))
     end
     return isempty(sys) ? nothing : sys
 end
+
+rad_ptx_options(model, selected, r1, r2) = rad_options(model, selected, r1, r2)
+
+const RAD_KDS_ELEMENTS = Dict{String,Vector{String}}()
+
+function rad_kds_elements(kds_mod)
+    kds_mod isa AbstractString && !isempty(kds_mod) || return String[]
+    return get!(RAD_KDS_ELEMENTS, String(kds_mod)) do
+        try
+            String.(build_kds_database(String(kds_mod)).element_name)
+        catch
+            String[]
+        end
+    end
+end
+
+function rad_te_gate(te_model, kds_mod, dtb)
+    te_on = te_model == "true" && !(dtb in ("um", "ume", "mtl", "po"))
+    els   = te_on ? rad_kds_elements(kds_mod) : String[]
+    opts  = [Dict("label" => " " * RADIOGENIC_SYSTEMS[s].ratio * (te_on && !(RADIOGENIC_SYSTEMS[s].element in els) ? " (not in $(kds_mod))" : ""),
+                  "value" => s, "disabled" => !(te_on && RADIOGENIC_SYSTEMS[s].element in els)) for s in RADIOGENIC_ORDER]
+    note  = te_on ? "" : "Requires the trace-element model (TE predictive model = true, with a Kd database containing Sr, Nd or Hf)."
+    return te_on, opts, note
+end
+
+function rad_ratio_rows(suffix::String, which::String; label_suffix::String = "")
+    rows = []
+    for s in RADIOGENIC_ORDER
+        S  = RADIOGENIC_SYSTEMS[s]
+        id = "rad-$(which)-$(s)$(suffix)"
+        push!(rows, html_div([
+            html_div("‎ "),
+            dbc_row([
+                dbc_col([
+                    html_h1(S.ratio * label_suffix, style = Dict("textAlign" => "center","font-size" => "120%")),
+                ]),
+                dbc_col([
+                    dbc_input(id = id, type = "number", step = "any", value = which == "r0" ? S.R0 : S.R_ass),
+                ]),
+            ]),
+        ], style = Dict("display" => "none"), id = id * "-row"))
+    end
+    return rows
+end
+
+function rad_usable_systems(selected, te_model, kds_mod, dtb)
+    te_on, opts, _ = rad_te_gate(te_model, kds_mod, dtb)
+    te_on || return String[]
+    ok = [o["value"] for o in opts if !o["disabled"]]
+    return [String(v) for v in something(selected, String[]) if String(v) in ok]
+end
+
+rad_row_styles(model, selected) = [Dict("display" => (model == "true" && s in String.(something(selected, String[]))) ? "block" : "none") for s in RADIOGENIC_ORDER]
 
 """
     rad_ptx_available()
@@ -158,6 +201,12 @@ function rad_ptx_series(key::String)
         return s == "liq" ? [o.δ_liq for o in Out_O18_PTX] : [o.δ_sys for o in Out_O18_PTX]
     end
     return fill(NaN, n)
+end
+
+function rad_ptx_default_axes()
+    haskey(Rad_PTX, "Sr") && haskey(Rad_PTX, "Nd") && return "R|Sr", ["E|Nd"]
+    haskey(Rad_PTX, "Sr") && o18_ptx_available()   && return "R|Sr", ["O|liq"]
+    return "step", ["R|$s" for s in RADIOGENIC_ORDER if haskey(Rad_PTX, s)]
 end
 
 rad_ptx_label(key::String) = something(get(Dict(String(q.value) => q.label for q in rad_ptx_quantities()), key, nothing), key)

@@ -441,6 +441,7 @@ function Tab_PTXpaths()
                                                 ], width=6),
                                                 dbc_col([
                                                     dcc_dropdown(   id      = "rad-dropdown-ptx",
+                                                    disabled    = true,
                                                     options = [
                                                         (label = "true",         value = "true"),
                                                         (label = "false",        value = "false"),
@@ -450,6 +451,7 @@ function Tab_PTXpaths()
                                                     multi       = false),
                                                 ]),
                                             ]),
+                                            html_div("", id = "rad-te-note-ptx", style = Dict("color" => "#b00020", "marginTop" => 6)),
                                         html_div([
                                             dbc_row([
                                                 dbc_col([
@@ -462,18 +464,7 @@ function Tab_PTXpaths()
                                                                     inline      = true),
                                                 ]),
                                             ]),
-                                            html_div("‎ "),
-                                            dash_datatable(
-                                                id          = "rad-table-ptx",
-                                                columns     = [ Dict("id" => "ratio",   "name" => "ratio",        "editable" => false),
-                                                                Dict("id" => "R0",      "name" => "initial",      "editable" => true, "type" => "numeric"),
-                                                                Dict("id" => "R_ass",   "name" => "assimilant",   "editable" => true, "type" => "numeric") ],
-                                                data        = rad_default_table(),
-                                                style_cell  = (textAlign="center", fontSize="120%",),
-                                                style_header= (fontWeight="bold",),
-                                                editable    = true,
-                                            ),
-                                            html_div("Requires the trace-element model (Kd database with the element) and changes only through assimilation: phases share the system ratio (no mass-dependent fractionation).",
+                                            html_div("Initial and assimilant ratios are set below the bulk-rock and assimilant compositions. Phases share the system ratio (no mass-dependent fractionation); it changes only through assimilation.",
                                                      style = Dict("color" => "grey", "marginTop" => 8)),
                                         ], style = Dict("display" => "none"), id = "rad-options-ptx"),
                                     ]),
@@ -856,6 +847,7 @@ function Tab_PTXpaths()
                                                                     ]),
                                                                 ]),
                                                                 ], style = Dict("display" => "none"), id  = "o18-bulk-1-id-ptx"),
+                                                rad_ratio_rows("-ptx", "r0")...,
 
 
                                                             ], style = Dict("display" => "block"), id      = "table-1-id-ptx"), #none, block
@@ -909,6 +901,7 @@ function Tab_PTXpaths()
                                                                     ]),
                                                                 ]),
                                                                 ], style = Dict("display" => "none"), id  = "o18-bulk-2-id-ptx"),
+                                                rad_ratio_rows("-ptx", "r2"; label_suffix = " assimilant")...,
 
                                                             ], style = Dict("display" => "none"), id      = "table-2-id-ptx"), #none, block
                                                         ]),
@@ -1926,6 +1919,71 @@ function Tab_PTXpaths()
                                                 clearable   =  false,
                                                 multi       =  false    ),
                                             ]),
+                                        ]),
+
+                                        dbc_row([
+                                            dbc_col([ 
+                                                html_h1("Color options", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ], width=6),
+                                            dbc_col([ 
+                                                dbc_button("Modify phase colors",id="style-canvas-button", color="light",  n_clicks=0,
+                                                style       = Dict( "textAlign"     => "center",
+                                                                    "font-size"     => "100%",
+                                                                    "border"        =>"1px grey solid",
+                                                                    "width"         => "100%" )), 
+                                            ]),
+                                        ]),
+
+
+                                        dbc_row([    
+                                            dbc_offcanvas(
+                                                [
+                                                    dbc_col([ 
+                                                        dbc_row([
+                                                            dbc_button("Save colors/styles",id="save-color-style", color="light", className="me-2", n_clicks=0,
+                                                            style       = Dict( "textAlign"     => "center",
+                                                                                "font-size"     => "100%",
+                                                                                "background-color" => "#d3f2ce",
+                                                                                "border"        =>"1px grey solid")), 
+                                                            dbc_alert(
+                                                            "Successfully saved colors/styles",
+                                                            id      ="color-style-save",
+                                                            is_open =false,
+                                                            duration=4000,
+                                                        ),
+                                                        html_div("‎ "),
+                                                        ]),
+                                                    ], width=11),
+                                                    dbc_row([
+                                                        html_h1("Recompute PTX path to apply changes!", style=Dict("textAlign" => "center", "font-size" => "120%")),  # Add header here
+                                                    ]),
+                                                    dbc_row([
+                                                        dbc_col([ 
+                                                           html_div(create_color_table(AppData.mineral_style[1]), id="ph-names-container")
+                                                        ], width=8),
+                                                        dbc_col([ 
+                                                           html_div(create_color_selec(AppData.mineral_style[1]), id="ph-selec-container")
+                                                        ], width=2),
+
+                                                        dbc_col([ 
+                                                            dbc_input(
+                                                                type    = "color",
+                                                                id      = "colorpicker-mineral-id",
+                                                                value   =  "white",
+                                                                style   =  Dict("height" => "$((24 + 6) * (length(collect(keys(AppData.mineral_style[1])))+1))px", "padding" => "0", "margin" => "0" )
+                                                            )
+                                                        ], width=1),
+            
+                                                    ])
+                                                ],
+
+                                                id          = "style-canvas",
+                                                title       = "Color/style options",
+                                                is_open     = false,
+                                                placement   = "start",
+                                                style   = Dict( "width"             => "320px",
+                                                                "background-color"  => "rgba(255, 255, 255, 1.0)"),
+                                            ),
                                         ]),
 
                                         dbc_row([

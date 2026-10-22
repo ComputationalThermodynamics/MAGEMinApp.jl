@@ -1972,6 +1972,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
         o18_available() || (println("δ18O is not available: activate the δ18O model in Setup -> Oxygen isotopes and compute the phase diagram"); return data_isopleth, isopleths)
         ss      = ""
         em      = ""
+        ox      = ""
         mod     = "o18"
         name    = o18_field_label(of)
     else
@@ -2700,8 +2701,32 @@ function pd_minipie_entry(out, x::Real, y::Real, py::Bool, dtb)
                 "py"     => py,
                 "phases" => legacy,
                 "labels" => display_ph_names_tagged(legacy, dtb),
+                "names"  => display_ph_name.(legacy),
+                "ranks"  => [something(findfirst(==(ph), AppData.mineral_order[1]), length(AppData.mineral_order[1]) + 1) for ph in legacy],
                 "values" => round.(out.ph_frac_wt[ids] .* 100.0; digits = 4),
+                "values_mol" => round.(out.ph_frac[ids] .* 100.0; digits = 4),
+                "values_vol" => round.(out.ph_frac_vol[ids] .* 100.0; digits = 4),
                 "colors" => [get_phase_color(ph; default = "#808080") for ph in legacy])
+end
+
+
+function pd_minipie_recolor(pies)
+    out = Any[]
+    for p in pies
+        e = Dict{String,Any}(String(k) => v for (k, v) in pairs(p))
+        e["colors"] = [get_phase_color(String(ph); default = "#808080") for ph in e["phases"]]
+        push!(out, e)
+    end
+    return out
+end
+
+
+function pd_pie_legend(pies)
+    items = Dict{String,Tuple{Int,String,String}}()
+    for p in pies, (k, ph) in enumerate(p.phases)
+        items[ph] = (something(findfirst(==(ph), AppData.mineral_order[1]), length(AppData.mineral_order[1]) + 1), display_ph_name(ph), p.colors[k])
+    end
+    return [(phase = ph, label = v[2], color = v[3]) for (ph, v) in sort(collect(items), by = kv -> (kv[2][1], kv[1]))]
 end
 
 

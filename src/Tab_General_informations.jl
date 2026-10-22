@@ -281,6 +281,50 @@ Phases or end-members without a DBOxygen analogue (e.g. sapphirine, scapolite, c
 """
 
 
+RadiogenicIsotopes = """
+**Radiogenic isotopes (Sr, Nd, Hf) along PTX paths**
+
+With "Radiogenic isotopes" set to *true* in the PTX path tab (Setup → Radiogenic isotopes), the ⁸⁷Sr/⁸⁶Sr, ¹⁴³Nd/¹⁴⁴Nd and ¹⁷⁶Hf/¹⁷⁷Hf ratios of the system are followed along the path. They are meant for assimilation–fractional crystallization (AFC) diagnostics such as εNd vs ⁸⁷Sr/⁸⁶Sr, δ¹⁸O vs ⁸⁷Sr/⁸⁶Sr or ⁸⁷Sr/⁸⁶Sr vs 1/Sr.
+
+Radiogenic ratios are not offered for phase diagrams: at fixed bulk composition and isotopic equilibrium every phase, including the melt at suprasolidus conditions, carries the bulk ratio, so a phase-diagram field would only reflect the input values (or a trivial two-component mixing along X).
+
+#### Requirements
+
+- The trace-element model must be on (TE predictive model = *true*), with a Kd database that contains the element: OL12 and CO include Sr, Nd and Hf; Yak25 includes Nd only. Otherwise the radiogenic switch is disabled, and systems missing from the Kd database are greyed out.
+- The element concentrations of the starting composition and of the assimilant are those of the trace-element compositions.
+
+#### Model
+
+- **No mass-dependent fractionation**: at each step all phases (melt, solids, fluid) and the extracted material carry the ratio of the system. Fractional melting, fractional crystallization and extraction thresholds change the element concentrations but not the ratio.
+- **Assimilation** is the only source term. With \$w\$ the mass fraction of assimilant added at the step (the same weight as for the trace-element bulk), \$C\$ the element concentration (ppm) and \$f_{ref}(R)\$ the atomic fraction of the reference isotope (⁸⁶Sr, ¹⁴⁴Nd, ¹⁷⁷Hf) at ratio \$R\$:
+
+\$\$n_{sys} = (1 - w) \\, C_{sys} \\, f_{ref}(R_{sys}), \\qquad n_{ass} = w \\, C_{ass} \\, f_{ref}(R_{ass})\$\$
+
+\$\$R_{new} = \\frac{n_{sys} R_{sys} + n_{ass} R_{ass}}{n_{sys} + n_{ass}}\$\$
+
+- The mixing is weighted by the reference isotope, so it is exact rather than an elemental-concentration approximation. \$f_{ref}\$ is computed from the natural abundance ratios of the non-radiogenic isotopes (Berglund & Wieser, 2011).
+- Without assimilation the ratios stay constant along the path.
+- **ε notation**: \$\\varepsilon Nd = (R / 0.512630 - 1) \\cdot 10^4\$ and \$\\varepsilon Hf = (R / 0.282785 - 1) \\cdot 10^4\$ (CHUR, Bouvier et al., 2008).
+- **Not modelled**: radioactive decay and ingrowth (no time axis), disequilibrium assimilation, recharge, Pb isotopes.
+
+#### Inputs
+
+- Setup → Radiogenic isotopes: on/off and the systems to follow (⁸⁷Sr/⁸⁶Sr, ¹⁴³Nd/¹⁴⁴Nd, ¹⁷⁶Hf/¹⁷⁷Hf).
+- The initial ratio of each selected system is set below the bulk-rock composition, and the assimilant ratio below the assimilant composition (visible when assimilation is on).
+
+#### Results
+
+The "Radiogenic isotopes" results tab plots any of the following against any other: ratios, ε values, melt and bulk concentrations, 1/C of the melt, δ¹⁸O of the melt and system (when the δ18O model is on), path step and temperature. The default x–y diagram is εNd vs ⁸⁷Sr/⁸⁶Sr (δ¹⁸O vs ⁸⁷Sr/⁸⁶Sr when Nd is not followed and δ18O is on). The table of all quantities at every step can be saved as csv.
+
+#### References
+
+- Berglund, M. & Wieser, M. E. (2011). Isotopic compositions of the elements 2009 (IUPAC Technical Report). *Pure and Applied Chemistry* 83, 397-410. doi:10.1351/PAC-REP-10-06-02
+- Bouvier, A., Vervoort, J. D. & Patchett, P. J. (2008). The Lu-Hf and Sm-Nd isotopic composition of CHUR. *Earth and Planetary Science Letters* 273, 48-57. doi:10.1016/j.epsl.2008.06.010
+- Langmuir, C. H., Vocke, R. D., Hanson, G. N. & Hart, S. R. (1978). A general mixing equation with applications to Icelandic basalts. *Earth and Planetary Science Letters* 37, 380-392. doi:10.1016/0012-821X(78)90053-5
+- DePaolo, D. J. (1981). Trace element and isotopic effects of combined wallrock assimilation and fractional crystallization. *Earth and Planetary Science Letters* 53, 189-202. doi:10.1016/0012-821X(81)90153-9
+- Taylor, H. P. (1980). The effects of assimilation of country rocks by magmas on ¹⁸O/¹⁶O and ⁸⁷Sr/⁸⁶Sr systematics in igneous rocks. *Earth and Planetary Science Letters* 47, 243-254. doi:10.1016/0012-821X(80)90040-0
+"""
+
 function Tab_General_informations()
     html_div([
         html_div("‎ "),
@@ -491,6 +535,13 @@ function Tab_General_informations()
                 html_div([
                     dbc_card([
                         dcc_markdown(OxygenIsotopes; mathjax=true, style = Dict("font-size" => "130%")),
+                    ], style = Dict("overflowX" => "auto")),
+                ], style = Dict("padding" => "12px", "maxWidth" => "1100px", "margin" => "auto")),
+            ]),
+            dbc_tab(label="Radiogenic isotopes", children=[
+                html_div([
+                    dbc_card([
+                        dcc_markdown(RadiogenicIsotopes; mathjax=true, style = Dict("font-size" => "130%")),
                     ], style = Dict("overflowX" => "auto")),
                 ], style = Dict("padding" => "12px", "maxWidth" => "1100px", "margin" => "auto")),
             ]),

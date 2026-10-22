@@ -239,6 +239,56 @@ function Tab_PhaseDiagram()
                                 dbc_collapse(
                                     dbc_card(dbc_cardbody([
                                         dbc_row([
+                                            dbc_button("Modify phase colors", id="style-canvas-button-pd", color="light", size="sm", n_clicks=0,
+                                                        style = Dict("width" => "100%", "border" => "1px grey solid", "font-size" => "80%")),
+                                            dbc_offcanvas(
+                                                [
+                                                    dbc_col([
+                                                        dbc_row([
+                                                            dbc_button("Save colors/styles",id="save-color-style-pd", color="light", className="me-2", n_clicks=0,
+                                                            style       = Dict( "textAlign"     => "center",
+                                                                                "font-size"     => "100%",
+                                                                                "background-color" => "#d3f2ce",
+                                                                                "border"        =>"1px grey solid")),
+                                                            dbc_alert(
+                                                            "Successfully saved colors/styles",
+                                                            id      ="color-style-save-pd",
+                                                            is_open =false,
+                                                            duration=4000,
+                                                        ),
+                                                        html_div("‎ "),
+                                                        ]),
+                                                    ], width=11),
+                                                    dbc_row([
+                                                        html_h1("Phases of the current diagram. Colors are shared with PTX paths; new pie charts use them directly.", style=Dict("textAlign" => "center", "font-size" => "100%")),
+                                                    ]),
+                                                    dbc_row([
+                                                        dbc_col([
+                                                           html_div(create_color_table(Dict{String, Vector{Any}}(); id = "color-table-id-pd"), id="ph-names-container-pd")
+                                                        ], width=8),
+                                                        dbc_col([
+                                                           html_div(create_color_selec(Dict{String, Vector{Any}}(); id = "color-table-change-id-pd"), id="ph-selec-container-pd")
+                                                        ], width=2),
+                                                        dbc_col([
+                                                            dbc_input(
+                                                                type    = "color",
+                                                                id      = "colorpicker-mineral-id-pd",
+                                                                value   =  "white",
+                                                                style   =  Dict("height" => "30px", "padding" => "0", "margin" => "0" )
+                                                            )
+                                                        ], width=1),
+                                                    ])
+                                                ],
+                                                id          = "style-canvas-pd",
+                                                title       = "Color/style options",
+                                                is_open     = false,
+                                                placement   = "start",
+                                                style   = Dict( "width"             => "320px",
+                                                                "background-color"  => "rgba(255, 255, 255, 1.0)"),
+                                            ),
+                                        ]),
+                                        html_hr(style = Dict("marginTop" => 8, "marginBottom" => 10)),
+                                        dbc_row([
                                             html_div([
                                                 dbc_button("Record pie chart", id="pd-pie-record", color="light", size="sm", n_clicks=0,
                                                             style = Dict("flex" => "1", "border" => "1px grey solid", "font-size" => "80%")),
@@ -247,14 +297,25 @@ function Tab_PhaseDiagram()
                                                 dbc_button("Delete all",       id="pd-pie-clear",  color="light", size="sm", n_clicks=0,
                                                             style = Dict("flex" => "1", "border" => "1px grey solid", "font-size" => "80%")),
                                             ], style = Dict("display" => "flex", "gap" => "4px", "padding" => "0px")),
-                                            html_div("Pie radius (px)", style = Dict("font-size" => "80%", "color" => "grey", "marginTop" => 4)),
-                                            dcc_slider( id      = "pd-pie-radius",
-                                                        min     = 10,
-                                                        max     = 60,
-                                                        step    = 1,
-                                                        value   = 25,
-                                                        marks   = Dict(string(i) => string(i) for i in 10:10:60),
-                                                        tooltip = Dict("placement" => "bottom")),
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_div("Pie radius (px)", style = Dict("font-size" => "80%", "color" => "grey", "marginTop" => 4)),
+                                                    dcc_slider( id      = "pd-pie-radius",
+                                                                min     = 10,
+                                                                max     = 40,
+                                                                step    = 10,
+                                                                value   = 20,
+                                                                marks   = Dict(string(i) => Dict("label" => string(i), "style" => Dict("font-size" => "70%")) for i in 10:10:40)),
+                                                ], width = 7),
+                                                dbc_col([
+                                                    html_div("Unit", style = Dict("font-size" => "80%", "color" => "grey", "marginTop" => 4)),
+                                                    dbc_select( id          = "pd-pie-unit",
+                                                                options     = [Dict("label" => "mol%", "value" => "mol"), Dict("label" => "wt%", "value" => "wt"), Dict("label" => "vol%", "value" => "vol")],
+                                                                value       = "wt",
+                                                                size        = "sm",
+                                                                style       = Dict("font-size" => "75%", "padding-left" => "4px", "padding-right" => "16px", "background-position" => "right 3px center")),
+                                                ], width = 5, style = Dict("padding-left" => "0px")),
+                                            ]),
                                             dcc_store(id = "pd-pie-mode", data = false),
                                             dcc_store(id = "pd-pie-list", data = []),
                                             dcc_store(id = "pd-pie-cs"),

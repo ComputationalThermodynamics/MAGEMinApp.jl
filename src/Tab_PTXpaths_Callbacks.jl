@@ -1289,6 +1289,7 @@ function Tab_PTXpaths_Callbacks(app)
         Output("te-ptx-computed-store", "data"    ),
         Output("ptx-compute-version-store", "data"),
         Output("o18-ptx-computed-store", "data"   ),
+        Output("rad-ptx-computed-store", "data"   ),
 
         Input("compute-path-button",    "n_clicks"),
         Input("sys-unit-ptx",           "value"),
@@ -1365,6 +1366,10 @@ function Tab_PTXpaths_Callbacks(app)
         State("o18-melt-dropdown-ptx",          "value"),
         State("o18-unmapped-dropdown-ptx",      "value"),
         State("o18-tmax-ptx",                   "value"),
+        State("rad-dropdown-ptx",               "value"),
+        State("rad-systems-ptx",                "value"),
+        [State("rad-r0-$(r)-ptx", "value") for r in RADIOGENIC_ORDER]...,
+        [State("rad-r2-$(r)-ptx", "value") for r in RADIOGENIC_ORDER]...,
 
         prevent_initial_call = true,
 
@@ -1380,7 +1385,8 @@ function Tab_PTXpaths_Callbacks(app)
                 sas,        wf,         seismicCorVal,
                 aspectRatioVal, seismicWaterMode, shallowCorMode, fluidAsMeltMode, anelasticCorMode,
                 calcUnit,   ptxTableAdvData, threshStore, reminimizeThreshold, computeVersion,
-                o18_model,  o18_delta,  o18_delta_ass,  o18_melt,   o18_unmapped,   o18_tmax
+                o18_model,  o18_delta,  o18_delta_ass,  o18_melt,   o18_unmapped,   o18_tmax,
+                rad_model,  rad_systems, r0_Sr,  r0_Nd,  r0_Hf,  r2_Sr,  r2_Nd,  r2_Hf
 
         global use_warr_names
         use_warr_names[1]       = (warr_naming == "warr")
@@ -1395,6 +1401,7 @@ function Tab_PTXpaths_Callbacks(app)
             global layout_path, figIsoSPath
             global Out_TE_PTX, all_TE_ph_ptx, C_ext_TE_PTX
             global Out_O18_PTX, all_O18_ph_ptx, O18_ext_PTX
+            global Rad_PTX
 
             bufferN                     = Float64(bufferN)               # convert buffer_n to float
             bulk_ini, bulk_assim, oxi   = get_bulkrock_prop(bulk, bulk2; sys_unit=sys_unit)
@@ -1436,7 +1443,8 @@ function Tab_PTXpaths_Callbacks(app)
                                     aspectRatio, seismicWater, shallowCor, fluidAsMelt, anelasticCor,
                                     calcUnit,   phase_thresholds,   Bool(reminimizeThreshold);
                                     optimizer = optimizer,
-                                    o18       = o18_ptx_options(o18_model, o18_delta, o18_delta_ass, o18_melt, o18_unmapped, o18_tmax) )
+                                    o18       = o18_ptx_options(o18_model, o18_delta, o18_delta_ass, o18_melt, o18_unmapped, o18_tmax),
+                                    rad       = rad_ptx_options(rad_model, rad_systems, [r0_Sr, r0_Nd, r0_Hf], [r2_Sr, r2_Nd, r2_Hf]) )
 
             if isentropic_mode == true
                 entropy                 = string(round(Out_PTX[1].entropy[1],digits=3))
@@ -1519,11 +1527,12 @@ function Tab_PTXpaths_Callbacks(app)
         te_computed     = bid == "compute-path-button" && te_model == "true"
         compute_version = bid == "compute-path-button" ? (isnothing(computeVersion) ? 1 : computeVersion+1) : no_update()
         o18_computed    = bid == "compute-path-button" ? o18_ptx_available() : no_update()
+        rad_computed    = bid == "compute-path-button" ? rad_ptx_available() : no_update()
 
         if isentropic_mode == true
-            return entropy, figIsoSPath, configPathIsoS, figPTX, configPTX, figExtractedPTX, configExtractedPTX, figrmPTX, configrmPTX, figrmintPTX, configrmintPTX, phase_list, loading, te_computed, compute_version, o18_computed
+            return entropy, figIsoSPath, configPathIsoS, figPTX, configPTX, figExtractedPTX, configExtractedPTX, figrmPTX, configrmPTX, figrmintPTX, configrmintPTX, phase_list, loading, te_computed, compute_version, o18_computed, rad_computed
         else
-            return entropy, no_update(), no_update(), figPTX, configPTX, figExtractedPTX, configExtractedPTX, figrmPTX, configrmPTX, figrmintPTX, configrmintPTX, phase_list, loading, te_computed, compute_version, o18_computed
+            return entropy, no_update(), no_update(), figPTX, configPTX, figExtractedPTX, configExtractedPTX, figrmPTX, configrmPTX, figrmintPTX, configrmintPTX, phase_list, loading, te_computed, compute_version, o18_computed, rad_computed
         end
 
     end
@@ -2899,6 +2908,7 @@ function Tab_PTXpaths_Callbacks(app)
                           info_fn = (step_id, norm) -> get_ptx_spectrum_info(Int(step_id), norm))
     register_svg_export!(app, "te-evol-ptx", "PTX_TE_evolution"; info_fn = get_ptx_evolution_info)
     register_svg_export!(app, "o18-evol-ptx", "PTX_d18O_evolution")
+    register_svg_export!(app, "rad-plot-ptx", "PTX_radiogenic_isotopes")
 
     callback!(
         app,
@@ -3005,6 +3015,98 @@ function Tab_PTXpaths_Callbacks(app)
         (o18_ptx_available() && fname isa AbstractString && !isempty(strip(fname)) && fname != "filename") || return false, true
         mkpath(output_dir[1])
         o18_ptx_export_csv(output_dir[1] * String(strip(fname)) * "_" * String(something(dtb, "")) * "_PTX_O18.csv")
+        return true, false
+    end
+
+    callback!(
+        app,
+        Output("rad-options-ptx", "style"),
+        [Output("rad-r0-$(r)-ptx-row", "style") for r in RADIOGENIC_ORDER]...,
+        [Output("rad-r2-$(r)-ptx-row", "style") for r in RADIOGENIC_ORDER]...,
+        Input("rad-dropdown-ptx",       "value"),
+        Input("rad-systems-ptx",        "value"),
+        Input("tepm-dropdown-ptx",      "value"),
+        Input("kds-dropdown-ptx",       "value"),
+        Input("database-dropdown-ptx",  "value"),
+        prevent_initial_call = false,
+    ) do rad, systems, te_model, kds_mod, dtb
+        on   = rad == "true" && rad_te_gate(te_model, kds_mod, dtb)[1]
+        rows = rad_row_styles(on ? "true" : "false", rad_usable_systems(systems, te_model, kds_mod, dtb))
+        return (on ? Dict("display" => "block") : Dict("display" => "none")), rows..., rows...
+    end
+
+    callback!(
+        app,
+        Output("rad-dropdown-ptx",      "disabled"),
+        Output("rad-systems-ptx",       "options"),
+        Output("rad-te-note-ptx",       "children"),
+        Input("tepm-dropdown-ptx",      "value"),
+        Input("kds-dropdown-ptx",       "value"),
+        Input("database-dropdown-ptx",  "value"),
+        prevent_initial_call = false,
+    ) do te_model, kds_mod, dtb
+        te_on, opts, note = rad_te_gate(te_model, kds_mod, dtb)
+        return !te_on, opts, note
+    end
+
+    callback!(
+        app,
+        Output("rad-tab-ptx",           "disabled"),
+        Output("rad-x-ptx",             "options"),
+        Output("rad-x-ptx",             "value"),
+        Output("rad-y-ptx",             "options"),
+        Output("rad-y-ptx",             "value"),
+        Input("rad-ptx-computed-store", "data"),
+        State("rad-x-ptx",              "value"),
+        State("rad-y-ptx",              "value"),
+        prevent_initial_call = true,
+    ) do computed, xsel, ysel
+
+        (computed == true && rad_ptx_available()) || return true, no_update(), no_update(), no_update(), no_update()
+        opts    = [Dict("label" => q.label, "value" => q.value) for q in rad_ptx_quantities()]
+        names   = [String(q.value) for q in rad_ptx_quantities()]
+        x       = String(something(xsel, ""))
+        y       = [String(v) for v in something(ysel, String[]) if String(v) in names]
+        if !(x in names) || isempty(y)
+            x, y = rad_ptx_default_axes()
+        end
+        return false, opts, x, opts, y
+    end
+
+    callback!(
+        app,
+        Output("rad-plot-ptx",          "figure"),
+        Output("rad-plot-ptx",          "config"),
+        Input("rad-x-ptx",              "value"),
+        Input("rad-y-ptx",              "value"),
+        Input("rad-ptx-computed-store", "data"),
+        Input("pressure-unit-dropdown", "value"),
+        prevent_initial_call = true,
+    ) do xkey, ykeys, _computed, _punit
+
+        rad_ptx_available() || return no_update(), no_update()
+        isnothing(xkey) && return no_update(), no_update()
+        config = PlotConfig(    toImageButtonOptions  = attr(   name     = "Download as svg",
+                                                                format   = "svg",
+                                                                filename = "PTX_radiogenic_isotopes",
+                                                                height   =  380,
+                                                                width    =  900,
+                                                                scale    =  2.0, ).fields)
+        return get_rad_ptx_plot(xkey, ykeys), config
+    end
+
+    callback!(
+        app,
+        Output("data-rad-csv-ptx-save",     "is_open"),
+        Output("data-rad-csv-ptx-failed",   "is_open"),
+        Input("save-rad-csv-ptx-button",    "n_clicks"),
+        State("Filename-rad-ptx-id",        "value"),
+        State("database-dropdown-ptx",      "value"),
+        prevent_initial_call = true,
+    ) do n_clicks, fname, dtb
+        (rad_ptx_available() && fname isa AbstractString && !isempty(strip(fname)) && fname != "filename") || return false, true
+        mkpath(output_dir[1])
+        rad_ptx_export_csv(output_dir[1] * String(strip(fname)) * "_" * String(something(dtb, "")) * "_PTX_radiogenic.csv")
         return true, false
     end
 

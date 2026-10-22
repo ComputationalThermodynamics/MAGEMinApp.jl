@@ -92,7 +92,7 @@ function create_ph_names(style::Dict{String, Vector{Any}})
     return inputs
 end
 
-function create_color_table(style::Dict{String, Vector{Any}})
+function create_color_table(style::Dict{String, Vector{Any}}; id::String = "color-table-id")
 
     data = [
         Dict("Mineral" => mineral, "Color" => style[mineral][1])
@@ -110,7 +110,7 @@ function create_color_table(style::Dict{String, Vector{Any}})
     ]
 
     return dash_datatable(
-        id                          = "color-table-id",
+        id                          = id,
         data                        =  data,
         columns                     =  columns,
         style_table                 =  Dict("margin" => "0", "padding" => "0", "table-layout" => "fixed"),
@@ -127,7 +127,7 @@ function create_color_table(style::Dict{String, Vector{Any}})
 end
 
 
-function create_color_selec(style::Dict{String, Vector{Any}})
+function create_color_selec(style::Dict{String, Vector{Any}}; id::String = "color-table-change-id")
     data = [
         Dict("Change" => " ")
         for mineral in sort(collect(keys(style)))
@@ -137,7 +137,7 @@ function create_color_selec(style::Dict{String, Vector{Any}})
     ]
 
     return dash_datatable(
-        id                          = "color-table-change-id",  
+        id                          = id,
         data                        =  data,
         columns                     =  columns,
         style_table                 =  Dict("margin" => "0", "padding" => "0", "table-layout" => "fixed"),

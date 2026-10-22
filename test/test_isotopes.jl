@@ -28,6 +28,7 @@ end
 
 @testset verbose=true "AFC benchmark (DePaolo, 1981, Eq. 6a and 15a)" begin
     for (r, D, Cm0, Ca, R0, Ra) in ((0.2, 0.1, 400.0, 300.0, 0.7030, 0.7150), (0.5, 1.5, 400.0, 150.0, 0.7030, 0.7200), (0.3, 3.0, 25.0, 30.0, 0.51310, 0.51180))
+        sys     = R0 < 0.6 ? "Nd" : "Sr"
         z       = (r + D - 1.0) / (r - 1.0)
         M, C, R = 1.0, Cm0, R0
         dMc     = 1e-5
@@ -37,16 +38,18 @@ end
             C     = (M * C - dMc * C_cr) / M_l
             dMa   = r * dMc
             w     = dMa / (M_l + dMa)
-            R     = ISO.rad_mix(R0 < 0.6 ? "Nd" : "Sr", C, Ca, w, R, Ra)
+            R     = ISO.rad_mix(sys, C, Ca, w, R, Ra)
             C     = (1.0 - w) * C + w * Ca
             M     = M_l + dMa
         end
         F       = M
         C_an    = Cm0 * (F^(-z) + (r / (r - 1.0 + D)) * (Ca / Cm0) * (1.0 - F^(-z)))
-        A       = (r / (r - 1.0)) * (Ca / z) * (1.0 - F^(-z))
-        R_an    = (A * Ra + Cm0 * F^(-z) * R0) / (A + Cm0 * F^(-z))
+        c0      = Cm0 * ISO.rad_ref_fraction(sys, R0)
+        ca      = Ca  * ISO.rad_ref_fraction(sys, Ra)
+        A       = (r / (r - 1.0)) * (ca / z) * (1.0 - F^(-z))
+        R_an    = (A * Ra + c0 * F^(-z) * R0) / (A + c0 * F^(-z))
         @test C ≈ C_an  rtol=1e-3
-        @test R ≈ R_an  atol=5e-5 * abs(Ra - R0) + 1e-7
+        @test R ≈ R_an  atol=2e-5 * abs(Ra - R0) + 1e-9
     end
 end
 
@@ -90,7 +93,7 @@ end
 
 @testset verbose=true "PTX path δ18O and radiogenic isotopes" begin
     o18 = ISO.o18_ptx_options("true", 6.0, 12.0, "norm", "exclude", 900.0)
-    rad = ISO.rad_ptx_options("true", ["Sr", "Nd"], ISO.rad_default_table())
+    rad = ISO.rad_ptx_options("true", ["Sr", "Nd"], [0.7030, 0.51310, 0.28320], [0.7150, 0.51200, 0.28250])
 
     iso_run_ptx(; mode = "fc", o18 = o18, rad = rad)
     @test ISO.o18_ptx_available()
@@ -107,10 +110,17 @@ end
     Sr  = ISO.Rad_PTX["Sr"]
     Nd  = ISO.Rad_PTX["Nd"]
     @test all(isfinite, Sr) && all(isfinite, Nd)
-    @test Sr[1] ≈ 0.7030
+    @test 0.7030 < Sr[1] < Sr[2]
     @test all(diff(Sr) .>= -1e-12) && Sr[end] > Sr[1] && Sr[end] < 0.7150
     @test all(diff(Nd) .<= 1e-12)  && Nd[end] < Nd[1] && Nd[end] > 0.51200
     @test ISO.Out_O18_PTX[end].δ_sys > ISO.Out_O18_PTX[1].δ_sys
     @test length(ISO.rad_ptx_series("E|Nd")) == length(ISO.Out_PTX)
     @test all(isfinite, ISO.rad_ptx_series("Cliq|Sr"))
+
+    iso_run_ptx(; mode = "eq", assim = true, add = [0.0, 0.5], rad = rad)
+    x   = 1.0 ./ ISO.rad_ptx_series("C0|Sr")
+    y   = ISO.Rad_PTX["Sr"]
+    b   = [ones(length(x)) x] \ y
+    @test maximum(abs.(y .- (b[1] .+ b[2] .* x))) < 1e-3 * (y[end] - y[1])
+    @test y[end] > y[1]
 end

@@ -1,4 +1,9 @@
 
+const MINIMIZATION_LOCK = ReentrantLock()
+
+locked_multi_point_minimization(args...; kwargs...) = lock(() -> MAGEMin_C.multi_point_minimization(args...; kwargs...), MINIMIZATION_LOCK)
+locked_multi_point_section(args...; kwargs...)      = lock(() -> MAGEMin_C.multi_point_section(args...; kwargs...), MINIMIZATION_LOCK)
+
 """
     compute_mumu_bounds(    fixP,           fixT,
                             bulk_ref,       oxi,
@@ -158,7 +163,7 @@ function section_fresh_seeds(seeds, MAGEMin_data; X = nothing, B = nothing, Xoxi
     Ts      = Float64[s.T_C    for sd in seeds for s in sd]
     isempty(Ps) && return [similar(sd, 0) for sd in seeds]
     Bv      = isnothing(B) ? nothing : fill(Float64(B isa Number ? B : first(B)), length(Ps))
-    out     = MAGEMin_C.multi_point_minimization(Ps, Ts, MAGEMin_data; X = X, B = Bv, Xoxides = Xoxides, sys_in = "mol",
+    out     = locked_multi_point_minimization(Ps, Ts, MAGEMin_data; X = X, B = Bv, Xoxides = Xoxides, sys_in = "mol",
                                                  rm_list = rm_list, W = W, scp = scp, name_solvus = true, progressbar = false)
     off     = cumsum(vcat(0, length.(seeds)))
     return [out[off[m] + 1:off[m + 1]] for m in eachindex(seeds)]
@@ -225,7 +230,7 @@ function section_fill_holes!(   sec         :: Symbol,
         isempty(holes) && break
         xs      = [section_from_display(ax[1], coords[g][1]) for g in holes]
         ys      = [section_from_display(ax[2], coords[g][2]) for g in holes]
-        fill_solve(idx, sds) = MAGEMin_C.multi_point_section(sec, xs[idx], ys[idx], MAGEMin_data; Pbox = Pbox, Tbox = Tbox, seeds = sds, xrange = xrange, yrange = yrange,
+        fill_solve(idx, sds) = locked_multi_point_section(sec, xs[idx], ys[idx], MAGEMin_data; Pbox = Pbox, Tbox = Tbox, seeds = sds, xrange = xrange, yrange = yrange,
                                                 sys_in = "mol", name_solvus = true, log_P_2d = true, warm = true, maxit = 32, retry_passes = 0, progressbar = false, kwargs...)
         o2, i2  = fill_solve(eachindex(holes), seeds)
         rest    = [k for k in eachindex(holes) if i2[k].status != 0]
@@ -390,7 +395,7 @@ function section_box_image( diagType        :: String,
                                             buffer      = bufferType,
                                             solver      = sol,
                                             optimizer   = get_optimizer(dtb, optimizer, sol)    )
-        outs    = multi_point_minimization( P, T, MAGEMin_data;
+        outs    = locked_multi_point_minimization( P, T, MAGEMin_data;
                                             X           = bulk_ref,
                                             B           = fill(bufferN, length(P)),
                                             Xoxides     = oxi,
@@ -838,22 +843,27 @@ function multi_point_mumu(     target_mu1      :: Vector{Float64},
 
     count = Threads.Atomic{Int}(0)
 
-    @showprogress desc="Computing $n points..." @threads :static for i in eachindex(target_mu1)
+    lock(MINIMIZATION_LOCK)
+    try
+        @showprogress desc="Computing $n points..." @threads :static for i in eachindex(target_mu1)
 
-        gv, z_b, DB, splx_data = get_data_thread(MAGEMin_data)
+            gv, z_b, DB, splx_data = get_data_thread(MAGEMin_data)
 
-        gv2 = define_bulk_rock(gv, trial_seed, oxi, sys_in, dtb)
-        out = deepcopy( point_wise_minimization(fixP, fixT, gv2, z_b, DB, splx_data, sys_in;
-                                                    buffer_n=bufferN, rm_list=phase_selection, name_solvus=true,
-                                                    mu_fix_val=[target_mu1[i], target_mu2[i]]    ) )
+            gv2 = define_bulk_rock(gv, trial_seed, oxi, sys_in, dtb)
+            out = deepcopy( point_wise_minimization(fixP, fixT, gv2, z_b, DB, splx_data, sys_in;
+                                                        buffer_n=bufferN, rm_list=phase_selection, name_solvus=true,
+                                                        mu_fix_val=[target_mu1[i], target_mu2[i]]    ) )
 
-        conv        = abs(out.Gamma[oxide1_idx] - target_mu1[i]) < tol &&
-                      abs(out.Gamma[oxide2_idx] - target_mu2[i]) < tol
+            conv        = abs(out.Gamma[oxide1_idx] - target_mu1[i]) < tol &&
+                          abs(out.Gamma[oxide2_idx] - target_mu2[i]) < tol
 
-        results[i]  = out
-        status[i]   = conv ? 0 : 5
+            results[i]  = out
+            status[i]   = conv ? 0 : 5
 
-        update_progress(Threads.atomic_add!(count, 1) + 1, n, time())
+            update_progress(Threads.atomic_add!(count, 1) + 1, n, time())
+        end
+    finally
+        unlock(MINIMIZATION_LOCK)
     end
 
     return results, status
@@ -978,7 +988,7 @@ function refine_MAGEMin(dtb,data,
             end
 
             search_P, search_T = section_search_box(sec_Pbox, sec_Tbox; limits = sec_limits)
-            Out_XY_new, sec_info = MAGEMin_C.multi_point_section(  sec, xs, ys, MAGEMin_data;
+            Out_XY_new, sec_info = locked_multi_point_section(  sec, xs, ys, MAGEMin_data;
                                                         Pbox        = search_P,
                                                         Tbox        = search_T,
                                                         seed_Pbox   = extrema(Float64.(sec_Pbox)),
@@ -1032,7 +1042,7 @@ function refine_MAGEMin(dtb,data,
                 gP      = section_x_fixed_P(diagType) ? fill(fixv, length(gF)) : gF
                 gT      = section_x_fixed_P(diagType) ? gF : fill(fixv, length(gF))
                 println("Section diagram: seed grid of $(length(gX)) points (X x $(section_x_fixed_P(diagType) ? "T" : "P") between the bounds)")
-                Sec_seed_grid = multi_point_minimization(   gP, gT, MAGEMin_data;
+                Sec_seed_grid = locked_multi_point_minimization(   gP, gT, MAGEMin_data;
                                                             X = [bulk_L .* (1.0 - x) .+ bulk_R .* x for x in gX], B = [bufferN1*(1.0 - x) + bufferN2*x for x in gX],
                                                             Xoxides = oxi, sys_in = "mol", rm_list = phase_selection, name_solvus = true, W = new_Ws, scp = scp,
                                                             seismic_cor = seismic_cor, aspect_ratio = aspect_ratio, seismic_water = seismic_water,
@@ -1052,7 +1062,7 @@ function refine_MAGEMin(dtb,data,
 
             xs, ys  = section_x_fixed_P(diagType) ? (yv, fill(fixv, n_new_points)) : (fill(fixv, n_new_points), yv)
             yr      = section_from_display.(prop, data.Yrange)
-            Out_XY_new, sec_info = MAGEMin_C.multi_point_section(  mode, xs, ys, MAGEMin_data;
+            Out_XY_new, sec_info = locked_multi_point_section(  mode, xs, ys, MAGEMin_data;
                                                         Pbox        = search_P,
                                                         Tbox        = search_T,
                                                         seeds       = seeds,
@@ -1207,7 +1217,7 @@ function refine_MAGEMin(dtb,data,
             else
                 fixed_bulk = false
             end
-            Out_XY_new  =   multi_point_minimization(   Pvec, Tvec, MAGEMin_data;
+            Out_XY_new  =   locked_multi_point_minimization(   Pvec, Tvec, MAGEMin_data;
                                                         X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol", G=Gvec, scp=scp,
                                                         rm_list=phase_selection, name_solvus=true, fixed_bulk=fixed_bulk, iguess=Ivec, callback_fn = update_progress, W=new_Ws,
                                                         seismic_cor=seismic_cor, aspect_ratio=aspect_ratio, seismic_water=seismic_water, shallow_correction=shallow_cor, fluid_as_melt=fluid_as_melt, anelastic_cor=anelastic_correction);
@@ -1261,54 +1271,59 @@ function refine_MAGEMin(dtb,data,
 
                 Out_rows    = Vector{Vector{MAGEMin_C.gmin_struct{Float64, Int64}}}(undef, n);
                 progr       = Progress(n, desc="Computing $n Polymetamorphic paths...") # progress meter
-                @threads :static for i=1:n
+                lock(MINIMIZATION_LOCK)
+                try
+                    @threads :static for i=1:n
 
-                    Out_PT      = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef, n)
-                    P_          = fixP
-                    T_          = collect(range(data.Xrange[1], stop=data.Xrange[2], length=n))
-                    bulk_       = deepcopy(Out_col_1[i].bulk)
-                    X           = Out_col_1[i].X[1]
+                        Out_PT      = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef, n)
+                        P_          = fixP
+                        T_          = collect(range(data.Xrange[1], stop=data.Xrange[2], length=n))
+                        bulk_       = deepcopy(Out_col_1[i].bulk)
+                        X           = Out_col_1[i].X[1]
 
-                    gv, z_b, DB, splx_data = get_data_thread(MAGEMin_data)
-                    gv          = define_bulk_rock(gv, bulk_, oxi, "mol",unsafe_string(gv.db))
-                    for j=1:n 
+                        gv, z_b, DB, splx_data = get_data_thread(MAGEMin_data)
+                        gv          = define_bulk_rock(gv, bulk_, oxi, "mol",unsafe_string(gv.db))
+                        for j=1:n 
 
-                        out     = point_wise_minimization(  P_, T_[j], gv, z_b, DB, splx_data;
-                                                            buffer_n=bufferN1, name_solvus=true, scp=scp, rm_list=phase_selection, W=new_Ws,
-                                                            seismic_cor=seismic_cor, aspect_ratio=aspect_ratio, seismic_water=seismic_water, shallow_correction=shallow_cor, fluid_as_melt=fluid_as_melt, anelastic_cor=anelastic_correction)
-
-                        if "fl" in out.ph || "H2O" in out.ph || "liq" in out.ph
-                            if "fl" in out.ph
-                                id              = findfirst(out.ph .== "fl")
-                                bulk_          .= out.bulk .- out.SS_vec[id].Comp .* out.ph_frac[id]
-                                bulk_           .+= e2_remain_wat .* out.SS_vec[id].Comp;
-                            end
-                            if "H2O" in out.ph
-                                id              = findfirst(out.ph .== "H2O")
-                                bulk_          .= out.bulk .- out.PP_vec[id - out.n_SS].Comp .* out.ph_frac[id]
-                                bulk_[id_h2o]  += e2_remain_wat;
-                            end
-                            if "liq" in out.ph
-                                id = findfirst(out.ph .== "liq")
-                                if  out.ph_frac_vol[id] > e2_liq/100.0
-                                    ratio        = (out.ph_frac_vol[id] - e2_remain/100.0)/out.ph_frac_vol[id]
-                                    bulk_       .= out.bulk .- out.SS_vec[id].Comp .* (out.ph_frac[id]*ratio)
-                                end
-                            end
-                            gv      = define_bulk_rock(gv, bulk_, oxi, "mol",unsafe_string(gv.db))
                             out     = point_wise_minimization(  P_, T_[j], gv, z_b, DB, splx_data;
                                                                 buffer_n=bufferN1, name_solvus=true, scp=scp, rm_list=phase_selection, W=new_Ws,
                                                                 seismic_cor=seismic_cor, aspect_ratio=aspect_ratio, seismic_water=seismic_water, shallow_correction=shallow_cor, fluid_as_melt=fluid_as_melt, anelastic_cor=anelastic_correction)
 
-                            Out_PT[j] = deepcopy(out)
-                            Out_PT[j].X .= X
-                        else
-                            Out_PT[j] = deepcopy(out)
-                            Out_PT[j].X .= X
+                            if "fl" in out.ph || "H2O" in out.ph || "liq" in out.ph
+                                if "fl" in out.ph
+                                    id              = findfirst(out.ph .== "fl")
+                                    bulk_          .= out.bulk .- out.SS_vec[id].Comp .* out.ph_frac[id]
+                                    bulk_           .+= e2_remain_wat .* out.SS_vec[id].Comp;
+                                end
+                                if "H2O" in out.ph
+                                    id              = findfirst(out.ph .== "H2O")
+                                    bulk_          .= out.bulk .- out.PP_vec[id - out.n_SS].Comp .* out.ph_frac[id]
+                                    bulk_[id_h2o]  += e2_remain_wat;
+                                end
+                                if "liq" in out.ph
+                                    id = findfirst(out.ph .== "liq")
+                                    if  out.ph_frac_vol[id] > e2_liq/100.0
+                                        ratio        = (out.ph_frac_vol[id] - e2_remain/100.0)/out.ph_frac_vol[id]
+                                        bulk_       .= out.bulk .- out.SS_vec[id].Comp .* (out.ph_frac[id]*ratio)
+                                    end
+                                end
+                                gv      = define_bulk_rock(gv, bulk_, oxi, "mol",unsafe_string(gv.db))
+                                out     = point_wise_minimization(  P_, T_[j], gv, z_b, DB, splx_data;
+                                                                    buffer_n=bufferN1, name_solvus=true, scp=scp, rm_list=phase_selection, W=new_Ws,
+                                                                    seismic_cor=seismic_cor, aspect_ratio=aspect_ratio, seismic_water=seismic_water, shallow_correction=shallow_cor, fluid_as_melt=fluid_as_melt, anelastic_cor=anelastic_correction)
+
+                                Out_PT[j] = deepcopy(out)
+                                Out_PT[j].X .= X
+                            else
+                                Out_PT[j] = deepcopy(out)
+                                Out_PT[j].X .= X
+                            end
                         end
+                        Out_rows[i] = Out_PT
+                        next!(progr)
                     end
-                    Out_rows[i] = Out_PT
-                    next!(progr)
+                finally
+                    unlock(MINIMIZATION_LOCK)
                 end
                 finish!(progr)
 
@@ -1339,7 +1354,7 @@ function refine_MAGEMin(dtb,data,
                     end
                 end
 
-                Out_XY_new  =   multi_point_minimization(   Pvec, Tvec, MAGEMin_data;
+                Out_XY_new  =   locked_multi_point_minimization(   Pvec, Tvec, MAGEMin_data;
                                                             X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol", G=Gvec, scp=scp,
                                                             rm_list=phase_selection, name_solvus=true, iguess=boost, callback_fn = update_progress, W=new_Ws,
                                                             seismic_cor=seismic_cor, aspect_ratio=aspect_ratio, seismic_water=seismic_water, shallow_correction=shallow_cor, fluid_as_melt=fluid_as_melt, anelastic_cor=anelastic_correction);

@@ -42,6 +42,10 @@ end
     include(joinpath(@__DIR__, "test_minipie.jl"))
 end
 
+@testset "isotopes" begin
+    include(joinpath(@__DIR__, "test_isotopes.jl"))
+end
+
 @testset "threaded" begin
     # Do a dummy `@test true`:
     # If the process errors out the testset would error out as well
