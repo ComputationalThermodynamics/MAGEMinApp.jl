@@ -240,7 +240,7 @@ function Tab_PhaseDiagram()
                                     dbc_card(dbc_cardbody([
                                         dbc_row([
                                             dbc_button("Modify phase colors", id="style-canvas-button-pd", color="light", size="sm", n_clicks=0,
-                                                        style = Dict("width" => "100%", "border" => "1px grey solid", "font-size" => "80%")),
+                                                        style = Dict("width" => "100%", "border" => "1px grey solid", "font-size" => "100%")),
                                             dbc_offcanvas(
                                                 [
                                                     dbc_col([
@@ -291,30 +291,30 @@ function Tab_PhaseDiagram()
                                         dbc_row([
                                             html_div([
                                                 dbc_button("Record pie chart", id="pd-pie-record", color="light", size="sm", n_clicks=0,
-                                                            style = Dict("flex" => "1", "border" => "1px grey solid", "font-size" => "80%")),
+                                                            style = Dict("flex" => "1", "border" => "1px grey solid", "font-size" => "100%")),
                                                 dbc_button("Stop record",      id="pd-pie-stop",   color="light", size="sm", n_clicks=0,
-                                                            style = Dict("flex" => "1", "border" => "1px grey solid", "font-size" => "80%")),
+                                                            style = Dict("flex" => "1", "border" => "1px grey solid", "font-size" => "100%")),
                                                 dbc_button("Delete all",       id="pd-pie-clear",  color="light", size="sm", n_clicks=0,
-                                                            style = Dict("flex" => "1", "border" => "1px grey solid", "font-size" => "80%")),
+                                                            style = Dict("flex" => "1", "border" => "1px grey solid", "font-size" => "100%")),
                                             ], style = Dict("display" => "flex", "gap" => "4px", "padding" => "0px")),
                                             dbc_row([
                                                 dbc_col([
-                                                    html_div("Pie radius (px)", style = Dict("font-size" => "80%", "color" => "grey", "marginTop" => 4)),
+                                                    html_div("Pie radius (px)", style = Dict("font-size" => "100%", "color" => "grey", "marginTop" => 4)),
                                                     dcc_slider( id      = "pd-pie-radius",
                                                                 min     = 10,
                                                                 max     = 40,
                                                                 step    = 10,
                                                                 value   = 20,
                                                                 marks   = Dict(string(i) => Dict("label" => string(i), "style" => Dict("font-size" => "70%")) for i in 10:10:40)),
-                                                ], width = 7),
+                                                ], width = 9),
                                                 dbc_col([
-                                                    html_div("Unit", style = Dict("font-size" => "80%", "color" => "grey", "marginTop" => 4)),
+                                                    html_div("Unit", style = Dict("font-size" => "100%", "color" => "grey", "marginTop" => 4)),
                                                     dbc_select( id          = "pd-pie-unit",
                                                                 options     = [Dict("label" => "mol%", "value" => "mol"), Dict("label" => "wt%", "value" => "wt"), Dict("label" => "vol%", "value" => "vol")],
                                                                 value       = "wt",
                                                                 size        = "sm",
                                                                 style       = Dict("font-size" => "75%", "padding-left" => "4px", "padding-right" => "16px", "background-position" => "right 3px center")),
-                                                ], width = 5, style = Dict("padding-left" => "0px")),
+                                                ], width = 3, style = Dict("padding-left" => "0px")),
                                             ]),
                                             dcc_store(id = "pd-pie-mode", data = false),
                                             dcc_store(id = "pd-pie-list", data = []),
@@ -325,7 +325,7 @@ function Tab_PhaseDiagram()
                                             dbc_switch(label="Clean boundaries", id="smooth-boundaries-switch", value=true),
                                         ]),
                                         dbc_row([
-                                            html_div("Smoothing (cells)", style = Dict("font-size" => "80%", "color" => "grey")),
+                                            html_div("Smoothing (cells)", style = Dict("font-size" => "100%", "color" => "grey")),
                                             dcc_slider( id      = "smooth-boundaries-sigma",
                                                         min     = 0.0,
                                                         max     = 5.0,
