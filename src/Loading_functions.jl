@@ -127,7 +127,7 @@ end
     here hides it from the interface without removing it from the library.
 """
 const DB_MENU_GROUPS = [
-    "- PUBLISHED DATABASE -"  => ["mp", "mb", "ig", "igd", "igad", "um"],
+    "- PUBLISHED DATABASE -"  => ["mp", "mb", "ig", "igd", "igad", "igaw", "um"],
     "- BERMAN EOS DATABASE -" => ["po"],
     "- MANTLE DATABASE -"     => [(ENABLE_IGM ? ["igm"] : String[])..., "mtl", "sb11", "sb21", "sb24"],
     "- CUSTOM DATABASE -"     => ["ume", "mpe", "mbe", "all"],
@@ -143,6 +143,7 @@ const DB_MENU_GROUPS = [
 const DB_MENU_LABELS = Dict(
     "ig"   => "Igneous (Green et al., 2025, after H18)",
     "igd"  => "Igneous dry (Su et al., 2026, after T21)",
+    "igaw" => "Igneous alkaline wet (Holland et al., 2026, in progress)",
     "igm"  => "Igneous mantle (Rinaldi et al., 2026)",
     "ume"  => "Ultramafic extended (Evans & Frost., 2021)",
     "mpe"  => "Metapelite extended (White et al., 2014, Green et al., 2016, Evans & Frost., 2021)",

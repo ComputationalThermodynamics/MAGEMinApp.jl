@@ -65,6 +65,7 @@ const TC_PRESET_PHASES = Dict(
     "ig"   => ["spl_T21", "bi_G25", "cd_G25", "cpx_W24", "ep_H11", "g_W24", "amp_G16", "ilm_W24", "liq_G25w", "ol_H18", "opx_W24", "fsp_H22", "fl_G25", "mu_W14", "fper", "chl_W14"],
     "igad" => ["spl_T21", "cpx_W24", "g_W24", "ilm_W24", "liq_S26", "ol_H18", "opx_W24", "fsp_H22", "lct_W24", "mel_W24", "nph_W24", "kals_W24"],
     "igd"  => ["spl_T21", "cpx_T21", "g_T21", "ilm_T21", "liq_S26", "ol_H18", "opx_T21", "fsp_H22op"],
+    "igaw" => ["spl_T21", "bi_H26", "cd_G25", "cpx_W24", "ep_H11", "g_W24", "amp_H26", "ilm_W24", "liq_H26", "ol_H18", "opx_W24", "fsp_H22", "fl_H26", "mu_W14", "fper", "chl_W14", "lct_W24", "mel_W24", "nph_W24", "kals_W24"],
     "um"   => ["fl_EF21", "ol_H11", "br_E13", "ch_EF21", "atg_EF21", "g_H18", "ta_EF21", "chl_W14", "spi_W02", "opx_W14", "po_E10", "anth_D07"],
 )
 
@@ -74,6 +75,7 @@ const TC_PRESET_OPTIONS = [
     Dict("label" => "Metabasite",         "value" => "mb"),
     Dict("label" => "Igneous",            "value" => "ig"),
     Dict("label" => "Igneous alkali-dry", "value" => "igad"),
+    Dict("label" => "Igneous alkali-wet", "value" => "igaw"),
     Dict("label" => "Igneous dry High-TiO2",        "value" => "igd"),
     Dict("label" => "Ultramafic",         "value" => "um"),
 ]
@@ -310,7 +312,7 @@ function get_init_param(    dtb         :: String,
         end
         limitCaOpx  = 0
         CaOpxLim    = 1.0
-        if limOpx == "ON" && (dtb =="mb" || dtb =="mbe" || dtb =="ig" || dtb =="igd" || dtb =="alk")
+        if limOpx == "ON" && (dtb =="mb" || dtb =="mbe" || dtb =="ig" || dtb =="igaw" || dtb =="igd" || dtb =="alk")
             limitCaOpx   = 1
             CaOpxLim     = limOpxVal
         end

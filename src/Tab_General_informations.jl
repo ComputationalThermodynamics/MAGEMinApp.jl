@@ -178,6 +178,7 @@ The CSV file should have columns for each oxide and relevant metadata. The table
 | mb | metabasite (Green et al., 2016) |
 | ig | igneous (Green et al., 2025) |
 | igad | igneous alkaline dry (Weller et al., 2024) |
+| igaw | igneous alkaline wet (Holland et al., 2026, in progress) |
 | um | ultramafic (Evans & Frost, 2021) |
 | sb11 | Stixrude & Lithgow-Bertelloni (2011) |
 | sb21 | Stixrude & Lithgow-Bertelloni (2021) |
