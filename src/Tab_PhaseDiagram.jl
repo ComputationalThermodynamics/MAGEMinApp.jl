@@ -233,16 +233,99 @@ function Tab_PhaseDiagram()
 
                             dbc_col([
                                 html_div("‎ "),
-                                html_div("‎ "), 
+                                html_div("‎ "),
 
-                                dbc_row([dbc_button("Export figure",id="export-figure"),
+                                dbc_row([dbc_button("Figure options",id="export-figure"),
                                 dbc_collapse(
                                     dbc_card(dbc_cardbody([
+                                        dbc_row([
+                                            dbc_button("Modify phase colors", id="style-canvas-button-pd", color="light", size="sm", n_clicks=0,
+                                                        style = Dict("width" => "100%", "border" => "1px grey solid", "font-size" => "100%")),
+                                            dbc_offcanvas(
+                                                [
+                                                    dbc_col([
+                                                        dbc_row([
+                                                            dbc_button("Save colors/styles",id="save-color-style-pd", color="light", className="me-2", n_clicks=0,
+                                                            style       = Dict( "textAlign"     => "center",
+                                                                                "font-size"     => "100%",
+                                                                                "background-color" => "#d3f2ce",
+                                                                                "border"        =>"1px grey solid")),
+                                                            dbc_alert(
+                                                            "Successfully saved colors/styles",
+                                                            id      ="color-style-save-pd",
+                                                            is_open =false,
+                                                            duration=4000,
+                                                        ),
+                                                        html_div("‎ "),
+                                                        ]),
+                                                    ], width=11),
+                                                    dbc_row([
+                                                        html_h1("Phases of the current diagram. Colors are shared with PTX paths; new pie charts use them directly.", style=Dict("textAlign" => "center", "font-size" => "100%")),
+                                                    ]),
+                                                    dbc_row([
+                                                        dbc_col([
+                                                           html_div(create_color_table(Dict{String, Vector{Any}}(); id = "color-table-id-pd"), id="ph-names-container-pd")
+                                                        ], width=8),
+                                                        dbc_col([
+                                                           html_div(create_color_selec(Dict{String, Vector{Any}}(); id = "color-table-change-id-pd"), id="ph-selec-container-pd")
+                                                        ], width=2),
+                                                        dbc_col([
+                                                            dbc_input(
+                                                                type    = "color",
+                                                                id      = "colorpicker-mineral-id-pd",
+                                                                value   =  "white",
+                                                                style   =  Dict("height" => "30px", "padding" => "0", "margin" => "0" )
+                                                            )
+                                                        ], width=1),
+                                                    ])
+                                                ],
+                                                id          = "style-canvas-pd",
+                                                title       = "Color/style options",
+                                                is_open     = false,
+                                                placement   = "start",
+                                                style   = Dict( "width"             => "320px",
+                                                                "background-color"  => "rgba(255, 255, 255, 1.0)"),
+                                            ),
+                                        ]),
+                                        html_hr(style = Dict("marginTop" => 8, "marginBottom" => 10)),
+                                        dbc_row([
+                                            html_div([
+                                                dbc_button("Record pie chart", id="pd-pie-record", color="light", size="sm", n_clicks=0,
+                                                            style = Dict("flex" => "1", "border" => "1px grey solid", "font-size" => "100%")),
+                                                dbc_button("Stop record",      id="pd-pie-stop",   color="light", size="sm", n_clicks=0,
+                                                            style = Dict("flex" => "1", "border" => "1px grey solid", "font-size" => "100%")),
+                                                dbc_button("Delete all",       id="pd-pie-clear",  color="light", size="sm", n_clicks=0,
+                                                            style = Dict("flex" => "1", "border" => "1px grey solid", "font-size" => "100%")),
+                                            ], style = Dict("display" => "flex", "gap" => "4px", "padding" => "0px")),
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_div("Pie radius (px)", style = Dict("font-size" => "100%", "color" => "grey", "marginTop" => 4)),
+                                                    dcc_slider( id      = "pd-pie-radius",
+                                                                min     = 10,
+                                                                max     = 40,
+                                                                step    = 10,
+                                                                value   = 20,
+                                                                marks   = Dict(string(i) => Dict("label" => string(i), "style" => Dict("font-size" => "70%")) for i in 10:10:40)),
+                                                ], width = 9),
+                                                dbc_col([
+                                                    html_div("Unit", style = Dict("font-size" => "100%", "color" => "grey", "marginTop" => 4)),
+                                                    dbc_select( id          = "pd-pie-unit",
+                                                                options     = [Dict("label" => "mol%", "value" => "mol"), Dict("label" => "wt%", "value" => "wt"), Dict("label" => "vol%", "value" => "vol")],
+                                                                value       = "wt",
+                                                                size        = "sm",
+                                                                style       = Dict("font-size" => "75%", "padding-left" => "4px", "padding-right" => "16px", "background-position" => "right 3px center")),
+                                                ], width = 3, style = Dict("padding-left" => "0px")),
+                                            ]),
+                                            dcc_store(id = "pd-pie-mode", data = false),
+                                            dcc_store(id = "pd-pie-list", data = []),
+                                            dcc_store(id = "pd-pie-cs"),
+                                        ], style = Dict("marginBottom" => 10)),
+                                        html_hr(style = Dict("marginTop" => 0, "marginBottom" => 10)),
                                         dbc_row([
                                             dbc_switch(label="Clean boundaries", id="smooth-boundaries-switch", value=true),
                                         ]),
                                         dbc_row([
-                                            html_div("Smoothing (cells)", style = Dict("font-size" => "80%", "color" => "grey")),
+                                            html_div("Smoothing (cells)", style = Dict("font-size" => "100%", "color" => "grey")),
                                             dcc_slider( id      = "smooth-boundaries-sigma",
                                                         min     = 0.0,
                                                         max     = 5.0,
@@ -353,6 +436,20 @@ function Tab_PhaseDiagram()
 
                                             html_div([
                                             ], style = Dict("display" => "none"), id      = "test-show-id"),
+
+                                            html_div([
+                                                html_div("‎ "),
+                                                html_hr(),
+                                                html_h1("δ18O", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
+                                                dcc_graph(  id      = "o18-point-pd",
+                                                            figure  = plot(Layout(height = 320, plot_bgcolor = "#FFF", paper_bgcolor = "#FFF")),
+                                                            config  = PlotConfig(displaylogo = false)),
+                                                dbc_card([
+                                                    dcc_markdown(   id          = "o18-point-info-pd",
+                                                                    children    = "",
+                                                                    style       = Dict("white-space" => "pre"))
+                                                ]),
+                                            ], style = Dict("display" => "none"), id = "o18-point-section-id"),
 
                                             html_div("‎ "),
                                             html_hr(),
@@ -633,12 +730,13 @@ function Tab_PhaseDiagram()
                                         ], width=5),
                                         dbc_col([
                                             dcc_dropdown(   id      = "fields-dropdown",
-                                                            options = field_dropdown_options(),
+                                                            options = vcat(field_dropdown_options(), [(label = "δ18O", value = "o18")]),
                                                             value="Variance" ,
                                                             clearable   = false,
                                                             multi       = false),
                                         ]), 
                                     ]),
+                                    html_div(o18_selector("-pd"), style = Dict("display" => "none"), id = "show-o18-pd-id"),
                                     html_div("‎ "),
                                     html_h1("Diagram options", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                     html_hr(),
@@ -976,6 +1074,7 @@ function Tab_PhaseDiagram()
                                                         (label = "Pure phase",          value = "pp"),
                                                         (label = "Solution phase",      value = "ss"),
                                                         (label = "Other",               value = "of"),
+                                                        (label = "δ18O",                value = "o18"),
                                                     ],
                                                     value       = "pp",
                                                     clearable   = false,
@@ -984,6 +1083,7 @@ function Tab_PhaseDiagram()
 
                                             ]),
                                         ]),
+                                        html_div(o18_selector("-iso"), style = Dict("display" => "none"), id = "o18-iso-id"),
                                             html_div([
                                                 dbc_row([
 
@@ -1194,8 +1294,11 @@ function Tab_PhaseDiagram()
                                                     dbc_col([
                                                         dcc_dropdown(   id      = "of-dropdown",
                                                         options = [
+                                                                (label = "Pressure",                value = "P_kbar"),
+                                                                (label = "Temperature [°C]",        value = "T_C"),
                                                                 (label = "G system",                value = "G_system"),    
                                                                 (label = "Entropy",                 value = "entropy"),
+                                                                (label = "Volume [cm³/mol]",        value = "V"),
                                                                 (label = "Enthalpy",                value = "enthalpy"),
                                                                 (label = "Specific cp",             value = "s_cp"),
                                                                 (label = "Thermal expansivity",     value = "alpha"),

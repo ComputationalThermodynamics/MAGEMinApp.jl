@@ -33,6 +33,7 @@ As for `MAGEMin`, you can choose among several thermodynamic datasets, including
 - `um`; `FMASHOS` -> ultramafic, Evans & Frost (2021)
 
 ### Mantle
+- `igm`; `NCKFMASTOCr` -> igneous mantle, Rinaldi et al. (2026)
 - `mtl`; `NCFMAS` -> mantle to upper lowermost mantle, Holland et al. (2013)
 - `sb11`; `NCFMAS` -> mantle, Stixrude & Lithgow-Bertelloni (2011)
 - `sb21`; `NCFMAS` -> mantle, Stixrude & Lithgow-Bertelloni (2021)

@@ -330,7 +330,7 @@ function mageres_minimize!(th::MAGEResThermo, oxides::Vector{String}, xs::Vector
                                           "$stage: $n points to compute"); flush(stdout))
     G  = guess === nothing ? nothing : guess
     ig = guess === nothing ? false : Bool[!isempty(g) for g in guess]
-    t  = @elapsed out = multi_point_minimization(P, T, th.mm;
+    t  = @elapsed out = locked_multi_point_minimization(P, T, th.mm;
                                                  X           = [copy(x) for x in xs],
                                                  Xoxides     = oxides,
                                                  sys_in      = "mol",

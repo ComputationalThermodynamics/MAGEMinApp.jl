@@ -34,6 +34,18 @@ end
     include(joinpath(@__DIR__, "test_ptx_mass_balance.jl"))
 end
 
+@testset "section fill" begin
+    include(joinpath(@__DIR__, "test_section_fill.jl"))
+end
+
+@testset "mini pie charts" begin
+    include(joinpath(@__DIR__, "test_minipie.jl"))
+end
+
+@testset "isotopes" begin
+    include(joinpath(@__DIR__, "test_isotopes.jl"))
+end
+
 @testset "threaded" begin
     # Do a dummy `@test true`:
     # If the process errors out the testset would error out as well

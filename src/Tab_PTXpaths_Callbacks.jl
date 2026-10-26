@@ -1288,6 +1288,8 @@ function Tab_PTXpaths_Callbacks(app)
         Output("output-loading-id-ptx", "children"),
         Output("te-ptx-computed-store", "data"    ),
         Output("ptx-compute-version-store", "data"),
+        Output("o18-ptx-computed-store", "data"   ),
+        Output("rad-ptx-computed-store", "data"   ),
 
         Input("compute-path-button",    "n_clicks"),
         Input("sys-unit-ptx",           "value"),
@@ -1358,6 +1360,16 @@ function Tab_PTXpaths_Callbacks(app)
         State("phase-threshold-store-ptx",      "data"),
         State("adv-reminimize-dropdown-ptx",    "value"),
         State("ptx-compute-version-store",      "data"),
+        State("o18-dropdown-ptx",               "value"),
+        State("o18-delta-ptx",                  "value"),
+        State("o18-delta-assim-ptx",            "value"),
+        State("o18-melt-dropdown-ptx",          "value"),
+        State("o18-unmapped-dropdown-ptx",      "value"),
+        State("o18-tmax-ptx",                   "value"),
+        State("rad-dropdown-ptx",               "value"),
+        State("rad-systems-ptx",                "value"),
+        [State("rad-r0-$(r)-ptx", "value") for r in RADIOGENIC_ORDER]...,
+        [State("rad-r2-$(r)-ptx", "value") for r in RADIOGENIC_ORDER]...,
 
         prevent_initial_call = true,
 
@@ -1372,7 +1384,9 @@ function Tab_PTXpaths_Callbacks(app)
                 te_model,   kds_mod,    zrsat_mod,  ssat_mod,   P2O5sat_mod,    co2sat_mod, mnzsat_mod,     bulkte1,    bulkte2,
                 sas,        wf,         seismicCorVal,
                 aspectRatioVal, seismicWaterMode, shallowCorMode, fluidAsMeltMode, anelasticCorMode,
-                calcUnit,   ptxTableAdvData, threshStore, reminimizeThreshold, computeVersion
+                calcUnit,   ptxTableAdvData, threshStore, reminimizeThreshold, computeVersion,
+                o18_model,  o18_delta,  o18_delta_ass,  o18_melt,   o18_unmapped,   o18_tmax,
+                rad_model,  rad_systems, r0_Sr,  r0_Nd,  r0_Hf,  r2_Sr,  r2_Nd,  r2_Hf
 
         global use_warr_names
         use_warr_names[1]       = (warr_naming == "warr")
@@ -1386,6 +1400,8 @@ function Tab_PTXpaths_Callbacks(app)
             global Out_PTX, ph_names_ptx, phase_infos_PTX, layout_ptx, layout_extracted_ptx, data_plot_ptx, fracEvol, removedBulk, layout_rm_ptx, data_comp_rm_plot, layout_rm_int_ptx, data_comp_rm_int_plot
             global layout_path, figIsoSPath
             global Out_TE_PTX, all_TE_ph_ptx, C_ext_TE_PTX
+            global Out_O18_PTX, all_O18_ph_ptx, O18_ext_PTX
+            global Rad_PTX
 
             bufferN                     = Float64(bufferN)               # convert buffer_n to float
             bulk_ini, bulk_assim, oxi   = get_bulkrock_prop(bulk, bulk2; sys_unit=sys_unit)
@@ -1426,7 +1442,9 @@ function Tab_PTXpaths_Callbacks(app)
                                     seismicScheme, seismicWeightFactor, seismicCorMode,
                                     aspectRatio, seismicWater, shallowCor, fluidAsMelt, anelasticCor,
                                     calcUnit,   phase_thresholds,   Bool(reminimizeThreshold);
-                                    optimizer = optimizer   )
+                                    optimizer = optimizer,
+                                    o18       = o18_ptx_options(o18_model, o18_delta, o18_delta_ass, o18_melt, o18_unmapped, o18_tmax),
+                                    rad       = rad_ptx_options(rad_model, rad_systems, [r0_Sr, r0_Nd, r0_Hf], [r2_Sr, r2_Nd, r2_Hf]) )
 
             if isentropic_mode == true
                 entropy                 = string(round(Out_PTX[1].entropy[1],digits=3))
@@ -1508,11 +1526,13 @@ function Tab_PTXpaths_Callbacks(app)
                                     scale    =  2.0,       ).fields)
         te_computed     = bid == "compute-path-button" && te_model == "true"
         compute_version = bid == "compute-path-button" ? (isnothing(computeVersion) ? 1 : computeVersion+1) : no_update()
+        o18_computed    = bid == "compute-path-button" ? o18_ptx_available() : no_update()
+        rad_computed    = bid == "compute-path-button" ? rad_ptx_available() : no_update()
 
         if isentropic_mode == true
-            return entropy, figIsoSPath, configPathIsoS, figPTX, configPTX, figExtractedPTX, configExtractedPTX, figrmPTX, configrmPTX, figrmintPTX, configrmintPTX, phase_list, loading, te_computed, compute_version
+            return entropy, figIsoSPath, configPathIsoS, figPTX, configPTX, figExtractedPTX, configExtractedPTX, figrmPTX, configrmPTX, figrmintPTX, configrmintPTX, phase_list, loading, te_computed, compute_version, o18_computed, rad_computed
         else
-            return entropy, no_update(), no_update(), figPTX, configPTX, figExtractedPTX, configExtractedPTX, figrmPTX, configrmPTX, figrmintPTX, configrmintPTX, phase_list, loading, te_computed, compute_version
+            return entropy, no_update(), no_update(), figPTX, configPTX, figExtractedPTX, configExtractedPTX, figrmPTX, configrmPTX, figrmintPTX, configrmintPTX, phase_list, loading, te_computed, compute_version, o18_computed, rad_computed
         end
 
     end
@@ -1878,14 +1898,19 @@ function Tab_PTXpaths_Callbacks(app)
                 return fail("No 'O' oxide in the current chemical system")
             end
 
-            new_O_val = sys_unit == 1 ? out.bulk[o_idx] * 100.0 : mol2wt(out.bulk, out.oxides)[o_idx]
-            new_O_val = round(new_O_val, digits=6)
-
             dataout = copy(tb_data)
             row_idx = findfirst(r -> r[:oxide] == "O", dataout)
             if isnothing(row_idx)
                 return fail("No 'O' oxide row in the current bulk-rock table")
             end
+
+            ph_comp(i) = sys_unit == 1 ? (i <= out.n_SS ? out.SS_vec[i].Comp    : out.PP_vec[i-out.n_SS].Comp) :
+                                         (i <= out.n_SS ? out.SS_vec[i].Comp_wt : out.PP_vec[i-out.n_SS].Comp_wt)
+            ph_f       = sys_unit == 1 ? out.ph_frac : out.ph_frac_wt
+            bulk_eff   = sum(ph_f[i] .* ph_comp(i) for i in findall(out.ph .!= bufferType))
+            ratio_O    = bulk_eff[o_idx] / (sum(bulk_eff) - bulk_eff[o_idx])
+            tb_val(r)  = r[:fraction] isa String ? parse(Float64, r[:fraction]) : Float64(r[:fraction])
+            new_O_val  = round(ratio_O * sum(tb_val(r) for r in dataout if r[:oxide] != "O"), digits=6)
             dataout[row_idx] = Dict(:oxide => "O", :fraction => new_O_val)
 
             return dataout, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, string(new_O_val), false, no_update(), no_upd, no_upd
@@ -1993,9 +2018,9 @@ function Tab_PTXpaths_Callbacks(app)
             preset_value_out = no_update()
         end
 
-        dataset_options = [Dict(    "label"     => "ds$(db_in.dataset_opt[i])",
-                                    "value"     => db_in.dataset_opt[i] )
-                                for i = 1:length(db_in.dataset_opt) ]
+        dataset_options = [Dict(    "label"     => "ds$(d)",
+                                    "value"     => d )
+                                for d in unique(db_in.dataset_opt) ]
         dataset_value    = keep_dataset(bid in ("database-dropdown-ptx", ""), dataset, db_in)
 
         return data, opts, val, cap, phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value, adv_phase_options, dataset_options, dataset_value, no_update(), no_update(), no_update(), preset_style, preset_value_out
@@ -2887,6 +2912,208 @@ function Tab_PTXpaths_Callbacks(app)
                           extra_states = [("te-ptx-step-id", "value"), ("normalization-te-ptx", "value")],
                           info_fn = (step_id, norm) -> get_ptx_spectrum_info(Int(step_id), norm))
     register_svg_export!(app, "te-evol-ptx", "PTX_TE_evolution"; info_fn = get_ptx_evolution_info)
+    register_svg_export!(app, "o18-evol-ptx", "PTX_d18O_evolution")
+    register_svg_export!(app, "rad-plot-ptx", "PTX_radiogenic_isotopes")
+
+    callback!(
+        app,
+        Output("o18-options-ptx",       "style"),
+        Output("o18-bulk-1-id-ptx",     "style"),
+        Output("o18-bulk-2-id-ptx",     "style"),
+        Input("o18-dropdown-ptx",       "value"),
+        prevent_initial_call = false,
+    ) do o18
+        style = o18 == "true" ? Dict("display" => "block") : Dict("display" => "none")
+        return style, style, style
+    end
+
+    callback!(
+        app,
+        Output("o18-tab-ptx",           "disabled"),
+        Output("o18-evol-phase-ptx",    "options"),
+        Output("o18-evol-phase-ptx",    "value"),
+        Output("o18-step-ptx",          "max"),
+        Input("o18-ptx-computed-store", "data"),
+        Input("mineral-naming-dropdown","value"),
+        State("o18-evol-phase-ptx",     "value"),
+        prevent_initial_call = true,
+    ) do computed, warr_naming, selected
+
+        global use_warr_names
+        use_warr_names[1] = (warr_naming == "warr")
+
+        (computed == true && o18_ptx_available()) || return true, no_update(), no_update(), no_update()
+        opts    = get_o18_ptx_phase_options()
+        names   = [String(o.value) for o in opts]
+        keep    = [String(s) for s in something(selected, String[]) if String(s) in names]
+        isempty(keep) && (keep = ["sys", "ext_cum"])
+
+        return false, opts, keep, length(Out_O18_PTX)
+    end
+
+    callback!(
+        app,
+        Output("o18-evol-ptx",          "figure"),
+        Output("o18-evol-ptx",          "config"),
+        Input("o18-evol-phase-ptx",     "value"),
+        Input("o18-ptx-computed-store", "data"),
+        Input("mineral-naming-dropdown","value"),
+        prevent_initial_call = true,
+    ) do keys, _computed, warr_naming
+
+        global use_warr_names
+        use_warr_names[1] = (warr_naming == "warr")
+
+        o18_ptx_available() || return no_update(), no_update()
+        config = PlotConfig(    toImageButtonOptions  = attr(   name     = "Download as svg",
+                                                                format   = "svg",
+                                                                filename = "PTX_d18O_evolution",
+                                                                height   =  360,
+                                                                width    =  900,
+                                                                scale    =  2.0, ).fields)
+        return get_o18_ptx_evolution_plot(keys), config
+    end
+
+    callback!(
+        app,
+        Output("o18-step-ptx",          "value"),
+        Input("o18-evol-ptx",           "clickData"),
+        prevent_initial_call = true,
+    ) do click
+        pts = isnothing(click) ? nothing : get(click, :points, nothing)
+        (isnothing(pts) || isempty(pts)) && return no_update()
+        x   = get(pts[1], :x, nothing)
+        return x isa Real ? Int(round(x)) : no_update()
+    end
+
+    callback!(
+        app,
+        Output("o18-step-plot-ptx",     "figure"),
+        Output("o18-step-info-ptx",     "children"),
+        Input("o18-step-ptx",           "value"),
+        Input("o18-ptx-computed-store", "data"),
+        Input("mineral-naming-dropdown","value"),
+        prevent_initial_call = true,
+    ) do step, _computed, warr_naming
+
+        global use_warr_names
+        use_warr_names[1] = (warr_naming == "warr")
+
+        o18_ptx_available() || return no_update(), no_update()
+        k   = clamp(Int(something(step, 1)), 1, length(Out_O18_PTX))
+        out = Out_PTX[k]
+        dN, δe = O18_ext_PTX[k]
+        head = "**Step $k**: P = $(round(display_pressure(out.P_kbar), digits = 3)) $(pressure_unit_label()), T = $(round(out.T_C, digits = 1)) °C\n"
+        ext  = dN > 0.0 && isfinite(δe) ? "\nextracted at this step: δ¹⁸O = $(round(δe, digits = 2)) ‰ ($(round(100 * dN, digits = 2)) % of the initial oxygen)\n" : ""
+        return get_o18_point_plot(Out_O18_PTX[k]), head * get_o18_point_info(Out_O18_PTX[k]) * ext
+    end
+
+    callback!(
+        app,
+        Output("data-o18-csv-ptx-save",     "is_open"),
+        Output("data-o18-csv-ptx-failed",   "is_open"),
+        Input("save-o18-csv-ptx-button",    "n_clicks"),
+        State("Filename-o18-ptx-id",        "value"),
+        State("database-dropdown-ptx",      "value"),
+        prevent_initial_call = true,
+    ) do n_clicks, fname, dtb
+        (o18_ptx_available() && fname isa AbstractString && !isempty(strip(fname)) && fname != "filename") || return false, true
+        mkpath(output_dir[1])
+        o18_ptx_export_csv(output_dir[1] * String(strip(fname)) * "_" * String(something(dtb, "")) * "_PTX_O18.csv")
+        return true, false
+    end
+
+    callback!(
+        app,
+        Output("rad-options-ptx", "style"),
+        [Output("rad-r0-$(r)-ptx-row", "style") for r in RADIOGENIC_ORDER]...,
+        [Output("rad-r2-$(r)-ptx-row", "style") for r in RADIOGENIC_ORDER]...,
+        Input("rad-dropdown-ptx",       "value"),
+        Input("rad-systems-ptx",        "value"),
+        Input("tepm-dropdown-ptx",      "value"),
+        Input("kds-dropdown-ptx",       "value"),
+        Input("database-dropdown-ptx",  "value"),
+        prevent_initial_call = false,
+    ) do rad, systems, te_model, kds_mod, dtb
+        on   = rad == "true" && rad_te_gate(te_model, kds_mod, dtb)[1]
+        rows = rad_row_styles(on ? "true" : "false", rad_usable_systems(systems, te_model, kds_mod, dtb))
+        return (on ? Dict("display" => "block") : Dict("display" => "none")), rows..., rows...
+    end
+
+    callback!(
+        app,
+        Output("rad-dropdown-ptx",      "disabled"),
+        Output("rad-systems-ptx",       "options"),
+        Output("rad-te-note-ptx",       "children"),
+        Input("tepm-dropdown-ptx",      "value"),
+        Input("kds-dropdown-ptx",       "value"),
+        Input("database-dropdown-ptx",  "value"),
+        prevent_initial_call = false,
+    ) do te_model, kds_mod, dtb
+        te_on, opts, note = rad_te_gate(te_model, kds_mod, dtb)
+        return !te_on, opts, note
+    end
+
+    callback!(
+        app,
+        Output("rad-tab-ptx",           "disabled"),
+        Output("rad-x-ptx",             "options"),
+        Output("rad-x-ptx",             "value"),
+        Output("rad-y-ptx",             "options"),
+        Output("rad-y-ptx",             "value"),
+        Input("rad-ptx-computed-store", "data"),
+        State("rad-x-ptx",              "value"),
+        State("rad-y-ptx",              "value"),
+        prevent_initial_call = true,
+    ) do computed, xsel, ysel
+
+        (computed == true && rad_ptx_available()) || return true, no_update(), no_update(), no_update(), no_update()
+        opts    = [Dict("label" => q.label, "value" => q.value) for q in rad_ptx_quantities()]
+        names   = [String(q.value) for q in rad_ptx_quantities()]
+        x       = String(something(xsel, ""))
+        y       = [String(v) for v in something(ysel, String[]) if String(v) in names]
+        if !(x in names) || isempty(y)
+            x, y = rad_ptx_default_axes()
+        end
+        return false, opts, x, opts, y
+    end
+
+    callback!(
+        app,
+        Output("rad-plot-ptx",          "figure"),
+        Output("rad-plot-ptx",          "config"),
+        Input("rad-x-ptx",              "value"),
+        Input("rad-y-ptx",              "value"),
+        Input("rad-ptx-computed-store", "data"),
+        Input("pressure-unit-dropdown", "value"),
+        prevent_initial_call = true,
+    ) do xkey, ykeys, _computed, _punit
+
+        rad_ptx_available() || return no_update(), no_update()
+        isnothing(xkey) && return no_update(), no_update()
+        config = PlotConfig(    toImageButtonOptions  = attr(   name     = "Download as svg",
+                                                                format   = "svg",
+                                                                filename = "PTX_radiogenic_isotopes",
+                                                                height   =  380,
+                                                                width    =  900,
+                                                                scale    =  2.0, ).fields)
+        return get_rad_ptx_plot(xkey, ykeys), config
+    end
+
+    callback!(
+        app,
+        Output("data-rad-csv-ptx-save",     "is_open"),
+        Output("data-rad-csv-ptx-failed",   "is_open"),
+        Input("save-rad-csv-ptx-button",    "n_clicks"),
+        State("Filename-rad-ptx-id",        "value"),
+        State("database-dropdown-ptx",      "value"),
+        prevent_initial_call = true,
+    ) do n_clicks, fname, dtb
+        (rad_ptx_available() && fname isa AbstractString && !isempty(strip(fname)) && fname != "filename") || return false, true
+        mkpath(output_dir[1])
+        rad_ptx_export_csv(output_dir[1] * String(strip(fname)) * "_" * String(something(dtb, "")) * "_PTX_radiogenic.csv")
+        return true, false
+    end
 
     return app
 end

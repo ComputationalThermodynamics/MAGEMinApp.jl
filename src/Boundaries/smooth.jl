@@ -123,6 +123,8 @@ function pd_simplify(P::Matrix{Float64}, tol_x::Float64, tol_y::Float64)
     return P[keep, :]
 end
 
+pd_count_changed(a, b) = [ph for ph in union(a, b) if count(==(ph), a) != count(==(ph), b)]
+
 function pd_smooth_geometry(F::AbstractMatrix{<:Integer}, Xrange, Yrange, id2phases::Dict{Int,Vector{String}};
                              sigma::Real = pd_smooth_sigma_default)
     nx, ny = size(F)
@@ -271,7 +273,7 @@ function pd_smooth_geometry(F::AbstractMatrix{<:Integer}, Xrange, Yrange, id2pha
         (arc.L > 0 && arc.R > 0) || continue
         pl = get(id2phases, idof[arc.L], String[])
         pr = get(id2phases, idof[arc.R], String[])
-        for ph in symdiff(pl, pr)
+        for ph in pd_count_changed(pl, pr)
             push!(get!(byphase, ph, Int[]), k)
         end
     end
@@ -357,6 +359,12 @@ function pd_domain_values(geom, gridded::AbstractMatrix)
     for i in eachindex(D)
         v = gridded[i]
         (v !== missing && v isa Real && isfinite(v) && isnan(val[D[i]])) && (val[D[i]] = Float64(v))
+    end
+    vk = pd_void_field_id()
+    if !isnothing(vk) && size(gridded_fields) == size(D)
+        for i in eachindex(D)
+            gridded_fields[i] == vk && (val[D[i]] = NaN)
+        end
     end
     return [val[p.domain] for p in geom.polys]
 end

@@ -286,7 +286,10 @@ function Tab_TraceElement_Callbacks(app)
 
         pmin, pmax                      = to_kbar_pressure(Float64(pmin)), to_kbar_pressure(Float64(pmax))                                  # convert displayed pressure unit to kbar
         xtitle, ytitle, Xrange, Yrange  = diagram_type(diagType, tmin, tmax, pmin, pmax, e1_tmin, e1_tmax, e2_tmin, e2_tmax)
-        bulk_L, bulk_R, oxi             = get_bulkrock_prop(bulk1, bulk2) 
+        if (diagType in SECTION_TYPES || diagType in SECTION_X_TYPES || diagType in MU_TYPES) && @isdefined(data)
+            Xrange, Yrange              = (Float64(data.Xrange[1]), Float64(data.Xrange[2])), (Float64(data.Yrange[1]), Float64(data.Yrange[2]))
+        end
+        bulk_L, bulk_R, oxi             = get_bulkrock_prop(bulk1, bulk2)
         global pd_fig_meta_te
         pd_fig_meta_te                  = (xtitle = xtitle, ytitle = ytitle, diagType = diagType)
         colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)              # get colormap information
@@ -408,6 +411,12 @@ function Tab_TraceElement_Callbacks(app)
                                                                 tickness        =  0.5,
                                                                 x               =  1.005,
                                                                 y               =  0.5,
+                                                                outlinewidth    =  1,
+                                                                outlinecolor    = "black",
+                                                                ticks           = "inside",
+                                                                ticklen         =  5,
+                                                                tickwidth       =  1,
+                                                                tickcolor       = "black",
                                                                 title = attr(   text = fieldname_zrc,
                                                                                 side = "right")
                                                             ),)
@@ -437,6 +446,12 @@ function Tab_TraceElement_Callbacks(app)
                                                                             tickness        =  0.5,
                                                                             x               =  1.005,
                                                                             y               =  0.5,
+                                                                            outlinewidth    =  1,
+                                                                            outlinecolor    = "black",
+                                                                            ticks           = "inside",
+                                                                            ticklen         =  5,
+                                                                            tickwidth       =  1,
+                                                                            tickcolor       = "black",
                                                                 title = attr(   text = fieldname_zrc,
                                                                                 side = "right")         ),)
 

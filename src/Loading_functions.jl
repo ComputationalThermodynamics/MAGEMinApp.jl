@@ -40,7 +40,8 @@ function get_contributors()
     debug   *= "Richard Palin\n"
     debug   *= "Simon Schorn\n"
     debug   *= "Tim J.B. Holland\n"
-    debug   *= "Tobias Keller"
+    debug   *= "Tobias Keller\n"
+    debug   *= "Ville Virtanen"
 
     app      = "**Interface Suggestions**\n"
     app     *= "Alexandre Peillod\n"
@@ -127,9 +128,10 @@ end
     here hides it from the interface without removing it from the library.
 """
 const DB_MENU_GROUPS = [
-    "- PUBLISHED DATABASE -"  => ["mp", "mb", "ig", "igd", "igad", "um"],
+    # "- PUBLISHED DATABASE -"  => ["mp", (ENABLE_MPMN ? ["mpmn"] : String[])..., "mb", "ig", "igd", "igad", "igaw", "um"],
+     "- PUBLISHED DATABASE -"  => ["mp", (ENABLE_MPMN ? ["mpmn"] : String[])..., "mb", "ig", "igd", "igad", "um"],
     "- BERMAN EOS DATABASE -" => ["po"],
-    "- MANTLE DATABASE -"     => ["mtl", "sb11", "sb21", "sb24"],
+    "- MANTLE DATABASE -"     => [(ENABLE_IGM ? ["igm"] : String[])..., "mtl", "sb11", "sb21", "sb24"],
     "- CUSTOM DATABASE -"     => ["ume", "mpe", "mbe", "all"],
     (ENABLE_MELTS ? ["- MELTS DATABASE -" => ["pMELTS", "rMELTS"]] : [])...,
 ]
@@ -143,6 +145,9 @@ const DB_MENU_GROUPS = [
 const DB_MENU_LABELS = Dict(
     "ig"   => "Igneous (Green et al., 2025, after H18)",
     "igd"  => "Igneous dry (Su et al., 2026, after T21)",
+    # "igaw" => "Igneous alkaline wet (Holland et al., 2026, in progress)",
+    "mpmn" => "Metapelite + Mn, calibrated (Riel et al., 2026, in progress)",
+    "igm"  => "Igneous mantle (Rinaldi et al., 2026)",
     "ume"  => "Ultramafic extended (Evans & Frost., 2021)",
     "mpe"  => "Metapelite extended (White et al., 2014, Green et al., 2016, Evans & Frost., 2021)",
     "mbe"  => "Metabasite extended (Green et al., 2016, Diener et al., 2007)",
@@ -160,7 +165,7 @@ db_menu_label(dtb::String) = get(DB_MENU_LABELS, dtb, get_db_label(dtb))
     are not in `DB_MENU_GROUPS`, so they stay out of the selector until the library
     grows them and they turn up in `get_db_list()` on their own.
 """
-const DB_STAGED = ("igm", "cs")
+const DB_STAGED = ENABLE_IGM ? ("cs",) : ("igm", "cs")
 
 function get_dtbulk_list()
 

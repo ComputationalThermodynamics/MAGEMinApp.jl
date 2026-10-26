@@ -732,10 +732,12 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                 seismicScheme = "VRH",  seismicWeightFactor = 0.5, seismicCorMode = false,
                                 aspectRatio = 0.3, seismicWater = 0, shallowCor = false, fluidAsMelt = false, anelasticCor = false,
                                 calcUnit = "mol", phase_thresholds = [], reminimize_threshold = false;
-                                optimizer = "nlopt" )
+                                optimizer = "nlopt", o18 = nothing, rad = nothing )
 
         global Out_PTX, ph_names_ptx, fracEvol, compo_matrix, removedBulk, assimFrac
         global Out_TE_PTX, all_TE_ph_ptx, C_ext_TE_PTX
+        global Out_O18_PTX, all_O18_ph_ptx, O18_ext_PTX
+        global Rad_PTX
 
 
         nsteps = Int64(nsteps)
@@ -777,6 +779,32 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                 all_TE_ph    = []
                 C_ext_TE_PTX = [fill(NaN, length(bulkte_ini_a)) for _ in 1:n_tot]
             end
+
+            o18_on      = !isnothing(o18)
+            Out_O18_PTX = o18_on ? Vector{MAGEMin_C.out_O18}(undef, n_tot) : MAGEMin_C.out_O18[]
+            O18_ext_PTX = [(0.0, NaN) for _ in 1:n_tot]
+            all_O18_ph_ptx = String[]
+            δ_cur       = o18_on ? o18.δ : NaN
+            O_abs       = 1.0
+
+            Rad_PTX     = Dict{String,Vector{Float64}}()
+            R_rad       = Dict{String,Float64}()
+            rad_sys     = NamedTuple[]
+            if !isnothing(rad) && !te_enabled
+                println("Radiogenic isotopes need the trace-element model (TE predictive model = true, with a Kd database and TE compositions)")
+            elseif !isnothing(rad)
+                for s in rad
+                    j = findfirst(==(s.element), KDs_dtb.element_name)
+                    if isnothing(j)
+                        println("Radiogenic isotopes: $(s.element) is not in the selected Kd database, $(s.name) is skipped")
+                        continue
+                    end
+                    push!(rad_sys, merge(s, (id = j,)))
+                    Rad_PTX[s.name] = fill(NaN, n_tot)
+                    R_rad[s.name]   = s.R0
+                end
+            end
+            rad_on      = !isempty(rad_sys)
 
             Pres        = zeros(Float64,np)
             Temp        = zeros(Float64,np)
@@ -993,7 +1021,12 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
             if assim == "true"
                  if te_enabled
                      w_te       = te_assim_wt_frac(bulk, Add[1])
+                     rad_on && rad_assimilate!(R_rad, rad_sys, bulkte_cur, bulkte_ass_a, w_te)
                      bulkte_cur = (1.0 - w_te) .* bulkte_cur .+ w_te .* bulkte_ass_a
+                 end
+                 if o18_on
+                     δ_cur, gain = o18_mix_assim(calcUnit == "wt" ? mol2wt(bulk, oxi) : bulk, bulk_assim_calc, Add[1], δ_cur, o18.δ_ass, oxi, calcUnit)
+                     O_abs      *= gain
                  end
                  bulk   .= to_mol( (1.0 - Add[1]) .* (calcUnit == "wt" ? mol2wt(bulk, oxi) : bulk) .+ Add[1] .* bulk_assim_calc )
             end
@@ -1036,7 +1069,12 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                         w_assim = step ./ (1.0 .+ step .* j)
                         if te_enabled
                             w_te       = te_assim_wt_frac(bulk, w_assim)
+                            rad_on && rad_assimilate!(R_rad, rad_sys, bulkte_cur, bulkte_ass_a, w_te)
                             bulkte_cur = (1.0 - w_te) .* bulkte_cur .+ w_te .* bulkte_ass_a
+                        end
+                        if o18_on
+                            δ_cur, gain = o18_mix_assim(calcUnit == "wt" ? mol2wt(bulk, oxi) : bulk, bulk_assim_calc, w_assim, δ_cur, o18.δ_ass, oxi, calcUnit)
+                            O_abs      *= gain
                         end
                         bulk   .= to_mol( (1.0 .- w_assim) .* (calcUnit == "wt" ? mol2wt(bulk, oxi) : bulk) .+ w_assim .* bulk_assim_calc )
                     end
@@ -1137,6 +1175,13 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                         te_c(A, m) = m > 0.0 ? A ./ m : zeros(length(A))
                     end
 
+                    o18k           = o18_on ? (Out_O18_PTX[k] = o18_point(o, δ_cur, o18)) : nothing
+                    if rad_on
+                        for s in rad_sys
+                            Rad_PTX[s.name][k] = R_rad[s.name]
+                        end
+                    end
+
                     keep_S, keep_M = 1.0, 1.0
                     extract        = false
                     if mode == "fm" && o.frac_S > 0.0 && o.frac_M > 0.0
@@ -1183,6 +1228,10 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                         fracEvol[k+1,1]     = fracEvol[k,1]
                         fracEvol[k+1,2]     = 1.0 - fracEvol[k+1,1]
                         fracEvol[k+1,3]     = 0.0
+                    end
+
+                    if o18_on
+                        N_ret18, δ_ret18, N_out18, δ_out18 = o18_extract_step(o18k, extract, keep_S, keep_M)
                     end
 
                     # Per-phase extraction thresholds (Advanced path definition panel):
@@ -1240,6 +1289,11 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                                 bulk             .-= excess_mol_frac .* comp_avg
                                 bulk[bulk .< 0.0] .= 0.0
                                 bulk            ./= sum(bulk)
+
+                                if o18_on
+                                    N_ret18, δ_ret18, N_out18, δ_out18 = o18_remove_phase(o18k, id_ph, excess_mol_frac / sum(pt.ph_frac[id_ph]),
+                                                                                          N_ret18, δ_ret18, N_out18, δ_out18)
+                                end
 
                                 if te_ok
                                     e_wt = excess_mol_frac * sum(pt.ph_frac_wt[id_ph]) / sum(pt.ph_frac[id_ph])
@@ -1300,8 +1354,15 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                             if reminimize_threshold
                                 gv         = define_bulk_rock(gv, bulk, oxi, sys_in, dtb)
                                 Out_PTX[k] = deepcopy( point_wise_minimization(P, T, gv, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true, scp=scp, seismic_cor=seismicCorMode, aspect_ratio=aspectRatio, seismic_water=seismicWater, shallow_correction=shallowCor, fluid_as_melt=fluidAsMelt, anelastic_cor=anelasticCor) )
+                                o18_on && isfinite(δ_ret18) && (Out_O18_PTX[k] = o18_point(Out_PTX[k], δ_ret18, o18))
                             end
                         end
+                    end
+
+                    if o18_on
+                        O18_ext_PTX[k] = (N_out18 * O_abs, δ_out18)
+                        O_abs         *= N_ret18
+                        isfinite(δ_ret18) && (δ_cur = δ_ret18)
                     end
 
                     if te_enabled && isassigned(Out_TE_PTX, k) && !isnothing(Out_TE_PTX[k].ph_TE)
@@ -1411,6 +1472,13 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                 assimFrac[k] = assimFrac[k-1]
             end
 
+            o18_on && (Out_O18_PTX[k] = o18_point(Out_PTX[k], δ_cur, o18))
+            if rad_on
+                for s in rad_sys
+                    Rad_PTX[s.name][k] = R_rad[s.name]
+                end
+            end
+
             # TE prediction for the final point (no bulk update needed after the last step)
             if te_enabled
                 Out_TE_PTX[k] = TE_prediction(Out_PTX[k], bulkte_cur, KDs_dtb, dtb;
@@ -1437,6 +1505,13 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                 end
             end
             ph_names_ptx = sort(ph_names_ptx)
+
+            if o18_on
+                for o in Out_O18_PTX, (i, p) in enumerate(o.ph)
+                    (o.f_O[i] > 0.0 && !(p in all_O18_ph_ptx)) && push!(all_O18_ph_ptx, p)
+                end
+                sort!(all_O18_ph_ptx)
+            end
 
             # free MAGEMin
             LibMAGEMin.FreeDatabases(gv, DB, z_b, pointer_from_objref(splx_data))

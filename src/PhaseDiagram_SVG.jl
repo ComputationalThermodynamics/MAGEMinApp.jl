@@ -35,9 +35,37 @@ end
     Plotly's `connectgaps`: smooth across coarse cells, while phase boundaries, where
     the mesh is fine, keep their jump to one cell. `data` is kept for the call
     signature (screen and SVG export share this function).
+
+    Cells of the section-diagram void field (`SECTION_VOID_HASH`: targets outside the image
+    of the P-T box or not resolved), grown by one cell, stay `missing`, i.e. blank, so the
+    raster does not reach past the traced edge of the image.
 """
 function pd_fill_gridded(gridded::AbstractMatrix, data)
-    return svg_fill_gaps(gridded)
+    filled  = svg_fill_gaps(gridded)
+    void    = pd_void_mask(size(filled))
+    isnothing(void) || (filled[void] .= missing)
+    return filled
+end
+
+function pd_void_field_id()
+    (@isdefined(Hash_XY) && @isdefined(gridded_fields)) || return nothing
+    return findfirst(==(SECTION_VOID_HASH), unique(Hash_XY))
+end
+
+function pd_void_mask(sz)
+    k = pd_void_field_id()
+    (isnothing(k) || size(gridded_fields) != sz) && return nothing
+    void    = gridded_fields .== k
+    grown   = copy(void)
+    nx, ny  = sz
+    for j in 1:ny, i in 1:nx
+        void[i, j] || continue
+        for (di, dj) in ((-1, 0), (1, 0), (0, -1), (0, 1))
+            ii, jj = i + di, j + dj
+            (1 <= ii <= nx && 1 <= jj <= ny) && (grown[ii, jj] = true)
+        end
+    end
+    return grown
 end
 
 """
@@ -217,9 +245,10 @@ end
 function pd_figure_parts(; data, gridded, heat_map, layout_g, reaction, data_isopleth, iso_show,
                           assemblage_rows, xtitle::AbstractString, ytitle::AbstractString, diagType::AbstractString,
                           show_reaction::Bool, show_mesh::Bool, show_labels::Bool, geotherms = GenericTrace[],
-                          fills = Tuple{Vector{Matrix{Float64}},NTuple{4,Float64}}[], iso_sigma::Real = 0.0)
+                          fills = Tuple{Vector{Matrix{Float64}},NTuple{4,Float64}}[], iso_sigma::Real = 0.0,
+                          pies = Any[], pie_radius::Real = 20, pie_unit = "wt")
     global phase_infos
-    convert_p = use_GPa[1] && diagType in ("pt", "px", "ptx")
+    convert_p = use_GPa[1] && pressure_on_y_axis(diagType)
     yconv(y::Real) = convert_p ? display_pressure(Float64(y)) : Float64(y)
     yconv(y)       = y
     xr = collect(Float64.(data.Xrange))
@@ -293,7 +322,18 @@ function pd_figure_parts(; data, gridded, heat_map, layout_g, reaction, data_iso
             mesh = mesh, reaction = lines,
             fills = [([[(r[k, 1], yconv(r[k, 2])) for k in 1:size(r, 1)] for r in rings], col) for (rings, col) in fills],
             isopleths = isopleths, geotherms = subd_svg_lines(geotherms, yconv), annotations = annotations,
-            info = info, assemblages = assemblages)
+            info = info, assemblages = assemblages, pies = pd_svg_pies(pies, convert_p; unit = pie_unit), pie_radius = Float64(pie_radius))
+end
+
+function pd_svg_pies(pies, convert_p::Bool; unit = "wt")
+    out = NamedTuple[]
+    for p in pies
+        y = Float64(p["y"])
+        convert_p && p["py"] == true && (y = display_pressure(y))
+        push!(out, (x = Float64(p["x"]), y = y, phases = String.(collect(p["phases"])),
+                    values = Float64.(collect(p[unit == "mol" && haskey(p, "values_mol") ? "values_mol" : (unit == "vol" && haskey(p, "values_vol") ? "values_vol" : "values")])), colors = String.(collect(p["colors"]))))
+    end
+    return out
 end
 
 """
@@ -347,7 +387,9 @@ function pd_export_svg(parts, path::AbstractString)
     ncol       = 3
     list_rows  = cld(length(parts.assemblages), ncol)
     list_h     = list_rows * 10.5
-    height     = 48.0 + ph + 62.0 + (info_h > 0 ? info_h + 24 : 0) + (list_h > 0 ? list_h + 30 : 0) + 10
+    legend     = pd_pie_legend(get(parts, :pies, NamedTuple[]))
+    legend_h   = isempty(legend) ? 0.0 : 40.0
+    height     = 48.0 + ph + 62.0 + legend_h + (info_h > 0 ? info_h + 24 : 0) + (list_h > 0 ? list_h + 30 : 0) + 10
     c          = SVGCanvas(758.0, height, ml, mr, mt, height - mt - ph, xr[1], xr[2], yr[1], yr[2])
     left, right, top, bottom = c.ml, c.ml + pw, c.mt, c.mt + ph
     seen   = Set{String}()
@@ -455,6 +497,24 @@ function pd_export_svg(parts, path::AbstractString)
 
     svg_annotation_layer(io, c, seen, parts.annotations; font = font)
 
+    pies = get(parts, :pies, NamedTuple[])
+    if !isempty(pies)
+        r = get(parts, :pie_radius, 25.0)
+        svg_group_open(io, svg_id(seen, "Mini_pie_charts"); stroke = "#000000", width = 0.6)
+        for (k, p) in enumerate(pies)
+            (min(xr...) <= p.x <= max(xr...) && min(yr...) <= p.y <= max(yr...)) || continue
+            svg_group_open(io, svg_id(seen, "Pie_$(k)"))
+            for (w, poly) in enumerate(pd_pie_wedges(svg_x(c, p.x), svg_y(c, p.y), r, p.values))
+                d = "M" * join(["$(svg_num(x)) $(svg_num(y))" for (x, y) in poly], " L") * " Z"
+                rgb, op = svg_css_color(p.colors[w])
+                svg_path(io, svg_id(seen, "Pie_$(k)_" * display_ph_name(p.phases[w])), d; fill = rgb, fill_opacity = op)
+                n_paths += 1
+            end
+            svg_group_close(io)
+        end
+        svg_group_close(io)
+    end
+
     nt = parts.ticks + 1
     svg_layout_layers(io, c, seen; xticks = [xr[1] + k * (xr[2] - xr[1]) / nt for k in 0:nt],
                        yticks = [yr[1] + k * (yr[2] - yr[1]) / nt for k in 0:nt],
@@ -468,9 +528,17 @@ function pd_export_svg(parts, path::AbstractString)
     zticks = isnothing(get(parts, :ztick, nothing)) ? svg_nice_ticks(parts.zmin, parts.zmax) :
              collect(ceil(parts.zmin / parts.ztick - 1e-9) * parts.ztick : parts.ztick : parts.zmax + 1e-9)
     zlabels = [svg_tick_label(v) for v in zticks]
-    for (k, v) in enumerate(zticks)
-        t = parts.zmax == parts.zmin ? 0.0 : (v - parts.zmin) / (parts.zmax - parts.zmin)
-        svg_text(io, bar_x + bar_w + 5, bar_y + bar_h * (1 - t), zlabels[k]; id = svg_id(seen, "Colorbar_tick_$(k)"), anchor = "start")
+    zy      = [bar_y + bar_h * (1 - (parts.zmax == parts.zmin ? 0.0 : (v - parts.zmin) / (parts.zmax - parts.zmin))) for v in zticks]
+    svg_group_open(io, svg_id(seen, "Colorbar_outline"); stroke = ink, width = 0.75, fill = "none")
+    svg_rect(io, svg_id(seen, "Colorbar_frame"), bar_x, bar_y, bar_w, bar_h)
+    svg_group_close(io)
+    svg_group_open(io, svg_id(seen, "Colorbar_ticks"); stroke = ink, width = 0.75)
+    for y in zy
+        svg_line(io, bar_x + bar_w - 4, y, bar_x + bar_w, y)
+    end
+    svg_group_close(io)
+    for (k, y) in enumerate(zy)
+        svg_text(io, bar_x + bar_w + 5, y, zlabels[k]; id = svg_id(seen, "Colorbar_tick_$(k)"), anchor = "start")
     end
     title_dx = max(42.0, 5.0 + 5.8 * maximum(length, zlabels; init = 0) + 14.0)
     isempty(parts.field_title) || svg_text(io, bar_x + bar_w + title_dx, bar_y + bar_h / 2, parts.field_title;
@@ -489,7 +557,22 @@ function pd_export_svg(parts, path::AbstractString)
         svg_group_close(io)
     end
 
-    y_info = bottom + 62
+    if !isempty(legend)
+        bw  = min(50.0, pw / length(legend))
+        x0  = left + (pw - bw * length(legend)) / 2
+        ytp = bottom + 62 + 12
+        svg_group_open(io, svg_id(seen, "Mini_pie_legend"); font_family = font, font_size = 10, fill = "#000000")
+        for (k, it) in enumerate(legend)
+            rgb, op = svg_css_color(it.color)
+            xa = x0 + (k - 1) * bw
+            svg_path(io, svg_id(seen, "Pie_legend_box_" * it.label), "M$(svg_num(xa)) $(svg_num(ytp)) L$(svg_num(xa + bw)) $(svg_num(ytp)) L$(svg_num(xa + bw)) $(svg_num(ytp + 16)) L$(svg_num(xa)) $(svg_num(ytp + 16)) Z";
+                     fill = rgb, fill_opacity = op, stroke = "#000000", width = 0.75)
+            svg_text(io, xa + bw / 2, ytp - 7, it.label; id = svg_id(seen, "Pie_legend_label_" * it.label), anchor = "middle")
+        end
+        svg_group_close(io)
+    end
+
+    y_info = bottom + 62 + legend_h
     svg_info_layer(io, seen, parts.info; left = left, y = y_info, pw = pw, font = font, ink = ink, line_h = line_h)
 
     if !isempty(parts.assemblages)

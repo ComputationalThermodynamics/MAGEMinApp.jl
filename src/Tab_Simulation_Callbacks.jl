@@ -10,13 +10,14 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ =#
 
 const STATE_DIAGRAM_FIELDS = [  "infos", "layout", "data", "data_plot", "data_reaction", "iso_show", "n_lbl", "data_isopleth", "data_isopleth_out",
-                                "Out_XY", "Hash_XY", "Out_TE_XY", "all_TE_ph", "n_phase_XY", "addedRefinementLvl", "pChip_wat", "pChip_T",
-                                "assemblage_rows", "list_compacted_idx", "raw_field_id", "PT_infos" ]
+                                "Out_XY", "Hash_XY", "Out_TE_XY", "all_TE_ph", "Out_O18_XY", "all_O18_ph", "n_phase_XY", "addedRefinementLvl", "pChip_wat", "pChip_T",
+                                "assemblage_rows", "list_compacted_idx", "raw_field_id", "PT_infos", "Sec_status_XY", "Sec_seed_grid", "Sec_seed_X" ]
 
 const STATE_EXTRA_FIELDS = [ "dataset", "sas", "wf", "seismic_cor", "aspect_ratio", "seismic_water", "shallow_cor", "fluid_as_melt", "anelastic_cor",
                              "mumu_oxide1", "mumu_oxide2", "mumu_ox1_min", "mumu_ox1_max", "mumu_ox2_min", "mumu_ox2_max",
                              "mumu_mu1_min", "mumu_mu1_max", "mumu_mu2_min", "mumu_mu2_max",
-                             "fields", "colormap", "reverse_cmap", "set_min_white" ]
+                             "fields", "colormap", "reverse_cmap", "set_min_white",
+                             "o18", "o18_delta", "o18_delta2", "o18_anchor", "o18_anchor_delta", "o18_melt", "o18_unmapped", "o18_tmax" ]
 
 global loaded_state_has_diagram = false
 global state_pending_dataset = Ref{Any}(nothing)
@@ -268,10 +269,31 @@ function Tab_Simulation_Callbacks(app)
         State(  "mumu-mu1-max-id",                  "value"       ),
         State(  "mumu-mu2-min-id",                  "value"       ),
         State(  "mumu-mu2-max-id",                  "value"       ),
+        State(  "sec-p1-id",                        "value"       ),
+        State(  "sec-t1-id",                        "value"       ),
+        State(  "sec-p2-id",                        "value"       ),
+        State(  "sec-t2-id",                        "value"       ),
+        State(  "sec-search-pmin-id",               "value"       ),
+        State(  "sec-search-pmax-id",               "value"       ),
+        State(  "sec-search-tmin-id",               "value"       ),
+        State(  "sec-search-tmax-id",               "value"       ),
+        State(  "sec-range-mode-id",                "value"       ),
+        State(  "sec-xmin-id",                      "value"       ),
+        State(  "sec-xmax-id",                      "value"       ),
+        State(  "sec-ymin-id",                      "value"       ),
+        State(  "sec-ymax-id",                      "value"       ),
         State(  "fields-dropdown",                  "value"       ),
         State(  "colormaps_cross",                  "value"       ),
         State(  "reverse-colormap",                 "value"       ),
         State(  "set-min-white",                    "value"       ),
+        State(  "o18-dropdown",                     "value"       ),
+        State(  "o18-delta-id",                     "value"       ),
+        State(  "o18-delta2-id",                    "value"       ),
+        State(  "o18-anchor-id",                    "value"       ),
+        State(  "o18-anchor-delta-id",              "value"       ),
+        State(  "o18-melt-dropdown",                "value"       ),
+        State(  "o18-unmapped-dropdown",            "value"       ),
+        State(  "o18-tmax-id",                      "value"       ),
 
         prevent_initial_call = true,         # we have to load at startup, so one minimzation is achieved
     ) do click, filename,
@@ -291,7 +313,11 @@ function Tab_Simulation_Callbacks(app)
         dataset, sas, wf, seismic_cor, aspect_ratio, seismic_water, shallow_cor, fluid_as_melt, anelastic_cor,
         mumu_oxide1, mumu_oxide2, mumu_ox1_min, mumu_ox1_max, mumu_ox2_min, mumu_ox2_max,
         mumu_mu1_min, mumu_mu1_max, mumu_mu2_min, mumu_mu2_max,
-        fields, colormap, reverse_cmap, set_min_white
+        sec_p1, sec_t1, sec_p2, sec_t2,
+        sec_search_pmin, sec_search_pmax, sec_search_tmin, sec_search_tmax,
+        sec_range_mode, sec_xmin, sec_xmax, sec_ymin, sec_ymax,
+        fields, colormap, reverse_cmap, set_min_white,
+        o18, o18_delta, o18_delta2, o18_anchor, o18_anchor_delta, o18_melt, o18_unmapped, o18_tmax
 
         global db, dbte
 
@@ -316,7 +342,7 @@ function Tab_Simulation_Callbacks(app)
         pressure_unit   = pressure_unit == "gpa" ? "gpa" : "kbar"
 
         println("Saving phase diagram options..."); t0 = time()
-        @save file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ssat_dtb P2O5sat_dtb ptx_table pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver optimizer boost verbose scp test test2 buffer1 buffer2 te_test te_test2 watsat watsat_val ss_selection pp_selection preset pressure_unit bulk_unit bulk_table bulk_table2 te_table te_table2 dataset sas wf seismic_cor aspect_ratio seismic_water shallow_cor fluid_as_melt anelastic_cor mumu_oxide1 mumu_oxide2 mumu_ox1_min mumu_ox1_max mumu_ox2_min mumu_ox2_max mumu_mu1_min mumu_mu1_max mumu_mu2_min mumu_mu2_max fields colormap reverse_cmap set_min_white
+        @save file db dbte database diagram_type mb_cpx limit_ca_opx ca_opx_val tepm kds_dtb zrsat_dtb ssat_dtb P2O5sat_dtb ptx_table pmin pmax tmin tmax pfix tfix grid_sub refinement refinement_level buffer solver optimizer boost verbose scp test test2 buffer1 buffer2 te_test te_test2 watsat watsat_val ss_selection pp_selection preset pressure_unit bulk_unit bulk_table bulk_table2 te_table te_table2 dataset sas wf seismic_cor aspect_ratio seismic_water shallow_cor fluid_as_melt anelastic_cor mumu_oxide1 mumu_oxide2 mumu_ox1_min mumu_ox1_max mumu_ox2_min mumu_ox2_max mumu_mu1_min mumu_mu1_max mumu_mu2_min mumu_mu2_max sec_p1 sec_t1 sec_p2 sec_t2 sec_search_pmin sec_search_pmax sec_search_tmin sec_search_tmax sec_range_mode sec_xmin sec_xmax sec_ymin sec_ymax fields colormap reverse_cmap set_min_white o18 o18_delta o18_delta2 o18_anchor o18_anchor_delta o18_melt o18_unmapped o18_tmax
         println("Saved phase diagram options in $(round(time()-t0, digits=3)) seconds");
 
         field_list = [n for n in STATE_DIAGRAM_FIELDS if isdefined(MAGEMinApp, Symbol(n))]
@@ -450,7 +476,7 @@ function Tab_Simulation_Callbacks(app)
 
         state_pending_dataset[] = (database = database, dataset = first(state_read(file, "dataset"; optional = ("dataset",))))
 
-        global infos, layout, data, data_plot, data_reaction, iso_show, n_lbl, data_isopleth, data_isopleth_out, Out_XY, Hash_XY, Out_TE_XY, all_TE_ph, n_phase_XY, addedRefinementLvl, pChip_wat, pChip_T, loaded_state_has_diagram
+        global infos, layout, data, data_plot, data_reaction, iso_show, n_lbl, data_isopleth, data_isopleth_out, Out_XY, Hash_XY, Out_TE_XY, all_TE_ph, Out_O18_XY, all_O18_ph, n_phase_XY, addedRefinementLvl, pChip_wat, pChip_T, loaded_state_has_diagram
 
         base_path       = state_base_path(filename)
         file_pd         = base_path * "_phase_diagram.jld2"
@@ -514,6 +540,14 @@ function Tab_Simulation_Callbacks(app)
         Output("colormaps_cross",               "value"),
         Output("reverse-colormap",              "value"),
         Output("set-min-white",                 "value"),
+        Output("o18-dropdown",                  "value"),
+        Output("o18-delta-id",                  "value"),
+        Output("o18-delta2-id",                 "value"),
+        Output("o18-anchor-id",                 "value"),
+        Output("o18-anchor-delta-id",           "value"),
+        Output("o18-melt-dropdown",             "value"),
+        Output("o18-unmapped-dropdown",         "value"),
+        Output("o18-tmax-id",                   "value"),
 
         Input(  "load-state-diagram-button",    "n_clicks"),
         State(  "load-state-filename-id",       "value"),
@@ -522,7 +556,7 @@ function Tab_Simulation_Callbacks(app)
     ) do n_clicks, filename
 
         file = state_options_file(filename)
-        isnothing(file) && return ntuple(_ -> no_update(), 18)
+        isnothing(file) && return ntuple(_ -> no_update(), 26)
 
         extra = Dict(zip(STATE_EXTRA_FIELDS, state_read(file, STATE_EXTRA_FIELDS...; optional = STATE_EXTRA_FIELDS)))
         pick(k) = isnothing(extra[k]) ? no_update() : extra[k]
@@ -530,7 +564,8 @@ function Tab_Simulation_Callbacks(app)
         return pick("sas"), pick("wf"), pick("seismic_cor"), pick("aspect_ratio"), pick("seismic_water"), pick("shallow_cor"),
                pick("fluid_as_melt"), pick("anelastic_cor"), pick("mumu_oxide1"), pick("mumu_oxide2"),
                pick("mumu_ox1_min"), pick("mumu_ox1_max"), pick("mumu_ox2_min"), pick("mumu_ox2_max"),
-               pick("fields"), pick("colormap"), pick("reverse_cmap"), pick("set_min_white")
+               pick("fields"), pick("colormap"), pick("reverse_cmap"), pick("set_min_white"),
+               pick("o18"), pick("o18_delta"), pick("o18_delta2"), pick("o18_anchor"), pick("o18_anchor_delta"), pick("o18_melt"), pick("o18_unmapped"), pick("o18_tmax")
     end
 
     # update the dictionary of phase_selection_options
@@ -629,9 +664,9 @@ function Tab_Simulation_Callbacks(app)
         end
 
 
-        dataset_options = [Dict(    "label"     => "ds$(db_in.dataset_opt[i])",
-                                    "value"     => db_in.dataset_opt[i] )
-                                for i = 1:length(db_in.dataset_opt) ]
+        dataset_options = [Dict(    "label"     => "ds$(d)",
+                                    "value"     => d )
+                                for d in unique(db_in.dataset_opt) ]
         pend = state_pending_dataset[]
         if !isnothing(pend) && bid == "database-dropdown" && pend.database != dtb
             state_pending_dataset[] = nothing
@@ -794,7 +829,7 @@ function Tab_Simulation_Callbacks(app)
         n_pp        = length(pp)
         n_ss        = length(ss)
 
-        if phase == "of"
+        if phase == "of" || phase == "o18"
             style_ph    = Dict("display" => "none")
             style_em    = Dict("display" => "none")
             style_ox    = Dict("display" => "none")
@@ -802,7 +837,7 @@ function Tab_Simulation_Callbacks(app)
             style_calc_sf = Dict("display" => "none")
             style_calc_ox = Dict("display" => "none")
             style_ot    = Dict("display" => "none")
-            style_of    = Dict("display" => "block")
+            style_of    = Dict("display" => phase == "of" ? "block" : "none")
             style_sys   = Dict("display" => "none")
             style_rmf   = Dict("display" => "none")
             opts_ph     = []
@@ -989,6 +1024,27 @@ function Tab_Simulation_Callbacks(app)
         end
 
         return opt, panel, zr, show_norm
+    end
+
+    callback!(
+        app,
+        Output("o18-options-id",    "style"),
+        Output("o18-bulk-1-id",     "style"),
+        Output("o18-bulk-2-id",     "style"),
+        Input("o18-dropdown",       "value"),
+        prevent_initial_call = false,
+    ) do o18
+        style = o18 == "true" ? Dict("display" => "block") : Dict("display" => "none")
+        return style, style, style
+    end
+
+    callback!(
+        app,
+        Output("o18-anchor-delta-row",  "style"),
+        Input("o18-anchor-id",          "value"),
+        prevent_initial_call = false,
+    ) do anchor
+        return isempty(strip(something(anchor, ""))) ? Dict("display" => "none") : Dict("display" => "block")
     end
 
 
@@ -1226,6 +1282,10 @@ function Tab_Simulation_Callbacks(app)
         Output("display-refine-option-id", "style"),
         Output("display-refine-option-2-id", "style"),
         Output("mumu-setup-id", "style"),
+        Output("mumu-oxide2-row-id", "style"),
+        Output("mumu-mu2-row-id", "style"),
+        Output("section-setup-id", "style"),
+        Output("sec-corners-id", "style"),
         Output("gsub-row-id", "style"),
         Output("tepm-row-id", "style"),
         Output("pd3d-resolution-id", "style"),
@@ -1235,7 +1295,7 @@ function Tab_Simulation_Callbacks(app)
         prevent_initial_call = true,
     ) do value
 
-        if value == "px"
+        if value == "px" || value == "vx"
             Tstyle  = Dict("display" => "block")
             Pstyle  = Dict("display" => "none")
             Ts      = Dict("display" => "none")
@@ -1251,7 +1311,7 @@ function Tab_Simulation_Callbacks(app)
             refine  = Dict("display" => "block")
             refine2 = Dict("display" => "block")
             mumu    = Dict("display" => "none")
-        elseif value == "tx"
+        elseif value == "tx" || section_x_fixed_P(value)
             Tstyle  = Dict("display" => "none")
             Pstyle  = Dict("display" => "block")
             Ts      = Dict("display" => "block")
@@ -1267,7 +1327,7 @@ function Tab_Simulation_Callbacks(app)
             refine  = Dict("display" => "block")
             refine2 = Dict("display" => "block")
             mumu    = Dict("display" => "none")
-        elseif value == "pt"
+        elseif value == "pt" || value in SECTION_TYPES
             Tstyle  = Dict("display" => "none")
             Pstyle  = Dict("display" => "none")
             Ts      = Dict("display" => "block")
@@ -1331,6 +1391,22 @@ function Tab_Simulation_Callbacks(app)
             refine  = Dict("display" => "block")
             refine2 = Dict("display" => "block")
             mumu    = Dict("display" => "block")
+        elseif value == "pmu" || value == "tmu"
+            Tstyle  = Dict("display" => value == "pmu" ? "block" : "none")
+            Pstyle  = Dict("display" => value == "tmu" ? "block" : "none")
+            Ts      = Dict("display" => value == "tmu" ? "block" : "none")
+            Ps      = Dict("display" => value == "pmu" ? "block" : "none")
+            test2   = Dict("display" => "none")
+            table2  = Dict("display" => "none")
+            PTx     = Dict("display" => "none")
+            testte2 = Dict("display" => "none")
+            tabte2  = Dict("display" => "none")
+            watsat  = Dict("display" => "none")
+            T1      = Dict("display" => "none")
+            T2      = Dict("display" => "none")
+            refine  = Dict("display" => "block")
+            refine2 = Dict("display" => "block")
+            mumu    = Dict("display" => "block")
         elseif value == "ptx3d"
             Tstyle  = Dict("display" => "none")
             Pstyle  = Dict("display" => "none")
@@ -1365,12 +1441,21 @@ function Tab_Simulation_Callbacks(app)
             mumu    = Dict("display" => "none")
         end
 
+        mumu2   = Dict("display" => value == "mumu" ? "block" : "none")
+        section = Dict("display" => (value in SECTION_TYPES || value in SECTION_X_TYPES) ? "block" : "none")
+        corners = Dict("display" => value in SECTION_TYPES ? "block" : "none")
+        if value in SECTION_TYPES
+            watsat  = Dict("display" => "none")
+            Ts      = Dict("display" => "none")
+            Ps      = Dict("display" => "none")
+        end
+
         is3d    = value == "ptx3d"
         gsub    = Dict("display" => is3d ? "none"  : "block")
         tepmrow = Dict("display" => is3d ? "none"  : "block")
         res3d   = Dict("display" => is3d ? "block" : "none")
 
-        return Tstyle, Pstyle, Ts, Ps, test2, table2, PTx, testte2, tabte2, watsat, T1, T2, refine, refine2, mumu, gsub, tepmrow, res3d, refine
+        return Tstyle, Pstyle, Ts, Ps, test2, table2, PTx, testte2, tabte2, watsat, T1, T2, refine, refine2, mumu, mumu2, mumu2, section, corners, gsub, tepmrow, res3d, refine
     end
 
 
@@ -1390,13 +1475,13 @@ function Tab_Simulation_Callbacks(app)
     ) do bulk_data, ox1, ox2, diagType
 
         oxides  = [row["oxide"] for row in bulk_data]
-        opts1   = [Dict("label" => ox, "value" => ox) for ox in oxides if ox != ox2]
+        opts1   = [Dict("label" => ox, "value" => ox) for ox in oxides if ox != ox2 || diagType != "mumu"]
         opts2   = [Dict("label" => ox, "value" => ox) for ox in oxides if ox != ox1]
 
         style_cond = []
-        if diagType == "mumu"
+        if diagType in MU_TYPES
             for (i, row) in enumerate(bulk_data)
-                if row["oxide"] == ox1 || row["oxide"] == ox2
+                if row["oxide"] == ox1 || (row["oxide"] == ox2 && diagType == "mumu")
                     push!(style_cond, Dict(
                         "if"                => Dict("row_index" => i-1, "column_id" => "fraction"),
                         "backgroundColor"   => "#e9ecef",
@@ -1438,10 +1523,15 @@ function Tab_Simulation_Callbacks(app)
         State("solver-dropdown",               "value"),
         State("optimizer-dropdown",            "value"),
         State("select-bulk-unit",              "value"),
+        State("diagram-dropdown",              "value"),
+        State("pmin-id",                       "value"),
+        State("pmax-id",                       "value"),
+        State("tmin-id",                       "value"),
+        State("tmax-id",                       "value"),
 
         prevent_initial_call = true,
 
-    ) do n_clicks, n_clicks_load, filename, bulk_data, ox1, ox2, ox1_min, ox1_max, ox2_min, ox2_max, fixP, fixT, dtb, bufferType, solver, optimizer, sys_unit
+    ) do n_clicks, n_clicks_load, filename, bulk_data, ox1, ox2, ox1_min, ox1_max, ox2_min, ox2_max, fixP, fixT, dtb, bufferType, solver, optimizer, sys_unit, diagType, pmin, pmax, tmin, tmax
 
         if state_load_triggered()
             file = state_options_file(filename)
@@ -1462,6 +1552,22 @@ function Tab_Simulation_Callbacks(app)
         idx1    = findfirst(oxi .== ox1)
         idx2    = findfirst(oxi .== ox2)
         fixP_kbar = to_kbar_pressure(Float64(fixP))
+
+        if diagType == "pmu" || diagType == "tmu"
+            n_s     = 5
+            Pvec    = diagType == "pmu" ? collect(range(to_kbar_pressure(Float64(pmin)), to_kbar_pressure(Float64(pmax)), length = n_s)) : fill(fixP_kbar, n_s)
+            Tvec    = diagType == "tmu" ? collect(range(Float64(tmin), Float64(tmax), length = n_s)) : fill(Float64(fixT), n_s)
+            mu_bounds, statuses, ok = compute_mu_bounds_path(
+                Pvec,               Tvec,
+                bulk,               oxi,
+                idx1,               Float64(ox1_min)/100.0,    Float64(ox1_max)/100.0,
+                dtb,    bufferType, solver,
+                -1,  0.0,        nothing,
+                false,  "OFF",      0.0;
+                optimizer = optimizer   )
+            warn_msg, warn_open = ok ? ("", false) : ("$(count(!=(0), statuses)) / $(length(statuses)) pre-pass minimizations did not converge — bounds use the converged ones only and may be unreliable. Try narrower content bounds.", true)
+            return round(mu_bounds[1],digits=2), round(mu_bounds[2],digits=2), no_update(), no_update(), warn_msg, warn_open
+        end
 
         mu1_bounds, mu2_bounds, statuses, ok = compute_mumu_bounds(
             fixP_kbar,          Float64(fixT),
@@ -1484,6 +1590,277 @@ function Tab_Simulation_Callbacks(app)
         return round(mu1_bounds[1],digits=2), round(mu1_bounds[2],digits=2), round(mu2_bounds[1],digits=2), round(mu2_bounds[2],digits=2), warn_msg, warn_open
     end
 
+
+    callback!(
+        app,
+        Output("sec-p1-id",                     "value"),
+        Output("sec-t1-id",                     "value"),
+        Output("sec-p2-id",                     "value"),
+        Output("sec-t2-id",                     "value"),
+        Output("sec-p-unit-label-id",           "children"),
+        Output("sec-search-pmin-id",            "value"),
+        Output("sec-search-pmax-id",            "value"),
+        Output("sec-search-tmin-id",            "value"),
+        Output("sec-search-tmax-id",            "value"),
+        Output("sec-search-p-label-id",         "children"),
+        Output("sec-range-mode-id",             "value"),
+        Output("sec-xmin-id",                   "value"),
+        Output("sec-xmax-id",                   "value"),
+        Output("sec-ymin-id",                   "value"),
+        Output("sec-ymax-id",                   "value"),
+
+        Input("load-state-diagram-button",      "n_clicks"),
+        Input("pressure-unit-dropdown",         "value"),
+
+        State("load-state-filename-id",         "value"),
+        State("sec-p1-id",                      "value"),
+        State("sec-p2-id",                      "value"),
+        State("sec-search-pmin-id",             "value"),
+        State("sec-search-pmax-id",             "value"),
+        State("sec-xmin-id",                    "value"),
+        State("sec-xmax-id",                    "value"),
+        State("sec-ymin-id",                    "value"),
+        State("sec-ymax-id",                    "value"),
+        State("diagram-dropdown",               "value"),
+        State("pressure-unit-prev",             "children"),
+
+        prevent_initial_call = true,
+
+    ) do n_clicks_load, pressure_unit, filename, p1_cur, p2_cur, spmin_cur, spmax_cur, xmin_cur, xmax_cur, ymin_cur, ymax_cur, diagType, pressure_unit_prev
+
+        if state_load_triggered()
+            file = state_options_file(filename)
+            isnothing(file) && return ntuple(_ -> no_update(), 15)
+            keys_sec = ("sec_p1", "sec_t1", "sec_p2", "sec_t2", "sec_search_pmin", "sec_search_pmax", "sec_search_tmin", "sec_search_tmax", "pressure_unit",
+                        "sec_range_mode", "sec_xmin", "sec_xmax", "sec_ymin", "sec_ymax", "diagram_type")
+            v = state_read(file, keys_sec...; optional = keys_sec)
+            unit  = something(v[9], "kbar")
+            pc(x) = isnothing(x) ? no_update() : round(display_pressure(state_pressure_kbar(x, unit)), digits = 10)
+            tc(x) = isnothing(x) ? no_update() : x
+            box   = (v[1], v[3], v[2], v[4])
+            if all(x -> x isa Number, box)
+                plo, phi = extrema(Float64.(box[1:2]))
+                tlo, thi = extrema(Float64.(box[3:4]))
+                box      = (plo, phi, tlo, thi)
+            end
+            ax    = string(something(v[15], "")) in SECTION_TYPES ? MAGEMin_C.SECTION_XY[Symbol(v[15])] : (:S, :V)
+            mc(x, c) = c === :P ? pc(x) : tc(x)
+            ul    = pressure_unit_label()
+            mode  = isnothing(v[10]) ? "inscribed" : section_range_mode(v[10])
+            return pc(box[1]), tc(box[3]), pc(box[2]), tc(box[4]), "Pressure [$ul]", pc(v[5]), pc(v[6]), tc(v[7]), tc(v[8]), "Pressure [$ul]",
+                   mode, mc(v[11], ax[1]), mc(v[12], ax[1]), mc(v[13], ax[2]), mc(v[14], ax[2])
+        end
+
+        was_gpa = (pressure_unit_prev == "gpa")
+        is_gpa  = (pressure_unit == "gpa")
+        ax      = diagType in SECTION_TYPES ? MAGEMin_C.SECTION_XY[Symbol(diagType)] : (:S, :V)
+        cur     = Any[p1_cur, p2_cur, spmin_cur, spmax_cur, xmin_cur, xmax_cur, ymin_cur, ymax_cur]
+        isP     = Bool[true, true, true, true, ax[1] === :P, ax[1] === :P, ax[2] === :P, ax[2] === :P]
+        out     = Any[no_update() for _ in 1:8]
+        if was_gpa != is_gpa
+            factor = is_gpa ? (1.0/10.0) : 10.0
+            for k in 1:8
+                isP[k] && cur[k] isa Number && (out[k] = round(cur[k] * factor, digits = 10))
+            end
+        end
+        ul = is_gpa ? "GPa" : "kbar"
+        return out[1], no_update(), out[2], no_update(), "Pressure [$ul]", out[3], out[4], no_update(), no_update(), "Pressure [$ul]",
+               no_update(), out[5], out[6], out[7], out[8]
+    end
+
+    callback!(
+        app,
+        Output("sec-manual-id",         "style"),
+        Output("sec-xaxis-label-id",    "children"),
+        Output("sec-yaxis-label-id",    "children"),
+        Input("sec-range-mode-id",      "value"),
+        Input("diagram-dropdown",       "value"),
+        Input("pressure-unit-dropdown", "value"),
+    ) do mode, diagType, pressure_unit
+        diagType in SECTION_TYPES || return Dict("display" => "none"), no_update(), no_update()
+        ax      = MAGEMin_C.SECTION_XY[Symbol(diagType)]
+        lbl(c)  = c === :P ? "Pressure [$(pressure_unit == "gpa" ? "GPa" : "kbar")]" : section_axis_title(c)
+        return Dict("display" => section_range_mode(mode) == "manual" ? "block" : "none"), lbl(ax[1]), lbl(ax[2])
+    end
+
+    callback!(
+        app,
+        Output("sec-search-pmin-id",    "placeholder"),
+        Output("sec-search-pmax-id",    "placeholder"),
+        Output("sec-search-tmin-id",    "placeholder"),
+        Output("sec-search-tmax-id",    "placeholder"),
+        Input("sec-p1-id",              "value"),
+        Input("sec-t1-id",              "value"),
+        Input("sec-p2-id",              "value"),
+        Input("sec-t2-id",              "value"),
+        Input("pressure-unit-dropdown", "value"),
+        Input("diagram-dropdown",       "value"),
+        Input("pmin-id",                "value"),
+        Input("pmax-id",                "value"),
+        Input("tmin-id",                "value"),
+        Input("tmax-id",                "value"),
+        Input("fixed-pressure-val-id",  "value"),
+        Input("fixed-temperature-val-id", "value"),
+        Input("sec-range-mode-id",      "value"),
+    ) do p1, t1, p2, t2, pressure_unit, diagType, pmin, pmax, tmin, tmax, fixP, fixT, mode
+        tokbar(x) = pressure_unit == "gpa" ? Float64(x)*10.0 : Float64(x)
+        todisp(x) = pressure_unit == "gpa" ? x/10.0 : x
+        if section_x_fixed_P(diagType)
+            any(x -> !(x isa Number), (fixP, tmin, tmax)) && return ntuple(_ -> no_update(), 4)
+            Pc, Tc = (tokbar(fixP), tokbar(fixP)), (Float64(tmin), Float64(tmax))
+        elseif diagType == "vx"
+            any(x -> !(x isa Number), (fixT, pmin, pmax)) && return ntuple(_ -> no_update(), 4)
+            Pc, Tc = (tokbar(pmin), tokbar(pmax)), (Float64(fixT), Float64(fixT))
+        else
+            any(x -> !(x isa Number), (p1, t1, p2, t2)) && return ntuple(_ -> no_update(), 4)
+            Pc, Tc = (tokbar(p1), tokbar(p2)), (Float64(t1), Float64(t2))
+        end
+        sP, sT    = section_search_box(Pc, Tc; widen = diagType in SECTION_TYPES ? section_widen(mode) : 3.0)
+        fmt(x)    = string(round(x, sigdigits = 4))
+        return fmt(todisp(sP[1])), fmt(todisp(sP[2])), fmt(sT[1]), fmt(sT[2])
+    end
+
+    callback!(
+        app,
+        Output("sec-adv-collapse",  "is_open"),
+        Input("sec-adv-btn",        "n_clicks"),
+        State("sec-adv-collapse",   "is_open"),
+        prevent_initial_call = true,
+    ) do n, is_open
+        return n > 0 ? (is_open == 0) : is_open
+    end
+
+    callback!(
+        app,
+        Output("section-ranges-text-id",        "children"),
+        Output("section-ranges-warning",        "children"),
+        Output("section-ranges-warning",        "is_open"),
+        Output("section-image-graph-id",        "figure"),
+        Output("section-image-wrap-id",         "style"),
+
+        Input("compute-section-ranges-button",  "n_clicks"),
+        Input("diagram-dropdown",               "value"),
+        Input("sec-range-mode-id",              "value"),
+
+        State("table-bulk-rock",                "data"),
+        State("select-bulk-unit",               "value"),
+        State("sec-p1-id",                      "value"),
+        State("sec-t1-id",                      "value"),
+        State("sec-p2-id",                      "value"),
+        State("sec-t2-id",                      "value"),
+        State("database-dropdown",              "value"),
+        State("dataset-dropdown",               "value"),
+        State("buffer-dropdown",                "value"),
+        State("buffer-1-mul-id",                "value"),
+        State("solver-dropdown",                "value"),
+        State("optimizer-dropdown",             "value"),
+        State("phase-selection",                "value"),
+        State("pure-phase-selection",           "value"),
+        State("mb-cpx-switch",                  "value"),
+        State("limit-ca-opx-id",                "value"),
+        State("ca-opx-val-id",                  "value"),
+        State("table-2-bulk-rock",              "data"),
+        State("buffer-2-mul-id",                "value"),
+        State("fixed-pressure-val-id",          "value"),
+        State("fixed-temperature-val-id",       "value"),
+        State("pmin-id",                        "value"),
+        State("pmax-id",                        "value"),
+        State("tmin-id",                        "value"),
+        State("tmax-id",                        "value"),
+        State("sec-xmin-id",                    "value"),
+        State("sec-xmax-id",                    "value"),
+        State("sec-ymin-id",                    "value"),
+        State("sec-ymax-id",                    "value"),
+        State("sec-search-pmin-id",             "value"),
+        State("sec-search-pmax-id",             "value"),
+        State("sec-search-tmin-id",             "value"),
+        State("sec-search-tmax-id",             "value"),
+
+        prevent_initial_call = true,
+
+    ) do n_clicks, diagType, mode, bulk_data, sys_unit, p1, t1, p2, t2, dtb, dataset, bufferType, bufferN, solver, optimizer, ph_selection, pure_ph_selection, cpx, limOpx, limOpxVal,
+         bulk_data2, bufferN2, fixP, fixT, pmin, pmax, tmin, tmax, xmin, xmax, ymin, ymax, spmin, spmax, stmin, stmax
+
+        hidden = Dict("display" => "none", "position" => "relative", "clear" => "both", "marginBottom" => 10)
+        bid    = pushed_button(callback_context())
+        bid == "diagram-dropdown" && return "", "", false, Dict(), hidden
+        bid == "sec-range-mode-id" && (isnothing(n_clicks) || n_clicks == 0 || !(diagType in SECTION_TYPES)) && return ntuple(_ -> no_update(), 5)
+
+        if diagType in SECTION_X_TYPES
+            bulk_L, bulk_R, oxi = get_bulkrock_prop(bulk_data, bulk_data2; sys_unit = sys_unit)
+            phase_selection = remove_phases(string_vec_diff(to_str_vec(ph_selection), to_str_vec(pure_ph_selection), dtb), dtb)
+            bN1     = isnothing(bufferN)  ? 0.0 : Float64(bufferN)
+            bN2     = isnothing(bufferN2) ? 0.0 : Float64(bufferN2)
+            fixv    = section_x_fixed_P(diagType) ? to_kbar_pressure(Float64(fixP)) : Float64(fixT)
+            bnd     = section_x_fixed_P(diagType) ? (Float64(tmin), Float64(tmax)) : (to_kbar_pressure(Float64(pmin)), to_kbar_pressure(Float64(pmax)))
+            yr, ok  = section_x_ranges(diagType, fixv, bnd, bulk_L, bulk_R, bN1, bN2, oxi, dtb, bufferType, solver, phase_selection,
+                                       cpx, limOpx, Float64(limOpxVal); optimizer = optimizer, dataset = dataset)
+            ok || return "", "The bounds do not span a range (a corner minimization failed or equal values).", true, Dict(), hidden
+            yt      = section_axis_title(section_x_prop(diagType))
+            return "Composition [X0 -> X1]: 0 - 1;  $(yt): $(round(yr[1], sigdigits = 5)) - $(round(yr[2], sigdigits = 5))", "", false, Dict(), hidden
+        end
+        diagType in SECTION_TYPES || return "", "Select a section diagram (P-S, P-V, T-S, T-V, S-V, P-H, S-H, V-H, S-X, H-X or V-X) first.", true, Dict(), hidden
+        any(x -> !(x isa Number), (p1, t1, p2, t2)) && return "", "Provide the pressure and temperature bounds of the box.", true, Dict(), hidden
+
+        bulk_L, _, oxi  = get_bulkrock_prop(bulk_data, bulk_data; sys_unit = sys_unit)
+        phase_selection = remove_phases(string_vec_diff(to_str_vec(ph_selection), to_str_vec(pure_ph_selection), dtb), dtb)
+        Pc              = (to_kbar_pressure(Float64(p1)), to_kbar_pressure(Float64(p2)))
+        Tc              = (Float64(t1), Float64(t2))
+        bN              = isnothing(bufferN) ? 0.0 : Float64(bufferN)
+
+        (Pc[2] > Pc[1] && Tc[2] > Tc[1]) || return "", "The box needs P max > P min and T max > T min.", true, Dict(), hidden
+        mode            = section_range_mode(mode)
+
+        numP(v)      = v isa Number ? to_kbar_pressure(Float64(v)) : nothing
+        numT(v)      = v isa Number ? Float64(v) : nothing
+        rx, ry, poly, ok = section_box_ranges(  diagType, Pc, Tc, bulk_L, oxi, dtb, bufferType, solver, bN, phase_selection,
+                                                cpx, limOpx, Float64(limOpxVal); mode = mode, optimizer = optimizer, dataset = dataset,
+                                                limits = (numP(spmin), numP(spmax), numT(stmin), numT(stmax)) )
+        if mode == "manual"
+            rx, ry, ok = section_manual_ranges(diagType, xmin, xmax, ymin, ymax)
+            ok || return "", "Provide the manual ranges (min < max on both axes).", true, Dict(), hidden
+        end
+        ok || return "", "The image of the box is degenerate (boundary minimizations failed or the box is too small).", true, Dict(), hidden
+
+        lim          = section_limits(Pc, Tc, (numP(spmin), numP(spmax), numT(stmin), numT(stmax)), mode)
+        sxs, sys     = section_box_image(diagType, (lim[1], lim[2]), (lim[3], lim[4]), bulk_L, oxi, dtb, bufferType, solver, bN, phase_selection,
+                                         cpx, limOpx, Float64(limOpxVal); optimizer = optimizer, dataset = dataset)
+
+        xt, yt, _, _ = diagram_type(diagType, 0.0, 1.0, 0.0, 1.0, 0, 0, 0, 0)
+        ax           = MAGEMin_C.SECTION_XY[Symbol(diagType)]
+        dsp(v, c)    = c === :P ? display_pressure(v) : v
+        fmt(r, c)    = "$(round(dsp(r[1], c), sigdigits = 5)) - $(round(dsp(r[2], c), sigdigits = 5))"
+        px           = [dsp.(poly[1], ax[1]); dsp(poly[1][1], ax[1])]
+        py           = [dsp.(poly[2], ax[2]); dsp(poly[2][1], ax[2])]
+        bx           = dsp.([rx[1], rx[2], rx[2], rx[1], rx[1]], ax[1])
+        by           = dsp.([ry[1], ry[1], ry[2], ry[2], ry[1]], ax[2])
+        has_s        = length(sxs) >= 3
+        qx           = has_s ? [dsp.(sxs, ax[1]); dsp(sxs[1], ax[1])] : Float64[]
+        qy           = has_s ? [dsp.(sys, ax[2]); dsp(sys[1], ax[2])] : Float64[]
+        function view(inner, outer)
+            lo, hi = extrema(inner)
+            sp     = hi - lo
+            if !isempty(outer)
+                olo, ohi = extrema(outer)
+                lo, hi   = min(lo, max(olo, lo - 0.5*sp)), max(hi, min(ohi, hi + 0.5*sp))
+            end
+            d = 0.04*(hi - lo)
+            return [lo - d, hi + d]
+        end
+        traces       = has_s ? [ scatter(x = qx, y = qy, mode = "lines", name = "reachable (search box)",
+                                         line = attr(color = "#7f8c8d", width = 1.2, dash = "dot"), fill = "toself", fillcolor = "rgba(127,140,141,0.08)") ] : []
+        fig          = plot([ traces...,
+                              scatter(x = px, y = py, mode = "lines+markers", name = "image of the P-T box",
+                                      line = attr(color = "#4a6fa5", width = 1.5), marker = attr(size = 4), fill = "toself", fillcolor = "rgba(74,111,165,0.12)"),
+                              scatter(x = bx, y = by, mode = "lines", name = "diagram ($(mode))", line = attr(color = "#c0392b", width = 2.5, dash = "dash"),
+                                      fill = "toself", fillcolor = "rgba(192,57,43,0.10)") ],
+                            Layout( height = 340, autosize = true, margin = attr(l = 60, r = 10, t = 10, b = 50),
+                                    xaxis = attr(title = xt, range = view([px; bx], qx), autorange = false, showline = true, linecolor = "#888", mirror = true),
+                                    yaxis = attr(title = yt, range = view([py; by], qy), autorange = false, showline = true, linecolor = "#888", mirror = true),
+                                    legend = attr(orientation = "h", y = -0.3), plot_bgcolor = "white",
+                                    paper_bgcolor = "white" ))
+        return "$(xt): $(fmt(rx, ax[1]));  $(yt): $(fmt(ry, ax[2]))", "", false, fig, Dict("display" => "block", "position" => "relative", "clear" => "both", "marginBottom" => 10)
+    end
 
     callback!(
         app,
