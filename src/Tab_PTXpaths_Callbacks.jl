@@ -1898,14 +1898,19 @@ function Tab_PTXpaths_Callbacks(app)
                 return fail("No 'O' oxide in the current chemical system")
             end
 
-            new_O_val = sys_unit == 1 ? out.bulk[o_idx] * 100.0 : mol2wt(out.bulk, out.oxides)[o_idx]
-            new_O_val = round(new_O_val, digits=6)
-
             dataout = copy(tb_data)
             row_idx = findfirst(r -> r[:oxide] == "O", dataout)
             if isnothing(row_idx)
                 return fail("No 'O' oxide row in the current bulk-rock table")
             end
+
+            ph_comp(i) = sys_unit == 1 ? (i <= out.n_SS ? out.SS_vec[i].Comp    : out.PP_vec[i-out.n_SS].Comp) :
+                                         (i <= out.n_SS ? out.SS_vec[i].Comp_wt : out.PP_vec[i-out.n_SS].Comp_wt)
+            ph_f       = sys_unit == 1 ? out.ph_frac : out.ph_frac_wt
+            bulk_eff   = sum(ph_f[i] .* ph_comp(i) for i in findall(out.ph .!= bufferType))
+            ratio_O    = bulk_eff[o_idx] / (sum(bulk_eff) - bulk_eff[o_idx])
+            tb_val(r)  = r[:fraction] isa String ? parse(Float64, r[:fraction]) : Float64(r[:fraction])
+            new_O_val  = round(ratio_O * sum(tb_val(r) for r in dataout if r[:oxide] != "O"), digits=6)
             dataout[row_idx] = Dict(:oxide => "O", :fraction => new_O_val)
 
             return dataout, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, no_upd, string(new_O_val), false, no_update(), no_upd, no_upd
@@ -2013,9 +2018,9 @@ function Tab_PTXpaths_Callbacks(app)
             preset_value_out = no_update()
         end
 
-        dataset_options = [Dict(    "label"     => "ds$(db_in.dataset_opt[i])",
-                                    "value"     => db_in.dataset_opt[i] )
-                                for i = 1:length(db_in.dataset_opt) ]
+        dataset_options = [Dict(    "label"     => "ds$(d)",
+                                    "value"     => d )
+                                for d in unique(db_in.dataset_opt) ]
         dataset_value    = keep_dataset(bid in ("database-dropdown-ptx", ""), dataset, db_in)
 
         return data, opts, val, cap, phase_selection_options, phase_selection_value, pure_phase_selection_options, pure_phase_selection_value, adv_phase_options, dataset_options, dataset_value, no_update(), no_update(), no_update(), preset_style, preset_value_out

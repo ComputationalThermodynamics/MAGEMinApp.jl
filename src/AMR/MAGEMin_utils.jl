@@ -5,6 +5,64 @@ locked_multi_point_minimization(args...; kwargs...) = lock(() -> MAGEMin_C.multi
 locked_multi_point_section(args...; kwargs...)      = lock(() -> MAGEMin_C.multi_point_section(args...; kwargs...), MINIMIZATION_LOCK)
 
 """
+    mu_prepass_gamma(   evals,          bulk_ref,       oxi,
+                        dtb,            bufferType,     solver,
+                        verbose,        bufferN,        phase_selection,
+                        cpx,            limOpx,         limOpxVal;
+                        optimizer   )
+
+    Runs one single-point minimization per entry of `evals`, each a named tuple
+    `(P, T, content, target)`: `content` is a vector of `oxide_idx => mol fraction`
+    overrides applied to `bulk_ref`, `target` the oxide index whose chemical potential
+    (`Gamma`) is read off. Self-contained (own single-thread `init_MAGEMin` instance) so
+    it can run from a "Compute μ bounds" UI action before any AMR mesh or the main
+    multi-threaded `MAGEMin_data` bundle exists — mirrors `get_wat_sat_function`'s
+    pre-pass pattern.
+
+    Returns `(gammas, statuses)` in `evals` order (status 0 = converged).
+"""
+function mu_prepass_gamma(  evals,
+                            bulk_ref        :: Vector{Float64},
+                            oxi             :: Vector{String},
+                            dtb             :: String,
+                            bufferType      :: String,
+                            solver          :: String,
+                            verbose,
+                            bufferN         :: Float64,
+                            phase_selection,
+                            cpx,            limOpx,     limOpxVal;
+                            optimizer       = "nlopt"   )
+
+    mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb, solver, cpx, limOpx, limOpxVal )
+
+    gv, z_b, DB, splx_data = init_MAGEMin(  dtb;
+                                            verbose     = verbose,
+                                            mbCpx       = mbCpx,
+                                            limitCaOpx  = limitCaOpx,
+                                            CaOpxLim    = CaOpxLim,
+                                            buffer      = bufferType,
+                                            solver      = sol,
+                                            optimizer   = get_optimizer(dtb, optimizer, sol)    );
+
+    sys_in      = "mol"
+    gammas      = zeros(Float64, length(evals))
+    statuses    = zeros(Int64,   length(evals))
+    for (k, e) in enumerate(evals)
+        trial   = deepcopy(bulk_ref)
+        for (i, c) in e.content
+            trial[i] = c
+        end
+        gv2     = define_bulk_rock(gv, trial, oxi, sys_in, dtb)
+        out     = deepcopy( point_wise_minimization(e.P, e.T, gv2, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
+        gammas[k], statuses[k] = out.Gamma[e.target], out.status
+    end
+
+    LibMAGEMin.FreeDatabases(gv, DB, z_b, pointer_from_objref(splx_data))
+
+    return gammas, statuses
+end
+
+"""
     compute_mumu_bounds(    fixP,           fixT,
                             bulk_ref,       oxi,
                             oxide1_idx,     oxide2_idx,
@@ -24,11 +82,6 @@ locked_multi_point_section(args...; kwargs...)      = lock(() -> MAGEMin_C.multi
     is "min"/"max" content, so the two evaluated values are sorted into
     (mu_min, mu_max) rather than assumed to correspond directly to
     (content_min, content_max)).
-
-    Self-contained (own single-thread `init_MAGEMin` instance) so it can run
-    standalone from a "Compute μ bounds" UI action before any AMR mesh or
-    the main multi-threaded `MAGEMin_data` bundle exists — mirrors
-    `get_wat_sat_function`'s pre-pass pattern below.
 
     Returns `(mu1_bounds, mu2_bounds, statuses, ok)` where `statuses` is the
     4 `gmin_struct.status` values (0 = converged, 5 = not converged) in
@@ -54,41 +107,64 @@ function compute_mumu_bounds(   fixP            :: Float64,
                                 cpx,            limOpx,     limOpxVal;
                                 optimizer       = "nlopt"   )
 
-    mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb, solver, cpx, limOpx, limOpxVal )
+    ref1, ref2  = bulk_ref[oxide1_idx], bulk_ref[oxide2_idx]
+    evals       = [ (P = fixP, T = fixT, content = [oxide1_idx => oxide1_min, oxide2_idx => ref2], target = oxide1_idx),
+                    (P = fixP, T = fixT, content = [oxide1_idx => oxide1_max, oxide2_idx => ref2], target = oxide1_idx),
+                    (P = fixP, T = fixT, content = [oxide1_idx => ref1, oxide2_idx => oxide2_min], target = oxide2_idx),
+                    (P = fixP, T = fixT, content = [oxide1_idx => ref1, oxide2_idx => oxide2_max], target = oxide2_idx) ]
 
-    gv, z_b, DB, splx_data = init_MAGEMin(  dtb;
-                                            verbose     = verbose,
-                                            mbCpx       = mbCpx,
-                                            limitCaOpx  = limitCaOpx,
-                                            CaOpxLim    = CaOpxLim,
-                                            buffer      = bufferType,
-                                            solver      = sol,
-                                            optimizer   = get_optimizer(dtb, optimizer, sol)    );
+    g, st       = mu_prepass_gamma( evals, bulk_ref, oxi, dtb, bufferType, solver, verbose, bufferN, phase_selection,
+                                    cpx, limOpx, limOpxVal; optimizer = optimizer )
 
-    sys_in  = "mol"
-
-    function eval_gamma(content1, content2, target_idx)
-        trial               = deepcopy(bulk_ref)
-        trial[oxide1_idx]   = content1
-        trial[oxide2_idx]   = content2
-        gv2     = define_bulk_rock(gv, trial, oxi, sys_in, dtb)
-        out     = deepcopy( point_wise_minimization(fixP, fixT, gv2, z_b, DB, splx_data, sys_in; buffer_n=bufferN, rm_list=phase_selection, name_solvus=true) )
-        return out.Gamma[target_idx], out.status
-    end
-
-    mu1_a, status_1a  = eval_gamma(oxide1_min, bulk_ref[oxide2_idx], oxide1_idx)
-    mu1_b, status_1b  = eval_gamma(oxide1_max, bulk_ref[oxide2_idx], oxide1_idx)
-    mu2_a, status_2a  = eval_gamma(bulk_ref[oxide1_idx], oxide2_min, oxide2_idx)
-    mu2_b, status_2b  = eval_gamma(bulk_ref[oxide1_idx], oxide2_max, oxide2_idx)
-
-    LibMAGEMin.FreeDatabases(gv, DB, z_b, pointer_from_objref(splx_data))
-
-    mu1_bounds  = (min(mu1_a,mu1_b), max(mu1_a,mu1_b))
-    mu2_bounds  = (min(mu2_a,mu2_b), max(mu2_a,mu2_b))
-    statuses    = (status_1a, status_1b, status_2a, status_2b)
-    ok          = all(statuses .== 0)
+    mu1_bounds  = (min(g[1],g[2]), max(g[1],g[2]))
+    mu2_bounds  = (min(g[3],g[4]), max(g[3],g[4]))
+    statuses    = Tuple(st)
+    ok          = all(st .== 0)
 
     return mu1_bounds, mu2_bounds, statuses, ok
+end
+
+"""
+    compute_mu_bounds_path( Pvec,           Tvec,
+                            bulk_ref,       oxi,
+                            oxide_idx,      oxide_min,  oxide_max,
+                            dtb,            bufferType, solver,
+                            verbose,        bufferN,    phase_selection,
+                            cpx,            limOpx,     limOpxVal   )
+
+    Pre-pass for a P-μ / T-μ diagram: μ of the fixed oxide at a given content shifts
+    with P (or T), so the oxide is evaluated at its min and max content at every
+    (Pvec[k], Tvec[k]) sample along the varied axis, and the μ bounds are the envelope
+    of all converged values (all values if none converged).
+
+    Returns `(mu_bounds, statuses, ok)`.
+"""
+function compute_mu_bounds_path(Pvec            :: Vector{Float64},
+                                Tvec            :: Vector{Float64},
+                                bulk_ref        :: Vector{Float64},
+                                oxi             :: Vector{String},
+                                oxide_idx       :: Int64,
+                                oxide_min       :: Float64,
+                                oxide_max       :: Float64,
+                                dtb             :: String,
+                                bufferType      :: String,
+                                solver          :: String,
+                                verbose,
+                                bufferN         :: Float64,
+                                phase_selection,
+                                cpx,            limOpx,     limOpxVal;
+                                optimizer       = "nlopt"   )
+
+    evals       = [ (P = P, T = T, content = [oxide_idx => c], target = oxide_idx) for (P, T) in zip(Pvec, Tvec) for c in (oxide_min, oxide_max) ]
+
+    g, st       = mu_prepass_gamma( evals, bulk_ref, oxi, dtb, bufferType, solver, verbose, bufferN, phase_selection,
+                                    cpx, limOpx, limOpxVal; optimizer = optimizer )
+
+    gc          = any(st .== 0) ? g[st .== 0] : g
+    mu_bounds   = (minimum(gc), maximum(gc))
+    ok          = all(st .== 0)
+
+    return mu_bounds, Tuple(st), ok
 end
 
 
@@ -117,7 +193,17 @@ section_x_prop(diagType)    = diagType == "sx" ? :S : diagType == "hx" ? :H : :V
 section_x_mode(diagType)    = diagType == "sx" ? :ps : diagType == "hx" ? :ph : :tv
 section_axis_title(c::Symbol) = c === :P ? "Pressure [$(pressure_unit_label())]" : c === :T ? "Temperature [Celsius]" :
                                 c === :S ? "Entropy [J/K/mol]" : c === :H ? "Enthalpy [kJ/mol]" : c === :rho ? "Density [kg/m³]" : "Volume [cm³/mol]"
-pressure_on_y_axis(diagType) = diagType in ("pt", "px", "ptx") || (diagType in SECTION_TYPES && MAGEMin_C.SECTION_XY[Symbol(diagType)][2] === :P)
+pressure_on_y_axis(diagType) = diagType in ("pt", "px", "ptx", "pmu") || (diagType in SECTION_TYPES && MAGEMin_C.SECTION_XY[Symbol(diagType)][2] === :P)
+
+"""
+    MU_TYPES
+
+    Diagram types computed at fixed chemical potential(s) with MAGEMin_C's `mu_fix_idx`/`mu_fix_val`:
+    "mumu" (μ1-μ2 at fixed P and T), "pmu" (μ-P at fixed T) and "tmu" (μ-T at fixed P). μ is always on the x axis.
+"""
+const MU_TYPES          = ("mumu", "pmu", "tmu")
+
+mu_fixed_oxides(diagType, idx1, idx2, oxi) = diagType == "mumu" ? [oxi[idx1], oxi[idx2]] : diagType in MU_TYPES ? [oxi[idx1]] : String[]
 const SECTION_VOID_HASH = hash("section-void")
 
 function mask_section_void!(field, hashes)
@@ -775,37 +861,33 @@ function get_data_thread( MAGEMin_db :: MAGEMin_Data )
 end
 
 """
-    multi_point_mumu(     target_mu1,     target_mu2,
-                        oxide1_idx,     oxide2_idx,
+    multi_point_mumu(   targets,        fixed_idx,
                         bulk_ref,       oxi,
-                        fixP,           fixT,       dtb,
+                        Pvec,           Tvec,       dtb,
                         MAGEMin_data;
                         bufferN, phase_selection, tol )
 
-    For a mu-mu (chemical potential) diagram: given `n = length(target_mu1)`
-    target (μ1,μ2) grid points, compute — independently per point, in
-    parallel — the equilibrium at each target via MAGEMin_C's native
-    chemical-potential-fixing mechanism (`mu_fix_idx`/`mu_fix_val`): one
-    `point_wise_minimization` call per point with
-    `mu_fix_val=[target_mu1[i], target_mu2[i]]`, no search loop. Requires
-    `MAGEMin_data` to have been built with
-    `mu_fix_idx=[oxi[oxide1_idx],oxi[oxide2_idx]]` at `Initialize_MAGEMin`
-    time (see `refine_MAGEMin`'s "mumu" branch and
-    `compute_new_phaseDiagram`/`refine_phaseDiagram`, which build it this
-    way whenever `diagType=="mumu"`).
+    For chemical-potential diagrams (mu-mu, P-μ, T-μ): given `n = length(targets)`
+    grid points, compute — independently per point, in parallel — the equilibrium
+    at (Pvec[i], Tvec[i]) with the chemical potentials of the oxides `fixed_idx`
+    set to `targets[i]` (same order, one value per fixed oxide) via MAGEMin_C's
+    native chemical-potential-fixing mechanism (`mu_fix_idx`/`mu_fix_val`): one
+    `point_wise_minimization` call per point, no search loop. Requires
+    `MAGEMin_data` to have been built with `mu_fix_idx=oxi[fixed_idx]` at
+    `Initialize_MAGEMin` time (see `mu_fixed_oxides`, used by
+    `compute_new_phaseDiagram`/`refine_phaseDiagram` for every `MU_TYPES` diagram).
 
-    The trial bulk composition is `bulk_ref` with both mu-mu oxides
+    The trial bulk composition is `bulk_ref` with every fixed oxide
     unconditionally overridden to `100.0` (mol%, pre-normalization) — the
-    bulk-rock table's own entries for those two oxides are irrelevant here
+    bulk-rock table's own entries for those oxides are irrelevant here
     (locked/greyed in the UI) and never read. MAGEMin_C's docs for
     `mu_fix_val` require each fixed oxide's bulk content to be set
     "generously in excess" of what its target implies, or the underlying
     fictive-phase mechanism may not reliably activate; `100.0` is used
-    unconditionally for both oxides so this always holds regardless of P,T
-    or the rest of the bulk composition, without needing user input.
-    MAGEMin_C explicitly does not itself verify the target was hit, so this
-    still checks `out.Gamma` against `(target_mu1[i],target_mu2[i])` before
-    reporting a point converged.
+    unconditionally so this always holds regardless of P,T or the rest of
+    the bulk composition, without needing user input. MAGEMin_C explicitly
+    does not itself verify the target was hit, so this still checks
+    `out.Gamma` against `targets[i]` before reporting a point converged.
 
     Mirrors `multi_point_minimization`'s own `@threads :static` outer loop
     over grid points and per-thread buffer pattern (`get_data_thread`) —
@@ -813,49 +895,45 @@ end
 
     Returns `(results, status)`: `results` is a `Vector{gmin_struct}` (for
     direct storage into `Out_XY`/`Hash_XY`/`n_phase_XY` like any other
-    diagram type), `status` is `0` (both targets hit within `tol`) or `5`
+    diagram type), `status` is `0` (all targets hit within `tol`) or `5`
     (not hit — e.g. a target outside what any real phase in the database
     can support at this P,T) per point, same convention as
     `gmin_struct.status`.
 """
-function multi_point_mumu(     target_mu1      :: Vector{Float64},
-                                target_mu2      :: Vector{Float64},
-                                oxide1_idx      :: Int64,
-                                oxide2_idx      :: Int64,
+function multi_point_mumu(      targets         :: Vector{Vector{Float64}},
+                                fixed_idx       :: Vector{Int64},
                                 bulk_ref        :: Vector{Float64},
                                 oxi             :: Vector{String},
-                                fixP            :: Float64,
-                                fixT            :: Float64,
+                                Pvec            :: Vector{Float64},
+                                Tvec            :: Vector{Float64},
                                 dtb             :: String,
                                 MAGEMin_data    :: MAGEMin_Data;
                                 bufferN         :: Float64 = 0.0,
                                 phase_selection = nothing,
                                 tol             :: Float64 = 1e-3    )
 
-    n           = length(target_mu1)
+    n           = length(targets)
     results     = Vector{MAGEMin_C.gmin_struct{Float64, Int64}}(undef, n)
     status      = Vector{Int64}(undef, n)
     sys_in      = "mol"
 
     trial_seed              = deepcopy(bulk_ref)
-    trial_seed[oxide1_idx]  = 100.0
-    trial_seed[oxide2_idx]  = 100.0
+    trial_seed[fixed_idx]  .= 100.0
 
     count = Threads.Atomic{Int}(0)
 
     lock(MINIMIZATION_LOCK)
     try
-        @showprogress desc="Computing $n points..." @threads :static for i in eachindex(target_mu1)
+        @showprogress desc="Computing $n points..." @threads :static for i in eachindex(targets)
 
             gv, z_b, DB, splx_data = get_data_thread(MAGEMin_data)
 
             gv2 = define_bulk_rock(gv, trial_seed, oxi, sys_in, dtb)
-            out = deepcopy( point_wise_minimization(fixP, fixT, gv2, z_b, DB, splx_data, sys_in;
+            out = deepcopy( point_wise_minimization(Pvec[i], Tvec[i], gv2, z_b, DB, splx_data, sys_in;
                                                         buffer_n=bufferN, rm_list=phase_selection, name_solvus=true,
-                                                        mu_fix_val=[target_mu1[i], target_mu2[i]]    ) )
+                                                        mu_fix_val=targets[i]    ) )
 
-            conv        = abs(out.Gamma[oxide1_idx] - target_mu1[i]) < tol &&
-                          abs(out.Gamma[oxide2_idx] - target_mu2[i]) < tol
+            conv        = all(abs(out.Gamma[fixed_idx[k]] - targets[i][k]) < tol for k in eachindex(fixed_idx))
 
             results[i]  = out
             status[i]   = conv ? 0 : 5
@@ -1091,27 +1169,26 @@ function refine_MAGEMin(dtb,data,
                 println("Section diagram: $n_void / $n_new_points point(s) not reached within $(section_x_fixed_P(diagType) ? "T $(round.(search_T, sigdigits = 4)) °C" : "P $(round.(search_P, sigdigits = 4)) kbar") or not resolved (left blank).")
             end
 
-        elseif diagType == "mumu"
+        elseif diagType in MU_TYPES
 
-            target_mu1 = zeros(Float64,n_new_points)
-            target_mu2 = zeros(Float64,n_new_points)
-            for i = 1:n_new_points
-                target_mu1[i] = npoints[i][1]
-                target_mu2[i] = npoints[i][2]
-            end
+            fixed_idx   = diagType == "mumu" ? [mumu_oxide1_idx, mumu_oxide2_idx] : [mumu_oxide1_idx]
+            targets     = [diagType == "mumu" ? [Float64(npoints[i][1]), Float64(npoints[i][2])] : [Float64(npoints[i][1])] for i = 1:n_new_points]
+            Pmu         = [diagType == "pmu" ? Float64(npoints[i][2]) : fixP for i = 1:n_new_points]
+            Tmu         = [diagType == "tmu" ? Float64(npoints[i][2]) : fixT for i = 1:n_new_points]
 
             Out_XY_new, mumu_status = multi_point_mumu(
-                                            target_mu1,     target_mu2,
-                                            mumu_oxide1_idx, mumu_oxide2_idx,
+                                            targets,        fixed_idx,
                                             bulk_L,         oxi,
-                                            fixP,           fixT,           dtb,
+                                            Pmu,            Tmu,            dtb,
                                             MAGEMin_data;
                                             bufferN         = bufferN1,
                                             phase_selection = phase_selection    )
 
+            append!(Sec_status_XY, mumu_status)
+
             n_failed = count(==(5), mumu_status)
             if n_failed > 0
-                println("Warning: $n_failed / $n_new_points mu-mu grid point(s) did not converge (status=5) — check your oxide content bounds.")
+                println("Chemical-potential diagram: $n_failed / $n_new_points point(s) could not reach their μ target (e.g. above fluid saturation) — left blank.")
             end
 
         elseif diagType != "tt"
@@ -1391,7 +1468,7 @@ function refine_MAGEMin(dtb,data,
         end
     end
 
-    if (diagType in SECTION_TYPES || diagType in SECTION_X_TYPES) && length(Sec_status_XY) == n_points
+    if (diagType in SECTION_TYPES || diagType in SECTION_X_TYPES || diagType in MU_TYPES) && length(Sec_status_XY) == n_points
         for i=1:n_points
             if Sec_status_XY[i] != 0
                 Hash_XY[i] = SECTION_VOID_HASH

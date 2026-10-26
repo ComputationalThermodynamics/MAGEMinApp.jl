@@ -1630,15 +1630,17 @@ function Tab_PhaseDiagram_Callbacks(app)
         mumu_oxide1_idx     = 0
         mumu_oxide2_idx     = 0
 
-        if diagType == "mumu"
+        if diagType in MU_TYPES
             mumu_oxide1_idx     = findfirst(oxi .== mumu_oxide1)
-            mumu_oxide2_idx     = findfirst(oxi .== mumu_oxide2)
+            mumu_oxide2_idx     = diagType == "mumu" ? findfirst(oxi .== mumu_oxide2) : 0
 
-            xtitle, ytitle, _, _   = diagram_type(diagType, tmin, tmax, pmin, pmax, e1_tmin, e1_tmax, e2_tmin, e2_tmax;
+            xtitle, ytitle, _, Yrange = diagram_type(diagType, tmin, tmax, pmin, pmax, e1_tmin, e1_tmax, e2_tmin, e2_tmax;
                                                     mumu_oxide1_name=mumu_oxide1, mumu_oxide2_name=mumu_oxide2)
 
             Xrange = (Float64(mumu_mu1_min), Float64(mumu_mu1_max))
-            Yrange = (Float64(mumu_mu2_min), Float64(mumu_mu2_max))
+            if diagType == "mumu"
+                Yrange = (Float64(mumu_mu2_min), Float64(mumu_mu2_max))
+            end
         end
 
         sec_Pbox, sec_Tbox, sec_limits = nothing, nothing, nothing
@@ -2462,8 +2464,10 @@ function Tab_PhaseDiagram_Callbacks(app)
             fname   = "draw_path_phase_fractions"
         end
 
-        xtitle = diagType == "px" ? "X; P [$(pressure_unit_label())]" :
-                 diagType == "tx" ? "X; T [°C]"   : "T [°C]; P [$(pressure_unit_label())]"
+        xtitle = diagType == "px"  ? "X; P [$(pressure_unit_label())]" :
+                 diagType == "tx"  ? "X; T [°C]"   :
+                 diagType == "pmu" ? "μ; P [$(pressure_unit_label())]" :
+                 diagType == "tmu" ? "μ; T [°C]"   : "T [°C]; P [$(pressure_unit_label())]"
 
         layout = Layout(
             font        = attr(size=10),

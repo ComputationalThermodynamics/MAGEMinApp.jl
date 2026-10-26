@@ -664,9 +664,9 @@ function Tab_Simulation_Callbacks(app)
         end
 
 
-        dataset_options = [Dict(    "label"     => "ds$(db_in.dataset_opt[i])",
-                                    "value"     => db_in.dataset_opt[i] )
-                                for i = 1:length(db_in.dataset_opt) ]
+        dataset_options = [Dict(    "label"     => "ds$(d)",
+                                    "value"     => d )
+                                for d in unique(db_in.dataset_opt) ]
         pend = state_pending_dataset[]
         if !isnothing(pend) && bid == "database-dropdown" && pend.database != dtb
             state_pending_dataset[] = nothing
@@ -1282,6 +1282,8 @@ function Tab_Simulation_Callbacks(app)
         Output("display-refine-option-id", "style"),
         Output("display-refine-option-2-id", "style"),
         Output("mumu-setup-id", "style"),
+        Output("mumu-oxide2-row-id", "style"),
+        Output("mumu-mu2-row-id", "style"),
         Output("section-setup-id", "style"),
         Output("sec-corners-id", "style"),
         Output("gsub-row-id", "style"),
@@ -1389,6 +1391,22 @@ function Tab_Simulation_Callbacks(app)
             refine  = Dict("display" => "block")
             refine2 = Dict("display" => "block")
             mumu    = Dict("display" => "block")
+        elseif value == "pmu" || value == "tmu"
+            Tstyle  = Dict("display" => value == "pmu" ? "block" : "none")
+            Pstyle  = Dict("display" => value == "tmu" ? "block" : "none")
+            Ts      = Dict("display" => value == "tmu" ? "block" : "none")
+            Ps      = Dict("display" => value == "pmu" ? "block" : "none")
+            test2   = Dict("display" => "none")
+            table2  = Dict("display" => "none")
+            PTx     = Dict("display" => "none")
+            testte2 = Dict("display" => "none")
+            tabte2  = Dict("display" => "none")
+            watsat  = Dict("display" => "none")
+            T1      = Dict("display" => "none")
+            T2      = Dict("display" => "none")
+            refine  = Dict("display" => "block")
+            refine2 = Dict("display" => "block")
+            mumu    = Dict("display" => "block")
         elseif value == "ptx3d"
             Tstyle  = Dict("display" => "none")
             Pstyle  = Dict("display" => "none")
@@ -1423,6 +1441,7 @@ function Tab_Simulation_Callbacks(app)
             mumu    = Dict("display" => "none")
         end
 
+        mumu2   = Dict("display" => value == "mumu" ? "block" : "none")
         section = Dict("display" => (value in SECTION_TYPES || value in SECTION_X_TYPES) ? "block" : "none")
         corners = Dict("display" => value in SECTION_TYPES ? "block" : "none")
         if value in SECTION_TYPES
@@ -1436,7 +1455,7 @@ function Tab_Simulation_Callbacks(app)
         tepmrow = Dict("display" => is3d ? "none"  : "block")
         res3d   = Dict("display" => is3d ? "block" : "none")
 
-        return Tstyle, Pstyle, Ts, Ps, test2, table2, PTx, testte2, tabte2, watsat, T1, T2, refine, refine2, mumu, section, corners, gsub, tepmrow, res3d, refine
+        return Tstyle, Pstyle, Ts, Ps, test2, table2, PTx, testte2, tabte2, watsat, T1, T2, refine, refine2, mumu, mumu2, mumu2, section, corners, gsub, tepmrow, res3d, refine
     end
 
 
@@ -1456,13 +1475,13 @@ function Tab_Simulation_Callbacks(app)
     ) do bulk_data, ox1, ox2, diagType
 
         oxides  = [row["oxide"] for row in bulk_data]
-        opts1   = [Dict("label" => ox, "value" => ox) for ox in oxides if ox != ox2]
+        opts1   = [Dict("label" => ox, "value" => ox) for ox in oxides if ox != ox2 || diagType != "mumu"]
         opts2   = [Dict("label" => ox, "value" => ox) for ox in oxides if ox != ox1]
 
         style_cond = []
-        if diagType == "mumu"
+        if diagType in MU_TYPES
             for (i, row) in enumerate(bulk_data)
-                if row["oxide"] == ox1 || row["oxide"] == ox2
+                if row["oxide"] == ox1 || (row["oxide"] == ox2 && diagType == "mumu")
                     push!(style_cond, Dict(
                         "if"                => Dict("row_index" => i-1, "column_id" => "fraction"),
                         "backgroundColor"   => "#e9ecef",
@@ -1504,10 +1523,15 @@ function Tab_Simulation_Callbacks(app)
         State("solver-dropdown",               "value"),
         State("optimizer-dropdown",            "value"),
         State("select-bulk-unit",              "value"),
+        State("diagram-dropdown",              "value"),
+        State("pmin-id",                       "value"),
+        State("pmax-id",                       "value"),
+        State("tmin-id",                       "value"),
+        State("tmax-id",                       "value"),
 
         prevent_initial_call = true,
 
-    ) do n_clicks, n_clicks_load, filename, bulk_data, ox1, ox2, ox1_min, ox1_max, ox2_min, ox2_max, fixP, fixT, dtb, bufferType, solver, optimizer, sys_unit
+    ) do n_clicks, n_clicks_load, filename, bulk_data, ox1, ox2, ox1_min, ox1_max, ox2_min, ox2_max, fixP, fixT, dtb, bufferType, solver, optimizer, sys_unit, diagType, pmin, pmax, tmin, tmax
 
         if state_load_triggered()
             file = state_options_file(filename)
@@ -1528,6 +1552,22 @@ function Tab_Simulation_Callbacks(app)
         idx1    = findfirst(oxi .== ox1)
         idx2    = findfirst(oxi .== ox2)
         fixP_kbar = to_kbar_pressure(Float64(fixP))
+
+        if diagType == "pmu" || diagType == "tmu"
+            n_s     = 5
+            Pvec    = diagType == "pmu" ? collect(range(to_kbar_pressure(Float64(pmin)), to_kbar_pressure(Float64(pmax)), length = n_s)) : fill(fixP_kbar, n_s)
+            Tvec    = diagType == "tmu" ? collect(range(Float64(tmin), Float64(tmax), length = n_s)) : fill(Float64(fixT), n_s)
+            mu_bounds, statuses, ok = compute_mu_bounds_path(
+                Pvec,               Tvec,
+                bulk,               oxi,
+                idx1,               Float64(ox1_min)/100.0,    Float64(ox1_max)/100.0,
+                dtb,    bufferType, solver,
+                -1,  0.0,        nothing,
+                false,  "OFF",      0.0;
+                optimizer = optimizer   )
+            warn_msg, warn_open = ok ? ("", false) : ("$(count(!=(0), statuses)) / $(length(statuses)) pre-pass minimizations did not converge — bounds use the converged ones only and may be unreliable. Try narrower content bounds.", true)
+            return round(mu_bounds[1],digits=2), round(mu_bounds[2],digits=2), no_update(), no_update(), warn_msg, warn_open
+        end
 
         mu1_bounds, mu2_bounds, statuses, ok = compute_mumu_bounds(
             fixP_kbar,          Float64(fixT),

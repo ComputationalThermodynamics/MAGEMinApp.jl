@@ -286,7 +286,7 @@ function Tab_TraceElement_Callbacks(app)
 
         pmin, pmax                      = to_kbar_pressure(Float64(pmin)), to_kbar_pressure(Float64(pmax))                                  # convert displayed pressure unit to kbar
         xtitle, ytitle, Xrange, Yrange  = diagram_type(diagType, tmin, tmax, pmin, pmax, e1_tmin, e1_tmax, e2_tmin, e2_tmax)
-        if (diagType in SECTION_TYPES || diagType in SECTION_X_TYPES || diagType == "mumu") && @isdefined(data)
+        if (diagType in SECTION_TYPES || diagType in SECTION_X_TYPES || diagType in MU_TYPES) && @isdefined(data)
             Xrange, Yrange              = (Float64(data.Xrange[1]), Float64(data.Xrange[2])), (Float64(data.Yrange[1]), Float64(data.Yrange[2]))
         end
         bulk_L, bulk_R, oxi             = get_bulkrock_prop(bulk1, bulk2)

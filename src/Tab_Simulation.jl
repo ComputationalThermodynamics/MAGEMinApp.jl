@@ -215,20 +215,22 @@ function Tab_Simulation()
                                                 (label = "PT-X diagram",                            value = "ptx"),
                                                 (label = "T-T diagram (poly-metamorphic)",          value = "tt"),
                                                 (label = "μ-μ diagram (chemical potential)",        value = "mumu"),
+                                                (label = "P-μ diagram (fixed temperature)",         value = "pmu"),
+                                                (label = "T-μ diagram (fixed pressure)",            value = "tmu"),
                                                 (label = "P-T-X 3D diagram",                        value = "ptx3d"),
-                                                (label = "- S-V-H diagrams -", value = "sep-sections",         disabled = true),
-                                                (label = "P-S diagram (fixed composition)",         value = "ps"),
-                                                (label = "P-V diagram (fixed composition)",         value = "pv"),
-                                                (label = "T-S diagram (fixed composition)",         value = "ts"),
-                                                (label = "T-V diagram (fixed composition)",         value = "tv"),
-                                                (label = "S-V diagram (fixed composition)",         value = "sv"),
-                                                (label = "P-H diagram (fixed composition)",         value = "ph"),
-                                                (label = "S-H diagram (fixed composition)",         value = "sh"),
-                                                (label = "V-H diagram (fixed composition)",         value = "vh"),
-                                                (label = "ρ-H diagram (fixed composition)",         value = "rh"),
-                                                (label = "S-X diagram (fixed pressure)",            value = "sx"),
-                                                (label = "H-X diagram (fixed pressure)",            value = "hx"),
-                                                (label = "V-X diagram (fixed temperature)",         value = "vx"),
+                                                # (label = "- S-V-H diagrams -", value = "sep-sections",         disabled = true),
+                                                # (label = "P-S diagram (fixed composition)",         value = "ps"),
+                                                # (label = "P-V diagram (fixed composition)",         value = "pv"),
+                                                # (label = "T-S diagram (fixed composition)",         value = "ts"),
+                                                # (label = "T-V diagram (fixed composition)",         value = "tv"),
+                                                # (label = "S-V diagram (fixed composition)",         value = "sv"),
+                                                # (label = "P-H diagram (fixed composition)",         value = "ph"),
+                                                # (label = "S-H diagram (fixed composition)",         value = "sh"),
+                                                # (label = "V-H diagram (fixed composition)",         value = "vh"),
+                                                # (label = "ρ-H diagram (fixed composition)",         value = "rh"),
+                                                # (label = "S-X diagram (fixed pressure)",            value = "sx"),
+                                                # (label = "H-X diagram (fixed pressure)",            value = "hx"),
+                                                # (label = "V-X diagram (fixed temperature)",         value = "vx"),
 
                                             ],
                                             value="pt" ,
@@ -645,6 +647,7 @@ function Tab_Simulation()
                                                 ]),
                                             ]),
                                         ]),
+                                        html_div([
                                         html_div("‎ "),
                                         dbc_row([
                                             dbc_col([
@@ -669,6 +672,7 @@ function Tab_Simulation()
                                                 ]),
                                             ]),
                                         ]),
+                                        ], id = "mumu-oxide2-row-id"),
                                         html_div("‎ "),
                                         dbc_row([
                                             dbc_col([
@@ -683,25 +687,27 @@ function Tab_Simulation()
                                                 html_div("‎ "),
                                                 dbc_row([
                                                     dbc_col([
-                                                        html_h1("min [μ1, J/mol]", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                        html_h1("min [μ1, kJ/mol]", style = Dict("textAlign" => "center","font-size" => "100%")),
                                                         dbc_input(id = "mumu-mu1-min-id", type = "number", value = 0.0),
                                                     ]),
                                                     dbc_col([
-                                                        html_h1("max [μ1, J/mol]", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                        html_h1("max [μ1, kJ/mol]", style = Dict("textAlign" => "center","font-size" => "100%")),
                                                         dbc_input(id = "mumu-mu1-max-id", type = "number", value = 1.0),
                                                     ]),
                                                 ]),
+                                                html_div([
                                                 html_div("‎ "),
                                                 dbc_row([
                                                     dbc_col([
-                                                        html_h1("min [μ2, J/mol]", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                        html_h1("min [μ2, kJ/mol]", style = Dict("textAlign" => "center","font-size" => "100%")),
                                                         dbc_input(id = "mumu-mu2-min-id", type = "number", value = 0.0),
                                                     ]),
                                                     dbc_col([
-                                                        html_h1("max [μ2, J/mol]", style = Dict("textAlign" => "center","font-size" => "100%")),
+                                                        html_h1("max [μ2, kJ/mol]", style = Dict("textAlign" => "center","font-size" => "100%")),
                                                         dbc_input(id = "mumu-mu2-max-id", type = "number", value = 1.0),
                                                     ]),
                                                 ]),
+                                                ], id = "mumu-mu2-row-id"),
                                             ]),
                                         ]),
                                         html_div("‎ "),

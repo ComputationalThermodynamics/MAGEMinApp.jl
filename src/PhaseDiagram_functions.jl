@@ -506,6 +506,10 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         dgtype = "Polymetamorphic T-T path, fixed pressure"
     elseif diagType == "mumu"
         dgtype = "μ-μ (chemical potential), fixed pressure and temperature"
+    elseif diagType == "pmu"
+        dgtype = "Pressure-μ (chemical potential), fixed temperature"
+    elseif diagType == "tmu"
+        dgtype = "Temperature-μ (chemical potential), fixed pressure"
     elseif diagType == "sx"
         dgtype = "Entropy-Composition, fixed pressure"
     elseif diagType == "hx"
@@ -600,6 +604,12 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         PD_infos[1] *= "Bulk comp [mol] <br>"
         PD_infos[1] *= "Fixed Pres [$(pressure_unit_label())] <br>"
         PD_infos[1] *= "Fixed Temp <br>"
+    elseif diagType == "pmu"
+        PD_infos[1] *= "Bulk comp [mol] <br>"
+        PD_infos[1] *= "Fixed Temp <br>"
+    elseif diagType == "tmu"
+        PD_infos[1] *= "Bulk comp [mol] <br>"
+        PD_infos[1] *= "Fixed Pres [$(pressure_unit_label())] <br>"
     end
     if diagType in SECTION_X_TYPES && !isnothing(sec_Pbox)
         PD_infos[1] *= (section_x_fixed_P(diagType) ? "T bounds <br>" : "P bounds <br>")
@@ -683,6 +693,12 @@ function get_phase_diagram_information(npoints, dtb,diagType,solver,bulk_L, bulk
         PD_infos[2] *= join(round.(bulk_L,digits=6), " ") *"<br>"
         PD_infos[2] *= join(display_pressure(fixP), " ") *"<br>"
         PD_infos[2] *= join(fixT, " ") *"<br>"
+    elseif diagType == "pmu"
+        PD_infos[2] *= join(round.(bulk_L,digits=6), " ") *"<br>"
+        PD_infos[2] *= join(fixT, " ") *"<br>"
+    elseif diagType == "tmu"
+        PD_infos[2] *= join(round.(bulk_L,digits=6), " ") *"<br>"
+        PD_infos[2] *= join(display_pressure(fixP), " ") *"<br>"
     end
 
     if diagType in SECTION_X_TYPES && !isnothing(sec_Pbox)
@@ -743,10 +759,20 @@ function diagram_type(diagType, tmin, tmax, pmin, pmax, e1_tmin, e1_tmax, e2_tmi
             Xrange          = (Float64(e2_tmin),Float64(e2_tmax))
             Yrange          = (Float64(e1_tmin),Float64(e1_tmax))
     elseif diagType == "mumu"
-            xtitle = "μ($(mumu_oxide1_name)) [J/mol]"
-            ytitle = "μ($(mumu_oxide2_name)) [J/mol]"
+            xtitle = "μ($(mumu_oxide1_name)) [kJ/mol]"
+            ytitle = "μ($(mumu_oxide2_name)) [kJ/mol]"
             Xrange          = (Float64(0.0),Float64(1.0))
             Yrange          = (Float64(0.0),Float64(1.0))
+    elseif diagType == "pmu"
+            xtitle = "μ($(mumu_oxide1_name)) [kJ/mol]"
+            ytitle = "Pressure [$(pressure_unit_label())]"
+            Xrange          = (Float64(0.0),Float64(1.0))
+            Yrange          = (Float64(pmin),Float64(pmax))
+    elseif diagType == "tmu"
+            xtitle = "μ($(mumu_oxide1_name)) [kJ/mol]"
+            ytitle = "Temperature [Celsius]"
+            Xrange          = (Float64(0.0),Float64(1.0))
+            Yrange          = (Float64(tmin),Float64(tmax))
     else
         error("Unknown diagram type: $diagType")
     end
@@ -1119,7 +1145,7 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
         end
 
         CompProgress.stage = "Initialize MAGEMin"
-        mu_fix_idx      = diagType == "mumu" ? [oxi[mumu_oxide1_idx], oxi[mumu_oxide2_idx]] : String[]
+        mu_fix_idx      = mu_fixed_oxides(diagType, mumu_oxide1_idx, mumu_oxide2_idx, oxi)
         MAGEMin_data    =   Initialize_MAGEMin( dtb;
                                                 verbose             = false,
                                                 dataset             = dataset,
@@ -1342,7 +1368,7 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
     mbCpx,limitCaOpx,CaOpxLim,sol = get_init_param( dtb,        solver,
                                                     cpx,        limOpx,     limOpxVal ) 
 
-    mu_fix_idx      = diagType == "mumu" ? [oxi[mumu_oxide1_idx], oxi[mumu_oxide2_idx]] : String[]
+    mu_fix_idx      = mu_fixed_oxides(diagType, mumu_oxide1_idx, mumu_oxide2_idx, oxi)
     MAGEMin_data    =   Initialize_MAGEMin( dtb;
                                             verbose             = false,
                                             dataset             = dataset,
@@ -2156,29 +2182,31 @@ end
 
 
 function _draw_path_point_label(diagType, id)
-    diagType = section_x_fixed_P(diagType) ? "tx" : diagType == "vx" ? "px" : diagType
+    xl       = diagType in ("pmu", "tmu") ? "μ" : "X"
+    diagType = section_x_fixed_P(diagType) || diagType == "tmu" ? "tx" : diagType in ("vx", "pmu") ? "px" : diagType
     global Out_XY, data
     P = round(display_pressure(Out_XY[id].P_kbar), digits=2)
     T = round(Out_XY[id].T_C,    digits=2)
     if (diagType == "px" || diagType == "tx") && @isdefined(data) && id <= length(data.points)
         X = round(data.points[id][1], digits=4)
-        return diagType == "px" ? "X=$(X); P=$(P)" : "X=$(X); T=$(T)"
+        return diagType == "px" ? "$(xl)=$(X); P=$(P)" : "$(xl)=$(X); T=$(T)"
     else
         return "T=$(T); P=$(P)"
     end
 end
 
 function draw_path_table_data(diagType, path_ids)
-    diagType = section_x_fixed_P(diagType) ? "tx" : diagType == "vx" ? "px" : diagType
+    xl       = diagType in ("pmu", "tmu") ? "μ" : "X"
+    diagType = section_x_fixed_P(diagType) || diagType == "tmu" ? "tx" : diagType in ("vx", "pmu") ? "px" : diagType
     global Out_XY, data
 
     p_col = "P[$(pressure_unit_label())]"
 
     if isempty(path_ids)
         if diagType == "px"
-            cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"X","name"=>"X"), Dict("id"=>p_col,"name"=>p_col)]
+            cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"X","name"=>xl), Dict("id"=>p_col,"name"=>p_col)]
         elseif diagType == "tx"
-            cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"X","name"=>"X"), Dict("id"=>"T[°C]","name"=>"T[°C]")]
+            cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"X","name"=>xl), Dict("id"=>"T[°C]","name"=>"T[°C]")]
         else
             cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>p_col,"name"=>p_col), Dict("id"=>"T[°C]","name"=>"T[°C]")]
         end
@@ -2186,11 +2214,11 @@ function draw_path_table_data(diagType, path_ids)
     end
 
     if diagType == "px"
-        cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"X","name"=>"X"), Dict("id"=>p_col,"name"=>p_col)]
+        cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"X","name"=>xl), Dict("id"=>p_col,"name"=>p_col)]
         rows = [Dict("#"=>k, "X"=>(@isdefined(data) && id<=length(data.points) ? round(data.points[id][1],digits=4) : "—"),
                      p_col=>round(display_pressure(Out_XY[id].P_kbar), digits=3)) for (k,id) in enumerate(path_ids)]
     elseif diagType == "tx"
-        cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"X","name"=>"X"), Dict("id"=>"T[°C]","name"=>"T[°C]")]
+        cols = [Dict("id"=>"#","name"=>"#"), Dict("id"=>"X","name"=>xl), Dict("id"=>"T[°C]","name"=>"T[°C]")]
         rows = [Dict("#"=>k, "X"=>(@isdefined(data) && id<=length(data.points) ? round(data.points[id][1],digits=4) : "—"),
                      "T[°C]"=>round(Out_XY[id].T_C, digits=3)) for (k,id) in enumerate(path_ids)]
     else

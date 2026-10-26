@@ -46,9 +46,9 @@ function Tab_PTXpaths()
                                                 ],width=4),
                                                 dbc_col([ 
                                                     dcc_dropdown(   id      = "dataset-dropdown-ptx",
-                                                                    options = [Dict(    "label"     => "ds$(AppData.db_inf.dataset_opt[i])",
-                                                                                        "value"     => AppData.db_inf.dataset_opt[i] )
-                                                                                    for i = 1:length(AppData.db_inf.dataset_opt) ],
+                                                                    options = [Dict(    "label"     => "ds$(d)",
+                                                                                        "value"     => d )
+                                                                                    for d in unique(AppData.db_inf.dataset_opt) ],
                                                                     value       = AppData.db_inf.db_dataset,
                                                                     clearable   = false,
                                                                     multi       = false),

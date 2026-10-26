@@ -175,6 +175,7 @@ The CSV file should have columns for each oxide and relevant metadata. The table
 |---|---|
 | mtl | mantle (Holland et al., 2013) |
 | mp | metapelite (White et al., 2014) |
+| mpmn | metapelite + Mn, solution models calibrated against phase-equilibrium experiments (Riel et al., 2026, in progress) |
 | mb | metabasite (Green et al., 2016) |
 | ig | igneous (Green et al., 2025) |
 | igad | igneous alkaline dry (Weller et al., 2024) |
@@ -539,13 +540,13 @@ function Tab_General_informations()
                     ], style = Dict("overflowX" => "auto")),
                 ], style = Dict("padding" => "12px", "maxWidth" => "1100px", "margin" => "auto")),
             ]),
-            dbc_tab(label="Radiogenic isotopes", children=[
-                html_div([
-                    dbc_card([
-                        dcc_markdown(RadiogenicIsotopes; mathjax=true, style = Dict("font-size" => "130%")),
-                    ], style = Dict("overflowX" => "auto")),
-                ], style = Dict("padding" => "12px", "maxWidth" => "1100px", "margin" => "auto")),
-            ]),
+            # dbc_tab(label="Radiogenic isotopes", children=[
+            #     html_div([
+            #         dbc_card([
+            #             dcc_markdown(RadiogenicIsotopes; mathjax=true, style = Dict("font-size" => "130%")),
+            #         ], style = Dict("overflowX" => "auto")),
+            #     ], style = Dict("padding" => "12px", "maxWidth" => "1100px", "margin" => "auto")),
+            # ]),
             dbc_tab(label="Slab geotherms", children=[
                 html_div([
                     dbc_card([
