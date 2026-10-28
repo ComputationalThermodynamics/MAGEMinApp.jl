@@ -10,8 +10,12 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ =#
 
 const MAGERES_IG_OXIDES    = ["SiO2", "Al2O3", "CaO", "MgO", "FeO", "K2O", "Na2O", "TiO2", "O", "Cr2O3", "H2O"]
-const MAGERES_TONALITE_101 = [66.01, 11.98, 7.06, 4.16, 5.3, 1.57, 4.12, 0.66, 0.97, 0.01, 20.0]
-const MAGERES_WET_BASALT   = [50.081, 8.6901, 11.6698, 12.1438, 7.7832, 0.215, 2.4978, 1.0059, 0.467, 0.01, 5.4364]
+const MAGERES_TONALITE_101 = [66.01, 11.98, 7.06, 4.16, 5.3, 1.57, 4.12, 0.66, 0.0, 0.0, 10.0]
+const MAGERES_WET_BASALT   = [50.081, 8.6901, 11.6698, 12.1438, 7.7832, 0.215, 2.4978, 1.0059, 0.0, 0.0, 5.4364]
+const MAGERES_TE_ELEMENTS  = ["CO2", "S", "P2O5", "Rb", "Ba", "Th", "U", "Nb", "Ta", "La", "Ce", "Pb", "Pr", "Sr", "Nd", "Zr", "Hf", "Sm", "Eu", "Gd", "Tb", "Dy", "Y", "Ho", "Er", "Tm", "Yb", "Lu", "V", "Sc", "Cs", "K", "Ti"]
+const MAGERES_TE_INJECTION = [500.0, 200.0, 200.0, 64.54, 499.01, 5.69, 1.06, 5.43, 0.72, 29.06, 53.78, 15.17, 5.8, 484.58, 20.54, 150.24, 3.96, 3.32, 0.96, 2.42, 0.32, 1.59, 7.46, 0.3, 0.8, 0.13, 0.71, 0.13, 39.88, 5.52, 3.5, 15000.0, 2800.0]
+const MAGERES_TE_MAGMA     = [500.0, 200.0, 200.0, 64.54, 499.01, 5.69, 1.06, 5.43, 0.72, 29.06, 53.78, 15.17, 5.8, 484.58, 20.54, 150.24, 3.96, 3.32, 0.96, 2.42, 0.32, 1.59, 7.46, 0.3, 0.8, 0.13, 0.71, 0.13, 39.88, 5.52, 3.5, 15000.0, 2800.0]
+const MAGERES_TE_HOST      = [100.0, 100.0, 100.0, 16.61, 122.84, 1.07, 0.29, 3.81, 0.33, 6.94, 16.05, 5.45, 2.25, 163.45, 10.18, 66.91, 1.84, 3.35, 0.92, 3.28, 1.42, 3.85, 20.74, 0.91, 2.2, 0.34, 2.14, 0.32, 257.43, 38.24, 0.4, 2000.0, 7500.0]
 
 """
     MAGEResOptions
@@ -21,13 +25,13 @@ const MAGERES_WET_BASALT   = [50.081, 8.6901, 11.6698, 12.1438, 7.7832, 0.215, 2
 """
 Base.@kwdef mutable struct MAGEResOptions
     domain_width_km           :: Float64         = 20.0
-    domain_thickness_km       :: Float64         = 30.0
+    domain_thickness_km       :: Float64         = 15.0
     grid_h_max_m              :: Float64         = 1000.0
     grid_h_min_m              :: Float64         = 62.5
     grid_grading              :: Float64         = 0.25
     lens_length_km            :: Float64         = 5.0
     lens_thickness_m          :: Float64         = 100.0
-    lens_depth_km             :: Float64         = 24.0
+    lens_depth_km             :: Float64         = 9.0
     lens_shape                :: String          = "ellipse"
     lens_n_segments           :: Int             = 32
     opening_mode              :: String          = "split"
@@ -49,7 +53,7 @@ Base.@kwdef mutable struct MAGEResOptions
 
     injection_period_yr       :: Float64         = 1000.0
     first_injection_yr        :: Float64         = 0.0
-    T_injection_C             :: Float64         = 1200.0
+    T_injection_C             :: Float64         = 950.0
     injection_target          :: String          = "body"
     injection_melt_only       :: Bool            = false
 
@@ -59,7 +63,7 @@ Base.@kwdef mutable struct MAGEResOptions
     erupt_frac                :: Float64         = 0.20
     erupt_crystal_frac        :: Float64         = 1.0
     fluid_treatment           :: String          = "removed"
-    eruption_trigger          :: String          = "melt"
+    eruption_trigger          :: String          = "overpressure"
     dP_crit_MPa               :: Float64         = 20.0
     host_shear_modulus_GPa    :: Float64         = 10.0
     host_visc_A_Pas           :: Float64         = 4.25e7
@@ -84,13 +88,13 @@ Base.@kwdef mutable struct MAGEResOptions
     Nu_exponent               :: Float64         = 1.0/3.0
     g                         :: Float64         = 9.81
 
-    te_enabled                :: Bool            = false
+    te_enabled                :: Bool            = true
     kds_mod                   :: String          = "OL"
-    zrsat_mod                 :: String          = "B"
-    te_elements               :: Vector{String}  = String[]
-    te_injection_ppm          :: Vector{Float64} = Float64[]
-    te_magma_ppm              :: Vector{Float64} = Float64[]
-    te_host_ppm               :: Vector{Float64} = Float64[]
+    zrsat_mod                 :: String          = "CB"
+    te_elements               :: Vector{String}  = copy(MAGERES_TE_ELEMENTS)
+    te_injection_ppm          :: Vector{Float64} = copy(MAGERES_TE_INJECTION)
+    te_magma_ppm              :: Vector{Float64} = copy(MAGERES_TE_MAGMA)
+    te_host_ppm               :: Vector{Float64} = copy(MAGERES_TE_HOST)
     zircon_age_bin_yr         :: Float64         = 1000.0
     zircon_nucleation_density :: Float64         = 1e8
     zircon_host_radius_um     :: Float64         = 50.0
@@ -102,8 +106,8 @@ Base.@kwdef mutable struct MAGEResOptions
     zircon_sigma_kyr          :: Float64         = 3.0
     zircon_eruption_age_Ma    :: Float64         = 1.0
 
-    show_grid                 :: Bool            = true
-    show_outline              :: Bool            = true
+    show_grid                 :: Bool            = false
+    show_outline              :: Bool            = false
     show_isotherms            :: Bool            = true
     gif_frame_ms              :: Int             = 250
 end

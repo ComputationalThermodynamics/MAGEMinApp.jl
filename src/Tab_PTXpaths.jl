@@ -376,6 +376,7 @@ function Tab_PTXpaths()
                                     ]),
                                     dbc_tab(    tab_id      = "ptx-tab-o18",
                                                 label       = "Oxygen isotopes",
+                                                tab_style   = ENABLE_O18 ? Dict() : Dict("display" => "none"),
                                                 children    = [
                                         html_div("‎ "),
                                             dbc_row([
@@ -2372,7 +2373,7 @@ svg_export_button_row("te-fieldbuilder-ptx"),
                                 ], width=12),
                             ]),
                         ]),
-                        dbc_tab(label="δ18O", id="o18-tab-ptx", disabled=true, children=[
+                        dbc_tab(label="δ18O", id="o18-tab-ptx", disabled=true, tab_style = ENABLE_O18 ? Dict() : Dict("display" => "none"), children=[
                             dbc_row([
                                 dbc_col([
                                     dbc_card(dbc_cardbody([

@@ -2710,9 +2710,13 @@ function phase_pie_figure(out, dtb, pie_unit, xval)
                         title       = attr(text=title, x=0.5, y=0.96),
                         titlefont   = attr(size=12))
 
+    colors  = [get_phase_color(String(ph); default = "#808080") for ph in legacy_labels]
+
     trace   = pie(; labels          = labels,
                     customdata      = legacy_labels,
                     values          = values,
+                    sort            = false,
+                    marker          = attr(colors = colors, line = attr(color = "#000000", width = 0.6)),
                     domain          = attr(x=[0.0, 0.95], y=[0.0, 0.9]),
                     hoverinfo       = "label+percent",
                     textposition    = "inside" #=,

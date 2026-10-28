@@ -737,8 +737,11 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("export-citation-button", "n_clicks"),
         State("export-citation-id", "value"),
         State("database-dropdown","value"),
+        State("o18-dropdown","value"),
+        State("o18-melt-dropdown","value"),
+        State("o18-unmapped-dropdown","value"),
         prevent_initial_call=true,
-    ) do n_clicks, fname, dtb
+    ) do n_clicks, fname, dtb, o18_on, o18_melt, o18_unmapped
 
         if fname != "filename"
             mkpath(output_dir[1])
@@ -773,6 +776,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                 id_oamp = findfirst(bib[bib.keys[i]].fields["info"] .== "oamp" for i=1:n_ref)
                 push!(selection, String(bib.keys[id_oamp]))
             end
+            push_bib_infos!(selection, bib, o18_bib_infos(o18_on, o18_melt, o18_unmapped))
 
             selected_bib    = Bibliography.select(bib, selection)
             

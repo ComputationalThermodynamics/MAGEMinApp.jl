@@ -533,13 +533,13 @@ function Tab_General_informations()
                     ], style = Dict("overflowX" => "auto")),
                 ], style = Dict("padding" => "12px", "maxWidth" => "1100px", "margin" => "auto")),
             ]),
-            dbc_tab(label="δ18O", children=[
+            (ENABLE_O18 ? [dbc_tab(label="δ18O", children=[
                 html_div([
                     dbc_card([
                         dcc_markdown(OxygenIsotopes; mathjax=true, style = Dict("font-size" => "130%")),
                     ], style = Dict("overflowX" => "auto")),
                 ], style = Dict("padding" => "12px", "maxWidth" => "1100px", "margin" => "auto")),
-            ]),
+            ])] : [])...,
             # dbc_tab(label="Radiogenic isotopes", children=[
             #     html_div([
             #         dbc_card([
