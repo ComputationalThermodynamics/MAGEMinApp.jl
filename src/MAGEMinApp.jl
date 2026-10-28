@@ -37,6 +37,8 @@ module MAGEMinApp
     const ENABLE_MAGERES = false
     const ENABLE_MELTS   = false
     const ENABLE_IGM     = false
+    const ENABLE_IGAW    = false
+    const ENABLE_O18     = true
     const ENABLE_MPMN    = false
 
     export App

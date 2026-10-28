@@ -730,7 +730,7 @@ function Tab_PhaseDiagram()
                                         ], width=5),
                                         dbc_col([
                                             dcc_dropdown(   id      = "fields-dropdown",
-                                                            options = vcat(field_dropdown_options(), [(label = "δ18O", value = "o18")]),
+                                                            options = vcat(field_dropdown_options(), ENABLE_O18 ? [(label = "δ18O", value = "o18")] : []),
                                                             value="Variance" ,
                                                             clearable   = false,
                                                             multi       = false),
@@ -1074,7 +1074,7 @@ function Tab_PhaseDiagram()
                                                         (label = "Pure phase",          value = "pp"),
                                                         (label = "Solution phase",      value = "ss"),
                                                         (label = "Other",               value = "of"),
-                                                        (label = "δ18O",                value = "o18"),
+                                                        (ENABLE_O18 ? [(label = "δ18O", value = "o18")] : [])...,
                                                     ],
                                                     value       = "pp",
                                                     clearable   = false,
