@@ -25,6 +25,23 @@ const O18_MELT_MODELS = [   (label = "CIPW norm (Bindeman, 2008)",      value = 
 const O18_UNMAPPED = [      (label = "exclude",                         value = "exclude"),
                             (label = "oxide index (Zhao & Zheng, 2003)",value = "index"  ) ]
 
+function o18_bib_infos(o18_on, melt_model, unmapped; ptx::Bool = false)
+    o18_on == "true" || return String[]
+    infos = ["Vho19"]
+    ptx                   && push!(infos, "Vho20")
+    melt_model == "norm"  && push!(infos, "Bindeman08")
+    (melt_model == "ZZ03" || unmapped == "index") && push!(infos, "ZZ03")
+    return infos
+end
+
+function push_bib_infos!(selection, bib, infos)
+    for info in infos
+        k = findfirst(key -> get(bib[key].fields, "info", "") == info, bib.keys)
+        isnothing(k) || push!(selection, String(bib.keys[k]))
+    end
+    return selection
+end
+
 """
     o18_available()
 

@@ -436,8 +436,11 @@ function Tab_PTXpaths_Callbacks(app)
         Input("export-citation-button-ptx", "n_clicks"),
         State("export-citation-id-ptx", "value"),
         State("database-dropdown-ptx","value"),
+        State("o18-dropdown-ptx","value"),
+        State("o18-melt-dropdown-ptx","value"),
+        State("o18-unmapped-dropdown-ptx","value"),
         prevent_initial_call=true,
-    ) do n_clicks, fname, dtb
+    ) do n_clicks, fname, dtb, o18_on, o18_melt, o18_unmapped
 
         if fname != "filename"
             mkpath(output_dir[1])
@@ -471,9 +474,10 @@ function Tab_PTXpaths_Callbacks(app)
                 id_um= findfirst(bib[bib.keys[i]].fields["info"] .== "um" for i=1:n_ref)
                 push!(selection, String(bib.keys[id_um]))
             end
+            push_bib_infos!(selection, bib, o18_bib_infos(o18_on, o18_melt, o18_unmapped; ptx = true))
 
             selected_bib    = Bibliography.select(bib, selection)
-            
+
             export_bibtex(fileout, selected_bib)
 
             return "success", ""
@@ -482,7 +486,7 @@ function Tab_PTXpaths_Callbacks(app)
         end
     end
 
-  
+
     #save all table to file
     callback!(
         app,
