@@ -879,10 +879,11 @@ function Tab_TraceElement_Callbacks(app)
         State("ssat-dropdown","value"),
         State("P2O5sat-dropdown","value"),
         State("mnzsat-dropdown","value"),
+        State(subd_ids("-te").show,"value"),
 
         prevent_initial_call=true,
 
-    ) do n_clicks, fname, kds, zrc, sulf, fapt, mnz
+    ) do n_clicks, fname, kds, zrc, sulf, fapt, mnz, subd_show
 
         if fname != "filename"
             mkpath(output_dir[1])
@@ -911,6 +912,7 @@ function Tab_TraceElement_Callbacks(app)
             if !isnothing(id_mnz);      push!(selection, String(bib.keys[id_mnz]))      end
             if !isnothing(id_kds);      push!(selection, String(bib.keys[id_kds]))      end
             if !isnothing(id_magemin);  push!(selection, String(bib.keys[id_magemin]))  end
+            push_bib_infos!(selection, bib, subd_bib_infos(subd_show))
 
             selected_bib    = Bibliography.select(bib, selection)
             

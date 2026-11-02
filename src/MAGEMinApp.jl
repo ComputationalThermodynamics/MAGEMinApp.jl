@@ -51,6 +51,7 @@ module MAGEMinApp
     include(joinpath(pkg_dir,"src","AMR/MAGEMin_utils.jl"))
     include(joinpath(pkg_dir,"src","AMR/AMR_utils.jl"))
     include(joinpath(pkg_dir,"src","PhaseDiagram_functions.jl"))
+    include(joinpath(pkg_dir,"src","DrawPath_functions.jl"))
     include(joinpath(pkg_dir,"src","PhaseDiagram3D_functions.jl"))
     include(joinpath(pkg_dir,"src","PhaseDiagram3D_export.jl"))
     include(joinpath(pkg_dir,"src","Plotly_ColorScales.jl"))
@@ -134,6 +135,7 @@ module MAGEMinApp
         println(" 4/4 Loading user data...")
         AppData.mineral_style[1] = load_mineral_style();
         AppData.mineral_order[1] = load_mineral_order(sort(collect(keys(AppData.mineral_style[1]))));
+        AppData.reaction_style_presets[1] = load_reaction_style_presets();
 
         try
             run_server(app, host, port, debug=debug)

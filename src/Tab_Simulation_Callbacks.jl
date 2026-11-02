@@ -11,7 +11,7 @@
 
 const STATE_DIAGRAM_FIELDS = [  "infos", "layout", "data", "data_plot", "data_reaction", "iso_show", "n_lbl", "data_isopleth", "data_isopleth_out",
                                 "Out_XY", "Hash_XY", "Out_TE_XY", "all_TE_ph", "Out_O18_XY", "all_O18_ph", "n_phase_XY", "addedRefinementLvl", "pChip_wat", "pChip_T",
-                                "assemblage_rows", "list_compacted_idx", "raw_field_id", "PT_infos", "Sec_status_XY", "Sec_seed_grid", "Sec_seed_X" ]
+                                "assemblage_rows", "list_compacted_idx", "raw_field_id", "PT_infos", "Sec_status_XY", "Sec_seed_grid", "Sec_seed_X", "diagram_ctx" ]
 
 const STATE_EXTRA_FIELDS = [ "dataset", "sas", "wf", "seismic_cor", "aspect_ratio", "seismic_water", "shallow_cor", "fluid_as_melt", "anelastic_cor",
                              "mumu_oxide1", "mumu_oxide2", "mumu_ox1_min", "mumu_ox1_max", "mumu_ox2_min", "mumu_ox2_max",
@@ -500,6 +500,9 @@ function Tab_Simulation_Callbacks(app)
 
         for (n, v) in loaded
             Core.eval(MAGEMinApp, Expr(:(=), Symbol(n), QuoteNode(v)))
+        end
+        if !isempty(loaded) && !haskey(loaded, "diagram_ctx")
+            Core.eval(MAGEMinApp, :(diagram_ctx = nothing))
         end
         loaded_state_has_diagram = all(k -> haskey(loaded, k), ("data", "Out_XY", "Hash_XY", "data_plot", "layout", "data_isopleth", "n_phase_XY", "addedRefinementLvl"))
 
@@ -1913,6 +1916,7 @@ function Tab_Simulation_Callbacks(app)
         Input( "test-dropdown","value"),
         Input( "database-dropdown","value"),
         Input( "output-data-uploadn", "is_open"),  
+        Input( "transfer-bulk-pd-success", "is_open"),
         
         Input( "load-state-diagram-button","n_clicks"  ),
         Input( "select-bulk-unit","value"),
@@ -1924,7 +1928,7 @@ function Tab_Simulation_Callbacks(app)
 
         prevent_initial_call=true,
 
-    ) do    test, dtb, update,
+    ) do    test, dtb, update, update_pd,
             n_clicks_load, sys_unit, 
             tb_data, filename, test_opts, db_cap
 

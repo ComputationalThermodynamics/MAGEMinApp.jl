@@ -514,6 +514,59 @@ function Tab_PhaseDiagram()
                                                                         "border"        =>"1px grey solid")),
                                                 ], width=3),
                                             ]),
+                                            html_hr(),
+                                            html_h1("Add bulk to phase diagram", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
+                                            html_hr(),
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("Name", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
+                                                ], width=2),
+                                                dbc_col([
+                                                    dbc_input(
+                                                        id      = "transfer-bulk-pd-name",
+                                                        type    = "text",
+                                                        style   = Dict("textAlign" => "center") ,
+                                                        value   = "bulk-name"   ),
+                                                ], width=3),
+                                                dbc_col([
+                                                    dcc_dropdown(   id          = "transfer-bulk-pd-id",
+                                                                    options     =  ["Solid","Melt","Whole-rock"],
+                                                                    value       = "Solid" ,
+                                                                    clearable   =  false,
+                                                                    multi       =  false),
+                                                ], width=3),
+                                                dbc_col([
+                                                    dbc_button("add", id="transfer-bulk-pd-button", color="light",  n_clicks=0,
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"1px grey solid")),
+                                                ], width=3),
+                                            ]),
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("Database", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                ], width=5),
+                                                dbc_col([
+                                                    dcc_dropdown(   id          = "transfer-bulk-pd-db",
+                                                                    options     = dtb_dict,
+                                                                    value       = "ig",
+                                                                    clearable   = false,
+                                                                    multi       = false),
+                                                ], width=6),
+                                            ], style = Dict("marginTop" => 4)),
+                                            dbc_alert(
+                                                "",
+                                                id      = "transfer-bulk-pd-success",
+                                                is_open = false,
+                                                duration= 4000,
+                                            ),
+                                            dbc_alert(
+                                                "",
+                                                id      = "transfer-bulk-pd-failed",
+                                                color   = "danger",
+                                                is_open = false,
+                                                duration= 6000,
+                                            ),
 
                                             # SAVE POINTS INFORMATION
                                             html_hr(),
@@ -817,6 +870,9 @@ function Tab_PhaseDiagram()
                                         # html_hr(),
                                         html_div([
                                         html_div("‎ "),
+                                    html_h1("Phase boundaries", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                    html_hr(),
+                                        
                                         dbc_row([
 
                                             dbc_col([ 
@@ -920,8 +976,52 @@ function Tab_PhaseDiagram()
                                             ],width=7),
                                         ]),
                                         ], style = Dict("display" => "block"), id      = "reaction-line-display"),
-
-
+                                        html_div("‎ "),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_h1("Preset", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                            ], width=2),
+                                            dbc_col([
+                                                dcc_dropdown(   id          = "reaction-preset-dropdown",
+                                                                options     = [],
+                                                                value       = nothing,
+                                                                placeholder = "no preset",
+                                                                clearable   = true,
+                                                                multi       = false),
+                                            ], width=4),
+                                            dbc_col([
+                                                dbc_button( "Apply", id="apply-reaction-preset", color="light", className="me-2", n_clicks=0,
+                                                                style       = Dict( "textAlign"     => "center",
+                                                                                    "font-size"     => "100%",
+                                                                                    "border"        => "1px grey solid",
+                                                                                    "width"         => "100%" )),
+                                            ], width=3),
+                                            dbc_col([
+                                                dbc_button( "Delete", id="delete-reaction-preset", color="light", className="me-2", n_clicks=0,
+                                                                style       = Dict( "textAlign"     => "center",
+                                                                                    "font-size"     => "100%",
+                                                                                    "border"        => "1px grey solid",
+                                                                                    "width"         => "100%" )),
+                                            ], width=3),
+                                        ]),
+                                        dbc_row([
+                                            dbc_col([
+                                            ], width=2),
+                                            dbc_col([
+                                                dbc_input(
+                                                    id          = "reaction-preset-name",
+                                                    type        = "text",
+                                                    placeholder = "preset name",
+                                                    value       = "" ),
+                                            ], width=4),
+                                            dbc_col([
+                                                dbc_button( "Save as preset", id="save-reaction-preset", color="light", className="me-2", n_clicks=0,
+                                                                style       = Dict( "textAlign"     => "center",
+                                                                                    "font-size"     => "100%",
+                                                                                    "border"        => "1px grey solid",
+                                                                                    "width"         => "100%" )),
+                                            ], width=4),
+                                        ], style = Dict("marginTop" => 4)),
 
                                         html_div("‎ "),
                                         html_h1("Color options", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
@@ -1672,6 +1772,51 @@ function Tab_PhaseDiagram()
                                                     ], width=8),
                                                 ]),
                                             ], style = Dict("display" => "none"), id = "draw-path-field-id"),
+                                            html_div("‎ "),
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("Intermediate points",
+                                                        style = Dict("textAlign" => "left",
+                                                                     "font-size" => "120%",
+                                                                     "marginTop" => 4)),
+                                                ], width=6),
+                                                dbc_col([
+                                                    dbc_input(
+                                                        id       = "draw-path-npts",
+                                                        type     = "number",
+                                                        value    = 0,
+                                                        min      = 0,
+                                                        max      = 500,
+                                                        step     = 1,
+                                                        debounce = true,
+                                                    ),
+                                                ], width=6),
+                                            ]),
+                                            dbc_tooltip("Number of MAGEMin points computed between two recorded points (0: off)", target="draw-path-npts"),
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("Path interpolation",
+                                                        style = Dict("textAlign" => "left",
+                                                                     "font-size" => "120%",
+                                                                     "marginTop" => 4)),
+                                                ], width=6),
+                                                dbc_col([
+                                                    dcc_dropdown(
+                                                        id      = "draw-path-interp",
+                                                        options = [
+                                                            (label = "Linear", value = "linear"),
+                                                            (label = "PCHIP",  value = "pchip"),
+                                                        ],
+                                                        value     = "linear",
+                                                        clearable = false,
+                                                        style     = Dict("border" => "none"),
+                                                    ),
+                                                ], width=6),
+                                            ]),
+                                            html_div(id="draw-path-smooth-note", children="",
+                                                style = Dict("textAlign" => "center", "font-size" => "90%", "marginTop" => 4, "color" => "grey")),
+                                            html_div(id="draw-path-smooth-status", children="",
+                                                style = Dict("textAlign" => "center", "font-size" => "90%", "marginTop" => 4)),
                                             html_div("‎ "),
                                             dbc_row([
                                                 dbc_col([

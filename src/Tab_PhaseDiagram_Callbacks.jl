@@ -740,8 +740,9 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("o18-dropdown","value"),
         State("o18-melt-dropdown","value"),
         State("o18-unmapped-dropdown","value"),
+        State(subd_ids("").show,"value"),
         prevent_initial_call=true,
-    ) do n_clicks, fname, dtb, o18_on, o18_melt, o18_unmapped
+    ) do n_clicks, fname, dtb, o18_on, o18_melt, o18_unmapped, subd_show
 
         if fname != "filename"
             mkpath(output_dir[1])
@@ -777,6 +778,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                 push!(selection, String(bib.keys[id_oamp]))
             end
             push_bib_infos!(selection, bib, o18_bib_infos(o18_on, o18_melt, o18_unmapped))
+            push_bib_infos!(selection, bib, subd_bib_infos(subd_show))
 
             selected_bib    = Bibliography.select(bib, selection)
             
@@ -1320,6 +1322,47 @@ function Tab_PhaseDiagram_Callbacks(app)
 
     end
 
+    callback!(
+        app,
+        Output("reaction-preset-dropdown",          "options"   ),
+        Output("reaction-preset-dropdown",          "value"     ),
+        Input("trigger-update-reaction-line-list",  "value"     ),
+        Input("save-reaction-preset",               "n_clicks"  ),
+        Input("delete-reaction-preset",             "n_clicks"  ),
+        State("reaction-preset-name",               "value"     ),
+        State("reaction-preset-dropdown",           "value"     ),
+
+        prevent_initial_call = true,
+    ) do reac_update, save_clicks, delete_clicks, name, selected
+        bid     = pushed_button( callback_context() )
+        global phase_infos_dtb
+
+        if !@isdefined(phase_infos_dtb)
+            return [], nothing
+        end
+
+        dtb     = phase_infos_dtb
+        value   = no_update()
+
+        if bid == "trigger-update-reaction-line-list"
+            reac_update == 1 || return no_update(), no_update()
+            value = reaction_preset_last(dtb)
+        elseif bid == "save-reaction-preset"
+            name  = strip(string(something(name, "")))
+            isempty(name) && return no_update(), no_update()
+            save_reaction_preset!(dtb, String(name))
+            value = String(name)
+        elseif bid == "delete-reaction-preset"
+            isnothing(selected) && return no_update(), no_update()
+            delete_reaction_preset!(dtb, selected)
+            value = nothing
+        end
+
+        options = [Dict("label" => " "*n, "value" => n) for n in reaction_preset_names(dtb)]
+
+        return options, value
+    end
+
 
     callback!(
         app,
@@ -1379,7 +1422,8 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("mc-run-done",               "data"),
 
         Input("update-reaction-line",       "n_clicks"),
-        Input("show-full-grid",             "value"), 
+        Input("apply-reaction-preset",      "n_clicks"),
+        Input("show-full-grid",             "value"),
      
         Input("button-add-isopleth",        "n_clicks"),
         Input("button-remove-isopleth",     "n_clicks"),
@@ -1565,6 +1609,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("show-lbl-id",            "value"),
         State("lbl-bg-id",              "value"),
         State("iso-label-bg-id",        "value"),
+        State("reaction-preset-dropdown", "value"),
 
         prevent_initial_call = true,
 
@@ -1572,7 +1617,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         lock(() -> pd_main_update(args...), MINIMIZATION_LOCK)
     end
 
-    function pd_main_update(reac_up,    full_grid,  addIso,     removeIso,  removeAllIso,    isoShow,   isoHide,   isoShowAll,    isoHideAll,
+    function pd_main_update(reac_up,    reac_preset_up, full_grid,  addIso,     removeIso,  removeAllIso,    isoShow,   isoHide,   isoShowAll,    isoHideAll,
             n_clicks_mesh, n_clicks_refine, uni_n_clicks_refine, n_clicks_mc,
             minColor,   maxColor,
             colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  o18_q,      o18_p1,     o18_p2,     updateTitle,     loadstateid,       warr_naming, pressure_unit,
@@ -1600,7 +1645,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             minIso,     stepIso,    maxIso,
             active_tab,
             mc_sigma_data, mc_sigma_mode_str, mc_bulk_unit, mc_n_real, mc_seed_val, mc_mode, mc_bulk2_data,
-            grid,       lbl,        lbl_bg,     iso_lbl_bg)
+            grid,       lbl,        lbl_bg,     iso_lbl_bg, reac_preset)
 
 
         diagType                        = diagram_type_2d(diagType)
@@ -1718,6 +1763,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             # declare set of global variables needed to generate, refine and display phase diagrams
             global fig, data, Hash_XY, Out_TE_XY, all_TE_ph, Out_O18_XY, all_O18_ph, n_phase_XY, gridded, gridded_info, gridded_fields, phase_infos, X, Y, meant, npoints
             global addedRefinementLvl   = 0;
+            global phase_infos_dtb      = dtb;
             global n_lbl                = 0;
             global iso_show             = 1;
             global data_plot, data_reaction, data_grid, layout, data_isopleth, data_isopleth_out, data_isopleth_out_export, PT_infos, infos, heat_map_export;
@@ -1788,6 +1834,16 @@ function Tab_PhaseDiagram_Callbacks(app)
         elseif bid == "update-reaction-line"
 
             data_reaction   = show_hide_reaction_lines(sub,refLvl,Xrange,Yrange)
+
+        elseif bid == "apply-reaction-preset"
+            global phase_infos_dtb
+            if !@isdefined(phase_infos) || !@isdefined(phase_infos_dtb) || isnothing(reac_preset)
+                return ntuple(_ -> no_update(), 23)
+            end
+
+            apply_reaction_preset!(phase_infos_dtb, reac_preset)
+            data_reaction   = show_hide_reaction_lines(sub,refLvl,Xrange,Yrange)
+            update_reaction_list  = 1
 
         elseif bid == "refine-pb-button" || bid == "uni-refine-pb-button"
                 
@@ -1941,6 +1997,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             global gridded_info, gridded_fields, poly_phases, poly_pcoor
             phase_infos     = get_phase_infos(Out_XY)
+            global phase_infos_dtb = dtb
             _, gridded_info, gridded_fields, _, _, _, _ = get_gridded_map( compute_field, "major", oxi_s, Out_XY, nothing, Hash_XY,
                                                                             sub, refLvl + addedRefinementLvl, refType, data, Xrange_s, Yrange_s )
             poly_phases, poly_pcoor     = compute_assemblage_boundaries(gridded_fields, Xrange_s, Yrange_s)
@@ -2432,12 +2489,28 @@ function Tab_PhaseDiagram_Callbacks(app)
         return mode == "field" ? Dict("display" => "block") : Dict("display" => "none")
     end
 
+    # Draw path — intermediate points availability for the current diagram
+    callback!(
+        app,
+        Output("draw-path-npts",        "disabled"),
+        Output("draw-path-interp",      "disabled"),
+        Output("draw-path-smooth-note", "children"),
+        Input("pd-sidebar-tabs",        "active_tab"),
+        Input("phase-diagram",          "figure"),
+        prevent_initial_call = true,
+    ) do _active_tab, _fig
+        global diagram_ctx
+        ok, msg = draw_path_smoothing_status(diagram_ctx)
+        return !ok, !ok, msg
+    end
+
     # Draw path — generate stacked area / field profile diagram
     callback!(
         app,
-        Output("draw-path-diagram", "figure" ),
-        Output("draw-path-diagram", "config" ),
-        Output("draw-path-canvas",  "is_open"),
+        Output("draw-path-diagram",       "figure"  ),
+        Output("draw-path-diagram",       "config"  ),
+        Output("draw-path-canvas",        "is_open" ),
+        Output("draw-path-smooth-status", "children"),
         Input("draw-path-generate-button", "n_clicks"),
         Input("mineral-naming-dropdown",   "value"   ),
         State("draw-path-sysunit",         "value"   ),
@@ -2445,8 +2518,10 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("draw-path-mode-dropdown",   "value"   ),
         State("draw-path-field-dropdown",  "value"   ),
         State("database-dropdown",         "value"   ),
+        State("draw-path-npts",            "value"   ),
+        State("draw-path-interp",          "value"   ),
         prevent_initial_call = true,
-    ) do _n, warr_naming, sysunit, diagType, mode, field_value, dtb
+    ) do _n, warr_naming, sysunit, diagType, mode, field_value, dtb, npts, interp
         global use_warr_names
         use_warr_names[1] = (warr_naming == "warr")
 
@@ -2455,18 +2530,27 @@ function Tab_PhaseDiagram_Callbacks(app)
         bid = pushed_button( callback_context() )
 
         if !@isdefined(draw_path_ids) || isempty(draw_path_ids)
-            return plot(Layout(height=360)), PlotConfig(), (bid == "mineral-naming-dropdown" ? no_update() : false)
+            return plot(Layout(height=360)), PlotConfig(), (bid == "mineral-naming-dropdown" ? no_update() : false), ""
+        end
+
+        n_seg = npts isa Real ? max(Int64(round(npts)), 0) : 0
+        path, status = try
+            draw_path_data(draw_path_ids, n_seg, something(interp, "linear"))
+        catch e
+            println("Draw path intermediate points failed: ", sprint(showerror, e))
+            first(draw_path_data(draw_path_ids, 0, "linear")), "Intermediate points failed, showing recorded points only (see terminal)"
         end
 
         if mode == "field"
-            traces  = get_draw_path_field_plot(diagType, field_value, draw_path_ids)
+            traces  = get_draw_path_field_plot(diagType, field_value, path)
             ytitle  = get(OTHER_FIELD_LABELS, field_value, field_value)
             fname   = "draw_path_field_profile"
         else
-            traces, _phase_list = get_draw_path_plot(diagType, sysunit, draw_path_ids, dtb)
+            traces, _phase_list = get_draw_path_plot(diagType, sysunit, path, dtb)
             ytitle  = "Phase fraction [$(sysunit)%]"
             fname   = "draw_path_phase_fractions"
         end
+        tickvals, ticktext = draw_path_ticks(diagType, path)
 
         xtitle = diagType == "px"  ? "X; P [$(pressure_unit_label())]" :
                  diagType == "tx"  ? "X; T [°C]"   :
@@ -2482,7 +2566,8 @@ function Tab_PhaseDiagram_Callbacks(app)
             plot_bgcolor  = "white",
             xaxis       = attr(title=xtitle, showgrid=false, zeroline=false,
                                 showline=true, linecolor="black", linewidth=1, mirror=true,
-                                ticks="outside", tickcolor="black"),
+                                ticks="outside", tickcolor="black",
+                                tickmode="array", tickvals=tickvals, ticktext=ticktext),
             yaxis       = attr(title=ytitle, autorange=true, showgrid=false, zeroline=false,
                                 showline=true, linecolor="black", linewidth=1, mirror=true,
                                 ticks="outside", tickcolor="black"),
@@ -2501,7 +2586,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             ).fields
         )
 
-        return fig, config, (bid == "mineral-naming-dropdown" ? no_update() : true)
+        return fig, config, (bid == "mineral-naming-dropdown" ? no_update() : true), status
     end
 
     # ── Thermobarometric intersection callbacks ───────────────────────────────
@@ -3352,6 +3437,70 @@ function Tab_PhaseDiagram_Callbacks(app)
         (pid === nothing || pid > length(Out_O18_XY)) && return no_update(), no_update(), no_update()
 
         return Dict("display" => "block"), get_o18_point_plot(pid), get_o18_point_info(pid)
+    end
+
+    callback!(
+        app,
+        Output("transfer-bulk-pd-db",       "value"     ),
+        Input("database-dropdown",          "value"     ),
+    ) do dtb
+        return dtb
+    end
+
+    callback!(
+        app,
+        Output("transfer-bulk-pd-success",  "is_open"   ),
+        Output("transfer-bulk-pd-success",  "children"  ),
+        Output("transfer-bulk-pd-failed",   "is_open"   ),
+        Output("transfer-bulk-pd-failed",   "children"  ),
+
+        Input("transfer-bulk-pd-button",    "n_clicks"  ),
+
+        State("transfer-bulk-pd-name",      "value"     ),
+        State("transfer-bulk-pd-id",        "value"     ),
+        State("transfer-bulk-pd-db",        "value"     ),
+        State("optimizer-dropdown",         "value"     ),
+
+        prevent_initial_call = true,
+    ) do n_clicks, bulk_name, bulk_id, dbout, optimizer
+
+        global point_id, using_sample_point, SamplePoint
+
+        out = try
+            using_sample_point ? SamplePoint.out : Out_XY[point_id]
+        catch
+            nothing
+        end
+        isnothing(out) && return false, "", true, "No point selected: click on the phase diagram or compute a sample point first"
+
+        bulkrock = bulk_id == "Solid" ? out.bulk_S : bulk_id == "Melt" ? out.bulk_M : out.bulk
+        sum(bulkrock) == 0.0 && return false, "", true, "No $(lowercase(bulk_id)) composition available for the selected point"
+
+        bulkrock, oxides = try
+            MAGEMin_C.convertBulk4MAGEMin(Float64.(bulkrock), String.(out.oxides), "mol", String(dbout); ns = optimizer == "ns")
+        catch e
+            return false, "", true, "Conversion to database '$dbout' failed: "*sprint(showerror, e)
+        end
+
+        bulkrock        = round.(bulkrock, digits = 6)
+        bulkrock_wt     = round.(mol2wt(bulkrock, oxides), digits = 6)
+        title           = bulk_name*"_"*bulk_id
+        test            = length(db[(db.db .== dbout), :].test)
+
+        push!(db,Dict(  :bulk       => "custom",
+                        :title      => title,
+                        :comments   => "pd2pd",
+                        :db         => dbout,
+                        :test       => test,
+                        :sysUnit    => "mol",
+                        :oxide      => oxides,
+                        :frac       => bulkrock,
+                        :frac2      => copy(bulkrock),
+                        :frac_wt    => bulkrock_wt,
+                        :frac2_wt   => copy(bulkrock_wt),
+                    ), cols=:union)
+
+        return true, "Bulk-rock '$title' added to database '$dbout' (Setup tab)", false, ""
     end
 
     return app

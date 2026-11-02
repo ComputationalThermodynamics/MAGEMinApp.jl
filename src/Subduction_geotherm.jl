@@ -116,7 +116,9 @@ subd_inputs(sfx)  = (ids = subd_ids(sfx); [Input(ids.show, "value"), Input(ids.v
                                             Input(ids.T0, "value"), Input(ids.T1, "value"), Input(ids.h, "value"), Input(ids.d, "value"),
                                             Input(ids.kappa, "value"), Input(ids.rho, "value")])
 
-subd_input_ids(sfx) = (ids = subd_ids(sfx); [ids.show, ids.vel, ids.dip, ids.depth, ids.T0, ids.T1, ids.h, ids.d, ids.kappa, ids.rho])
+subd_bib_infos(show) = show == "true" ? ["Davies99"] : String[]
+
+subd_input_ids(sfx) =(ids = subd_ids(sfx); [ids.show, ids.vel, ids.dip, ids.depth, ids.T0, ids.T1, ids.h, ids.d, ids.kappa, ids.rho])
 
 function subd_row(label, control)
     return dbc_row([

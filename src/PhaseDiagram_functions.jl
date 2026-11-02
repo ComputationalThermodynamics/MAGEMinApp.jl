@@ -862,6 +862,8 @@ end
 
 is_integer_field(fieldname) = fieldname in ("Variance", "#Phases")
 
+n_active_oxides(out) = count(>(0.0), out.bulk)
+
 """
     field_colorbar_title(fieldname)
 
@@ -1208,6 +1210,15 @@ function compute_new_phaseDiagram(  xtitle,     ytitle,     lbl,        field_si
             finalize_MAGEMin_data(MAGEMin_data)
         end
 
+        global diagram_ctx = diagram_context(  dtb,        dataset,    diagType,   oxi,
+                                                bulk_L,     bulk_R,     bufferType, bufferN1,   bufferN2,
+                                                fixT,       fixP,       PTpath,     pChip_wat,  pChip_T,
+                                                scp,        sol,        optimizer,  mbCpx,      limitCaOpx, CaOpxLim,
+                                                phase_selection,        custW,      boost,
+                                                seismicScheme,          seismicWeightFactor,
+                                                seismic_cor,            aspect_ratio,           seismic_water,
+                                                shallow_cor,            fluid_as_melt,          anelastic_correction )
+
         #________________________________________________________________________________________#
         # Scatter plotly of the grid
 
@@ -1401,6 +1412,15 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
         finalize_MAGEMin_data(MAGEMin_data)
     end
 
+    global diagram_ctx = diagram_context(  dtb,        dataset,    diagType,   oxi,
+                                            bulk_L,     bulk_R,     bufferType, bufferN1,   bufferN2,
+                                            fixT,       fixP,       PTpath,     pChip_wat,  pChip_T,
+                                            scp,        sol,        optimizer,  mbCpx,      limitCaOpx, CaOpxLim,
+                                            phase_selection,        custW,      boost,
+                                            seismicScheme,          seismicWeightFactor,
+                                            seismic_cor,            aspect_ratio,           seismic_water,
+                                            shallow_cor,            fluid_as_melt,          anelastic_correction )
+
     #________________________________________________________________________________________#                   
     # Scatter plotly of the grid
     gridded, gridded_info, gridded_fields, X, Y, npoints, meant = get_gridded_map(  fieldname,
@@ -1415,7 +1435,9 @@ function refine_phaseDiagram(   xtitle,     ytitle,     lbl,        field_size,
                                                                                     data,
                                                                                     Xrange,
                                                                                     Yrange )
-    
+
+    phase_infos                        = get_phase_infos(Out_XY; styles = current_reaction_styles())
+
     PT_infos                           = get_phase_diagram_information(npoints,dtb,diagType,solver,bulk_L, bulk_R, oxi, fixT, fixP,bufferType, bufferN1, bufferN2,PTpath,watsat,watsat_val; optimizer = optimizer, sec_Pbox = sec_Pbox, sec_Tbox = sec_Tbox, sec_limits = sec_limits)
                                                               
     data_plot, annotations, txt_list, assemblage_rows, list_compacted_idx, raw_field_id = get_diagram_labels(   Out_XY,
@@ -2181,20 +2203,6 @@ function remove_all_isopleth_phaseDiagram()
 end
 
 
-function _draw_path_point_label(diagType, id)
-    xl       = diagType in ("pmu", "tmu") ? "μ" : "X"
-    diagType = section_x_fixed_P(diagType) || diagType == "tmu" ? "tx" : diagType in ("vx", "pmu") ? "px" : diagType
-    global Out_XY, data
-    P = round(display_pressure(Out_XY[id].P_kbar), digits=2)
-    T = round(Out_XY[id].T_C,    digits=2)
-    if (diagType == "px" || diagType == "tx") && @isdefined(data) && id <= length(data.points)
-        X = round(data.points[id][1], digits=4)
-        return diagType == "px" ? "$(xl)=$(X); P=$(P)" : "$(xl)=$(X); T=$(T)"
-    else
-        return "T=$(T); P=$(P)"
-    end
-end
-
 function draw_path_table_data(diagType, path_ids)
     xl       = diagType in ("pmu", "tmu") ? "μ" : "X"
     diagType = section_x_fixed_P(diagType) || diagType == "tmu" ? "tx" : diagType in ("vx", "pmu") ? "px" : diagType
@@ -2230,17 +2238,16 @@ function draw_path_table_data(diagType, path_ids)
     return cols, rows
 end
 
-function get_draw_path_plot(diagType, sysunit, path_ids, dtb)
-    global Out_XY
-
-    n_tot = length(path_ids)
+function get_draw_path_plot(diagType, sysunit, path, dtb)
+    outs  = path.outs
+    n_tot = length(outs)
     if n_tot == 0
         return GenericTrace[], []
     end
 
     ph_names = Vector{String}()
-    for id in path_ids
-        for ph in Out_XY[id].ph
+    for out in outs
+        for ph in out.ph
             if !(ph in ph_names)
                 push!(ph_names, ph)
             end
@@ -2250,19 +2257,19 @@ function get_draw_path_plot(diagType, sysunit, path_ids, dtb)
     n_ph     = length(ph_names)
     ph_disp_names = display_ph_names_tagged(ph_names, dtb)
 
-    x = Vector{String}(undef, n_tot)
-    Y = zeros(Float64, n_ph, n_tot)
+    x      = path.t
+    labels = draw_path_labels(diagType, path)
+    Y      = zeros(Float64, n_ph, n_tot)
 
-    for (k, id) in enumerate(path_ids)
-        x[k] = _draw_path_point_label(diagType, id)
+    for (k, out) in enumerate(outs)
         for (i, ph) in enumerate(ph_names)
-            idx = findall(Out_XY[id].ph .== ph)
+            idx = findall(out.ph .== ph)
             if sysunit == "mol"
-                if ~isempty(idx); Y[i,k] = sum(Out_XY[id].ph_frac[idx])     * 100.0; end
+                if ~isempty(idx); Y[i,k] = sum(out.ph_frac[idx])     * 100.0; end
             elseif sysunit == "wt"
-                if ~isempty(idx); Y[i,k] = sum(Out_XY[id].ph_frac_wt[idx])  * 100.0; end
+                if ~isempty(idx); Y[i,k] = sum(out.ph_frac_wt[idx])  * 100.0; end
             elseif sysunit == "vol"
-                if ~isempty(idx); Y[i,k] = sum(Out_XY[id].ph_frac_vol[idx]) * 100.0; end
+                if ~isempty(idx); Y[i,k] = sum(out.ph_frac_vol[idx]) * 100.0; end
             end
         end
     end
@@ -2281,7 +2288,9 @@ function get_draw_path_plot(diagType, sysunit, path_ids, dtb)
             name       = ph_disp_names[i],
             stackgroup = "one",
             mode       = "lines",
-            line       = attr(width=0.5, color=color)
+            line       = attr(width=0.5, color=color),
+            text       = labels,
+            hovertemplate = "%{text}<br>%{y:.2f}"
         )
     end
 
@@ -2362,7 +2371,7 @@ function get_other_field_value(pt, of::String)::Float64
     elseif of == "P_kbar"
         return display_pressure(pt.P_kbar)
     elseif of == "Variance"
-        return Float64(length(pt.oxides) - length(pt.ph) + 2.0)
+        return Float64(n_active_oxides(pt) - length(pt.ph) + 2.0)
     elseif of == "s_cp"
         return pt.s_cp[1]
     elseif of == "entropy"
@@ -2386,35 +2395,27 @@ function get_other_field_value(pt, of::String)::Float64
 end
 
 """
-    get_draw_path_field_plot(diagType, of, path_ids)
+    get_draw_path_field_plot(diagType, of, path)
 
 Field-profile counterpart of `get_draw_path_plot`: samples a single
-system-level "Other" field (see `OTHER_FIELD_LABELS`) along the recorded
-path instead of stacking phase fractions.
+system-level "Other" field (see `OTHER_FIELD_LABELS`) along the
+path ([`draw_path_data`](@ref)) instead of stacking phase fractions.
+Markers are drawn on the recorded points only.
 """
-function get_draw_path_field_plot(diagType, of, path_ids)
-    global Out_XY
-
-    n_tot = length(path_ids)
-    if n_tot == 0
-        return GenericTrace[]
-    end
-
-    x = Vector{String}(undef, n_tot)
-    y = Vector{Float64}(undef, n_tot)
-    for (k, id) in enumerate(path_ids)
-        x[k] = _draw_path_point_label(diagType, id)
-        y[k] = get_other_field_value(Out_XY[id], of)
-    end
+function get_draw_path_field_plot(diagType, of, path)
+    outs = path.outs
+    isempty(outs) && return GenericTrace[]
 
     trace = scatter(;
-        x          = x,
-        y          = y,
-        mode       = "lines+markers",
-        line       = attr(width=1.5, color="black"),
-        marker     = attr(size=5, color="black"),
-        name       = get(OTHER_FIELD_LABELS, of, of),
-        showlegend = false,
+        x             = path.t,
+        y             = [get_other_field_value(out, of) for out in outs],
+        text          = draw_path_labels(diagType, path),
+        hovertemplate = "%{text}<br>%{y:.4g}<extra></extra>",
+        mode          = "lines+markers",
+        line          = attr(width=1.5, color="black"),
+        marker        = attr(size=[r > 0 ? 5 : 0 for r in path.rec], color="black"),
+        name          = get(OTHER_FIELD_LABELS, of, of),
+        showlegend    = false,
     )
 
     return GenericTrace[trace]
