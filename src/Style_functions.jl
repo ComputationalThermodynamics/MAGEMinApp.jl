@@ -68,6 +68,100 @@ function load_mineral_order(all_minerals::Vector{String}; path::String=joinpath(
     return vcat(kept, missing_ph)
 end
 
+const REACTION_LINE_DEFAULT = ("solid",0.75,"#000000",10.0,"")
+
+reaction_presets_path() = joinpath(pkg_dir, "user_data", "reaction_style_presets.json")
+
+function load_reaction_style_presets(; path::String = reaction_presets_path())
+    isfile(path) || return Dict{String,Any}()
+    try
+        presets = JSON.parsefile(path)
+        return presets isa Dict{String,Any} ? presets : Dict{String,Any}()
+    catch
+        @warn "Failed to parse reaction line style presets, starting without presets" path=path
+        return Dict{String,Any}()
+    end
+end
+
+function save_reaction_style_presets(presets::Dict{String,Any}; path::String = reaction_presets_path())
+    try
+        mkpath(dirname(path))
+        tmp = path * ".tmp"
+        open(tmp, "w") do io
+            JSON.print(io, presets, 2)
+        end
+        mv(tmp, path; force = true)
+    catch e
+        @warn "Failed to save reaction line style presets" path=path exception=e
+    end
+end
+
+function reaction_presets_of(dtb)
+    db = get(AppData.reaction_style_presets[1], string(dtb), nothing)
+    return db isa Dict ? db : Dict{String,Any}("last" => nothing, "presets" => Dict{String,Any}())
+end
+
+reaction_preset_names(dtb) = sort(collect(keys(get(reaction_presets_of(dtb), "presets", Dict{String,Any}()))))
+
+function reaction_preset_last(dtb)
+    last = get(reaction_presets_of(dtb), "last", nothing)
+    return last in reaction_preset_names(dtb) ? last : nothing
+end
+
+function current_reaction_styles()
+    global phase_infos
+    styles = Dict{String,Tuple}()
+    @isdefined(phase_infos) || return styles
+    for (names, opts) in ((phase_infos.act_ss, phase_infos.reac_ss), (phase_infos.act_pp, phase_infos.reac_pp))
+        for (ph, opt) in zip(names, opts)
+            styles[ph] = opt
+        end
+    end
+    return styles
+end
+
+function preset_reaction_styles(dtb, name)
+    styles  = Dict{String,Tuple}()
+    entries = get(get(reaction_presets_of(dtb), "presets", Dict{String,Any}()), string(something(name, "")), nothing)
+    entries isa Dict || return styles
+    for (ph, v) in entries
+        styles[ph] = (String(v[1]), Float64(v[2]), String(v[3]), Float64(v[4]), ph)
+    end
+    return styles
+end
+
+function save_reaction_preset!(dtb, name)
+    db      = get!(AppData.reaction_style_presets[1], string(dtb), Dict{String,Any}())
+    presets = get!(db, "presets", Dict{String,Any}())
+    presets[name] = Dict{String,Any}(ph => Any[opt[1], opt[2], opt[3], opt[4]]
+                                        for (ph, opt) in current_reaction_styles() if opt[1:4] != REACTION_LINE_DEFAULT[1:4])
+    db["last"] = name
+    save_reaction_style_presets(AppData.reaction_style_presets[1])
+end
+
+function delete_reaction_preset!(dtb, name)
+    db = get(AppData.reaction_style_presets[1], string(dtb), nothing)
+    db isa Dict || return
+    presets = get(db, "presets", nothing)
+    presets isa Dict && delete!(presets, name)
+    get(db, "last", nothing) == name && (db["last"] = nothing)
+    save_reaction_style_presets(AppData.reaction_style_presets[1])
+end
+
+function apply_reaction_preset!(dtb, name)
+    global phase_infos
+    @isdefined(phase_infos) || return
+    styles = preset_reaction_styles(dtb, name)
+    for (names, opts) in ((phase_infos.act_ss, phase_infos.reac_ss), (phase_infos.act_pp, phase_infos.reac_pp))
+        for i in eachindex(names)
+            opts[i] = get(styles, names[i], REACTION_LINE_DEFAULT)
+        end
+    end
+    db = get!(AppData.reaction_style_presets[1], string(dtb), Dict{String,Any}())
+    db["last"] = name
+    save_reaction_style_presets(AppData.reaction_style_presets[1])
+end
+
 # sort ph_list according to the rank of each name in `order`; names absent from
 # `order` are sorted alphabetically and placed after all ranked names.
 function order_phases(ph_list, order::Vector{String}=AppData.mineral_order[1])

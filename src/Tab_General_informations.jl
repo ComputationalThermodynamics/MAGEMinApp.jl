@@ -46,6 +46,8 @@ The "Slab geotherms" subtab (Phase diagram, Trace-element and 3D diagram tabs) o
 
 #### Thermal model
 
+Analytic solution of Davies (1999).
+
 - Two plates are juxtaposed along the subduction interface $x = 0$: the upper plate of thickness $h$ on the $x > 0$ side and the subducting slab of thickness $d$ on the $x < 0$ side.
 - Initially the interface is at the surface temperature $T_0$, and the temperature increases linearly to the mantle temperature $T_1$ at $x = h$ and $x = -d$.
 - As the slab descends at the convergence velocity $v$, it is heated by conduction only. A point at distance $y$ along the slab has been subducting for $t = y / v$.
@@ -92,6 +94,28 @@ The last six are under "Advanced".
 - Velocity and dip only enter through $y / v = (z - o\cos\delta) / (v \sin\delta)$: a steeper dip has the same effect as a faster convergence.
 - The model is purely conductive with constant $\kappa$: no shear heating, no mantle-wedge corner flow, no radiogenic or latent heat.
 - Each curve is labelled with its velocity and clipped to the diagram range. It is included in the 2D "Export SVG" and in all 3D exports: interactive HTML; PLY + STL (walls as surfaces, or tubes when rendered as lines); VTK, as a companion `<name>_geotherms.vtk` file of polylines in the same normalized cube as the grid, with T, P, X and velocity as point data.
+- When "Show geotherms" is *true*, the "bibtex file" export of the Phase diagram and Trace-element tabs includes Davies (1999).
+
+#### References
+
+- Davies, J. H. (1999). Simple analytic model for subduction zone thermal structure. *Geophysical Journal International* 139, 823-828. doi:10.1046/j.1365-246x.1999.00964.x
+"""
+
+
+DrawPath = """
+**Draw path**
+
+The "Draw path" subtab of the phase diagram records points clicked on the diagram (switch "Record" on) and displays the phase fractions (stacked areas) or a field profile along the path ("Generate").
+
+#### Intermediate points
+
+- "Intermediate points" sets the number of points computed with MAGEMin between two recorded points (0: off, only the recorded points are shown).
+- They are computed with the settings the diagram was computed with (database, dataset, bulk compositions, buffer, phase selection, solver, custom W's, seismic options, water saturation at sub-solidus), not the current sidebar, and their P, T and bulk are built the same way as the diagram mesh points. Each point starts from the solutions of the two recorded points of its segment.
+- "Path interpolation" sets where the intermediate points are placed:
+    - *Linear*: on straight segments between the recorded points.
+    - *PCHIP*: on a smooth monotone piecewise cubic Hermite curve through the recorded points. The curve passes through every recorded point and does not overshoot between them.
+- Both use the distance along the path, with each diagram axis normalized by its range, as path coordinate. This is also the x axis of the plot, with ticks at the recorded points.
+- Available for P-T, P-X, T-X and PTX diagrams. A diagram computed with an older version, or loaded from an older saved state, has to be recomputed. Results are kept until the path, the settings or the diagram change, so switching between phase fractions and field profiles does not recompute them.
 """
 
 
@@ -523,6 +547,10 @@ function Tab_General_informations()
                     html_div("‎ "),
                     dbc_card([
                         dcc_markdown(SiteFractionCalculator; mathjax=true, style = Dict("font-size" => "130%")),
+                    ], style = Dict("overflowX" => "auto")),
+                    html_div("‎ "),
+                    dbc_card([
+                        dcc_markdown(DrawPath; mathjax=true, style = Dict("font-size" => "130%")),
                     ], style = Dict("overflowX" => "auto")),
                 ], style = Dict("padding" => "12px", "maxWidth" => "1100px", "margin" => "auto")),
             ]),

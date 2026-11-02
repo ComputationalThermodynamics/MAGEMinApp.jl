@@ -846,7 +846,7 @@ function pd3d_cloud_trace(st::PD3D_state, stride::Int, size)
     ids        = vec([li[iP, iT, iX] for iP in 1:stride:nP, iT in 1:stride:nT, iX in 1:stride:nX])
     Pd         = display_pressure(st.Pv)
     ci         = CartesianIndices((nP, nT, nX))
-    var        = [length(st.Out[l].oxides) - length(st.Out[l].ph) + 2 for l in ids]
+    var        = [n_active_oxides(st.Out[l]) - length(st.Out[l].ph) + 2 for l in ids]
     txt        = [join(display_ph_names(st.Out[l].ph), " + ") * "<br>variance $(v)" for (l, v) in zip(ids, var)]
     return scatter3d(   x = [Pd[ci[l][1]] for l in ids], y = [st.Tv[ci[l][2]] for l in ids], z = [st.Xv[ci[l][3]] for l in ids],
                         mode = "markers", text = vec(txt), hovertemplate = "P: %{x:.3f}<br>T: %{y:.1f}<br>X: %{z:.3f}<br>%{text}<extra></extra>",

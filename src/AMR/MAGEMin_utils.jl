@@ -975,6 +975,72 @@ function set_magemin_buffer!(MAGEMin_data::MAGEMin_Data, bufferType::String)
     return nothing
 end
 
+const DIAGRAM_POINT_TYPES = ("pt", "px", "tx", "ptx")
+
+diagram_fixed_bulk(diagType, dtb, pChip_wat) = diagType == "pt" && !(dtb in ("sb11", "sb21", "sb24", "rMELTS", "pMELTS")) && isnothing(pChip_wat)
+
+function ptx_path_PT(PTpath)
+    np   = length(PTpath)
+    Pres = [Float64(to_kbar_pressure(PTpath[i][Symbol("col-1")])) for i = 1:np]
+    Temp = [Float64(PTpath[i][Symbol("col-2")]) for i = 1:np]
+    return Pres, Temp
+end
+
+"""
+    diagram_point_builder(diagType, oxi, bulk_L, bulk_R, bufferN1, bufferN2, fixT, fixP, ptx_PT, pChip_wat, pChip_T)
+
+Returns `(x, y) -> (P, T, X, B, wat_sat)`: the MAGEMin inputs of the point at diagram
+coordinates `(x, y)` of a pt, px, tx or ptx diagram, built exactly as the AMR mesh points.
+`ptx_PT` is `(Pres, Temp)` from [`ptx_path_PT`](@ref) for ptx diagrams, `nothing` otherwise.
+`wat_sat` is true when the bulk was set to the sub-solidus water saturation.
+"""
+function diagram_point_builder( diagType    :: String,
+                                oxi         :: Vector{String},
+                                bulk_L      :: Vector{Float64},
+                                bulk_R      :: Vector{Float64},
+                                bufferN1    :: Float64,
+                                bufferN2    :: Float64,
+                                fixT        :: Float64,
+                                fixP        :: Float64,
+                                ptx_PT,
+                                pChip_wat,
+                                pChip_T )
+
+    mix_X(x) = bulk_L*(1.0 - x) + bulk_R*x
+    mix_B(x) = bufferN1*(1.0 - x) + bufferN2*x
+
+    if diagType == "tx"
+        return (x, y) -> (fixP, Float64(y), mix_X(x), mix_B(x), false)
+    elseif diagType == "px"
+        return (x, y) -> (Float64(y), fixT, mix_X(x), mix_B(x), false)
+    elseif diagType == "ptx"
+        Pres, Temp    = ptx_PT
+        np            = length(Pres)
+        s             = [(i-1)*(1.0/(np-1)) for i = 1:np]
+        pChipInterp_P = Interpolator(s, Pres)
+        pChipInterp_T = Interpolator(s, Temp)
+        return (x, y) -> (pChipInterp_P(y), pChipInterp_T(y), mix_X(x), mix_B(x), false)
+    elseif diagType == "pt"
+        if isnothing(pChip_wat)
+            return (x, y) -> (Float64(y), Float64(x), bulk_L, bufferN1, false)
+        end
+        id_h2o = findfirst(oxi .== "H2O")
+        id_dry = findall(oxi .!= "H2O")
+        return function (x, y)
+            P, T = Float64(y), Float64(x)
+            if T > pChip_T(P)
+                tmp_bulk              = deepcopy(bulk_L)
+                tmp_bulk            ./= sum(tmp_bulk[id_dry])
+                tmp_bulk[id_h2o]      = pChip_wat(P)
+                tmp_bulk            ./= sum(tmp_bulk)
+                return P, T, tmp_bulk, bufferN1, true
+            end
+            return P, T, bulk_L, bufferN1, false
+        end
+    end
+    error("diagram_point_builder: unsupported diagram type $diagType")
+end
+
 function refine_MAGEMin(dtb,data,
                         MAGEMin_data    :: MAGEMin_Data, 
                         custW           :: Bool,
@@ -1192,108 +1258,36 @@ function refine_MAGEMin(dtb,data,
             end
 
         elseif diagType != "tt"
-            if diagType == "tx"
+            if diagType in DIAGRAM_POINT_TYPES
+                point_inputs = diagram_point_builder(   diagType,   oxi,        bulk_L,     bulk_R,
+                                                        bufferN1,   bufferN2,   fixT,       fixP,
+                                                        diagType == "ptx" ? ptx_path_PT(PTpath) : nothing,
+                                                        pChip_wat,  pChip_T )
+                id_h2o       = findfirst(oxi .== "H2O")
 
                 for i = 1:n_new_points
-                    Pvec[i] = fixP;
-                    Tvec[i] = npoints[i][2];
-                    Xvec[i] = bulk_L*(1.0 - npoints[i][1]) + bulk_R*npoints[i][1];
-                    Bvec[i] = bufferN1*(1.0 - npoints[i][1]) + bufferN2*npoints[i][1];
+                    Pvec[i], Tvec[i], Xvec[i], Bvec[i], wat_sat = point_inputs(npoints[i][1], npoints[i][2])
+
                     if !isempty(data.split_cell_list) && boost == true
-                        tmp = [Out_XY[data.npoints_ig[i][j]].mSS_vec for j=1:length(data.npoints_ig[i])]
-                        Gvec[i] = vcat(tmp...)
-                    end
-                end
-            elseif diagType == "px"
-
-                for i = 1:n_new_points
-                    Tvec[i] = fixT;
-                    Pvec[i] = npoints[i][2];
-                    Xvec[i] = bulk_L*(1.0 - npoints[i][1]) + bulk_R*npoints[i][1];
-                    Bvec[i] = bufferN1*(1.0 - npoints[i][1]) + bufferN2*npoints[i][1];
-                    if !isempty(data.split_cell_list) && boost == true
-                        tmp = [Out_XY[data.npoints_ig[i][j]].mSS_vec for j=1:length(data.npoints_ig[i])]
-                        Gvec[i] = vcat(tmp...)
-                    end
-                end
-            elseif diagType == "pt"
-
-                if "H2O" in oxi
-                    id_h2o      = findfirst(oxi .== "H2O")
-                    id_dry      = findall(oxi .!= "H2O")
-                end
-
-                for i = 1:n_new_points
-                    Tvec[i] = npoints[i][1];
-                    Pvec[i] = npoints[i][2];
-                    Bvec[i] = bufferN1;
-                    
-                    if !isempty(data.split_cell_list) && boost == true
-                        tmp = [Out_XY[data.npoints_ig[i][j]].mSS_vec for j=1:length(data.npoints_ig[i])]
-                        Gvec[i] = vcat(tmp...)
-                    end
-
-                    # here we check if the water need to be saturated at sub-solidus
-                    if ~isnothing(pChip_wat)
-                        TsatSol     = pChip_T(Pvec[i])
-                        waterSat    = pChip_wat(Pvec[i])
-
-                        if Tvec[i] > TsatSol        # if we are above the solidus then we use the water content from the sub-solidus curve
-                            tmp_bulk              = deepcopy(bulk_L)
-                            tmp_bulk            ./= sum(tmp_bulk[id_dry])
-                            tmp_bulk[id_h2o]      = waterSat
-                            tmp_bulk            ./= sum(tmp_bulk)
-
-                            if !isempty(data.ncorners) && boost == true # Here we roughly check if the bulk composition is feasible with respect to initial guess
-                                check_bulk = vcat([Out_XY[data.npoints_ig[i][j]].bulk[id_h2o] for j=1:length(data.npoints_ig[i])]...)
-                                if tmp_bulk[id_h2o] > maximum(check_bulk) || tmp_bulk[id_h2o] < minimum(check_bulk)
-                                    Ivec[i] = false
-                                end
-                            end   
-
-                            Xvec[i]               = tmp_bulk
+                        if diagType == "ptx"
+                            n_ph = [ length(Out_XY[data.npoints_ig[i][j]].ph) for j=1:length(data.npoints_ig[i])]
+                            ids  = sortperm(n_ph, rev=true)
+                            tmp  = [Out_XY[data.npoints_ig[i][ids[j]]].mSS_vec for j=1:length(data.npoints_ig[i])]
                         else
-                            Xvec[i] = bulk_L;
+                            tmp  = [Out_XY[data.npoints_ig[i][j]].mSS_vec for j=1:length(data.npoints_ig[i])]
                         end
-                    else
-                        Xvec[i] = bulk_L;
-                    end
-                end
-            elseif diagType == "ptx"
-
-                ptx_data    = copy(PTpath)
-                np          = length(ptx_data)
-                Pres        = zeros(Float64,np)
-                Temp        = zeros(Float64,np)
-                x           = zeros(Float64,np)
-                for i=1:np
-                    Pres[i] = to_kbar_pressure(ptx_data[i][Symbol("col-1")])
-                    Temp[i] = ptx_data[i][Symbol("col-2")]
-                    x[i]    = (i-1)*(1.0/(np-1))
-                end
-                pChipInterp_P = Interpolator(x, Pres)
-                pChipInterp_T = Interpolator(x, Temp)
-
-                for i = 1:n_new_points
-                    Tvec[i] = pChipInterp_T(npoints[i][2]); 
-                    Pvec[i] = pChipInterp_P(npoints[i][2]);
-                    Xvec[i] = bulk_L*(  1.0 - npoints[i][1]) + bulk_R*npoints[i][1];
-                    Bvec[i] = bufferN1*(1.0 - npoints[i][1]) + bufferN2*npoints[i][1];
-                    if !isempty(data.split_cell_list) && boost == true
-
-                        n_ph = [ length(Out_XY[data.npoints_ig[i][j]].ph) for j=1:length(data.npoints_ig[i])]
-                        ids  = sortperm(n_ph, rev=true)
-
-                        tmp = [Out_XY[data.npoints_ig[i][ids[j]]].mSS_vec for j=1:length(data.npoints_ig[i])]
                         Gvec[i] = vcat(tmp...)
                     end
+
+                    if wat_sat && !isempty(data.ncorners) && boost == true
+                        check_bulk = vcat([Out_XY[data.npoints_ig[i][j]].bulk[id_h2o] for j=1:length(data.npoints_ig[i])]...)
+                        if Xvec[i][id_h2o] > maximum(check_bulk) || Xvec[i][id_h2o] < minimum(check_bulk)
+                            Ivec[i] = false
+                        end
+                    end
                 end
             end
-            if diagType == "pt" && dtb != "sb11" && dtb != "sb21"  && dtb != "sb24" && dtb != "rMELTS" && dtb != "pMELTS" && isnothing(pChip_wat) == true
-                fixed_bulk = true
-            else
-                fixed_bulk = false
-            end
+            fixed_bulk = diagram_fixed_bulk(diagType, dtb, pChip_wat)
             Out_XY_new  =   locked_multi_point_minimization(   Pvec, Tvec, MAGEMin_data;
                                                         X=Xvec, B=Bvec, Xoxides=oxi, sys_in="mol", G=Gvec, scp=scp,
                                                         rm_list=phase_selection, name_solvus=true, fixed_bulk=fixed_bulk, iguess=Ivec, callback_fn = update_progress, W=new_Ws,
