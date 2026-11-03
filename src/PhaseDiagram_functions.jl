@@ -2824,3 +2824,46 @@ function system_chemistry_text(out)
 
     return sys_chem*" (mol%)"*" - ["*bk*"]"
 end
+
+"""
+    pd_field_color_polys(specs, smooth_bnd, sigma)
+
+    Field-coloring overlay of the phase diagram. `specs` is a vector of
+    `(target, strict, color, alpha)`; every grid assemblage whose phase list matches
+    `target` (same rule as the Monte Carlo targets, see `mc_field_match`) has
+    its polygons collected, as the smoothed domain rings when `smooth_bnd` is
+    on, else as the traced boundaries. Returns `(polys, missing)`: `polys[k]` is
+    `(color, alpha, py, rings)` with `rings` a vector of `(x, y)` (y in kbar, `py`
+    flags a pressure y axis) and `missing` lists the colorings (indices into `specs`)
+    that matched no assemblage.
+"""
+function pd_field_color_polys(specs, smooth_bnd::Bool, sigma::Real)
+    global Out_XY, Hash_XY, poly_phases, poly_pcoor, pd_fig_meta
+    polys, absent = Any[], Int[]
+    (isempty(specs) || !(@isdefined(Out_XY) && @isdefined(Hash_XY) && @isdefined(poly_phases) && @isdefined(poly_pcoor))) && return polys, absent
+
+    id2ph = mc_id_to_phases(Out_XY, Hash_XY)
+    geom  = smooth_bnd ? pd_get_smooth_geometry(sigma) : nothing
+    py    = isnothing(pd_fig_meta) ? true : pressure_on_y_axis(pd_fig_meta.diagType)
+
+    for (k, (target, strict, color, alpha)) in enumerate(specs)
+        ids   = sort([id for (id, ph) in id2ph if mc_field_match(ph, target, strict)])
+        rings = NamedTuple{(:x, :y),Tuple{Vector{Float64},Vector{Float64}}}[]
+        for id in ids
+            if geom !== nothing
+                for p in geom.polys
+                    p.id == id || continue
+                    for r in p.rings
+                        push!(rings, (x = Float64.(r[:, 1]), y = Float64.(r[:, 2])))
+                    end
+                end
+            else
+                for m in findall(==(id), poly_phases)
+                    push!(rings, (x = Float64.(poly_pcoor[m][:, 1]), y = Float64.(poly_pcoor[m][:, 2])))
+                end
+            end
+        end
+        isempty(rings) ? push!(absent, k) : push!(polys, (color = color, alpha = alpha, py = py, rings = rings))
+    end
+    return polys, absent
+end

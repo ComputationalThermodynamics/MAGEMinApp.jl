@@ -2973,9 +2973,10 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("pd-pie-list",      "data"),
         State("pd-pie-radius",    "value"),
         State("pd-pie-unit",      "value"),
+        State("pd-fc-polys",      "data"),
 
         prevent_initial_call = true,
-    ) do _n, show_reaction, show_mesh, show_labels, fieldname, smooth_bnd, smooth_sigma, pies, pie_radius, pie_unit
+    ) do _n, show_reaction, show_mesh, show_labels, fieldname, smooth_bnd, smooth_sigma, pies, pie_radius, pie_unit, field_colors
 
         global data, gridded, layout, data_reaction, data_isopleth, iso_show, heat_map_export, assemblage_rows, pd_fig_meta, output_dir
 
@@ -3001,7 +3002,8 @@ function Tab_PhaseDiagram_Callbacks(app)
                                     xtitle = pd_fig_meta.xtitle, ytitle = pd_fig_meta.ytitle, diagType = pd_fig_meta.diagType,
                                     show_reaction = show_reaction == "true", show_mesh = show_mesh == "true", show_labels = show_labels == "true",
                                     geotherms = SUBD_TRACES["pd"],
-                                    pies = isnothing(pies) ? Any[] : collect(Any, pies), pie_radius = something(pie_radius, 20), pie_unit = something(pie_unit, "wt"))
+                                    pies = isnothing(pies) ? Any[] : collect(Any, pies), pie_radius = something(pie_radius, 20), pie_unit = something(pie_unit, "wt"),
+                                    field_colors = isnothing(field_colors) ? Any[] : collect(Any, field_colors))
             mkpath(output_dir[1])
             base = output_dir[1] * replace(isempty(parts.title) ? "phase_diagram" : parts.title, r"[ /\\:]" => "_")
             path = base * "_" * strip(replace(string(fieldname), r"[^A-Za-z0-9]+" => "_"), '_') * ".svg"
@@ -3167,8 +3169,9 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("diagram-dropdown",       "value"),
         State("database-dropdown",      "value"),
         State("pressure-unit-dropdown", "value"),
+        State("pd-fc-pick",             "data"),
         prevent_initial_call = true,
-    ) do click_info, _, _, _, canvas_open, recording, pies, diagType, dtb, punit
+    ) do click_info, _, _, _, canvas_open, recording, pies, diagType, dtb, punit, fc_picking
 
         bid = pushed_button( callback_context() )
         if bid == "style-canvas-pd"
@@ -3177,6 +3180,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         end
         bid == "phase-diagram" || return Any[]
         recording == true || return no_update()
+        fc_picking == true && return no_update()
 
         pid = pd_click_point_id(click_info)
         (pid === nothing || !@isdefined(Out_XY) || pid > length(Out_XY)) && return no_update()
@@ -3349,6 +3353,197 @@ function Tab_PhaseDiagram_Callbacks(app)
         Output("pd-cs-hover",       "data"),
         Input("phase-diagram",      "figure"),
         Input("phase-diagram-te",   "figure"),
+        prevent_initial_call = true,
+    )
+
+    """
+        "Field coloring" list: Add/Update (the selected entry is updated, otherwise a new one is
+        appended), Delete selected and Delete all act on the `pd-fc-list` store; the dropdown lists
+        the entries.
+    """
+    callback!(
+        app,
+        Output("pd-fc-list",    "data"),
+        Output("pd-fc-select",  "options"),
+        Output("pd-fc-select",  "value"),
+        Output("pd-fc-msg",     "children"),
+
+        Input("pd-fc-add",      "n_clicks"),
+        Input("pd-fc-del",      "n_clicks"),
+        Input("pd-fc-clear",    "n_clicks"),
+
+        State("pd-fc-select",   "value"),
+        State("pd-fc-list",     "data"),
+        State("pd-fc-ph",       "value"),
+        State("pd-fc-mode",     "value"),
+        State("pd-fc-col",      "value"),
+        State("pd-fc-alpha",    "value"),
+
+        prevent_initial_call = true,
+    ) do _a, _d, _c, sel, list, ph, mode, col, alpha
+
+        bid  = pushed_button( callback_context() )
+        list = isnothing(list) ? Any[] : collect(Any, list)
+        idx  = sel isa AbstractString ? tryparse(Int, sel) : nothing
+        msg  = ""
+
+        if bid == "pd-fc-clear"
+            list = Any[]
+            sel  = "new"
+        elseif bid == "pd-fc-del"
+            if idx !== nothing && 1 <= idx <= length(list)
+                deleteat!(list, idx)
+            end
+            sel = "new"
+        elseif bid == "pd-fc-add"
+            target = String.(split(something(ph, ""), r"[,\s]+"; keepempty = false))
+            if isempty(target)
+                msg = "Enter an assemblage (or use Select field) first."
+            else
+                entry = Dict("ph" => join(target, " "), "strict" => mode == "strict",
+                             "color" => something(col, "#e6194b"), "alpha" => Float64(something(alpha, 0.5)))
+                if idx !== nothing && 1 <= idx <= length(list)
+                    list[idx] = entry
+                else
+                    push!(list, entry)
+                    sel = string(length(list))
+                end
+            end
+        end
+
+        options = vcat([Dict("label" => "New coloring", "value" => "new")],
+                       [Dict("label" => "$(i)) $(e["ph"]) [$(e["strict"] ? "strict" : "loose")]", "value" => string(i)) for (i, e) in enumerate(list)])
+        return list, options, sel, msg
+    end
+
+    """
+        "Field coloring" editor: choosing an entry loads it into the editor (the add button becomes
+        "Update coloring"); "Select field" arms a one-shot pick mode in which the next click on the
+        diagram writes that point's assemblage (strict) into the editor.
+    """
+    callback!(
+        app,
+        Output("pd-fc-ph",          "value"),
+        Output("pd-fc-mode",        "value"),
+        Output("pd-fc-col",         "value"),
+        Output("pd-fc-alpha",       "value"),
+        Output("pd-fc-add",         "children"),
+        Output("pd-fc-pick",        "data"),
+        Output("pd-fc-pick-btn",    "color"),
+
+        Input("pd-fc-select",       "value"),
+        Input("pd-fc-pick-btn",     "n_clicks"),
+        Input("phase-diagram",      "clickData"),
+
+        State("pd-fc-pick",         "data"),
+        State("pd-fc-list",         "data"),
+
+        prevent_initial_call = true,
+    ) do sel, _n, click_info, picking, list
+
+        bid = pushed_button( callback_context() )
+        nu  = no_update()
+
+        if bid == "pd-fc-select"
+            idx = sel isa AbstractString ? tryparse(Int, sel) : nothing
+            if idx === nothing || isnothing(list) || !(1 <= idx <= length(list))
+                return nu, nu, nu, nu, "Add coloring", false, "light"
+            end
+            e = list[idx]
+            return e["ph"], e["strict"] == true ? "strict" : "loose", e["color"], e["alpha"], "Update coloring", false, "light"
+        elseif bid == "pd-fc-pick-btn"
+            on = !(picking == true)
+            return nu, nu, nu, nu, nu, on, on ? "danger" : "light"
+        elseif bid == "phase-diagram"
+            picking == true || return nu, nu, nu, nu, nu, nu, nu
+            pid = pd_click_point_id(click_info)
+            (pid === nothing || !@isdefined(Out_XY) || pid > length(Out_XY)) && return nu, nu, nu, nu, nu, nu, nu
+            return join(sort(String.(Out_XY[pid].ph)), " "), "strict", nu, nu, nu, false, "light"
+        end
+        return nu, nu, nu, nu, nu, nu, nu
+    end
+
+    """
+        Collect the polygons of the fields matching each coloring of the list (see
+        `pd_field_color_polys`); redrawn on the figure by the clientside callback below.
+    """
+    callback!(
+        app,
+        Output("pd-fc-polys",   "data"),
+        Output("pd-fc-status",  "children"),
+
+        Input("pd-fc-list",                 "data"),
+        Input("computation-info-id",        "children"),
+        Input("smooth-boundaries-switch",   "value"),
+        Input("smooth-boundaries-sigma",    "value"),
+
+        prevent_initial_call = true,
+    ) do list, _info, smooth, sigma
+
+        specs = Tuple{Vector{String},Bool,String,Float64}[]
+        for e in something(list, [])
+            target = String.(split(e["ph"], r"[,\s]+"; keepempty = false))
+            isempty(target) && continue
+            push!(specs, (target, e["strict"] == true, String(e["color"]), Float64(e["alpha"])))
+        end
+
+        polys, absent = pd_field_color_polys(specs, smooth == true, something(sigma, pd_smooth_sigma_default))
+        status = isempty(absent) ? "" : "No matching field for coloring " * join(absent, ", ") * "."
+        return polys, status
+    end
+
+    callback!(
+        """
+        function(polys, fig, punit) {
+            var host = document.getElementById('phase-diagram');
+            if (!host) { return window.dash_clientside.no_update; }
+            host.__pdFcState = {polys: polys || [], gpa: punit === 'gpa'};
+            var isFc = function(t) { return t.meta && t.meta.kind === 'pd-fieldcolor'; };
+            var build = function() {
+                var st = host.__pdFcState, out = [];
+                st.polys.forEach(function(p, k) {
+                    var xs = [], ys = [];
+                    p.rings.forEach(function(r) {
+                        if (xs.length) { xs.push(null); ys.push(null); }
+                        r.x.forEach(function(v, j) { xs.push(v); ys.push((p.py && st.gpa) ? r.y[j] / 10 : r.y[j]); });
+                        xs.push(r.x[0]); ys.push((p.py && st.gpa) ? r.y[0] / 10 : r.y[0]);
+                    });
+                    out.push({type: 'scatter', mode: 'lines', x: xs, y: ys, fill: 'toself', fillcolor: p.color, opacity: p.alpha,
+                              line: {width: 0}, hoverinfo: 'skip', showlegend: false, meta: {kind: 'pd-fieldcolor', row: k}});
+                });
+                return out;
+            };
+            var redraw = function(gd) {
+                if (!gd || !gd.data) { return; }
+                var idx = [];
+                gd.data.forEach(function(t, i) { if (isFc(t)) { idx.push(i); } });
+                var traces = build();
+                if (idx.length) { Plotly.deleteTraces(gd, idx); }
+                if (traces.length) {
+                    // right above the heatmap and the smoothed field fills, below every line trace
+                    var at = 1;
+                    while (at < gd.data.length && gd.data[at].fill === 'toself' && gd.data[at].hoverinfo === 'skip' && !gd.data[at].meta) { at++; }
+                    Plotly.addTraces(gd, traces, traces.map(function(t, i) { return at + i; }));
+                }
+            };
+            var gd = host.querySelector('.js-plotly-plot');
+            if (!gd || !gd.on) { return window.dash_clientside.no_update; }
+            if (!gd.__pdFcHook) {
+                gd.__pdFcHook = true;
+                gd.on('plotly_afterplot', function() {
+                    var n = gd.data ? gd.data.filter(isFc).length : 0;
+                    if (n !== host.__pdFcState.polys.length) { redraw(gd); }
+                });
+            }
+            redraw(gd);
+            return window.dash_clientside.no_update;
+        }
+        """,
+        app,
+        Output("pd-fc-cs",               "data"),
+        Input("pd-fc-polys",             "data"),
+        Input("phase-diagram",           "figure"),
+        Input("pressure-unit-dropdown",  "value"),
         prevent_initial_call = true,
     )
 

@@ -15,6 +15,59 @@ colormap_dropdown_options() = vcat(
     [Dict("label" => name, "value" => name) for name in ["Pink","Sunset","Dawn","Almeria","Almeria Extended","Almeria Red","Almeria Blue"]],
 )
 
+# "Field coloring" sub-tab of the Figure options panel: an editor (assemblage, loose/strict, colour, alpha) feeding a
+# list of colorings kept in the "pd-fc-list" store and selectable from a dropdown
+function pd_field_coloring_tab()
+    small = Dict("font-size" => "80%", "color" => "grey")
+    btn   = Dict("border" => "1px grey solid", "font-size" => "100%", "width" => "100%")
+    return Any[
+        html_div("Coloring", style = merge(small, Dict("marginTop" => 4))),
+        dcc_dropdown(id = "pd-fc-select", options = [Dict("label" => "New coloring", "value" => "new")], value = "new", clearable = false),
+        html_hr(style = Dict("marginTop" => 8, "marginBottom" => 8)),
+        dbc_row([
+            dbc_col([
+                html_div("Assemblage", style = small),
+                dbc_input(id = "pd-fc-ph", type = "text", value = "", placeholder = "e.g. g bi pl", debounce = true, size = "sm"),
+            ], width = 6, style = Dict("padding-right" => "2px")),
+            dbc_col([
+                html_div("Match", style = small),
+                dbc_select(id = "pd-fc-mode", size = "sm", value = "loose",
+                            options = [Dict("label" => "loose", "value" => "loose"), Dict("label" => "strict", "value" => "strict")],
+                            style = Dict("font-size" => "75%", "padding-left" => "4px", "padding-right" => "16px", "background-position" => "right 3px center")),
+            ], width = 4, style = Dict("padding" => "0px 2px")),
+            dbc_col([
+                html_div("Color", style = small),
+                dbc_input(id = "pd-fc-col", type = "color", value = "#e6194b", style = Dict("height" => "31px", "padding" => "0", "margin" => "0")),
+            ], width = 2, style = Dict("padding-left" => "2px")),
+        ]),
+        dbc_row([
+            html_div("Alpha", style = merge(small, Dict("marginTop" => 6))),
+            dcc_slider(id = "pd-fc-alpha", min = 0.1, max = 1.0, step = 0.05, value = 0.5,
+                        marks = Dict(string(v) => Dict("label" => string(v), "style" => Dict("font-size" => "70%")) for v in (0.2, 0.4, 0.6, 0.8, 1.0)),
+                        tooltip = Dict("placement" => "bottom")),
+        ]),
+        dbc_row([
+            dbc_button("Select field", id = "pd-fc-pick-btn", color = "light", size = "sm", n_clicks = 0, style = merge(btn, Dict("marginTop" => 8))),
+        ]),
+        dbc_row([
+            dbc_button("Add coloring", id = "pd-fc-add", color = "light", size = "sm", n_clicks = 0,
+                        style = merge(btn, Dict("marginTop" => 4, "background-color" => "#d3f2ce"))),
+        ]),
+        dbc_row([
+            dbc_col(dbc_button("Delete selected", id = "pd-fc-del",   color = "light", size = "sm", n_clicks = 0, style = btn), width = 6, style = Dict("padding-right" => "2px")),
+            dbc_col(dbc_button("Delete all",      id = "pd-fc-clear", color = "light", size = "sm", n_clicks = 0, style = btn), width = 6, style = Dict("padding-left" => "2px")),
+        ], style = Dict("marginTop" => 4)),
+        html_div("Loose: the entered phases must all be stable (others may be present). Strict: exactly these phases. \"Select field\" then click a field of the diagram to read its assemblage.",
+                    style = Dict("font-size" => "70%", "color" => "grey", "marginTop" => 6)),
+        html_div(id = "pd-fc-msg",    children = "", style = Dict("font-size" => "75%", "color" => "#c0392b", "marginTop" => 4)),
+        html_div(id = "pd-fc-status", children = "", style = Dict("font-size" => "75%", "color" => "grey", "marginTop" => 4)),
+        dcc_store(id = "pd-fc-list",  data = []),
+        dcc_store(id = "pd-fc-pick",  data = false),
+        dcc_store(id = "pd-fc-polys", data = []),
+        dcc_store(id = "pd-fc-cs"),
+    ]
+end
+
 function phase_pie_section(; unit_id, pie_id, title_id, table_id, div_id)
     return [
         dbc_row([
@@ -238,6 +291,8 @@ function Tab_PhaseDiagram()
                                 dbc_row([dbc_button("Figure options",id="export-figure"),
                                 dbc_collapse(
                                     dbc_card(dbc_cardbody([
+                                      dbc_tabs([
+                                      dbc_tab(label="Pie charts", children=[
                                         dbc_row([
                                             dbc_button("Modify phase colors", id="style-canvas-button-pd", color="light", size="sm", n_clicks=0,
                                                         style = Dict("width" => "100%", "border" => "1px grey solid", "font-size" => "100%")),
@@ -322,19 +377,6 @@ function Tab_PhaseDiagram()
                                         ], style = Dict("marginBottom" => 10)),
                                         html_hr(style = Dict("marginTop" => 0, "marginBottom" => 10)),
                                         dbc_row([
-                                            dbc_switch(label="Clean boundaries", id="smooth-boundaries-switch", value=true),
-                                        ]),
-                                        dbc_row([
-                                            html_div("Smoothing (cells)", style = Dict("font-size" => "100%", "color" => "grey")),
-                                            dcc_slider( id      = "smooth-boundaries-sigma",
-                                                        min     = 0.0,
-                                                        max     = 5.0,
-                                                        step    = 0.25,
-                                                        value   = 2.5,
-                                                        marks   = Dict(string(i) => string(i) for i in 0:5),
-                                                        tooltip = Dict("placement" => "bottom")),
-                                        ]),
-                                        dbc_row([
                                             dbc_button("Export svg",
                                                         id          = "export-layers", color="light",  n_clicks=0,
                                                         style       =  Dict( "textAlign"    => "center",
@@ -361,7 +403,101 @@ function Tab_PhaseDiagram()
                                                 style       = Dict("textAlign" => "center","font-size" => "100%", "width"=> "100%", "resize"=> "none")
                                             )
                                         ]),
+                                      ]),
+                                      dbc_tab(label="Field coloring", children = pd_field_coloring_tab()),
+                                      dbc_tab(label="Bulk transfer", children=[
+                                            html_h1("Transfer point as bulk for PTX path", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
+                                            html_hr(),
+                                            dbc_row([
+                                                dbc_col([
+                                                    dbc_input(
+                                                        id      = "transfer-bulk-name",
+                                                        type    = "text",
+                                                        style   = Dict("textAlign" => "center") ,
+                                                        value   = "bulk-name"   ),
+                                                ], width=4),
+                                                dbc_col([
+                                                    dcc_dropdown(   id          = "transfer-bulk-id",
+                                                                    options     =  ["Solid","Melt","Whole-rock"],
+                                                                    value       = "Melt" ,
+                                                                    clearable   =  false,
+                                                                    multi       =  false),
+                                                ], width=4),
+                                                dbc_col([
+                                                    dbc_button("transfer", id="transfer-bulk-button", color="light",  n_clicks=0,
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"1px grey solid")),
+                                                ], width=4),
+                                            ]),
+                                            html_hr(),
+                                            html_h1("Add bulk to phase diagram", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
+                                            html_hr(),
+                                            dbc_row([
+                                                dbc_col([
+                                                    dbc_input(
+                                                        id      = "transfer-bulk-pd-name",
+                                                        type    = "text",
+                                                        style   = Dict("textAlign" => "center") ,
+                                                        value   = "bulk-name"   ),
+                                                ], width=4),
+                                                dbc_col([
+                                                    dcc_dropdown(   id          = "transfer-bulk-pd-id",
+                                                                    options     =  ["Solid","Melt","Whole-rock"],
+                                                                    value       = "Solid" ,
+                                                                    clearable   =  false,
+                                                                    multi       =  false),
+                                                ], width=4),
+                                                dbc_col([
+                                                    dbc_button("add", id="transfer-bulk-pd-button", color="light",  n_clicks=0,
+                                                    style       = Dict( "textAlign"     => "center",
+                                                                        "font-size"     => "100%",
+                                                                        "border"        =>"1px grey solid")),
+                                                ], width=4),
+                                            ]),
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("Database", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                ], width=4),
+                                                dbc_col([
+                                                    dcc_dropdown(   id          = "transfer-bulk-pd-db",
+                                                                    options     = dtb_dict,
+                                                                    value       = "ig",
+                                                                    clearable   = false,
+                                                                    multi       = false),
+                                                ], width=8),
+                                            ], style = Dict("marginTop" => 4)),
+                                            dbc_alert(
+                                                "",
+                                                id      = "transfer-bulk-pd-success",
+                                                is_open = false,
+                                                duration= 4000,
+                                            ),
+                                            dbc_alert(
+                                                "",
+                                                id      = "transfer-bulk-pd-failed",
+                                                color   = "danger",
+                                                is_open = false,
+                                                duration= 6000,
+                                            ),
 
+                                      ]),
+                                      dbc_tab(label="Boundaries", children=[
+                                        dbc_row([
+                                            dbc_switch(label="Clean boundaries", id="smooth-boundaries-switch", value=true),
+                                        ], style = Dict("marginTop" => 4)),
+                                        dbc_row([
+                                            html_div("Smoothing (cells)", style = Dict("font-size" => "100%", "color" => "grey")),
+                                            dcc_slider( id      = "smooth-boundaries-sigma",
+                                                        min     = 0.0,
+                                                        max     = 5.0,
+                                                        step    = 0.25,
+                                                        value   = 2.5,
+                                                        marks   = Dict(string(i) => string(i) for i in 0:5),
+                                                        tooltip = Dict("placement" => "bottom")),
+                                        ]),
+                                      ]),
+                                      ]),
                                     ])),
                                     id          = "collapse-export-figure",
                                     is_open     =  true,
@@ -487,87 +623,6 @@ function Tab_PhaseDiagram()
                                                 ),
                                             ], style = Dict("display" => "block"), id = "sample-point-section-id"),
                                             html_hr(),
-                                            html_h1("Transfer point as bulk for PTX path", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
-                                            html_hr(),
-                                            dbc_row([
-                                                dbc_col([
-                                                    html_h1("Name", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
-                                                ], width=2),
-                                                dbc_col([
-                                                    dbc_input(
-                                                        id      = "transfer-bulk-name",
-                                                        type    = "text",
-                                                        style   = Dict("textAlign" => "center") ,
-                                                        value   = "bulk-name"   ),
-                                                ], width=3),
-                                                dbc_col([
-                                                    dcc_dropdown(   id          = "transfer-bulk-id",
-                                                                    options     =  ["Solid","Melt","Whole-rock"],
-                                                                    value       = "Melt" ,
-                                                                    clearable   =  false,
-                                                                    multi       =  false),
-                                                ], width=3),
-                                                dbc_col([
-                                                    dbc_button("transfer", id="transfer-bulk-button", color="light",  n_clicks=0,
-                                                    style       = Dict( "textAlign"     => "center",
-                                                                        "font-size"     => "100%",
-                                                                        "border"        =>"1px grey solid")),
-                                                ], width=3),
-                                            ]),
-                                            html_hr(),
-                                            html_h1("Add bulk to phase diagram", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
-                                            html_hr(),
-                                            dbc_row([
-                                                dbc_col([
-                                                    html_h1("Name", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
-                                                ], width=2),
-                                                dbc_col([
-                                                    dbc_input(
-                                                        id      = "transfer-bulk-pd-name",
-                                                        type    = "text",
-                                                        style   = Dict("textAlign" => "center") ,
-                                                        value   = "bulk-name"   ),
-                                                ], width=3),
-                                                dbc_col([
-                                                    dcc_dropdown(   id          = "transfer-bulk-pd-id",
-                                                                    options     =  ["Solid","Melt","Whole-rock"],
-                                                                    value       = "Solid" ,
-                                                                    clearable   =  false,
-                                                                    multi       =  false),
-                                                ], width=3),
-                                                dbc_col([
-                                                    dbc_button("add", id="transfer-bulk-pd-button", color="light",  n_clicks=0,
-                                                    style       = Dict( "textAlign"     => "center",
-                                                                        "font-size"     => "100%",
-                                                                        "border"        =>"1px grey solid")),
-                                                ], width=3),
-                                            ]),
-                                            dbc_row([
-                                                dbc_col([
-                                                    html_h1("Database", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
-                                                ], width=5),
-                                                dbc_col([
-                                                    dcc_dropdown(   id          = "transfer-bulk-pd-db",
-                                                                    options     = dtb_dict,
-                                                                    value       = "ig",
-                                                                    clearable   = false,
-                                                                    multi       = false),
-                                                ], width=6),
-                                            ], style = Dict("marginTop" => 4)),
-                                            dbc_alert(
-                                                "",
-                                                id      = "transfer-bulk-pd-success",
-                                                is_open = false,
-                                                duration= 4000,
-                                            ),
-                                            dbc_alert(
-                                                "",
-                                                id      = "transfer-bulk-pd-failed",
-                                                color   = "danger",
-                                                is_open = false,
-                                                duration= 6000,
-                                            ),
-
                                             # SAVE POINTS INFORMATION
                                             html_hr(),
                                             dbc_row([
