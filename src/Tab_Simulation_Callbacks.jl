@@ -1962,9 +1962,10 @@ function Tab_Simulation_Callbacks(app)
             data    = [Dict("oxide" => row.oxide[1][i], "fraction" => row.frac_wt[1][i]) for i=1:length(row.oxide[1]) ]
         end
 
-        opts        =  [Dict(   "label" => db_dtb.title[i],
-                                "value" => db_dtb.test[i]  )
-                                    for i=1:length(db_dtb.test)]
+        db_list     = bulk_list_rows(db_dtb, :pd)
+        opts        =  [Dict(   "label" => db_list.title[i],
+                                "value" => db_list.test[i]  )
+                                    for i=1:length(db_list.test)]
 
         cap         = dba[(dba.acronym .== dtb) , :].database[1]
 
@@ -1981,6 +1982,8 @@ function Tab_Simulation_Callbacks(app)
         Output("test-2-dropdown","value"),
         Input("test-2-dropdown","value"),
         Input("database-dropdown","value"),
+        Input( "output-data-uploadn", "is_open"),
+        Input( "transfer-bulk-pd-success", "is_open"),
 
         Input( "load-state-diagram-button","n_clicks"  ),
         Input( "select-bulk-unit","value"),
@@ -1991,7 +1994,7 @@ function Tab_Simulation_Callbacks(app)
 
         prevent_initial_call=true,
 
-    ) do    test, dtb, 
+    ) do    test, dtb, update, update_pd,
             n_clicks_load, sys_unit,
             tb2_data, filename,
             test2_opts
@@ -2029,9 +2032,10 @@ function Tab_Simulation_Callbacks(app)
             data    = [Dict("oxide" => row.oxide[1][i], "fraction" => frac[i]) for i=1:length(row.oxide[1]) ]
         end
 
-        opts        =  [Dict(   "label" => db_dtb.title[i],
-                                "value" => db_dtb.test[i]  )
-                                    for i=1:length(db_dtb.test)]
+        db_list     = bulk_list_rows(db_dtb, :pd)
+        opts        =  [Dict(   "label" => db_list.title[i],
+                                "value" => db_list.test[i]  )
+                                    for i=1:length(db_list.test)]
 
         return data, opts, val
     end

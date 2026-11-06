@@ -1938,9 +1938,10 @@ function Tab_PTXpaths_Callbacks(app)
         end
 
 
-        opts        =  [Dict(   "label" => db[(db.db .== dtb), :].title[i],
-                                "value" => db[(db.db .== dtb), :].test[i]  )
-                                    for i=1:length(db[(db.db .== dtb), :].test)]
+        db_list     = bulk_list_rows(db[(db.db .== dtb), :], :ptx)
+        opts        =  [Dict(   "label" => db_list.title[i],
+                                "value" => db_list.test[i]  )
+                                    for i=1:length(db_list.test)]
 
         cap         = dba[(dba.acronym .== dtb) , :].database[1]      
         
@@ -2126,9 +2127,10 @@ function Tab_PTXpaths_Callbacks(app)
             end
         end
 
-        opts        =  [Dict(   "label" => db[(db.db .== dtb), :].title[i],
-                                "value" => db[(db.db .== dtb), :].test[i]  )
-                                    for i=1:length(db[(db.db .== dtb), :].test)]
+        db_list     = bulk_list_rows(db[(db.db .== dtb), :], :ptx)
+        opts        =  [Dict(   "label" => db_list.title[i],
+                                "value" => db_list.test[i]  )
+                                    for i=1:length(db_list.test)]
 
         # cap         = dba[(dba.acronym .== dtb) , :].database[1]      
         

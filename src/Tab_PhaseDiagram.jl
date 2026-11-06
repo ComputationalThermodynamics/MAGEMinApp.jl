@@ -404,7 +404,7 @@ function Tab_PhaseDiagram()
                                             )
                                         ]),
                                       ]),
-                                      dbc_tab(label="Field coloring", children = pd_field_coloring_tab()),
+                                      dbc_tab(label="Field colors", children = pd_field_coloring_tab()),
                                       dbc_tab(label="Bulk transfer", children=[
                                             html_h1("Transfer point as bulk for PTX path", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
                                             html_hr(),

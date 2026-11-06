@@ -1,0 +1,39 @@
+{
+  "mpmn": {
+    "presets": {
+      "pelite": {
+        "cd": [
+          "solid",
+          2,
+          "#3c7de5",
+          10
+        ],
+        "st": [
+          "solid",
+          2,
+          "#f7ff42",
+          10
+        ],
+        "bi": [
+          "solid",
+          2,
+          "#e6654d",
+          10
+        ],
+        "chl": [
+          "solid",
+          2,
+          "#00fa02",
+          10
+        ],
+        "liqmn": [
+          "dash",
+          3,
+          "#ff0000",
+          10
+        ]
+      }
+    },
+    "last": "pelite"
+  }
+}

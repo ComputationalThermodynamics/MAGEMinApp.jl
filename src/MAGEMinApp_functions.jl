@@ -3058,6 +3058,16 @@ function parse_contents(contents, filename)
     return KDs
 end
 
+"""
+    bulk_list_rows(rows, tab)
 
-
-
+    Rows of a bulk-rock database slice (`db[db.db .== dtb, :]`) to list in the bulk dropdowns of `tab`
+    (`:pd` or `:ptx`). A composition transferred from a point is tagged in `comments`
+    ("pd2ptx": sent to the PTX path, "pd2pd": added to the phase diagram) and is listed only in the
+    tab it was sent to; every other row is listed everywhere. The `test` values are kept as they are,
+    so the lists may skip some of them.
+"""
+function bulk_list_rows(rows, tab::Symbol)
+    hidden = tab == :pd ? "pd2ptx" : "pd2pd"
+    return rows[coalesce.(rows.comments, "") .!= hidden, :]
+end

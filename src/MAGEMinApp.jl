@@ -39,7 +39,7 @@ module MAGEMinApp
     const ENABLE_IGM     = false
     const ENABLE_IGAW    = false
     const ENABLE_O18     = true
-    const ENABLE_MPMN    = false
+    const ENABLE_MPMN    = true
 
     export App
     export build_intersect_model_df, make_measurements_df, list_intersect_phases, list_intersect_elements
@@ -148,7 +148,12 @@ module MAGEMinApp
     function build_app(; verbose = true)
         vApp = "Running MAGEMinApp@$(AppData.GUI_version) - Julia 1.10+"
 
-        app         = dash(external_stylesheets = [dbc_themes.BOOTSTRAP], prevent_initial_callbacks=false)
+        # Bootstrap is bundled in assets/a0_bootstrap.min.css (loaded before the other assets) so the GUI works offline.
+        # Set ENV["MAGEMINAPP_BOOTSTRAP"]="cdn" to load it from the CDN instead.
+        use_cdn     = lowercase(get(ENV, "MAGEMINAPP_BOOTSTRAP", "local")) == "cdn"
+        app         = dash(external_stylesheets = use_cdn ? [dbc_themes.BOOTSTRAP] : String[],
+                           assets_ignore        = use_cdn ? "a0_bootstrap" : "",
+                           prevent_initial_callbacks=false)
         app.title   = "MAGEMinApp"
         app.layout  = html_div() do
 
