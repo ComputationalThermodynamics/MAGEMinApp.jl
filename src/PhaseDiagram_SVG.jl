@@ -246,7 +246,7 @@ function pd_figure_parts(; data, gridded, heat_map, layout_g, reaction, data_iso
                           assemblage_rows, xtitle::AbstractString, ytitle::AbstractString, diagType::AbstractString,
                           show_reaction::Bool, show_mesh::Bool, show_labels::Bool, geotherms = GenericTrace[],
                           fills = Tuple{Vector{Matrix{Float64}},NTuple{4,Float64}}[], iso_sigma::Real = 0.0,
-                          pies = Any[], pie_radius::Real = 20, pie_unit = "wt")
+                          pies = Any[], pie_radius::Real = 20, pie_unit = "wt", field_colors = Any[])
     global phase_infos
     convert_p = use_GPa[1] && pressure_on_y_axis(diagType)
     yconv(y::Real) = convert_p ? display_pressure(Float64(y)) : Float64(y)
@@ -322,7 +322,21 @@ function pd_figure_parts(; data, gridded, heat_map, layout_g, reaction, data_iso
             mesh = mesh, reaction = lines,
             fills = [([[(r[k, 1], yconv(r[k, 2])) for k in 1:size(r, 1)] for r in rings], col) for (rings, col) in fills],
             isopleths = isopleths, geotherms = subd_svg_lines(geotherms, yconv), annotations = annotations,
-            info = info, assemblages = assemblages, pies = pd_svg_pies(pies, convert_p; unit = pie_unit), pie_radius = Float64(pie_radius))
+            info = info, assemblages = assemblages, pies = pd_svg_pies(pies, convert_p; unit = pie_unit), pie_radius = Float64(pie_radius),
+            field_colors = pd_svg_field_colors(field_colors, convert_p))
+end
+
+# Field-coloring polygons (JSON rows from the "pd-fc-polys" store) as `(color, alpha, rings)` with display-unit y
+function pd_svg_field_colors(rows, convert_p::Bool)
+    out = NamedTuple[]
+    for row in rows
+        rings = Vector{Tuple{Float64,Float64}}[]
+        for r in row["rings"]
+            push!(rings, [(Float64(x), convert_p ? display_pressure(Float64(y)) : Float64(y)) for (x, y) in zip(r["x"], r["y"])])
+        end
+        isempty(rings) || push!(out, (color = String(row["color"]), alpha = Float64(row["alpha"]), rings = rings))
+    end
+    return out
 end
 
 function pd_svg_pies(pies, convert_p::Bool; unit = "wt")
@@ -413,6 +427,17 @@ function pd_export_svg(parts, path::AbstractString)
             d   = join([svg_path_data(c, [r]) * " Z" for r in rings], " ")
             rgb, op = svg_css_color(pd_rgba(col))
             svg_path(io, svg_id(seen, "Field_$(k)"), d; fill = rgb, stroke = op === nothing ? rgb : "none", fill_opacity = op)
+            n_paths += 1
+        end
+        svg_group_close(io)
+    end
+
+    fcol = get(parts, :field_colors, NamedTuple[])
+    if !isempty(fcol)
+        svg_group_open(io, svg_id(seen, "Field_coloring"); stroke = "none")
+        for (k, f) in enumerate(fcol)
+            d = join([svg_path_data(c, [r]) * " Z" for r in f.rings], " ")
+            svg_path(io, svg_id(seen, "Field_coloring_$(k)"), d; fill = f.color, stroke = "none", fill_opacity = f.alpha)
             n_paths += 1
         end
         svg_group_close(io)

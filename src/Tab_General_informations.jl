@@ -444,6 +444,7 @@ function Tab_General_informations()
             dbc_tab(label="Trace-element Kd", children=[
                 html_div([
                 html_h1("Trace-Elements partitioning coefficients (O. Laurent, 2012)", style = Dict("textAlign" => "center","font-size" => "130%", "marginTop" => 4)),
+                dcc_markdown("**Note:** Laurent (2012) gives no Kd for *and*, *sill* and *mu* (all SiO2 ranges) nor for *ep* (52–63 wt% SiO2). These entries are placeholders set to 1e-5, i.e. the phase is treated as incompatible for all elements. *smt* and *spl* use the *mgt* and *sp* values, respectively.", style = Dict("textAlign" => "center", "font-size" => "110%", "marginTop" => 8)),
             dbc_tabs([
                 dbc_tab(label="SiO2 < 52 wt%", children=[
                     dbc_row([   

@@ -148,7 +148,12 @@ module MAGEMinApp
     function build_app(; verbose = true)
         vApp = "Running MAGEMinApp@$(AppData.GUI_version) - Julia 1.10+"
 
-        app         = dash(external_stylesheets = [dbc_themes.BOOTSTRAP], prevent_initial_callbacks=false)
+        # Bootstrap is bundled in assets/a0_bootstrap.min.css (loaded before the other assets) so the GUI works offline.
+        # Set ENV["MAGEMINAPP_BOOTSTRAP"]="cdn" to load it from the CDN instead.
+        use_cdn     = lowercase(get(ENV, "MAGEMINAPP_BOOTSTRAP", "local")) == "cdn"
+        app         = dash(external_stylesheets = use_cdn ? [dbc_themes.BOOTSTRAP] : String[],
+                           assets_ignore        = use_cdn ? "a0_bootstrap" : "",
+                           prevent_initial_callbacks=false)
         app.title   = "MAGEMinApp"
         app.layout  = html_div() do
 

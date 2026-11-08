@@ -178,13 +178,13 @@ delta_fc       = [fracEvol_fc[k, 1] * Out_PTX_fc[k].frac_S for k in 1:n_tot_fc]
 remaining_melt = fracEvol_fc[n_tot_fc, 1] * Out_PTX_fc[n_tot_fc].frac_M
 @test sum(delta_fc) + remaining_melt ≈ 1.0 rtol=0.01
 
-# Point-wise TE partition: C0 ≈ Cliq * frac_M + Csol * frac_S at every two-phase step
+# Point-wise TE partition: C0 ≈ Cliq * frac_M_wt + Csol * frac_S_wt at every two-phase step
 for k in 1:n_tot_fc
     if !all(isnan, Out_TE_fc[k].Cliq) && !all(isnan, Out_TE_fc[k].Csol)
-        fM = Out_PTX_fc[k].frac_M
-        fS = Out_PTX_fc[k].frac_S
+        fM = Out_PTX_fc[k].frac_M_wt
+        fS = Out_PTX_fc[k].frac_S_wt
         for j in 1:n_el_fc
-            @test Out_TE_fc[k].Cliq[j] * fM + Out_TE_fc[k].Csol[j] * fS ≈ Out_TE_fc[k].C0[j] rtol=0.01
+            @test Out_TE_fc[k].Cliq[j] * fM + Out_TE_fc[k].Csol[j] * fS ≈ Out_TE_fc[k].C0[j] rtol=1e-4
         end
     end
 end
@@ -235,16 +235,15 @@ end
 remaining_solid = 1.0 - sum(delta_fm)
 @test sum(delta_fm) + remaining_solid ≈ 1.0 rtol=0.1
 
-# Point-wise TE partition: C0 ≈ Cliq * frac_M + Csol * frac_S at every two-phase step
-# rtol=0.15 accounts for near-solidus steps and phases with incomplete KD coverage
+# Point-wise TE partition: C0 ≈ Cliq * frac_M_wt + Csol * frac_S_wt at every two-phase step
 for k in 1:n_tot_fm
     if !all(isnan, Out_TE_fm[k].Cliq) && !all(isnan, Out_TE_fm[k].Csol)
-        fM = Out_PTX_fm[k].frac_M
-        fS = Out_PTX_fm[k].frac_S
+        fM = Out_PTX_fm[k].frac_M_wt
+        fS = Out_PTX_fm[k].frac_S_wt
         for j in 1:n_el_fm
             C0_j = Out_TE_fm[k].C0[j]
             (isnan(C0_j) || C0_j <= 0.0) && continue
-            @test Out_TE_fm[k].Cliq[j] * fM + Out_TE_fm[k].Csol[j] * fS ≈ C0_j rtol=0.15
+            @test Out_TE_fm[k].Cliq[j] * fM + Out_TE_fm[k].Csol[j] * fS ≈ C0_j rtol=1e-4
         end
     end
 end
