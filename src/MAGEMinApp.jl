@@ -39,7 +39,7 @@ module MAGEMinApp
     const ENABLE_IGM     = false
     const ENABLE_IGAW    = false
     const ENABLE_O18     = true
-    const ENABLE_MPMN    = true
+    const ENABLE_MPMN    = false
 
     export App
     export build_intersect_model_df, make_measurements_df, list_intersect_phases, list_intersect_elements
