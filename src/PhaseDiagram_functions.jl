@@ -2867,3 +2867,50 @@ function pd_field_color_polys(specs, smooth_bnd::Bool, sigma::Real)
     end
     return polys, absent
 end
+
+const PD_LEGEND_W     = 680.0
+const PD_LEGEND_ROW_H = 21.0
+
+pd_legend_item_w(name) = 46.0 + 7.0 * length(string(name))
+
+function pd_legend_rows(names, title)
+    isempty(names) && return 0
+    rows, x = 1, 7.0 * length(title) + 10.0
+    for n in names
+        w = pd_legend_item_w(n)
+        if x + w > PD_LEGEND_W && x > 0
+            rows += 1
+            x = 7.0 * length(title) + 10.0
+        end
+        x += w
+    end
+    return rows
+end
+
+function pd_reaction_legend_traces(; visible::Bool = true)
+    return GenericTrace[scatter(x = [nothing], y = [nothing], mode = "lines",
+                                line = attr(color = opt[3], dash = opt[1], width = opt[2]),
+                                name = display_ph_name(ph), legend = "legend2", showlegend = true,
+                                visible = visible, meta = "pd-reac-cap")
+                        for (ph, opt) in styled_reaction_phases()]
+end
+
+function pd_legend_figure(iso_caps, pb_caps)
+    t_iso, t_pb = "Isopleths", "Phase boundaries"
+    r_iso = pd_legend_rows([string(t[:name]) for t in iso_caps], t_iso)
+    r_pb  = pd_legend_rows([string(t[:name]) for t in pb_caps],  t_pb)
+    rows  = r_iso + r_pb
+    H     = rows == 0 ? 30 : round(Int, 6 + PD_LEGEND_ROW_H * rows)
+    leg(y, title) = attr(x = 0.02, xanchor = "left", y = y, yanchor = "top", orientation = "h",
+                         title = attr(text = title, side = "left", font = attr(size = 12, color = "#555555")),
+                         bgcolor = "rgba(0,0,0,0)", font = attr(size = 12))
+    y_iso = 1.0 - 3.0 / H
+    y_pb  = y_iso - r_iso * PD_LEGEND_ROW_H / H
+    lay   = Layout(height = H, plot_bgcolor = "white", paper_bgcolor = "white", title = "",
+                   xaxis = attr(visible = false, range = [0, 1], fixedrange = true),
+                   yaxis = attr(visible = false, range = [0, 1], fixedrange = true), showlegend = true,
+                   legend = leg(y_iso, t_iso), legend2 = leg(y_pb, t_pb))
+    lay.fields[:margin] = Dict{Symbol,Any}(:l => 0, :r => 0, :t => 0, :b => 0, :autoexpand => false)
+    traces = GenericTrace[iso_caps..., pb_caps...]
+    return (isempty(traces) ? plot(lay) : plot(traces, lay)), H
+end

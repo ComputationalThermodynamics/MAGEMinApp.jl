@@ -130,12 +130,13 @@ module MAGEMinApp
         pkg_dir     = pkgdir(MAGEMinApp)   # package dir
         cd(pkg_dir)
 
+        AppData.reaction_style_presets[1] = load_reaction_style_presets();
+
         app         = build_app()
 
         println(" 4/4 Loading user data...")
         AppData.mineral_style[1] = load_mineral_style();
         AppData.mineral_order[1] = load_mineral_order(sort(collect(keys(AppData.mineral_style[1]))));
-        AppData.reaction_style_presets[1] = load_reaction_style_presets();
 
         try
             run_server(app, host, port, debug=debug)

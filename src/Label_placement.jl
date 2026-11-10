@@ -95,11 +95,12 @@ const pd_iso_label_fracs = (0.5, 0.3, 0.7, 0.15, 0.85)
     whose label box does not overlap a label already in `placed`. `nothing` when the
     line is too short or every candidate overlaps. Accepted boxes are added to `placed`.
 """
-function pd_place_line_label!(placed::Vector, pts::AbstractVector, txt, fsize)
+function pd_place_line_label!(placed::Vector, pts::AbstractVector, txt, fsize; offset::Real = 0.0)
     w, h = pd_label_box(txt, fsize)
     for f in pd_iso_label_fracs
         lab = pd_polyline_label(pts, f)
         lab === nothing && return nothing
+        offset == 0 || (lab = (lab[1] + offset * sind(lab[3]), lab[2] - offset * cosd(lab[3]), lab[3]))
         box = (lab[1], lab[2], lab[3], w, h)
         if !any(b -> pd_obb_overlap(b, box), placed)
             push!(placed, box)
@@ -224,4 +225,75 @@ function pd_apply_label_bg!(annotations, on::Bool)
         end
     end
     return annotations
+end
+
+const PD_REAC_LABELS_PER_PHASE = 3
+
+function pd_split_polylines(x, y)
+    lines = Vector{Vector{Tuple{Float64,Float64}}}()
+    cur   = Tuple{Float64,Float64}[]
+    for (a, b) in zip(x, y)
+        if a === nothing || b === nothing || a === missing || b === missing || !isfinite(a) || !isfinite(b)
+            length(cur) > 1 && push!(lines, cur)
+            cur = Tuple{Float64,Float64}[]
+        else
+            push!(cur, (Float64(a), Float64(b)))
+        end
+    end
+    length(cur) > 1 && push!(lines, cur)
+    return lines
+end
+
+pd_reaction_label_offset(txt, fs, lw) = 0.5 * pd_label_box(txt, fs)[2] + 0.5 * Float64(lw) + 1.0
+
+pd_polyline_px_length(pts) =sum((hypot(pts[k+1][1] - pts[k][1], pts[k+1][2] - pts[k][2]) for k in 1:length(pts)-1); init = 0.0)
+
+function pd_annotation_boxes(annotations, Xr, Yr)
+    boxes = NTuple{5,Float64}[]
+    for ann in annotations
+        f = ann.fields
+        (get(f, :xref, "") == "x" && get(f, :yref, "") == "y") || continue
+        get(f, :visible, true) == false && continue
+        txt = string(get(f, :text, ""))
+        (isempty(strip(txt)) || !(get(f, :x, nothing) isa Real) || !(get(f, :y, nothing) isa Real)) && continue
+        fnt = get(f, :font, nothing)
+        fs  = try Float64(fnt[:size]) catch; 10.0 end
+        px, py = pd_to_px(Float64(f[:x]), Float64(f[:y]), Xr, Yr)
+        if get(f, :showarrow, false) == true
+            px += Float64(something(get(f, :ax, 0.0), 0.0))
+            py += Float64(something(get(f, :ay, 0.0), 0.0))
+        end
+        w, h = pd_label_box(txt, fs)
+        push!(boxes, (px, py, 0.0, w, h))
+    end
+    return boxes
+end
+
+function pd_reaction_label_annotations(traces, phases::Vector{String}, styles, Xr, Yr;
+                                       placed::Vector = NTuple{5,Float64}[], label_bg::Bool = false, visible::Bool = true)
+    anns = PlotlyBase.PlotlyAttribute[]
+    length(traces) == length(phases) || return anns
+    for (k, ph) in enumerate(phases)
+        opt = get(styles, ph, nothing)
+        opt === nothing && continue
+        tr  = traces[k]
+        txt = display_ph_name(ph)
+        fs  = Float64(opt[4])
+        px_lines = [[pd_to_px(a, b, Xr, Yr) for (a, b) in l] for l in pd_split_polylines(tr[:x], tr[:y])]
+        sort!(px_lines, by = l -> -pd_polyline_px_length(l))
+        n = 0
+        for l in px_lines
+            n >= PD_REAC_LABELS_PER_PHASE && break
+            lab = pd_place_line_label!(placed, l, txt, fs; offset = pd_reaction_label_offset(txt, fs, opt[2]))
+            lab === nothing && continue
+            lx, ly = pd_to_data(lab[1], lab[2], Xr, Yr)
+            a = attr(xref = "x", yref = "y", x = lx, y = ly, text = txt, showarrow = false,
+                     textangle = lab[3], name = "pd-reac-label", visible = visible,
+                     font = attr(size = fs, color = opt[3]))
+            label_bg && (a[:bgcolor] = "rgba(255,255,255,0.7)"; a[:borderpad] = 0)
+            push!(anns, a)
+            n += 1
+        end
+    end
+    return anns
 end

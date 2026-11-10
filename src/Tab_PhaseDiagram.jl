@@ -358,8 +358,9 @@ function Tab_PhaseDiagram()
                                                     dcc_slider( id      = "pd-pie-radius",
                                                                 min     = 10,
                                                                 max     = 40,
-                                                                step    = 10,
+                                                                step    = 1,
                                                                 value   = 20,
+                                                                tooltip = Dict("placement" => "bottom", "always_visible" => false),
                                                                 marks   = Dict(string(i) => Dict("label" => string(i), "style" => Dict("font-size" => "70%")) for i in 10:10:40)),
                                                 ], width = 9),
                                                 dbc_col([
@@ -944,26 +945,19 @@ function Tab_PhaseDiagram()
                                                 ]),
                                                 html_div("‎ "),
                                                 dbc_row([  
-                                                    dbc_button( "Save", id="save-reaction-line", color="light", className="me-2", n_clicks=0,
+                                                    dbc_button( "Apply", id="apply-reaction-line", color="light", className="me-2", n_clicks=0,
                                                                     style       = Dict( "textAlign"     => "center",
                                                                                         "font-size"     => "100%",
                                                                                         "border"        => "1px grey solid",
-                                                                                        "width"         => "86%" )), 
-                                                ],justify="center"), 
-                                                dbc_row([  
-                                                    dbc_button( "Reset", id="reset-reaction-line", color="light", className="me-2", n_clicks=0,
+                                                                                        "width"         => "86%" )),
+                                                ],justify="center"),
+                                                dbc_row([
+                                                    dbc_button( "Delete", id="delete-reaction-line", color="light", className="me-2", n_clicks=0,
                                                                     style       = Dict( "textAlign"     => "center",
                                                                                         "font-size"     => "100%",
                                                                                         "border"        => "1px grey solid",
-                                                                                        "width"         => "86%" )), 
-                                                ],justify="center"),   
-                                                dbc_row([  
-                                                    dbc_button( "Update", id="update-reaction-line", color="light", className="me-2", n_clicks=0,
-                                                                    style       = Dict( "textAlign"     => "center",
-                                                                                        "font-size"     => "100%",
-                                                                                        "border"        => "1px grey solid",
-                                                                                        "width"         => "86%" )), 
-                                                ],justify="center"), 
+                                                                                        "width"         => "86%" )),
+                                                ],justify="center"),
                                             ], width=4),
                                             dbc_col([
                                                 html_div("", style = Dict("borderLeft" => "1px solid grey", "height" => "100%", "display" => "flex", "alignItems" => "center", "justifyContent" => "center"))
@@ -1038,14 +1032,24 @@ function Tab_PhaseDiagram()
                                             ], width=2),
                                             dbc_col([
                                                 dcc_dropdown(   id          = "reaction-preset-dropdown",
-                                                                options     = [],
-                                                                value       = nothing,
-                                                                placeholder = "no preset",
+                                                                options     = reaction_preset_options(),
+                                                                value       = reaction_preset_last(),
+                                                                placeholder = "select or type a new name",
+                                                                searchable  = true,
                                                                 clearable   = true,
                                                                 multi       = false),
-                                            ], width=4),
+                                            ], width=10),
+                                        ]),
+                                        dbc_row([
                                             dbc_col([
-                                                dbc_button( "Apply", id="apply-reaction-preset", color="light", className="me-2", n_clicks=0,
+                                                dbc_button( "Load", id="load-reaction-preset", color="light", className="me-2", n_clicks=0,
+                                                                style       = Dict( "textAlign"     => "center",
+                                                                                    "font-size"     => "100%",
+                                                                                    "border"        => "1px grey solid",
+                                                                                    "width"         => "100%" )),
+                                            ], width=3),
+                                            dbc_col([
+                                                dbc_button( "Save", id="save-reaction-preset", color="light", className="me-2", n_clicks=0,
                                                                 style       = Dict( "textAlign"     => "center",
                                                                                     "font-size"     => "100%",
                                                                                     "border"        => "1px grey solid",
@@ -1058,25 +1062,21 @@ function Tab_PhaseDiagram()
                                                                                     "border"        => "1px grey solid",
                                                                                     "width"         => "100%" )),
                                             ], width=3),
-                                        ]),
-                                        dbc_row([
                                             dbc_col([
-                                            ], width=2),
-                                            dbc_col([
-                                                dbc_input(
-                                                    id          = "reaction-preset-name",
-                                                    type        = "text",
-                                                    placeholder = "preset name",
-                                                    value       = "" ),
-                                            ], width=4),
-                                            dbc_col([
-                                                dbc_button( "Save as preset", id="save-reaction-preset", color="light", className="me-2", n_clicks=0,
+                                                dbc_button( "Reset", id="reset-reaction-preset", color="light", className="me-2", n_clicks=0,
                                                                 style       = Dict( "textAlign"     => "center",
                                                                                     "font-size"     => "100%",
                                                                                     "border"        => "1px grey solid",
                                                                                     "width"         => "100%" )),
-                                            ], width=4),
+                                            ], width=3),
                                         ], style = Dict("marginTop" => 4)),
+                                        dbc_row([
+                                            dbc_col([
+                                                html_div("", id = "reaction-preset-status", style = Dict("font-size" => "85%", "color" => "#555555", "marginTop" => 2)),
+                                            ], width=12),
+                                        ]),
+                                        dcc_store(id = "reaction-preset-forget"),
+                                        dcc_store(id = "reaction-preset-base-options", data = reaction_preset_options()),
 
                                         html_div("‎ "),
                                         html_h1("Color options", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
