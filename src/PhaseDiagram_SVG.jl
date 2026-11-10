@@ -10,7 +10,6 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ =#
 
 pd_fig_meta    = nothing
-pd_fig_meta_te = nothing
 
 """
     pd_export_status(msg; ok)
@@ -225,8 +224,7 @@ end
                       show_reaction, show_mesh, show_labels)
 
     Everything a phase diagram shows, as plain data in the display pressure unit,
-    from the globals its on-screen figure is built from (passed in, so the Phase
-    diagram and Trace elements tabs, which keep parallel `_te` globals, share it):
+    from the globals its on-screen figure is built from (passed in):
     `data` (the AMR mesh), `gridded` (the field, `[ix, iy]`), `heat_map` (the export
     heatmap trace, for its colorscale/range/smoothing/title), `layout_g` (title and
     label annotations and the two paper-anchored provenance text columns, which are

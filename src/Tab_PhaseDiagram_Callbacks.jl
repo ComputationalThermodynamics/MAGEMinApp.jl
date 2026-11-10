@@ -670,6 +670,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             out     = using_sample_point ? SamplePoint.out : Out_XY[point_id]
             MAGEMin_data2dataframe(out,dtb,fileout; use_Warr2021=use_warr_names[1], use_GPA=use_GPa[1])
             (!using_sample_point && o18_available()) && o18_export_csv([point_id], fileout*"_O18.csv")
+            using_sample_point || te_export_csv(point_id, dtb, fileout)
 
             return  "success", ""
         else
@@ -722,6 +723,7 @@ function Tab_PhaseDiagram_Callbacks(app)
 
             MAGEMin_data2dataframe(Out_XY,dtb,fileout; use_Warr2021=use_warr_names[1], use_GPA=use_GPa[1])
             o18_available() && o18_export_csv(collect(eachindex(Out_O18_XY)), fileout*"_O18.csv")
+            te_export_csv(nothing, dtb, fileout)
             return "success", ""
         else
             return  "", "failed"
@@ -741,8 +743,13 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("o18-melt-dropdown","value"),
         State("o18-unmapped-dropdown","value"),
         State(subd_ids("").show,"value"),
+        State("kds-dropdown","value"),
+        State("zrsat-dropdown","value"),
+        State("ssat-dropdown","value"),
+        State("P2O5sat-dropdown","value"),
+        State("mnzsat-dropdown","value"),
         prevent_initial_call=true,
-    ) do n_clicks, fname, dtb, o18_on, o18_melt, o18_unmapped, subd_show
+    ) do n_clicks, fname, dtb, o18_on, o18_melt, o18_unmapped, subd_show, kds, zrsat, ssat, P2O5sat, mnzsat
 
         if fname != "filename"
             mkpath(output_dir[1])
@@ -779,8 +786,9 @@ function Tab_PhaseDiagram_Callbacks(app)
             end
             push_bib_infos!(selection, bib, o18_bib_infos(o18_on, o18_melt, o18_unmapped))
             push_bib_infos!(selection, bib, subd_bib_infos(subd_show))
+            push_bib_infos!(selection, bib, te_bib_infos(kds, zrsat, ssat, P2O5sat, mnzsat))
 
-            selected_bib    = Bibliography.select(bib, selection)
+            selected_bib    = Bibliography.select(bib, unique(selection))
             
             export_bibtex(fileout, selected_bib)
 
@@ -1446,6 +1454,8 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("fields-dropdown-o18-q-pd",   "value"),
         Input("fields-dropdown-o18-p1-pd",  "value"),
         Input("fields-dropdown-o18-p2-pd",  "value"),
+        Input("te-name-pd",             "value"),
+        Input("te-display-pd",          "n_clicks"),
         Input("update-title-button",    "n_clicks"),
         Input("load-state-id",          "value"),
         Input("mineral-naming-dropdown","value"),
@@ -1568,6 +1578,14 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("fields-dropdown-o18-q-iso",  "value"),
         State("fields-dropdown-o18-p1-iso", "value"),
         State("fields-dropdown-o18-p2-iso", "value"),
+        State("te-type-iso",            "value"),
+        State("te-name-iso",            "value"),
+        State("te-formula-iso",         "value"),
+        State("te-norm-iso",            "value"),
+        State("te-cust-iso",            "value"),
+        State("te-type-pd",             "value"),
+        State("te-formula-pd",          "value"),
+        State("te-norm-pd",             "value"),
         State("ss-dropdown",            "value"),
         State("em-dropdown",            "value"),
         State("ox-dropdown",            "value"),
@@ -1619,7 +1637,7 @@ function Tab_PhaseDiagram_Callbacks(app)
     function pd_main_update(reac_up,    reac_del,   reac_preset_up, reac_preset_reset, full_grid, addIso,     removeIso,  removeAllIso,    isoShow,   isoHide,   isoShowAll,    isoHideAll,
             n_clicks_mesh, n_clicks_refine, uni_n_clicks_refine, n_clicks_mc,
             minColor,   maxColor,
-            colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  o18_q,      o18_p1,     o18_p2,     updateTitle,     loadstateid,       warr_naming, pressure_unit,
+            colorMap,   smooth,     rangeColor, set_white,  reverse,    fieldname,  o18_q,      o18_p1,     o18_p2,     te_name,    te_disp,    updateTitle,     loadstateid,       warr_naming, pressure_unit,
             assemblage_selected_cells, clearHighlight,
             subd_show,  subd_vel,   subd_dip,   subd_depth, subd_T0,    subd_T1,    subd_h,     subd_d,     subd_kappa, subd_rho,
             smooth_bnd, smooth_sigma,
@@ -1639,7 +1657,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             tepm,       kds_mod,    zrsat_mod,  ssat_mod,   co2sat_mod, P2O5sat_mod,    mnzsat_mod,     bulkte1,    bulkte2,
             o18,        o18_delta,  o18_delta2, o18_anchor, o18_anchor_delta,   o18_melt,   o18_unmapped,   o18_tmax,
             test,
-            isopleths,  isoplethsID,isoplethsHid,  isoplethsHidID,  phase,      o18_q_iso,  o18_p1_iso, o18_p2_iso, ss,         em,     ox,    of,     ot, sys, rmf, calc, cust, calc_sf, calc_ox, cust_sf, cust_ox,
+            isopleths,  isoplethsID,isoplethsHid,  isoplethsHidID,  phase,      o18_q_iso,  o18_p1_iso, o18_p2_iso, te_type_iso, te_name_iso, te_formula_iso, te_norm_iso, te_cust_iso, te_type, te_formula, te_norm, ss,         em,     ox,    of,     ot, sys, rmf, calc, cust, calc_sf, calc_ox, cust_sf, cust_ox,
             isoLineStyle, isoLineWidth, isoColorLine,           isoLabelSize,
             minIso,     stepIso,    maxIso,
             active_tab,
@@ -1650,9 +1668,12 @@ function Tab_PhaseDiagram_Callbacks(app)
 
         diagType                        = diagram_type_2d(diagType)
         o18_field_sel                   = fieldname == "o18"
+        te_field_sel                    = fieldname == "te"
         fieldname                       = o18_main_fieldname(fieldname, o18_q, o18_p1, o18_p2)
-        compute_field                   = is_o18_field(fieldname) ? "Variance" : fieldname
+        fieldname                       = te_main_fieldname(fieldname, te_type, te_name, te_formula, te_norm)
+        compute_field                   = (is_o18_field(fieldname) || is_te_field(fieldname)) ? "Variance" : fieldname
         phase == "o18" && (of = "o18:" * o18_fieldname(o18_q_iso, o18_p1_iso, o18_p2_iso))
+        phase == "te"  && (of = te_main_fieldname("te", te_type_iso, te_name_iso, te_formula_iso, te_norm_iso))
         global use_GPa
         use_GPa[1]                      = (pressure_unit == "gpa")                                                                          # keep in sync with the dropdown for this callback's invocation
         phase_selection                 = remove_phases(string_vec_diff(to_str_vec(ph_selection),to_str_vec(pure_ph_selection),dtb),dtb)
@@ -1672,6 +1693,9 @@ function Tab_PhaseDiagram_Callbacks(app)
         global use_warr_names
         use_warr_names[1]               = (warr_naming == "warr")
         bid                             = pushed_button( callback_context() )                           # get the ID of the last pushed button
+        if bid in ("te-name-pd", "te-display-pd") && (!te_field_sel || !@isdefined(data_plot) || !@isdefined(layout))
+            return ntuple(_ -> no_update(), 23)
+        end
         bulkte_L, bulkte_R, elem        = get_terock_prop(bulkte1, bulkte2)
         colorm, reverseColorMap         = get_colormap_prop(colorMap, rangeColor, reverse)              # get colormap information
         bulk_L, bulk_R, oxi             = get_bulkrock_prop(bulk1, bulk2; sys_unit=sys_unit)                               # get bulk rock composition information
@@ -1797,6 +1821,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                                                         seismicCor, aspectRatio, seismicWater, shallowCor, fluidAsMelt, anelasticCor;
                                                                                                         mumu_oxide1_idx=mumu_oxide1_idx, mumu_oxide2_idx=mumu_oxide2_idx,
                                                                                                         optimizer=optimizer, sec_Pbox=sec_Pbox, sec_Tbox=sec_Tbox, sec_limits=sec_limits        )
+            Out_TE_XY, all_TE_ph = MAGEMin_C.out_tepm[], String[]
             if tepm == "true"
                 if dtb != "um" && dtb != "ume" && dtb != "mtl"
                     t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
@@ -1812,7 +1837,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             t = @elapsed Out_O18_XY, all_O18_ph = o18_diagram(  o18, diagType, o18_delta, o18_delta2, o18_anchor, o18_anchor_delta, o18_melt, o18_unmapped, o18_tmax,
                                                                 bulk_L, bulk_R, oxi)
             o18 == "true" && println("Computed oxygen isotope fractionation in $t s")
-            if is_o18_field(fieldname) && o18_available()
+            if (is_o18_field(fieldname) && o18_available()) || (is_te_field(fieldname) && te_available())
                 data_plot, layout, heat_map_export = update_displayed_field_phaseDiagram(   xtitle,     ytitle,     Xrange,     Yrange,     fieldname,
                                                                                             dtb,        oxi,        sub,        refLvl,
                                                                                             smooth,     colorm,     reverseColorMap, set_white,
@@ -1890,6 +1915,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                                     mumu_oxide1_idx=mumu_oxide1_idx, mumu_oxide2_idx=mumu_oxide2_idx,
                                                                                     optimizer=optimizer, sec_Pbox=sec_Pbox, sec_Tbox=sec_Tbox, sec_limits=sec_limits     )
 
+            Out_TE_XY, all_TE_ph = MAGEMin_C.out_tepm[], String[]
             if tepm == "true"
                 if dtb != "um" && dtb != "ume" && dtb != "mtl"
                     t = @elapsed Out_TE_XY,all_TE_ph = tepm_function(   diagType, dtb,
@@ -1904,7 +1930,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             t = @elapsed Out_O18_XY, all_O18_ph = o18_diagram(  o18, diagType, o18_delta, o18_delta2, o18_anchor, o18_anchor_delta, o18_melt, o18_unmapped, o18_tmax,
                                                                 bulk_L, bulk_R, oxi)
             o18 == "true" && println("Computed oxygen isotope fractionation in $t s")
-            if is_o18_field(fieldname) && o18_available()
+            if (is_o18_field(fieldname) && o18_available()) || (is_te_field(fieldname) && te_available())
                 data_plot, layout, heat_map_export = update_displayed_field_phaseDiagram(   xtitle,     ytitle,     Xrange,     Yrange,     fieldname,
                                                                                             dtb,        oxi,        sub,        refLvl,
                                                                                             smooth,     colorm,     reverseColorMap, set_white,
@@ -1990,6 +2016,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             oxi_s       = String.(Out_XY[1].oxides)
 
             is_o18_field(fieldname) && !o18_available() && (fieldname = compute_field)
+            is_te_field(fieldname)  && !te_available()  && (fieldname = compute_field)
             data_plot,layout,heat_map_export =  update_displayed_field_phaseDiagram( xtitle,     ytitle,
             Xrange_s,   Yrange_s,   fieldname,
             dtb,        oxi_s,
@@ -2032,12 +2059,18 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                                 smooth,     colorm,     reverseColorMap, set_white,
                                                                                 test                                                    )
 
-        elseif bid == "fields-dropdown" || (o18_field_sel && bid in ("fields-dropdown-o18-q-pd", "fields-dropdown-o18-p1-pd", "fields-dropdown-o18-p2-pd"))
+        elseif bid == "fields-dropdown" || (o18_field_sel && bid in ("fields-dropdown-o18-q-pd", "fields-dropdown-o18-p1-pd", "fields-dropdown-o18-p2-pd")) ||
+               (te_field_sel && bid in ("te-name-pd", "te-display-pd"))
 
             if is_o18_field(fieldname) && !o18_available()
                 println("δ18O is not available: activate the δ18O model in Setup -> Oxygen isotopes and compute the phase diagram")
                 fieldname = compute_field
             end
+            if is_te_field(fieldname) && !te_available()
+                println("Trace elements are not available: activate trace-element partitioning in Setup and compute the phase diagram")
+                fieldname = compute_field
+            end
+
 
             data_plot,layout,heat_map_export =  update_displayed_field_phaseDiagram( xtitle,     ytitle,     
                                                                     Xrange,     Yrange,     fieldname,
@@ -2062,7 +2095,7 @@ function Tab_PhaseDiagram_Callbacks(app)
                                                                     isopleths,  phase,      ss,     em,  ox,   of,     ot, sys, rmf,    calc, cust, calc_sf, calc_ox, cust_sf, cust_ox,
                                                                     isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,   
                                                                     minIso,     stepIso,    maxIso;
-                                                                    label_bg = iso_lbl_bg == "true" )
+                                                                    label_bg = iso_lbl_bg == "true", te_cust = te_cust_iso )
             data_isopleth_out = data_isopleth.isoP[data_isopleth.active]
             data_isopleth_out_export = data_isopleth.isoPexp[data_isopleth.active]
             field2plot[4] = 1
@@ -2198,6 +2231,7 @@ function Tab_PhaseDiagram_Callbacks(app)
             end
 
         elseif bid in ("fields-dropdown-o18-q-pd", "fields-dropdown-o18-p1-pd", "fields-dropdown-o18-p2-pd")
+
 
         elseif bid == "clear-assemblage-highlight-button"
             if !@isdefined(data_plot) || !@isdefined(layout)
@@ -2871,6 +2905,10 @@ function Tab_PhaseDiagram_Callbacks(app)
         Input("fields-dropdown-o18-q-iso",    "value"),
         Input("fields-dropdown-o18-p1-iso",   "value"),
         Input("fields-dropdown-o18-p2-iso",   "value"),
+        Input("te-type-iso",                  "value"),
+        Input("te-name-iso",                  "value"),
+        Input("te-formula-iso",               "value"),
+        Input("te-norm-iso",                  "value"),
         Input("input-calc-id",                "n_blur"),
         Input("input-calc-id",                "n_submit"),
         Input("input-calc-sf-id",             "n_blur"),
@@ -2883,7 +2921,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         State("gsub-id",                      "value"),
         State("refinement-levels",            "value"),
         prevent_initial_call = true,
-    ) do phase, ss, em, ox, of, ot, sys, rmf, o18_q, o18_p1, o18_p2, _cb, _cs, _sb, _ss, _ob, _os, calc, calc_sf, calc_ox, sub, refLvl
+    ) do phase, ss, em, ox, of, ot, sys, rmf, o18_q, o18_p1, o18_p2, te_type, te_name, te_formula, te_norm, _cb, _cs, _sb, _ss, _ob, _os, calc, calc_sf, calc_ox, sub, refLvl
 
         global Out_XY, data, addedRefinementLvl
 
@@ -2930,6 +2968,9 @@ function Tab_PhaseDiagram_Callbacks(app)
             elseif phase == "o18"
                 o18_available() || return no_range
                 mod = "o18"; em = ""; ss = ""; of = "o18:" * o18_fieldname(o18_q, o18_p1, o18_p2)
+            elseif phase == "te"
+                te_available() || return no_range
+                mod = "te"; of = te_main_fieldname("te", te_type, te_name, te_formula, te_norm)
             else
                 return no_range
             end
@@ -2939,7 +2980,9 @@ function Tab_PhaseDiagram_Callbacks(app)
             Xrange_t     = (Float64(data.Xrange[1]), Float64(data.Xrange[2]))
             Yrange_t     = (Float64(data.Yrange[1]), Float64(data.Yrange[2]))
 
-            gridded, _, _ = get_isopleth_map(
+            gridded, _, _ = mod == "te" ?
+                te_isopleth_grid(of, oxi, Int64(something(sub, 3)), total_refLvl, data, Xrange_t, Yrange_t) :
+                get_isopleth_map(
                 mod, ss, em, ox, of, ot, calc, calc_sf, calc_ox,
                 rmf_b, oxi, Out_XY,
                 Int64(something(sub, 3)), total_refLvl,
@@ -3343,7 +3386,7 @@ function Tab_PhaseDiagram_Callbacks(app)
         """
         function(f1, f2) {
             var install = function() {
-                ['phase-diagram', 'phase-diagram-te'].forEach(function(id) {
+                ['phase-diagram'].forEach(function(id) {
                     var gd = document.querySelector('#' + id + ' .js-plotly-plot');
                     if (!gd || !gd.on || gd.__pdTip) { return; }
                     gd.__pdTip = true;
@@ -3373,7 +3416,6 @@ function Tab_PhaseDiagram_Callbacks(app)
         app,
         Output("pd-cs-hover",       "data"),
         Input("phase-diagram",      "figure"),
-        Input("phase-diagram-te",   "figure"),
         prevent_initial_call = true,
     )
 
@@ -3593,6 +3635,62 @@ function Tab_PhaseDiagram_Callbacks(app)
 
     callback!(
         app,
+        Output("show-te-pd-id",     "style"),
+        Input("fields-dropdown",    "value"),
+        prevent_initial_call = false,
+    ) do field
+        return field == "te" ? Dict("display" => "block") : Dict("display" => "none")
+    end
+
+    callback!(
+        app,
+        Output("te-iso-id",         "style"),
+        Input("phase-dropdown",     "value"),
+        prevent_initial_call = false,
+    ) do phase
+        return phase == "te" ? Dict("display" => "block") : Dict("display" => "none")
+    end
+
+    for suffix in ("-pd", "-iso")
+        callback!(
+            app,
+            Output("te-name-row" * suffix,      "style"),
+            Output("te-formula-row" * suffix,   "style"),
+            Output("te-name" * suffix,          "options"),
+            Output("te-name" * suffix,          "value"),
+            Input("te-type" * suffix,           "value"),
+            prevent_initial_call = false,
+        ) do type
+            return te_selector_state(type)
+        end
+    end
+
+    callback!(
+        app,
+        Output("te-phases-pd",              "children"),
+        Output("te-phases-iso",             "children"),
+        Output("te-type-pd",                "options"),
+        Output("te-type-iso",               "options"),
+        Output("te-type-pd",                "value"),
+        Output("te-type-iso",               "value"),
+        Input("trigger-update-ss-list",     "value"),
+        Input("load-state-id",              "value"),
+        Input("mineral-naming-dropdown",    "value"),
+        State("te-type-pd",                 "value"),
+        State("te-type-iso",                "value"),
+        prevent_initial_call = false,
+    ) do _update, _load, warr_naming, type_pd, type_iso
+        global use_warr_names
+        use_warr_names[1] = (warr_naming == "warr")
+        txt  = te_phase_list()
+        opts = te_type_options()
+        vals = [o.value for o in opts]
+        keep(v) = v in vals ? v : "te"
+        return txt, txt, opts, opts, keep(type_pd), keep(type_iso)
+    end
+
+    callback!(
+        app,
         Output("o18-iso-id",        "style"),
         Input("phase-dropdown",     "value"),
         prevent_initial_call = false,
@@ -3653,6 +3751,45 @@ function Tab_PhaseDiagram_Callbacks(app)
         (pid === nothing || pid > length(Out_O18_XY)) && return no_update(), no_update(), no_update()
 
         return Dict("display" => "block"), get_o18_point_plot(pid), get_o18_point_info(pid)
+    end
+
+    callback!(
+        app,
+        Output("te-spectrum-section-id",    "style"     ),
+        Output("te-spectrum-pd",            "figure"    ),
+        Input("phase-diagram",              "clickData" ),
+        Input("te-spectrum-show",           "value"     ),
+        Input("te-spectrum-norm",           "value"     ),
+        Input("mineral-naming-dropdown",    "value"     ),
+        Input("trigger-update-ss-list",     "value"     ),
+        Input("load-state-id",              "value"     ),
+        State("kds-dropdown",               "value"     ),
+
+        prevent_initial_call = true,
+    ) do click_info, show_type, norm, warr_naming, _update, _load, kds_db
+
+        global use_warr_names, point_id_te
+        use_warr_names[1] = (warr_naming == "warr")
+
+        bid = pushed_button( callback_context() )
+        bid == "trigger-update-ss-list" && _update != 1 && return no_update(), no_update()
+        if bid in ("trigger-update-ss-list", "load-state-id")
+            point_id_te = nothing
+            return Dict("display" => "none"), no_update()
+        end
+        te_available() || return Dict("display" => "none"), no_update()
+        pid = pd_click_point_id(click_info)
+        pid === nothing && @isdefined(point_id_te) && point_id_te !== nothing && (pid = point_id_te)
+        (pid === nothing || pid > length(Out_TE_XY)) && return no_update(), no_update()
+        point_id_te = pid
+
+        fig = try
+            te_spectrum_figure(pid, String(something(norm, "bulk")), String(something(show_type, "ree")), String(something(kds_db, "OL")))
+        catch e
+            @warn "Trace-element spectrum failed" exception = e
+            return no_update(), no_update()
+        end
+        return Dict("display" => "block"), fig
     end
 
     callback!(

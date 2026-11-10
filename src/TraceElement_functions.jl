@@ -194,396 +194,156 @@ function get_data_ree_plot(point_id_te, norm, show_type, kds_db)
     return data_ree_plot
 end
 
-"""
-    update_colormap_phaseDiagram(      xtitle,     ytitle,     
-                                                Xrange,     Yrange,     fieldname,
-                                                dtb,        diagType,
-                                                smooth,     colorm,     reverseColorMap,
-                                                test                                  )
-    Updates the colormap configuration of the phase diagram
-"""
-function update_colormap_phaseDiagram_te(       xtitle,     ytitle,     type,       varBuilder,
-                                                Xrange,     Yrange,     fieldname, 
-                                                dtb,        diagType,
-                                                sub,        refLvl,
-                                                minColor,   maxColor,
-                                                smooth,     colorm,     reverseColorMap, set_white)
-    global PT_infos_te, layout_te, addedRefinementLvl
+const TE_FIELD_TYPES = [    (label = "Formula",         value = "te"     ),
+                            (label = "Zircon",          value = "zrc"    ),
+                            (label = "Sulfide",         value = "sulf"   ),
+                            (label = "Fluorapatite",    value = "fapt"   ),
+                            (label = "CO2 saturation",  value = "co2sat" ),
+                            (label = "Monazite",        value = "mnz"    ) ]
 
+const TE_ACCESSORY_FIELDS = Dict(   "zrc"    => ["Sat_Zr_liq",   "zrc_wt"   ],
+                                    "sulf"   => ["Sat_S_liq",    "sulf_wt"  ],
+                                    "fapt"   => ["Sat_P2O5_liq", "fapt_wt"  ],
+                                    "co2sat" => ["Sat_CO2_liq",  "fl_CO2_wt"],
+                                    "mnz"    => ["Sat_LREE_liq", "mnz_wt"   ] )
+
+const TE_DEFAULT_FORMULA = "[M_Dy] / [M_Yb]"
+
+function te_available()
+    isdefined(@__MODULE__, :Out_TE_XY) && isdefined(@__MODULE__, :Out_XY) || return false
+    return Out_TE_XY isa AbstractVector && !isempty(Out_TE_XY) && length(Out_TE_XY) == length(Out_XY)
+end
+
+is_te_field(fieldname) = fieldname isa AbstractString && startswith(fieldname, "te:")
+
+te_field_key(type, name, norm) = "te:" * String(type) * "|" * String(norm) * "|" * String(name)
+
+function te_field_parts(fieldname::AbstractString)
+    parts = split(chop(fieldname, head = 3, tail = 0), '|'; limit = 3)
+    length(parts) == 3 || return ("te", "none", "")
+    return (String(parts[1]), String(parts[2]), String(parts[3]))
+end
+
+function te_main_fieldname(field, type, name, formula, norm)
+    field == "te" || return field
+    type = String(something(type, "te"))
     if type == "te"
-        fieldname = varBuilder
+        f = strip(String(something(formula, "")))
+        return te_field_key("te", isempty(f) ? TE_DEFAULT_FORMULA : f, String(something(norm, "none")))
     end
-    if set_white == "true"
-        colorm = set_min_to_white(colorm; reverseColorMap)
-    end
-    data_plot_te[1] = heatmap(; pd_heatmap_xyz(gridded_te, data)...,
-                                zmin            =  minColor,
-                                zmax            =  maxColor,
-                                zsmooth         =  smooth,
-                                connectgaps     =  false,
-                                type            = "heatmap",
-                                colorscale      =  colorm,
-                                # colorbar_title  =  fieldname,
-                                reversescale    =  reverseColorMap,
-                                hoverinfo       = "skip",
-                                colorbar        =  attr(    lenmode         = "fraction",
-                                                            len             =  0.75,
-                                                            thicknessmode   = "fraction",
-                                                            tickness        =  0.5,
-                                                            x               =  1.005,
-                                                            y               =  0.5,
-                                                            outlinewidth    =  1,
-                                                            outlinecolor    = "black",
-                                                            ticks           = "inside",
-                                                            ticklen         =  5,
-                                                            tickwidth       =  1,
-                                                            tickcolor       = "black",
-                                                                title = attr(   text = fieldname,
-                                                                                side = "right")         ),)
-    n       = 2^(sub + refLvl + addedRefinementLvl)+1
-    xvals   = range(data.Xrange[1], stop = data.Xrange[2], length = n)
-    yvals   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
-    heat_map_export_te = heatmap(  x               = xvals,
-                                y               = yvals,
-                                z               = pd_fill_gridded(gridded_te, data)',
-                                zmin            =  minColor,
-                                zmax            =  maxColor,
-                                zsmooth         =  smooth,
-                                connectgaps     = true,
-                                type            = "heatmap",
-                                colorscale      =  colorm,
-                                # colorbar_title  =  fieldname,
-                                reversescale    =  reverseColorMap,
-                                hoverinfo       = "skip",
-                                colorbar        = attr(     lenmode         = "fraction",
-                                                            len             =  0.75,
-                                                            thicknessmode   = "fraction",
-                                                            exponentformat  = "e" ,
-                                                            tickness        =  0.5,
-                                                            x               =  1.005,
-                                                            y               =  0.5,
-                                                            outlinewidth    =  1,
-                                                            outlinecolor    = "black",
-                                                            ticks           = "inside",
-                                                            ticklen         =  5,
-                                                            tickwidth       =  1,
-                                                            tickcolor       = "black",
-                                                                title = attr(   text = fieldname,
-                                                                                side = "right")         ),)
-    return data_plot_te, layout_te, heat_map_export_te
+    names = get(TE_ACCESSORY_FIELDS, type, String[])
+    name  = name isa AbstractString && name in names ? String(name) : (isempty(names) ? "" : names[1])
+    return te_field_key(type, name, "none")
 end
 
-
-function te_set_zrange!(zmin, zmax)
-    global data_plot_te, heat_map_export_te
-    for tr in (data_plot_te[1], heat_map_export_te)
-        tr[:zmin] = zmin
-        tr[:zmax] = zmax
-    end
-    return nothing
+function te_field_label(fieldname::AbstractString)
+    type, norm, name = te_field_parts(fieldname)
+    type == "te" || return name
+    return norm == "none" ? name : name * " (" * norm * ")"
 end
 
-"""
-    update_displayed_field_phaseDiagram(   xtitle,     ytitle,     
-                                                    Xrange,     Yrange,     fieldname,
-                                                    dtb,        oxi,
-                                                    sub,        refLvl,
-                                                    smooth,     colorm,     reverseColorMap,
-                                                    test                                  )
-    Updates the field displayed
-"""
-function  update_displayed_field_phaseDiagram_te(   xtitle,     ytitle,     type,       varBuilder, norm,
-                                                    Xrange,     Yrange,     fieldname,
-                                                    dtb,        oxi,
-                                                    sub,        refLvl,
-                                                    smooth,     colorm,     reverseColorMap, set_white,       refType )
-
-    global data, Out_XY, Out_TE_XY, data_plot_te, gridded_te, gridded_info_te, X_te, Y_te, addedRefinementLvl, PT_infos_te, layout_te
-
-    gridded_te, X_te, Y_te, npoints, meant = get_gridded_map_no_lbl(    fieldname,
-                                                                        type,
-                                                                        varBuilder,
-                                                                        norm,
-                                                                        oxi,
-                                                                        Out_XY,
-                                                                        Out_TE_XY,
-                                                                        Hash_XY,
-                                                                        sub,
-                                                                        refLvl + addedRefinementLvl,
-                                                                        refType,
-                                                                        data,
-                                                                        Xrange,
-                                                                        Yrange )
-
+function te_field_column(fieldname::AbstractString)
+    type, norm, name = te_field_parts(fieldname)
+    np    = length(Out_TE_XY)
+    field = Vector{Union{Float64,Missing,Nothing}}(undef, np)
     if type == "te"
-        fieldname = varBuilder
-    end
-
-    if set_white == "true"
-        colorm = set_min_to_white(colorm; reverseColorMap)
-    end
-
-    data_plot_te[1] = heatmap(; pd_heatmap_xyz(gridded_te, data)...,
-                                zsmooth         = smooth,
-                                connectgaps     = false,
-                                type            = "heatmap",
-                                colorscale      = colorm,
-                                # colorbar_title  = fieldname,
-                                reversescale    = reverseColorMap,
-                                hoverinfo       = "skip",
-                                # hoverinfo       = "text",
-                                # text            = gridded_info,
-                                colorbar        = attr(     lenmode         = "fraction",
-                                                            len             =  0.75,
-                                                            thicknessmode   = "fraction",
-                                                            tickness        =  0.5,
-                                                            x               =  1.005,
-                                                            y               =  0.5,
-                                                            outlinewidth    =  1,
-                                                            outlinecolor    = "black",
-                                                            ticks           = "inside",
-                                                            ticklen         =  5,
-                                                            tickwidth       =  1,
-                                                            tickcolor       = "black",
-                                                                title = attr(   text = fieldname,
-                                                                                side = "right")         ),)
-
-    n       = 2^(sub + refLvl + addedRefinementLvl)+1
-    xvals   = range(data.Xrange[1], stop = data.Xrange[2], length = n)
-    yvals   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
-    heat_map_export_te = heatmap(  x               = xvals,
-                                y               = yvals,
-                                z               = pd_fill_gridded(gridded_te, data)',
-                                zsmooth         = smooth,
-                                connectgaps     = true,
-                                type            = "heatmap",
-                                colorscale      = colorm,
-                                # colorbar_title  = fieldname,
-                                reversescale    = reverseColorMap,
-                                hoverinfo       = "skip",
-                                # hoverinfo       = "text",
-                                # text            = gridded_info,
-                                colorbar        = attr(     lenmode         = "fraction",
-                                                            len             =  0.75,
-                                                            thicknessmode   = "fraction",
-                                                            exponentformat  = "e" ,
-                                                            tickness        =  0.5,
-                                                            x               =  1.005,
-                                                            y               =  0.5,
-                                                            outlinewidth    =  1,
-                                                            outlinecolor    = "black",
-                                                            ticks           = "inside",
-                                                            ticklen         =  5,
-                                                            tickwidth       =  1,
-                                                            tickcolor       = "black",
-                                                                title = attr(   text = fieldname,
-                                                                                side = "right")         ),)         
-
-    return data_plot_te, layout_te, heat_map_export_te
-end
-
-
-"""
-
-    add_isopleth_phaseDiagram
-"""
-function add_isopleth_phaseDiagram_te(      Xrange,     Yrange, 
-                                            sub,        refLvl,
-                                            dtb,        oxi,
-                                            isopleths_te,  field,  field_zrc, field_sulf, field_fapt, field_co2sat, field_mnz, calc, cust, norm_tes,
-                                            isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,       
-                                            minIso,     stepIso,    maxIso      )
-
-    isoLabelSize    = Int64(isoLabelSize)
-
-    if (field == "te")
-        mod     = "calc"
-        if cust != "none"
-            name    = cust
-        else
-            name    = calc
+        f = compile_te_formula(name)
+        for i = 1:np
+            field[i] = eval_te_formula(f, Out_TE_XY[i], norm)
         end
-    elseif (field == "zrc")
-        mod     = "zrc"
-        name    = field_zrc
-    elseif (field == "sulf")
-        mod     = "sulf"
-        name    = field_sulf
-    elseif (field == "fapt")
-        mod     = "fapt"
-        name    = field_fapt
-    elseif (field == "co2sat")
-        mod     = "co2sat"
-        name    = field_co2sat
-    elseif (field == "mnz")
-        mod     = "mnz"
-        name    = field_mnz
     else
-        println("Wrong combination, needs debugging...")
-        return data_isopleth_te, isopleths_te
+        for i = 1:np
+            field[i] = get_property(Out_TE_XY[i], name)
+        end
     end
+    field[isnan.(field)] .= 0.0
+    return field
+end
 
-    global data_isopleth_te, nIsopleths_te, data, Out_TE_XY, data_plot_te, X, Y, addedRefinementLvl
+function te_field_color_range(fieldname::AbstractString, gridded)
+    type, norm, name = te_field_parts(fieldname)
+    return type == "te" ? te_color_range("te", "", name, norm, gridded) : te_color_range(type, name, "", "none", gridded)
+end
 
-    slot = next_isopleth_slot(data_isopleth_te.status)
-    if isnothing(slot)
-        println("Maximum number of isopleths ($(data_isopleth_te.n_iso_max)) reached, remove one first")
-        return data_isopleth_te, isopleths_te
+function te_isopleth_grid(fieldname::AbstractString, oxi, sub, refLvl, data, Xrange, Yrange)
+    type, norm, name = te_field_parts(fieldname)
+    mod = type == "te" ? "calc" : type
+    return get_isopleth_map_te( mod, type, name, name, norm, oxi, Out_TE_XY, sub, refLvl, data, Xrange, Yrange;
+                                absent = NaN, defined_only = true )
+end
+
+function te_phase_list()
+    te_available() && isdefined(@__MODULE__, :all_TE_ph) || return ""
+    return "**C0 M S " * join(display_ph_names(to_str_vec(all_TE_ph)), " ") * "**"
+end
+
+function te_selector(suffix::String)
+    w = suffix == "-pd" ? 5 : 6
+    title(t) = html_h1(t, style = Dict("textAlign" => "center", "font-size" => "120%", "marginTop" => 8))
+    row(t, content) = dbc_row([dbc_col([title(t)], width = w), dbc_col([content])])
+    formula_rows = Any[
+        dbc_row([dbc_card([dcc_markdown(id = "te-phases" * suffix, children = "", style = Dict("white-space" => "pre"))])]),
+        row("Formula",       dbc_input(id = "te-formula" * suffix, type = "text", value = TE_DEFAULT_FORMULA, debounce = true)),
+        row("Normalization", dcc_dropdown(id = "te-norm" * suffix, options = ["none", "bulk", "chondrite"], value = "none", clearable = false, multi = false)),
+    ]
+    if suffix == "-pd"
+        push!(formula_rows, dbc_row([dbc_button("Display", id = "te-display-pd", color = "light", className = "me-2", n_clicks = 0,
+                                                style = Dict("textAlign" => "center", "font-size" => "100%", "border" => "1px grey solid"))]))
+    else
+        push!(formula_rows, row("Custom name", dbc_input(id = "te-cust" * suffix, type = "text", value = "none")))
     end
-
-    gridded_te, X, Y = get_isopleth_map_te(     mod, field, name, calc, norm_tes,
-                                                oxi,
-                                                Out_TE_XY,
-                                                sub,
-                                                refLvl + addedRefinementLvl,
-                                                data,
-                                                Xrange,
-                                                Yrange;
-                                                absent       = NaN,
-                                                defined_only = true )
-    gridded_te = iso_undefined_to_missing(gridded_te)
-
-    data_isopleth_te.isoT[slot] = CTR.contours(X[1:size(gridded_te,1)],Y[1:size(gridded_te,1):end],Float64.(coalesce.(gridded_te, NaN)),[Float64(minIso + k * stepIso) for k in 0:floor(Int, (maxIso - minIso) / stepIso + 1e-9)])
-    data_isopleth_te.isoP[slot]= contour(; pd_grid_xyz(gridded_te, data)...,
-                                                            contours_coloring   = "lines",
-                                                            colorscale          = [[0, isoColorLine], [1, isoColorLine]],
-                                                            # connectgaps         = false,
-                                                            contours_start      = minIso,
-                                                            contours_end        = maxIso,
-                                                            contours_size       = stepIso,
-                                                            line_width          = isoLineWidth,
-                                                            line_dash           = isoLineStyle,
-                                                            showscale           = false,
-                                                            hoverinfo           = "skip",
-                                                            contours            =  attr(    coloring    = "lines",
-                                                                                            showlabels  = true,
-                                                                                            labelfont   = attr( size    = isoLabelSize,
-                                                                                                                color   = isoColorLine,  )
-                                                            )
-                                                        );
-    n       = 2^(sub + refLvl + addedRefinementLvl)+1
-    xvals   = range(data.Xrange[1], stop = data.Xrange[2], length = n)
-    yvals   = range(data.Yrange[1], stop = data.Yrange[2], length = n)
-    
-    data_isopleth_te.isoPexp[slot] = contour(   x                   = xvals,
-                                                                y                   = yvals,
-                                                                z                   = gridded_te',
-                                                                contours_coloring   = "lines",
-                                                                colorscale          = [[0, isoColorLine], [1, isoColorLine]],
-                                                                # connectgaps         = false,
-                                                                contours_start      = minIso,
-                                                                contours_end        = maxIso,
-                                                                contours_size       = stepIso,
-                                                                line_width          = isoLineWidth,
-                                                                line_dash           = isoLineStyle,
-                                                                showscale           = false,
-                                                                hoverinfo           = "skip",
-                                                                contours            =  attr(    coloring    = "lines",
-                                                                                                showlabels  = true,
-                                                                                                labelfont   = attr( size    = isoLabelSize,
-                                                                                                                    color   = isoColorLine,  )
-                                                            )
-                                                        );
-
-    data_isopleth_te.isoCap[slot]   = scatter(    x           = [nothing],
-                                                                    y           = [nothing],
-                                                                    mode        = "lines",
-                                                                    line        =  attr(color=isoColorLine,dash=isoLineStyle,width=isoLineWidth),
-                                                                    name        =  name,
-                                                                    showlegend  =  true);
-
-    data_isopleth_te.status[slot]                       = 1
-    data_isopleth_te.label[slot]                        = name
-    data_isopleth_te.value[slot]                        = slot
-    data_isopleth_te.n_iso                              = count(!=(0), data_isopleth_te.status)
-    data_isopleth_te.active                             = findall(data_isopleth_te.status .== 1)
-    n_act                                               = length(data_isopleth_te.active)
-
-    isopleths_te = [Dict("label" => data_isopleth_te.label[data_isopleth_te.active[i]], "value" => data_isopleth_te.value[data_isopleth_te.active[i]])
-                        for i=1:n_act]
-
-    return data_isopleth_te, isopleths_te
-
+    return [
+        row("Type", dcc_dropdown(id = "te-type" * suffix, options = TE_FIELD_TYPES, value = "te", clearable = false, multi = false)),
+        html_div([row("Field", dcc_dropdown(id = "te-name" * suffix, options = [], value = nothing, clearable = false, multi = false))],
+                 style = Dict("display" => "none"), id = "te-name-row" * suffix),
+        html_div(formula_rows, style = Dict("display" => "block"), id = "te-formula-row" * suffix),
+    ]
 end
 
-function hide_single_isopleth_phaseDiagram_te(isoplethsID)
-    global data_isopleth_te
-
-    # data_isopleth_te.n_iso                -= 1      
-    data_isopleth_te.status[isoplethsID]   = 2;
-
-    # deals with the activte dropdown menu
-    data_isopleth_te.active                = findall(data_isopleth_te.status .== 1)
-    n_act                               = length(data_isopleth_te.active)
-    isopleths_te = [Dict("label" => data_isopleth_te.label[data_isopleth_te.active[i]], "value" => data_isopleth_te.value[data_isopleth_te.active[i]])
-                    for i=1:n_act]
-
-    # deals with the hidden dropdown menu
-    data_isopleth_te.hidden                = findall(data_isopleth_te.status .== 2)
-    n_act                               = length(data_isopleth_te.hidden)
-    isoplethsHid_te = [Dict("label" => data_isopleth_te.label[data_isopleth_te.hidden[i]], "value" => data_isopleth_te.value[data_isopleth_te.hidden[i]])
-                    for i=1:n_act]              
-
-    return data_isopleth_te, isopleths_te, isoplethsHid_te
+function te_selector_state(type)
+    vis(b) = Dict("display" => b ? "block" : "none")
+    names  = get(TE_ACCESSORY_FIELDS, String(something(type, "te")), String[])
+    opts   = [Dict("label" => n, "value" => n) for n in names]
+    return vis(!isempty(names)), vis(isempty(names)), opts, isempty(names) ? nothing : names[1]
 end
 
-function show_single_isopleth_phaseDiagram_te(isoplethsHid_te)
-    global data_isopleth_te
-
-    # data_isopleth_te.n_iso                -= 1      
-    data_isopleth_te.status[isoplethsHid_te]   = 1;
-
-    # deals with the activte dropdown menu
-    data_isopleth_te.active                = findall(data_isopleth_te.status .== 1)
-    n_act                               = length(data_isopleth_te.active)
-    isopleths_te = [Dict("label" => data_isopleth_te.label[data_isopleth_te.active[i]], "value" => data_isopleth_te.value[data_isopleth_te.active[i]])
-                    for i=1:n_act]
-
-    # deals with the hidden dropdown menu
-    data_isopleth_te.hidden                = findall(data_isopleth_te.status .== 2)
-    n_act                               = length(data_isopleth_te.hidden)
-    isoplethsHid_te = [Dict("label" => data_isopleth_te.label[data_isopleth_te.hidden[i]], "value" => data_isopleth_te.value[data_isopleth_te.hidden[i]])
-                    for i=1:n_act]              
-
-    return data_isopleth_te, isopleths_te, isoplethsHid_te
+function te_spectrum_figure(point_id::Int, norm::String, show_type::String, kds_db::String)
+    layout = get_layout_ree(norm, show_type, kds_db)
+    layout[:height]        = 340
+    layout[:autosize]      = true
+    layout[:margin]        = attr(autoexpand = true, l = 50, r = 10, b = 40, t = 10)
+    layout[:font]          = attr(size = 10)
+    layout[:legend]        = attr(orientation = "h", x = 0.0, xanchor = "left", y = -0.25, yanchor = "top", font = attr(size = 9))
+    layout[:plot_bgcolor]  = "#FFF"
+    layout[:paper_bgcolor] = "#FFF"
+    layout[:xaxis]         = attr(fixedrange = true, tickangle = show_type == "all" ? -60 : 0, dtick = 1, tickfont = attr(size = show_type == "all" ? 8 : 10),
+                                  showline = true, linecolor = "black", mirror = true, ticks = "inside")
+    layout[:yaxis]         = attr(fixedrange = true, type = "log", showline = true, linecolor = "black", mirror = true, ticks = "inside")
+    return plot(get_data_ree_plot(point_id, norm, show_type, kds_db), layout)
 end
 
-function remove_single_isopleth_phaseDiagram_te(isoplethsID)
-    global data_isopleth_te
-
-    data_isopleth_te.status[isoplethsID]   = 0;
-    data_isopleth_te.n_iso                 = count(!=(0), data_isopleth_te.status)
-    data_isopleth_te.isoP[isoplethsID]     = contour()
-    data_isopleth_te.isoPexp[isoplethsID]  = contour()
-    data_isopleth_te.isoCap[isoplethsID]   = scatter()
-    data_isopleth_te.label[isoplethsID]    = ""
-    data_isopleth_te.value[isoplethsID]    = 0
-    data_isopleth_te.active                = findall(data_isopleth_te.status .== 1)
-    n_act                                  = length(data_isopleth_te.active)
-    isopleths_te = [Dict("label" => data_isopleth_te.label[data_isopleth_te.active[i]], "value" => data_isopleth_te.value[data_isopleth_te.active[i]])
-                    for i=1:n_act]
-
-    return data_isopleth_te, isopleths_te
+function te_bib_infos(kds, zrsat, ssat, P2O5sat, mnzsat)
+    te_available() || return String[]
+    return String[string(x) for x in (zrsat, ssat, P2O5sat, mnzsat, kds) if x !== nothing && string(x) != "none"]
 end
 
+function te_export_csv(points, dtb, fileout)
+    te_available() || return false
+    out    = points === nothing ? Out_XY : Out_XY[points]
+    out_te = points === nothing ? Out_TE_XY : Out_TE_XY[points]
+    MAGEMin_dataTE2dataframe(out, out_te, dtb, fileout * "_TE"; use_Warr2021 = use_warr_names[1], use_GPA = use_GPa[1])
+    return true
+end
 
-function remove_all_isopleth_phaseDiagram_te()
-    global data_isopleth_te, data_plot_te
-
-    data_isopleth_te.label    .= ""
-    data_isopleth_te.value    .= 0
-    data_isopleth_te.n_iso     = 0
-    for i=1:data_isopleth_te.n_iso_max
-        data_isopleth_te.isoP[i] = contour()
-        data_isopleth_te.isoPexp[i] = contour()
-        data_isopleth_te.isoCap[i] = scatter()
+function te_type_available(type::String)
+    type == "te" && return true
+    te_available() || return false
+    names = get(TE_ACCESSORY_FIELDS, type, String[])
+    for te in Out_TE_XY, n in names
+        v = get_property(te, n)
+        v isa Real && isfinite(v) && v != 0 && return true
     end
-    data_isopleth_te.status   .= 0
-    data_isopleth_te.active    = Int64[]
-    data_isopleth_te.hidden    = Int64[]
-
-    # clear isopleth dropdown menu
-    isopleths_te = []              
-    isoplethsHid_te = []   
-    return data_isopleth_te, isopleths_te, isoplethsHid_te, data_plot_te
+    return false
 end
+
+te_type_options() = [o for o in TE_FIELD_TYPES if te_type_available(o.value)]

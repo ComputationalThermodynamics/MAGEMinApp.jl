@@ -17,7 +17,6 @@ function Tab_GeneralSetup_Callbacks(app)
         app,
         Output("state-directory2",     "value"),
         Output("state-directory-2",    "value"),
-        Output("state-directory-2-te", "value"),
         Output("output-dir-feedback",  "children"),
         Input("apply-output-dir-button", "n_clicks"),
         State("state-directory2",      "value"),
@@ -30,7 +29,7 @@ function Tab_GeneralSetup_Callbacks(app)
         path = strip(path)
 
         if isempty(path)
-            return output_dir[1], "Figure directory: $(output_dir[1])", "Figure directory: $(output_dir[1])", "Path cannot be empty - keeping previous directory."
+            return output_dir[1], "Figure directory: $(output_dir[1])", "Path cannot be empty - keeping previous directory."
         end
 
         path = endswith(path, "/") ? path : path * "/"
@@ -38,9 +37,9 @@ function Tab_GeneralSetup_Callbacks(app)
         try
             isdir(path) || mkpath(path)
             output_dir[1] = path
-            return path, "Figure directory: $(path)", "Figure directory: $(path)", "Output directory set to $(path)"
+            return path, "Figure directory: $(path)", "Output directory set to $(path)"
         catch
-            return output_dir[1], "Figure directory: $(output_dir[1])", "Figure directory: $(output_dir[1])", "Could not use this path - keeping previous directory."
+            return output_dir[1], "Figure directory: $(output_dir[1])", "Could not use this path - keeping previous directory."
         end
     end;
 

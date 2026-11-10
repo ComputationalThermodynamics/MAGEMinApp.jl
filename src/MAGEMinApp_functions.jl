@@ -174,7 +174,7 @@ end
     `x` rounded to `sig` significant digits, but never to fewer than `mindigits` decimals
     (so `1234.567` stays `1234.57` while `0.00012345` becomes `0.000123` instead of `0.0`).
     Used for the default colour and isopleth ranges, whose values can be tiny
-    (e.g. the weight of zircon in the trace-element tab).
+    (e.g. the weight of zircon as a trace-element field).
 """
 function round_sig(x::Real; sig::Int = 3, mindigits::Int = 2)
     v = Float64(x)
@@ -1538,6 +1538,8 @@ function get_gridded_map(   fieldname   ::String,
             for i=1:np
                 field[i] = display_pressure(Out_XY[i].P_kbar);
             end
+        elseif is_te_field(fieldname)
+            field .= te_field_column(fieldname)
         elseif is_o18_field(fieldname)
             name = o18_field_name(fieldname)
             for i=1:np
@@ -1934,6 +1936,8 @@ function get_gridded_map_no_lbl(    fieldname   ::String,
             for i=1:np
                 field[i] = display_pressure(Out_XY[i].P_kbar);
             end
+        elseif is_te_field(fieldname)
+            field .= te_field_column(fieldname)
         elseif is_o18_field(fieldname)
             name = o18_field_name(fieldname)
             for i=1:np

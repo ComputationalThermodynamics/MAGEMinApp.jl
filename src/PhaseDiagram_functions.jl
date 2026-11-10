@@ -872,6 +872,7 @@ n_active_oxides(out) = count(>(0.0), out.bulk)
 """
 function field_colorbar_title(fieldname)
     is_o18_field(fieldname) && return o18_field_label(fieldname)
+    is_te_field(fieldname)  && return te_field_label(fieldname)
     fieldname == "P_kbar"   && return "Pressure [$(pressure_unit_label())]"
     fieldname == "T_C"      && return "Temperature [°C]"
     return fieldname
@@ -1894,38 +1895,6 @@ function initialize_g_isopleth(; n_iso_max = 32)
 end
 
 
-"""
-
-    Initiatize global variable storing isopleths information
-"""
-function initialize_g_isopleth_te(; n_iso_max = 32)
-    global data_isopleth_te
-
-    status    = zeros(Int64,n_iso_max)
-    active    = []
-    hidden    = []
-    isoP      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
-    isoPexp   = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
-    isoT      = Vector{CTR.ContourCollection{CTR.ContourLevel{Tuple{Float64, Float64}, Float64}}}(undef, n_iso_max); # + 1 to store the heatmap
-    isoCap    = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
-
-    for i=1:n_iso_max
-        isoP[i] = contour()
-        isoPexp[i]  = contour()
-        isoCap[i] = scatter()
-    end
-
-    label     = Vector{String}(undef,n_iso_max)
-    value     = Vector{Int64}(undef,n_iso_max)
-
-    data_isopleth_te = isopleth_data(   0, n_iso_max,
-                                        status, active, hidden, isoP, isoPexp, isoT, isoCap,
-                                        label, value)
-
-    
-    return data_isopleth_te
-end
-
 iso_undefined_to_missing(g) = map(v -> (v isa Real && !isfinite(v)) ? missing : v, g)
 
 """
@@ -1938,7 +1907,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                             isopleths,  phase,      ss,     em,   ox,  of,     ot,  sys,   rmf,  calc, cust, calc_sf, calc_ox, cust_sf, cust_ox,
                                             isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,       
                                             minIso,     stepIso,    maxIso;
-                                            label_bg::Bool = false )
+                                            label_bg::Bool = false, te_cust = "none" )
 
     isoLabelSize    = Int64(isoLabelSize)
 
@@ -2023,6 +1992,14 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
         ox      = ""
         mod     = "o18"
         name    = o18_field_label(of)
+    elseif phase == "te"
+        te_available() || (println("Trace elements are not available: activate trace-element partitioning in Setup and compute the phase diagram"); return data_isopleth, isopleths)
+        ss      = ""
+        em      = ""
+        ox      = ""
+        mod     = "te"
+        te_cust = strip(string(something(te_cust, "none")))
+        name    = (isempty(te_cust) || te_cust == "none") ? te_field_label(of) : String(te_cust)
     else
         println("Wrong combination, needs debugging...")
         return data_isopleth, isopleths
@@ -2036,7 +2013,9 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
         return data_isopleth, isopleths
     end
 
-    gridded, X, Y = get_isopleth_map(   mod, ss, em, ox, of, ot, calc, calc_sf, calc_ox, rmf, 
+    gridded, X, Y = mod == "te" ?
+                    te_isopleth_grid(of, oxi, sub, refLvl + addedRefinementLvl, data, Xrange, Yrange) :
+                    get_isopleth_map(   mod, ss, em, ox, of, ot, calc, calc_sf, calc_ox, rmf, 
                                         oxi,
                                         Out_XY,
                                         sub,

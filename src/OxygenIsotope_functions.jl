@@ -170,6 +170,7 @@ o18_main_fieldname(field, q, p1, p2) = field == "o18" ? "o18:" * o18_fieldname(q
     defined at the computed points ((0, 1) when the field is defined nowhere).
 """
 function field_color_range(fieldname, gridded)
+    is_te_field(fieldname) && return te_field_color_range(fieldname, gridded)
     is_o18_field(fieldname) || return round_sig(grid_min(gridded)), round_sig(grid_max(gridded))
     vals = o18_available() ? o18_field_values(fieldname) : Float64[]
     isempty(vals) && return 0.0, 1.0

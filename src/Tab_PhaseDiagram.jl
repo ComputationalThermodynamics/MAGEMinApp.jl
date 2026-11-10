@@ -588,6 +588,33 @@ function Tab_PhaseDiagram()
                                                 ]),
                                             ], style = Dict("display" => "none"), id = "o18-point-section-id"),
 
+                                            html_div([
+                                                html_div("‎ "),
+                                                html_hr(),
+                                                html_h1("Trace elements", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
+                                                dbc_row([
+                                                    dbc_col([
+                                                        dcc_dropdown(   id          = "te-spectrum-show",
+                                                                        options     = [(label = "REE", value = "ree"), (label = "All", value = "all")],
+                                                                        value       = "ree",
+                                                                        clearable   = false,
+                                                                        multi       = false),
+                                                    ], width = 6),
+                                                    dbc_col([
+                                                        dcc_dropdown(   id          = "te-spectrum-norm",
+                                                                        options     = [(label = "Bulk", value = "bulk"), (label = "Chondrite", value = "chondrite")],
+                                                                        value       = "bulk",
+                                                                        clearable   = false,
+                                                                        multi       = false),
+                                                    ], width = 6),
+                                                ]),
+                                                dcc_graph(  id      = "te-spectrum-pd",
+                                                            figure  = plot(Layout(height = 280, plot_bgcolor = "#FFF", paper_bgcolor = "#FFF")),
+                                                            config  = PlotConfig(displaylogo = false,
+                                                                                 toImageButtonOptions = attr(name = "Download as svg", format = "svg", filename = "trace_element_spectrum",
+                                                                                                             height = 340, width = 600, scale = 2.0).fields)),
+                                            ], style = Dict("display" => "none"), id = "te-spectrum-section-id"),
+
                                             html_div("‎ "),
                                             html_hr(),
                                             html_div([
@@ -839,13 +866,14 @@ function Tab_PhaseDiagram()
                                         ], width=5),
                                         dbc_col([
                                             dcc_dropdown(   id      = "fields-dropdown",
-                                                            options = vcat(field_dropdown_options(), ENABLE_O18 ? [(label = "δ18O", value = "o18")] : []),
+                                                            options = vcat(field_dropdown_options(), ENABLE_O18 ? [(label = "δ18O", value = "o18")] : [], [(label = "Trace elements", value = "te")]),
                                                             value="Variance" ,
                                                             clearable   = false,
                                                             multi       = false),
                                         ]), 
                                     ]),
                                     html_div(o18_selector("-pd"), style = Dict("display" => "none"), id = "show-o18-pd-id"),
+                                    html_div(te_selector("-pd"), style = Dict("display" => "none"), id = "show-te-pd-id"),
                                     html_div("‎ "),
                                     html_h1("Diagram options", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
                                     html_hr(),
@@ -1230,6 +1258,7 @@ function Tab_PhaseDiagram()
                                                         (label = "Solution phase",      value = "ss"),
                                                         (label = "Other",               value = "of"),
                                                         (ENABLE_O18 ? [(label = "δ18O", value = "o18")] : [])...,
+                                                        (label = "Trace elements",      value = "te"),
                                                     ],
                                                     value       = "pp",
                                                     clearable   = false,
@@ -1239,6 +1268,7 @@ function Tab_PhaseDiagram()
                                             ]),
                                         ]),
                                         html_div(o18_selector("-iso"), style = Dict("display" => "none"), id = "o18-iso-id"),
+                                        html_div(te_selector("-iso"), style = Dict("display" => "none"), id = "te-iso-id"),
                                             html_div([
                                                 dbc_row([
 
