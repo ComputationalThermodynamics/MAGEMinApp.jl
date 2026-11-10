@@ -411,10 +411,9 @@ function pd_domain_rings(geom, raw_id::Integer)
     return px, py
 end
 
-function pd_isopleth_overlay(data_isopleth, Xr, Yr; sigma::Real = 0.0)
+function pd_isopleth_overlay(data_isopleth, Xr, Yr; sigma::Real = 0.0, placed::Vector = NTuple{5,Float64}[])
     traces = GenericTrace{Dict{Symbol,Any}}[]
     anns   = PlotlyBase.PlotlyAttribute[]
-    placed = NTuple{5,Float64}[]
     for iso in pd_isopleth_sets(data_isopleth, identity; sigma = sigma)
         x, y = Union{Float64,Nothing}[], Union{Float64,Nothing}[]
         for (lvl, polys) in iso.levels

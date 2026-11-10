@@ -872,6 +872,7 @@ n_active_oxides(out) = count(>(0.0), out.bulk)
 """
 function field_colorbar_title(fieldname)
     is_o18_field(fieldname) && return o18_field_label(fieldname)
+    is_te_field(fieldname)  && return te_field_label(fieldname)
     fieldname == "P_kbar"   && return "Pressure [$(pressure_unit_label())]"
     fieldname == "T_C"      && return "Temperature [°C]"
     return fieldname
@@ -1894,38 +1895,6 @@ function initialize_g_isopleth(; n_iso_max = 32)
 end
 
 
-"""
-
-    Initiatize global variable storing isopleths information
-"""
-function initialize_g_isopleth_te(; n_iso_max = 32)
-    global data_isopleth_te
-
-    status    = zeros(Int64,n_iso_max)
-    active    = []
-    hidden    = []
-    isoP      = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
-    isoPexp   = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
-    isoT      = Vector{CTR.ContourCollection{CTR.ContourLevel{Tuple{Float64, Float64}, Float64}}}(undef, n_iso_max); # + 1 to store the heatmap
-    isoCap    = Vector{GenericTrace{Dict{Symbol, Any}}}(undef, n_iso_max); # + 1 to store the heatmap
-
-    for i=1:n_iso_max
-        isoP[i] = contour()
-        isoPexp[i]  = contour()
-        isoCap[i] = scatter()
-    end
-
-    label     = Vector{String}(undef,n_iso_max)
-    value     = Vector{Int64}(undef,n_iso_max)
-
-    data_isopleth_te = isopleth_data(   0, n_iso_max,
-                                        status, active, hidden, isoP, isoPexp, isoT, isoCap,
-                                        label, value)
-
-    
-    return data_isopleth_te
-end
-
 iso_undefined_to_missing(g) = map(v -> (v isa Real && !isfinite(v)) ? missing : v, g)
 
 """
@@ -1938,7 +1907,7 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
                                             isopleths,  phase,      ss,     em,   ox,  of,     ot,  sys,   rmf,  calc, cust, calc_sf, calc_ox, cust_sf, cust_ox,
                                             isoLineStyle,   isoLineWidth, isoColorLine,           isoLabelSize,       
                                             minIso,     stepIso,    maxIso;
-                                            label_bg::Bool = false )
+                                            label_bg::Bool = false, te_cust = "none" )
 
     isoLabelSize    = Int64(isoLabelSize)
 
@@ -2023,6 +1992,14 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
         ox      = ""
         mod     = "o18"
         name    = o18_field_label(of)
+    elseif phase == "te"
+        te_available() || (println("Trace elements are not available: activate trace-element partitioning in Setup and compute the phase diagram"); return data_isopleth, isopleths)
+        ss      = ""
+        em      = ""
+        ox      = ""
+        mod     = "te"
+        te_cust = strip(string(something(te_cust, "none")))
+        name    = (isempty(te_cust) || te_cust == "none") ? te_field_label(of) : String(te_cust)
     else
         println("Wrong combination, needs debugging...")
         return data_isopleth, isopleths
@@ -2036,7 +2013,9 @@ function add_isopleth_phaseDiagram(         Xrange,     Yrange,
         return data_isopleth, isopleths
     end
 
-    gridded, X, Y = get_isopleth_map(   mod, ss, em, ox, of, ot, calc, calc_sf, calc_ox, rmf, 
+    gridded, X, Y = mod == "te" ?
+                    te_isopleth_grid(of, oxi, sub, refLvl + addedRefinementLvl, data, Xrange, Yrange) :
+                    get_isopleth_map(   mod, ss, em, ox, of, ot, calc, calc_sf, calc_ox, rmf, 
                                         oxi,
                                         Out_XY,
                                         sub,
@@ -2866,4 +2845,51 @@ function pd_field_color_polys(specs, smooth_bnd::Bool, sigma::Real)
         isempty(rings) ? push!(absent, k) : push!(polys, (color = color, alpha = alpha, py = py, rings = rings))
     end
     return polys, absent
+end
+
+const PD_LEGEND_W     = 680.0
+const PD_LEGEND_ROW_H = 21.0
+
+pd_legend_item_w(name) = 46.0 + 7.0 * length(string(name))
+
+function pd_legend_rows(names, title)
+    isempty(names) && return 0
+    rows, x = 1, 7.0 * length(title) + 10.0
+    for n in names
+        w = pd_legend_item_w(n)
+        if x + w > PD_LEGEND_W && x > 0
+            rows += 1
+            x = 7.0 * length(title) + 10.0
+        end
+        x += w
+    end
+    return rows
+end
+
+function pd_reaction_legend_traces(; visible::Bool = true)
+    return GenericTrace[scatter(x = [nothing], y = [nothing], mode = "lines",
+                                line = attr(color = opt[3], dash = opt[1], width = opt[2]),
+                                name = display_ph_name(ph), legend = "legend2", showlegend = true,
+                                visible = visible, meta = "pd-reac-cap")
+                        for (ph, opt) in styled_reaction_phases()]
+end
+
+function pd_legend_figure(iso_caps, pb_caps)
+    t_iso, t_pb = "Isopleths", "Phase boundaries"
+    r_iso = pd_legend_rows([string(t[:name]) for t in iso_caps], t_iso)
+    r_pb  = pd_legend_rows([string(t[:name]) for t in pb_caps],  t_pb)
+    rows  = r_iso + r_pb
+    H     = rows == 0 ? 30 : round(Int, 6 + PD_LEGEND_ROW_H * rows)
+    leg(y, title) = attr(x = 0.02, xanchor = "left", y = y, yanchor = "top", orientation = "h",
+                         title = attr(text = title, side = "left", font = attr(size = 12, color = "#555555")),
+                         bgcolor = "rgba(0,0,0,0)", font = attr(size = 12))
+    y_iso = 1.0 - 3.0 / H
+    y_pb  = y_iso - r_iso * PD_LEGEND_ROW_H / H
+    lay   = Layout(height = H, plot_bgcolor = "white", paper_bgcolor = "white", title = "",
+                   xaxis = attr(visible = false, range = [0, 1], fixedrange = true),
+                   yaxis = attr(visible = false, range = [0, 1], fixedrange = true), showlegend = true,
+                   legend = leg(y_iso, t_iso), legend2 = leg(y_pb, t_pb))
+    lay.fields[:margin] = Dict{Symbol,Any}(:l => 0, :r => 0, :t => 0, :b => 0, :autoexpand => false)
+    traces = GenericTrace[iso_caps..., pb_caps...]
+    return (isempty(traces) ? plot(lay) : plot(traces, lay)), H
 end

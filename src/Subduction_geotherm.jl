@@ -1,6 +1,6 @@
 const SUBD_YEAR_S  = 365.0 * 24.0 * 3600.0
 const SUBD_G       = 9.81
-const SUBD_TRACES  = Dict{String,Vector{GenericTrace}}("pd" => GenericTrace[], "te" => GenericTrace[])
+const SUBD_TRACES  = Dict{String,Vector{GenericTrace}}("pd" => GenericTrace[])
 
 function subd_erf(x::Float64)
     t = 1.0 / (1.0 + 0.5 * abs(x))

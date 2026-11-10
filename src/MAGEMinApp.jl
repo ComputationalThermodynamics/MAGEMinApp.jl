@@ -84,7 +84,6 @@ module MAGEMinApp
     include(joinpath(pkg_dir,"src","Tab_PhaseDiagram3D.jl"))
     include(joinpath(pkg_dir,"src","Tab_MonteCarlo.jl"))
     include(joinpath(pkg_dir,"src","Tab_Classification.jl"))
-    include(joinpath(pkg_dir,"src","Tab_TraceElement.jl"))
     include(joinpath(pkg_dir,"src","Tab_IntersecT.jl"))
     include(joinpath(pkg_dir,"src","Tab_PTXpaths.jl"))
     ENABLE_MAGERES && include(joinpath(pkg_dir,"src","Tab_MAGERes.jl"))
@@ -94,7 +93,6 @@ module MAGEMinApp
     include(joinpath(pkg_dir,"src","Tab_PhaseDiagram_Callbacks.jl"))
     include(joinpath(pkg_dir,"src","Tab_PhaseDiagram3D_Callbacks.jl"))
     include(joinpath(pkg_dir,"src","Tab_MonteCarlo_Callbacks.jl"))
-    include(joinpath(pkg_dir,"src","Tab_TraceElement_Callbacks.jl"))
     include(joinpath(pkg_dir,"src","Tab_IntersecT_Callbacks.jl"))
     include(joinpath(pkg_dir,"src","PTXpaths_functions.jl"))   
     include(joinpath(pkg_dir,"src","Tab_PTXpaths_Callbacks.jl")) 
@@ -130,12 +128,13 @@ module MAGEMinApp
         pkg_dir     = pkgdir(MAGEMinApp)   # package dir
         cd(pkg_dir)
 
+        AppData.reaction_style_presets[1] = load_reaction_style_presets();
+
         app         = build_app()
 
         println(" 4/4 Loading user data...")
         AppData.mineral_style[1] = load_mineral_style();
         AppData.mineral_order[1] = load_mineral_order(sort(collect(keys(AppData.mineral_style[1]))));
-        AppData.reaction_style_presets[1] = load_reaction_style_presets();
 
         try
             run_server(app, host, port, debug=debug)
@@ -264,10 +263,6 @@ module MAGEMinApp
                                                                         tab_style   = Dict("display" => "none"),
                                                                         children    = [Tab_PhaseDiagram3D()]
                                                                     ),
-                                                            dbc_tab(    tab_id      = "tab-te",
-                                                                        label       = "Trace-elements",
-                                                                        children    = [Tab_TraceElement()],
-                                                                    ),
                                                             dbc_tab(    tab_id      = "tab-intersect",
                                                                         label       = "IntersecT",
                                                                         children    = [Tab_IntersecT()],
@@ -348,9 +343,7 @@ module MAGEMinApp
         app = Tab_PhaseDiagram_Callbacks(app)
         app = Tab_PhaseDiagram3D_Callbacks(app)
         app = Tab_MonteCarlo_Callbacks(app)
-        app = Tab_TraceElement_Callbacks(app)
         app = subduction_geotherm_callbacks!(app, "")
-        app = subduction_geotherm_callbacks!(app, "-te")
         app = subduction_geotherm_callbacks!(app, "-3d")
         app = Tab_PTXpaths_Callbacks(app)
         ENABLE_MAGERES && (app = Tab_MAGERes_Callbacks(app))

@@ -42,7 +42,7 @@ If "Seismic correction" is set to *false*, \$V_{p,cor}\$ and \$V_{s,cor}\$ are n
 SlabGeotherms = raw"""
 **Slab geotherms**
 
-The "Slab geotherms" subtab (Phase diagram, Trace-element and 3D diagram tabs) overlays the pressure-temperature paths followed by a point of the downgoing slab, for one or several convergence velocities. In 2D the curves are only drawn on P-T diagrams. In the 3D P-T-X diagram a geotherm does not depend on X: it is drawn either as a translucent wall spanning the X axis, or as curves at chosen X values.
+The "Slab geotherms" subtab (Phase diagram and 3D diagram tabs) overlays the pressure-temperature paths followed by a point of the downgoing slab, for one or several convergence velocities. In 2D the curves are only drawn on P-T diagrams. In the 3D P-T-X diagram a geotherm does not depend on X: it is drawn either as a translucent wall spanning the X axis, or as curves at chosen X values.
 
 #### Thermal model
 
@@ -94,7 +94,7 @@ The last six are under "Advanced".
 - Velocity and dip only enter through $y / v = (z - o\cos\delta) / (v \sin\delta)$: a steeper dip has the same effect as a faster convergence.
 - The model is purely conductive with constant $\kappa$: no shear heating, no mantle-wedge corner flow, no radiogenic or latent heat.
 - Each curve is labelled with its velocity and clipped to the diagram range. It is included in the 2D "Export SVG" and in all 3D exports: interactive HTML; PLY + STL (walls as surfaces, or tubes when rendered as lines); VTK, as a companion `<name>_geotherms.vtk` file of polylines in the same normalized cube as the grid, with T, P, X and velocity as point data.
-- When "Show geotherms" is *true*, the "bibtex file" export of the Phase diagram and Trace-element tabs includes Davies (1999).
+- When "Show geotherms" is *true*, the "bibtex file" export of the Phase diagram tab includes Davies (1999).
 
 #### References
 

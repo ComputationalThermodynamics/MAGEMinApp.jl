@@ -10,7 +10,6 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ =#
 
 pd_fig_meta    = nothing
-pd_fig_meta_te = nothing
 
 """
     pd_export_status(msg; ok)
@@ -225,8 +224,7 @@ end
                       show_reaction, show_mesh, show_labels)
 
     Everything a phase diagram shows, as plain data in the display pressure unit,
-    from the globals its on-screen figure is built from (passed in, so the Phase
-    diagram and Trace elements tabs, which keep parallel `_te` globals, share it):
+    from the globals its on-screen figure is built from (passed in):
     `data` (the AMR mesh), `gridded` (the field, `[ix, iy]`), `heat_map` (the export
     heatmap trace, for its colorscale/range/smoothing/title), `layout_g` (title and
     label annotations and the two paper-anchored provenance text columns, which are
@@ -276,13 +274,16 @@ function pd_figure_parts(; data, gridded, heat_map, layout_g, reaction, data_iso
     lines = NamedTuple[]
     if show_reaction && reaction !== nothing
         all_ph = Vector{String}(vcat(phase_infos.act_ss, phase_infos.act_pp))
+        styled = Dict(styled_reaction_phases())
         if length(reaction) == length(all_ph)
             for (i, t) in enumerate(reaction)
                 ln = t[:line]
                 push!(lines, (phase = all_ph[i], x = t[:x], y = [yconv(v) for v in t[:y]],
                               color = string(haskey(ln, :color) ? ln[:color] : "#000000"),
                               dash  = haskey(ln, :dash) ? ln[:dash] : "solid",
-                              width = Float64(haskey(ln, :width) ? ln[:width] : 0.75)))
+                              width = Float64(haskey(ln, :width) ? ln[:width] : 0.75),
+                              styled = haskey(styled, all_ph[i]),
+                              label_size = haskey(styled, all_ph[i]) ? Float64(styled[all_ph[i]][4]) : 10.0))
             end
         end
     end
@@ -376,12 +377,14 @@ end
     - `Mesh`: the AMR mesh as merged straight segments ([`pd_mesh_segments`](@ref));
     - `Reaction_lines`: one path per phase (`Reaction_<phase>`) with the dash, width
       and color set for it in the reaction-line options;
+    - `Reaction_labels`: the phase name along each styled phase boundary;
     - `Isopleth_<name>`: one layer per active isopleth, one path per contour level,
       with the value labels as text along the lines;
     - `Labels`: the field labels and leader lines ([`svg_annotation_layer`](@ref));
     - `Layout`: outline, ticks, tick labels, axis titles, figure title;
     - `Colorbar`: a multi-stop gradient, its ticks and the field name;
     - `Isopleth_legend`: a swatch and name per active isopleth;
+    - `Phase_boundary_legend`: a swatch and name per styled phase boundary;
     - `Info`: the two provenance text columns shown under the diagram;
     - `Assemblage_list`: the numbered assemblages the small labels refer to.
 
@@ -464,6 +467,29 @@ function pd_export_svg(parts, path::AbstractString)
     end
 
     iso_placed = NTuple{5,Float64}[]
+    reac_labels = Tuple{Float64,Float64,Float64,String,String,Float64}[]
+    for r in parts.reaction
+        r.styled || continue
+        txt   = display_ph_name(r.phase)
+        lines_px = [[(svg_x(c, x), svg_y(c, y)) for (x, y) in l] for l in clipped(r.x, r.y)]
+        sort!(lines_px, by = l -> -pd_polyline_px_length(l))
+        n = 0
+        for l in lines_px
+            n >= PD_REAC_LABELS_PER_PHASE && break
+            lab = pd_place_line_label!(iso_placed, l, txt, r.label_size; offset = pd_reaction_label_offset(txt, r.label_size, r.width))
+            lab === nothing && continue
+            push!(reac_labels, (lab[1], lab[2], lab[3], txt, r.color, r.label_size))
+            n += 1
+        end
+    end
+    if !isempty(reac_labels)
+        svg_group_open(io, svg_id(seen, "Reaction_labels"); font_family = font, anchor = "middle")
+        for (k, (x, y, ang, txt, col, fs)) in enumerate(reac_labels)
+            svg_text(io, x, y, txt; id = svg_id(seen, "Reaction_label_$(txt)_$(k)"), rotate = ang, fill = col, size = fs)
+        end
+        svg_group_close(io)
+    end
+
     for iso in parts.isopleths
         svg_group_open(io, svg_id(seen, "Isopleth_" * iso.name); stroke = iso.color, width = iso.width, fill = "none",
                         dash = svg_dasharray(iso.dash, iso.width), rounded = true)
@@ -570,14 +596,28 @@ function pd_export_svg(parts, path::AbstractString)
                                             id = svg_id(seen, "Colorbar_title"), size = 11, anchor = "middle", rotate = 90)
     svg_group_close(io)
 
+    leg_y = bar_y + bar_h + 28
     if !isempty(parts.isopleths)
         svg_group_open(io, svg_id(seen, "Isopleth_legend"); font_family = font, font_size = 10, fill = ink)
-        y = bar_y + bar_h + 28
         for iso in parts.isopleths
-            svg_path(io, svg_id(seen, "Legend_swatch_" * iso.name), "M$(svg_num(right + 16)) $(svg_num(y)) L$(svg_num(right + 36)) $(svg_num(y))";
+            svg_path(io, svg_id(seen, "Legend_swatch_" * iso.name), "M$(svg_num(right + 16)) $(svg_num(leg_y)) L$(svg_num(right + 36)) $(svg_num(leg_y))";
                      stroke = iso.color, width = iso.width, dash = svg_dasharray(iso.dash, iso.width))
-            svg_text(io, right + 42, y, iso.name; id = svg_id(seen, "Legend_text_" * iso.name), anchor = "start")
-            y += 17
+            svg_text(io, right + 42, leg_y, iso.name; id = svg_id(seen, "Legend_text_" * iso.name), anchor = "start")
+            leg_y += 17
+        end
+        svg_group_close(io)
+        leg_y += 8
+    end
+
+    pb_leg = [r for r in parts.reaction if r.styled]
+    if !isempty(pb_leg)
+        svg_group_open(io, svg_id(seen, "Phase_boundary_legend"); font_family = font, font_size = 10, fill = ink)
+        for r in pb_leg
+            nm = display_ph_name(r.phase)
+            svg_path(io, svg_id(seen, "Legend_swatch_pb_" * nm), "M$(svg_num(right + 16)) $(svg_num(leg_y)) L$(svg_num(right + 36)) $(svg_num(leg_y))";
+                     stroke = r.color, width = r.width, dash = svg_dasharray(r.dash, r.width))
+            svg_text(io, right + 42, leg_y, nm; id = svg_id(seen, "Legend_text_pb_" * nm), anchor = "start")
+            leg_y += 17
         end
         svg_group_close(io)
     end

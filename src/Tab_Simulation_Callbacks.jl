@@ -504,6 +504,10 @@ function Tab_Simulation_Callbacks(app)
         if !isempty(loaded) && !haskey(loaded, "diagram_ctx")
             Core.eval(MAGEMinApp, :(diagram_ctx = nothing))
         end
+        if haskey(loaded, "Out_XY")
+            haskey(loaded, "Out_TE_XY")  || Core.eval(MAGEMinApp, :(Out_TE_XY  = MAGEMin_C.out_tepm[]; all_TE_ph  = String[]))
+            haskey(loaded, "Out_O18_XY") || Core.eval(MAGEMinApp, :(Out_O18_XY = MAGEMin_C.out_O18[];  all_O18_ph = String[]))
+        end
         loaded_state_has_diagram = all(k -> haskey(loaded, k), ("data", "Out_XY", "Hash_XY", "data_plot", "layout", "data_isopleth", "n_phase_XY", "addedRefinementLvl"))
 
         db, dbte = db_s, dbte_s
@@ -832,7 +836,7 @@ function Tab_Simulation_Callbacks(app)
         n_pp        = length(pp)
         n_ss        = length(ss)
 
-        if phase == "of" || phase == "o18"
+        if phase == "of" || phase == "o18" || phase == "te"
             style_ph    = Dict("display" => "none")
             style_em    = Dict("display" => "none")
             style_ox    = Dict("display" => "none")
@@ -1005,7 +1009,6 @@ function Tab_Simulation_Callbacks(app)
         Output("tepm-options-id",   "style"),
         Output("te-panel-id",       "style"),
         Output("zr-options-id",     "style"),
-        Output("display-show-norm-id",   "style"),
         
         Input("tepm-dropdown",      "value"),
         Input("kds-dropdown",       "value"),
@@ -1017,16 +1020,14 @@ function Tab_Simulation_Callbacks(app)
             opt     = Dict("display" => "none")
             panel   = Dict("display" => "none")
             zr      = Dict("display" => "none")
-            show_norm = Dict("display" => "none")
 
         elseif tepm == "true" 
             opt     = Dict("display" => "block" )    
             panel   = Dict("display" => "block" )
             zr      = Dict("display" => "block" )
-            show_norm = Dict("display" => "block")
         end
 
-        return opt, panel, zr, show_norm
+        return opt, panel, zr
     end
 
     callback!(
