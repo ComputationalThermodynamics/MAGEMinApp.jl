@@ -535,6 +535,30 @@ function o18_ptx_available()
     return !isempty(Out_O18_PTX) && length(Out_O18_PTX) == length(Out_PTX)
 end
 
+function o18_field_series_ptx(fieldname::AbstractString)
+    name = is_o18_field(fieldname) ? o18_field_name(fieldname) : String(fieldname)
+    y    = Vector{Union{Float64,Missing}}(missing, length(Out_O18_PTX))
+    for k in eachindex(Out_O18_PTX)
+        isassigned(Out_O18_PTX, k) || continue
+        v = o18_value(Out_O18_PTX[k], name)
+        y[k] = isfinite(v) ? Float64(v) : missing
+    end
+    return y
+end
+
+function o18_phase_options_ptx()
+    o18_ptx_available() && isdefined(@__MODULE__, :all_O18_ph_ptx) || return Dict{String,String}[]
+    return [Dict("label" => display_ph_name(p), "value" => p) for p in all_O18_ph_ptx]
+end
+
+function o18_default_phases_ptx()
+    o18_ptx_available() && isdefined(@__MODULE__, :all_O18_ph_ptx) && !isempty(all_O18_ph_ptx) || return nothing, nothing
+    p1   = "q" in all_O18_ph_ptx ? "q" : all_O18_ph_ptx[1]
+    rest = [p for p in all_O18_ph_ptx if p != p1]
+    p2   = "g" in rest ? "g" : (isempty(rest) ? p1 : rest[1])
+    return p1, p2
+end
+
 """
     get_o18_ptx_phase_options()
 

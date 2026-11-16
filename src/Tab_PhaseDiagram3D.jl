@@ -262,6 +262,8 @@ function Tab_PhaseDiagram3D()
                                 pd3d_export_button("Surfaces: PLY (colour) + STL", "pd3d-export-mesh"),
                                 html_div("‎ "),
                                 pd3d_export_button("Full grid for ParaView (VTK)", "pd3d-export-vtk"),
+                                html_div("‎ "),
+                                pd3d_export_button("All points (CSV)", "pd3d-export-csv"),
                                 html_div(id = "pd3d-export-status", children = "",
                                          style = Dict("textAlign" => "center", "font-size" => "85%", "color" => "grey", "marginTop" => 8, "wordBreak" => "break-all")),
                                 html_hr(),

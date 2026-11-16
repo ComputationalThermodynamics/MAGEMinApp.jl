@@ -778,6 +778,9 @@ function compute_new_PTXpath(   nsteps,     PTdata,     mode,       bulk_ini,   
                 Out_TE_PTX   = Vector{MAGEMin_C.out_tepm}(undef, n_tot)
                 all_TE_ph    = []
                 C_ext_TE_PTX = [fill(NaN, length(bulkte_ini_a)) for _ in 1:n_tot]
+            else
+                Out_TE_PTX    = MAGEMin_C.out_tepm[]
+                all_TE_ph_ptx = String[]
             end
 
             o18_on      = !isnothing(o18)
@@ -1577,7 +1580,7 @@ function get_layout_ree_ptx(norm :: String, show_type :: String)
     else
         xaxis_title = "Trace Elements"
     end
-    yaxis_title = "C/" * norm * " log10[μg/g]"
+    yaxis_title = "C/" * te_norm_short(norm) * " log10[μg/g]"
 
     layout_ree = Layout(
         font        = attr(size = 10),
@@ -1624,7 +1627,7 @@ function get_te_fieldbuilder_plot(varBuilder::String, norm::String)
         y_vals[k] = (val isa Number && isfinite(Float64(val))) ? Float64(val) : missing
     end
 
-    ytitle = norm == "none" ? varBuilder : varBuilder * " / " * norm
+    ytitle = norm == "none" ? varBuilder : varBuilder * " / " * te_norm_short(norm)
     traces = [scatter(; x=x_vals, y=y_vals,
                        mode="markers+lines",
                        name=varBuilder,
@@ -1698,7 +1701,7 @@ function get_ptx_spectrum_info(step_id::Int, norm::AbstractString)
      1 <= step_id <= length(Out_PTX) && step_id <= length(Out_TE_PTX)) || return nothing
     out, out_te = Out_PTX[step_id], Out_TE_PTX[step_id]
     rows = ptx_bulk_info_rows(out, out_te)
-    push!(rows, ("Normalization", String(norm)))
+    push!(rows, ("Normalization", te_norm_label(norm)))
     push!(rows, ("P", "$(round(display_pressure(out.P_kbar), digits = 3)) $(pressure_unit_label())"))
     push!(rows, ("T", "$(round(out.T_C, digits = 3)) °C"))
     return ptx_info_columns(rows)
@@ -1805,8 +1808,7 @@ end
 function get_data_ree_plot_ptx(step_id, norm, show_type)
 
     ree           = ["La", "Ce", "Pr", "Nd", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu"]
-    te_chondrite  = ["Rb", "Ba", "Th", "U", "Nb", "Ta", "La", "Ce", "Pb", "Pr", "Sr", "Nd", "Zr", "Hf", "Sm", "Eu", "Gd", "Tb", "Dy", "Y", "Ho", "Er", "Tm", "Yb", "Lu", "V", "Sc", "Cs", "K", "Ti"]
-    ppm_chondrite = [2.3, 2.41, 0.029, 0.0074, 0.24, 0.0136, 0.237, 0.613, 2.47, 0.0928, 7.25, 0.457, 3.82, 0.103, 0.148, 0.0563, 0.199, 0.0361, 0.246, 1.57, 0.0546, 0.160, 0.0247, 0.161, 0.0246, 56, 5.92, 0.188, 558.0, 436.0]
+    te_chondrite  = TE_NORM_ELEMENTS
 
     res = Out_TE_PTX[step_id]
 
@@ -1814,12 +1816,10 @@ function get_data_ree_plot_ptx(step_id, norm, show_type)
         te      = ree
         te_idx  = [findfirst(isequal(x), res.elements) for x in ree]
     else
-        mask    = [!isnothing(findfirst(isequal(x), res.elements)) for x in te_chondrite]
+        mask    = [!isnothing(findfirst(isequal(x), res.elements)) && te_ref_has(x, norm) for x in te_chondrite]
         te      = te_chondrite[mask]
         te_idx  = [findfirst(isequal(x), res.elements) for x in te]
     end
-
-    chon_idx = [findfirst(isequal(x), te_chondrite) for x in te]
 
     n_ree    = length(te_idx)
     n_traces = 0
@@ -1838,8 +1838,8 @@ function get_data_ree_plot_ptx(step_id, norm, show_type)
     compo_mat      = Matrix{Union{Float64,Missing}}(undef, n_traces, n_ree) .= missing
     colormap       = get_lines_colormap()
 
-    if norm == "chondrite"
-        C_norm = ppm_chondrite[chon_idx]
+    if is_te_ref_norm(norm)
+        C_norm = te_ref_ppm(te, norm)
     elseif norm == "bulk"
         C_norm = res.C0[te_idx]
     else
@@ -2400,13 +2400,13 @@ function initialize_rm_layout(calcUnit = "mol")
             linewidth     = 1       # Set the thickness of the axis line
         ),
         yaxis       = attr(
-            autorange     = false,
+            autorange     = true,
+            rangemode     = "tozero",
             fixedrange    = true,
             showgrid      = false,  # Disable gridlines inside the plot
             zeroline      = true,   # Show the axis line
             linecolor     = "black", # Set the left axis line color
             linewidth     = 1,       # Set the thickness of the axis line
-            range         = [0.0, 100.0]
         ),
     )
 
@@ -2521,13 +2521,16 @@ Samples a single system-level field (see `field_dropdown_options()` /
 computed PTX path, reusing `get_other_field_value` (the same per-point
 extractor the Phase Diagram tab's "draw path field profile" uses). "Hash"
 is handled separately here since it only becomes a meaningful small integer
-once mapped against the *other* assemblages seen along this path.
+once mapped against the *other* assemblages seen along this path. Trace-element
+keys (`"te:..."`, see `te_main_fieldname`) are read from `Out_TE_PTX` and δ18O
+keys (`"o18:..."`, see `o18_main_fieldname`) from `Out_O18_PTX`; steps where
+they are undefined are left as gaps.
 """
 function get_ptx_field_plot(fieldname::String)
 
     n_tot   = length(Out_PTX)
     x       = Vector{String}(undef, n_tot)
-    y       = Vector{Float64}(undef, n_tot)
+    y       = Vector{Union{Float64,Missing}}(missing, n_tot)
 
     for k = 1:n_tot
         x[k] = string(round(display_pressure(Out_PTX[k].P_kbar),digits=1))*"; "*string(round(Out_PTX[k].T_C,digits=1))
@@ -2537,6 +2540,10 @@ function get_ptx_field_plot(fieldname::String)
         raw_hash    = [hash(sort(Out_PTX[k].ph)) for k = 1:n_tot]
         uniq_hash   = unique(raw_hash)
         y          .= [Float64(findfirst(==(h), uniq_hash)) for h in raw_hash]
+    elseif is_te_field(fieldname)
+        te_ptx_available() && (y .= te_field_series(fieldname, Out_TE_PTX))
+    elseif is_o18_field(fieldname)
+        o18_ptx_available() && (y .= o18_field_series_ptx(fieldname))
     else
         y          .= [get_other_field_value(Out_PTX[k], fieldname) for k = 1:n_tot]
     end
@@ -2546,11 +2553,19 @@ function get_ptx_field_plot(fieldname::String)
                         mode    = "markers+lines",
                         marker  = attr(size = 5.0, color = "black", symbol = "circle-open", opacity = 0.5),
                         line    = attr(width = 0.75, color = "black"),
-                        name    = get(OTHER_FIELD_LABELS, fieldname, fieldname),
+                        name    = ptx_field_label(fieldname),
                     )
 
     return GenericTrace[trace]
 end
+
+function ptx_field_label(fieldname::String)
+    is_te_field(fieldname)  && return te_field_label(fieldname)
+    is_o18_field(fieldname) && return o18_field_label(fieldname)
+    return get(OTHER_FIELD_LABELS, fieldname, fieldname)
+end
+
+ptx_field_filename(fieldname::String) = replace(fieldname, r"[^A-Za-z0-9_.-]+" => "_")
 
 
 function initialize_ext_layout(title,sysunit)
@@ -2626,13 +2641,13 @@ function initialize_comp_layout(sysunit)
             linewidth     = 1       # Set the thickness of the axis line
         ),
         yaxis       = attr(
-            autorange     = false,
+            autorange     = true,
+            rangemode     = "tozero",
             fixedrange    = true,
             showgrid      = false,  # Disable gridlines inside the plot
             zeroline      = true,   # Show the axis line
             linecolor     = "black", # Set the left axis line color
             linewidth     = 1,       # Set the thickness of the axis line
-            range         = [0.0, 100]
         ),
     )
 

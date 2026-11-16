@@ -905,7 +905,8 @@ older by the time since they erupted, and the eruptions of the selected output a
    growth zones are shaded in greys as in a CL image, and its spots are labelled with their ages.
 
 The *Trace elements* figure shows each eruption's REE or all trace elements (bulk erupted material, Zr in zircon
-included), normalised to chondrite or to the injected magma, with the injected magma as reference. All zircon and
+included), normalised to CI chondrite (McDonough & Sun 1995), to primitive mantle (Sun & McDonough 1989, or McDonough & Sun 1995) or to the
+injected magma, with the injected magma as reference. All zircon and
 trace-element figures show only the eruptions of the selected output, i.e. those since the previous output.
 
 ---

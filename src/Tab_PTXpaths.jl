@@ -2091,11 +2091,17 @@ svg_export_button_row("ptx-plot"),
                                                     ],width=10),
                                                     dbc_col([
                                                         dcc_dropdown(   id      = "ptx-field-dropdown",
-                                                                        options = field_dropdown_options(),
+                                                                        options = vcat(field_dropdown_options(), ENABLE_O18 ? [(label = "δ18O", value = "o18")] : [], [(label = "Trace elements", value = "te")]),
                                                                         value       = "rho" ,
                                                                         clearable   = false,
                                                                         multi       = false),
                                                     ],width=2),
+                                                ]),
+                                                dbc_row([
+                                                    dbc_col([
+                                                        html_div(o18_selector("-ptxf"), style = Dict("display" => "none"), id = "show-o18-ptxf-id"),
+                                                        html_div(te_selector("-ptxf"),  style = Dict("display" => "none"), id = "show-te-ptxf-id"),
+                                                    ], width = Dict("size" => 6, "offset" => 6)),
                                                 ]),
                                                 dbc_row([
                                                     html_hr(),
@@ -2268,7 +2274,7 @@ svg_export_button_row("AFM-plot"),
                                                     ], width=3),
                                                     dbc_col([
                                                         dcc_dropdown(id="normalization-te-ptx",
-                                                            options = ["bulk","chondrite"],
+                                                            options = te_norm_options(["bulk", "chondrite", "pm_sm89", "pm_ms95"]),
                                                             value   = "chondrite",
                                                             clearable = false, multi = false),
                                                     ], width=3),
@@ -2336,7 +2342,7 @@ svg_export_button_row("te-evol-ptx"),
                                                     ], width=5),
                                                     dbc_col([
                                                         dcc_dropdown(id="te-fieldbuilder-norm-ptx",
-                                                            options=["none","bulk","chondrite"],
+                                                            options=te_norm_options(["none", "bulk", "chondrite", "pm_sm89", "pm_ms95"]),
                                                             value="none", clearable=false, multi=false),
                                                     ], width=3),
                                                     dbc_col([

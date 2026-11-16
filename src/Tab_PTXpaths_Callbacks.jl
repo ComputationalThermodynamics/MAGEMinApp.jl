@@ -808,6 +808,14 @@ function Tab_PTXpaths_Callbacks(app)
 
     callback!(
         app,
+        Output("transfer-bulk-db",                  "value"     ),
+        Input("database-dropdown-ptx",              "value"     ),
+    ) do dtb
+        return dtb
+    end
+
+    callback!(
+        app,
         Output("output-data-uploadn-ptx",           "is_open"    ),
         Output("output-data-uploadn-failed-ptx",    "is_open"    ),
         Output("output-data-uploadn-failed-ptx",    "children"   ),
@@ -818,10 +826,11 @@ function Tab_PTXpaths_Callbacks(app)
         State("upload-bulk-ptx",                    "filename"  ),
         State("transfer-bulk-name",                 "value"     ),
         State("transfer-bulk-id",                   "value"     ),
+        State("transfer-bulk-db",                   "value"     ),
         State("optimizer-dropdown-ptx",             "value"     ),
 
         prevent_initial_call=true,
-    ) do bulk, contents, filename, transfer_bulk_name, transfer_bulk_id, optimizer
+    ) do bulk, contents, filename, transfer_bulk_name, transfer_bulk_id, dbout, optimizer
 
         bid         = pushed_button( callback_context() ) 
         
@@ -837,43 +846,40 @@ function Tab_PTXpaths_Callbacks(app)
         elseif bid == "transfer-bulk-button"
             global point_id, using_sample_point, SamplePoint
 
-            out         = using_sample_point ? SamplePoint.out : Out_XY[point_id]     #point_id/SamplePoint are defined as global variables in the Phase diagram pie-chart callback
+            out = try
+                using_sample_point ? SamplePoint.out : Out_XY[point_id]
+            catch
+                nothing
+            end
+            isnothing(out) && return false, true, "No point selected: click on the phase diagram or compute a sample point first"
 
-            bulkrock    = zeros(Float64,length(out.oxides))
-            oxides      = out.oxides
-            dbin        = out.database
-            test 		= length(db[(db.db .== dbin), :].test);
-            if transfer_bulk_id == "Solid"
-                bulkrock = out.bulk_S
-            elseif transfer_bulk_id == "Melt"
-                bulkrock = out.bulk_M
-            else
-                bulkrock = out.bulk
+            bulkrock = transfer_bulk_id == "Solid" ? out.bulk_S : transfer_bulk_id == "Melt" ? out.bulk_M : out.bulk
+            sum(bulkrock) == 0.0 && return false, true, "No bulk-rock composition available for the selected point"
+
+            bulkrock, oxides = try
+                MAGEMin_C.convertBulk4MAGEMin(Float64.(bulkrock), String.(out.oxides), "mol", String(dbout); ns = optimizer == "ns")
+            catch e
+                return false, true, "Conversion to database '$dbout' failed: "*sprint(showerror, e)
             end
 
-            if sum(bulkrock) == 0.0
-                return false, true, "No bulk-rock composition available for the selected point"
-            else
-                bulkrock2       = copy(bulkrock)
-                bulkrock_wt     = round.(mol2wt(bulkrock, oxides),  digits = 6)
-                bulkrock2_wt    = round.(mol2wt(bulkrock2, oxides), digits = 6)
-                bulkrock        = round.(bulkrock   .* 100.0,       digits = 6)
-                bulkrock2       = round.(bulkrock2  .* 100.0,       digits = 6)
-                push!(db,Dict(  :bulk       => "custom",
-                                :title      => transfer_bulk_name*"_"*transfer_bulk_id,
-                                :comments   => "pd2ptx",
-                                :db         => dbin,
-                                :test       => test,
-                                :sysUnit    => "mol",
-                                :oxide      => oxides,
-                                :frac       => bulkrock,
-                                :frac2      => bulkrock2,
-                                :frac_wt    => bulkrock_wt,
-                                :frac2_wt   => bulkrock2_wt,
-                            ), cols=:union)
+            bulkrock        = round.(bulkrock, digits = 6)
+            bulkrock_wt     = round.(mol2wt(bulkrock, oxides), digits = 6)
+            test            = length(db[(db.db .== dbout), :].test)
 
-                return "success", false, ""
-            end
+            push!(db,Dict(  :bulk       => "custom",
+                            :title      => transfer_bulk_name*"_"*transfer_bulk_id,
+                            :comments   => "pd2ptx",
+                            :db         => dbout,
+                            :test       => test,
+                            :sysUnit    => "mol",
+                            :oxide      => oxides,
+                            :frac       => bulkrock,
+                            :frac2      => copy(bulkrock),
+                            :frac_wt    => bulkrock_wt,
+                            :frac2_wt   => copy(bulkrock_wt),
+                        ), cols=:union)
+
+            return "success", false, ""
         end
 
     end
@@ -1550,32 +1556,111 @@ function Tab_PTXpaths_Callbacks(app)
         Output("ptx-field-plot", "figure"),
         Output("ptx-field-plot", "config"),
 
-        Input("compute-path-button",   "n_clicks"),
-        Input("ptx-field-dropdown",    "value"),
+        Input("ptx-compute-version-store",      "data"),
+        Input("ptx-field-dropdown",             "value"),
+        Input("fields-dropdown-o18-q-ptxf",     "value"),
+        Input("fields-dropdown-o18-p1-ptxf",    "value"),
+        Input("fields-dropdown-o18-p2-ptxf",    "value"),
+        Input("te-type-ptxf",                   "value"),
+        Input("te-name-ptxf",                   "value"),
+        Input("te-formula-ptxf",                "value"),
+        Input("te-norm-ptxf",                   "value"),
 
         prevent_initial_call = true,
 
-    ) do compute, fieldname
+    ) do _version, field, o18_q, o18_p1, o18_p2, te_type, te_name, te_formula, te_norm
 
         global Out_PTX
 
+        fieldname = te_main_fieldname(o18_main_fieldname(field, o18_q, o18_p1, o18_p2), te_type, te_name, te_formula, te_norm)
+
         if @isdefined(Out_PTX) && !isempty(Out_PTX)
-            ytitle       = get(OTHER_FIELD_LABELS, fieldname, fieldname)
+            ytitle       = ptx_field_label(fieldname)
             layout_field = initialize_field_layout(ytitle, ytitle)
-            data_field   = get_ptx_field_plot(fieldname)
-            fig          = plot(data_field, layout_field)
+            missing_msg  = is_te_field(fieldname)  && !te_ptx_available()  ? "Trace-element model not computed for this path" :
+                           is_o18_field(fieldname) && !o18_ptx_available() ? "δ18O not computed for this path" : ""
+            if isempty(missing_msg)
+                fig      = plot(get_ptx_field_plot(fieldname), layout_field)
+            else
+                layout_field[:annotations] = [attr(text = missing_msg, xref = "paper", yref = "paper", x = 0.5, y = 0.5, showarrow = false, font = attr(size = 14, color = "grey"))]
+                fig      = plot(GenericTrace[], layout_field)
+            end
         else
             fig          = plot( Layout( height= 360 ))
         end
 
         config = PlotConfig(    toImageButtonOptions  = attr(     name     = "Download as svg",
                                     format   = "svg",
-                                    filename =  "PTX_path_field_"*fieldname,
+                                    filename =  "PTX_path_field_"*ptx_field_filename(fieldname),
                                     height   =  360,
                                     width    =  960,
                                     scale    =  2.0,       ).fields)
 
         return fig, config
+    end
+
+    callback!(
+        app,
+        Output("show-o18-ptxf-id",      "style"),
+        Output("show-te-ptxf-id",       "style"),
+        Input("ptx-field-dropdown",     "value"),
+        prevent_initial_call = false,
+    ) do field
+        vis(b) = Dict("display" => b ? "block" : "none")
+        return vis(field == "o18"), vis(field == "te")
+    end
+
+    callback!(
+        app,
+        Output("o18-p1-row-ptxf",               "style"),
+        Output("o18-p2-row-ptxf",               "style"),
+        Input("fields-dropdown-o18-q-ptxf",     "value"),
+        prevent_initial_call = false,
+    ) do q
+        return o18_phase_rows_style(q)
+    end
+
+    callback!(
+        app,
+        Output("te-name-row-ptxf",      "style"),
+        Output("te-formula-row-ptxf",   "style"),
+        Output("te-name-ptxf",          "options"),
+        Output("te-name-ptxf",          "value"),
+        Input("te-type-ptxf",           "value"),
+        prevent_initial_call = false,
+    ) do type
+        return te_selector_state(type)
+    end
+
+    callback!(
+        app,
+        Output("te-phases-ptxf",                "children"),
+        Output("te-type-ptxf",                  "options"),
+        Output("te-type-ptxf",                  "value"),
+        Output("fields-dropdown-o18-p1-ptxf",   "options"),
+        Output("fields-dropdown-o18-p2-ptxf",   "options"),
+        Output("fields-dropdown-o18-p1-ptxf",   "value"),
+        Output("fields-dropdown-o18-p2-ptxf",   "value"),
+        Input("ptx-compute-version-store",      "data"),
+        Input("mineral-naming-dropdown",        "value"),
+        State("te-type-ptxf",                   "value"),
+        State("fields-dropdown-o18-p1-ptxf",    "value"),
+        State("fields-dropdown-o18-p2-ptxf",    "value"),
+        prevent_initial_call = true,
+    ) do _version, warr_naming, type, p1, p2
+        global use_warr_names
+        use_warr_names[1] = (warr_naming == "warr")
+
+        opts     = te_type_options_ptx()
+        vals     = [o.value for o in opts]
+        type_val = type in vals ? type : "te"
+
+        o18_opts = o18_phase_options_ptx()
+        names    = [o["value"] for o in o18_opts]
+        d1, d2   = o18_default_phases_ptx()
+        keep(v, d) = v in names ? v : d
+
+        return te_phase_list_ptx(), opts, type_val, o18_opts, o18_opts, keep(p1, d1), keep(p2, d2)
     end
 
 

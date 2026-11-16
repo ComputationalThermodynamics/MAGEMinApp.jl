@@ -22,7 +22,7 @@ function get_layout_ree(norm        :: String,
         elseif show_type == "all"
             xaxis_title = "Trace Elements"
         end
-        yaxis_title = "C"*show_type*"/"*norm*" log10[μg/g]"
+        yaxis_title = "C"*show_type*"/"*te_norm_short(norm)*" log10[μg/g]"
     else#if kds_db == "EODC"
         xaxis_title = "Trace Elements"
         yaxis_title = "Cte log10[μg/g]"
@@ -52,8 +52,7 @@ end
 function get_data_ree_plot(point_id_te, norm, show_type, kds_db)
 
     ree             = ["La", "Ce", "Pr", "Nd", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu"]
-    te_chondrite    = ["Rb", "Ba", "Th", "U", "Nb", "Ta", "La", "Ce", "Pb", "Pr", "Sr", "Nd", "Zr", "Hf", "Sm", "Eu", "Gd", "Tb", "Dy", "Y", "Ho", "Er", "Tm", "Yb", "Lu", "V", "Sc", "Cs", "K", "Ti"]
-    ppm_chondrite   = [2.3, 2.41,0.029,0.0074,0.24,0.0136,0.237,0.613,2.47,0.0928,7.25,0.457,3.82,0.103,0.148,0.0563,0.199,0.0361,0.246,1.57,0.0546,0.160,0.0247,0.161,0.0246,56,5.92,0.188,558.0,436.0]
+    te_chondrite    = TE_NORM_ELEMENTS
 
     if kds_db == "OL" || kds_db == "CO" || kds_db == "Yak25"
         if show_type == "ree"
@@ -61,7 +60,7 @@ function get_data_ree_plot(point_id_te, norm, show_type, kds_db)
             te      = ree[mask]
             te_idx  = [findfirst(isequal(x), Out_TE_XY[point_id_te].elements) for x in te]
         elseif show_type == "all"
-            mask    = [!isnothing(findfirst(isequal(x), Out_TE_XY[point_id_te].elements)) for x in te_chondrite]
+            mask    = [!isnothing(findfirst(isequal(x), Out_TE_XY[point_id_te].elements)) && te_ref_has(x, norm) for x in te_chondrite]
             te      = te_chondrite[mask]
             te_idx  = [findfirst(isequal(x), Out_TE_XY[point_id_te].elements) for x in te]
         end
@@ -105,19 +104,10 @@ function get_data_ree_plot(point_id_te, norm, show_type, kds_db)
     # te_idx   = [findfirst(isequal(x), Out_TE_XY[point_id_te].elements) for x in ree];
     k = 1
     if kds_db == "OL" || kds_db == "CO" || kds_db == "Yak25"
-        chon_idx = [findfirst(isequal(x), te_chondrite) for x in te]
-        if show_type == "ree"
-            if norm == "chondrite"
-                C_norm = copy(ppm_chondrite[chon_idx])
-            elseif norm == "bulk"
-                C_norm = copy(Out_TE_XY[point_id_te].C0[te_idx])
-            end
-        elseif show_type == "all"
-            if norm == "chondrite"
-                C_norm = copy(ppm_chondrite[chon_idx])
-            elseif norm == "bulk"
-                C_norm = copy(Out_TE_XY[point_id_te].C0[te_idx])
-            end
+        if is_te_ref_norm(norm)
+            C_norm = te_ref_ppm(te, norm)
+        elseif norm == "bulk"
+            C_norm = copy(Out_TE_XY[point_id_te].C0[te_idx])
         end
     else#if kds_db == "EODC"
         C_norm = 1;
@@ -239,7 +229,7 @@ end
 function te_field_label(fieldname::AbstractString)
     type, norm, name = te_field_parts(fieldname)
     type == "te" || return name
-    return norm == "none" ? name : name * " (" * norm * ")"
+    return norm == "none" ? name : name * " (" * te_norm_short(norm) * ")"
 end
 
 function te_field_column(fieldname::AbstractString)
@@ -284,12 +274,12 @@ function te_selector(suffix::String)
     formula_rows = Any[
         dbc_row([dbc_card([dcc_markdown(id = "te-phases" * suffix, children = "", style = Dict("white-space" => "pre"))])]),
         row("Formula",       dbc_input(id = "te-formula" * suffix, type = "text", value = TE_DEFAULT_FORMULA, debounce = true)),
-        row("Normalization", dcc_dropdown(id = "te-norm" * suffix, options = ["none", "bulk", "chondrite"], value = "none", clearable = false, multi = false)),
+        row("Normalization", dcc_dropdown(id = "te-norm" * suffix, options = te_norm_options(["none", "bulk", "chondrite", "pm_sm89", "pm_ms95"]), value = "none", clearable = false, multi = false)),
     ]
     if suffix == "-pd"
         push!(formula_rows, dbc_row([dbc_button("Display", id = "te-display-pd", color = "light", className = "me-2", n_clicks = 0,
                                                 style = Dict("textAlign" => "center", "font-size" => "100%", "border" => "1px grey solid"))]))
-    else
+    elseif suffix == "-iso"
         push!(formula_rows, row("Custom name", dbc_input(id = "te-cust" * suffix, type = "text", value = "none")))
     end
     return [
@@ -347,3 +337,42 @@ function te_type_available(type::String)
 end
 
 te_type_options() = [o for o in TE_FIELD_TYPES if te_type_available(o.value)]
+
+function te_ptx_available()
+    isdefined(@__MODULE__, :Out_TE_PTX) && isdefined(@__MODULE__, :Out_PTX) || return false
+    return Out_TE_PTX isa AbstractVector && !isempty(Out_TE_PTX) && length(Out_TE_PTX) == length(Out_PTX)
+end
+
+function te_type_available_ptx(type::String)
+    type == "te" && return true
+    te_ptx_available() || return false
+    names = get(TE_ACCESSORY_FIELDS, type, String[])
+    for k in eachindex(Out_TE_PTX), n in names
+        isassigned(Out_TE_PTX, k) || continue
+        v = get_property(Out_TE_PTX[k], n)
+        v isa Real && isfinite(v) && v != 0 && return true
+    end
+    return false
+end
+
+te_type_options_ptx() = [o for o in TE_FIELD_TYPES if te_type_available_ptx(o.value)]
+
+function te_phase_list_ptx()
+    te_ptx_available() && isdefined(@__MODULE__, :all_TE_ph_ptx) || return ""
+    return "**C0 M S " * join(display_ph_names(to_str_vec(all_TE_ph_ptx)), " ") * "**"
+end
+
+function te_field_series(fieldname::AbstractString, tes::AbstractVector)
+    type, norm, name = te_field_parts(fieldname)
+    f         = type == "te" ? compile_te_formula(name) : nothing
+    melt_only = type != "te" && endswith(name, "_liq")
+    y         = Vector{Union{Float64,Missing}}(missing, length(tes))
+    for k in eachindex(tes)
+        isassigned(tes, k) || continue
+        te = tes[k]
+        (melt_only && !te_melt_present(te)) && continue
+        v  = type == "te" ? eval_te_formula(f, te, norm; strict_liq = false) : get_property(te, name)
+        y[k] = (v isa Real && isfinite(v)) ? Float64(v) : missing
+    end
+    return y
+end

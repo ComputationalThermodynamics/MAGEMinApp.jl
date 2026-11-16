@@ -63,7 +63,7 @@ const TC_PRESET_PHASES = Dict(
     "mp"   => ["liq_W14", "fsp_H22", "bi_W14", "g_W14", "ep_H11", "ma_W14", "mu_W14", "opx_W14", "sa_W14", "cd_W14", "st_W14", "chl_W14", "ctd_W14", "sp_W02", "ilm_W00"],
     "mb"   => ["sp_W02", "opx_W14", "fsp_H22", "liq_G16", "mu_W14", "ilmm_W14", "ilm_W00", "ol_H11", "amp_G16", "ep_H11", "g_W14", "chl_W14", "bi_W14", "dio_G16", "aug_G16", "abc_H11", "spl_W02"],
     "ig"   => ["spl_T21", "bi_G25", "cd_G25", "cpx_W24", "ep_H11", "g_W24", "amp_G16", "ilm_W24", "liq_G25w", "ol_H18", "opx_W24", "fsp_H22", "fl_G25", "mu_W14", "fper", "chl_W14"],
-    "igad" => ["spl_T21", "cpx_W24", "g_W24", "ilm_W24", "liq_S26", "ol_H18", "opx_W24", "fsp_H22", "lct_W24", "mel_W24", "nph_W24", "kals_W24"],
+    "igad" => ["spl_T21", "cpx_W24", "g_W24", "ilm_W24", "liq_W24d", "ol_H18", "opx_W24", "fsp_H22", "lct_W24", "mel_W24", "nph_W24", "kals_W24"],
     "igd"  => ["spl_T21", "cpx_T21", "g_T21", "ilm_T21", "liq_S26", "ol_H18", "opx_T21", "fsp_H22op"],
     "igaw" => ["spl_T21", "bi_H26", "cd_G25", "cpx_W24", "ep_H11", "g_W24", "amp_H26", "ilm_W24", "liq_H26", "ol_H18", "opx_W24", "fsp_H22", "fl_H26", "mu_W14", "fper", "chl_W14", "lct_W24", "mel_W24", "nph_W24", "kals_W24"],
     "mpmn" => ["liq_R27", "fsp_R27", "bi_R27", "g_R27", "ep_R27", "mu_R27", "opx_R27", "sa_R27", "cd_R27", "st_R27", "chl_R27", "ctd_R27", "spl_R27", "ilm_R27", "cpx_R27", "amp_R27", "ol_R27", "ta_R27", "oamp_R27", "ma_R27"],
@@ -1679,13 +1679,39 @@ end
 
 
 
-const te_chondrite_names = ["Rb", "Ba", "Th", "U", "Nb", "Ta", "La", "Ce", "Pb", "Pr", "Sr", "Nd", "Zr", "Hf", "Sm", "Eu", "Gd", "Tb", "Dy", "Y", "Ho", "Er", "Tm", "Yb", "Lu", "V", "Sc"]
-const te_chondrite_ppm   = [2.3, 2.41, 0.029, 0.0074, 0.24, 0.0136, 0.237, 0.613, 2.47, 0.0928, 7.25, 0.457, 3.82, 0.103, 0.148, 0.0563, 0.199, 0.0361, 0.246, 1.57, 0.0546, 0.160, 0.0247, 0.161, 0.0246, 56, 5.92]
+const TE_NORM_ELEMENTS = ["Rb", "Ba", "Th", "U", "Nb", "Ta", "La", "Ce", "Pb", "Pr", "Sr", "Nd", "Zr", "Hf", "Sm", "Eu", "Gd", "Tb", "Dy", "Y", "Ho", "Er", "Tm", "Yb", "Lu", "V", "Sc", "Cs", "K", "Ti"]
 
-function te_chondrite_norm(el::AbstractString)
-    id = findfirst(==(el), te_chondrite_names)
-    return isnothing(id) ? 1.0 : te_chondrite_ppm[id]
+const TE_NORM_REFS = Dict{String, Vector{Float64}}(
+    "chondrite" => [2.3, 2.41, 0.029, 0.0074, 0.24, 0.0136, 0.237, 0.613, 2.47, 0.0928, 7.25, 0.457, 3.82, 0.103, 0.148, 0.0563, 0.199, 0.0361, 0.246, 1.57, 0.0546, 0.160, 0.0247, 0.161, 0.0246, 56.0, 5.92, 0.190, 550.0, 440.0],
+    "pm_sm89"   => [0.635, 6.989, 0.085, 0.021, 0.713, 0.041, 0.687, 1.775, 0.185, 0.276, 21.1, 1.354, 11.2, 0.309, 0.444, 0.168, 0.596, 0.108, 0.737, 4.55, 0.164, 0.480, 0.074, 0.493, 0.074, NaN, NaN, 0.032, 250.0, 1300.0],
+    "pm_ms95"   => [0.600, 6.600, 0.0795, 0.0203, 0.658, 0.037, 0.648, 1.675, 0.150, 0.254, 19.9, 1.250, 10.5, 0.283, 0.406, 0.154, 0.544, 0.099, 0.674, 4.30, 0.149, 0.438, 0.068, 0.441, 0.0675, 82.0, 16.2, 0.021, 240.0, 1205.0],
+)
+
+const TE_NORM_LABELS = Dict("none"      => "None",
+                            "bulk"      => "Bulk",
+                            "chondrite" => "Chondrite (CI, McDonough & Sun 1995)",
+                            "pm_sm89"   => "PM (Sun & McDonough 1989)",
+                            "pm_ms95"   => "PM (McDonough & Sun 1995)")
+
+const TE_NORM_SHORT  = Dict("pm_sm89" => "PM-SM89", "pm_ms95" => "PM-MS95")
+
+is_te_ref_norm(norm::AbstractString) = haskey(TE_NORM_REFS, norm)
+
+te_norm_label(norm::AbstractString) = get(TE_NORM_LABELS, norm, String(norm))
+
+te_norm_short(norm::AbstractString) = get(TE_NORM_SHORT, norm, String(norm))
+
+te_norm_options(values::Vector{String}) = [(label = te_norm_label(v), value = v) for v in values]
+
+function te_ref_ppm(el::AbstractString, norm::AbstractString)
+    is_te_ref_norm(norm) || return NaN
+    id = findfirst(==(el), TE_NORM_ELEMENTS)
+    return isnothing(id) ? NaN : TE_NORM_REFS[norm][id]
 end
+
+te_ref_ppm(els::AbstractVector, norm::AbstractString) = [te_ref_ppm(el, norm) for el in els]
+
+te_ref_has(el::AbstractString, norm::AbstractString) = !is_te_ref_norm(norm) || isfinite(te_ref_ppm(el, norm))
 
 struct TEFormula
     fn          :: Any
@@ -1727,7 +1753,7 @@ function te_term_value(te, kind::String, el::String, norm::String; defined_only:
     id_el = findfirst(e -> string(e) == el, te.elements)
     isnothing(id_el) && return nothing
     defined_only && kind == "M" && !te_melt_present(te) && return nothing
-    nrm   = norm == "bulk" ? te.C0[id_el] : norm == "chondrite" ? te_chondrite_norm(el) : 1.0
+    nrm   = norm == "bulk" ? te.C0[id_el] : is_te_ref_norm(norm) ? te_ref_ppm(el, norm) : 1.0
     if kind == "S"
         v = te.Csol[id_el]
     elseif kind == "M"

@@ -199,8 +199,8 @@ philosophy of the Magma Chamber Simulator (Bohrson et al., 2014), here on a spat
   - core-to-rim analyses of zoned grains, coloured by the number of spots per grain;
   - the age histogram (bins 2σ) with its kernel density;
   - one representative zoned grain per family.
-- The Trace elements tab shows the erupted REE or all trace elements, normalised to chondrite or to the injected
-  magma.
+- The Trace elements tab shows the erupted REE or all trace elements, normalised to CI chondrite (McDonough & Sun 1995), to primitive
+  mantle (Sun & McDonough 1989, or McDonough & Sun 1995) or to the injected magma.
 
 ### 11. Conservation and diagnostics
 
