@@ -572,10 +572,11 @@ function Tab_PhaseDiagram3D_Callbacks(app)
         Input("pd3d-export-html",           "n_clicks"),
         Input("pd3d-export-mesh",           "n_clicks"),
         Input("pd3d-export-vtk",            "n_clicks"),
+        Input("pd3d-export-csv",            "n_clicks"),
         State("pd3d-export-name",           "value"),
 
         prevent_initial_call = true,
-    ) do _html, _mesh, _vtk, name
+    ) do _html, _mesh, _vtk, _csv, name
         st, o = PD3D[], PD3D_LAST_OPTS[]
         (isnothing(st) || isnothing(o)) && return "Compute and display a 3D diagram first."
         name = pd3d_safe_name(something(name, ""))
@@ -597,6 +598,9 @@ function Tab_PhaseDiagram3D_Callbacks(app)
                 n    = pd3d_export_vtk(st, o, path)
                 gpath = subd_export_vtk(st, get(o, :geotherm, (curves = NamedTuple[],)), joinpath(output_dir[1], name * "_geotherms.vtk"))
                 return "Saved $(path) ($n fields, $(round(filesize(path) / 1e6, digits = 1)) MB)" * (isnothing(gpath) ? "" : " and slab geotherms in $(gpath)")
+            elseif bid == "pd3d-export-csv"
+                path = pd3d_export_csv(st, joinpath(output_dir[1], name * "_" * st.dtb))
+                return "Saved $(path) ($(length(st.Out)) points, $(round(filesize(path) / 1e6, digits = 1)) MB)"
             end
         catch e
             msg = sprint(showerror, e)

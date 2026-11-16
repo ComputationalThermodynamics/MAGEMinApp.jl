@@ -444,19 +444,14 @@ end
 mageres_layer_comps(c::MAGEResColumn) = [l.moles for l in c.layers]
 
 const MAGERES_REE           = ["La", "Ce", "Pr", "Nd", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu"]
-const MAGERES_TE_CHONDRITE  = ["Rb", "Ba", "Th", "U", "Nb", "Ta", "La", "Ce", "Pb", "Pr", "Sr", "Nd", "Zr", "Hf", "Sm",
-                               "Eu", "Gd", "Tb", "Dy", "Y", "Ho", "Er", "Tm", "Yb", "Lu", "V", "Sc", "Cs", "K", "Ti"]
-const MAGERES_PPM_CHONDRITE = [2.3, 2.41, 0.029, 0.0074, 0.24, 0.0136, 0.237, 0.613, 2.47, 0.0928, 7.25, 0.457, 3.82,
-                               0.103, 0.148, 0.0563, 0.199, 0.0361, 0.246, 1.57, 0.0546, 0.160, 0.0247, 0.161, 0.0246,
-                               56.0, 5.92, 0.188, 558.0, 436.0]
 
 """
     mageres_eruption_te_figure(st::MAGEResState; t_from = -Inf, show = "ree", norm = "chondrite")
 
     Trace-element spectrum of the eruptions of `st` after `t_from` [yr], merged into one (bulk erupted material, Zr in
     zircon included), with the first injected magma dashed. `show` selects the rare earth elements ("ree") or
-    all elements with a chondrite value ("all"); `norm` normalises to chondrite ("chondrite") or to the injected magma
-    ("bulk"), on a log scale.
+    all elements with a reference value ("all"); `norm` normalises to chondrite ("chondrite"), to primitive mantle
+    ("pm_sm89", "pm_ms95") or to the injected magma ("bulk"), on a log scale.
 """
 function mageres_eruption_te_figure(st::MAGEResState; t_from::Float64 = -Inf, show::AbstractString = "ree",
                                     norm::AbstractString = "chondrite")
@@ -465,11 +460,11 @@ function mageres_eruption_te_figure(st::MAGEResState; t_from::Float64 = -Inf, sh
     sel   = [l for l in st.pluton.layers if l.t > t_from]
     isempty(sel) && return mageres_placeholder_figure("No eruption during this output"; height = 360)
     Mox   = st.thermo.Mox
-    names = show == "ree" ? MAGERES_REE : MAGERES_TE_CHONDRITE
-    x     = [e for e in names if e in te.elements]
+    names = show == "ree" ? MAGERES_REE : TE_NORM_ELEMENTS
+    x     = [e for e in names if e in te.elements && te_ref_has(e, norm)]
     idx   = [findfirst(==(e), te.elements) for e in x]
     C_inj = isempty(st.source.layers) ? te.C_injection[idx] : mageres_layer_te(st.source.layers[1], te, Mox)[idx]
-    C_ref = norm == "bulk" ? C_inj : MAGERES_PPM_CHONDRITE[[findfirst(==(e), MAGERES_TE_CHONDRITE) for e in x]]
+    C_ref = norm == "bulk" ? C_inj : te_ref_ppm(x, norm)
     ratio(C) = mageres_finite_or_nothing([r > 0 ? c / r : NaN for (c, r) in zip(C, C_ref)])
     traces = GenericTrace[scatter(; x = x, y = ratio(C_inj), name = "injected magma", mode = "lines",
                                     line = attr(color = "black", dash = "dash", width = 2))]
@@ -486,7 +481,7 @@ function mageres_eruption_te_figure(st::MAGEResState; t_from::Float64 = -Inf, sh
                       plot_bgcolor = "white",
                       xaxis        = attr(title = show == "ree" ? "Rare Earth Elements" : "Trace Elements",
                                           showline = true, linecolor = "black", mirror = true),
-                      yaxis        = attr(title = norm == "bulk" ? "C / injected magma" : "C / chondrite",
+                      yaxis        = attr(title = norm == "bulk" ? "C / injected magma" : "C / " * te_norm_short(norm),
                                           type = "log", exponentformat = "power", showline = true, linecolor = "black",
                                           mirror = true),
                       legend       = attr(orientation = "v", x = 1.02, y = 1.0))

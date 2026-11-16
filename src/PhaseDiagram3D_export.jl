@@ -175,6 +175,15 @@ function pd3d_export_vtk(st::PD3D_state, o, path)
     return length(fields)
 end
 
+function pd3d_export_csv(st::PD3D_state, fileout)
+    n_plane = length(st.Pv) * length(st.Tv)
+    for (l, out) in enumerate(st.Out)
+        out.X .= st.Xv[(l - 1) ÷ n_plane + 1]
+    end
+    MAGEMin_data2dataframe(st.Out, st.dtb, fileout; use_Warr2021 = use_warr_names[1], use_GPA = use_GPa[1])
+    return fileout * ".csv"
+end
+
 function pd3d_export_html(st::PD3D_state, o, path)
     logo  = "data:image/jpeg;base64," * base64encode(read(joinpath(pkg_dir, PD3D_LOGO_SRC)))
     fig   = pd3d_figure(st, o; logo_src = logo)

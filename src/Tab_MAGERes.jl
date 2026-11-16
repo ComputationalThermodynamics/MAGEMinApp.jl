@@ -55,8 +55,10 @@ const MAGERES_ENUM_FIELDS = Dict{Symbol,Vector{Dict{String,Any}}}(
 
 const MAGERES_TE_SHOW_OPTIONS = [Dict("label" => "REE",                "value" => "ree"),
                                  Dict("label" => "All trace elements", "value" => "all")]
-const MAGERES_TE_NORM_OPTIONS = [Dict("label" => "Chondrite normalised",      "value" => "chondrite"),
-                                 Dict("label" => "Injected-magma normalised", "value" => "bulk")]
+const MAGERES_TE_NORM_OPTIONS = [Dict("label" => "Chondrite normalised (McDonough & Sun 1995)", "value" => "chondrite"),
+                                 Dict("label" => "PM normalised (Sun & McDonough 1989)",     "value" => "pm_sm89"),
+                                 Dict("label" => "PM normalised (McDonough & Sun 1995)",     "value" => "pm_ms95"),
+                                 Dict("label" => "Injected-magma normalised",                "value" => "bulk")]
 
 """
     mageres_input_id(f::Symbol)

@@ -431,6 +431,18 @@ function Tab_PhaseDiagram()
                                                                         "border"        =>"1px grey solid")),
                                                 ], width=4),
                                             ]),
+                                            dbc_row([
+                                                dbc_col([
+                                                    html_h1("Database", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 8)),
+                                                ], width=4),
+                                                dbc_col([
+                                                    dcc_dropdown(   id          = "transfer-bulk-db",
+                                                                    options     = dtb_dict,
+                                                                    value       = "ig",
+                                                                    clearable   = false,
+                                                                    multi       = false),
+                                                ], width=8),
+                                            ], style = Dict("marginTop" => 4)),
                                             html_hr(),
                                             html_h1("Add bulk to phase diagram", style = Dict("textAlign" => "center","font-size" => "120%", "marginTop" => 4)),
                                             html_hr(),
@@ -602,7 +614,7 @@ function Tab_PhaseDiagram()
                                                     ], width = 6),
                                                     dbc_col([
                                                         dcc_dropdown(   id          = "te-spectrum-norm",
-                                                                        options     = [(label = "Bulk", value = "bulk"), (label = "Chondrite", value = "chondrite")],
+                                                                        options     = te_norm_options(["bulk", "chondrite", "pm_sm89", "pm_ms95"]),
                                                                         value       = "bulk",
                                                                         clearable   = false,
                                                                         multi       = false),
